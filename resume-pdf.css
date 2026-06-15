@@ -368,6 +368,17 @@ li::before {
   font-weight: 800;
 }
 
+.education a {
+  display: inline-block;
+  margin-top: 0.035in;
+  color: var(--accent);
+  font-size: 6.9pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--accent);
+}
+
 @media print {
   body {
     background: var(--ivory);

@@ -939,6 +939,17 @@ a.chip { cursor: pointer; }
   color: var(--accent);
 }
 
+.edu__proof {
+  width: fit-content;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 4px;
+}
+
 /* ------------------------------------------------------------
    Contact — emerald close
    ------------------------------------------------------------ */
