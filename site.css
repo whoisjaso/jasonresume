@@ -335,22 +335,6 @@ body.menu-open .menu__foot { opacity: 1; }
   pointer-events: none;
 }
 
-.hero__label {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: clamp(20px, 3vh, 36px);
-}
-
-.hero__label .label { color: var(--accent); }
-
-.hero__label::before {
-  content: "";
-  width: 48px;
-  height: 1px;
-  background: var(--accent);
-}
-
 .hero__name {
   font-family: var(--serif);
   font-weight: 500;

@@ -63,7 +63,6 @@ a {
   border-bottom: 2px solid var(--accent);
 }
 
-.eyebrow,
 .band-label,
 .section h2,
 .contact,
@@ -71,13 +70,6 @@ a {
   font-family: var(--sans);
   letter-spacing: 0.11em;
   text-transform: uppercase;
-}
-
-.eyebrow {
-  margin: 0 0 0.06in;
-  color: var(--accent);
-  font-size: 7.7pt;
-  font-weight: 700;
 }
 
 h1 {
