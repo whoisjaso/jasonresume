@@ -314,6 +314,37 @@ li::before {
   line-height: 1;
 }
 
+.certification article {
+  padding: 0.11in;
+  background: var(--ivory-raise);
+  border: 1px solid var(--line-soft);
+}
+
+.certification h3 {
+  font-family: var(--sans);
+  font-size: 8.7pt;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.certification p {
+  margin: 0.035in 0 0;
+  color: var(--ink-soft);
+  font-size: 7.7pt;
+  line-height: 1.34;
+}
+
+.certification a {
+  display: inline-block;
+  margin-top: 0.055in;
+  color: var(--accent);
+  font-size: 7pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--accent);
+}
+
 .education article + article {
   margin-top: 0.13in;
   padding-top: 0.13in;

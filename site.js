@@ -23,6 +23,18 @@
     revealEls.forEach(function (el) { el.classList.add("in-view"); });
   }
 
+  function revealHashTarget() {
+    if (!window.location.hash) return;
+    var target = document.getElementById(window.location.hash.slice(1));
+    if (!target) return;
+    target.querySelectorAll("[data-reveal]").forEach(function (el) {
+      el.classList.add("in-view");
+    });
+  }
+
+  revealHashTarget();
+  window.addEventListener("hashchange", revealHashTarget);
+
   /* ---- nav state + progress hairline ---- */
   var nav = document.querySelector(".nav");
   var progress = document.querySelector(".progress");

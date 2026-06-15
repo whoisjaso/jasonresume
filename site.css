@@ -145,7 +145,7 @@ img { display: block; max-width: 100%; }
 .nav__links {
   display: flex;
   align-items: center;
-  gap: clamp(18px, 2.5vw, 36px);
+  gap: clamp(14px, 1.9vw, 28px);
 }
 
 .nav__link {
@@ -762,7 +762,7 @@ a.chip { cursor: pointer; }
 }
 
 /* ------------------------------------------------------------
-   Capabilities + Education
+   Capabilities + Credentials + Education
    ------------------------------------------------------------ */
 
 .caps__grid {
@@ -814,6 +814,81 @@ a.chip { cursor: pointer; }
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
+}
+
+.credentials__wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(22px, 3vw, 40px);
+  align-items: stretch;
+  padding: clamp(24px, 3.4vw, 44px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, var(--ivory-raise), var(--ivory));
+}
+
+.credentials__copy {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.credentials__copy h3 {
+  font-family: var(--serif);
+  font-size: calc(clamp(28px, 3.2vw, 46px) * var(--display-scale));
+  font-weight: 500;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.credentials__copy p {
+  max-width: 54ch;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  text-wrap: pretty;
+}
+
+.credentials__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 22px;
+  padding-top: 10px;
+}
+
+.credentials__textlink {
+  width: fit-content;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 4px;
+}
+
+.credentials__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-content: center;
+  min-width: 0;
+}
+
+.credentials__list span {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ivory) 74%, transparent);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-transform: uppercase;
 }
 
 .edu { background: var(--ivory-raise); }
@@ -1003,6 +1078,8 @@ a.chip { cursor: pointer; }
   .work__card { min-height: 0; }
 
   .caps__grid { grid-template-columns: 1fr; }
+  .credentials__wrap { grid-template-columns: 1fr; }
+  .credentials__list { grid-template-columns: 1fr; }
   .edu__grid { grid-template-columns: 1fr; }
   .contact__grid { grid-template-columns: 1fr; }
 }
