@@ -24,6 +24,8 @@ const mojibakeMarkers = [
   String.fromCodePoint(0x00e2)
 ];
 const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html'];
+const vercelIgnore = fs.readFileSync('.vercelignore', 'utf8');
+if (!vercelIgnore.includes('release/')) throw new Error('.vercelignore must exclude generated release archives');
 for (const file of htmlFiles) {
   const html = fs.readFileSync(file, 'utf8');
   for (const [, json] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) JSON.parse(json);
@@ -213,6 +215,7 @@ $files = @(
   "image-sitemap.xml",
   "feed.xml",
   "vercel.json",
+  ".vercelignore",
   "README.md",
   "PUBLISH_NOW.md",
   "CITATION.cff",

@@ -1,0 +1,4 @@
+release/
+.git/
+.vercel/
+.env*.local
