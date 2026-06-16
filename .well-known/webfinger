@@ -1,0 +1,72 @@
+{
+  "subject": "acct:jobawems@jasonobawemimo.com",
+  "aliases": [
+    "https://jasonobawemimo.com/",
+    "https://jasonobawemimo.com/jason-obawemimo.html",
+    "https://github.com/whoisjaso",
+    "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
+  ],
+  "links": [
+    {
+      "rel": "self",
+      "type": "text/html",
+      "href": "https://jasonobawemimo.com/jason-obawemimo.html"
+    },
+    {
+      "rel": "me",
+      "type": "text/html",
+      "href": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
+    },
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "https://jasonobawemimo.com/"
+    },
+    {
+      "rel": "http://webfinger.net/rel/avatar",
+      "type": "image/png",
+      "href": "https://jasonobawemimo.com/assets/jason-headshot.png"
+    },
+    {
+      "rel": "http://webfinger.net/rel/vcard",
+      "type": "text/vcard",
+      "href": "https://jasonobawemimo.com/jason-obawemimo.vcf"
+    },
+    {
+      "rel": "author",
+      "type": "text/plain",
+      "href": "https://jasonobawemimo.com/humans.txt"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/json",
+      "href": "https://jasonobawemimo.com/discovery.json"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/json",
+      "href": "https://jasonobawemimo.com/identity.json"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/ld+json",
+      "href": "https://jasonobawemimo.com/faq.jsonld"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/ld+json",
+      "href": "https://jasonobawemimo.com/credentials.jsonld"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/ld+json",
+      "href": "https://jasonobawemimo.com/profile.jsonld"
+    }
+  ],
+  "properties": {
+    "http://schema.org/name": "Jason Obawemimo",
+    "http://schema.org/jobTitle": "Web Design and Workflow Systems Builder",
+    "http://schema.org/homeLocation": "Pearland, Texas, United States",
+    "http://schema.org/url": "https://jasonobawemimo.com/"
+  }
+}

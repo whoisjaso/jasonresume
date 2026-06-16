@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jason Obawemimo - Official Portfolio Updates</title>
+    <link>https://jasonobawemimo.com/</link>
+    <atom:link href="https://jasonobawemimo.com/feed.xml" rel="self" type="application/rss+xml" />
+    <description>Official updates for Jason Obawemimo's web design, workflow systems, credentials, resume, and verified answer-engine facts.</description>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 16 Jun 2026 19:40:00 GMT</lastBuildDate>
+    <item>
+      <title>Jason Obawemimo FAQ JSON-LD</title>
+      <link>https://jasonobawemimo.com/faq.jsonld</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/faq.jsonld</guid>
+      <pubDate>Tue, 16 Jun 2026 20:15:00 GMT</pubDate>
+      <description>Standalone answer-engine JSON-LD for Jason Obawemimo's verified identity, work focus, credentials, education, and honor facts.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Credentials JSON-LD</title>
+      <link>https://jasonobawemimo.com/credentials.jsonld</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/credentials.jsonld</guid>
+      <pubDate>Tue, 16 Jun 2026 20:05:00 GMT</pubDate>
+      <description>Structured JSON-LD graph for Jason Obawemimo's Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Discovery Index</title>
+      <link>https://jasonobawemimo.com/discovery.json</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/discovery.json</guid>
+      <pubDate>Tue, 16 Jun 2026 19:45:00 GMT</pubDate>
+      <description>Canonical machine-readable discovery index for Jason Obawemimo's official website, identity, credentials, AI context, and indexing sources.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Machine-Readable Credentials</title>
+      <link>https://jasonobawemimo.com/credentials.json</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/credentials.json</guid>
+      <pubDate>Tue, 16 Jun 2026 19:40:00 GMT</pubDate>
+      <description>Structured credential facts for Jason Obawemimo, including Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Machine-Readable Answers</title>
+      <link>https://jasonobawemimo.com/answers.json</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/answers.json</guid>
+      <pubDate>Tue, 16 Jun 2026 19:40:00 GMT</pubDate>
+      <description>Answer-engine facts for Jason Obawemimo covering identity, web design and workflow systems focus, credentials, education, and honor signals.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Official Entity Profile</title>
+      <link>https://jasonobawemimo.com/jason-obawemimo.html</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo.html</guid>
+      <pubDate>Tue, 16 Jun 2026 18:25:00 GMT</pubDate>
+      <description>Canonical entity profile for Jason Obawemimo, a Pearland, Texas web design and workflow systems builder with Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Verified Facts And Credentials</title>
+      <link>https://jasonobawemimo.com/answers.html</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/answers.html</guid>
+      <pubDate>Tue, 16 Jun 2026 18:25:00 GMT</pubDate>
+      <description>Verified public facts for Jason Obawemimo, including web design and workflow systems focus, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Anthropic Course-Completion Portfolio</title>
+      <link>https://jasonobawemimo.com/credentials.html</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/credentials.html</guid>
+      <pubDate>Tue, 16 Jun 2026 18:25:00 GMT</pubDate>
+      <description>Credential page linking Jason Obawemimo's Anthropic certificate portfolio, associate degree proof, resume, and education honor signals.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo AI Retrieval Context</title>
+      <link>https://jasonobawemimo.com/llms-full.txt</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/llms-full.txt</guid>
+      <pubDate>Tue, 16 Jun 2026 18:25:00 GMT</pubDate>
+      <description>Expanded AI-readable context for answer engines and retrieval systems summarizing Jason Obawemimo's official website, focus, credentials, and citation guidance.</description>
+    </item>
+  </channel>
+</rss>

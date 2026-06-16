@@ -1,0 +1,53 @@
+/* TEAM */
+
+Name: Jason Obawemimo
+Role: Web Design and Workflow Systems Builder
+Location: Pearland, Texas, United States
+Website: https://jasonobawemimo.com/
+Contact: jobawems@gmail.com
+LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
+
+/* SITE */
+
+Canonical URL: https://jasonobawemimo.com/
+Entity profile: https://jasonobawemimo.com/jason-obawemimo.html
+Language: English
+Primary focus: Conversion-focused web design, workflow systems, AI-assisted operations, landing page architecture, CRM/database handoffs, SOPs, reporting, and business operations.
+Preferred positioning: Web design, workflow systems, and business value.
+Not primary positioning: Voice-agent specialist.
+
+/* CREDENTIALS */
+
+Anthropic course-completion portfolio: https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf
+Associate degree proof: https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf
+Resume: https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf
+Education: Associate of Arts in Business, San Jacinto College, graduated May 2026.
+Honor: GPA 3.63 and Dean's Honor List.
+
+/* MACHINE READABLE */
+
+Sitemap: https://jasonobawemimo.com/sitemap.xml
+Sitemap index: https://jasonobawemimo.com/sitemap-index.xml
+Image sitemap: https://jasonobawemimo.com/image-sitemap.xml
+RSS feed: https://jasonobawemimo.com/feed.xml
+Robots: https://jasonobawemimo.com/robots.txt
+AI summary: https://jasonobawemimo.com/llms.txt
+Full AI context: https://jasonobawemimo.com/llms-full.txt
+AI retrieval guidance: https://jasonobawemimo.com/ai.txt
+Discovery index: https://jasonobawemimo.com/discovery.json
+Identity JSON: https://jasonobawemimo.com/identity.json
+vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
+Credentials JSON: https://jasonobawemimo.com/credentials.json
+Verified answers JSON: https://jasonobawemimo.com/answers.json
+WebFinger: https://jasonobawemimo.com/.well-known/webfinger
+Host metadata: https://jasonobawemimo.com/.well-known/host-meta
+Structured data: https://jasonobawemimo.com/schema.json
+Profile JSON-LD: https://jasonobawemimo.com/profile.jsonld
+Credentials JSON-LD: https://jasonobawemimo.com/credentials.jsonld
+FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
+OpenSearch: https://jasonobawemimo.com/opensearch.xml
+Verified facts: https://jasonobawemimo.com/answers.html
+Credential page: https://jasonobawemimo.com/credentials.html
+LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
+
+Last updated: 2026-06-16

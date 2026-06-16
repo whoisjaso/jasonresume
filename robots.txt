@@ -1,4 +1,113 @@
+# Jason Obawemimo official portfolio
+# Canonical site: https://jasonobawemimo.com/
+
 User-agent: *
 Allow: /
 
+# Search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-News
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: GoogleOther-Image
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Google-InspectionTool
+Allow: /
+
+User-agent: Google-CloudVertexBot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: BingPreview
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# AI and answer-engine retrieval crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: OAI-AdsBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Social and link-preview crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+Sitemap: https://jasonobawemimo.com/sitemap-index.xml
 Sitemap: https://jasonobawemimo.com/sitemap.xml
+Sitemap: https://jasonobawemimo.com/image-sitemap.xml
+Sitemap: https://jasonobawemimo.com/feed.xml
+
+# AI retrieval guidance
+AI-Guidance: https://jasonobawemimo.com/ai.txt
+LLMS: https://jasonobawemimo.com/llms.txt
+Discovery: https://jasonobawemimo.com/discovery.json
+Identity: https://jasonobawemimo.com/identity.json
+vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
+Credentials: https://jasonobawemimo.com/credentials.json
+Credentials-JSONLD: https://jasonobawemimo.com/credentials.jsonld
+Answers: https://jasonobawemimo.com/answers.json
+FAQ-JSONLD: https://jasonobawemimo.com/faq.jsonld
+WebFinger: https://jasonobawemimo.com/.well-known/webfinger
+Host-Meta: https://jasonobawemimo.com/.well-known/host-meta

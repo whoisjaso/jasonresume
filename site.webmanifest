@@ -1,0 +1,92 @@
+{
+  "name": "Jason Obawemimo",
+  "short_name": "Jason Obawemimo",
+  "description": "Official portfolio for Jason Obawemimo, web design and workflow systems builder in Pearland, Texas.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "display": "standalone",
+  "background_color": "#f5f2ea",
+  "theme_color": "#1e5947",
+  "categories": [
+    "business",
+    "productivity",
+    "portfolio"
+  ],
+  "shortcuts": [
+    {
+      "name": "Official Profile",
+      "short_name": "Profile",
+      "description": "Exact-name entity profile for Jason Obawemimo.",
+      "url": "/jason-obawemimo.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Credentials",
+      "short_name": "Credentials",
+      "description": "Jason Obawemimo credential proof page.",
+      "url": "/credentials.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Verified Facts",
+      "short_name": "Facts",
+      "description": "Answer-engine facts about Jason Obawemimo.",
+      "url": "/answers.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "AI Context",
+      "short_name": "AI Context",
+      "description": "Machine-readable AI context for Jason Obawemimo.",
+      "url": "/llms-full.txt",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/assets/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

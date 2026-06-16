@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://jasonobawemimo.com/</loc>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
+      <image:title>Jason Obawemimo professional headshot</image:title>
+      <image:caption>Portrait of Jason Obawemimo, Pearland Texas web design and workflow systems builder.</image:caption>
+      <image:geo_location>Pearland, Texas, United States</image:geo_location>
+    </image:image>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/favicon-512.png</image:loc>
+      <image:title>Jason Obawemimo favicon portrait</image:title>
+      <image:caption>Site icon for Jason Obawemimo's official portfolio.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://jasonobawemimo.com/jason-obawemimo.html</loc>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
+      <image:title>Jason Obawemimo official entity profile image</image:title>
+      <image:caption>Official profile image for Jason Obawemimo, web design and workflow systems builder.</image:caption>
+      <image:geo_location>Pearland, Texas, United States</image:geo_location>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://jasonobawemimo.com/credentials.html</loc>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
+      <image:title>Jason Obawemimo credentials profile image</image:title>
+      <image:caption>Profile image associated with Jason Obawemimo's Anthropic coursework, associate degree, GPA 3.63, and Dean's Honor List recognition.</image:caption>
+      <image:geo_location>Pearland, Texas, United States</image:geo_location>
+    </image:image>
+  </url>
+</urlset>

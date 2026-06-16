@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Jason Obawemimo</ShortName>
+  <Description>Search Jason Obawemimo's official portfolio, credentials, answer facts, and web design workflow systems profile.</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image height="32" width="32" type="image/png">https://jasonobawemimo.com/assets/favicon-32.png</Image>
+  <Url type="text/html" method="get" template="https://jasonobawemimo.com/?q={searchTerms}" />
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://jasonobawemimo.com/opensearch.xml" />
+</OpenSearchDescription>

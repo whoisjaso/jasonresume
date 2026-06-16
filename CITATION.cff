@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you cite this website or repository, cite Jason Obawemimo's official portfolio."
+title: "Jason Obawemimo Official Resume Site"
+type: software
+authors:
+  - family-names: "Obawemimo"
+    given-names: "Jason"
+url: "https://jasonobawemimo.com/"
+repository-code: "https://github.com/whoisjaso/jasonresume"
+date-released: "2026-06-16"
+keywords:
+  - Jason Obawemimo
+  - web design
+  - workflow systems
+  - AI-assisted operations
+  - Anthropic coursework
+  - Dean's Honor List
+abstract: "Official resume and portfolio website for Jason Obawemimo, a Pearland, Texas web design and workflow systems builder."
