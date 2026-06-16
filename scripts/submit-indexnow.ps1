@@ -1,44 +1,28 @@
 param(
-  [string]$SearchEngineHost = "api.indexnow.org",
+  [string]$Endpoint = "https://api.indexnow.org/indexnow",
   [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
 
+$root = Split-Path -Parent $PSScriptRoot
+Set-Location $root
+
 $hostName = "jasonobawemimo.com"
 $key = "25250c82c435407fa759bd71fbe2b1df"
 $keyLocation = "https://jasonobawemimo.com/$key.txt"
-$urls = @(
-  "https://jasonobawemimo.com/",
-  "https://jasonobawemimo.com/credentials.html",
-  "https://jasonobawemimo.com/answers.html",
-  "https://jasonobawemimo.com/jason-obawemimo.html",
-  "https://jasonobawemimo.com/resume-pdf.html",
+
+[xml]$sitemap = Get-Content -Path "sitemap.xml" -Raw
+$sitemapUrls = @($sitemap.urlset.url | ForEach-Object { [string]$_.loc } | Where-Object { $_ })
+$extraUrls = @(
   "https://jasonobawemimo.com/sitemap-index.xml",
   "https://jasonobawemimo.com/sitemap.xml",
   "https://jasonobawemimo.com/image-sitemap.xml",
-  "https://jasonobawemimo.com/feed.xml",
-  "https://jasonobawemimo.com/llms.txt",
-  "https://jasonobawemimo.com/llms-full.txt",
-  "https://jasonobawemimo.com/ai.txt",
-  "https://jasonobawemimo.com/discovery.json",
-  "https://jasonobawemimo.com/identity.json",
-  "https://jasonobawemimo.com/jason-obawemimo.vcf",
-  "https://jasonobawemimo.com/credentials.json",
-  "https://jasonobawemimo.com/answers.json",
-  "https://jasonobawemimo.com/.well-known/llms.txt",
-  "https://jasonobawemimo.com/.well-known/ai.txt",
-  "https://jasonobawemimo.com/.well-known/webfinger",
-  "https://jasonobawemimo.com/.well-known/host-meta",
-  "https://jasonobawemimo.com/schema.json",
-  "https://jasonobawemimo.com/profile.jsonld",
-  "https://jasonobawemimo.com/credentials.jsonld",
-  "https://jasonobawemimo.com/faq.jsonld",
-  "https://jasonobawemimo.com/opensearch.xml",
-  "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
-  "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
-  "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf"
+  "https://jasonobawemimo.com/robots.txt",
+  "https://jasonobawemimo.com/site.webmanifest",
+  "https://jasonobawemimo.com/$key.txt"
 )
+$urls = @($sitemapUrls + $extraUrls | Sort-Object -Unique)
 
 $payload = @{
   host = $hostName
@@ -54,5 +38,20 @@ if ($DryRun) {
   return
 }
 
-$uri = "https://$SearchEngineHost/indexnow"
-Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json; charset=utf-8" -Body $json
+Write-Host "Submitting $($urls.Count) URLs to IndexNow endpoint: $Endpoint"
+
+try {
+  $response = Invoke-WebRequest -Uri $Endpoint -Method Post -ContentType "application/json; charset=utf-8" -Body $json -TimeoutSec 30
+  Write-Host "IndexNow status: $($response.StatusCode) $($response.StatusDescription)"
+  if ($response.Content) {
+    Write-Host "IndexNow response: $($response.Content)"
+  }
+} catch {
+  if ($_.Exception.Response) {
+    $statusCode = [int]$_.Exception.Response.StatusCode
+    $statusDescription = $_.Exception.Response.StatusDescription
+    throw "IndexNow submission failed: $statusCode $statusDescription"
+  }
+
+  throw
+}

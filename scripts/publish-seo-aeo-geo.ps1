@@ -120,6 +120,15 @@ node -e $validationScript
 $exitCode = $LASTEXITCODE
 if ($exitCode -ne 0) { throw "local SEO/AEO/GEO validation failed with exit code $exitCode" }
 
+$indexNowDryRun = powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\submit-indexnow.ps1 -DryRun
+$exitCode = $LASTEXITCODE
+if ($exitCode -ne 0) { throw "IndexNow dry-run failed with exit code $exitCode" }
+$indexNowPayload = ($indexNowDryRun | Out-String) | ConvertFrom-Json
+if ($indexNowPayload.urlList.Count -lt 33) { throw "IndexNow dry-run has too few URLs" }
+foreach ($requiredIndexNowUrl in @("https://jasonobawemimo.com/robots.txt", "https://jasonobawemimo.com/site.webmanifest", "https://jasonobawemimo.com/25250c82c435407fa759bd71fbe2b1df.txt")) {
+  if ($indexNowPayload.urlList -notcontains $requiredIndexNowUrl) { throw "IndexNow dry-run missing $requiredIndexNowUrl" }
+}
+
 if ($ValidateOnly) {
   Write-Host "Validation-only complete."
   return

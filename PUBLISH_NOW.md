@@ -7,11 +7,9 @@ GitHub repository: https://github.com/whoisjaso/jasonresume
 Vercel project: jasonresume
 Validated release bundle: `release/jasonresume-seo-aeo-geo-latest-valid.zip`
 
-## Current Blocker
+## Current State
 
-In the Codex sandbox, local Git writes fail because `.git/index.lock` cannot be created. GitHub API writes also return `403 Resource not accessible by integration`, and the Vercel connector only returns CLI/Git deployment instructions.
-
-The latest production check still shows the old deployment: `https://jasonobawemimo.com/sitemap.xml` has only the homepage, and `https://jasonobawemimo.com/answers.html` returns `404`. Publish the validated bundle or run the script below from an unrestricted terminal to make the AI/search files live.
+The SEO/AEO/GEO package is committed, pushed to `main`, and live on Vercel. The production verifier passes against `https://jasonobawemimo.com/`, including the sitemap, machine-readable identity files, structured data, AI guidance files, credential PDFs, and IndexNow key file.
 
 ## Publish Command
 
@@ -21,7 +19,7 @@ Run this from an unrestricted PowerShell terminal in the project root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-seo-aeo-geo.ps1
 ```
 
-The script validates local SEO/AEO/GEO files, stages the intended files, commits, pushes `main`, waits for Vercel, submits IndexNow, and verifies the live URLs.
+The script validates local SEO/AEO/GEO files, checks the IndexNow dry-run payload, stages the intended files, commits, pushes `main`, waits for Vercel, submits IndexNow, and verifies the live URLs.
 
 ## Required Live Proof
 

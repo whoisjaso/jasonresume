@@ -90,7 +90,7 @@ Request inspection/indexing for these URLs first:
 
 ## 4. Submit IndexNow
 
-After deploy, run:
+After deploy, run the sitemap-derived IndexNow payload. The script prints the submitted URL count and response status for audit evidence.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\submit-indexnow.ps1
@@ -100,6 +100,12 @@ Dry run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\submit-indexnow.ps1 -DryRun
+```
+
+Optional custom endpoint:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\submit-indexnow.ps1 -Endpoint "https://www.bing.com/indexnow"
 ```
 
 ## 5. Refresh Social Link Previews
