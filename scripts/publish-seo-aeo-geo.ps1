@@ -18,6 +18,7 @@ const publicSourceUrls = [
   'https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf',
   'https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf'
 ];
+const mojibakeMarkers = ['Ã', 'Â', 'â€', 'â†', 'â„'];
 const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html'];
 for (const file of htmlFiles) {
   const html = fs.readFileSync(file, 'utf8');
@@ -43,6 +44,35 @@ for (const file of htmlFiles) {
   if (!html.includes('/opensearch.xml')) throw new Error(`${file} missing opensearch.xml link`);
   if (!html.includes('/credentials.jsonld')) throw new Error(`${file} missing credentials.jsonld link`);
   if (!html.includes('/faq.jsonld')) throw new Error(`${file} missing faq.jsonld link`);
+}
+const crawlableTextFiles = [
+  ...htmlFiles,
+  'schema.json',
+  'profile.jsonld',
+  'credentials.jsonld',
+  'faq.jsonld',
+  'discovery.json',
+  'identity.json',
+  'credentials.json',
+  'answers.json',
+  'llms.txt',
+  'llms-full.txt',
+  'ai.txt',
+  '.well-known/ai.txt',
+  '.well-known/llms.txt',
+  '.well-known/webfinger',
+  '.well-known/host-meta',
+  'humans.txt',
+  'robots.txt',
+  'feed.xml',
+  'sitemap.xml',
+  'opensearch.xml'
+];
+for (const file of crawlableTextFiles) {
+  const body = fs.readFileSync(file, 'utf8');
+  for (const marker of mojibakeMarkers) {
+    if (body.includes(marker)) throw new Error(`${file} contains mojibake marker ${marker}`);
+  }
 }
 const schema = JSON.parse(fs.readFileSync('schema.json', 'utf8'));
 const profile = JSON.parse(fs.readFileSync('profile.jsonld', 'utf8'));

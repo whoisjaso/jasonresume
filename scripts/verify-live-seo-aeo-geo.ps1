@@ -17,6 +17,9 @@ function Get-ResponseText {
 $checks = @(
   @{ Path = "/"; Contains = "Jason Obawemimo" },
   @{ Path = "/"; Contains = "linkedin.com/in/jason-obawemimo-51a76120a" },
+  @{ Path = "/"; NotContains = "RÃ" },
+  @{ Path = "/"; NotContains = "â" },
+  @{ Path = "/"; NotContains = "Â" },
   @{ Path = "/credentials.html"; Contains = "Dean" },
   @{ Path = "/answers.html"; Contains = "web design and workflow systems" },
   @{ Path = "/answers.html"; Contains = "jason-obawemimo-51a76120a" },
@@ -71,15 +74,19 @@ $failures = @()
 foreach ($check in $checks) {
   $url = "$BaseUrl$($check.Path)"
   try {
-    if ($check.Contains) {
+    if ($check.Contains -or $check.NotContains) {
       $response = Invoke-WebRequest -Uri $url -Method Get -MaximumRedirection 5 -TimeoutSec 30
       if ($response.StatusCode -ne 200) {
         $failures += "$url returned $($response.StatusCode)"
         continue
       }
       $content = Get-ResponseText $response
-      if (-not ($content -like "*$($check.Contains)*")) {
+      if ($check.Contains -and -not ($content -like "*$($check.Contains)*")) {
         $failures += "$url missing marker: $($check.Contains)"
+        continue
+      }
+      if ($check.NotContains -and ($content -like "*$($check.NotContains)*")) {
+        $failures += "$url contains forbidden marker: $($check.NotContains)"
         continue
       }
     } else {
