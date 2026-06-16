@@ -13,6 +13,11 @@ Write-Host "Validating local SEO/AEO/GEO files..."
 $validationScript = @'
 const fs = require('fs');
 const linkedInUrl = 'https://www.linkedin.com/in/jason-obawemimo-51a76120a/';
+const publicSourceUrls = [
+  'https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland',
+  'https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf',
+  'https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf'
+];
 const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html'];
 for (const file of htmlFiles) {
   const html = fs.readFileSync(file, 'utf8');
@@ -88,6 +93,12 @@ if (!JSON.stringify(profile).includes('https://github.com/whoisjaso')) throw new
 if (!JSON.stringify(identity).includes('https://github.com/whoisjaso')) throw new Error('identity.json missing GitHub sameAs identity link');
 for (const [name, value] of Object.entries({ schema, profile, credentialGraph, faqGraph, discovery, identity, credentials, answers, webfinger })) {
   if (!JSON.stringify(value).includes(linkedInUrl)) throw new Error(`${name} missing LinkedIn identity link`);
+}
+for (const sourceUrl of publicSourceUrls) {
+  if (!fs.readFileSync('mentions.html', 'utf8').includes(sourceUrl)) throw new Error(`mentions.html missing public source ${sourceUrl}`);
+  for (const [name, value] of Object.entries({ schema, profile, discovery, identity })) {
+    if (!JSON.stringify(value).includes(sourceUrl)) throw new Error(`${name} missing public source ${sourceUrl}`);
+  }
 }
 if (!schema['@graph'].some(node => node['@type'] === 'ImageObject' && node['@id'] === 'https://jasonobawemimo.com/#headshot')) throw new Error('schema.json missing headshot ImageObject');
 if ([...sitemap.matchAll(/<loc>/g)].length !== 28) throw new Error('Expected 28 sitemap URLs');
