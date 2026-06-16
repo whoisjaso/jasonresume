@@ -18,7 +18,11 @@ const publicSourceUrls = [
   'https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf',
   'https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf'
 ];
-const mojibakeMarkers = ['Ã', 'Â', 'â€', 'â†', 'â„'];
+const mojibakeMarkers = [
+  String.fromCodePoint(0x00c3),
+  String.fromCodePoint(0x00c2),
+  String.fromCodePoint(0x00e2)
+];
 const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html'];
 for (const file of htmlFiles) {
   const html = fs.readFileSync(file, 'utf8');
@@ -306,9 +310,13 @@ if ($remaining.Count -gt 0) {
 if (-not $SkipIndexNow) {
   Write-Host "Submitting IndexNow URL set..."
   powershell -ExecutionPolicy Bypass -File .\scripts\submit-indexnow.ps1
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -ne 0) { throw "IndexNow submission failed with exit code $exitCode" }
 }
 
 Write-Host "Running live SEO/AEO/GEO verification..."
 powershell -ExecutionPolicy Bypass -File .\scripts\verify-live-seo-aeo-geo.ps1
+$exitCode = $LASTEXITCODE
+if ($exitCode -ne 0) { throw "Live SEO/AEO/GEO verification failed with exit code $exitCode" }
 
 Write-Host "Published and verified."

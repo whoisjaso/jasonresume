@@ -14,12 +14,16 @@ function Get-ResponseText {
   return [string]$Response.Content
 }
 
+$mojibakeR = "R" + [string][char]0x00C3
+$mojibakeE2 = [string][char]0x00E2
+$mojibakeC2 = [string][char]0x00C2
+
 $checks = @(
   @{ Path = "/"; Contains = "Jason Obawemimo" },
   @{ Path = "/"; Contains = "linkedin.com/in/jason-obawemimo-51a76120a" },
-  @{ Path = "/"; NotContains = "RÃ" },
-  @{ Path = "/"; NotContains = "â" },
-  @{ Path = "/"; NotContains = "Â" },
+  @{ Path = "/"; NotContains = $mojibakeR },
+  @{ Path = "/"; NotContains = $mojibakeE2 },
+  @{ Path = "/"; NotContains = $mojibakeC2 },
   @{ Path = "/credentials.html"; Contains = "Dean" },
   @{ Path = "/answers.html"; Contains = "web design and workflow systems" },
   @{ Path = "/answers.html"; Contains = "jason-obawemimo-51a76120a" },
@@ -73,20 +77,22 @@ $failures = @()
 
 foreach ($check in $checks) {
   $url = "$BaseUrl$($check.Path)"
+  $containsMarker = $check["Contains"]
+  $notContainsMarker = $check["NotContains"]
   try {
-    if ($check.Contains -or $check.NotContains) {
+    if ($containsMarker -or $notContainsMarker) {
       $response = Invoke-WebRequest -Uri $url -Method Get -MaximumRedirection 5 -TimeoutSec 30
       if ($response.StatusCode -ne 200) {
         $failures += "$url returned $($response.StatusCode)"
         continue
       }
       $content = Get-ResponseText $response
-      if ($check.Contains -and -not ($content -like "*$($check.Contains)*")) {
-        $failures += "$url missing marker: $($check.Contains)"
+      if ($containsMarker -and -not ($content -like "*$containsMarker*")) {
+        $failures += "$url missing marker: $containsMarker"
         continue
       }
-      if ($check.NotContains -and ($content -like "*$($check.NotContains)*")) {
-        $failures += "$url contains forbidden marker: $($check.NotContains)"
+      if ($notContainsMarker -and ($content -like "*$notContainsMarker*")) {
+        $failures += "$url contains forbidden marker: $notContainsMarker"
         continue
       }
     } else {
