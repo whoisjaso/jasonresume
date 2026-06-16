@@ -18,6 +18,11 @@
       "href": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
     },
     {
+      "rel": "me",
+      "type": "text/html",
+      "href": "https://github.com/whoisjaso"
+    },
+    {
       "rel": "http://webfinger.net/rel/profile-page",
       "type": "text/html",
       "href": "https://jasonobawemimo.com/"

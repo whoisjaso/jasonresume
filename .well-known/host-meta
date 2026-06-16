@@ -2,7 +2,11 @@
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
   <Subject>https://jasonobawemimo.com/</Subject>
   <Alias>https://jasonobawemimo.com/jason-obawemimo.html</Alias>
+  <Alias>https://www.linkedin.com/in/jason-obawemimo-51a76120a/</Alias>
+  <Alias>https://github.com/whoisjaso</Alias>
   <Link rel="lrdd" type="application/jrd+json" template="https://jasonobawemimo.com/.well-known/webfinger?resource={uri}" />
+  <Link rel="me" type="text/html" href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" />
+  <Link rel="me" type="text/html" href="https://github.com/whoisjaso" />
   <Link rel="author" type="text/plain" href="https://jasonobawemimo.com/humans.txt" />
   <Link rel="http://webfinger.net/rel/vcard" type="text/vcard" href="https://jasonobawemimo.com/jason-obawemimo.vcf" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/discovery.json" />
