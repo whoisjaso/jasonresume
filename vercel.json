@@ -1,6 +1,18 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "host",
+          "value": "www.jasonobawemimo.com"
+        }
+      ],
+      "destination": "https://jasonobawemimo.com/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         {

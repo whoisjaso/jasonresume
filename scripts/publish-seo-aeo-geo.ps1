@@ -91,6 +91,12 @@ JSON.parse(fs.readFileSync('site.webmanifest', 'utf8'));
 const vercelConfig = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
 const manifest = JSON.parse(fs.readFileSync('site.webmanifest', 'utf8'));
 if (!Array.isArray(vercelConfig.redirects) || !vercelConfig.redirects.some(rule =>
+  rule.source === '/' &&
+  rule.destination === 'https://jasonobawemimo.com/' &&
+  rule.permanent === true &&
+  Array.isArray(rule.has) &&
+  rule.has.some(condition => condition.type === 'header' && condition.key === 'host' && condition.value === 'www.jasonobawemimo.com')
+) || !vercelConfig.redirects.some(rule =>
   rule.source === '/:path*' &&
   rule.destination === 'https://jasonobawemimo.com/:path*' &&
   rule.permanent === true &&

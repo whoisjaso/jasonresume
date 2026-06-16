@@ -87,24 +87,24 @@ $canonicalHostChecks = @(
 )
 
 foreach ($hostCheck in $canonicalHostChecks) {
+  $response = $null
   try {
     $response = Invoke-WebRequest -Uri $hostCheck.From -Method Head -MaximumRedirection 0 -TimeoutSec 30
-    $failures += "$($hostCheck.From) returned $($response.StatusCode) instead of a canonical redirect"
   } catch {
     $response = $_.Exception.Response
     if (-not $response) {
       $failures += "$($hostCheck.From) failed: $($_.Exception.Message)"
       continue
     }
-
-    $location = [string]$response.Headers["Location"]
-    if ([int]$response.StatusCode -ne 308 -or $location -ne $hostCheck.To) {
-      $failures += "$($hostCheck.From) expected 308 to $($hostCheck.To), got $([int]$response.StatusCode) to $location"
-      continue
-    }
-
-    Write-Host "OK $($hostCheck.From) redirects to $location"
   }
+
+  $location = [string]$response.Headers["Location"]
+  if ([int]$response.StatusCode -ne 308 -or $location -ne $hostCheck.To) {
+    $failures += "$($hostCheck.From) expected 308 to $($hostCheck.To), got $([int]$response.StatusCode) to $location"
+    continue
+  }
+
+  Write-Host "OK $($hostCheck.From) redirects to $location"
 }
 
 foreach ($check in $checks) {
