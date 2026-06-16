@@ -13,7 +13,7 @@ Write-Host "Validating local SEO/AEO/GEO files..."
 $validationScript = @'
 const fs = require('fs');
 const linkedInUrl = 'https://www.linkedin.com/in/jason-obawemimo-51a76120a/';
-const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html'];
+const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html'];
 for (const file of htmlFiles) {
   const html = fs.readFileSync(file, 'utf8');
   for (const [, json] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) JSON.parse(json);
@@ -70,18 +70,19 @@ if (!credential || credential.about.length !== 19) throw new Error('Expected 19 
 if (profile['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('profile.jsonld missing canonical Person @id');
 const courseList = credentialGraph['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#anthropic-course-list');
 if (!courseList || courseList.numberOfItems !== 19 || courseList.itemListElement.length !== 19) throw new Error('credentials.jsonld missing 19 course ItemList');
-if (faqGraph['@type'] !== 'FAQPage' || faqGraph.mainEntity.length !== 6) throw new Error('faq.jsonld missing 6 FAQ answers');
+if (faqGraph['@type'] !== 'FAQPage' || faqGraph.mainEntity.length !== 7) throw new Error('faq.jsonld missing 7 FAQ answers');
 if (discovery.entity.name !== 'Jason Obawemimo') throw new Error('discovery.json missing Jason Obawemimo name');
 if (identity.name !== 'Jason Obawemimo') throw new Error('identity.json missing Jason Obawemimo name');
 if (credentials.anthropic_course_completion_portfolio.course_count !== 19) throw new Error('credentials.json missing 19 Anthropic courses');
 if (!credentials.education || !/Dean/.test(credentials.education.honor)) throw new Error('credentials.json missing Dean honor');
-if (!Array.isArray(answers.answers) || answers.answers.length < 6) throw new Error('answers.json missing verified answers');
+if (!Array.isArray(answers.answers) || answers.answers.length < 7) throw new Error('answers.json missing verified answers');
 if (webfinger.subject !== 'acct:jobawems@jasonobawemimo.com') throw new Error('WebFinger subject mismatch');
 if (!webfinger.links.some(link => link.rel === 'me' && link.href === linkedInUrl)) throw new Error('WebFinger missing LinkedIn rel=me');
 if (!webfinger.links.some(link => link.rel === 'me' && link.href === 'https://github.com/whoisjaso')) throw new Error('WebFinger missing GitHub rel=me');
 if (!hostMeta.includes('rel=' + String.fromCharCode(34) + 'me' + String.fromCharCode(34)) || !hostMeta.includes(linkedInUrl) || !hostMeta.includes('https://github.com/whoisjaso')) throw new Error('host-meta missing rel=me identity links');
 if (!vcard.includes('FN:Jason Obawemimo') || !vcard.includes('URL:https://jasonobawemimo.com/')) throw new Error('vCard missing canonical identity');
 if (!vcard.includes(linkedInUrl)) throw new Error('vCard missing LinkedIn profile');
+if (!vcard.includes('https://jasonobawemimo.com/mentions.html')) throw new Error('vCard missing public mentions page');
 if (!JSON.stringify(schema).includes('https://github.com/whoisjaso')) throw new Error('schema.json missing GitHub sameAs identity link');
 if (!JSON.stringify(profile).includes('https://github.com/whoisjaso')) throw new Error('profile.jsonld missing GitHub sameAs identity link');
 if (!JSON.stringify(identity).includes('https://github.com/whoisjaso')) throw new Error('identity.json missing GitHub sameAs identity link');
@@ -89,11 +90,11 @@ for (const [name, value] of Object.entries({ schema, profile, credentialGraph, f
   if (!JSON.stringify(value).includes(linkedInUrl)) throw new Error(`${name} missing LinkedIn identity link`);
 }
 if (!schema['@graph'].some(node => node['@type'] === 'ImageObject' && node['@id'] === 'https://jasonobawemimo.com/#headshot')) throw new Error('schema.json missing headshot ImageObject');
-if ([...sitemap.matchAll(/<loc>/g)].length !== 27) throw new Error('Expected 27 sitemap URLs');
+if ([...sitemap.matchAll(/<loc>/g)].length !== 28) throw new Error('Expected 28 sitemap URLs');
 if ([...sitemapIndex.matchAll(/<loc>/g)].length !== 2) throw new Error('Expected 2 sitemap-index URLs');
 if (!sitemapIndex.includes('https://jasonobawemimo.com/image-sitemap.xml')) throw new Error('sitemap-index.xml missing image sitemap');
 if (!imageSitemap.includes('https://jasonobawemimo.com/assets/jason-headshot.png')) throw new Error('image-sitemap.xml missing headshot');
-for (const requiredUrl of ['/jason-obawemimo.html', '/llms-full.txt', '/profile.jsonld', '/credentials.jsonld', '/faq.jsonld', '/opensearch.xml', '/feed.xml', '/ai.txt', '/discovery.json', '/identity.json', '/credentials.json', '/answers.json', '/.well-known/llms.txt', '/.well-known/ai.txt', '/.well-known/webfinger', '/.well-known/host-meta']) {
+for (const requiredUrl of ['/jason-obawemimo.html', '/mentions.html', '/llms-full.txt', '/profile.jsonld', '/credentials.jsonld', '/faq.jsonld', '/opensearch.xml', '/feed.xml', '/ai.txt', '/discovery.json', '/identity.json', '/credentials.json', '/answers.json', '/.well-known/llms.txt', '/.well-known/ai.txt', '/.well-known/webfinger', '/.well-known/host-meta']) {
   if (!sitemap.includes(`https://jasonobawemimo.com${requiredUrl}`)) throw new Error(`sitemap.xml missing ${requiredUrl}`);
 }
 if (!robots.includes('Sitemap: https://jasonobawemimo.com/sitemap-index.xml')) throw new Error('robots.txt missing sitemap-index.xml reference');
@@ -111,7 +112,7 @@ if (!robots.includes('Host-Meta: https://jasonobawemimo.com/.well-known/host-met
 for (const crawler of ['OAI-SearchBot', 'GPTBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot', 'PerplexityBot', 'Google-Extended', 'Googlebot-Image', 'GoogleOther', 'Applebot', 'Applebot-Extended', 'Bingbot', 'DuckDuckBot']) {
   if (!robots.includes(`User-agent: ${crawler}`)) throw new Error(`robots.txt missing ${crawler}`);
 }
-if (['index.html','credentials.html','answers.html','resume-pdf.html','jason-obawemimo.html','sitemap.xml','sitemap-index.xml','image-sitemap.xml','llms.txt','llms-full.txt','ai.txt','discovery.json','identity.json','jason-obawemimo.vcf','credentials.json','credentials.jsonld','faq.jsonld','answers.json','.well-known/ai.txt','.well-known/llms.txt','.well-known/webfinger','.well-known/host-meta','humans.txt','SEARCH_SUBMISSION_CHECKLIST.md','README.md','PUBLISH_NOW.md','feed.xml'].some(file => fs.readFileSync(file, 'utf8').includes('jason-obawemimo-og.png'))) {
+if (['index.html','credentials.html','answers.html','resume-pdf.html','jason-obawemimo.html','mentions.html','sitemap.xml','sitemap-index.xml','image-sitemap.xml','llms.txt','llms-full.txt','ai.txt','discovery.json','identity.json','jason-obawemimo.vcf','credentials.json','credentials.jsonld','faq.jsonld','answers.json','.well-known/ai.txt','.well-known/llms.txt','.well-known/webfinger','.well-known/host-meta','humans.txt','SEARCH_SUBMISSION_CHECKLIST.md','README.md','PUBLISH_NOW.md','feed.xml'].some(file => fs.readFileSync(file, 'utf8').includes('jason-obawemimo-og.png'))) {
   throw new Error('Generated social PNG is still referenced');
 }
 console.log('Validation passed');
@@ -124,7 +125,8 @@ $indexNowDryRun = powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\
 $exitCode = $LASTEXITCODE
 if ($exitCode -ne 0) { throw "IndexNow dry-run failed with exit code $exitCode" }
 $indexNowPayload = ($indexNowDryRun | Out-String) | ConvertFrom-Json
-if ($indexNowPayload.urlList.Count -lt 33) { throw "IndexNow dry-run has too few URLs" }
+if ($indexNowPayload.urlList.Count -lt 34) { throw "IndexNow dry-run has too few URLs" }
+if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/mentions.html") { throw "IndexNow dry-run missing public mentions page" }
 foreach ($requiredIndexNowUrl in @("https://jasonobawemimo.com/robots.txt", "https://jasonobawemimo.com/site.webmanifest", "https://jasonobawemimo.com/25250c82c435407fa759bd71fbe2b1df.txt")) {
   if ($indexNowPayload.urlList -notcontains $requiredIndexNowUrl) { throw "IndexNow dry-run missing $requiredIndexNowUrl" }
 }
@@ -156,6 +158,7 @@ $files = @(
   "faq.jsonld",
   "answers.json",
   "jason-obawemimo.html",
+  "mentions.html",
   "answers.html",
   "credentials.html",
   "schema.json",
@@ -209,6 +212,7 @@ $urls = @(
   "https://jasonobawemimo.com/credentials.html",
   "https://jasonobawemimo.com/answers.html",
   "https://jasonobawemimo.com/jason-obawemimo.html",
+  "https://jasonobawemimo.com/mentions.html",
   "https://jasonobawemimo.com/resume-pdf.html",
   "https://jasonobawemimo.com/sitemap.xml",
   "https://jasonobawemimo.com/sitemap-index.xml",

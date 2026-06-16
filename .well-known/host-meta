@@ -2,6 +2,7 @@
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
   <Subject>https://jasonobawemimo.com/</Subject>
   <Alias>https://jasonobawemimo.com/jason-obawemimo.html</Alias>
+  <Alias>https://jasonobawemimo.com/mentions.html</Alias>
   <Alias>https://www.linkedin.com/in/jason-obawemimo-51a76120a/</Alias>
   <Alias>https://github.com/whoisjaso</Alias>
   <Link rel="lrdd" type="application/jrd+json" template="https://jasonobawemimo.com/.well-known/webfinger?resource={uri}" />
@@ -11,6 +12,7 @@
   <Link rel="http://webfinger.net/rel/vcard" type="text/vcard" href="https://jasonobawemimo.com/jason-obawemimo.vcf" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/discovery.json" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/identity.json" />
+  <Link rel="describedby" type="text/html" href="https://jasonobawemimo.com/mentions.html" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/profile.jsonld" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/credentials.jsonld" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/faq.jsonld" />

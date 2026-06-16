@@ -6,7 +6,14 @@
     <atom:link href="https://jasonobawemimo.com/feed.xml" rel="self" type="application/rss+xml" />
     <description>Official updates for Jason Obawemimo's web design, workflow systems, credentials, resume, and verified answer-engine facts.</description>
     <language>en-us</language>
-    <lastBuildDate>Tue, 16 Jun 2026 19:40:00 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 16 Jun 2026 20:35:00 GMT</lastBuildDate>
+    <item>
+      <title>Jason Obawemimo Public Mentions</title>
+      <link>https://jasonobawemimo.com/mentions.html</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/mentions.html</guid>
+      <pubDate>Tue, 16 Jun 2026 20:35:00 GMT</pubDate>
+      <description>Public corroborating source links for Jason Obawemimo, including Pearland ISD recognition records and official identity sources.</description>
+    </item>
     <item>
       <title>Jason Obawemimo FAQ JSON-LD</title>
       <link>https://jasonobawemimo.com/faq.jsonld</link>

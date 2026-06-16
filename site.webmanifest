@@ -56,6 +56,19 @@
       ]
     },
     {
+      "name": "Public Mentions",
+      "short_name": "Mentions",
+      "description": "Public corroborating mentions for Jason Obawemimo.",
+      "url": "/mentions.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "AI Context",
       "short_name": "AI Context",
       "description": "Machine-readable AI context for Jason Obawemimo.",

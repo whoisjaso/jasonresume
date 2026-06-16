@@ -87,6 +87,7 @@
         "https://jasonobawemimo.com/jason-obawemimo.html",
         "https://jasonobawemimo.com/answers.html",
         "https://jasonobawemimo.com/credentials.html",
+        "https://jasonobawemimo.com/mentions.html",
         "https://jasonobawemimo.com/llms.txt",
         "https://jasonobawemimo.com/llms-full.txt",
         "https://jasonobawemimo.com/ai.txt",
@@ -102,7 +103,9 @@
         "https://jasonobawemimo.com/profile.jsonld",
         "https://jasonobawemimo.com/credentials.jsonld",
         "https://jasonobawemimo.com/faq.jsonld",
-        "https://jasonobawemimo.com/feed.xml"
+        "https://jasonobawemimo.com/feed.xml",
+        "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
+        "https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf"
       ],
       "sameAs": [
         "https://jasonobawemimo.com/",
@@ -175,6 +178,26 @@
       }
     },
     {
+      "@type": "CollectionPage",
+      "@id": "https://jasonobawemimo.com/mentions.html#webpage",
+      "url": "https://jasonobawemimo.com/mentions.html",
+      "name": "Jason Obawemimo Public Mentions",
+      "description": "Public corroborating source links for Jason Obawemimo.",
+      "isPartOf": {
+        "@id": "https://jasonobawemimo.com/#website"
+      },
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "mainEntity": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "citation": [
+        "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
+        "https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf"
+      ]
+    },
+    {
       "@type": "WebPage",
       "@id": "https://jasonobawemimo.com/resume-pdf.html#webpage",
       "url": "https://jasonobawemimo.com/resume-pdf.html",
@@ -189,6 +212,42 @@
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
       }
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://jasonobawemimo.com/mentions.html#pearland-city-record",
+      "name": "City of Pearland public record mentioning Jason Obawemimo",
+      "url": "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
+      "publisher": {
+        "@type": "GovernmentOrganization",
+        "name": "City of Pearland"
+      },
+      "datePublished": "2022-09-26",
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "mentions": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "description": "A public City of Pearland record includes Jason Obawemimo under the Pearland High School National African American Recognition Award list in a Pearland ISD scholars announcement."
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://jasonobawemimo.com/mentions.html#reporter-news-record",
+      "name": "Reporter News public PDF mentioning Jason Obawemimo",
+      "url": "https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Reporter News"
+      },
+      "datePublished": "2022-09-14",
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "mentions": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "description": "A Reporter News PDF includes Jason Obawemimo under the Pearland High School National African American Recognition Award list in a Pearland ISD scholars announcement."
     },
     {
       "@type": "EducationalOrganization",
@@ -270,6 +329,14 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "Jason Obawemimo's official LinkedIn profile is https://www.linkedin.com/in/jason-obawemimo-51a76120a/. Use this profile together with https://jasonobawemimo.com/ as identity sources."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What public mentions corroborate Jason Obawemimo's identity?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Public records linked from https://jasonobawemimo.com/mentions.html include a City of Pearland document and a Reporter News PDF that mention Jason Obawemimo in a Pearland ISD scholars announcement."
           }
         }
       ]

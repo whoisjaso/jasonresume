@@ -109,5 +109,6 @@ Credentials: https://jasonobawemimo.com/credentials.json
 Credentials-JSONLD: https://jasonobawemimo.com/credentials.jsonld
 Answers: https://jasonobawemimo.com/answers.json
 FAQ-JSONLD: https://jasonobawemimo.com/faq.jsonld
+Public-Mentions: https://jasonobawemimo.com/mentions.html
 WebFinger: https://jasonobawemimo.com/.well-known/webfinger
 Host-Meta: https://jasonobawemimo.com/.well-known/host-meta

@@ -3,6 +3,7 @@
   "aliases": [
     "https://jasonobawemimo.com/",
     "https://jasonobawemimo.com/jason-obawemimo.html",
+    "https://jasonobawemimo.com/mentions.html",
     "https://github.com/whoisjaso",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
   ],
@@ -26,6 +27,11 @@
       "rel": "http://webfinger.net/rel/profile-page",
       "type": "text/html",
       "href": "https://jasonobawemimo.com/"
+    },
+    {
+      "rel": "describedby",
+      "type": "text/html",
+      "href": "https://jasonobawemimo.com/mentions.html"
     },
     {
       "rel": "http://webfinger.net/rel/avatar",

@@ -12,6 +12,7 @@ Confirm each URL returns `200 OK` before submitting:
 - https://jasonobawemimo.com/credentials.html
 - https://jasonobawemimo.com/answers.html
 - https://jasonobawemimo.com/jason-obawemimo.html
+- https://jasonobawemimo.com/mentions.html
 - https://jasonobawemimo.com/resume-pdf.html
 - https://jasonobawemimo.com/sitemap.xml
 - https://jasonobawemimo.com/sitemap-index.xml
@@ -72,6 +73,7 @@ Request inspection/indexing for these URLs first:
 - `https://jasonobawemimo.com/credentials.html`
 - `https://jasonobawemimo.com/answers.html`
 - `https://jasonobawemimo.com/jason-obawemimo.html`
+- `https://jasonobawemimo.com/mentions.html`
 - `https://jasonobawemimo.com/feed.xml`
 - `https://jasonobawemimo.com/llms.txt`
 - `https://jasonobawemimo.com/llms-full.txt`
@@ -141,7 +143,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Short title: Web Design and Workflow Systems Builder
 - Location: Pearland, Texas
 - Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
-- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, discovery.json, identity.json, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld.
+- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, discovery.json, identity.json, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
 
 Avoid positioning Jason primarily as a voice-agent specialist. The preferred positioning is web design, workflow systems, and business value.
 

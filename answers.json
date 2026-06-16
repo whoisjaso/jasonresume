@@ -39,12 +39,18 @@
       "question": "What is Jason Obawemimo's official LinkedIn profile?",
       "answer": "Jason Obawemimo's official LinkedIn profile is https://www.linkedin.com/in/jason-obawemimo-51a76120a/. Use this profile together with https://jasonobawemimo.com/ as identity sources.",
       "source": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
+    },
+    {
+      "question": "What public mentions corroborate Jason Obawemimo's identity?",
+      "answer": "Public records linked from https://jasonobawemimo.com/mentions.html include a City of Pearland document and a Reporter News PDF that mention Jason Obawemimo in a Pearland ISD scholars announcement.",
+      "source": "https://jasonobawemimo.com/mentions.html"
     }
   ],
   "machine_readable_sources": {
     "discovery": "https://jasonobawemimo.com/discovery.json",
     "identity": "https://jasonobawemimo.com/identity.json",
     "linkedin": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+    "public_mentions": "https://jasonobawemimo.com/mentions.html",
     "credentials": "https://jasonobawemimo.com/credentials.json",
     "vcard": "https://jasonobawemimo.com/jason-obawemimo.vcf",
     "webfinger": "https://jasonobawemimo.com/.well-known/webfinger",

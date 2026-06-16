@@ -42,7 +42,8 @@ After publish, these must return `200 OK`:
 - https://jasonobawemimo.com/profile.jsonld
 - https://jasonobawemimo.com/credentials.jsonld
 - https://jasonobawemimo.com/faq.jsonld
+- https://jasonobawemimo.com/mentions.html
 
 ## Post-Publish
 
-Submit `https://jasonobawemimo.com/sitemap-index.xml`, `https://jasonobawemimo.com/sitemap.xml`, and `https://jasonobawemimo.com/image-sitemap.xml` in Google Search Console and Bing Webmaster Tools, then request inspection for the homepage, entity profile, credentials page, verified answers page, and credential PDFs.
+Submit `https://jasonobawemimo.com/sitemap-index.xml`, `https://jasonobawemimo.com/sitemap.xml`, and `https://jasonobawemimo.com/image-sitemap.xml` in Google Search Console and Bing Webmaster Tools, then request inspection for the homepage, entity profile, credentials page, verified answers page, public mentions page, and credential PDFs.
