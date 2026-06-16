@@ -88,8 +88,15 @@ const credentials = JSON.parse(fs.readFileSync('credentials.json', 'utf8'));
 const answers = JSON.parse(fs.readFileSync('answers.json', 'utf8'));
 const webfinger = JSON.parse(fs.readFileSync('.well-known/webfinger', 'utf8'));
 JSON.parse(fs.readFileSync('site.webmanifest', 'utf8'));
-JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+const vercelConfig = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
 const manifest = JSON.parse(fs.readFileSync('site.webmanifest', 'utf8'));
+if (!Array.isArray(vercelConfig.redirects) || !vercelConfig.redirects.some(rule =>
+  rule.source === '/:path*' &&
+  rule.destination === 'https://jasonobawemimo.com/:path*' &&
+  rule.permanent === true &&
+  Array.isArray(rule.has) &&
+  rule.has.some(condition => condition.type === 'header' && condition.key === 'host' && condition.value === 'www.jasonobawemimo.com')
+)) throw new Error('vercel.json missing www-to-apex canonical redirect');
 if (!JSON.stringify(manifest).includes('/jason-obawemimo.html') || !JSON.stringify(manifest).includes('/llms-full.txt')) throw new Error('site.webmanifest missing profile or AI context shortcut');
 if (!fs.readFileSync('feed.xml', 'utf8').includes('Jason Obawemimo')) throw new Error('feed.xml missing Jason Obawemimo');
 if (!fs.readFileSync('ai.txt', 'utf8').includes('Jason Obawemimo')) throw new Error('ai.txt missing Jason Obawemimo');
