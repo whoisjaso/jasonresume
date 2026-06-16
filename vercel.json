@@ -11,6 +11,18 @@
       ],
       "destination": "https://jasonobawemimo.com/$1",
       "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "host",
+          "value": "jasonresume.vercel.app"
+        }
+      ],
+      "destination": "https://jasonobawemimo.com/$1",
+      "permanent": true
     }
   ],
   "headers": [

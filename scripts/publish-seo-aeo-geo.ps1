@@ -90,13 +90,17 @@ const webfinger = JSON.parse(fs.readFileSync('.well-known/webfinger', 'utf8'));
 JSON.parse(fs.readFileSync('site.webmanifest', 'utf8'));
 const vercelConfig = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
 const manifest = JSON.parse(fs.readFileSync('site.webmanifest', 'utf8'));
-if (!Array.isArray(vercelConfig.redirects) || !vercelConfig.redirects.some(rule =>
-  rule.source === '/(.*)' &&
-  rule.destination === 'https://jasonobawemimo.com/$1' &&
-  rule.permanent === true &&
-  Array.isArray(rule.has) &&
-  rule.has.some(condition => condition.type === 'header' && condition.key === 'host' && condition.value === 'www.jasonobawemimo.com')
-)) throw new Error('vercel.json missing www-to-apex canonical redirect');
+function hasCanonicalHostRedirect(hostname) {
+  return Array.isArray(vercelConfig.redirects) && vercelConfig.redirects.some(rule =>
+    rule.source === '/(.*)' &&
+    rule.destination === 'https://jasonobawemimo.com/$1' &&
+    rule.permanent === true &&
+    Array.isArray(rule.has) &&
+    rule.has.some(condition => condition.type === 'header' && condition.key === 'host' && condition.value === hostname)
+  );
+}
+if (!hasCanonicalHostRedirect('www.jasonobawemimo.com')) throw new Error('vercel.json missing www-to-apex canonical redirect');
+if (!hasCanonicalHostRedirect('jasonresume.vercel.app')) throw new Error('vercel.json missing Vercel alias-to-apex canonical redirect');
 if (!JSON.stringify(manifest).includes('/jason-obawemimo.html') || !JSON.stringify(manifest).includes('/llms-full.txt')) throw new Error('site.webmanifest missing profile or AI context shortcut');
 if (!fs.readFileSync('feed.xml', 'utf8').includes('Jason Obawemimo')) throw new Error('feed.xml missing Jason Obawemimo');
 if (!fs.readFileSync('ai.txt', 'utf8').includes('Jason Obawemimo')) throw new Error('ai.txt missing Jason Obawemimo');
@@ -323,6 +327,44 @@ while ($remaining.Count -gt 0 -and (Get-Date) -lt $deadline) {
 
 if ($remaining.Count -gt 0) {
   throw "Timed out waiting for live URLs: $($remaining -join ', ')"
+}
+
+$redirectChecks = @(
+  @{ From = "https://www.jasonobawemimo.com/"; To = "https://jasonobawemimo.com/" },
+  @{ From = "https://www.jasonobawemimo.com/schema.json"; To = "https://jasonobawemimo.com/schema.json" },
+  @{ From = "https://www.jasonobawemimo.com/credentials.html"; To = "https://jasonobawemimo.com/credentials.html" },
+  @{ From = "https://jasonresume.vercel.app/"; To = "https://jasonobawemimo.com/" },
+  @{ From = "https://jasonresume.vercel.app/schema.json"; To = "https://jasonobawemimo.com/schema.json" },
+  @{ From = "https://jasonresume.vercel.app/credentials.html"; To = "https://jasonobawemimo.com/credentials.html" }
+)
+
+Write-Host "Polling canonical host redirects..."
+$pendingRedirects = @($redirectChecks)
+$deadline = (Get-Date).AddMinutes(8)
+while ($pendingRedirects.Count -gt 0 -and (Get-Date) -lt $deadline) {
+  $nextPending = @()
+  foreach ($redirectCheck in $pendingRedirects) {
+    $response = $null
+    try {
+      $response = Invoke-WebRequest -Uri $redirectCheck.From -Method Head -MaximumRedirection 0 -TimeoutSec 30
+    } catch {
+      $response = $_.Exception.Response
+    }
+
+    if ($response -and [int]$response.StatusCode -eq 308 -and [string]$response.Headers["Location"] -eq $redirectCheck.To) {
+      Write-Host "308 $($redirectCheck.From) -> $($redirectCheck.To)"
+    } else {
+      Write-Host "Waiting for redirect $($redirectCheck.From)"
+      $nextPending += $redirectCheck
+    }
+  }
+  $pendingRedirects = @($nextPending)
+  if ($pendingRedirects.Count -gt 0) { Start-Sleep -Seconds 10 }
+}
+
+if ($pendingRedirects.Count -gt 0) {
+  $pending = $pendingRedirects | ForEach-Object { "$($_.From) -> $($_.To)" }
+  throw "Timed out waiting for canonical redirects: $($pending -join ', ')"
 }
 
 if (-not $SkipIndexNow) {

@@ -83,7 +83,10 @@ $failures = @()
 $canonicalHostChecks = @(
   @{ From = "https://www.jasonobawemimo.com/"; To = "https://jasonobawemimo.com/" },
   @{ From = "https://www.jasonobawemimo.com/schema.json"; To = "https://jasonobawemimo.com/schema.json" },
-  @{ From = "https://www.jasonobawemimo.com/credentials.html"; To = "https://jasonobawemimo.com/credentials.html" }
+  @{ From = "https://www.jasonobawemimo.com/credentials.html"; To = "https://jasonobawemimo.com/credentials.html" },
+  @{ From = "https://jasonresume.vercel.app/"; To = "https://jasonobawemimo.com/" },
+  @{ From = "https://jasonresume.vercel.app/schema.json"; To = "https://jasonobawemimo.com/schema.json" },
+  @{ From = "https://jasonresume.vercel.app/credentials.html"; To = "https://jasonobawemimo.com/credentials.html" }
 )
 
 foreach ($hostCheck in $canonicalHostChecks) {
