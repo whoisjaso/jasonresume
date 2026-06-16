@@ -4,6 +4,16 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Get-ResponseText {
+  param($Response)
+
+  if ($Response.Content -is [byte[]]) {
+    return [System.Text.Encoding]::UTF8.GetString($Response.Content)
+  }
+
+  return [string]$Response.Content
+}
+
 $checks = @(
   @{ Path = "/"; Contains = "Jason Obawemimo" },
   @{ Path = "/"; Contains = "linkedin.com/in/jason-obawemimo-51a76120a" },
@@ -52,7 +62,8 @@ foreach ($check in $checks) {
         $failures += "$url returned $($response.StatusCode)"
         continue
       }
-      if (-not ($response.Content -like "*$($check.Contains)*")) {
+      $content = Get-ResponseText $response
+      if (-not ($content -like "*$($check.Contains)*")) {
         $failures += "$url missing marker: $($check.Contains)"
         continue
       }
