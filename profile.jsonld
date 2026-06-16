@@ -7,6 +7,13 @@
   "familyName": "Obawemimo",
   "url": "https://jasonobawemimo.com/",
   "email": "mailto:jobawems@gmail.com",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "professional inquiries",
+    "email": "jobawems@gmail.com",
+    "url": "https://jasonobawemimo.com/",
+    "availableLanguage": "English"
+  },
   "identifier": [
     "Jason Obawemimo",
     "jason-obawemimo"
@@ -25,8 +32,33 @@
     "Workflow Systems Designer",
     "Founder"
   ],
+  "hasOccupation": {
+    "@type": "Occupation",
+    "name": "Web Design and Workflow Systems Builder",
+    "alternateName": [
+      "Web Systems Builder",
+      "Workflow Systems Designer"
+    ],
+    "description": "Builds conversion-focused websites, landing pages, workflow systems, CRM/database handoffs, SOPs, and practical AI-assisted operating layers for service businesses.",
+    "occupationLocation": {
+      "@type": "Country",
+      "name": "United States"
+    },
+    "skills": [
+      "Conversion-focused web design",
+      "Workflow systems",
+      "AI-assisted operations",
+      "Supabase",
+      "PostgreSQL",
+      "Vercel",
+      "Model Context Protocol"
+    ]
+  },
   "description": "Jason Obawemimo designs conversion-focused websites, workflow systems, and AI-assisted operating layers for service businesses.",
   "disambiguatingDescription": "Pearland, Texas based web design and workflow systems builder focused on business value, conversion-focused websites, CRM/database handoffs, Supabase, PostgreSQL, Vercel, Claude, Codex, and Model Context Protocol workflows.",
+  "knowsLanguage": [
+    "English"
+  ],
   "homeLocation": {
     "@type": "Place",
     "name": "Pearland, Texas",

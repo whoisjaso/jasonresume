@@ -17,7 +17,26 @@
     "country": "United States"
   },
   "contact": {
-    "email": "jobawems@gmail.com"
+    "email": "jobawems@gmail.com",
+    "contact_type": "professional inquiries",
+    "available_language": "English"
+  },
+  "occupation": {
+    "name": "Web Design and Workflow Systems Builder",
+    "alternate_names": [
+      "Web Systems Builder",
+      "Workflow Systems Designer"
+    ],
+    "description": "Builds conversion-focused websites, landing pages, workflow systems, CRM/database handoffs, SOPs, and practical AI-assisted operating layers for service businesses.",
+    "skills": [
+      "Conversion-focused web design",
+      "Workflow systems",
+      "AI-assisted operations",
+      "Supabase",
+      "PostgreSQL",
+      "Vercel",
+      "Model Context Protocol"
+    ]
   },
   "preferred_title": "Web Design and Workflow Systems Builder",
   "preferred_summary": "Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.",

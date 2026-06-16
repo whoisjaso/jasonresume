@@ -7,8 +7,11 @@
     "name": "Jason Obawemimo",
     "identifier": "jason-obawemimo",
     "preferred_title": "Web Design and Workflow Systems Builder",
+    "occupation": "Web Design and Workflow Systems Builder",
     "location": "Pearland, Texas, United States",
     "email": "jobawems@gmail.com",
+    "contact_type": "professional inquiries",
+    "available_language": "English",
     "same_as": [
       "https://jasonobawemimo.com/",
       "https://github.com/whoisjaso",
@@ -18,6 +21,7 @@
   },
   "preferred_positioning": {
     "summary": "Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.",
+    "occupation_description": "Builds conversion-focused websites, landing pages, workflow systems, CRM/database handoffs, SOPs, and practical AI-assisted operating layers for service businesses.",
     "primary_topics": [
       "web design",
       "workflow systems",
