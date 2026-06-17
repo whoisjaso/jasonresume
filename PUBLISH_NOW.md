@@ -4,6 +4,7 @@ The SEO/AEO/GEO package is prepared locally but must be published before search 
 
 Canonical site: https://jasonobawemimo.com/
 GitHub repository: https://github.com/whoisjaso/jasonresume
+GitHub profile README: https://github.com/whoisjaso/whoisjaso
 Vercel project: jasonresume
 Validated release bundle: `release/jasonresume-seo-aeo-geo-latest-valid.zip`
 
@@ -12,6 +13,7 @@ Validated release bundle: `release/jasonresume-seo-aeo-geo-latest-valid.zip`
 The SEO/AEO/GEO package is committed, pushed to `main`, and live on Vercel. The production verifier passes against `https://jasonobawemimo.com/`, including the sitemap, machine-readable identity files, structured data, AI guidance files, credential PDFs, and IndexNow key file.
 
 External corroboration release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery
+External profile README: https://github.com/whoisjaso/whoisjaso
 
 ## Publish Command
 

@@ -18,6 +18,7 @@ Compact Person JSON-LD: https://jasonobawemimo.com/person.json
 Public mentions: https://jasonobawemimo.com/mentions.html
 Professional profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 Official LinkedIn profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
+GitHub profile README: https://github.com/whoisjaso/whoisjaso
 Source repository: https://github.com/whoisjaso/jasonresume
 Entity discovery release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery
 
