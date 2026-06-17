@@ -19,7 +19,9 @@
   <Link rel="http://webfinger.net/rel/vcard" type="text/vcard" href="https://jasonobawemimo.com/jason-obawemimo.vcf" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/discovery.json" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/identity.json" />
+  <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/.well-known/ai-answers.json" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/person.json" />
+  <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/.well-known/ai-profile.jsonld" />
   <Link rel="describedby" type="text/markdown" href="https://jasonobawemimo.com/jason-obawemimo.md" />
   <Link rel="describedby" type="text/html" href="https://jasonobawemimo.com/mentions.html" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/profile.jsonld" />

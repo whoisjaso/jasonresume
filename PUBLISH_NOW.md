@@ -16,6 +16,8 @@ The SEO/AEO/GEO package is committed, pushed to `main`, and live on Vercel. The 
 Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
 Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
+Well-known AI profile JSON-LD: https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+Well-known AI answers JSON: https://jasonobawemimo.com/.well-known/ai-answers.json
 Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 External profile README: https://github.com/whoisjaso/whoisjaso
@@ -49,6 +51,8 @@ After publish, these must return `200 OK`:
 - https://jasonobawemimo.com/answers.json
 - https://jasonobawemimo.com/.well-known/webfinger
 - https://jasonobawemimo.com/.well-known/host-meta
+- https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+- https://jasonobawemimo.com/.well-known/ai-answers.json
 - https://jasonobawemimo.com/llms.txt
 - https://jasonobawemimo.com/llms-full.txt
 - https://jasonobawemimo.com/ai.txt

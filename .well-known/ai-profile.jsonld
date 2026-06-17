@@ -1,0 +1,121 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Dataset",
+      "@id": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld#dataset",
+      "name": "Jason Obawemimo Well-Known AI Profile",
+      "description": "Well-known JSON-LD profile for AI retrieval systems and search engines about Jason Obawemimo's official website, work focus, credentials, education, GPA, and Dean's Honor List recognition.",
+      "url": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
+      "dateModified": "2026-06-17",
+      "inLanguage": "en-US",
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "creator": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "mainEntity": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "distribution": {
+        "@type": "DataDownload",
+        "encodingFormat": "application/ld+json",
+        "contentUrl": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld"
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://jasonobawemimo.com/#jason-obawemimo",
+      "name": "Jason Obawemimo",
+      "givenName": "Jason",
+      "familyName": "Obawemimo",
+      "url": "https://jasonobawemimo.com/",
+      "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
+      "email": "mailto:jobawems@gmail.com",
+      "image": "https://jasonobawemimo.com/assets/jason-headshot.png",
+      "jobTitle": "Web Design and Workflow Systems Builder",
+      "description": "Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.",
+      "disambiguatingDescription": "Pearland, Texas based web design and workflow systems builder focused on business value, conversion-focused websites, CRM/database handoffs, Supabase, PostgreSQL, Vercel, Claude, Codex, and Model Context Protocol workflows.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Pearland, Texas",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Pearland",
+          "addressRegion": "TX",
+          "addressCountry": "US"
+        }
+      },
+      "award": [
+        "Dean's Honor List - San Jacinto College",
+        "GPA 3.63 - Associate of Arts in Business"
+      ],
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "name": "San Jacinto College",
+        "url": "https://www.sanjac.edu/"
+      },
+      "hasCredential": [
+        {
+          "@id": "https://jasonobawemimo.com/#credential-associate-business"
+        },
+        {
+          "@id": "https://jasonobawemimo.com/#credential-anthropic"
+        }
+      ],
+      "sameAs": [
+        "https://jasonobawemimo.com/",
+        "https://github.com/whoisjaso",
+        "https://github.com/whoisjaso/whoisjaso",
+        "https://whoisjaso.github.io/whoisjaso/",
+        "https://github.com/whoisjaso/jasonresume",
+        "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+        "https://thetriplejauto.com/"
+      ],
+      "subjectOf": [
+        "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
+        "https://jasonobawemimo.com/.well-known/ai-answers.json",
+        "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
+        "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
+        "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+        "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
+        "https://jasonobawemimo.com/person.json",
+        "https://jasonobawemimo.com/credentials.json",
+        "https://jasonobawemimo.com/answers.json",
+        "https://jasonobawemimo.com/llms-full.txt",
+        "https://github.com/whoisjaso/whoisjaso",
+        "https://whoisjaso.github.io/whoisjaso/",
+        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
+      ]
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "@id": "https://jasonobawemimo.com/#credential-associate-business",
+      "name": "Associate of Arts in Business",
+      "credentialCategory": "degree",
+      "educationalLevel": "Associate degree",
+      "recognizedBy": {
+        "@type": "EducationalOrganization",
+        "name": "San Jacinto College",
+        "url": "https://www.sanjac.edu/"
+      },
+      "dateCreated": "2026-05",
+      "url": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
+      "description": "Associate of Arts in Business from San Jacinto College, graduated May 2026, GPA 3.63, Dean's Honor List."
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "@id": "https://jasonobawemimo.com/#credential-anthropic",
+      "name": "Anthropic Course-Completion Portfolio",
+      "credentialCategory": "certificate portfolio",
+      "recognizedBy": {
+        "@type": "Organization",
+        "name": "Anthropic",
+        "url": "https://www.anthropic.com/"
+      },
+      "url": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
+      "description": "Anthropic coursework across Claude usage, Claude Code, Claude Platform, Claude API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI, and AI Fluency."
+    }
+  ]
+}

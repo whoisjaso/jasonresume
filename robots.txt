@@ -38,6 +38,9 @@ Allow: /
 User-agent: DuckDuckBot
 Allow: /
 
+User-agent: DuckAssistBot
+Allow: /
+
 User-agent: Applebot
 Allow: /
 
@@ -51,6 +54,12 @@ User-agent: Baiduspider
 Allow: /
 
 User-agent: Slurp
+Allow: /
+
+User-agent: Bravebot
+Allow: /
+
+User-agent: YouBot
 Allow: /
 
 # AI and answer-engine retrieval crawlers
@@ -84,6 +93,30 @@ Allow: /
 User-agent: Perplexity-User
 Allow: /
 
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
 # Social and link-preview crawlers
 User-agent: facebookexternalhit
 Allow: /
@@ -102,6 +135,8 @@ Sitemap: https://jasonobawemimo.com/feed.xml
 # AI retrieval guidance
 AI-Guidance: https://jasonobawemimo.com/ai.txt
 LLMS: https://jasonobawemimo.com/llms.txt
+Well-Known-AI-Profile: https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+Well-Known-AI-Answers: https://jasonobawemimo.com/.well-known/ai-answers.json
 Discovery: https://jasonobawemimo.com/discovery.json
 Identity: https://jasonobawemimo.com/identity.json
 Entity-Markdown: https://jasonobawemimo.com/jason-obawemimo.md

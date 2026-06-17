@@ -42,6 +42,8 @@ Machine-readable sources:
 - llms.txt: https://jasonobawemimo.com/llms.txt
 - Full AI context: https://jasonobawemimo.com/llms-full.txt
 - Well-known LLM context: https://jasonobawemimo.com/.well-known/llms.txt
+- Well-known AI profile JSON-LD: https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+- Well-known AI answers JSON: https://jasonobawemimo.com/.well-known/ai-answers.json
 - Discovery index: https://jasonobawemimo.com/discovery.json
 - Identity JSON: https://jasonobawemimo.com/identity.json
 - Compact Person JSON-LD: https://jasonobawemimo.com/person.json

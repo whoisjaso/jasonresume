@@ -249,6 +249,32 @@
       ]
     },
     {
+      "source": "/.well-known/ai-profile.jsonld",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/ld+json; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/.well-known/ai-answers.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json; charset=utf-8"
+        }
+      ]
+    },
+    {
       "source": "/.well-known/webfinger",
       "headers": [
         {

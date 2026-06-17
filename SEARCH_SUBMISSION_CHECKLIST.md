@@ -31,6 +31,8 @@ Confirm each URL returns `200 OK` before submitting:
 - https://jasonobawemimo.com/answers.json
 - https://jasonobawemimo.com/.well-known/llms.txt
 - https://jasonobawemimo.com/.well-known/ai.txt
+- https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+- https://jasonobawemimo.com/.well-known/ai-answers.json
 - https://jasonobawemimo.com/.well-known/webfinger
 - https://jasonobawemimo.com/.well-known/host-meta
 - https://jasonobawemimo.com/schema.json
@@ -65,7 +67,7 @@ Important crawler tokens now explicitly allowed in `robots.txt`:
 - Google Search and surfaces: `Googlebot`, `Googlebot-Image`, `GoogleOther`, `Google-Extended`, `Google-InspectionTool`, `Google-CloudVertexBot`
 - OpenAI and ChatGPT: `GPTBot`, `OAI-SearchBot`, `ChatGPT-User`, `OAI-AdsBot`
 - Anthropic and Claude: `ClaudeBot`, `Claude-User`, `Claude-SearchBot`
-- Other answer/search surfaces: `PerplexityBot`, `Applebot`, `Applebot-Extended`, `Bingbot`, `DuckDuckBot`
+- Other answer/search surfaces: `PerplexityBot`, `Applebot`, `Applebot-Extended`, `Bingbot`, `DuckDuckBot`, `DuckAssistBot`, `Bravebot`, `YouBot`, `CCBot`, `Bytespider`, `Amazonbot`, `Meta-ExternalAgent`, `FacebookBot`, `cohere-ai`, `Diffbot`
 
 ## 3. Request URL Inspection
 
@@ -89,6 +91,8 @@ Request inspection/indexing for these URLs first:
 - `https://jasonobawemimo.com/answers.json`
 - `https://jasonobawemimo.com/.well-known/webfinger`
 - `https://jasonobawemimo.com/.well-known/host-meta`
+- `https://jasonobawemimo.com/.well-known/ai-profile.jsonld`
+- `https://jasonobawemimo.com/.well-known/ai-answers.json`
 - `https://jasonobawemimo.com/profile.jsonld`
 - `https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf`
 - `https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf`
@@ -147,7 +151,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Short title: Web Design and Workflow Systems Builder
 - Location: Pearland, Texas
 - Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
-- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
+- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
 - Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld

@@ -79,8 +79,18 @@
     },
     {
       "rel": "describedby",
+      "type": "application/json",
+      "href": "https://jasonobawemimo.com/.well-known/ai-answers.json"
+    },
+    {
+      "rel": "describedby",
       "type": "application/ld+json",
       "href": "https://jasonobawemimo.com/person.json"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/ld+json",
+      "href": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld"
     },
     {
       "rel": "describedby",

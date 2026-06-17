@@ -3,6 +3,8 @@
 Canonical llms.txt: https://jasonobawemimo.com/llms.txt
 Full AI retrieval context: https://jasonobawemimo.com/llms-full.txt
 AI retrieval guidance: https://jasonobawemimo.com/ai.txt
+Well-known AI profile JSON-LD: https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+Well-known AI answers JSON: https://jasonobawemimo.com/.well-known/ai-answers.json
 Discovery index: https://jasonobawemimo.com/discovery.json
 Identity JSON: https://jasonobawemimo.com/identity.json
 vCard: https://jasonobawemimo.com/jason-obawemimo.vcf

@@ -15,6 +15,20 @@
       <description>Compact answer-engine knowledge card for Jason Obawemimo's official website, web design and workflow systems focus, credentials, GPA 3.63, and Dean's Honor List recognition.</description>
     </item>
     <item>
+      <title>Jason Obawemimo Well-Known AI Profile</title>
+      <link>https://jasonobawemimo.com/.well-known/ai-profile.jsonld</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/.well-known/ai-profile.jsonld</guid>
+      <pubDate>Wed, 17 Jun 2026 22:55:00 GMT</pubDate>
+      <description>Well-known JSON-LD profile for search and AI retrieval systems about Jason Obawemimo's website, credentials, GPA 3.63, and Dean's Honor List recognition.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Well-Known AI Answers</title>
+      <link>https://jasonobawemimo.com/.well-known/ai-answers.json</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/.well-known/ai-answers.json</guid>
+      <pubDate>Wed, 17 Jun 2026 22:55:00 GMT</pubDate>
+      <description>Well-known answer JSON for AI retrieval systems summarizing Jason Obawemimo's official website, work focus, credentials, education, and honor.</description>
+    </item>
+    <item>
       <title>Jason Obawemimo Knowledge Card JSON-LD</title>
       <link>https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld</guid>

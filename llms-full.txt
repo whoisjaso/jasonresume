@@ -122,6 +122,8 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - Credentials JSON: https://jasonobawemimo.com/credentials.json
 - Verified answers JSON: https://jasonobawemimo.com/answers.json
 - Well-known LLM context: https://jasonobawemimo.com/.well-known/llms.txt
+- Well-known AI profile JSON-LD: https://jasonobawemimo.com/.well-known/ai-profile.jsonld
+- Well-known AI answers JSON: https://jasonobawemimo.com/.well-known/ai-answers.json
 - WebFinger identity: https://jasonobawemimo.com/.well-known/webfinger
 - Host metadata: https://jasonobawemimo.com/.well-known/host-meta
 - Structured data graph: https://jasonobawemimo.com/schema.json
