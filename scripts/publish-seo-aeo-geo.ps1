@@ -178,6 +178,25 @@ if (!website || !Array.isArray(website.hasPart) || website.hasPart.length < 8) t
 for (const requiredPartId of ['https://jasonobawemimo.com/#homepage', 'https://jasonobawemimo.com/jason-obawemimo.html#profile-page', 'https://jasonobawemimo.com/credentials.html#webpage', 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/resume-pdf.html#webpage']) {
   if (!website.hasPart.some(part => part['@id'] === requiredPartId)) throw new Error(`schema.json WebSite hasPart missing ${requiredPartId}`);
 }
+const breadcrumbPairs = [
+  ['https://jasonobawemimo.com/#homepage', 'https://jasonobawemimo.com/#breadcrumbs'],
+  ['https://jasonobawemimo.com/jason-obawemimo.html#profile-page', 'https://jasonobawemimo.com/jason-obawemimo.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/credentials.html#webpage', 'https://jasonobawemimo.com/credentials.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page', 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/answers.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/mentions.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/resume-pdf.html#webpage', 'https://jasonobawemimo.com/resume-pdf.html#breadcrumbs']
+];
+const breadcrumbNodes = schema['@graph'].filter(node => node['@type'] === 'BreadcrumbList');
+if (breadcrumbNodes.length !== 8) throw new Error('schema.json must include 8 BreadcrumbList nodes');
+for (const [pageId, breadcrumbId] of breadcrumbPairs) {
+  const pageNode = schema['@graph'].find(node => node['@id'] === pageId);
+  const breadcrumbNode = schema['@graph'].find(node => node['@id'] === breadcrumbId);
+  if (pageNode?.breadcrumb?.['@id'] !== breadcrumbId) throw new Error(`schema.json page ${pageId} missing breadcrumb ${breadcrumbId}`);
+  if (!breadcrumbNode || !Array.isArray(breadcrumbNode.itemListElement) || breadcrumbNode.itemListElement.length < 1) throw new Error(`schema.json missing BreadcrumbList ${breadcrumbId}`);
+  if (breadcrumbNode.itemListElement[0]?.name !== 'Jason Obawemimo' || breadcrumbNode.itemListElement[0]?.item !== 'https://jasonobawemimo.com/') throw new Error(`schema.json breadcrumb ${breadcrumbId} missing canonical root item`);
+}
 if (!homepage || homepage['@type'] !== 'ProfilePage' || homepage.mainEntity?.['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('schema.json missing homepage ProfilePage node');
 if (!JSON.stringify(homepage).includes(wellKnownAiProfileUrl) || !JSON.stringify(homepage).includes(wellKnownAiAnswersUrl) || !JSON.stringify(homepage).includes('SpeakableSpecification')) throw new Error('schema.json homepage ProfilePage missing AI links or speakable guidance');
 if (!knowledgeCardPage || knowledgeCardPage['@type'] !== 'ProfilePage' || knowledgeCardPage.mainEntity?.['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('schema.json missing knowledge-card ProfilePage node');

@@ -65,6 +65,9 @@
       "primaryImageOfPage": {
         "@id": "https://jasonobawemimo.com/#headshot"
       },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/#breadcrumbs"
+      },
       "significantLink": [
         "https://jasonobawemimo.com/jason-obawemimo.html",
         "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
@@ -267,6 +270,9 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/jason-obawemimo.html#breadcrumbs"
       }
     },
     {
@@ -283,6 +289,9 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/credentials.html#breadcrumbs"
       }
     },
     {
@@ -299,6 +308,9 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#breadcrumbs"
       },
       "citation": [
         "https://jasonobawemimo.com/CITATION.cff",
@@ -364,6 +376,9 @@
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
       },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#breadcrumbs"
+      },
       "significantLink": [
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
         "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
@@ -386,6 +401,9 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/answers.html#breadcrumbs"
       }
     },
     {
@@ -402,6 +420,9 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/mentions.html#breadcrumbs"
       },
       "citation": [
         "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
@@ -423,7 +444,154 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "breadcrumb": {
+        "@id": "https://jasonobawemimo.com/resume-pdf.html#breadcrumbs"
       }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Official Entity Profile",
+          "item": "https://jasonobawemimo.com/jason-obawemimo.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/credentials.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Credentials",
+          "item": "https://jasonobawemimo.com/credentials.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Credentials",
+          "item": "https://jasonobawemimo.com/credentials.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Credential and Honor Evidence",
+          "item": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Knowledge Card",
+          "item": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/answers.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Verified Answers",
+          "item": "https://jasonobawemimo.com/answers.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/mentions.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Public Mentions",
+          "item": "https://jasonobawemimo.com/mentions.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://jasonobawemimo.com/resume-pdf.html#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Jason Obawemimo",
+          "item": "https://jasonobawemimo.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Resume",
+          "item": "https://jasonobawemimo.com/resume-pdf.html"
+        }
+      ]
     },
     {
       "@type": "CreativeWork",
