@@ -99,7 +99,8 @@
       },
       "identifier": [
         "Jason Obawemimo",
-        "jason-obawemimo"
+        "jason-obawemimo",
+        "did:web:jasonobawemimo.com"
       ],
       "mainEntityOfPage": {
         "@id": "https://jasonobawemimo.com/jason-obawemimo.html#profile-page"
@@ -182,6 +183,7 @@
         "https://jasonobawemimo.com/.well-known/ai.txt",
         "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
         "https://jasonobawemimo.com/.well-known/ai-answers.json",
+        "https://jasonobawemimo.com/.well-known/did.json",
         "https://jasonobawemimo.com/.well-known/webfinger",
         "https://jasonobawemimo.com/.well-known/host-meta",
         "https://jasonobawemimo.com/schema.json",
@@ -201,6 +203,7 @@
       ],
       "sameAs": [
         "https://jasonobawemimo.com/",
+        "did:web:jasonobawemimo.com",
         "https://github.com/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume",

@@ -46,6 +46,8 @@
     "knowledge_card": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
     "knowledge_card_jsonld": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
     "well_known_ai_profile": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
+    "did_web": "did:web:jasonobawemimo.com",
+    "did_document": "https://jasonobawemimo.com/.well-known/did.json",
     "person_jsonld": "https://jasonobawemimo.com/person.json",
     "credential_honor_evidence_page": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",

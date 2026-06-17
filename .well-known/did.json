@@ -1,0 +1,80 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    {
+      "schema": "https://schema.org/",
+      "alsoKnownAs": {
+        "@id": "schema:sameAs",
+        "@type": "@id"
+      }
+    }
+  ],
+  "id": "did:web:jasonobawemimo.com",
+  "controller": "did:web:jasonobawemimo.com",
+  "alsoKnownAs": [
+    "https://jasonobawemimo.com/",
+    "https://jasonobawemimo.com/#jason-obawemimo",
+    "https://jasonobawemimo.com/jason-obawemimo.html",
+    "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+    "https://github.com/whoisjaso",
+    "https://github.com/whoisjaso/whoisjaso",
+    "https://whoisjaso.github.io/whoisjaso/"
+  ],
+  "service": [
+    {
+      "id": "did:web:jasonobawemimo.com#official-profile",
+      "type": "LinkedDomains",
+      "serviceEndpoint": "https://jasonobawemimo.com/"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#schema",
+      "type": "SchemaOrgProfile",
+      "serviceEndpoint": "https://jasonobawemimo.com/schema.json"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#knowledge-card",
+      "type": "KnowledgeCardPage",
+      "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#knowledge-card-jsonld",
+      "type": "KnowledgeCard",
+      "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#ai-profile",
+      "type": "AIProfile",
+      "serviceEndpoint": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#ai-answers",
+      "type": "AIAnswers",
+      "serviceEndpoint": "https://jasonobawemimo.com/.well-known/ai-answers.json"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#credential-evidence",
+      "type": "CredentialEvidence",
+      "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#credential-evidence-jsonld",
+      "type": "CredentialEvidenceGraph",
+      "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#source-release",
+      "type": "SourceRelease",
+      "serviceEndpoint": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#webfinger",
+      "type": "WebFinger",
+      "serviceEndpoint": "https://jasonobawemimo.com/.well-known/webfinger"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#vcard",
+      "type": "VCard",
+      "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo.vcf"
+    }
+  ]
+}

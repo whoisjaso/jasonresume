@@ -29,6 +29,13 @@
       <description>Well-known answer JSON for AI retrieval systems summarizing Jason Obawemimo's official website, work focus, credentials, education, and honor.</description>
     </item>
     <item>
+      <title>Jason Obawemimo DID Web Identity Document</title>
+      <link>https://jasonobawemimo.com/.well-known/did.json</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/.well-known/did.json</guid>
+      <pubDate>Wed, 17 Jun 2026 23:05:00 GMT</pubDate>
+      <description>DID Web document linking Jason Obawemimo's canonical domain identity to official profile, credential evidence, knowledge card, LinkedIn, GitHub, and AI profile endpoints.</description>
+    </item>
+    <item>
       <title>Jason Obawemimo Knowledge Card JSON-LD</title>
       <link>https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld</guid>

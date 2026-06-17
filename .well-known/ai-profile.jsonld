@@ -66,6 +66,7 @@
       ],
       "sameAs": [
         "https://jasonobawemimo.com/",
+        "did:web:jasonobawemimo.com",
         "https://github.com/whoisjaso",
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
@@ -76,6 +77,7 @@
       "subjectOf": [
         "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
         "https://jasonobawemimo.com/.well-known/ai-answers.json",
+        "https://jasonobawemimo.com/.well-known/did.json",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
         "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",

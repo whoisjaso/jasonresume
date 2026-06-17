@@ -79,6 +79,8 @@
     "well_known_ai": "https://jasonobawemimo.com/.well-known/ai.txt",
     "well_known_ai_profile": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
     "well_known_ai_answers": "https://jasonobawemimo.com/.well-known/ai-answers.json",
+    "did_web": "did:web:jasonobawemimo.com",
+    "did_document": "https://jasonobawemimo.com/.well-known/did.json",
     "webfinger": "https://jasonobawemimo.com/.well-known/webfinger",
     "host_meta": "https://jasonobawemimo.com/.well-known/host-meta",
     "humans": "https://jasonobawemimo.com/humans.txt",

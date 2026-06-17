@@ -5,6 +5,7 @@
   <Alias>https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html</Alias>
   <Alias>https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html</Alias>
   <Alias>https://jasonobawemimo.com/mentions.html</Alias>
+  <Alias>did:web:jasonobawemimo.com</Alias>
   <Alias>https://www.linkedin.com/in/jason-obawemimo-51a76120a/</Alias>
   <Alias>https://github.com/whoisjaso</Alias>
   <Alias>https://github.com/whoisjaso/whoisjaso</Alias>
@@ -20,6 +21,7 @@
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/discovery.json" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/identity.json" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/.well-known/ai-answers.json" />
+  <Link rel="describedby" type="application/did+json" href="https://jasonobawemimo.com/.well-known/did.json" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/person.json" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/.well-known/ai-profile.jsonld" />
   <Link rel="describedby" type="text/markdown" href="https://jasonobawemimo.com/jason-obawemimo.md" />

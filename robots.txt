@@ -137,6 +137,8 @@ AI-Guidance: https://jasonobawemimo.com/ai.txt
 LLMS: https://jasonobawemimo.com/llms.txt
 Well-Known-AI-Profile: https://jasonobawemimo.com/.well-known/ai-profile.jsonld
 Well-Known-AI-Answers: https://jasonobawemimo.com/.well-known/ai-answers.json
+DID-Web: did:web:jasonobawemimo.com
+DID-Document: https://jasonobawemimo.com/.well-known/did.json
 Discovery: https://jasonobawemimo.com/discovery.json
 Identity: https://jasonobawemimo.com/identity.json
 Entity-Markdown: https://jasonobawemimo.com/jason-obawemimo.md
