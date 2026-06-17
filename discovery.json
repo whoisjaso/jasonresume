@@ -82,7 +82,8 @@
     "feed": "https://jasonobawemimo.com/feed.xml",
     "robots": "https://jasonobawemimo.com/robots.txt",
     "opensearch": "https://jasonobawemimo.com/opensearch.xml",
-    "source_repository": "https://github.com/whoisjaso/jasonresume"
+    "source_repository": "https://github.com/whoisjaso/jasonresume",
+    "source_release": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
   },
   "indexing": {
     "indexnow_key": "25250c82c435407fa759bd71fbe2b1df",

@@ -64,7 +64,8 @@
     "llms": "https://jasonobawemimo.com/llms.txt",
     "llms_full": "https://jasonobawemimo.com/llms-full.txt",
     "ai_guidance": "https://jasonobawemimo.com/ai.txt",
-    "source_repository": "https://github.com/whoisjaso/jasonresume"
+    "source_repository": "https://github.com/whoisjaso/jasonresume",
+    "source_release": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
   },
   "last_updated": "2026-06-17"
 }

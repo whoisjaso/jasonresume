@@ -24,6 +24,11 @@
       "href": "https://github.com/whoisjaso"
     },
     {
+      "rel": "describedby",
+      "type": "text/html",
+      "href": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
+    },
+    {
       "rel": "http://webfinger.net/rel/profile-page",
       "type": "text/html",
       "href": "https://jasonobawemimo.com/"

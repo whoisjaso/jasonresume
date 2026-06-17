@@ -13,6 +13,7 @@ Write-Host "Validating local SEO/AEO/GEO files..."
 $validationScript = @'
 const fs = require('fs');
 const linkedInUrl = 'https://www.linkedin.com/in/jason-obawemimo-51a76120a/';
+const sourceReleaseUrl = 'https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery';
 const publicSourceUrls = [
   'https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland',
   'https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf',
@@ -145,8 +146,10 @@ if (personJson['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw n
 if (personJson.name !== 'Jason Obawemimo') throw new Error('person.json missing Jason Obawemimo name');
 if (personJson.jobTitle !== 'Web Design and Workflow Systems Builder') throw new Error('person.json missing preferred title');
 if (!JSON.stringify(personJson).includes('https://github.com/whoisjaso/jasonresume')) throw new Error('person.json missing source repository');
+if (!JSON.stringify(personJson).includes(sourceReleaseUrl)) throw new Error('person.json missing source release');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder')) throw new Error('jason-obawemimo.md missing preferred summary');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('https://jasonobawemimo.com/person.json')) throw new Error('jason-obawemimo.md missing person.json reference');
+if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(sourceReleaseUrl)) throw new Error('jason-obawemimo.md missing source release');
 if (credentials.anthropic_course_completion_portfolio.course_count !== 19) throw new Error('credentials.json missing 19 Anthropic courses');
 if (!credentials.education || !/Dean/.test(credentials.education.honor)) throw new Error('credentials.json missing Dean honor');
 if (!Array.isArray(answers.answers) || answers.answers.length < 7) throw new Error('answers.json missing verified answers');
@@ -160,11 +163,18 @@ if (!vcard.includes('https://jasonobawemimo.com/mentions.html')) throw new Error
 if (!vcard.includes('https://jasonobawemimo.com/jason-obawemimo.md')) throw new Error('vCard missing Markdown profile');
 if (!vcard.includes('https://jasonobawemimo.com/person.json')) throw new Error('vCard missing Person JSON-LD');
 if (!vcard.includes('https://github.com/whoisjaso')) throw new Error('vCard missing GitHub profile');
+if (!vcard.includes(sourceReleaseUrl)) throw new Error('vCard missing source release');
 if (!JSON.stringify(schema).includes('https://github.com/whoisjaso')) throw new Error('schema.json missing GitHub sameAs identity link');
 if (!JSON.stringify(profile).includes('https://github.com/whoisjaso')) throw new Error('profile.jsonld missing GitHub sameAs identity link');
 if (!JSON.stringify(identity).includes('https://github.com/whoisjaso')) throw new Error('identity.json missing GitHub sameAs identity link');
 for (const [name, value] of Object.entries({ schema, profile, personJson, credentialGraph, faqGraph, discovery, identity, credentials, answers, webfinger })) {
   if (!JSON.stringify(value).includes(linkedInUrl)) throw new Error(`${name} missing LinkedIn identity link`);
+}
+for (const [name, value] of Object.entries({ schema, profile, personJson, discovery, identity, credentials, answers, webfinger })) {
+  if (!JSON.stringify(value).includes(sourceReleaseUrl)) throw new Error(`${name} missing source release`);
+}
+for (const file of ['llms.txt', 'llms-full.txt', 'ai.txt', '.well-known/ai.txt', '.well-known/llms.txt', '.well-known/host-meta', 'README.md', 'PUBLISH_NOW.md', 'SEARCH_SUBMISSION_CHECKLIST.md']) {
+  if (!fs.readFileSync(file, 'utf8').includes(sourceReleaseUrl)) throw new Error(`${file} missing source release`);
 }
 for (const sourceUrl of publicSourceUrls) {
   if (!fs.readFileSync('mentions.html', 'utf8').includes(sourceUrl)) throw new Error(`mentions.html missing public source ${sourceUrl}`);

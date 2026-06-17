@@ -148,6 +148,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Location: Pearland, Texas
 - Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
 - Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, discovery.json, identity.json, jason-obawemimo.md, person.json, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
+- External corroboration source: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery
 
 Avoid positioning Jason primarily as a voice-agent specialist. The preferred positioning is web design, workflow systems, and business value.
 

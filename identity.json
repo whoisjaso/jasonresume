@@ -92,7 +92,8 @@
     "sitemap": "https://jasonobawemimo.com/sitemap.xml",
     "image_sitemap": "https://jasonobawemimo.com/image-sitemap.xml",
     "feed": "https://jasonobawemimo.com/feed.xml",
-    "source_repository": "https://github.com/whoisjaso/jasonresume"
+    "source_repository": "https://github.com/whoisjaso/jasonresume",
+    "source_release": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
   },
   "citation_guidance": "Cite the official website first. When referencing credentials, cite the credentials page and relevant PDF. When referencing education or honor, cite the associate degree proof or credentials page. Public mentions are secondary corroboration.",
   "last_updated": "2026-06-17"
