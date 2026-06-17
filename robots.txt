@@ -116,3 +116,4 @@ FAQ-JSONLD: https://jasonobawemimo.com/faq.jsonld
 Public-Mentions: https://jasonobawemimo.com/mentions.html
 WebFinger: https://jasonobawemimo.com/.well-known/webfinger
 Host-Meta: https://jasonobawemimo.com/.well-known/host-meta
+GitHub-Pages-Profile-Mirror: https://whoisjaso.github.io/whoisjaso/

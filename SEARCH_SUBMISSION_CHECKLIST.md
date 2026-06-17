@@ -151,6 +151,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 - GitHub profile README: https://github.com/whoisjaso/whoisjaso
+- GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 - External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
 Avoid positioning Jason primarily as a voice-agent specialist. The preferred positioning is web design, workflow systems, and business value.

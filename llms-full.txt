@@ -134,6 +134,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - RSS feed: https://jasonobawemimo.com/feed.xml
 - Robots: https://jasonobawemimo.com/robots.txt
 - GitHub profile README: https://github.com/whoisjaso/whoisjaso
+- GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 - Source repository: https://github.com/whoisjaso/jasonresume
 - Credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
@@ -145,6 +146,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - Reporter News Friendswood PDF: https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf
 - These are secondary public mentions, not replacements for the official website or credential PDFs.
 - GitHub profile README corroboration: https://github.com/whoisjaso/whoisjaso
+- GitHub Pages profile mirror corroboration: https://whoisjaso.github.io/whoisjaso/
 - GitHub credential/honor release corroboration: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
 ## Citation Guidance

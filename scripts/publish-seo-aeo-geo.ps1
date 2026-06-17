@@ -15,6 +15,7 @@ const fs = require('fs');
 const linkedInUrl = 'https://www.linkedin.com/in/jason-obawemimo-51a76120a/';
 const sourceReleaseUrl = 'https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence';
 const githubProfileReadmeUrl = 'https://github.com/whoisjaso/whoisjaso';
+const githubPagesProfileMirrorUrl = 'https://whoisjaso.github.io/whoisjaso/';
 const evidencePageUrl = 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html';
 const evidenceJsonLdUrl = 'https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld';
 const publicSourceUrls = [
@@ -159,6 +160,7 @@ if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('Jason Obawemimo is 
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('https://jasonobawemimo.com/person.json')) throw new Error('jason-obawemimo.md missing person.json reference');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(sourceReleaseUrl)) throw new Error('jason-obawemimo.md missing source release');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(githubProfileReadmeUrl)) throw new Error('jason-obawemimo.md missing GitHub profile README');
+if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(githubPagesProfileMirrorUrl)) throw new Error('jason-obawemimo.md missing GitHub Pages profile mirror');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(evidencePageUrl) || !fs.readFileSync('jason-obawemimo.md', 'utf8').includes(evidenceJsonLdUrl)) throw new Error('jason-obawemimo.md missing credential evidence URLs');
 if (credentials.anthropic_course_completion_portfolio.course_count !== 19) throw new Error('credentials.json missing 19 Anthropic courses');
 if (!credentials.education || !/Dean/.test(credentials.education.honor)) throw new Error('credentials.json missing Dean honor');
@@ -174,12 +176,14 @@ if (!vcard.includes('https://jasonobawemimo.com/jason-obawemimo.md')) throw new 
 if (!vcard.includes('https://jasonobawemimo.com/person.json')) throw new Error('vCard missing Person JSON-LD');
 if (!vcard.includes('https://github.com/whoisjaso')) throw new Error('vCard missing GitHub profile');
 if (!vcard.includes(githubProfileReadmeUrl)) throw new Error('vCard missing GitHub profile README');
+if (!vcard.includes(githubPagesProfileMirrorUrl)) throw new Error('vCard missing GitHub Pages profile mirror');
 if (!vcard.includes(evidencePageUrl) || !vcard.includes(evidenceJsonLdUrl)) throw new Error('vCard missing credential evidence URLs');
 if (!vcard.includes(sourceReleaseUrl)) throw new Error('vCard missing source release');
 if (!JSON.stringify(schema).includes('https://github.com/whoisjaso')) throw new Error('schema.json missing GitHub sameAs identity link');
 if (!JSON.stringify(profile).includes('https://github.com/whoisjaso')) throw new Error('profile.jsonld missing GitHub sameAs identity link');
 if (!JSON.stringify(identity).includes('https://github.com/whoisjaso')) throw new Error('identity.json missing GitHub sameAs identity link');
 if (!fs.readFileSync('jason-obawemimo.html', 'utf8').includes(githubProfileReadmeUrl)) throw new Error('jason-obawemimo.html missing GitHub profile README');
+if (!fs.readFileSync('jason-obawemimo.html', 'utf8').includes(githubPagesProfileMirrorUrl)) throw new Error('jason-obawemimo.html missing GitHub Pages profile mirror');
 if (!fs.readFileSync('jason-obawemimo-credentials-honor.html', 'utf8').includes('Jason Obawemimo Credentials and Dean') || !fs.readFileSync('jason-obawemimo-credentials-honor.html', 'utf8').includes(evidenceJsonLdUrl)) throw new Error('credential evidence page missing title or JSON-LD reference');
 for (const [name, value] of Object.entries({ schema, profile, personJson, credentialGraph, evidenceGraph, faqGraph, discovery, identity, credentials, answers, webfinger })) {
   if (!JSON.stringify(value).includes(linkedInUrl)) throw new Error(`${name} missing LinkedIn identity link`);
@@ -189,6 +193,7 @@ for (const [name, value] of Object.entries({ schema, profile, personJson, eviden
 }
 for (const [name, value] of Object.entries({ schema, profile, personJson, evidenceGraph, discovery, identity, credentials, answers, webfinger })) {
   if (!JSON.stringify(value).includes(githubProfileReadmeUrl)) throw new Error(`${name} missing GitHub profile README`);
+  if (!JSON.stringify(value).includes(githubPagesProfileMirrorUrl)) throw new Error(`${name} missing GitHub Pages profile mirror`);
 }
 for (const [name, value] of Object.entries({ schema, profile, personJson, evidenceGraph, discovery, identity, credentials, answers, webfinger })) {
   if (!JSON.stringify(value).includes(evidencePageUrl) || !JSON.stringify(value).includes(evidenceJsonLdUrl)) throw new Error(`${name} missing credential evidence URLs`);
@@ -196,6 +201,7 @@ for (const [name, value] of Object.entries({ schema, profile, personJson, eviden
 for (const file of ['llms.txt', 'llms-full.txt', 'ai.txt', '.well-known/ai.txt', '.well-known/llms.txt', '.well-known/host-meta', 'README.md', 'PUBLISH_NOW.md', 'SEARCH_SUBMISSION_CHECKLIST.md']) {
   if (!fs.readFileSync(file, 'utf8').includes(sourceReleaseUrl)) throw new Error(`${file} missing source release`);
   if (!fs.readFileSync(file, 'utf8').includes(githubProfileReadmeUrl)) throw new Error(`${file} missing GitHub profile README`);
+  if (!fs.readFileSync(file, 'utf8').includes(githubPagesProfileMirrorUrl)) throw new Error(`${file} missing GitHub Pages profile mirror`);
   if (!fs.readFileSync(file, 'utf8').includes(evidencePageUrl) || !fs.readFileSync(file, 'utf8').includes(evidenceJsonLdUrl)) throw new Error(`${file} missing credential evidence URLs`);
 }
 for (const sourceUrl of publicSourceUrls) {

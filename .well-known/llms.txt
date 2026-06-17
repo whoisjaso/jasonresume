@@ -21,6 +21,7 @@ Public mentions: https://jasonobawemimo.com/mentions.html
 Professional profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 Official LinkedIn profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 GitHub profile README: https://github.com/whoisjaso/whoisjaso
+GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 Source repository: https://github.com/whoisjaso/jasonresume
 Credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 

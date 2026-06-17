@@ -5,6 +5,7 @@ The SEO/AEO/GEO package is prepared locally but must be published before search 
 Canonical site: https://jasonobawemimo.com/
 GitHub repository: https://github.com/whoisjaso/jasonresume
 GitHub profile README: https://github.com/whoisjaso/whoisjaso
+GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 Vercel project: jasonresume
 Validated release bundle: `release/jasonresume-seo-aeo-geo-latest-valid.zip`
 
@@ -16,6 +17,7 @@ Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-c
 Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 External profile README: https://github.com/whoisjaso/whoisjaso
+External GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 
 ## Publish Command
 

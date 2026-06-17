@@ -14,6 +14,7 @@ Jason Obawemimo is a Pearland, Texas based web design and workflow systems build
 - LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 - GitHub: https://github.com/whoisjaso
 - GitHub profile README: https://github.com/whoisjaso/whoisjaso
+- GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 - Source repository: https://github.com/whoisjaso/jasonresume
 - Credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 - Location: Pearland, Texas, United States
