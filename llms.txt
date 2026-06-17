@@ -101,6 +101,7 @@ Jason Obawemimo designs conversion-focused web experiences and workflow systems 
 - Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 - Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 - FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
+- Official site search: https://jasonobawemimo.com/search.html
 - OpenSearch browser metadata: https://jasonobawemimo.com/opensearch.xml
 - Triple J Auto: https://thetriplejauto.com/
 - LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/

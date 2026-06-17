@@ -58,6 +58,7 @@
     "credentials": "https://jasonobawemimo.com/credentials.html",
     "credential_honor_evidence": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
+    "search": "https://jasonobawemimo.com/search.html",
     "verified_answers": "https://jasonobawemimo.com/answers.html",
     "resume_page": "https://jasonobawemimo.com/resume-pdf.html"
   },
@@ -94,6 +95,7 @@
     "feed": "https://jasonobawemimo.com/feed.xml",
     "robots": "https://jasonobawemimo.com/robots.txt",
     "opensearch": "https://jasonobawemimo.com/opensearch.xml",
+    "site_search": "https://jasonobawemimo.com/search.html",
     "github_profile_readme": "https://github.com/whoisjaso/whoisjaso",
     "github_pages_profile_mirror": "https://whoisjaso.github.io/whoisjaso/",
     "source_repository": "https://github.com/whoisjaso/jasonresume",

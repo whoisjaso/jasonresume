@@ -25,6 +25,7 @@ Entity profile: https://jasonobawemimo.com/jason-obawemimo.html
 Exact-name Markdown profile: https://jasonobawemimo.com/jason-obawemimo.md
 Compact Person JSON-LD: https://jasonobawemimo.com/person.json
 Public mentions: https://jasonobawemimo.com/mentions.html
+Official site search: https://jasonobawemimo.com/search.html
 Professional profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 Official LinkedIn profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 GitHub profile README: https://github.com/whoisjaso/whoisjaso

@@ -95,6 +95,7 @@
     "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
     "answers": "https://jasonobawemimo.com/answers.json",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
+    "site_search": "https://jasonobawemimo.com/search.html",
     "vcard": "https://jasonobawemimo.com/jason-obawemimo.vcf",
     "webfinger": "https://jasonobawemimo.com/.well-known/webfinger",
     "host_meta": "https://jasonobawemimo.com/.well-known/host-meta",

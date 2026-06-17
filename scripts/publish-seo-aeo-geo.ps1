@@ -35,7 +35,7 @@ const mojibakeMarkers = [
   String.fromCodePoint(0x00c2),
   String.fromCodePoint(0x00e2)
 ];
-const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html', 'jason-obawemimo-credentials-honor.html', 'jason-obawemimo-knowledge-card.html'];
+const htmlFiles = ['index.html', 'credentials.html', 'answers.html', 'resume-pdf.html', 'jason-obawemimo.html', 'mentions.html', 'search.html', 'jason-obawemimo-credentials-honor.html', 'jason-obawemimo-knowledge-card.html'];
 const vercelIgnore = fs.readFileSync('.vercelignore', 'utf8');
 if (!vercelIgnore.includes('release/')) throw new Error('.vercelignore must exclude generated release archives');
 for (const file of htmlFiles) {
@@ -176,19 +176,21 @@ const occupation = schema['@graph'].find(node => node['@id'] === 'https://jasono
 const website = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#website');
 const homepage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#homepage');
 const knowledgeCardPage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card');
+const searchPage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/search.html#search-results-page');
 const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const sitemapIndex = fs.readFileSync('sitemap-index.xml', 'utf8');
 const imageSitemap = fs.readFileSync('image-sitemap.xml', 'utf8');
 const robots = fs.readFileSync('robots.txt', 'utf8');
 const hostMeta = fs.readFileSync('.well-known/host-meta', 'utf8');
 const vcard = fs.readFileSync('jason-obawemimo.vcf', 'utf8');
+const openSearch = fs.readFileSync('opensearch.xml', 'utf8');
 if (!credential || credential.about.length !== 19) throw new Error('Expected 19 Anthropic courses in schema.json');
 if (!person || person.hasOccupation?.['@id'] !== 'https://jasonobawemimo.com/#occupation-web-design-workflow-systems-builder') throw new Error('schema.json missing canonical occupation link');
 if (!person.contactPoint || person.contactPoint.email !== 'jobawems@gmail.com') throw new Error('schema.json missing professional contact point');
 if (!Array.isArray(person.knowsLanguage) || !person.knowsLanguage.includes('English')) throw new Error('schema.json missing knowsLanguage English');
 if (!occupation || occupation.name !== 'Web Design and Workflow Systems Builder' || !JSON.stringify(occupation).includes('Model Context Protocol')) throw new Error('schema.json missing occupation node');
-if (!website || !Array.isArray(website.hasPart) || website.hasPart.length < 8) throw new Error('schema.json missing WebSite hasPart page graph');
-for (const requiredPartId of ['https://jasonobawemimo.com/#homepage', 'https://jasonobawemimo.com/jason-obawemimo.html#profile-page', 'https://jasonobawemimo.com/credentials.html#webpage', 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/resume-pdf.html#webpage']) {
+if (!website || !Array.isArray(website.hasPart) || website.hasPart.length < 9) throw new Error('schema.json missing WebSite hasPart page graph');
+for (const requiredPartId of ['https://jasonobawemimo.com/#homepage', 'https://jasonobawemimo.com/jason-obawemimo.html#profile-page', 'https://jasonobawemimo.com/credentials.html#webpage', 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/search.html#search-results-page', 'https://jasonobawemimo.com/resume-pdf.html#webpage']) {
   if (!website.hasPart.some(part => part['@id'] === requiredPartId)) throw new Error(`schema.json WebSite hasPart missing ${requiredPartId}`);
 }
 const breadcrumbPairs = [
@@ -199,10 +201,11 @@ const breadcrumbPairs = [
   ['https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#breadcrumbs'],
   ['https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/answers.html#breadcrumbs'],
   ['https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/mentions.html#breadcrumbs'],
+  ['https://jasonobawemimo.com/search.html#search-results-page', 'https://jasonobawemimo.com/search.html#breadcrumbs'],
   ['https://jasonobawemimo.com/resume-pdf.html#webpage', 'https://jasonobawemimo.com/resume-pdf.html#breadcrumbs']
 ];
 const breadcrumbNodes = schema['@graph'].filter(node => node['@type'] === 'BreadcrumbList');
-if (breadcrumbNodes.length !== 8) throw new Error('schema.json must include 8 BreadcrumbList nodes');
+if (breadcrumbNodes.length !== 9) throw new Error('schema.json must include 9 BreadcrumbList nodes');
 for (const [pageId, breadcrumbId] of breadcrumbPairs) {
   const pageNode = schema['@graph'].find(node => node['@id'] === pageId);
   const breadcrumbNode = schema['@graph'].find(node => node['@id'] === breadcrumbId);
@@ -214,6 +217,9 @@ if (!homepage || homepage['@type'] !== 'ProfilePage' || homepage.mainEntity?.['@
 if (!JSON.stringify(homepage).includes(wellKnownAiProfileUrl) || !JSON.stringify(homepage).includes(wellKnownAiAnswersUrl) || !JSON.stringify(homepage).includes('SpeakableSpecification')) throw new Error('schema.json homepage ProfilePage missing AI links or speakable guidance');
 if (!knowledgeCardPage || knowledgeCardPage['@type'] !== 'ProfilePage' || knowledgeCardPage.mainEntity?.['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('schema.json missing knowledge-card ProfilePage node');
 if (!JSON.stringify(knowledgeCardPage).includes(knowledgeCardJsonLdUrl) || !JSON.stringify(knowledgeCardPage).includes(wellKnownAiProfileUrl) || !JSON.stringify(knowledgeCardPage).includes(wellKnownAiAnswersUrl)) throw new Error('schema.json knowledge-card ProfilePage missing high-signal links');
+if (!searchPage || searchPage['@type'] !== 'SearchResultsPage' || searchPage.mainEntity?.['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('schema.json missing SearchResultsPage node');
+if (website.potentialAction?.target !== 'https://jasonobawemimo.com/search.html?q={search_term_string}') throw new Error('schema.json SearchAction must target search.html');
+if (!openSearch.includes('https://jasonobawemimo.com/search.html?q={searchTerms}')) throw new Error('opensearch.xml must target search.html');
 if (profile['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('profile.jsonld missing canonical Person @id');
 if (!profile.hasOccupation || profile.hasOccupation.name !== 'Web Design and Workflow Systems Builder') throw new Error('profile.jsonld missing occupation');
 if (!profile.contactPoint || profile.contactPoint.email !== 'jobawems@gmail.com') throw new Error('profile.jsonld missing contact point');
@@ -306,6 +312,9 @@ for (const file of ['llms.txt', 'llms-full.txt', 'ai.txt', '.well-known/ai.txt',
   if (!fs.readFileSync(file, 'utf8').includes(didWeb) || !fs.readFileSync(file, 'utf8').includes(didDocumentUrl)) throw new Error(`${file} missing DID Web URLs`);
   if (!fs.readFileSync(file, 'utf8').includes(citationCffUrl)) throw new Error(`${file} missing CITATION.cff URL`);
 }
+for (const file of ['llms.txt', 'llms-full.txt', 'ai.txt', '.well-known/ai.txt', '.well-known/llms.txt']) {
+  if (!fs.readFileSync(file, 'utf8').includes('https://jasonobawemimo.com/search.html')) throw new Error(`${file} missing official site search URL`);
+}
 for (const sourceUrl of publicSourceUrls) {
   if (!fs.readFileSync('mentions.html', 'utf8').includes(sourceUrl)) throw new Error(`mentions.html missing public source ${sourceUrl}`);
   for (const [name, value] of Object.entries({ schema, profile, personJson, discovery, identity })) {
@@ -313,11 +322,11 @@ for (const sourceUrl of publicSourceUrls) {
   }
 }
 if (!schema['@graph'].some(node => node['@type'] === 'ImageObject' && node['@id'] === 'https://jasonobawemimo.com/#headshot')) throw new Error('schema.json missing headshot ImageObject');
-if ([...sitemap.matchAll(/<loc>/g)].length !== 38) throw new Error('Expected 38 sitemap URLs');
+if ([...sitemap.matchAll(/<loc>/g)].length !== 39) throw new Error('Expected 39 sitemap URLs');
 if ([...sitemapIndex.matchAll(/<loc>/g)].length !== 2) throw new Error('Expected 2 sitemap-index URLs');
 if (!sitemapIndex.includes('https://jasonobawemimo.com/image-sitemap.xml')) throw new Error('sitemap-index.xml missing image sitemap');
 if (!imageSitemap.includes('https://jasonobawemimo.com/assets/jason-headshot.png')) throw new Error('image-sitemap.xml missing headshot');
-for (const requiredUrl of ['/jason-obawemimo.html', '/jason-obawemimo-credentials-honor.html', '/jason-obawemimo-knowledge-card.html', '/jason-obawemimo.md', '/person.json', '/mentions.html', '/llms-full.txt', '/profile.jsonld', '/credentials.jsonld', '/jason-obawemimo-evidence.jsonld', '/jason-obawemimo-knowledge-card.jsonld', '/faq.jsonld', '/opensearch.xml', '/feed.xml', '/ai.txt', '/discovery.json', '/identity.json', '/credentials.json', '/answers.json', '/CITATION.cff', '/.well-known/llms.txt', '/.well-known/ai.txt', '/.well-known/ai-profile.jsonld', '/.well-known/ai-answers.json', '/.well-known/did.json', '/.well-known/webfinger', '/.well-known/host-meta']) {
+for (const requiredUrl of ['/jason-obawemimo.html', '/jason-obawemimo-credentials-honor.html', '/jason-obawemimo-knowledge-card.html', '/search.html', '/jason-obawemimo.md', '/person.json', '/mentions.html', '/llms-full.txt', '/profile.jsonld', '/credentials.jsonld', '/jason-obawemimo-evidence.jsonld', '/jason-obawemimo-knowledge-card.jsonld', '/faq.jsonld', '/opensearch.xml', '/feed.xml', '/ai.txt', '/discovery.json', '/identity.json', '/credentials.json', '/answers.json', '/CITATION.cff', '/.well-known/llms.txt', '/.well-known/ai.txt', '/.well-known/ai-profile.jsonld', '/.well-known/ai-answers.json', '/.well-known/did.json', '/.well-known/webfinger', '/.well-known/host-meta']) {
   if (!sitemap.includes(`https://jasonobawemimo.com${requiredUrl}`)) throw new Error(`sitemap.xml missing ${requiredUrl}`);
 }
 if (!robots.includes('Sitemap: https://jasonobawemimo.com/sitemap-index.xml')) throw new Error('robots.txt missing sitemap-index.xml reference');
@@ -341,12 +350,13 @@ if (!robots.includes('Knowledge-Card: https://jasonobawemimo.com/jason-obawemimo
 if (!robots.includes('Knowledge-Card-JSONLD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld')) throw new Error('robots.txt missing knowledge card JSON-LD reference');
 if (!robots.includes('Answers: https://jasonobawemimo.com/answers.json')) throw new Error('robots.txt missing answers.json reference');
 if (!robots.includes('FAQ-JSONLD: https://jasonobawemimo.com/faq.jsonld')) throw new Error('robots.txt missing faq.jsonld reference');
+if (!robots.includes('Site-Search: https://jasonobawemimo.com/search.html')) throw new Error('robots.txt missing site search reference');
 if (!robots.includes('WebFinger: https://jasonobawemimo.com/.well-known/webfinger')) throw new Error('robots.txt missing WebFinger reference');
 if (!robots.includes('Host-Meta: https://jasonobawemimo.com/.well-known/host-meta')) throw new Error('robots.txt missing host-meta reference');
 for (const crawler of ['OAI-SearchBot', 'GPTBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot', 'PerplexityBot', 'Google-Extended', 'Googlebot-Image', 'GoogleOther', 'Applebot', 'Applebot-Extended', 'Bingbot', 'DuckDuckBot', 'DuckAssistBot', 'Bravebot', 'YouBot', 'CCBot', 'Bytespider', 'Amazonbot', 'Meta-ExternalAgent', 'FacebookBot', 'cohere-ai', 'Diffbot']) {
   if (!robots.includes(`User-agent: ${crawler}`)) throw new Error(`robots.txt missing ${crawler}`);
 }
-if (['index.html','credentials.html','answers.html','resume-pdf.html','jason-obawemimo.html','jason-obawemimo-credentials-honor.html','jason-obawemimo-knowledge-card.html','mentions.html','sitemap.xml','sitemap-index.xml','image-sitemap.xml','llms.txt','llms-full.txt','ai.txt','discovery.json','identity.json','jason-obawemimo.md','person.json','jason-obawemimo.vcf','credentials.json','credentials.jsonld','jason-obawemimo-evidence.jsonld','jason-obawemimo-knowledge-card.jsonld','.well-known/ai-profile.jsonld','.well-known/ai-answers.json','.well-known/did.json','faq.jsonld','answers.json','.well-known/ai.txt','.well-known/llms.txt','.well-known/webfinger','.well-known/host-meta','CITATION.cff','humans.txt','SEARCH_SUBMISSION_CHECKLIST.md','README.md','PUBLISH_NOW.md','feed.xml'].some(file => fs.readFileSync(file, 'utf8').includes('jason-obawemimo-og.png'))) {
+if (['index.html','credentials.html','answers.html','resume-pdf.html','jason-obawemimo.html','jason-obawemimo-credentials-honor.html','jason-obawemimo-knowledge-card.html','mentions.html','search.html','sitemap.xml','sitemap-index.xml','image-sitemap.xml','llms.txt','llms-full.txt','ai.txt','discovery.json','identity.json','jason-obawemimo.md','person.json','jason-obawemimo.vcf','credentials.json','credentials.jsonld','jason-obawemimo-evidence.jsonld','jason-obawemimo-knowledge-card.jsonld','.well-known/ai-profile.jsonld','.well-known/ai-answers.json','.well-known/did.json','faq.jsonld','answers.json','.well-known/ai.txt','.well-known/llms.txt','.well-known/webfinger','.well-known/host-meta','CITATION.cff','humans.txt','SEARCH_SUBMISSION_CHECKLIST.md','README.md','PUBLISH_NOW.md','feed.xml'].some(file => fs.readFileSync(file, 'utf8').includes('jason-obawemimo-og.png'))) {
   throw new Error('Generated social PNG is still referenced');
 }
 console.log('Validation passed');
@@ -370,6 +380,7 @@ if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/mentions.h
 if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html") { throw "IndexNow dry-run missing credential evidence page" }
 if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld") { throw "IndexNow dry-run missing credential evidence JSON-LD" }
 if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html") { throw "IndexNow dry-run missing knowledge card page" }
+if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/search.html") { throw "IndexNow dry-run missing search page" }
 if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld") { throw "IndexNow dry-run missing knowledge card JSON-LD" }
 if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/.well-known/ai-profile.jsonld") { throw "IndexNow dry-run missing well-known AI profile JSON-LD" }
 if ($indexNowPayload.urlList -notcontains "https://jasonobawemimo.com/.well-known/ai-answers.json") { throw "IndexNow dry-run missing well-known AI answers JSON" }
@@ -419,6 +430,7 @@ $files = @(
   "mentions.html",
   "answers.html",
   "credentials.html",
+  "search.html",
   "schema.json",
   "profile.jsonld",
   "llms.txt",
@@ -476,6 +488,7 @@ $urls = @(
   "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
   "https://jasonobawemimo.com/jason-obawemimo.html",
   "https://jasonobawemimo.com/mentions.html",
+  "https://jasonobawemimo.com/search.html",
   "https://jasonobawemimo.com/resume-pdf.html",
   "https://jasonobawemimo.com/sitemap.xml",
   "https://jasonobawemimo.com/sitemap-index.xml",

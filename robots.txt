@@ -153,6 +153,7 @@ Credential-Honor-Evidence-JSONLD: https://jasonobawemimo.com/jason-obawemimo-evi
 Answers: https://jasonobawemimo.com/answers.json
 FAQ-JSONLD: https://jasonobawemimo.com/faq.jsonld
 Public-Mentions: https://jasonobawemimo.com/mentions.html
+Site-Search: https://jasonobawemimo.com/search.html
 WebFinger: https://jasonobawemimo.com/.well-known/webfinger
 Host-Meta: https://jasonobawemimo.com/.well-known/host-meta
 GitHub-Pages-Profile-Mirror: https://whoisjaso.github.io/whoisjaso/

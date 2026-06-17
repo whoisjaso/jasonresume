@@ -134,6 +134,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 - Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 - FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
+- Official site search: https://jasonobawemimo.com/search.html
 - Sitemap: https://jasonobawemimo.com/sitemap.xml
 - Sitemap index: https://jasonobawemimo.com/sitemap-index.xml
 - Image sitemap: https://jasonobawemimo.com/image-sitemap.xml

@@ -157,7 +157,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Short title: Web Design and Workflow Systems Builder
 - Location: Pearland, Texas
 - Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
-- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, CITATION.cff, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
+- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, CITATION.cff, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, official site search, and the public mentions page.
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
 - Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld

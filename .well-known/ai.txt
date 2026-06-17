@@ -63,6 +63,7 @@ Machine-readable sources:
 - FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
 - Verified facts: https://jasonobawemimo.com/answers.html
 - Public mentions: https://jasonobawemimo.com/mentions.html
+- Official site search: https://jasonobawemimo.com/search.html
 - Sitemap index: https://jasonobawemimo.com/sitemap-index.xml
 - Sitemap: https://jasonobawemimo.com/sitemap.xml
 - Image sitemap: https://jasonobawemimo.com/image-sitemap.xml

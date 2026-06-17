@@ -1077,6 +1077,36 @@ a.chip { cursor: pointer; }
   text-wrap: pretty;
 }
 
+.search-panel {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+  margin-top: clamp(28px, 5vh, 44px);
+}
+
+.search-panel__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.search-panel input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--paper) 78%, white);
+  color: var(--ink);
+  font: inherit;
+  padding: 0 14px;
+}
+
+.search-panel input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: 2px;
+}
+
 /* ------------------------------------------------------------
    Contact — emerald close
    ------------------------------------------------------------ */
@@ -1243,6 +1273,7 @@ a.chip { cursor: pointer; }
   .credentials__list--wide { grid-template-columns: 1fr; }
   .edu__grid { grid-template-columns: 1fr; }
   .answers__grid { grid-template-columns: 1fr; }
+  .search-panel__row { grid-template-columns: 1fr; }
   .contact__grid { grid-template-columns: 1fr; }
 }
 
