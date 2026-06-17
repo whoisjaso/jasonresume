@@ -3,6 +3,7 @@
   "aliases": [
     "https://jasonobawemimo.com/",
     "https://jasonobawemimo.com/jason-obawemimo.html",
+    "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "https://jasonobawemimo.com/mentions.html",
     "https://github.com/whoisjaso",
     "https://github.com/whoisjaso/whoisjaso",
@@ -88,6 +89,11 @@
       "rel": "describedby",
       "type": "application/ld+json",
       "href": "https://jasonobawemimo.com/credentials.jsonld"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/ld+json",
+      "href": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
     },
     {
       "rel": "describedby",

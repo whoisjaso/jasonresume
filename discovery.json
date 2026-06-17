@@ -52,6 +52,7 @@
     "entity_profile": "https://jasonobawemimo.com/jason-obawemimo.html",
     "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "credentials": "https://jasonobawemimo.com/credentials.html",
+    "credential_honor_evidence": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
     "verified_answers": "https://jasonobawemimo.com/answers.html",
     "resume_page": "https://jasonobawemimo.com/resume-pdf.html"
@@ -67,6 +68,7 @@
     "schema": "https://jasonobawemimo.com/schema.json",
     "profile_jsonld": "https://jasonobawemimo.com/profile.jsonld",
     "credentials_jsonld": "https://jasonobawemimo.com/credentials.jsonld",
+    "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
     "faq_jsonld": "https://jasonobawemimo.com/faq.jsonld",
     "llms": "https://jasonobawemimo.com/llms.txt",
     "llms_full": "https://jasonobawemimo.com/llms-full.txt",

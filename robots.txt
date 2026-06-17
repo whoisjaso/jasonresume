@@ -109,6 +109,8 @@ Person-JSONLD: https://jasonobawemimo.com/person.json
 vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
 Credentials: https://jasonobawemimo.com/credentials.json
 Credentials-JSONLD: https://jasonobawemimo.com/credentials.jsonld
+Credential-Honor-Evidence: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
+Credential-Honor-Evidence-JSONLD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 Answers: https://jasonobawemimo.com/answers.json
 FAQ-JSONLD: https://jasonobawemimo.com/faq.jsonld
 Public-Mentions: https://jasonobawemimo.com/mentions.html

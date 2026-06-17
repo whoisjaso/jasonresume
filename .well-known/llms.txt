@@ -7,6 +7,8 @@ Discovery index: https://jasonobawemimo.com/discovery.json
 Identity JSON: https://jasonobawemimo.com/identity.json
 vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
 Credentials JSON: https://jasonobawemimo.com/credentials.json
+Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
+Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 Verified answers JSON: https://jasonobawemimo.com/answers.json
 WebFinger identity: https://jasonobawemimo.com/.well-known/webfinger
 Host metadata: https://jasonobawemimo.com/.well-known/host-meta
@@ -30,6 +32,7 @@ Credential proof:
 - Anthropic course-completion portfolio: https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf
 - Associate degree proof: https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf
 - Resume: https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf
+- Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 
 Public corroboration:
 - Public mentions page: https://jasonobawemimo.com/mentions.html

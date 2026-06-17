@@ -57,6 +57,10 @@
     "associate_degree": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
     "resume": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf"
   },
+  "evidence": {
+    "credential_honor_evidence_page": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+    "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
+  },
   "public_corroboration": {
     "mentions_page": "https://jasonobawemimo.com/mentions.html",
     "city_of_pearland_record": "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
@@ -78,6 +82,8 @@
     "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "person_jsonld": "https://jasonobawemimo.com/person.json",
     "credentials": "https://jasonobawemimo.com/credentials.json",
+    "credential_honor_evidence_page": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+    "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
     "answers": "https://jasonobawemimo.com/answers.json",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
     "vcard": "https://jasonobawemimo.com/jason-obawemimo.vcf",

@@ -1,0 +1,169 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Dataset",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld#dataset",
+      "name": "Jason Obawemimo Credential and Honor Evidence Graph",
+      "description": "Focused machine-readable evidence graph for Jason Obawemimo's official identity, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
+      "url": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
+      "dateModified": "2026-06-17",
+      "inLanguage": "en-US",
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "creator": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "distribution": {
+        "@type": "DataDownload",
+        "encodingFormat": "application/ld+json",
+        "contentUrl": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
+      },
+      "mainEntity": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      }
+    },
+    {
+      "@type": "ProfilePage",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page",
+      "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+      "name": "Jason Obawemimo Credentials and Dean's Honor List Evidence",
+      "description": "Exact-name evidence page for Jason Obawemimo's Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
+      "dateModified": "2026-06-17",
+      "isPartOf": {
+        "@id": "https://jasonobawemimo.com/#website"
+      },
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "mainEntity": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "citation": [
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
+        "https://github.com/whoisjaso/whoisjaso",
+        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://jasonobawemimo.com/#jason-obawemimo",
+      "name": "Jason Obawemimo",
+      "givenName": "Jason",
+      "familyName": "Obawemimo",
+      "url": "https://jasonobawemimo.com/",
+      "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
+      "email": "mailto:jobawems@gmail.com",
+      "jobTitle": "Web Design and Workflow Systems Builder",
+      "description": "Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Pearland, Texas",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Pearland",
+          "addressRegion": "TX",
+          "addressCountry": "US"
+        }
+      },
+      "award": [
+        "Dean's Honor List - San Jacinto College",
+        "GPA 3.63 - Associate of Arts in Business"
+      ],
+      "alumniOf": {
+        "@id": "https://jasonobawemimo.com/#san-jacinto-college"
+      },
+      "hasCredential": [
+        {
+          "@id": "https://jasonobawemimo.com/#credential-associate-business"
+        },
+        {
+          "@id": "https://jasonobawemimo.com/#credential-anthropic"
+        }
+      ],
+      "sameAs": [
+        "https://jasonobawemimo.com/",
+        "https://github.com/whoisjaso",
+        "https://github.com/whoisjaso/whoisjaso",
+        "https://github.com/whoisjaso/jasonresume",
+        "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+        "https://thetriplejauto.com/"
+      ],
+      "subjectOf": [
+        "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+        "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
+        "https://jasonobawemimo.com/credentials.html",
+        "https://jasonobawemimo.com/credentials.json",
+        "https://jasonobawemimo.com/credentials.jsonld",
+        "https://jasonobawemimo.com/person.json",
+        "https://jasonobawemimo.com/jason-obawemimo.md",
+        "https://jasonobawemimo.com/answers.html",
+        "https://jasonobawemimo.com/answers.json",
+        "https://github.com/whoisjaso/whoisjaso",
+        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
+      ]
+    },
+    {
+      "@type": "EducationalOrganization",
+      "@id": "https://jasonobawemimo.com/#san-jacinto-college",
+      "name": "San Jacinto College",
+      "url": "https://www.sanjac.edu/"
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "@id": "https://jasonobawemimo.com/#credential-associate-business",
+      "name": "Associate of Arts - Business",
+      "credentialCategory": "degree",
+      "educationalLevel": "Associate degree",
+      "recognizedBy": {
+        "@id": "https://jasonobawemimo.com/#san-jacinto-college"
+      },
+      "dateCreated": "2026-05",
+      "url": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
+      "description": "Associate of Arts in Business from San Jacinto College, graduated May 2026, GPA 3.63, Dean's Honor List.",
+      "subjectOf": [
+        "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf"
+      ]
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "@id": "https://jasonobawemimo.com/#credential-anthropic",
+      "name": "Anthropic Course-Completion Portfolio",
+      "credentialCategory": "certificate portfolio",
+      "recognizedBy": {
+        "@type": "Organization",
+        "name": "Anthropic",
+        "url": "https://www.anthropic.com/"
+      },
+      "url": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
+      "description": "Anthropic coursework across Claude usage, Claude Code, Claude Platform, Claude API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI, and AI Fluency.",
+      "subjectOf": [
+        "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf"
+      ],
+      "about": [
+        "Claude 101",
+        "Claude Code 101",
+        "Claude Platform 101",
+        "Introduction to Claude Cowork",
+        "Claude Code in Action",
+        "AI Fluency: Framework and Foundations",
+        "Building with the Claude API",
+        "Introduction to Model Context Protocol",
+        "Model Context Protocol: Advanced Topics",
+        "Claude with Amazon Bedrock",
+        "Claude with Google Cloud Vertex AI",
+        "Teaching AI Fluency",
+        "AI Fluency for nonprofits",
+        "Introduction to agent skills",
+        "Introduction to subagents",
+        "AI Capabilities and Limitations",
+        "AI Fluency for Small Businesses"
+      ]
+    }
+  ]
+}

@@ -45,6 +45,8 @@ Jason Obawemimo designs and builds:
 - GPA 3.63
 - Dean's Honor List
 - Degree proof: https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf
+- Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
+- Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 
 ## Credentials
 
@@ -104,6 +106,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - Exact-name entity profile: https://jasonobawemimo.com/jason-obawemimo.html
 - Exact-name Markdown profile: https://jasonobawemimo.com/jason-obawemimo.md
 - Credential proof page: https://jasonobawemimo.com/credentials.html
+- Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Verified answer facts: https://jasonobawemimo.com/answers.html
 - Public mentions page: https://jasonobawemimo.com/mentions.html
 - Resume PDF: https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf
@@ -123,6 +126,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - Structured data graph: https://jasonobawemimo.com/schema.json
 - Compact profile JSON-LD: https://jasonobawemimo.com/profile.jsonld
 - Credentials JSON-LD: https://jasonobawemimo.com/credentials.jsonld
+- Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 - FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
 - Sitemap: https://jasonobawemimo.com/sitemap.xml
 - Sitemap index: https://jasonobawemimo.com/sitemap-index.xml

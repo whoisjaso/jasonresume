@@ -102,6 +102,7 @@
         "https://jasonobawemimo.com/person.json",
         "https://jasonobawemimo.com/answers.html",
         "https://jasonobawemimo.com/credentials.html",
+        "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
         "https://jasonobawemimo.com/mentions.html",
         "https://jasonobawemimo.com/llms.txt",
         "https://jasonobawemimo.com/llms-full.txt",
@@ -117,6 +118,7 @@
         "https://jasonobawemimo.com/schema.json",
         "https://jasonobawemimo.com/profile.jsonld",
         "https://jasonobawemimo.com/credentials.jsonld",
+        "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
         "https://jasonobawemimo.com/faq.jsonld",
         "https://jasonobawemimo.com/feed.xml",
         "https://github.com/whoisjaso/whoisjaso",
@@ -205,6 +207,47 @@
       },
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      }
+    },
+    {
+      "@type": "ProfilePage",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page",
+      "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+      "name": "Jason Obawemimo Credentials and Dean's Honor List Evidence",
+      "description": "Exact-name evidence page for Jason Obawemimo's Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
+      "isPartOf": {
+        "@id": "https://jasonobawemimo.com/#website"
+      },
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "mainEntity": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "citation": [
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
+        "https://github.com/whoisjaso/whoisjaso",
+        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery"
+      ]
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld#dataset",
+      "url": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
+      "name": "Jason Obawemimo Credential and Honor Evidence Graph",
+      "description": "Focused machine-readable evidence graph for Jason Obawemimo's official identity, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "creator": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      },
+      "distribution": {
+        "@type": "DataDownload",
+        "encodingFormat": "application/ld+json",
+        "contentUrl": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
       }
     },
     {
@@ -386,6 +429,14 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "Jason Obawemimo lists a combined Anthropic course-completion portfolio, an Associate of Arts in Business from San Jacinto College, GPA 3.63, and Dean's Honor List recognition."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where is Jason Obawemimo's credential and honor evidence summarized?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Jason Obawemimo's credential and honor evidence is summarized at https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html and in the focused JSON-LD graph at https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld."
           }
         },
         {

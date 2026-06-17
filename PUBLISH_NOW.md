@@ -12,6 +12,8 @@ Validated release bundle: `release/jasonresume-seo-aeo-geo-latest-valid.zip`
 
 The SEO/AEO/GEO package is committed, pushed to `main`, and live on Vercel. The production verifier passes against `https://jasonobawemimo.com/`, including the sitemap, machine-readable identity files, structured data, AI guidance files, credential PDFs, and IndexNow key file.
 
+Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
+Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 External corroboration release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery
 External profile README: https://github.com/whoisjaso/whoisjaso
 

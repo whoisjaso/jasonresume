@@ -6,7 +6,21 @@
     <atom:link href="https://jasonobawemimo.com/feed.xml" rel="self" type="application/rss+xml" />
     <description>Official updates for Jason Obawemimo's web design, workflow systems, credentials, resume, and verified answer-engine facts.</description>
     <language>en-us</language>
-    <lastBuildDate>Wed, 17 Jun 2026 22:15:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 17 Jun 2026 22:30:00 GMT</lastBuildDate>
+    <item>
+      <title>Jason Obawemimo Credentials and Dean's Honor List Evidence</title>
+      <link>https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html</guid>
+      <pubDate>Wed, 17 Jun 2026 22:30:00 GMT</pubDate>
+      <description>Exact-name evidence page for Jason Obawemimo's Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Evidence JSON-LD</title>
+      <link>https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld</guid>
+      <pubDate>Wed, 17 Jun 2026 22:30:00 GMT</pubDate>
+      <description>Focused machine-readable evidence graph for Jason Obawemimo's credentials, education, GPA, Dean's Honor List recognition, and canonical source links.</description>
+    </item>
     <item>
       <title>Jason Obawemimo Exact-Name Markdown Profile</title>
       <link>https://jasonobawemimo.com/jason-obawemimo.md</link>

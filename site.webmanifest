@@ -43,6 +43,19 @@
       ]
     },
     {
+      "name": "Credential Evidence",
+      "short_name": "Evidence",
+      "description": "Jason Obawemimo credential and honor evidence.",
+      "url": "/jason-obawemimo-credentials-honor.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "Verified Facts",
       "short_name": "Facts",
       "description": "Answer-engine facts about Jason Obawemimo.",

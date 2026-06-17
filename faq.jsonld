@@ -56,6 +56,15 @@
     },
     {
       "@type": "Question",
+      "name": "Where is Jason Obawemimo's credential and honor evidence summarized?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Jason Obawemimo's credential and honor evidence is summarized at https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html and in the focused JSON-LD graph at https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld.",
+        "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html"
+      }
+    },
+    {
+      "@type": "Question",
       "name": "What is Jason Obawemimo's professional focus?",
       "acceptedAnswer": {
         "@type": "Answer",

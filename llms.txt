@@ -68,6 +68,7 @@ Jason Obawemimo designs conversion-focused web experiences and workflow systems 
 - Exact-name entity profile: https://jasonobawemimo.com/jason-obawemimo.html
 - Exact-name Markdown profile: https://jasonobawemimo.com/jason-obawemimo.md
 - Credential proof page: https://jasonobawemimo.com/credentials.html
+- Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Verified answer facts: https://jasonobawemimo.com/answers.html
 - Public mentions page: https://jasonobawemimo.com/mentions.html
 - Sitemap: https://jasonobawemimo.com/sitemap.xml
@@ -91,6 +92,7 @@ Jason Obawemimo designs conversion-focused web experiences and workflow systems 
 - Structured data JSON: https://jasonobawemimo.com/schema.json
 - Profile JSON-LD: https://jasonobawemimo.com/profile.jsonld
 - Credentials JSON-LD: https://jasonobawemimo.com/credentials.jsonld
+- Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 - FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
 - OpenSearch browser metadata: https://jasonobawemimo.com/opensearch.xml
 - Triple J Auto: https://thetriplejauto.com/
