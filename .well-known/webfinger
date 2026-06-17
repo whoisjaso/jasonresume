@@ -61,6 +61,16 @@
     {
       "rel": "describedby",
       "type": "application/ld+json",
+      "href": "https://jasonobawemimo.com/person.json"
+    },
+    {
+      "rel": "describedby",
+      "type": "text/markdown",
+      "href": "https://jasonobawemimo.com/jason-obawemimo.md"
+    },
+    {
+      "rel": "describedby",
+      "type": "application/ld+json",
       "href": "https://jasonobawemimo.com/faq.jsonld"
     },
     {

@@ -6,34 +6,19 @@
   "givenName": "Jason",
   "familyName": "Obawemimo",
   "url": "https://jasonobawemimo.com/",
-  "email": "mailto:jobawems@gmail.com",
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "professional inquiries",
-    "email": "jobawems@gmail.com",
-    "url": "https://jasonobawemimo.com/",
-    "availableLanguage": "English"
-  },
-  "identifier": [
-    "Jason Obawemimo",
-    "jason-obawemimo"
-  ],
   "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
+  "email": "mailto:jobawems@gmail.com",
   "image": {
     "@type": "ImageObject",
     "@id": "https://jasonobawemimo.com/#headshot",
     "url": "https://jasonobawemimo.com/assets/jason-headshot.png",
     "contentUrl": "https://jasonobawemimo.com/assets/jason-headshot.png",
-    "name": "Jason Obawemimo professional headshot",
     "caption": "Portrait of Jason Obawemimo in a deep green suit"
   },
-  "jobTitle": [
-    "Web Systems Builder",
-    "Workflow Systems Designer",
-    "Founder"
-  ],
+  "jobTitle": "Web Design and Workflow Systems Builder",
   "hasOccupation": {
     "@type": "Occupation",
+    "@id": "https://jasonobawemimo.com/#occupation-web-design-workflow-systems-builder",
     "name": "Web Design and Workflow Systems Builder",
     "alternateName": [
       "Web Systems Builder",
@@ -136,6 +121,7 @@
     "https://jasonobawemimo.com/.well-known/webfinger",
     "https://jasonobawemimo.com/.well-known/host-meta",
     "https://jasonobawemimo.com/schema.json",
+    "https://jasonobawemimo.com/profile.jsonld",
     "https://jasonobawemimo.com/credentials.jsonld",
     "https://jasonobawemimo.com/faq.jsonld",
     "https://jasonobawemimo.com/feed.xml",
@@ -143,5 +129,6 @@
     "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
     "https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf",
     "https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf"
-  ]
+  ],
+  "dateModified": "2026-06-17"
 }

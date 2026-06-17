@@ -13,9 +13,12 @@ Host metadata: https://jasonobawemimo.com/.well-known/host-meta
 Credentials JSON-LD: https://jasonobawemimo.com/credentials.jsonld
 FAQ JSON-LD: https://jasonobawemimo.com/faq.jsonld
 Entity profile: https://jasonobawemimo.com/jason-obawemimo.html
+Exact-name Markdown profile: https://jasonobawemimo.com/jason-obawemimo.md
+Compact Person JSON-LD: https://jasonobawemimo.com/person.json
 Public mentions: https://jasonobawemimo.com/mentions.html
 Professional profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 Official LinkedIn profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
+Source repository: https://github.com/whoisjaso/jasonresume
 
 Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.
 

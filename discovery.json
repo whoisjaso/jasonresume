@@ -1,7 +1,7 @@
 {
   "name": "Jason Obawemimo Discovery Index",
   "canonical_url": "https://jasonobawemimo.com/",
-  "last_updated": "2026-06-16",
+  "last_updated": "2026-06-17",
   "entity": {
     "type": "Person",
     "name": "Jason Obawemimo",
@@ -15,6 +15,7 @@
     "same_as": [
       "https://jasonobawemimo.com/",
       "https://github.com/whoisjaso",
+      "https://github.com/whoisjaso/jasonresume",
       "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
       "https://thetriplejauto.com/"
     ]
@@ -49,6 +50,7 @@
   "html_pages": {
     "home": "https://jasonobawemimo.com/",
     "entity_profile": "https://jasonobawemimo.com/jason-obawemimo.html",
+    "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "credentials": "https://jasonobawemimo.com/credentials.html",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
     "verified_answers": "https://jasonobawemimo.com/answers.html",
@@ -57,6 +59,8 @@
   "machine_readable": {
     "discovery": "https://jasonobawemimo.com/discovery.json",
     "identity": "https://jasonobawemimo.com/identity.json",
+    "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
+    "person_jsonld": "https://jasonobawemimo.com/person.json",
     "credentials": "https://jasonobawemimo.com/credentials.json",
     "answers": "https://jasonobawemimo.com/answers.json",
     "vcard": "https://jasonobawemimo.com/jason-obawemimo.vcf",
@@ -77,7 +81,8 @@
     "image_sitemap": "https://jasonobawemimo.com/image-sitemap.xml",
     "feed": "https://jasonobawemimo.com/feed.xml",
     "robots": "https://jasonobawemimo.com/robots.txt",
-    "opensearch": "https://jasonobawemimo.com/opensearch.xml"
+    "opensearch": "https://jasonobawemimo.com/opensearch.xml",
+    "source_repository": "https://github.com/whoisjaso/jasonresume"
   },
   "indexing": {
     "indexnow_key": "25250c82c435407fa759bd71fbe2b1df",

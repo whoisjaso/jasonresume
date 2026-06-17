@@ -6,7 +6,21 @@
     <atom:link href="https://jasonobawemimo.com/feed.xml" rel="self" type="application/rss+xml" />
     <description>Official updates for Jason Obawemimo's web design, workflow systems, credentials, resume, and verified answer-engine facts.</description>
     <language>en-us</language>
-    <lastBuildDate>Tue, 16 Jun 2026 20:35:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 17 Jun 2026 22:15:00 GMT</lastBuildDate>
+    <item>
+      <title>Jason Obawemimo Exact-Name Markdown Profile</title>
+      <link>https://jasonobawemimo.com/jason-obawemimo.md</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo.md</guid>
+      <pubDate>Wed, 17 Jun 2026 22:15:00 GMT</pubDate>
+      <description>Plain Markdown entity profile for Jason Obawemimo, including canonical website, work focus, credentials, education, honor, and citation guidance for search and answer engines.</description>
+    </item>
+    <item>
+      <title>Jason Obawemimo Compact Person JSON-LD</title>
+      <link>https://jasonobawemimo.com/person.json</link>
+      <guid isPermaLink="true">https://jasonobawemimo.com/person.json</guid>
+      <pubDate>Wed, 17 Jun 2026 22:15:00 GMT</pubDate>
+      <description>Compact Schema.org Person record for Jason Obawemimo with canonical identity, LinkedIn, GitHub, credentials, Dean's Honor List recognition, and official source links.</description>
+    </item>
     <item>
       <title>Jason Obawemimo Public Mentions</title>
       <link>https://jasonobawemimo.com/mentions.html</link>

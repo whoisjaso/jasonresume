@@ -7,7 +7,7 @@ authors:
     given-names: "Jason"
 url: "https://jasonobawemimo.com/"
 repository-code: "https://github.com/whoisjaso/jasonresume"
-date-released: "2026-06-16"
+date-released: "2026-06-17"
 keywords:
   - Jason Obawemimo
   - web design
@@ -15,5 +15,6 @@ keywords:
   - AI-assisted operations
   - Anthropic coursework
   - Dean's Honor List
+  - Person JSON-LD
   - public mentions
 abstract: "Official resume and portfolio website for Jason Obawemimo, a Pearland, Texas web design and workflow systems builder."

@@ -80,6 +80,19 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Person JSON-LD",
+      "short_name": "Person JSON",
+      "description": "Compact Schema.org Person record for Jason Obawemimo.",
+      "url": "/person.json",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "icons": [

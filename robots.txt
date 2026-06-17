@@ -104,6 +104,8 @@ AI-Guidance: https://jasonobawemimo.com/ai.txt
 LLMS: https://jasonobawemimo.com/llms.txt
 Discovery: https://jasonobawemimo.com/discovery.json
 Identity: https://jasonobawemimo.com/identity.json
+Entity-Markdown: https://jasonobawemimo.com/jason-obawemimo.md
+Person-JSONLD: https://jasonobawemimo.com/person.json
 vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
 Credentials: https://jasonobawemimo.com/credentials.json
 Credentials-JSONLD: https://jasonobawemimo.com/credentials.jsonld

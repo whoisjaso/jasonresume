@@ -49,6 +49,8 @@
   "machine_readable_sources": {
     "discovery": "https://jasonobawemimo.com/discovery.json",
     "identity": "https://jasonobawemimo.com/identity.json",
+    "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
+    "person_jsonld": "https://jasonobawemimo.com/person.json",
     "linkedin": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
     "credentials": "https://jasonobawemimo.com/credentials.json",
@@ -61,7 +63,8 @@
     "faq_jsonld": "https://jasonobawemimo.com/faq.jsonld",
     "llms": "https://jasonobawemimo.com/llms.txt",
     "llms_full": "https://jasonobawemimo.com/llms-full.txt",
-    "ai_guidance": "https://jasonobawemimo.com/ai.txt"
+    "ai_guidance": "https://jasonobawemimo.com/ai.txt",
+    "source_repository": "https://github.com/whoisjaso/jasonresume"
   },
-  "last_updated": "2026-06-16"
+  "last_updated": "2026-06-17"
 }

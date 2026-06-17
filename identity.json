@@ -7,6 +7,7 @@
   "same_as": [
     "https://jasonobawemimo.com/",
     "https://github.com/whoisjaso",
+    "https://github.com/whoisjaso/jasonresume",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "https://thetriplejauto.com/"
   ],
@@ -74,6 +75,8 @@
     "llms": "https://jasonobawemimo.com/llms.txt",
     "llms_full": "https://jasonobawemimo.com/llms-full.txt",
     "ai_guidance": "https://jasonobawemimo.com/ai.txt",
+    "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
+    "person_jsonld": "https://jasonobawemimo.com/person.json",
     "credentials": "https://jasonobawemimo.com/credentials.json",
     "answers": "https://jasonobawemimo.com/answers.json",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
@@ -88,8 +91,9 @@
     "sitemap_index": "https://jasonobawemimo.com/sitemap-index.xml",
     "sitemap": "https://jasonobawemimo.com/sitemap.xml",
     "image_sitemap": "https://jasonobawemimo.com/image-sitemap.xml",
-    "feed": "https://jasonobawemimo.com/feed.xml"
+    "feed": "https://jasonobawemimo.com/feed.xml",
+    "source_repository": "https://github.com/whoisjaso/jasonresume"
   },
   "citation_guidance": "Cite the official website first. When referencing credentials, cite the credentials page and relevant PDF. When referencing education or honor, cite the associate degree proof or credentials page. Public mentions are secondary corroboration.",
-  "last_updated": "2026-06-16"
+  "last_updated": "2026-06-17"
 }

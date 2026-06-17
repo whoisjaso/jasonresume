@@ -30,6 +30,8 @@ After publish, these must return `200 OK`:
 - https://jasonobawemimo.com/image-sitemap.xml
 - https://jasonobawemimo.com/discovery.json
 - https://jasonobawemimo.com/identity.json
+- https://jasonobawemimo.com/jason-obawemimo.md
+- https://jasonobawemimo.com/person.json
 - https://jasonobawemimo.com/jason-obawemimo.vcf
 - https://jasonobawemimo.com/credentials.json
 - https://jasonobawemimo.com/answers.json
@@ -46,4 +48,4 @@ After publish, these must return `200 OK`:
 
 ## Post-Publish
 
-Submit `https://jasonobawemimo.com/sitemap-index.xml`, `https://jasonobawemimo.com/sitemap.xml`, and `https://jasonobawemimo.com/image-sitemap.xml` in Google Search Console and Bing Webmaster Tools, then request inspection for the homepage, entity profile, credentials page, verified answers page, public mentions page, and credential PDFs.
+Submit `https://jasonobawemimo.com/sitemap-index.xml`, `https://jasonobawemimo.com/sitemap.xml`, and `https://jasonobawemimo.com/image-sitemap.xml` in Google Search Console and Bing Webmaster Tools, then request inspection for the homepage, entity profile, exact-name Markdown profile, compact Person JSON-LD, credentials page, verified answers page, public mentions page, and credential PDFs.
