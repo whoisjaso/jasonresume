@@ -50,6 +50,7 @@
   "html_pages": {
     "home": "https://jasonobawemimo.com/",
     "entity_profile": "https://jasonobawemimo.com/jason-obawemimo.html",
+    "knowledge_card": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
     "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "credentials": "https://jasonobawemimo.com/credentials.html",
     "credential_honor_evidence": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
@@ -62,6 +63,7 @@
     "identity": "https://jasonobawemimo.com/identity.json",
     "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "person_jsonld": "https://jasonobawemimo.com/person.json",
+    "knowledge_card_jsonld": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
     "credentials": "https://jasonobawemimo.com/credentials.json",
     "answers": "https://jasonobawemimo.com/answers.json",
     "vcard": "https://jasonobawemimo.com/jason-obawemimo.vcf",

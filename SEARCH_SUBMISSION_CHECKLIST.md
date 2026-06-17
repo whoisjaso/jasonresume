@@ -147,8 +147,10 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Short title: Web Design and Workflow Systems Builder
 - Location: Pearland, Texas
 - Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
-- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, discovery.json, identity.json, jason-obawemimo.md, person.json, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
+- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
+- Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
+- Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 - Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 - GitHub profile README: https://github.com/whoisjaso/whoisjaso
 - GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/

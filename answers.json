@@ -56,6 +56,8 @@
     "identity": "https://jasonobawemimo.com/identity.json",
     "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "person_jsonld": "https://jasonobawemimo.com/person.json",
+    "knowledge_card": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
+    "knowledge_card_jsonld": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
     "linkedin": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "public_mentions": "https://jasonobawemimo.com/mentions.html",
     "credentials": "https://jasonobawemimo.com/credentials.json",

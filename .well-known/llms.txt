@@ -8,6 +8,8 @@ Identity JSON: https://jasonobawemimo.com/identity.json
 vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
 Credentials JSON: https://jasonobawemimo.com/credentials.json
 Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
+Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
+Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 Verified answers JSON: https://jasonobawemimo.com/answers.json
 WebFinger identity: https://jasonobawemimo.com/.well-known/webfinger

@@ -17,6 +17,8 @@ URL;TYPE=Credential-Honor-Evidence-JSONLD:https://jasonobawemimo.com/jason-obawe
 URL;TYPE=Public-Mentions:https://jasonobawemimo.com/mentions.html
 URL;TYPE=Markdown-Profile:https://jasonobawemimo.com/jason-obawemimo.md
 URL;TYPE=Person-JSONLD:https://jasonobawemimo.com/person.json
+URL;TYPE=Knowledge-Card:https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
+URL;TYPE=Knowledge-Card-JSONLD:https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 PHOTO;MEDIATYPE=image/png:https://jasonobawemimo.com/assets/jason-headshot.png
 ADR;TYPE=work:;;Pearland;TX;;United States
 NOTE:Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value. Credentials include an Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition. Public mentions are linked at https://jasonobawemimo.com/mentions.html.

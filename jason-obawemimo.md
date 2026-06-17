@@ -11,6 +11,8 @@ Jason Obawemimo is a Pearland, Texas based web design and workflow systems build
 - Official website: https://jasonobawemimo.com/
 - Official entity profile: https://jasonobawemimo.com/jason-obawemimo.html
 - Compact Person JSON-LD: https://jasonobawemimo.com/person.json
+- Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
+- Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 - LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 - GitHub: https://github.com/whoisjaso
 - GitHub profile README: https://github.com/whoisjaso/whoisjaso

@@ -56,6 +56,19 @@
       ]
     },
     {
+      "name": "Knowledge Card",
+      "short_name": "Knowledge",
+      "description": "Search and AI knowledge card for Jason Obawemimo.",
+      "url": "/jason-obawemimo-knowledge-card.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "Verified Facts",
       "short_name": "Facts",
       "description": "Answer-engine facts about Jason Obawemimo.",

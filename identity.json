@@ -59,6 +59,8 @@
   },
   "evidence": {
     "credential_honor_evidence_page": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
+    "knowledge_card": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
+    "knowledge_card_jsonld": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
     "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
     "github_pages_profile_mirror": "https://whoisjaso.github.io/whoisjaso/"
   },
@@ -83,6 +85,8 @@
     "ai_guidance": "https://jasonobawemimo.com/ai.txt",
     "entity_markdown": "https://jasonobawemimo.com/jason-obawemimo.md",
     "person_jsonld": "https://jasonobawemimo.com/person.json",
+    "knowledge_card": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
+    "knowledge_card_jsonld": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
     "credentials": "https://jasonobawemimo.com/credentials.json",
     "credential_honor_evidence_page": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",

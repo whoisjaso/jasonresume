@@ -106,6 +106,8 @@ Discovery: https://jasonobawemimo.com/discovery.json
 Identity: https://jasonobawemimo.com/identity.json
 Entity-Markdown: https://jasonobawemimo.com/jason-obawemimo.md
 Person-JSONLD: https://jasonobawemimo.com/person.json
+Knowledge-Card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
+Knowledge-Card-JSONLD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 vCard: https://jasonobawemimo.com/jason-obawemimo.vcf
 Credentials: https://jasonobawemimo.com/credentials.json
 Credentials-JSONLD: https://jasonobawemimo.com/credentials.jsonld

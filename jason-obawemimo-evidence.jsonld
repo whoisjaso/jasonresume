@@ -25,6 +25,16 @@
       }
     },
     {
+      "@type": "Dataset",
+      "@id": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld#dataset",
+      "name": "Jason Obawemimo Search and AI Knowledge Card",
+      "url": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
+      "description": "Compact retrieval dataset for Jason Obawemimo's official website, credentials, education, GPA 3.63, Dean's Honor List recognition, and preferred professional positioning.",
+      "about": {
+        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
+      }
+    },
+    {
       "@type": "ProfilePage",
       "@id": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page",
       "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
@@ -104,6 +114,8 @@
         "https://jasonobawemimo.com/jason-obawemimo.md",
         "https://jasonobawemimo.com/answers.html",
         "https://jasonobawemimo.com/answers.json",
+        "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
+        "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
