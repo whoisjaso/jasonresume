@@ -264,6 +264,7 @@ $files = @(
   "resume-pdf.html",
   "robots.txt",
   "site.css",
+  "site.js",
   "sitemap.xml",
   "sitemap-index.xml",
   "image-sitemap.xml",

@@ -45,11 +45,11 @@
     ticking = true;
     requestAnimationFrame(function () {
       var y = window.scrollY || 0;
-      nav.classList.toggle("is-scrolled", y > 24);
+      if (nav) nav.classList.toggle("is-scrolled", y > 24);
       var doc = document.documentElement;
       var max = doc.scrollHeight - window.innerHeight;
       var p = max > 0 ? Math.min(y / max, 1) : 0;
-      progress.style.transform = "scaleX(" + p + ")";
+      if (progress) progress.style.transform = "scaleX(" + p + ")";
       ticking = false;
     });
   }
@@ -63,12 +63,14 @@
 
   function setMenu(open) {
     document.body.classList.toggle("menu-open", open);
-    burger.setAttribute("aria-expanded", open ? "true" : "false");
+    if (burger) burger.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
-  burger.addEventListener("click", function () {
-    setMenu(!document.body.classList.contains("menu-open"));
-  });
+  if (burger) {
+    burger.addEventListener("click", function () {
+      setMenu(!document.body.classList.contains("menu-open"));
+    });
+  }
 
   menuLinks.forEach(function (link) {
     link.addEventListener("click", function () { setMenu(false); });
