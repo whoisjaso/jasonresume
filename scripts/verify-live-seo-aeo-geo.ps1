@@ -357,6 +357,9 @@ $checks = @(
 )
 
 $failures = @()
+$requestHeaders = @{
+  "User-Agent" = "JasonResumeLiveVerifier/1.0 (+https://jasonobawemimo.com/)"
+}
 
 $canonicalHostChecks = @(
   @{ From = "https://www.jasonobawemimo.com/"; To = "https://jasonobawemimo.com/" },
@@ -370,7 +373,7 @@ $canonicalHostChecks = @(
 foreach ($hostCheck in $canonicalHostChecks) {
   $response = $null
   try {
-    $response = Invoke-WebRequest -Uri $hostCheck.From -Method Head -MaximumRedirection 0 -TimeoutSec 30
+    $response = Invoke-WebRequest -Uri $hostCheck.From -Method Head -MaximumRedirection 0 -TimeoutSec 30 -Headers $requestHeaders
   } catch {
     $response = $_.Exception.Response
     if (-not $response) {
@@ -388,28 +391,43 @@ foreach ($hostCheck in $canonicalHostChecks) {
   Write-Host "OK $($hostCheck.From) redirects to $location"
 }
 
-foreach ($check in $checks) {
-  $url = "$BaseUrl$($check.Path)"
-  $containsMarker = $check["Contains"]
-  $notContainsMarker = $check["NotContains"]
+$checksByPath = $checks | Group-Object { $_.Path }
+foreach ($pathGroup in $checksByPath) {
+  $path = [string]$pathGroup.Name
+  $url = "$BaseUrl$path"
+  $pathChecks = @($pathGroup.Group)
+  $requiresContent = $false
+  foreach ($check in $pathChecks) {
+    if ($check["Contains"] -or $check["NotContains"]) {
+      $requiresContent = $true
+      break
+    }
+  }
+
   try {
-    if ($containsMarker -or $notContainsMarker) {
-      $response = Invoke-WebRequest -Uri $url -Method Get -MaximumRedirection 5 -TimeoutSec 30
+    if ($requiresContent) {
+      $response = Invoke-WebRequest -Uri $url -Method Get -MaximumRedirection 5 -TimeoutSec 30 -Headers $requestHeaders
       if ($response.StatusCode -ne 200) {
         $failures += "$url returned $($response.StatusCode)"
         continue
       }
       $content = Get-ResponseText $response
-      if ($containsMarker -and -not ($content -like "*$containsMarker*")) {
-        $failures += "$url missing marker: $containsMarker"
-        continue
+      $pathFailed = $false
+      foreach ($check in $pathChecks) {
+        $containsMarker = $check["Contains"]
+        $notContainsMarker = $check["NotContains"]
+        if ($containsMarker -and -not ($content -like "*$containsMarker*")) {
+          $failures += "$url missing marker: $containsMarker"
+          $pathFailed = $true
+        }
+        if ($notContainsMarker -and ($content -like "*$notContainsMarker*")) {
+          $failures += "$url contains forbidden marker: $notContainsMarker"
+          $pathFailed = $true
+        }
       }
-      if ($notContainsMarker -and ($content -like "*$notContainsMarker*")) {
-        $failures += "$url contains forbidden marker: $notContainsMarker"
-        continue
-      }
+      if ($pathFailed) { continue }
     } else {
-      $response = Invoke-WebRequest -Uri $url -Method Head -MaximumRedirection 5 -TimeoutSec 30
+      $response = Invoke-WebRequest -Uri $url -Method Head -MaximumRedirection 5 -TimeoutSec 30 -Headers $requestHeaders
       if ($response.StatusCode -ne 200) {
         $failures += "$url returned $($response.StatusCode)"
         continue
