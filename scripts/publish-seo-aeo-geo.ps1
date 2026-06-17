@@ -54,6 +54,8 @@ for (const file of htmlFiles) {
   if (!html.includes('/person.json')) throw new Error(`${file} missing compact Person JSON-LD link`);
   if (!html.includes('/credentials.json')) throw new Error(`${file} missing credentials.json link`);
   if (!html.includes('/answers.json')) throw new Error(`${file} missing answers.json link`);
+  if (!html.includes('/.well-known/ai-answers.json')) throw new Error(`${file} missing well-known AI answers JSON link`);
+  if (!html.includes('/.well-known/ai-profile.jsonld')) throw new Error(`${file} missing well-known AI profile JSON-LD link`);
   if (!html.includes('/jason-obawemimo.vcf')) throw new Error(`${file} missing vCard link`);
   if (!html.includes('/site.webmanifest')) throw new Error(`${file} missing site.webmanifest link`);
   if (!html.includes('/.well-known/webfinger')) throw new Error(`${file} missing WebFinger link`);
