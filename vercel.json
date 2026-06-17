@@ -32,6 +32,10 @@
         {
           "key": "X-Robots-Tag",
           "value": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        },
+        {
+          "key": "Link",
+          "value": "<https://jasonobawemimo.com/>; rel=\"canonical\", <https://jasonobawemimo.com/schema.json>; rel=\"describedby\"; type=\"application/ld+json\", <https://jasonobawemimo.com/.well-known/ai-profile.jsonld>; rel=\"alternate\"; type=\"application/ld+json\", <https://jasonobawemimo.com/llms.txt>; rel=\"alternate\"; type=\"text/plain\", <https://jasonobawemimo.com/sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\""
         }
       ]
     },

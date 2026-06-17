@@ -143,8 +143,21 @@ function hasHeaderSource(source, contentType) {
     rule.headers.some(header => header.key === 'Content-Type' && header.value === contentType)
   );
 }
+function getHeaderValue(source, key) {
+  const rule = Array.isArray(vercelConfig.headers) && vercelConfig.headers.find(rule =>
+    rule.source === source &&
+    Array.isArray(rule.headers) &&
+    rule.headers.some(header => header.key === key)
+  );
+  return rule ? rule.headers.find(header => header.key === key).value : '';
+}
 if (!hasCanonicalHostRedirect('www.jasonobawemimo.com')) throw new Error('vercel.json missing www-to-apex canonical redirect');
 if (!hasCanonicalHostRedirect('jasonresume.vercel.app')) throw new Error('vercel.json missing Vercel alias-to-apex canonical redirect');
+const discoveryLinkHeader = getHeaderValue('/(.*)', 'Link');
+for (const requiredLinkHeaderTarget of ['https://jasonobawemimo.com/schema.json', 'https://jasonobawemimo.com/.well-known/ai-profile.jsonld', 'https://jasonobawemimo.com/llms.txt', 'https://jasonobawemimo.com/sitemap-index.xml']) {
+  if (!discoveryLinkHeader.includes(requiredLinkHeaderTarget)) throw new Error(`vercel.json global Link header missing ${requiredLinkHeaderTarget}`);
+}
+if (!discoveryLinkHeader.includes('rel="canonical"') || !discoveryLinkHeader.includes('rel="describedby"') || !discoveryLinkHeader.includes('rel="sitemap"')) throw new Error('vercel.json global Link header missing canonical, describedby, or sitemap relation');
 if (!hasHeaderSource('/.well-known/ai-profile.jsonld', 'application/ld+json; charset=utf-8')) throw new Error('vercel.json missing well-known AI profile JSON-LD header');
 if (!hasHeaderSource('/.well-known/ai-answers.json', 'application/json; charset=utf-8')) throw new Error('vercel.json missing well-known AI answers JSON header');
 if (!hasHeaderSource('/.well-known/did.json', 'application/did+json; charset=utf-8')) throw new Error('vercel.json missing DID Web document header');

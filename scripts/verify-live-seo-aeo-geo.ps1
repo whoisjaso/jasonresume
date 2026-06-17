@@ -360,6 +360,15 @@ $failures = @()
 $requestHeaders = @{
   "User-Agent" = "JasonResumeLiveVerifier/1.0 (+https://jasonobawemimo.com/)"
 }
+$expectedLinkHeaderMarkers = @(
+  'rel="canonical"',
+  'rel="describedby"',
+  'rel="sitemap"',
+  'https://jasonobawemimo.com/schema.json',
+  'https://jasonobawemimo.com/.well-known/ai-profile.jsonld',
+  'https://jasonobawemimo.com/llms.txt',
+  'https://jasonobawemimo.com/sitemap-index.xml'
+)
 
 $canonicalHostChecks = @(
   @{ From = "https://www.jasonobawemimo.com/"; To = "https://jasonobawemimo.com/" },
@@ -404,6 +413,7 @@ foreach ($pathGroup in $checksByPath) {
     }
   }
 
+  $pathFailed = $false
   try {
     if ($requiresContent) {
       $response = Invoke-WebRequest -Uri $url -Method Get -MaximumRedirection 5 -TimeoutSec 30 -Headers $requestHeaders
@@ -412,7 +422,6 @@ foreach ($pathGroup in $checksByPath) {
         continue
       }
       $content = Get-ResponseText $response
-      $pathFailed = $false
       foreach ($check in $pathChecks) {
         $containsMarker = $check["Contains"]
         $notContainsMarker = $check["NotContains"]
@@ -425,7 +434,6 @@ foreach ($pathGroup in $checksByPath) {
           $pathFailed = $true
         }
       }
-      if ($pathFailed) { continue }
     } else {
       $response = Invoke-WebRequest -Uri $url -Method Head -MaximumRedirection 5 -TimeoutSec 30 -Headers $requestHeaders
       if ($response.StatusCode -ne 200) {
@@ -433,6 +441,18 @@ foreach ($pathGroup in $checksByPath) {
         continue
       }
     }
+
+    if ($path -eq "/" -or $path -eq "/schema.json") {
+      $linkHeader = [string]$response.Headers["Link"]
+      foreach ($marker in $expectedLinkHeaderMarkers) {
+        if (-not ($linkHeader -like "*$marker*")) {
+          $failures += "$url missing Link header marker: $marker"
+          $pathFailed = $true
+        }
+      }
+    }
+
+    if ($pathFailed) { continue }
     Write-Host "OK $url"
   } catch {
     $failures += "$url failed: $($_.Exception.Message)"
