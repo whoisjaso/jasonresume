@@ -149,6 +149,9 @@ if (!fs.readFileSync('.well-known/llms.txt', 'utf8').includes(linkedInUrl)) thro
 const credential = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#credential-anthropic');
 const person = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#jason-obawemimo');
 const occupation = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#occupation-web-design-workflow-systems-builder');
+const website = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#website');
+const homepage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#homepage');
+const knowledgeCardPage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card');
 const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const sitemapIndex = fs.readFileSync('sitemap-index.xml', 'utf8');
 const imageSitemap = fs.readFileSync('image-sitemap.xml', 'utf8');
@@ -160,6 +163,14 @@ if (!person || person.hasOccupation?.['@id'] !== 'https://jasonobawemimo.com/#oc
 if (!person.contactPoint || person.contactPoint.email !== 'jobawems@gmail.com') throw new Error('schema.json missing professional contact point');
 if (!Array.isArray(person.knowsLanguage) || !person.knowsLanguage.includes('English')) throw new Error('schema.json missing knowsLanguage English');
 if (!occupation || occupation.name !== 'Web Design and Workflow Systems Builder' || !JSON.stringify(occupation).includes('Model Context Protocol')) throw new Error('schema.json missing occupation node');
+if (!website || !Array.isArray(website.hasPart) || website.hasPart.length < 8) throw new Error('schema.json missing WebSite hasPart page graph');
+for (const requiredPartId of ['https://jasonobawemimo.com/#homepage', 'https://jasonobawemimo.com/jason-obawemimo.html#profile-page', 'https://jasonobawemimo.com/credentials.html#webpage', 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/resume-pdf.html#webpage']) {
+  if (!website.hasPart.some(part => part['@id'] === requiredPartId)) throw new Error(`schema.json WebSite hasPart missing ${requiredPartId}`);
+}
+if (!homepage || homepage['@type'] !== 'ProfilePage' || homepage.mainEntity?.['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('schema.json missing homepage ProfilePage node');
+if (!JSON.stringify(homepage).includes(wellKnownAiProfileUrl) || !JSON.stringify(homepage).includes(wellKnownAiAnswersUrl) || !JSON.stringify(homepage).includes('SpeakableSpecification')) throw new Error('schema.json homepage ProfilePage missing AI links or speakable guidance');
+if (!knowledgeCardPage || knowledgeCardPage['@type'] !== 'ProfilePage' || knowledgeCardPage.mainEntity?.['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('schema.json missing knowledge-card ProfilePage node');
+if (!JSON.stringify(knowledgeCardPage).includes(knowledgeCardJsonLdUrl) || !JSON.stringify(knowledgeCardPage).includes(wellKnownAiProfileUrl) || !JSON.stringify(knowledgeCardPage).includes(wellKnownAiAnswersUrl)) throw new Error('schema.json knowledge-card ProfilePage missing high-signal links');
 if (profile['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('profile.jsonld missing canonical Person @id');
 if (!profile.hasOccupation || profile.hasOccupation.name !== 'Web Design and Workflow Systems Builder') throw new Error('profile.jsonld missing occupation');
 if (!profile.contactPoint || profile.contactPoint.email !== 'jobawems@gmail.com') throw new Error('profile.jsonld missing contact point');
