@@ -13,7 +13,7 @@ Write-Host "Validating local SEO/AEO/GEO files..."
 $validationScript = @'
 const fs = require('fs');
 const linkedInUrl = 'https://www.linkedin.com/in/jason-obawemimo-51a76120a/';
-const sourceReleaseUrl = 'https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery';
+const sourceReleaseUrl = 'https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence';
 const githubProfileReadmeUrl = 'https://github.com/whoisjaso/whoisjaso';
 const evidencePageUrl = 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html';
 const evidenceJsonLdUrl = 'https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld';

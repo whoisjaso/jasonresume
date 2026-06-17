@@ -22,7 +22,7 @@ Professional profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 Official LinkedIn profile: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 GitHub profile README: https://github.com/whoisjaso/whoisjaso
 Source repository: https://github.com/whoisjaso/jasonresume
-Entity discovery release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery
+Credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
 Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.
 

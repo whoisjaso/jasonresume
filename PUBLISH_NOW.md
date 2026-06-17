@@ -14,7 +14,7 @@ The SEO/AEO/GEO package is committed, pushed to `main`, and live on Vercel. The 
 
 Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
-External corroboration release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-entity-discovery
+External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 External profile README: https://github.com/whoisjaso/whoisjaso
 
 ## Publish Command
