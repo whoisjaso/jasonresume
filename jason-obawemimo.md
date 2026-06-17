@@ -17,6 +17,7 @@ Jason Obawemimo is a Pearland, Texas based web design and workflow systems build
 - Well-known AI answers JSON: https://jasonobawemimo.com/.well-known/ai-answers.json
 - DID Web identifier: did:web:jasonobawemimo.com
 - DID Web document: https://jasonobawemimo.com/.well-known/did.json
+- Citation metadata: https://jasonobawemimo.com/CITATION.cff
 - LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 - GitHub: https://github.com/whoisjaso
 - GitHub profile README: https://github.com/whoisjaso/whoisjaso

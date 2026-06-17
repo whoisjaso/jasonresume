@@ -14,7 +14,10 @@
     "available_language": "English",
     "same_as": [
       "https://jasonobawemimo.com/",
+      "did:web:jasonobawemimo.com",
       "https://github.com/whoisjaso",
+      "https://github.com/whoisjaso/whoisjaso",
+      "https://whoisjaso.github.io/whoisjaso/",
       "https://github.com/whoisjaso/jasonresume",
       "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
       "https://thetriplejauto.com/"
@@ -84,6 +87,7 @@
     "webfinger": "https://jasonobawemimo.com/.well-known/webfinger",
     "host_meta": "https://jasonobawemimo.com/.well-known/host-meta",
     "humans": "https://jasonobawemimo.com/humans.txt",
+    "citation_cff": "https://jasonobawemimo.com/CITATION.cff",
     "sitemap_index": "https://jasonobawemimo.com/sitemap-index.xml",
     "sitemap": "https://jasonobawemimo.com/sitemap.xml",
     "image_sitemap": "https://jasonobawemimo.com/image-sitemap.xml",

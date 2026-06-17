@@ -75,6 +75,11 @@
       "id": "did:web:jasonobawemimo.com#vcard",
       "type": "VCard",
       "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo.vcf"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#citation",
+      "type": "CitationMetadata",
+      "serviceEndpoint": "https://jasonobawemimo.com/CITATION.cff"
     }
   ]
 }

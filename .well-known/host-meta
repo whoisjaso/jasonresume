@@ -22,6 +22,7 @@
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/identity.json" />
   <Link rel="describedby" type="application/json" href="https://jasonobawemimo.com/.well-known/ai-answers.json" />
   <Link rel="describedby" type="application/did+json" href="https://jasonobawemimo.com/.well-known/did.json" />
+  <Link rel="describedby" type="text/yaml" href="https://jasonobawemimo.com/CITATION.cff" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/person.json" />
   <Link rel="describedby" type="application/ld+json" href="https://jasonobawemimo.com/.well-known/ai-profile.jsonld" />
   <Link rel="describedby" type="text/markdown" href="https://jasonobawemimo.com/jason-obawemimo.md" />

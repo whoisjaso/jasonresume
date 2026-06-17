@@ -22,7 +22,8 @@
         "@type": "DataDownload",
         "encodingFormat": "application/ld+json",
         "contentUrl": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld"
-      }
+      },
+      "citation": "https://jasonobawemimo.com/CITATION.cff"
     },
     {
       "@type": "Person",
@@ -78,6 +79,7 @@
         "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
         "https://jasonobawemimo.com/.well-known/ai-answers.json",
         "https://jasonobawemimo.com/.well-known/did.json",
+        "https://jasonobawemimo.com/CITATION.cff",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
         "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",

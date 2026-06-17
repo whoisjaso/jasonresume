@@ -6,7 +6,10 @@
   "identifier": "jason-obawemimo",
   "same_as": [
     "https://jasonobawemimo.com/",
+    "did:web:jasonobawemimo.com",
     "https://github.com/whoisjaso",
+    "https://github.com/whoisjaso/whoisjaso",
+    "https://whoisjaso.github.io/whoisjaso/",
     "https://github.com/whoisjaso/jasonresume",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "https://thetriplejauto.com/"
@@ -108,6 +111,7 @@
     "sitemap": "https://jasonobawemimo.com/sitemap.xml",
     "image_sitemap": "https://jasonobawemimo.com/image-sitemap.xml",
     "feed": "https://jasonobawemimo.com/feed.xml",
+    "citation_cff": "https://jasonobawemimo.com/CITATION.cff",
     "github_profile_readme": "https://github.com/whoisjaso/whoisjaso",
     "github_pages_profile_mirror": "https://whoisjaso.github.io/whoisjaso/",
     "source_repository": "https://github.com/whoisjaso/jasonresume",

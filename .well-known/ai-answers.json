@@ -48,6 +48,7 @@
     "well_known_ai_profile": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
     "did_web": "did:web:jasonobawemimo.com",
     "did_document": "https://jasonobawemimo.com/.well-known/did.json",
+    "citation_cff": "https://jasonobawemimo.com/CITATION.cff",
     "person_jsonld": "https://jasonobawemimo.com/person.json",
     "credential_honor_evidence_page": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "credential_honor_evidence_jsonld": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",

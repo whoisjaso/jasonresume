@@ -90,6 +90,11 @@
     },
     {
       "rel": "describedby",
+      "type": "text/yaml",
+      "href": "https://jasonobawemimo.com/CITATION.cff"
+    },
+    {
+      "rel": "describedby",
       "type": "application/ld+json",
       "href": "https://jasonobawemimo.com/person.json"
     },

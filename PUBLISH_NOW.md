@@ -20,6 +20,7 @@ Well-known AI profile JSON-LD: https://jasonobawemimo.com/.well-known/ai-profile
 Well-known AI answers JSON: https://jasonobawemimo.com/.well-known/ai-answers.json
 DID Web identifier: did:web:jasonobawemimo.com
 DID Web document: https://jasonobawemimo.com/.well-known/did.json
+Citation metadata: https://jasonobawemimo.com/CITATION.cff
 Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 External profile README: https://github.com/whoisjaso/whoisjaso
@@ -56,6 +57,7 @@ After publish, these must return `200 OK`:
 - https://jasonobawemimo.com/.well-known/ai-profile.jsonld
 - https://jasonobawemimo.com/.well-known/ai-answers.json
 - https://jasonobawemimo.com/.well-known/did.json
+- https://jasonobawemimo.com/CITATION.cff
 - https://jasonobawemimo.com/llms.txt
 - https://jasonobawemimo.com/llms-full.txt
 - https://jasonobawemimo.com/ai.txt
@@ -67,4 +69,4 @@ After publish, these must return `200 OK`:
 
 ## Post-Publish
 
-Submit `https://jasonobawemimo.com/sitemap-index.xml`, `https://jasonobawemimo.com/sitemap.xml`, and `https://jasonobawemimo.com/image-sitemap.xml` in Google Search Console and Bing Webmaster Tools, then request inspection for the homepage, entity profile, exact-name Markdown profile, compact Person JSON-LD, credentials page, verified answers page, public mentions page, and credential PDFs.
+Submit `https://jasonobawemimo.com/sitemap-index.xml`, `https://jasonobawemimo.com/sitemap.xml`, and `https://jasonobawemimo.com/image-sitemap.xml` in Google Search Console and Bing Webmaster Tools, then request inspection for the homepage, entity profile, exact-name Markdown profile, compact Person JSON-LD, citation metadata, credentials page, verified answers page, public mentions page, and credential PDFs.

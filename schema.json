@@ -193,6 +193,7 @@
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
         "https://jasonobawemimo.com/faq.jsonld",
         "https://jasonobawemimo.com/feed.xml",
+        "https://jasonobawemimo.com/CITATION.cff",
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume",
@@ -300,6 +301,7 @@
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
       },
       "citation": [
+        "https://jasonobawemimo.com/CITATION.cff",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
@@ -324,7 +326,8 @@
         "@type": "DataDownload",
         "encodingFormat": "application/ld+json",
         "contentUrl": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
-      }
+      },
+      "citation": "https://jasonobawemimo.com/CITATION.cff"
     },
     {
       "@type": "Dataset",
@@ -342,7 +345,8 @@
         "@type": "DataDownload",
         "encodingFormat": "application/ld+json",
         "contentUrl": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld"
-      }
+      },
+      "citation": "https://jasonobawemimo.com/CITATION.cff"
     },
     {
       "@type": "ProfilePage",

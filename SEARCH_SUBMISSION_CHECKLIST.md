@@ -37,6 +37,7 @@ Confirm each URL returns `200 OK` before submitting:
 - https://jasonobawemimo.com/.well-known/did.json
 - https://jasonobawemimo.com/.well-known/webfinger
 - https://jasonobawemimo.com/.well-known/host-meta
+- https://jasonobawemimo.com/CITATION.cff
 - https://jasonobawemimo.com/schema.json
 - https://jasonobawemimo.com/profile.jsonld
 - https://jasonobawemimo.com/credentials.jsonld
@@ -97,6 +98,7 @@ Request inspection/indexing for these URLs first:
 - `https://jasonobawemimo.com/.well-known/ai-answers.json`
 - `did:web:jasonobawemimo.com`
 - `https://jasonobawemimo.com/.well-known/did.json`
+- `https://jasonobawemimo.com/CITATION.cff`
 - `https://jasonobawemimo.com/profile.jsonld`
 - `https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf`
 - `https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf`
@@ -144,7 +146,7 @@ After Vercel finishes deploying, run:
 powershell -ExecutionPolicy Bypass -File .\scripts\verify-live-seo-aeo-geo.ps1
 ```
 
-This checks live HTML, sitemap, feed, robots, llms files, AI guidance files, structured data, OpenSearch, IndexNow key, resume PDF, certificates PDF, and degree PDF.
+This checks live HTML, sitemap, feed, robots, llms files, AI guidance files, structured data, citation metadata, OpenSearch, IndexNow key, resume PDF, certificates PDF, and degree PDF.
 
 ## 7. Reinforce Entity Consistency
 
@@ -155,7 +157,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Short title: Web Design and Workflow Systems Builder
 - Location: Pearland, Texas
 - Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
-- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
+- Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, CITATION.cff, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, and the public mentions page.
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
 - Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld

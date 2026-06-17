@@ -20,6 +20,7 @@
         "encodingFormat": "application/ld+json",
         "contentUrl": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
       },
+      "citation": "https://jasonobawemimo.com/CITATION.cff",
       "mainEntity": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
       }
@@ -51,6 +52,7 @@
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
       },
       "citation": [
+        "https://jasonobawemimo.com/CITATION.cff",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
@@ -97,6 +99,7 @@
       ],
       "sameAs": [
         "https://jasonobawemimo.com/",
+        "did:web:jasonobawemimo.com",
         "https://github.com/whoisjaso",
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
@@ -116,6 +119,7 @@
         "https://jasonobawemimo.com/answers.json",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
+        "https://jasonobawemimo.com/CITATION.cff",
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"

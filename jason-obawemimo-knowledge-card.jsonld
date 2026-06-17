@@ -22,7 +22,8 @@
         "@type": "DataDownload",
         "encodingFormat": "application/ld+json",
         "contentUrl": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld"
-      }
+      },
+      "citation": "https://jasonobawemimo.com/CITATION.cff"
     },
     {
       "@type": "ProfilePage",
@@ -108,6 +109,7 @@
         "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
         "https://jasonobawemimo.com/.well-known/ai-answers.json",
         "https://jasonobawemimo.com/.well-known/did.json",
+        "https://jasonobawemimo.com/CITATION.cff",
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
