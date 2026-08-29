@@ -48,17 +48,6 @@ Jason Obawemimo designs and builds:
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
 
-
-## Ventures
-
-### Apohenia, Deal Packet Checker
-
-Apohenia (https://apohenia.com/) is Jason Obawemimo's company. Its first product, Deal Packet Checker, is transaction intelligence for Texas independent auto dealers: it scans a deal packet before webDEALER sees it, cross-checks the documents against each other, and returns a short list of exceptions for a human title clerk. It is on a founding waitlist with Texas pilot places. Apohenia is not affiliated with TxDMV, webDEALER, or any county office and makes no approval guarantee.
-
-### Triple J Auto Investment
-
-Triple J Auto Investment (https://thetriplejauto.com/) is a Houston, Texas used vehicle dealership at 8774 Almeda Genoa Rd, co-owned and operated by Jason Obawemimo. It sells cars, trucks and SUVs with in-house financing and pre-qualification, sell and trade valuations, and registration and title support, under the promise of clear vehicles, clear terms, real people.
-
 ## Credentials
 
 Jason Obawemimo lists an Anthropic course-completion portfolio. The proof PDF is available at:

@@ -2,28 +2,7 @@
 
 Canonical website: https://jasonobawemimo.com/
 
-Jason Obawemimo is a Pearland, Texas based web systems and workflow builder. He founded Apohenia, which makes Deal Packet Checker for Texas independent auto dealers, and co-owns and operates Triple J Auto Investment in Houston. His focus is conversion-focused websites, workflow automation, AI-assisted operations, and business value.
-
-## Ventures
-
-### Apohenia, Deal Packet Checker
-
-- Site: https://apohenia.com/
-- Role: founder, product and build
-- What it is: transaction intelligence for Texas independent auto dealers. It scans a deal packet before webDEALER sees it, cross-checks the documents against each other, and returns a short list of exceptions for a human title clerk.
-- Problem it removes: a title packet leaves the dealership looking finished, and three weeks later the county sends it back over one missing signature, by which point the deal has gone sideways.
-- Stage: founding waitlist, Texas pilot places.
-- Stack: Supabase, PostgreSQL, Vercel, Claude, Model Context Protocol, document parsing.
-- Disclosure: not affiliated with TxDMV, webDEALER, or any county office. No approval guarantee.
-
-### Triple J Auto Investment
-
-- Site: https://thetriplejauto.com/
-- Role: co-owner and operator
-- What it is: a Houston, Texas used vehicle dealership at 8774 Almeda Genoa Rd selling cars, trucks and SUVs with in-house financing and pre-qualification, sell and trade valuations, and registration and title support.
-- Promise: clear vehicles, clear terms, real people.
-- Problem it removes: buyers with steady work and thin credit get bounced between lots that will not put a number on paper until the very last minute.
-- Hours: Monday to Saturday, 9:00 to 19:00.
+Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.
 
 ## Official Identity
 
