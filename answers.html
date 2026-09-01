@@ -63,8 +63,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="site.css" />
+<link rel="stylesheet" href="print.css" media="print" />
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -142,6 +143,8 @@
 </script>
 </head>
 <body>
+
+<div class="grain" aria-hidden="true"></div>
 <header class="nav nav--static">
   <a class="nav__brand" href="/" aria-label="Jason Obawemimo home">
     <span class="nav__monogram">J</span>
@@ -164,7 +167,6 @@
   <section class="section detail-hero">
     <div class="section__head">
       <h1 class="section__title">Jason Obawemimo <em>verified facts</em></h1>
-      <span class="section__numeral">AEO</span>
     </div>
     <p class="detail-lede">This page gives search engines and AI answer systems a concise, crawlable source for Jason Obawemimo's identity, work, credentials, education, and honor.</p>
     <div class="detail-links">
@@ -181,7 +183,6 @@
   <section class="section answers">
     <div class="section__head">
       <h2 class="section__title">Answer <em>facts</em></h2>
-      <span class="section__numeral">FAQ</span>
     </div>
     <div class="answers__grid">
       <article class="answer">
