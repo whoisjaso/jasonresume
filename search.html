@@ -9,9 +9,9 @@
 <meta name="author" content="Jason Obawemimo" />
 <meta name="application-name" content="Jason Obawemimo" />
 <meta name="apple-mobile-web-app-title" content="Jason Obawemimo" />
-<meta name="msapplication-TileColor" content="#1e5947" />
+<meta name="msapplication-TileColor" content="#0a0d0b" />
 <meta name="msapplication-config" content="/browserconfig.xml" />
-<meta name="theme-color" content="#1e5947" />
+<meta name="theme-color" content="#0a0d0b" />
 <link rel="canonical" href="https://jasonobawemimo.com/search.html" />
 <link rel="cite-as" href="https://jasonobawemimo.com/" />
 <link rel="me" href="https://github.com/whoisjaso" />
@@ -64,8 +64,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="site.css" />
+<link rel="stylesheet" href="print.css" media="print" />
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -101,6 +102,8 @@
 </script>
 </head>
 <body>
+
+<div class="grain" aria-hidden="true"></div>
 <header class="nav nav--static">
   <a class="nav__brand" href="/" aria-label="Jason Obawemimo home">
     <span class="nav__monogram">J</span>
@@ -122,7 +125,6 @@
   <section class="section detail-hero">
     <div class="section__head">
       <h1 class="section__title">Search Jason <em>Obawemimo</em></h1>
-      <span class="section__numeral">Find</span>
     </div>
     <p class="detail-lede">Search the official site for Jason Obawemimo's identity, web design and workflow systems focus, Anthropic coursework, Associate of Arts in Business, GPA 3.63, Dean's Honor List recognition, and public evidence sources.</p>
     <form class="search-panel" action="/search.html" method="get" role="search">
@@ -217,5 +219,7 @@
   applySearch(initialQuery);
 })();
 </script>
+<script src="site.js"></script>
+
 </body>
 </html>

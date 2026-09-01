@@ -2,3 +2,7 @@
 .env*.local
 release/
 assets/jason-obawemimo-og.png
+
+node_modules/
+package-lock.json
+_*.mjs

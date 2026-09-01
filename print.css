@@ -1,0 +1,6 @@
+/* Print sheet, linked with media="print". */
+.grain, .nav, .menu, .intake, #jg-loader, #jg-gate, #jg-guide, #jg-fab { display: none !important; }
+body { background: #ffffff; color: #111111; }
+a { color: #111111; }
+.section, .venture, .band, .contact { border-color: #cccccc; page-break-inside: avoid; }
+.hero__portrait, .device { box-shadow: none; }
