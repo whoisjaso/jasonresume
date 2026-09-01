@@ -11,9 +11,9 @@
 <meta name="publisher" content="Jason Obawemimo" />
 <meta name="application-name" content="Jason Obawemimo" />
 <meta name="apple-mobile-web-app-title" content="Jason Obawemimo" />
-<meta name="msapplication-TileColor" content="#1e5947" />
+<meta name="msapplication-TileColor" content="#0a0d0b" />
 <meta name="msapplication-config" content="/browserconfig.xml" />
-<meta name="theme-color" content="#1e5947" />
+<meta name="theme-color" content="#0a0d0b" />
 <link rel="canonical" href="https://jasonobawemimo.com/" />
 <link rel="cite-as" href="https://jasonobawemimo.com/" />
 <link rel="me" href="https://github.com/whoisjaso" />
@@ -57,18 +57,18 @@
 <meta property="og:description" content="Founder of Apohenia and Pearland, Texas web systems builder focused on conversion websites, workflow systems, and practical AI-assisted operations." />
 <meta property="og:site_name" content="Jason Obawemimo" />
 <meta property="og:locale" content="en_US" />
-<meta property="og:image" content="https://jasonobawemimo.com/assets/jason-headshot.png" />
-<meta property="og:image:secure_url" content="https://jasonobawemimo.com/assets/jason-headshot.png" />
-<meta property="og:image:type" content="image/png" />
+<meta property="og:image" content="https://jasonobawemimo.com/assets/og-film.jpg" />
+<meta property="og:image:secure_url" content="https://jasonobawemimo.com/assets/og-film.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content="Jason Obawemimo - Web Design and Workflow Systems" />
 <meta property="profile:first_name" content="Jason" />
 <meta property="profile:last_name" content="Obawemimo" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Jason Obawemimo | Founder of Apohenia" />
 <meta name="twitter:description" content="Founder of Apohenia and web systems builder focused on conversion websites, workflow systems, and practical AI-assisted operations." />
-<meta name="twitter:image" content="https://jasonobawemimo.com/assets/jason-headshot.png" />
+<meta name="twitter:image" content="https://jasonobawemimo.com/assets/og-film.jpg" />
 <meta name="twitter:image:alt" content="Jason Obawemimo - Web Design and Workflow Systems" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
@@ -98,6 +98,9 @@
         "@type": "SearchAction",
         "target": "https://jasonobawemimo.com/search.html?q={search_term_string}",
         "query-input": "required name=search_term_string"
+      },
+      "image": {
+        "@id": "https://jasonobawemimo.com/#share-image"
       }
     },
     {
@@ -119,7 +122,23 @@
       "primaryImageOfPage": {
         "@id": "https://jasonobawemimo.com/#headshot"
       },
-      "dateModified": "2026-09-01"
+      "dateModified": "2026-09-01",
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": [
+          ".hero__sub",
+          ".profile__statement",
+          ".venture__problem"
+        ]
+      },
+      "mentions": [
+        {
+          "@id": "https://jasonobawemimo.com/#deal-packet-checker"
+        },
+        {
+          "@id": "https://jasonobawemimo.com/#triple-j-auto"
+        }
+      ]
     },
     {
       "@type": "Person",
@@ -380,6 +399,12 @@
       },
       "makesOffer": {
         "@id": "https://jasonobawemimo.com/#deal-packet-checker"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://jasonobawemimo.com/assets/brand/apohenia-logo.png",
+        "width": 600,
+        "height": 600
       }
     },
     {
@@ -427,6 +452,12 @@
       "openingHours": "Mo-Sa 09:00-19:00",
       "founder": {
         "@id": "https://jasonobawemimo.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://jasonobawemimo.com/assets/brand/triplej-logo.png",
+        "width": 600,
+        "height": 600
       }
     },
     {
@@ -678,15 +709,27 @@
           }
         }
       ]
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://jasonobawemimo.com/#share-image",
+      "url": "https://jasonobawemimo.com/assets/og-film.jpg",
+      "contentUrl": "https://jasonobawemimo.com/assets/og-film.jpg",
+      "width": 1200,
+      "height": 630,
+      "caption": "Jason Obawemimo. Are you an interviewer, a business partner, or just lurking?"
     }
   ]
 }
 </script>
 </head>
 <body class="is-loading">
+<a class="skip" href="#thesis">Skip to content</a>
 <noscript><style>body.is-loading{overflow:auto}.nav{opacity:1!important;transform:none!important;pointer-events:auto!important}.hero__name .line>span,.hero__sub,.hero__meta,.hero__portrait{opacity:1!important;transform:none!important}</style></noscript>
 
 <div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="jg-bars" aria-hidden="true"></div>
 
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
   <defs>
@@ -740,6 +783,7 @@
 <main id="top">
 
   <section class="hero" data-screen-label="Hero">
+    <canvas class="hero__dust" aria-hidden="true"></canvas>
     <div>
       <h1 class="hero__name"><span class="line"><span>Jason</span></span><span class="line"><span>Obawemimo</span></span></h1>
       <p class="hero__sub">I build what sits <strong>underneath</strong> a business: the site people land on, the paperwork that gets checked before it costs a deal, and the follow-up that <em>actually happens</em>.</p>
@@ -750,7 +794,7 @@
         <div><span class="label">Direct</span><a href="mailto:jobawems@gmail.com">jobawems@gmail.com</a></div>
       </div>
     </div>
-    <figure class="hero__portrait">
+    <figure class="hero__portrait" data-tilt>
       <picture>
         <source type="image/webp" srcset="assets/jason-headshot-620.webp 620w, assets/jason-headshot-900.webp 900w, assets/jason-headshot-1200.webp 1200w" sizes="(max-width: 1080px) 78vw, 34vw" />
         <img src="assets/jason-headshot.png" width="1200" height="1200" alt="Jason Obawemimo in a deep green suit and gold-rimmed glasses" fetchpriority="high" decoding="async" />
@@ -758,8 +802,9 @@
     </figure>
   </section>
 
-  <section class="section" id="thesis" data-screen-label="Approach">
+  <section class="section scene" id="thesis" data-codex="handoff" data-screen-label="Approach">
     <div class="section__head">
+      <span class="chapter-mark">Chapter I</span>
       <h2 class="section__title">A site is the front door. The <em>system behind it</em> is the business.</h2>
     </div>
     <div class="profile__grid">
@@ -803,9 +848,9 @@
     </div>
   </section>
 
-  <section class="venture" id="work" data-venture data-screen-label="Apohenia">
+  <section class="venture venture--emerald scene" id="work" data-venture data-codex="apohenia,dpc" data-screen-label="Apohenia">
     <div class="venture__head" data-reveal>
-      <h2 class="venture__name"><a href="https://apohenia.com" target="_blank" rel="noopener">Apohenia</a></h2>
+      <h2 class="venture__name"><img class="venture__mark" src="assets/brand/apohenia.png" alt="" width="64" height="64" loading="lazy" onerror="this.remove()" /><a href="https://apohenia.com" target="_blank" rel="noopener">Apohenia</a><span class="chapter-mark chapter-mark--inline">Chapter II</span></h2>
       <span class="venture__status">Founding waitlist, Texas pilot</span>
     </div>
     <div class="venture__body">
@@ -829,9 +874,9 @@
     </div>
   </section>
 
-  <section class="venture venture--gold" id="triple-j" data-venture data-screen-label="Triple J Auto">
+  <section class="venture scene" id="triple-j" data-venture data-codex="triplej" data-screen-label="Triple J Auto">
     <div class="venture__head" data-reveal>
-      <h2 class="venture__name"><a href="https://thetriplejauto.com" target="_blank" rel="noopener">Triple J Auto Investment</a></h2>
+      <h2 class="venture__name"><img class="venture__mark" src="assets/brand/triplej.png" alt="" width="64" height="64" loading="lazy" onerror="this.remove()" /><a href="https://thetriplejauto.com" target="_blank" rel="noopener">Triple J Auto Investment</a><span class="chapter-mark chapter-mark--inline">Chapter III</span></h2>
       <span class="venture__status">Operating, Houston TX</span>
     </div>
     <div class="venture__body">
@@ -862,8 +907,8 @@
     </div>
   </section>
 
-  <section class="section" id="experience" data-screen-label="Experience">
-    <div class="section__head"><h2 class="section__title">The <em>record</em></h2></div>
+  <section class="section scene" id="experience" data-codex="record" data-screen-label="Experience">
+    <div class="section__head"><span class="chapter-mark">Chapter IV</span><h2 class="section__title">The <em>record</em></h2></div>
     <div class="xp">
       <article class="xp__item" data-reveal>
         <div class="xp__meta"><p class="xp__dates">Sep 2024 to present</p><span class="label">Remote, Pearland TX</span></div>
@@ -895,7 +940,7 @@
     </div>
   </section>
 
-  <section class="section" id="capabilities" data-screen-label="Capabilities">
+  <section class="section scene" id="capabilities" data-codex="stack" data-screen-label="Capabilities">
     <div class="section__head"><h2 class="section__title">What I can be handed on <em>day one</em></h2></div>
     <div class="caps__grid">
       <p class="profile__aside" data-reveal>Three stacks that mostly get hired separately. One person holds all three, so the page, the database behind it, and the process around it are designed by somebody who has to live with all three decisions.</p>
@@ -907,8 +952,8 @@
     </div>
   </section>
 
-  <section class="section credentials" id="credentials" data-screen-label="Credentials">
-    <div class="section__head"><h2 class="section__title">Anthropic <em>coursework</em></h2></div>
+  <section class="section credentials scene" id="credentials" data-codex="anthropic" data-screen-label="Credentials">
+    <div class="section__head"><span class="chapter-mark">Chapter V</span><h2 class="section__title">Anthropic <em>coursework</em></h2></div>
     <div class="credentials__wrap">
       <div class="credentials__copy" data-reveal>
         <h3>Claude, MCP, the API, and applied AI fluency</h3>
@@ -926,7 +971,7 @@
     </div>
   </section>
 
-  <section class="section edu" id="education" data-screen-label="Education">
+  <section class="section edu scene" id="education" data-codex="degree" data-screen-label="Education">
     <div class="section__head"><h2 class="section__title">The <em>education</em></h2></div>
     <div class="edu__grid">
       <article class="edu__card" data-reveal><span class="edu__school"><a href="https://www.sanjac.edu" target="_blank" rel="noopener">San Jacinto College South</a>, Houston TX</span><h3>Pursuing Bachelor&rsquo;s, Neuroscience</h3><p>Expected 2027.</p></article>
@@ -957,8 +1002,9 @@
     </div>
   </section>
 
-  <section class="intake" id="intake" data-screen-label="Start">
+  <section class="intake scene" id="intake" data-screen-label="Start">
     <div class="intake__head" data-reveal>
+      <span class="chapter-mark">Chapter VI</span>
       <h2 class="intake__title">Before we talk, tell me <em>where it hurts</em>.</h2>
       <p class="intake__note">Three taps. Nothing is sent anywhere and nothing is stored. It writes you a first message you can read, edit, and send from your own mail.</p>
     </div>
@@ -1005,7 +1051,7 @@
     </div>
   </section>
 
-  <section class="contact" id="contact" data-screen-label="Contact">
+  <section class="contact scene" id="contact" data-codex="terms" data-screen-label="Contact">
     <h2 class="contact__title" data-reveal>Good systems are quiet. <em>Results are not.</em></h2>
     <div data-reveal style="--i: 1;"><a class="contact__email" href="mailto:jobawems@gmail.com">jobawems@gmail.com</a></div>
     <div class="contact__grid" data-reveal style="--i: 2;">

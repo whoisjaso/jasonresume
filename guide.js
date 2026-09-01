@@ -1,163 +1,177 @@
 /* ============================================================
-   The film. Loader, the gate, and Jason the guide.
-   Builds its own DOM. Needs only section ids on the page.
+   The film, in The Vault. Loader and title, choose your path,
+   the HUD, the Codex, chapter cards, Jason's dialogue, the close.
+   Builds its own DOM. Needs section ids and data-codex on the page.
    ============================================================ */
 (function () {
   "use strict";
 
-  var RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var FINE = window.matchMedia("(pointer: fine)").matches;
+  var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var RD = matchMedia("(prefers-reduced-data: reduce)").matches;
+  var FINE = matchMedia("(pointer: fine)").matches;
+  var LOW = (navigator.hardwareConcurrency || 4) <= 4 || innerWidth < 720;
   var body = document.body;
 
   var store = {
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
-
-  function el(html) {
-    var t = document.createElement("template");
-    t.innerHTML = html.trim();
-    return t.content.firstElementChild;
-  }
-  function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
-    });
-  }
+  function el(html) { var t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  var hidden = false;
+  document.addEventListener("visibilitychange", function () { hidden = document.hidden; });
 
-  /* ---------- Icons (authored, one stroke) ---------- */
   var I = {
     sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
     mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4zM16 9.5l5 5M21 9.5l-5 5"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
-    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 7l5 5-5 5"/></svg>'
+    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 7l5 5-5 5"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h6a2 2 0 0 1 2 2v11a2 2 0 0 0-2-2H4zM20 5.5h-6a2 2 0 0 0-2 2v11a2 2 0 0 1 2-2h6z"/></svg>'
   };
 
   /* ---------- Faces ---------- */
-  var FACE_DIR = "assets/guide/";
-  var FACES = ["calm", "warm", "attentive", "serious", "surprised", "laugh", "wink"];
-  var faceOk = {};
-  var FALLBACK = "assets/jason-headshot-620.webp";
+  var FACE_DIR = "assets/guide/", FACES = ["calm", "warm", "attentive", "serious", "surprised", "laugh", "wink"];
+  var faceOk = {}, FALLBACK = "assets/jason-headshot-620.webp";
+  FACES.forEach(function (f) { var im = new Image(); im.onload = function () { faceOk[f] = true; }; im.onerror = function () { faceOk[f] = false; }; im.src = FACE_DIR + f + ".png"; });
+  function faceSrc(f) { return faceOk[f] ? FACE_DIR + f + ".png" : faceOk.calm ? FACE_DIR + "calm.png" : FALLBACK; }
 
-  FACES.forEach(function (f) {
-    var im = new Image();
-    im.onload = function () { faceOk[f] = true; };
-    im.onerror = function () { faceOk[f] = false; };
-    im.src = FACE_DIR + f + ".png";
-  });
-  function faceSrc(f) {
-    if (faceOk[f]) return FACE_DIR + f + ".png";
-    if (faceOk.calm) return FACE_DIR + "calm.png";
-    return FALLBACK;
-  }
-
-  /* ---------- Audio: synthesized, unlocked on first gesture ---------- */
-  var AC = null;
-  var muted = store.get("jg_muted") === "1";
-  function unlock() {
-    if (AC) return;
-    try {
-      AC = new (window.AudioContext || window.webkitAudioContext)();
-      if (AC.state === "suspended") AC.resume();
-    } catch (e) { AC = null; }
-  }
-  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
-    window.addEventListener(ev, unlock, { once: true, passive: true });
-  });
+  /* ---------- Audio ---------- */
+  var AC = null, muted = store.get("jg_muted") === "1", padNodes = null;
+  function unlock() { if (AC) return; try { AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (e) { AC = null; } }
+  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, unlock, { once: true, passive: true }); });
   function tone(freq, dur, type, peak, delay) {
     if (!AC || muted) return;
-    var t0 = AC.currentTime + (delay || 0);
-    var o = AC.createOscillator();
-    var g = AC.createGain();
-    o.type = type || "sine";
-    o.frequency.setValueAtTime(freq, t0);
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(peak || 0.06, t0 + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(AC.destination);
-    o.start(t0);
-    o.stop(t0 + dur + 0.05);
+    var t0 = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak || 0.06, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + dur + 0.05);
   }
   var SFX = {
-    chime: function () { tone(659.25, 0.42, "sine", 0.055); tone(987.77, 0.6, "sine", 0.04, 0.1); },
-    tick: function () { tone(880, 0.09, "triangle", 0.035); },
-    low: function () { tone(261.63, 0.8, "sine", 0.05); tone(392, 0.9, "sine", 0.03, 0.05); },
-    open: function () { tone(523.25, 0.3, "sine", 0.04); }
+    chime: function () { tone(659.25, 0.42, "sine", 0.05); tone(987.77, 0.6, "sine", 0.035, 0.1); },
+    tick: function () { tone(880, 0.09, "triangle", 0.03); },
+    low: function () { tone(196, 1.2, "sine", 0.05); tone(293.66, 1.4, "sine", 0.03, 0.06); },
+    open: function () { tone(523.25, 0.3, "sine", 0.035); },
+    discover: function () { tone(1046.5, 0.18, "sine", 0.04); tone(1318.5, 0.32, "sine", 0.035, 0.09); tone(1568, 0.5, "sine", 0.025, 0.18); },
+    chapter: function () { tone(130.81, 1.6, "sine", 0.05); tone(196, 1.6, "sine", 0.03, 0.02); tone(392, 0.9, "triangle", 0.015, 0.3); }
+  };
+  var pad = {
+    start: function () {
+      if (!AC || muted || padNodes || RD) return;
+      var g = AC.createGain(), f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 380;
+      g.gain.setValueAtTime(0.0001, AC.currentTime); g.gain.exponentialRampToValueAtTime(0.012, AC.currentTime + 2.5);
+      var os = [110, 110.6, 165].map(function (fr) { var o = AC.createOscillator(); o.type = "sine"; o.frequency.value = fr; o.connect(f); o.start(); return o; });
+      f.connect(g).connect(AC.destination); padNodes = { g: g, os: os };
+    },
+    stop: function () {
+      if (!padNodes) return; var p = padNodes; padNodes = null;
+      p.g.gain.cancelScheduledValues(AC.currentTime); p.g.gain.setValueAtTime(p.g.gain.value || 0.0001, AC.currentTime);
+      p.g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 1.5);
+      setTimeout(function () { p.os.forEach(function (o) { try { o.stop(); } catch (e) {} }); }, 1700);
+    }
   };
 
-  /* ---------- Scroll helper (site.js provides the tween) ---------- */
-  function scrollToEl(node) {
+  function scrollToEl(node, dur) {
     if (!node) return;
-    var top = node.getBoundingClientRect().top + window.scrollY;
-    var y = Math.max(0, top - Math.round(window.innerHeight * 0.14));
-    if (typeof window.JG_SCROLL_TO === "function") window.JG_SCROLL_TO(y, RM ? 0 : 1400);
-    else window.scrollTo({ top: y, behavior: RM ? "auto" : "smooth" });
+    var top = node.getBoundingClientRect().top + scrollY, y = Math.max(0, top - Math.round(innerHeight * 0.12));
+    if (typeof window.JG_SCROLL_TO === "function") window.JG_SCROLL_TO(y, RM ? 0 : (dur || 1500));
+    else scrollTo({ top: y, behavior: RM ? "auto" : "smooth" });
   }
 
   /* ============================================================
-     LOADER
+     CHAPTERS and the CODEX: the structure the game and the page share
+     ============================================================ */
+
+  var CH = [
+    { n: "I", title: "The Handoff", at: "#thesis" },
+    { n: "II", title: "The Proof", at: "#work" },
+    { n: "III", title: "The Lot", at: "#triple-j" },
+    { n: "IV", title: "The Record", at: "#experience" },
+    { n: "V", title: "The Codex", at: "#credentials" },
+    { n: "VI", title: "The Terms", at: "#intake" }
+  ];
+  var CODEX = [
+    { id: "handoff", t: "The Handoff", p: "Most operations do not break at the design. They break at the handoff.", sel: "#thesis" },
+    { id: "apohenia", t: "Apohenia", p: "The company Jason founded. Websites, and the systems that run behind them.", sel: "#work" },
+    { id: "dpc", t: "Deal Packet Checker", p: "Reads a Texas title packet before webDEALER sees it and hands a human a short list of exceptions.", sel: "#work" },
+    { id: "triplej", t: "Triple J Auto Investment", p: "The Houston dealership Jason co-owns and runs. Clear vehicles, clear terms, real people.", sel: "#triple-j" },
+    { id: "record", t: "The Record", p: "Founder since September 2024. Co-owner and operator since August 2024.", sel: "#experience" },
+    { id: "stack", t: "The Stack", p: "Supabase, PostgreSQL, Vercel, Claude, Codex, Model Context Protocol.", sel: "#capabilities" },
+    { id: "anthropic", t: "Anthropic Coursework", p: "Nineteen completed courses, one PDF, every claim with a proof page.", sel: "#credentials" },
+    { id: "degree", t: "The Degree", p: "Associate of Arts in Business. GPA 3.63. Dean’s Honor List.", sel: "#education" },
+    { id: "terms", t: "The Terms", p: "jobawems@gmail.com. Or let the intake write the first message for you.", sel: "#contact" }
+  ];
+  var found = {};
+  try { (JSON.parse(store.get("jg_codex") || "[]") || []).forEach(function (id) { found[id] = true; }); } catch (e) {}
+  function foundCount() { return CODEX.filter(function (c) { return found[c.id]; }).length; }
+
+  /* ============================================================
+     LOADER, with dust, and the title beat
      ============================================================ */
 
   var seen = store.get("jg_seen") === "1";
   var loader = el(
     '<div id="jg-loader" role="status" aria-live="polite" aria-label="Loading">' +
+      '<canvas class="jg-dust" aria-hidden="true"></canvas>' +
       '<div class="jg-loader__wrap">' +
         '<div class="jg-loader__stage">' +
           '<div class="jg-loader__medallion"><canvas></canvas></div>' +
           '<svg class="jg-ring" viewBox="0 0 100 100" aria-hidden="true">' +
-            '<circle class="jg-ring__track" cx="50" cy="50" r="48.5"/>' +
-            '<circle class="jg-ring__progress" cx="50" cy="50" r="48.5"/>' +
+            '<circle class="jg-ring__track" cx="50" cy="50" r="48.5"/><circle class="jg-ring__progress" cx="50" cy="50" r="48.5"/>' +
             '<circle class="jg-ring__orbit" cx="50" cy="50" r="45" pathLength="100" stroke-dasharray="14 86"/>' +
           '</svg>' +
         '</div>' +
         '<div class="jg-loader__pct"><span>0</span><small>%</small></div>' +
         '<div class="jg-loader__name">Jason Obawemimo</div>' +
       '</div>' +
+      '<div class="jg-title" aria-hidden="true"><div><h1>Jason <em>Obawemimo</em></h1><p>A working system, presented live</p></div></div>' +
     '</div>'
   );
   body.appendChild(loader);
 
-  var canvas = loader.querySelector("canvas");
-  var pctEl = loader.querySelector(".jg-loader__pct span");
-  var ringP = loader.querySelector(".jg-ring__progress");
-  var RING_C = 2 * Math.PI * 48.5;
-  ringP.style.strokeDasharray = RING_C;
-  ringP.style.strokeDashoffset = RING_C;
-
-  /* Water: two height fields, the classic ripple integration, then a
-     displacement pass that samples the portrait through the surface. */
-  var N = 192;
-  var cur = new Float32Array(N * N), prev = new Float32Array(N * N);
-  var src = null, out = null, octx = null, vctx = null, ripplesOn = !RM;
-
-  function setupWater(img) {
-    var off = document.createElement("canvas");
-    off.width = N; off.height = N;
-    octx = off.getContext("2d", { willReadFrequently: true });
-    // cover-crop the source into the square
-    var s = Math.min(img.naturalWidth, img.naturalHeight);
-    var sx = (img.naturalWidth - s) / 2, sy = (img.naturalHeight - s) * 0.25;
-    octx.drawImage(img, sx, sy, s, s, 0, 0, N, N);
-    src = octx.getImageData(0, 0, N, N).data;
-    out = octx.createImageData(N, N);
-
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var size = canvas.clientWidth || 300;
-    canvas.width = size * dpr; canvas.height = size * dpr;
-    vctx = canvas.getContext("2d");
-    vctx.imageSmoothingEnabled = true;
-    vctx.imageSmoothingQuality = "high";
-
-    if (!ripplesOn) {
-      vctx.drawImage(off, 0, 0, canvas.width, canvas.height);
-      return;
-    }
-    // first ring at the centre so the surface is alive immediately
-    drop(N / 2, N / 2, 6, 14);
-    requestAnimationFrame(waterFrame);
+  /* gold dust */
+  var dustC = loader.querySelector(".jg-dust"), dustCtx = null, dust = [], dustAlive = !RM && !RD;
+  function dustInit() {
+    if (!dustAlive) return;
+    var dpr = Math.min(devicePixelRatio || 1, 2);
+    dustC.width = innerWidth * dpr; dustC.height = innerHeight * dpr;
+    dustCtx = dustC.getContext("2d"); dustCtx.scale(dpr, dpr);
+    var n = LOW ? 36 : 70;
+    for (var i = 0; i < n; i++) dust.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: 0.5 + Math.random() * 1.4, a: 0.12 + Math.random() * 0.4, v: 0.08 + Math.random() * 0.2, s: Math.random() * Math.PI * 2 });
+    requestAnimationFrame(dustFrame);
   }
+  function dustFrame(t) {
+    if (!dustAlive) return;
+    if (hidden) return requestAnimationFrame(dustFrame);
+    dustCtx.clearRect(0, 0, innerWidth, innerHeight);
+    for (var i = 0; i < dust.length; i++) {
+      var p = dust[i]; p.y -= p.v; p.x += Math.sin(t / 1800 + p.s) * 0.12;
+      if (p.y < -4) { p.y = innerHeight + 4; p.x = Math.random() * innerWidth; }
+      dustCtx.beginPath(); dustCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      dustCtx.fillStyle = "rgba(230,201,100," + (p.a * (0.6 + 0.4 * Math.sin(t / 900 + p.s))) + ")"; dustCtx.fill();
+    }
+    requestAnimationFrame(dustFrame);
+  }
+  dustInit();
 
+  var canvas = loader.querySelector(".jg-loader__medallion canvas"), pctEl = loader.querySelector(".jg-loader__pct span"), ringP = loader.querySelector(".jg-ring__progress");
+  var RING_C = 2 * Math.PI * 48.5; ringP.style.strokeDasharray = RING_C; ringP.style.strokeDashoffset = RING_C;
+
+  /* water: two height fields, then a displacement pass through the surface */
+  var N = LOW ? 128 : 192, cur = new Float32Array(N * N), prev = new Float32Array(N * N);
+  var src = null, out = null, octx = null, vctx = null, ripplesOn = !RM && !RD, waterAlive = true;
+  function setupWater(img) {
+    var off = document.createElement("canvas"); off.width = N; off.height = N;
+    octx = off.getContext("2d", { willReadFrequently: true });
+    var s = Math.min(img.naturalWidth, img.naturalHeight);
+    octx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) * 0.25, s, s, 0, 0, N, N);
+    src = octx.getImageData(0, 0, N, N).data; out = octx.createImageData(N, N);
+    var dpr = Math.min(devicePixelRatio || 1, 2), size = canvas.clientWidth || 300;
+    canvas.width = size * dpr; canvas.height = size * dpr;
+    vctx = canvas.getContext("2d"); vctx.imageSmoothingEnabled = true; vctx.imageSmoothingQuality = "high";
+    if (!ripplesOn) { vctx.drawImage(off, 0, 0, canvas.width, canvas.height); return; }
+    drop(N / 2, N / 2, 6, 14); requestAnimationFrame(waterFrame);
+  }
   function drop(cx, cy, r, strength) {
     var r2 = r * r;
     for (var y = -r; y <= r; y++) for (var x = -r; x <= r; x++) {
@@ -167,165 +181,185 @@
       prev[py * N + px] += strength * (1 - (x * x + y * y) / r2);
     }
   }
-
-  var waterAlive = true;
   function waterFrame() {
     if (!waterAlive) return;
+    if (hidden) return requestAnimationFrame(waterFrame);
     var i, x, y;
-    for (y = 1; y < N - 1; y++) {
-      var row = y * N;
-      for (x = 1; x < N - 1; x++) {
-        i = row + x;
-        var v = (prev[i - 1] + prev[i + 1] + prev[i - N] + prev[i + N]) * 0.5 - cur[i];
-        cur[i] = v * 0.982;
-      }
-    }
+    for (y = 1; y < N - 1; y++) { var row = y * N; for (x = 1; x < N - 1; x++) { i = row + x; cur[i] = ((prev[i - 1] + prev[i + 1] + prev[i - N] + prev[i + N]) * 0.5 - cur[i]) * 0.982; } }
     var d = out.data, k = 0.9;
-    for (y = 0; y < N; y++) {
-      for (x = 0; x < N; x++) {
-        i = y * N + x;
-        var dx = 0, dy = 0;
-        if (x > 0 && x < N - 1 && y > 0 && y < N - 1) {
-          dx = cur[i - 1] - cur[i + 1];
-          dy = cur[i - N] - cur[i + N];
-        }
-        var sx = clamp((x + dx * k) | 0, 0, N - 1);
-        var sy = clamp((y + dy * k) | 0, 0, N - 1);
-        var si = (sy * N + sx) * 4, oi = i * 4;
-        var shade = dx * 2.2;
-        d[oi] = clamp(src[si] + shade, 0, 255);
-        d[oi + 1] = clamp(src[si + 1] + shade, 0, 255);
-        d[oi + 2] = clamp(src[si + 2] + shade, 0, 255);
-        d[oi + 3] = 255;
-      }
+    for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
+      i = y * N + x; var dx = 0, dy = 0;
+      if (x > 0 && x < N - 1 && y > 0 && y < N - 1) { dx = cur[i - 1] - cur[i + 1]; dy = cur[i - N] - cur[i + N]; }
+      var si = (clamp((y + dy * k) | 0, 0, N - 1) * N + clamp((x + dx * k) | 0, 0, N - 1)) * 4, oi = i * 4, sh = dx * 2.4;
+      d[oi] = clamp(src[si] + sh, 0, 255); d[oi + 1] = clamp(src[si + 1] + sh, 0, 255); d[oi + 2] = clamp(src[si + 2] + sh, 0, 255); d[oi + 3] = 255;
     }
     var t = cur; cur = prev; prev = t;
-    octx.putImageData(out, 0, 0);
-    vctx.drawImage(octx.canvas, 0, 0, canvas.width, canvas.height);
+    octx.putImageData(out, 0, 0); vctx.drawImage(octx.canvas, 0, 0, canvas.width, canvas.height);
     requestAnimationFrame(waterFrame);
   }
-
-  // the cursor is a finger on the surface
   var lastGx = -99, lastGy = -99;
-  function pointerRipple(e) {
+  canvas.addEventListener("pointermove", function (e) {
     if (!ripplesOn || !src) return;
-    var r = canvas.getBoundingClientRect();
-    var gx = ((e.clientX - r.left) / r.width) * N;
-    var gy = ((e.clientY - r.top) / r.height) * N;
+    var r = canvas.getBoundingClientRect(), gx = ((e.clientX - r.left) / r.width) * N, gy = ((e.clientY - r.top) / r.height) * N;
     if (Math.abs(gx - lastGx) < 1.5 && Math.abs(gy - lastGy) < 1.5) return;
-    lastGx = gx; lastGy = gy;
-    drop(gx, gy, 2.2, 5);
-  }
-  canvas.addEventListener("pointermove", pointerRipple, { passive: true });
-  canvas.addEventListener("pointerdown", function (e) {
-    var r = canvas.getBoundingClientRect();
-    drop(((e.clientX - r.left) / r.width) * N, ((e.clientY - r.top) / r.height) * N, 5, 16);
+    lastGx = gx; lastGy = gy; drop(gx, gy, 2.2, 5);
   }, { passive: true });
-
-  // the surface breathes on its own, so it moves before anyone touches it
+  canvas.addEventListener("pointerdown", function (e) { var r = canvas.getBoundingClientRect(); drop(((e.clientX - r.left) / r.width) * N, ((e.clientY - r.top) / r.height) * N, 5, 16); }, { passive: true });
   var autoTimer = null;
-  function autoRipple() {
-    if (!ripplesOn || !src) return;
-    var a = Math.random() * Math.PI * 2, rad = 30 + Math.random() * 50;
-    drop(N / 2 + Math.cos(a) * rad, N / 2 + Math.sin(a) * rad, 3, 4);
-    autoTimer = setTimeout(autoRipple, 700 + Math.random() * 900);
-  }
+  function autoRipple() { if (!ripplesOn || !src) return; var a = Math.random() * Math.PI * 2, rad = 30 + Math.random() * 50; drop(N / 2 + Math.cos(a) * rad, N / 2 + Math.sin(a) * rad, 3, 4); autoTimer = setTimeout(autoRipple, 700 + Math.random() * 900); }
 
-  // percentage that takes its time
-  var DUR = seen ? 1900 : 4800;
-  var t0 = performance.now(), assetsReady = false, finished = false;
+  var DUR = seen ? 1900 : 4800, t0 = performance.now(), assetsReady = false, finished = false;
   function easeInOutSine(p) { return -(Math.cos(Math.PI * p) - 1) / 2; }
   function pctFrame(now) {
     if (finished) return;
-    var raw = clamp((now - t0) / DUR, 0, 1);
-    var p = easeInOutSine(raw);
-    // hold at 99 until the real assets are in
-    var shown = Math.round(p * 100);
+    var raw = clamp((now - t0) / DUR, 0, 1), shown = Math.round(easeInOutSine(raw) * 100);
     if (shown >= 100 && !assetsReady) shown = 99;
-    pctEl.textContent = shown;
-    ringP.style.strokeDashoffset = RING_C * (1 - shown / 100);
+    pctEl.textContent = shown; ringP.style.strokeDashoffset = RING_C * (1 - shown / 100);
     if (raw >= 1 && assetsReady) return finishLoader();
     requestAnimationFrame(pctFrame);
   }
-
   var loaderImg = new Image();
-  loaderImg.onload = function () {
-    setupWater(loaderImg);
-    autoRipple();
-    Promise.resolve(document.fonts && document.fonts.ready).then(function () { assetsReady = true; });
-  };
+  loaderImg.onload = function () { setupWater(loaderImg); autoRipple(); Promise.resolve(document.fonts && document.fonts.ready).then(function () { assetsReady = true; }); };
   loaderImg.onerror = function () { assetsReady = true; };
   loaderImg.src = "assets/jason-loader.webp";
   requestAnimationFrame(pctFrame);
-  // never trap anyone if the image stalls
   setTimeout(function () { assetsReady = true; }, 9000);
 
   function finishLoader() {
-    finished = true;
-    pctEl.textContent = "100";
-    ringP.style.strokeDashoffset = 0;
-    store.set("jg_seen", "1");
-    SFX.low();
+    finished = true; pctEl.textContent = "100"; ringP.style.strokeDashoffset = 0; store.set("jg_seen", "1"); SFX.low();
+    var wrap = loader.querySelector(".jg-loader__wrap"), title = loader.querySelector(".jg-title");
+    var hold = RM ? 0 : 700;
     setTimeout(function () {
-      loader.classList.add("is-done");
-      clearTimeout(autoTimer);
+      wrap.style.transition = "opacity 0.8s ease, transform 0.9s ease"; wrap.style.opacity = "0"; wrap.style.transform = "scale(0.96)";
+      title.classList.add("is-in");
       setTimeout(function () {
-        waterAlive = false;
-        loader.remove();
-      }, 1100);
-      body.classList.remove("is-loading");
-      showGate();
-    }, RM ? 0 : 500);
+        loader.classList.add("is-done"); clearTimeout(autoTimer);
+        setTimeout(function () { waterAlive = false; dustAlive = false; loader.remove(); }, 1200);
+        body.classList.remove("is-loading"); showGate();
+      }, RM ? 100 : 1900);
+    }, hold);
   }
 
   /* ============================================================
-     GATE
+     CHOOSE YOUR PATH
      ============================================================ */
 
-  var ROLES = {
-    interviewer: { label: "I’m interviewing", key: "1" },
-    partner: { label: "I’m a business partner", key: "2" },
-    lurker: { label: "Just lurking", key: "3" }
+  var PATHS = {
+    interviewer: { key: "1", k: "The hiring path", h: "I’m interviewing", p: "You’ve read forty of these. This one is the work sample.", ul: ["The proof, in two builds", "The record, in order", "Resume and email in one place"] },
+    partner: { key: "2", k: "The partner path", h: "I’m a business partner", p: "Something in your business is being done by hand that shouldn’t be.", ul: ["Where it actually breaks", "What I built for it", "Your first message, written for you"] },
+    lurker: { key: "3", k: "The quiet path", h: "Just lurking", p: "No pitch. Five lines, then the site is yours.", ul: ["The weird one", "The real one", "A codex to fill"] }
   };
-
   var gate = el(
-    '<div id="jg-gate" role="dialog" aria-modal="true" aria-labelledby="jg-gate-q">' +
-      '<div class="jg-gate__wrap">' +
-        '<h1 class="jg-gate__q" id="jg-gate-q">Are you an <em>interviewer</em>, a <em>business partner</em>, or just <em>lurking</em>?</h1>' +
-        '<div class="jg-gate__choices">' +
-          Object.keys(ROLES).map(function (r, i) {
-            return '<button class="jg-choice" type="button" data-role="' + r + '" style="--d:' + (250 + i * 120) + 'ms"><span>' + ROLES[r].label + '</span><kbd>' + ROLES[r].key + '</kbd></button>';
-          }).join("") +
-        '</div>' +
-        '<button class="jg-gate__skip" type="button">Skip this, just show me the site</button>' +
-      '</div>' +
-    '</div>'
+    '<div id="jg-gate" role="dialog" aria-modal="true" aria-labelledby="jg-gate-q"><div class="jg-gate__wrap">' +
+      '<h1 class="jg-gate__q" id="jg-gate-q">Are you an <em>interviewer</em>, a <em>business partner</em>, or just <em>lurking</em>?</h1>' +
+      '<div class="jg-paths">' + Object.keys(PATHS).map(function (r, i) { var P = PATHS[r];
+        return '<button class="jg-path" type="button" data-role="' + r + '" style="--d:' + (250 + i * 130) + 'ms">' +
+          '<div class="jg-path__k"><span>' + P.k + '</span><kbd>' + P.key + '</kbd></div>' +
+          '<h2>' + P.h + '</h2><p>' + P.p + '</p><ul>' + P.ul.map(function (s) { return "<li>" + s + "</li>"; }).join("") + '</ul>' +
+          '<span class="jg-path__go">Begin</span></button>'; }).join("") +
+      '</div><button class="jg-gate__skip" type="button">Skip this, just show me the site</button></div></div>'
   );
-
   function showGate() {
-    body.classList.add("is-gated");
-    body.appendChild(gate);
+    body.classList.add("is-gated"); body.appendChild(gate);
     requestAnimationFrame(function () { requestAnimationFrame(function () { gate.classList.add("is-in"); }); });
-    gate.querySelectorAll(".jg-choice").forEach(function (b) {
+    gate.querySelectorAll(".jg-path").forEach(function (b) {
       b.addEventListener("click", function () { choose(b.dataset.role); });
+      b.addEventListener("pointerenter", function () { SFX.tick(); });
     });
     gate.querySelector(".jg-gate__skip").addEventListener("click", function () { choose(null); });
-    window.addEventListener("keydown", gateKeys);
+    addEventListener("keydown", gateKeys);
   }
   function gateKeys(e) {
     var map = { "1": "interviewer", "2": "partner", "3": "lurker" };
-    if (map[e.key]) choose(map[e.key]);
-    if (e.key === "Escape") choose(null);
+    if (map[e.key]) return choose(map[e.key]);
+    if (e.key === "Escape") return choose(null);
+    if (e.key === "Tab") { // keep focus inside the gate
+      var f = gate.querySelectorAll("button"), first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (!gate.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    }
   }
   function choose(role) {
-    window.removeEventListener("keydown", gateKeys);
-    if (role) { store.set("jg_role", role); SFX.chime(); } else { SFX.tick(); }
-    gate.classList.add("is-leaving");
-    body.classList.remove("is-gated");
-    body.classList.add("is-live");
+    removeEventListener("keydown", gateKeys);
+    if (role) { store.set("jg_role", role); SFX.chime(); var hot = gate.querySelector('[data-role="' + role + '"]'); if (hot) hot.classList.add("is-hot"); } else SFX.tick();
+    gate.classList.add("is-leaving"); body.classList.remove("is-gated"); body.classList.add("is-live");
     setTimeout(function () { gate.remove(); }, 950);
-    if (role) setTimeout(function () { openGuide(role); }, RM ? 100 : 650);
-    else showFab();
+    showHud(); startCodexWatch();
+    if (role) setTimeout(function () { openGuide(role); }, RM ? 100 : 700); else showFab();
+  }
+
+  /* ============================================================
+     HUD and the CODEX
+     ============================================================ */
+
+  var hud = el('<div id="jg-hud"><div class="jg-hud__chapter"><b><i>—</i>Arrival</b><div class="jg-hud__track">' + CH.map(function () { return "<i></i>"; }).join("") + '</div></div>' +
+    '<div class="jg-hud__right"><button class="jg-hud__codex" type="button" aria-label="Open the codex">' + I.book + '<span>Codex</span><b>0 / ' + CODEX.length + '</b></button>' +
+    '<button class="jg-ibtn jg-mute" type="button" aria-label="Sound"></button></div></div>');
+  body.appendChild(hud);
+  var hudChap = hud.querySelector(".jg-hud__chapter b"), hudTrack = hud.querySelectorAll(".jg-hud__track i"), hudCount = hud.querySelector(".jg-hud__codex b"), muteBtn = hud.querySelector(".jg-mute");
+  function showHud() { hud.classList.add("is-in"); hudCount.textContent = foundCount() + " / " + CODEX.length; }
+  function setHudChapter(idx) {
+    if (idx < 0) { hudChap.innerHTML = "<i>—</i>Arrival"; } else { hudChap.innerHTML = "<i>" + CH[idx].n + "</i>" + CH[idx].title; }
+    hudTrack.forEach(function (t, i) { t.className = i < idx ? "is-done" : i === idx ? "is-now" : ""; });
+  }
+  function setMuteIcon() { muteBtn.innerHTML = muted ? I.mute : I.sound; muteBtn.setAttribute("aria-label", muted ? "Sound off. Turn on" : "Sound on. Turn off"); }
+  setMuteIcon();
+  muteBtn.addEventListener("click", function () { muted = !muted; store.set("jg_muted", muted ? "1" : "0"); setMuteIcon(); if (muted) pad.stop(); else { SFX.tick(); if (open) pad.start(); } });
+
+  var codex = el('<aside id="jg-codex" aria-label="Codex" aria-hidden="true"><div class="jg-codex__head"><h2>Codex<small>What you have found</small></h2><button class="jg-ibtn jg-codex__close" type="button" aria-label="Close the codex">' + I.close + '</button></div><div class="jg-codex__list"></div></aside>');
+  body.appendChild(codex);
+  var codexList = codex.querySelector(".jg-codex__list");
+  function renderCodex() {
+    codexList.innerHTML = "";
+    CODEX.forEach(function (c, i) {
+      var ok = !!found[c.id];
+      var e = el('<div class="jg-entry' + (ok ? "" : " is-locked") + (c.fresh ? " is-new" : "") + '" role="button" tabindex="0"><span class="jg-entry__n">' + (i + 1) + '</span><div><h3>' + (ok ? esc(c.t) : "Undiscovered") + '</h3><p>' + (ok ? esc(c.p) : "Keep going. It is on the page.") + '</p></div></div>');
+      function go() { if (!ok) return; SFX.tick(); closeCodex(); scrollToEl(document.querySelector(c.sel)); }
+      e.addEventListener("click", go); e.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } });
+      codexList.appendChild(e);
+    });
+  }
+  function openCodex() { renderCodex(); codex.classList.add("is-open"); codex.setAttribute("aria-hidden", "false"); SFX.open(); CODEX.forEach(function (c) { c.fresh = false; }); }
+  function closeCodex() { codex.classList.remove("is-open"); codex.setAttribute("aria-hidden", "true"); }
+  hud.querySelector(".jg-hud__codex").addEventListener("click", function () { codex.classList.contains("is-open") ? closeCodex() : openCodex(); });
+  codex.querySelector(".jg-codex__close").addEventListener("click", closeCodex);
+
+  function unlock(ids) {
+    if (!Array.isArray(ids)) ids = String(ids || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    var fresh = false;
+    ids.forEach(function (id) { if (!found[id] && CODEX.some(function (c) { return c.id === id; })) { found[id] = true; fresh = true; CODEX.forEach(function (c) { if (c.id === id) c.fresh = true; }); } });
+    if (!fresh) return;
+    store.set("jg_codex", JSON.stringify(Object.keys(found)));
+    hudCount.textContent = foundCount() + " / " + CODEX.length;
+    var b = hud.querySelector(".jg-hud__codex"); b.classList.remove("is-pulse"); void b.offsetWidth; b.classList.add("is-pulse");
+    SFX.discover();
+  }
+  function startCodexWatch() {
+    var nodes = document.querySelectorAll("[data-codex]");
+    if (!("IntersectionObserver" in window)) { nodes.forEach(function (n) { unlock(n.dataset.codex.split(",")); }); return; }
+    var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { unlock(en.target.dataset.codex.split(",")); en.target.classList.add("is-lit"); } }); }, { threshold: 0.3 });
+    nodes.forEach(function (n) { io.observe(n); });
+    // the HUD chapter follows the reader
+    var cio = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { var i = CH.findIndex(function (c) { return document.querySelector(c.at) === en.target; }); if (i >= 0) setHudChapter(i); } }); }, { rootMargin: "-40% 0px -50% 0px", threshold: 0 });
+    CH.forEach(function (c) { var n = document.querySelector(c.at); if (n) cio.observe(n); });
+  }
+
+  /* ============================================================
+     CHAPTER CARDS
+     ============================================================ */
+
+  var chapterCard = el('<div id="jg-chapter" aria-hidden="true"><div><div class="jg-chapter__n"></div><h2></h2></div></div>');
+  body.appendChild(chapterCard);
+  var shownChapters = {};
+  function chapterCardFor(idx, done) {
+    if (RM || shownChapters[idx]) return done();
+    shownChapters[idx] = true;
+    var c = CH[idx];
+    chapterCard.querySelector(".jg-chapter__n").textContent = "Chapter " + c.n;
+    chapterCard.querySelector("h2").innerHTML = c.title.replace(/^The /, "The <em>") + (c.title.indexOf("The ") === 0 ? "</em>" : "");
+    body.classList.add("jg-letterbox"); chapterCard.classList.add("is-in"); SFX.chapter();
+    setTimeout(function () { chapterCard.classList.remove("is-in"); setTimeout(function () { body.classList.remove("jg-letterbox"); }, 500); done(); }, 1700);
   }
 
   /* ============================================================
@@ -333,151 +367,85 @@
      ============================================================ */
 
   var guide = el(
-    '<aside id="jg-guide" aria-label="Jason, the guide">' +
-      '<div class="jg-card">' +
-        '<div class="jg-portrait"><img alt="" src="' + FALLBACK + '" /><img alt="" src="' + FALLBACK + '" /></div>' +
-        '<div class="jg-body">' +
-          '<div class="jg-top"><div class="jg-progress" aria-hidden="true"></div>' +
-            '<div class="jg-ctl">' +
-              '<button class="jg-ibtn jg-mute" type="button" aria-label="Sound"></button>' +
-              '<button class="jg-ibtn jg-close" type="button" aria-label="Close the guide">' + I.close + '</button>' +
-            '</div></div>' +
-          '<p class="jg-say" aria-live="polite"></p>' +
-          '<div class="jg-choices"></div>' +
-          '<form class="jg-chat"><input type="text" maxlength="500" placeholder="Ask me anything about the work" aria-label="Ask Jason" autocomplete="off" /><button type="submit" aria-label="Send">' + I.send + '</button></form>' +
-          '<p class="jg-note"></p>' +
-        '</div>' +
-      '</div>' +
-    '</aside>'
+    '<aside id="jg-guide" aria-label="Jason, the guide"><div class="jg-card"><span class="jg-name">Jason</span>' +
+      '<div class="jg-portrait"><img alt="" src="' + FALLBACK + '" /><img alt="" src="' + FALLBACK + '" /></div>' +
+      '<div class="jg-body"><div class="jg-top"><div class="jg-progress" aria-hidden="true"></div><div class="jg-ctl"><button class="jg-ibtn jg-close" type="button" aria-label="Close the guide">' + I.close + '</button></div></div>' +
+      '<p class="jg-say" aria-live="polite"></p><div class="jg-choices"></div>' +
+      '<form class="jg-chat"><input type="text" maxlength="500" placeholder="Ask me anything about the work" aria-label="Ask Jason" autocomplete="off" /><button type="submit" aria-label="Send">' + I.send + '</button></form>' +
+      '<p class="jg-note"></p></div></div></aside>'
   );
   body.appendChild(guide);
-
   var fab = el('<button id="jg-fab" type="button" aria-label="Open the guide"><img alt="" src="' + FALLBACK + '" /><span>Guide</span></button>');
   body.appendChild(fab);
   function showFab() { fab.classList.add("is-in"); }
-  fab.addEventListener("click", function () {
-    SFX.open();
-    openGuide(store.get("jg_role") || "lurker");
-  });
-  document.querySelectorAll('[data-open-guide]').forEach(function (a) {
-    a.addEventListener("click", function (e) { e.preventDefault(); SFX.open(); openGuide(store.get("jg_role") || "lurker"); });
-  });
+  fab.addEventListener("click", function () { SFX.open(); openGuide(store.get("jg_role") || "lurker"); });
+  document.querySelectorAll("[data-open-guide]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); SFX.open(); openGuide(store.get("jg_role") || "lurker"); }); });
 
-  var imgs = guide.querySelectorAll(".jg-portrait img");
-  var sayEl = guide.querySelector(".jg-say");
-  var choicesEl = guide.querySelector(".jg-choices");
-  var progEl = guide.querySelector(".jg-progress");
-  var noteEl = guide.querySelector(".jg-note");
-  var chatForm = guide.querySelector(".jg-chat");
-  var chatInput = chatForm.querySelector("input");
-  var chatBtn = chatForm.querySelector("button");
-  var muteBtn = guide.querySelector(".jg-mute");
+  var imgs = guide.querySelectorAll(".jg-portrait img"), sayEl = guide.querySelector(".jg-say"), choicesEl = guide.querySelector(".jg-choices"), progEl = guide.querySelector(".jg-progress"), noteEl = guide.querySelector(".jg-note");
+  var chatForm = guide.querySelector(".jg-chat"), chatInput = chatForm.querySelector("input"), chatBtn = chatForm.querySelector("button");
   var curImg = 0, curFace = "";
-
-  function setMuteIcon() { muteBtn.innerHTML = muted ? I.mute : I.sound; muteBtn.setAttribute("aria-label", muted ? "Sound off. Turn on" : "Sound on. Turn off"); }
-  setMuteIcon();
-  muteBtn.addEventListener("click", function () {
-    muted = !muted; store.set("jg_muted", muted ? "1" : "0"); setMuteIcon(); if (!muted) SFX.tick();
-  });
   guide.querySelector(".jg-close").addEventListener("click", closeGuide);
+  function setFace(face) { if (face === curFace) return; curFace = face; var next = imgs[1 - curImg]; next.src = faceSrc(face); next.classList.add("is-in"); imgs[curImg].classList.remove("is-in"); curImg = 1 - curImg; }
 
-  function setFace(face) {
-    if (face === curFace) return;
-    curFace = face;
-    var next = imgs[1 - curImg];
-    next.src = faceSrc(face);
-    next.classList.add("is-in");
-    imgs[curImg].classList.remove("is-in");
-    curImg = 1 - curImg;
-  }
-
-  /* typewriter with breath at punctuation */
   var typing = null;
   function say(text, done) {
     if (typing) { clearTimeout(typing); typing = null; }
-    sayEl.classList.remove("is-done");
-    sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';
+    sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';
     var span = sayEl.firstChild;
     if (RM) { span.innerHTML = text; sayEl.classList.add("is-done"); if (done) done(); return; }
-    // keep <em> tags working: type through a tag-aware token list
-    var tokens = text.match(/<[^>]+>|[^<]/g) || [];
-    var i = 0, html = "";
+    var tokens = text.match(/<[^>]+>|[^<]/g) || [], i = 0, html = "", n = 0;
     function step() {
       if (i >= tokens.length) { sayEl.classList.add("is-done"); typing = null; if (done) done(); return; }
-      var t = tokens[i++];
-      html += t;
-      span.innerHTML = html;
-      var wait = t.length > 1 ? 0 : /[.!?]/.test(t) ? 210 : /[,;:]/.test(t) ? 100 : 19;
-      typing = setTimeout(step, wait);
+      var t = tokens[i++]; html += t; span.innerHTML = html;
+      if (t.length === 1 && /\S/.test(t) && ++n % 3 === 0) tone(1900 + Math.random() * 200, 0.02, "sine", 0.006);
+      typing = setTimeout(step, t.length > 1 ? 0 : /[.!?]/.test(t) ? 210 : /[,;:]/.test(t) ? 100 : 19);
     }
     step();
-    sayEl.onclick = function () {
-      if (!typing) return;
-      clearTimeout(typing); typing = null;
-      span.innerHTML = text; sayEl.classList.add("is-done"); if (done) done();
-    };
+    sayEl.onclick = function () { if (!typing) return; clearTimeout(typing); typing = null; span.innerHTML = text; sayEl.classList.add("is-done"); if (done) done(); };
   }
-
   function setChoices(list) {
     choicesEl.innerHTML = "";
     (list || []).forEach(function (c, i) {
       var b = el('<button class="jg-opt' + (c.primary ? " jg-opt--primary" : "") + '" type="button" style="--i:' + i + '">' + esc(c.label) + '</button>');
-      b.addEventListener("click", function () { SFX.tick(); c.go(); });
-      choicesEl.appendChild(b);
+      b.addEventListener("click", function () { SFX.tick(); c.go(); }); choicesEl.appendChild(b);
     });
   }
-
-  function setProgress(n, at) {
-    progEl.innerHTML = "";
-    for (var i = 0; i < n; i++) {
-      var s = document.createElement("i");
-      if (i < at) s.className = "is-done";
-      if (i === at) s.className = "is-now";
-      progEl.appendChild(s);
-    }
-  }
-
+  function setProgress(n, at) { progEl.innerHTML = ""; for (var i = 0; i < n; i++) { var s = document.createElement("i"); s.className = i < at ? "is-done" : i === at ? "is-now" : ""; progEl.appendChild(s); } }
   var litNode = null;
   function focusSection(sel) {
     if (litNode) litNode.classList.remove("jg-lit");
     litNode = sel ? document.querySelector(sel) : null;
     if (litNode) {
-      litNode.classList.add("jg-lit");
-      body.classList.add("jg-focus");
-      scrollToEl(litNode);
+      litNode.classList.add("jg-lit", "is-lit"); body.classList.add("jg-focus"); scrollToEl(litNode);
       litNode.querySelectorAll("[data-reveal]").forEach(function (r) { r.classList.add("in-view"); });
       var head = litNode.querySelector(".section__head"); if (head) head.classList.add("in-view");
-    } else {
-      body.classList.remove("jg-focus");
-    }
+      if (litNode.dataset.codex) unlock(litNode.dataset.codex.split(","));
+    } else body.classList.remove("jg-focus");
   }
 
-  /* ---------- Scripts ----------
-     Statements, not questions. The choices are the questions.       */
-
-  var S = {}; // state shared across steps
-  var CONTACT = "jobawems@gmail.com";
-
-  function line(face, at, text, choices) { return { face: face, at: at, text: text, choices: choices }; }
-  function next(label, primary) { return { label: label || "Continue", primary: primary !== false, go: function () { go(S.i + 1); } }; }
+  /* ---------- Scripts: statements, not questions ---------- */
+  var S = {}, CONTACT = "jobawems@gmail.com";
+  function greet() { var h = new Date().getHours(); return h < 12 ? "Good morning." : h < 17 ? "Good afternoon." : "Good evening."; }
+  function line(face, ch, text, choices) { return { face: face, ch: ch, text: text, choices: choices }; }
+  function next(label) { return { label: label || "Continue", primary: true, go: function () { go(S.i + 1); } }; }
   function jump(label, idx) { return { label: label, go: function () { go(idx); } }; }
   function toChat(label) { return { label: label || "Ask me something", go: function () { enterChat(); } }; }
-  function finish(label) { return { label: label || "That’s enough for now", go: function () { closeGuide(); } }; }
+  function finish(label) { return { label: label || "Finish", primary: true, go: function () { showEnd(); } }; }
 
   var SCRIPTS = {
     interviewer: [
-      line("wink", null, "Let me skip the jargon. You’re hiring, or deciding whether to, and you’ve read forty of these this week.", [next("Fair.")]),
+      line("wink", null, greet() + " Let me skip the jargon. You’re hiring, or deciding whether to, and you’ve read forty of these this week.", [next("Fair.")]),
       line("serious", null, "So here’s the part that matters. <em>This site is the work sample.</em> The loader, the choice you just made, the fact that I’m talking to you. I built it. You’re inside it.", [next("Show me what you do")]),
-      line("calm", "#thesis", "I build the system underneath a business: the site people land on, the paperwork that gets checked before it costs a deal, and the follow-up that actually happens.", [next("Proof")]),
-      line("attentive", "#work", "Proof one. A Texas dealer sends a title packet to the county. Three weeks later it comes back over one missing signature and the deal is already sideways. I built the thing that catches it before it leaves the building.", [next("Proof two")]),
-      line("serious", "#triple-j", "Proof two. I co-own a dealership. I’ve priced the deal, chased the title, and eaten the bad follow-up. That’s why I don’t automate for sport.", [next("The record")]),
-      line("calm", "#experience", "The record, in order. Nothing padded.", [jump("Credentials", 6), jump("Skip to the resume", 7)]),
-      line("serious", "#credentials", "Nineteen Anthropic courses. Associate of Arts in Business, GPA 3.63, Dean’s Honor List. Every claim on this site has a proof page behind it. Click any of them.", [next("Wrap it up")]),
-      line("warm", "#contact", "That’s the tour. The resume is right there. If you want to talk, my email is the big one.", [toChat("Ask me something"), finish("Done")])
+      line("calm", 0, "I build the system underneath a business: the site people land on, the paperwork that gets checked before it costs a deal, and the follow-up that actually happens.", [next("Proof")]),
+      line("attentive", 1, "Proof one. A Texas dealer sends a title packet to the county. Three weeks later it comes back over one missing signature and the deal is already sideways. I built the thing that catches it before it leaves the building.", [next("Proof two")]),
+      line("serious", 2, "Proof two. I co-own a dealership. I’ve priced the deal, chased the title, and eaten the bad follow-up. That’s why I don’t automate for sport.", [next("The record")]),
+      line("calm", 3, "The record, in order. Nothing padded.", [jump("The credentials", 6), jump("Skip to the close", 7)]),
+      line("serious", 4, "Nineteen Anthropic courses. Associate of Arts in Business, GPA 3.63, Dean’s Honor List. Every claim on this site has a proof page behind it.", [next("Wrap it up")]),
+      line("warm", 5, "That’s the tour. The resume and the email are one screen down. Ask me anything first, or finish and take what you found.", [toChat("Ask me something"), finish("Finish")])
     ],
     partner: [
-      line("wink", null, "Let me skip the pitch. You have a business, and something in it is being done by hand that shouldn’t be.", [next("Go on")]),
-      line("calm", "#thesis", "Most operations don’t break at the design. They break at the <em>handoff</em>. A lead nobody owns. A packet that leaves unchecked. A process that lives in one head.", [next("Which one is mine")]),
+      line("wink", null, greet() + " Let me skip the pitch. You have a business, and something in it is being done by hand that shouldn’t be.", [next("Go on")]),
+      line("calm", 0, "Most operations don’t break at the design. They break at the <em>handoff</em>. A lead nobody owns. A packet that leaves unchecked. A process that lives in one head.", [next("Which one is mine")]),
       line("attentive", null, "Closest one wins.", [
         { label: "Nobody finds us", go: function () { S.pain = "found"; go(3); } },
         { label: "Traffic that never becomes a lead", go: function () { S.pain = "convert"; go(3); } },
@@ -486,17 +454,15 @@
         { label: "It all lives in my head", go: function () { S.pain = "tribal"; go(3); } }
       ]),
       { dynamic: function () {
-        var T = {
-          found: ["calm", "Being hard to find is the cheapest problem on that list and the slowest to pay back. Before spending on traffic I’d check whether your pages state the offer in the first screen."],
+        var T = { found: ["calm", "Being hard to find is the cheapest problem on that list and the slowest to pay back. Before spending on traffic I’d check whether your pages state the offer in the first screen."],
           convert: ["serious", "Traffic that won’t convert is rarely a traffic problem. The page is asking for a decision before it has earned one, or the lead lands where nobody owns it."],
           paper: ["surprised", "That one I’ve lived hardest. A returned packet costs three weeks and sometimes the deal. It starts with finding the one document that actually causes the kickback."],
           followup: ["serious", "Follow-up failure is structural, not effort. If the next action isn’t written down and assigned to a person, it doesn’t survive a busy day."],
-          tribal: ["laugh", "A process that lives in one head is a single point of failure drawing a salary. Writing it down is boring and it’s usually the best week of work available."]
-        }[S.pain || "tribal"];
+          tribal: ["laugh", "A process that lives in one head is a single point of failure drawing a salary. Writing it down is boring and it’s usually the best week of work available."] }[S.pain || "tribal"];
         return line(T[0], null, T[1], [next("What did you build for it")]);
       } },
-      line("calm", "#work", "This. Apohenia’s Deal Packet Checker reads the packet before the state sees it and hands a human a short list instead of a stack.", [next("And the dealership")]),
-      line("attentive", "#triple-j", "And the business I run it in. Clear vehicles, clear terms, real people. Intake, follow-up and reporting run off written scripts, not memory.", [next("What it’s costing me")]),
+      line("calm", 1, "This. Apohenia’s Deal Packet Checker reads the packet before the state sees it and hands a human a short list instead of a stack.", [next("And the dealership")]),
+      line("attentive", 2, "And the business I run it in. Clear vehicles, clear terms, real people. Intake, follow-up and reporting run off written scripts, not memory.", [next("What it’s costing me")]),
       line("attentive", null, "Roughly what it’s costing you.", [
         { label: "Under 5 hours a week", go: function () { S.cost = "under5"; go(7); } },
         { label: "5 to 15 hours a week", go: function () { S.cost = "5to15"; go(7); } },
@@ -505,66 +471,74 @@
       ]),
       { dynamic: function () {
         if (typeof window.INTAKE_PREFILL === "function") window.INTAKE_PREFILL({ pain: S.pain, cost: S.cost });
-        return line("warm", "#intake", "I’ve written your first message for you. Read it, change it, send it from your own mail. Nothing here is stored.", [toChat("Ask me something first"), finish("Done")]);
+        return line("warm", 5, "I’ve written your first message for you. Read it, change it, send it from your own mail. Nothing here is stored.", [toChat("Ask me something first"), finish("Finish")]);
       } }
     ],
     lurker: [
-      line("laugh", null, "Lurking. Respect. No pitch, then.", [next("Quick version")]),
-      line("calm", "#top", "Quick version. I’m Jason. Pearland, Texas. I build the systems under small businesses, and I co-own a car lot.", [next("The weird one")]),
-      line("surprised", "#work", "The weird one. I built a thing that reads Texas title paperwork so the county doesn’t bounce it.", [next("The real one")]),
-      line("wink", "#triple-j", "The real one. The dealership. Clear vehicles, clear terms, real people.", [next("Okay")]),
-      line("warm", null, "That’s it. The site stays here. Poke around.", [toChat("Actually, ask you something"), finish("Done")])
+      line("laugh", null, greet() + " Lurking. Respect. No pitch, then.", [next("Quick version")]),
+      line("calm", 0, "Quick version. I’m Jason. Pearland, Texas. I build the systems under small businesses, and I co-own a car lot.", [next("The weird one")]),
+      line("surprised", 1, "The weird one. I built a thing that reads Texas title paperwork so the county doesn’t bounce it.", [next("The real one")]),
+      line("wink", 2, "The real one. The dealership. Clear vehicles, clear terms, real people.", [next("Okay")]),
+      line("warm", null, "That’s it. The codex in the corner fills as you scroll. Nine entries. The site is yours.", [toChat("Actually, ask you something"), finish("Finish")])
     ]
   };
 
   var open = false, role = null, steps = [];
   function openGuide(r) {
-    role = r; steps = SCRIPTS[r] || SCRIPTS.lurker; S = { i: 0 };
-    guide.classList.remove("is-chat");
-    guide.classList.add("is-open");
-    fab.classList.remove("is-in");
-    noteEl.textContent = "";
-    open = true;
-    go(0);
+    role = r; steps = SCRIPTS[r] || SCRIPTS.lurker; S = { i: 0 }; shownChapters = {};
+    guide.classList.remove("is-chat"); guide.classList.add("is-open"); fab.classList.remove("is-in"); noteEl.textContent = ""; open = true;
+    pad.start(); go(0);
   }
-  function closeGuide() {
-    open = false;
-    guide.classList.remove("is-open", "is-chat");
-    focusSection(null);
-    showFab();
-  }
+  function closeGuide() { open = false; guide.classList.remove("is-open", "is-chat"); focusSection(null); pad.stop(); showFab(); }
   function go(i) {
-    if (i >= steps.length) return closeGuide();
-    S.i = i;
-    var st = steps[i];
-    if (st.dynamic) st = st.dynamic();
-    var chapters = steps.length;
-    setProgress(chapters, i);
-    setFace(st.face || "calm");
-    setChoices([]);
-    focusSection(st.at);
-    SFX.chime();
-    say(st.text, function () { setChoices(st.choices); });
+    if (i >= steps.length) return showEnd();
+    S.i = i; var st = steps[i]; if (st.dynamic) st = st.dynamic();
+    setProgress(steps.length, i); setFace(st.face || "calm"); setChoices([]);
+    if (typing) { clearTimeout(typing); typing = null; }
+    sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span>';
+    var proceed = function () { focusSection(st.ch != null ? CH[st.ch].at : null); if (st.ch != null) setHudChapter(st.ch); SFX.chime(); say(st.text, function () { setChoices(st.choices); }); };
+    if (st.ch != null) chapterCardFor(st.ch, proceed); else proceed();
   }
-
-  window.addEventListener("keydown", function (e) {
+  addEventListener("keydown", function (e) {
+    if (codex.classList.contains("is-open") && e.key === "Escape") return closeCodex();
     if (!open) return;
-    if (e.key === "Escape") { closeGuide(); return; }
+    if (e.key === "Escape") return closeGuide();
     if (guide.classList.contains("is-chat")) return;
-    var opts = choicesEl.querySelectorAll(".jg-opt");
-    if (!opts.length) return;
+    var opts = choicesEl.querySelectorAll(".jg-opt"); if (!opts.length) return;
     if ((e.key === "Enter" || e.key === " ") && document.activeElement === body) { e.preventDefault(); opts[0].click(); }
-    var n = parseInt(e.key, 10);
-    if (n >= 1 && n <= opts.length) opts[n - 1].click();
+    var n = parseInt(e.key, 10); if (n >= 1 && n <= opts.length) opts[n - 1].click();
   });
 
   /* ============================================================
-     CHAT: the live version of me, with the scripted one behind it
+     CHAPTER COMPLETE
      ============================================================ */
 
-  var history = [];
-  var liveDown = null; // null unknown, true reachable, false not
+  var endEl = el('<div id="jg-end" role="dialog" aria-modal="true" aria-labelledby="jg-end-h"><div class="jg-end__wrap"><div class="jg-seal">J</div><div class="jg-end__k">Chapter complete</div><h2 id="jg-end-h"></h2><p class="jg-end__sum"></p><div class="jg-end__cta"></div><div class="jg-end__replay"></div></div></div>');
+  body.appendChild(endEl);
+  function showEnd() {
+    open = false; guide.classList.remove("is-open", "is-chat"); focusSection(null); pad.stop();
+    var n = foundCount(), R = { interviewer: "an <em>interviewer</em>", partner: "a <em>business partner</em>", lurker: "a <em>lurker</em>" }[role] || "a visitor";
+    endEl.querySelector("h2").innerHTML = "You came as " + R + ".";
+    endEl.querySelector(".jg-end__sum").innerHTML = "You found <b>" + n + " of " + CODEX.length + "</b> codex entries. " + (n < CODEX.length ? "The rest are on the page." : "All of them. Nobody does that.") + " Everything on this site was built by the person talking to you.";
+    var cta = endEl.querySelector(".jg-end__cta"); cta.innerHTML = "";
+    var CTAS = {
+      interviewer: [['assets/Jason_Obawemimo_Resume_2026.pdf', 'Resume', true, 'download'], ['mailto:' + CONTACT, 'Email Jason', false]],
+      partner: [['#intake', 'Send the message', true], ['mailto:' + CONTACT, 'Email Jason', false]],
+      lurker: [['#work', 'Back to the proof', true], ['mailto:' + CONTACT, 'Say hello', false]]
+    }[role] || [['mailto:' + CONTACT, 'Email Jason', true]];
+    CTAS.forEach(function (c) { var a = el('<a class="btn' + (c[2] ? " btn--solid" : "") + '" href="' + c[0] + '"' + (c[3] ? ' download="Jason Obawemimo - Resume.pdf"' : "") + '><span>' + c[1] + '</span></a>'); a.addEventListener("click", function () { hideEnd(); if (c[0].charAt(0) === "#") { scrollToEl(document.querySelector(c[0])); } }); cta.appendChild(a); });
+    var rp = endEl.querySelector(".jg-end__replay"); rp.innerHTML = "<span>Replay as</span>";
+    Object.keys(PATHS).filter(function (r) { return r !== role; }).forEach(function (r) { var b = el('<button type="button">' + PATHS[r].h.toLowerCase() + '</button>'); b.addEventListener("click", function () { hideEnd(); store.set("jg_role", r); openGuide(r); }); rp.appendChild(b); });
+    var back = el('<button type="button">or return to the site</button>'); back.addEventListener("click", function () { hideEnd(); showFab(); }); rp.appendChild(back);
+    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.chapter(); SFX.discover();
+  }
+  function hideEnd() { endEl.classList.remove("is-in"); body.classList.remove("is-card"); }
 
+  /* ============================================================
+     CHAT
+     ============================================================ */
+
+  var history = [], liveDown = null;
   var FACTS = [
     [/apohenia|packet|webdealer|title|county|registration/i, "serious", "Apohenia is my company. Its first product, Deal Packet Checker, reads a Texas dealer’s title packet before webDEALER sees it, cross-checks the documents, and hands the clerk a short list of exceptions. Founding waitlist, Texas pilot. Not affiliated with TxDMV or any county office."],
     [/triple ?j|dealership|car lot|rental|finance|financing/i, "calm", "Triple J Auto Investment is a Houston dealership I co-own and run. Cars, trucks and SUVs you can finance in house, sell and trade valuations, and registration support after the sale. Clear vehicles, clear terms, real people."],
@@ -573,73 +547,34 @@
     [/stack|tools?|tech|supabase|postgres|vercel|mcp|codex/i, "attentive", "Supabase and PostgreSQL underneath, Vercel in production, Claude and Codex for agentic work, MCP integrations wired end to end. Obsidian for the knowledge base."],
     [/where|based|location|pearland|houston|texas/i, "calm", "Pearland, Texas. The dealership is in Houston, at 8774 Almeda Genoa Rd."],
     [/hire|rate|price|cost|budget|available|contract|work with/i, "warm", "Easiest path: the intake at the bottom of the page writes your first message for you. Or just email me at " + CONTACT + "."],
-    [/site|website|this|built|how.*(make|build)/i, "wink", "This site is plain HTML, CSS and JavaScript on Vercel. The loader is a water simulation on a canvas. The guide is scripted first and live second. Nothing here needs a framework to feel like it does."],
+    [/site|website|this|built|how.*(make|build)|game|loader|water/i, "wink", "This site is plain HTML, CSS and JavaScript on Vercel. The loader is a water simulation on a canvas. The codex fills as you scroll. The guide is scripted first and live second. Nothing here needs a framework to feel like it does."],
     [/email|contact|reach|talk/i, "warm", "Email is " + CONTACT + ". It goes to a real inbox that I read."]
   ];
-  function scripted(q) {
-    for (var i = 0; i < FACTS.length; i++) if (FACTS[i][0].test(q)) return { face: FACTS[i][1], text: FACTS[i][2] };
-    return { face: "attentive", text: "That one needs the live version of me. Email it to " + CONTACT + " and I’ll answer properly." };
-  }
-
+  function scripted(q) { for (var i = 0; i < FACTS.length; i++) if (FACTS[i][0].test(q)) return { face: FACTS[i][1], text: FACTS[i][2] }; return { face: "attentive", text: "That one needs the live version of me. Email it to " + CONTACT + " and I’ll answer properly." }; }
   function enterChat() {
-    guide.classList.add("is-chat");
-    focusSection(null);
-    setChoices([]);
-    setProgress(0, 0);
-    setFace("attentive");
-    say("Ask me anything about the work. I’ll answer as myself.", function () {
-      setChoices([finish("Back to the site")]);
-    });
+    guide.classList.add("is-chat"); focusSection(null); setChoices([]); setProgress(0, 0); setFace("attentive");
+    say("Ask me anything about the work. I’ll answer as myself.", function () { setChoices([finish("Finish")]); });
     setTimeout(function () { chatInput.focus({ preventScroll: true }); }, 400);
   }
-
   chatForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    var q = chatInput.value.trim();
-    if (!q) return;
-    chatInput.value = "";
-    chatBtn.disabled = true;
-    SFX.tick();
-    setChoices([]);
-    setFace("attentive");
+    var q = chatInput.value.trim(); if (!q) return;
+    chatInput.value = ""; chatBtn.disabled = true; SFX.tick(); setChoices([]); setFace("attentive");
     history.push({ role: "user", content: q });
-    sayEl.classList.remove("is-done");
-    sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';
-
+    sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';
     var handled = false;
     function reply(face, text, note) {
-      if (handled) return; handled = true;
-      chatBtn.disabled = false;
-      history.push({ role: "assistant", content: text });
-      if (history.length > 24) history = history.slice(-24);
-      setFace(face);
-      noteEl.textContent = note || "";
-      say(text, function () { setChoices([finish("Back to the site")]); });
+      if (handled) return; handled = true; chatBtn.disabled = false;
+      history.push({ role: "assistant", content: text }); if (history.length > 24) history = history.slice(-24);
+      setFace(face); noteEl.textContent = note || ""; say(text, function () { setChoices([finish("Finish")]); });
     }
-
-    if (liveDown === false) { var s = scripted(q); return reply(s.face, s.text); }
-
-    var ctrl = new AbortController();
-    var timer = setTimeout(function () { ctrl.abort(); }, 20000);
-    fetch("/api/guide", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: role, messages: history.slice(-12) }),
-      signal: ctrl.signal
-    }).then(function (r) {
-      clearTimeout(timer);
-      if (r.status === 503) { liveDown = false; throw new Error("unconfigured"); }
-      if (!r.ok) throw new Error("http " + r.status);
-      return r.json();
-    }).then(function (j) {
-      liveDown = true;
-      reply(FACES.indexOf(j.face) >= 0 ? j.face : "calm", j.text);
-    }).catch(function () {
-      var s = scripted(q);
-      var note = liveDown === false ? "The live version of me isn’t switched on here, so this is the scripted one." : "";
-      reply(s.face, s.text, note);
-    });
+    if (liveDown === false) { var s0 = scripted(q); return reply(s0.face, s0.text); }
+    var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, 20000);
+    fetch("/api/guide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: role, messages: history.slice(-12) }), signal: ctrl.signal })
+      .then(function (r) { clearTimeout(timer); if (r.status === 503) { liveDown = false; throw new Error("unconfigured"); } if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (j) { liveDown = true; reply(FACES.indexOf(j.face) >= 0 ? j.face : "calm", j.text); })
+      .catch(function () { var s = scripted(q); reply(s.face, s.text, liveDown === false ? "The live version of me isn’t switched on here, so this is the scripted one." : ""); });
   });
 
-  /* Sound stays honest: nothing plays until the page has been touched */
+  window.JG = { open: openGuide, codex: openCodex };
 })();

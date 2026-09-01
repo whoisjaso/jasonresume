@@ -7,7 +7,7 @@
   var body = document.body;
 
   function locked() {
-    return body.classList.contains("is-loading") || body.classList.contains("is-gated") || body.classList.contains("menu-open");
+    return body.classList.contains("is-loading") || body.classList.contains("is-gated") || body.classList.contains("is-card") || body.classList.contains("menu-open");
   }
 
   /* ------------------------------------------------------------
@@ -88,6 +88,35 @@
       entries.forEach(function (en) { en.target.classList.toggle("is-near", en.isIntersecting); });
     }, { rootMargin: "-18% 0px -18% 0px", threshold: 0 });
     ventures.forEach(function (n) { vio.observe(n); });
+  }
+
+  /* ------------------------------------------------------------
+     Ambience: the portrait tilts toward the pointer, gold dust drifts
+     ------------------------------------------------------------ */
+  var hero = document.querySelector(".hero"), portrait = document.querySelector(".hero__portrait[data-tilt]");
+  var hidden = false; document.addEventListener("visibilitychange", function () { hidden = document.hidden; });
+  if (hero && portrait && FINE && !RM) {
+    var tiltRaf = null, tx = 0, ty = 0;
+    hero.addEventListener("pointermove", function (e) {
+      var r = portrait.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      tx = Math.max(-1, Math.min(1, (e.clientX - cx) / (innerWidth / 2))); ty = Math.max(-1, Math.min(1, (e.clientY - cy) / (innerHeight / 2)));
+      if (!tiltRaf) tiltRaf = requestAnimationFrame(function () { portrait.style.transform = "perspective(1200px) rotateY(" + (tx * 6).toFixed(2) + "deg) rotateX(" + (-ty * 5).toFixed(2) + "deg)"; tiltRaf = null; });
+    }, { passive: true });
+    hero.addEventListener("pointerleave", function () { portrait.style.transform = ""; });
+  }
+  var dustC = document.querySelector(".hero__dust");
+  if (dustC && !RM && !matchMedia("(prefers-reduced-data: reduce)").matches && innerWidth > 720) {
+    var dctx = dustC.getContext("2d"), dpr = Math.min(devicePixelRatio || 1, 2), motes = [];
+    function sizeDust() { var r = dustC.getBoundingClientRect(); dustC.width = r.width * dpr; dustC.height = r.height * dpr; dctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+    sizeDust(); addEventListener("resize", sizeDust, { passive: true });
+    for (var i = 0; i < 44; i++) motes.push({ x: Math.random(), y: Math.random(), r: 0.5 + Math.random() * 1.3, a: 0.08 + Math.random() * 0.3, v: 0.00012 + Math.random() * 0.00025, s: Math.random() * 6.28 });
+    (function dustFrame(t) {
+      if (hidden || !body.classList.contains("is-live") || scrollY > innerHeight) return requestAnimationFrame(dustFrame);
+      var w = dustC.clientWidth, h = dustC.clientHeight; dctx.clearRect(0, 0, w, h);
+      for (var i = 0; i < motes.length; i++) { var m = motes[i]; m.y -= m.v; if (m.y < -0.02) { m.y = 1.02; m.x = Math.random(); } var x = (m.x + Math.sin(t / 2600 + m.s) * 0.01) * w;
+        dctx.beginPath(); dctx.arc(x, m.y * h, m.r, 0, 6.283); dctx.fillStyle = "rgba(230,201,100," + (m.a * (0.6 + 0.4 * Math.sin(t / 1100 + m.s))) + ")"; dctx.fill(); }
+      requestAnimationFrame(dustFrame);
+    })(0);
   }
 
   /* ------------------------------------------------------------

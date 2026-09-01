@@ -14,6 +14,21 @@
       <image:title>Jason Obawemimo favicon portrait</image:title>
       <image:caption>Site icon for Jason Obawemimo's official portfolio.</image:caption>
     </image:image>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/og-film.jpg</image:loc>
+      <image:title>Jason Obawemimo, the film</image:title>
+      <image:caption>Title card for jasonobawemimo.com: are you an interviewer, a business partner, or just lurking?</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/brand/apohenia-logo.png</image:loc>
+      <image:title>Apohenia mark</image:title>
+      <image:caption>Logo of Apohenia, the company founded by Jason Obawemimo.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/brand/triplej-logo.png</image:loc>
+      <image:title>Triple J Auto Investment monogram</image:title>
+      <image:caption>Monogram of Triple J Auto Investment, co-owned by Jason Obawemimo.</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.html</loc>
