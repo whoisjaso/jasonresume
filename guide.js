@@ -36,9 +36,9 @@
   var faceOk = {}, FALLBACK = "assets/jason-headshot-620.webp";
   /* assets/guide/faces.json lists which expression files exist, so nothing is requested blind */
   fetch(FACE_DIR + "faces.json").then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
-    (list || []).forEach(function (f) { if (FACES.indexOf(f) < 0) return; var im = new Image(); im.onload = function () { faceOk[f] = true; if (curFace === f) setFace(f, true); }; im.src = FACE_DIR + f + ".png"; });
+    (list || []).forEach(function (f) { if (FACES.indexOf(f) < 0) return; var im = new Image(); im.onload = function () { faceOk[f] = true; if (curFace === f) setFace(f, true); }; im.src = FACE_DIR + f + ".webp"; });
   }).catch(function () {});
-  function faceSrc(f) { return faceOk[f] ? FACE_DIR + f + ".png" : faceOk.calm ? FACE_DIR + "calm.png" : FALLBACK; }
+  function faceSrc(f) { return faceOk[f] ? FACE_DIR + f + ".webp" : faceOk.calm ? FACE_DIR + "calm.webp" : FALLBACK; }
 
   /* ============================================================
      SOUND. Glass, not piano: slow attacks, long tails, a
