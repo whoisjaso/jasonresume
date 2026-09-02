@@ -317,9 +317,9 @@
      ============================================================ */
 
   var PATHS = {
-    interviewer: { key: "1", h: "I’m interviewing", p: "The proof, the record, the resume. Five minutes, no jargon." },
-    partner: { key: "2", h: "I’m a business partner", p: "Where a business leaks, what I built for it, and your first message written for you." },
-    lurker: { key: "3", h: "Just lurking", p: "No pitch. Five lines, then the site is yours." }
+    interviewer: { key: "1", h: "I’m interviewing", p: "Proof, record, resume. About five minutes, no jargon." },
+    partner: { key: "2", h: "I’m a business partner", p: "Where your business is leaking, what I built for that, and I’ll write your first message for you." },
+    lurker: { key: "3", h: "Just lurking", p: "No pitch. Five lines and then the site’s yours." }
   };
   var gate = el(
     '<div id="jg-gate" role="dialog" aria-modal="true" aria-labelledby="jg-gate-q"><div class="jg-gate__wrap">' +
@@ -372,7 +372,7 @@
       wrap.innerHTML = '<h1 class="jg-gate__q" id="jg-gate-q">And your <em>name</em>?</h1>' +
         '<form class="jg-namestep"><input type="text" name="name" maxlength="40" autocomplete="given-name" autocapitalize="words" spellcheck="false" placeholder="First name is plenty" aria-label="Your name" value="' + esc(visitorName) + '" />' +
         '<div class="jg-namestep__row"><button class="jg-opt jg-opt--primary" type="submit">Continue</button><button class="jg-skip" type="button" data-skip>Skip</button></div>' +
-        '<p class="jg-namestep__note">Only used so Jason can say hello. Nothing else is asked.</p></form>';
+        '<p class="jg-namestep__note">Just so I know who I’m talking to. That’s it.</p></form>';
       wrap.classList.remove("is-swapping"); wrap.classList.add("is-in");
       var form = wrap.querySelector("form"), input = form.querySelector("input");
       setTimeout(function () { input.focus({ preventScroll: true }); }, 350);
@@ -523,21 +523,21 @@
 
   var SCRIPTS = {
     interviewer: [
-      line("wink", null, null, greet() + " Let me skip the jargon. You’re hiring, or deciding whether to, and you’ve read forty of these this week.", [next("Fair.")]),
-      line("serious", ".hero", ["happens", U], "So here’s the part that matters. <em>This site is the work sample.</em> The loader, the choice you just made, the fact that I’m talking to you. I built it. You’re inside it.", [next("Show me what you do")]),
-      line("calm", "#thesis", ["handoff", C], "I build the system underneath a business. Most operations don’t break at the design. They break at the handoff.", [next("Go on")]),
-      line("attentive", "#thesis", ["sport", U], "I co-own a dealership, so I’ve priced the deal, chased the title, and eaten the bad follow-up. That’s why I don’t automate for sport.", [next("Proof")]),
-      line("serious", "#work", ["signature", C], "Proof one. A Texas dealer sends a title packet to the county. Three weeks later it comes back over one missing signature, and the deal is already sideways.", [next("And?")]),
-      line("calm", "#work", ["dpc", U], "I built the thing that catches it before it leaves the building. It reads the packet before the state does, and hands a human a short list instead of a stack.", [next("The dealership")]),
-      line("attentive", "#triple-j", ["terms", U], "Proof two. Triple J Auto Investment, Houston. The terms go on the table early, the trade number is real, and the paperwork doesn’t become the customer’s problem.", [next("The record")]),
-      line("calm", "#experience", ["dates", B], "The record, in order. Two operating roles since 2024, both still running. Nothing padded.", [next("Credentials"), jump("Skip to the close", 9)]),
-      line("serious", "#credentials", ["nineteen", C], "Nineteen Anthropic courses. An Associate of Arts in Business, GPA 3.63, Dean’s Honor List. Every claim on this site has a proof page behind it.", [next("Wrap it up")]),
-      line("warm", "#contact", ["email", B], "That’s the tour. Resume and email, right here. Ask me anything first, or finish and take what you found.", [toChat("Ask me something"), finish("Finish")])
+      line("wink", null, null, greet() + " Real quick, I’m gonna skip the jargon. You’re hiring, or you’re figuring out if you should, and you’ve probably read forty of these this week.", [next("Fair.")]),
+      line("serious", ".hero", ["happens", U], "So here’s the part that matters. <em>This site is the work sample.</em> The loading screen, the question you just answered, me talking to you right now. I built all of it, and you’re standing in it.", [next("Show me what you do")]),
+      line("calm", "#thesis", ["handoff", C], "What I do is the stuff underneath a business. Honestly, most operations don’t break at the design. They break at the handoff, when one person passes something to the next and it just doesn’t land.", [next("Go on")]),
+      line("attentive", "#thesis", ["sport", U], "And I co-own a dealership, so I’ve priced the deal, chased the title, and eaten the cost when the follow-up didn’t happen. That’s why I don’t automate stuff just to automate it.", [next("Proof")]),
+      line("serious", "#work", ["signature", C], "Proof one. A Texas dealer sends a title packet to the county. Three weeks later it comes back because of one missing signature, and by then the deal is already sideways.", [next("And?")]),
+      line("calm", "#work", ["dpc", U], "So I built the thing that catches it before it leaves the building. It reads the packet before the state ever sees it, and hands a human a short list instead of a whole stack.", [next("The dealership")]),
+      line("attentive", "#triple-j", ["terms", U], "Proof two. Triple J Auto Investment, Houston. We put the terms on the table early, the trade number is real, and the paperwork doesn’t turn into the customer’s problem after they drive off.", [next("The record")]),
+      line("calm", "#experience", ["dates", B], "Here’s the record, in order. Two operating roles since 2024, both still running. I didn’t pad any of this.", [next("Credentials"), jump("Skip to the close", 9)]),
+      line("serious", "#credentials", ["nineteen", C], "Nineteen Anthropic courses. An Associate’s in Business, 3.63, Dean’s List. And every claim on this site has a proof page behind it, so you don’t have to take my word for it.", [next("Wrap it up")]),
+      line("warm", "#contact", ["email", B], "That’s the tour. Resume and email are right here. You can ask me something first, or just grab what you need.", [toChat("Ask me something"), finish("Finish")])
     ],
     partner: [
-      line("wink", null, null, greet() + " Let me skip the pitch. You have a business, and something in it is being done by hand that shouldn’t be.", [next("Go on")]),
-      line("calm", "#thesis", ["handoff", C], "Most operations don’t break at the design. They break at the <em>handoff</em>. A lead nobody owns. A packet that leaves unchecked. A process that lives in one head.", [next("Which one is mine")]),
-      line("attentive", null, null, "Closest one wins.", [
+      line("wink", null, null, greet() + " I’m gonna skip the pitch. You run a business, and somewhere in it something’s being done by hand that really shouldn’t be.", [next("Go on")]),
+      line("calm", "#thesis", ["handoff", C], "Most operations don’t break at the design, they break at the <em>handoff</em>. A lead comes in and nobody owns it, or a packet leaves the building without anybody checking it, or the whole process is living in one person’s head.", [next("Which one is mine")]),
+      line("attentive", null, null, "Pick whichever one’s closest.", [
         { label: "Nobody finds us", go: function () { S.pain = "found"; go(3); } },
         { label: "Traffic that never becomes a lead", go: function () { S.pain = "convert"; go(3); } },
         { label: "Paperwork and compliance", go: function () { S.pain = "paper"; go(3); } },
@@ -545,16 +545,16 @@
         { label: "It all lives in my head", go: function () { S.pain = "tribal"; go(3); } }
       ]),
       { dynamic: function () {
-        var T = { found: ["calm", "Being hard to find is the cheapest problem on that list and the slowest to pay back. Before spending on traffic I’d check whether your pages state the offer in the first screen."],
-          convert: ["serious", "Traffic that won’t convert is rarely a traffic problem. The page is asking for a decision before it has earned one, or the lead lands where nobody owns it."],
-          paper: ["surprised", "That one I’ve lived hardest. A returned packet costs three weeks and sometimes the deal. It starts with finding the one document that actually causes the kickback."],
-          followup: ["serious", "Follow-up failure is structural, not effort. If the next action isn’t written down and assigned to a person, it doesn’t survive a busy day."],
-          tribal: ["laugh", "A process that lives in one head is a single point of failure drawing a salary. Writing it down is boring, and it’s usually the best week of work available."] }[S.pain || "tribal"];
+        var T = { found: ["calm", "Being hard to find is the cheapest problem on that list, and the slowest one to pay back. Before you spend a dollar on traffic, I’d check whether your pages say what you sell in the first screen."],
+          convert: ["serious", "Traffic that won’t convert is almost never a traffic problem. The page is asking for a decision before it’s earned one, or the lead lands somewhere nobody’s watching."],
+          paper: ["surprised", "Okay, that one I’ve lived the hardest. A returned packet costs you three weeks, sometimes the whole deal. It starts with finding the one document that causes the kickback."],
+          followup: ["serious", "Follow-up doesn’t fail because people are lazy. It fails because the next step isn’t written down and given to somebody, so it doesn’t survive a busy Tuesday."],
+          tribal: ["laugh", "A process that lives in one head is a single point of failure that draws a salary. I’ve been that head. Writing it down is boring, I know. It’s also usually the best week of work you can do."] }[S.pain || "tribal"];
         return line(T[0], "#value", ["slides", X], T[1], [next("What did you build for it")]);
       } },
-      line("calm", "#work", ["dpc", U], "This, for the one I lived hardest. Deal Packet Checker reads the packet before the state sees it and hands a human a short list instead of a stack.", [next("And the dealership")]),
-      line("attentive", "#triple-j", ["scripts", U], "And the business I run it in. Intake, follow-up and reporting run off written scripts, not memory.", [next("What it’s costing me")]),
-      line("attentive", null, null, "Roughly what it’s costing you.", [
+      line("calm", "#work", ["dpc", U], "This, for the one I lived the hardest. Deal Packet Checker reads the packet before the state sees it and hands a human a short list instead of a stack.", [next("And the dealership")]),
+      line("attentive", "#triple-j", ["scripts", U], "And the business I run it in. Intake, follow-up, reporting, all of it runs off written scripts, not somebody’s memory.", [next("What it’s costing me")]),
+      line("attentive", null, null, "Rough guess. What’s it costing you right now?", [
         { label: "Under 5 hours a week", go: function () { S.cost = "under5"; go(7); } },
         { label: "5 to 15 hours a week", go: function () { S.cost = "5to15"; go(7); } },
         { label: "15 to 40 hours a week", go: function () { S.cost = "15to40"; go(7); } },
@@ -562,15 +562,15 @@
       ]),
       { dynamic: function () {
         if (typeof window.INTAKE_PREFILL === "function") window.INTAKE_PREFILL({ pain: S.pain, cost: S.cost });
-        return line("warm", "#intake", ["stored", U], "I’ve written your first message for you. Read it, change it, send it from your own mail. Nothing here is stored.", [toChat("Ask me something first"), finish("Finish")]);
+        return line("warm", "#intake", ["stored", U], "I already wrote your first message for you. Read it, change whatever you want, send it from your own email. Nothing here gets stored.", [toChat("Ask me something first"), finish("Finish")]);
       } }
     ],
     lurker: [
-      line("laugh", null, null, greet() + " Lurking. Respect. No pitch, then.", [next("Quick version")]),
-      line("calm", ".hero", ["happens", U], "Quick version. I’m Jason. Pearland, Texas. I build the systems under small businesses, and I co-own a car lot.", [next("The weird one")]),
-      line("surprised", "#work", ["signature", C], "The weird one. I built a thing that reads Texas title paperwork so the county doesn’t bounce it.", [next("The real one")]),
-      line("wink", "#triple-j", ["terms", U], "The real one. The dealership. Clear vehicles, clear terms, real people.", [next("Okay")]),
-      line("warm", null, null, "That’s it. The site is yours. Scroll anywhere. I’m in the corner if you want me.", [toChat("Actually, ask you something"), finish("Finish")])
+      line("laugh", null, null, greet() + " Lurking. Respect, honestly. No pitch then.", [next("Quick version")]),
+      line("calm", ".hero", ["happens", U], "Quick version. I’m Jason, Pearland, Texas. I build the systems underneath small businesses, and I co-own a car lot in Houston.", [next("The weird one")]),
+      line("surprised", "#work", ["signature", C], "The weird one. I built a thing that reads Texas title paperwork so the county doesn’t bounce it back three weeks later.", [next("The real one")]),
+      line("wink", "#triple-j", ["terms", U], "The real one. The dealership. Clear vehicles, clear terms, real people. That’s the whole promise.", [next("Okay")]),
+      line("warm", null, null, "That’s it. Site’s yours, scroll wherever. I’m down in the corner if you want me.", [toChat("Actually, ask you something"), finish("Finish")])
     ]
   };
 
@@ -621,7 +621,7 @@
     open = false; guide.classList.remove("is-open", "is-chat"); camera(null); clearMark(); voice.stop(); pad.stop();
     var R = { interviewer: "an <em>interviewer</em>", partner: "a <em>business partner</em>", lurker: "a <em>lurker</em>" }[role] || "a visitor";
     endEl.querySelector("h2").innerHTML = "You came as " + R + ".";
-    endEl.querySelector(".jg-end__sum").textContent = "Everything on this site was built by the person who just walked you through it. Take what you need.";
+    endEl.querySelector(".jg-end__sum").textContent = "That’s me, top to bottom. Nobody else built this. Grab what you need.";
     var cta = endEl.querySelector(".jg-end__cta"); cta.innerHTML = "";
     var CTAS = {
       interviewer: [['assets/Jason_Obawemimo_Resume_2026.pdf', 'Resume', true, 'download'], ['mailto:' + CONTACT, 'Email Jason', false]],
@@ -644,21 +644,21 @@
 
   var history = [], liveDown = null;
   var FACTS = [
-    [/apohenia|packet|webdealer|title|county|registration/i, "serious", "Apohenia is my company. Its first product, Deal Packet Checker, reads a Texas dealer’s title packet before webDEALER sees it, cross-checks the documents, and hands the clerk a short list of exceptions. Founding waitlist, Texas pilot. Not affiliated with TxDMV or any county office."],
-    [/triple ?j|dealership|car lot|rental|finance|financing/i, "calm", "Triple J Auto Investment is a Houston dealership I co-own and run. Cars, trucks and SUVs you can finance in house, sell and trade valuations, and registration support after the sale. Clear vehicles, clear terms, real people."],
-    [/credential|certif|anthropic|course|claude/i, "serious", "Nineteen completed Anthropic courses across Claude, Claude Code, the API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI and AI fluency. The certificates are one PDF on this site."],
-    [/degree|school|college|gpa|education|study/i, "calm", "Associate of Arts in Business from San Jacinto College, May 2026, GPA 3.63, Dean’s Honor List. Currently pursuing a Bachelor’s in Neuroscience, expected 2027."],
-    [/stack|tools?|tech|supabase|postgres|vercel|mcp|codex/i, "attentive", "Supabase and PostgreSQL underneath, Vercel in production, Claude and Codex for agentic work, MCP integrations wired end to end. Obsidian for the knowledge base."],
-    [/obawemimo|last name|surname|pronounce/i, "warm", "Obawemimo. It’s my family name, and as far as the web is concerned there’s one of me: founder of Apohenia, co-owner of Triple J Auto Investment, Pearland, Texas."],
+    [/apohenia|packet|webdealer|title|county|registration/i, "serious", "Apohenia is my company. The first product is Deal Packet Checker. It reads a Texas dealer’s title packet before webDEALER ever sees it, checks the documents against each other, and hands the clerk a short list of what’s wrong. We’re on a founding waitlist right now, Texas pilot. Not affiliated with TxDMV or any county office."],
+    [/triple ?j|dealership|car lot|rental|finance|financing/i, "calm", "Triple J Auto Investment is the dealership I co-own and run in Houston. Cars, trucks and SUVs you can finance in house, sell and trade valuations, and we help with registration after the sale. Clear vehicles, clear terms, real people."],
+    [/credential|certif|anthropic|course|claude/i, "serious", "Nineteen Anthropic courses. Claude, Claude Code, the API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI, the AI fluency series. The certificates are all in one PDF on this site."],
+    [/degree|school|college|gpa|education|study/i, "calm", "Associate of Arts in Business from San Jacinto College, May 2026, 3.63, Dean’s Honor List. I’m working on a Bachelor’s in Neuroscience now, should be done 2027."],
+    [/stack|tools?|tech|supabase|postgres|vercel|mcp|codex/i, "attentive", "Supabase and Postgres underneath, Vercel in production, Claude and Codex for the agent work, MCP wired all the way through. Obsidian for notes."],
+    [/obawemimo|last name|surname|pronounce/i, "warm", "Obawemimo. Family name. As far as the internet is concerned there’s one of me: founder of Apohenia, co-owner of Triple J Auto Investment, Pearland, Texas."],
     [/where|based|location|pearland|houston|texas/i, "calm", "Pearland, Texas. The dealership is in Houston, at 8774 Almeda Genoa Rd."],
-    [/hire|rate|price|cost|budget|available|contract|work with/i, "warm", "Easiest path: the intake at the bottom of the page writes your first message for you. Or just email me at " + CONTACT + "."],
-    [/site|website|this|built|how.*(make|build)|game|loader|water|voice/i, "wink", "This site is plain HTML, CSS and JavaScript on Vercel. The loader is a water simulation on a canvas, the films are rendered with Remotion, and the voice is a rendered model reading lines I wrote. Nothing here needs a framework to feel like it does."],
-    [/email|contact|reach|talk/i, "warm", "Email is " + CONTACT + ". It goes to a real inbox that I read."]
+    [/hire|rate|price|cost|budget|available|contract|work with/i, "warm", "Easiest way: the intake at the bottom of the page writes your first message for you. Or honestly, just email me at " + CONTACT + "."],
+    [/site|website|this|built|how.*(make|build)|game|loader|water|voice/i, "wink", "This site is plain HTML, CSS and JavaScript on Vercel. The loader is a water simulation on a canvas, the films are rendered with Remotion, and the voice is a clone of mine reading lines I wrote. No framework. Didn’t need one."],
+    [/email|contact|reach|talk/i, "warm", "Email is " + CONTACT + ". Real inbox, I read it."]
   ];
-  function scripted(q) { for (var i = 0; i < FACTS.length; i++) if (FACTS[i][0].test(q)) return { face: FACTS[i][1], text: FACTS[i][2] }; return { face: "attentive", text: "That one needs the live version of me. Email it to " + CONTACT + " and I’ll answer properly." }; }
+  function scripted(q) { for (var i = 0; i < FACTS.length; i++) if (FACTS[i][0].test(q)) return { face: FACTS[i][1], text: FACTS[i][2] }; return { face: "attentive", text: "That one I’d rather answer for real. Email it to " + CONTACT + " and I’ll get back to you." }; }
   function enterChat() {
     guide.classList.add("is-chat"); camera(null); clearMark(); setChoices([]); setProgress(0, 0); setFace("attentive");
-    say("Ask me anything about the work. I’ll answer as myself.", function () { setChoices([finish("Finish")]); });
+    say("Ask me whatever about the work. I’ll answer as me.", function () { setChoices([finish("Finish")]); });
     setTimeout(function () { chatInput.focus({ preventScroll: true }); }, 400);
   }
   chatForm.addEventListener("submit", function (e) {
