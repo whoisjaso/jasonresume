@@ -29,7 +29,15 @@
       <image:title>Triple J Auto Investment monogram</image:title>
       <image:caption>Monogram of Triple J Auto Investment, co-owned by Jason Obawemimo.</image:caption>
     </image:image>
-  </url>
+      <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/film/signature-poster.jpg</image:loc>
+      <image:title>Jason Obawemimo, signature film poster</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/film/screen-poster.jpg</image:loc>
+      <image:title>Apohenia Deal Packet Checker on screen at jasonobawemimo.com</image:title>
+    </image:image>
+</url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.html</loc>
     <image:image>

@@ -6,13 +6,13 @@
     <atom:link href="https://jasonobawemimo.com/feed.xml" rel="self" type="application/rss+xml" />
     <description>Official updates for Jason Obawemimo's web design, workflow systems, credentials, resume, and verified answer-engine facts.</description>
     <language>en-us</language>
-    <lastBuildDate>Wed, 17 Jun 2026 22:30:00 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 01 Sep 2026 22:00:00 GMT</lastBuildDate>
     <item>
-      <title>jasonobawemimo.com is now a film you walk into</title>
+      <title>Jason Obawemimo walks you through the site, and speaks</title>
       <link>https://jasonobawemimo.com/</link>
-      <guid isPermaLink="false">https://jasonobawemimo.com/#film</guid>
-      <pubDate>Mon, 01 Sep 2026 20:00:00 GMT</pubDate>
-      <description>The site opens with a loading screen built on Jason Obawemimo's portrait, asks whether you are an interviewer, a business partner, or just lurking, and then Jason guides you through six chapters as a character with expressions and a live chat. A codex fills as you explore. Every fact on the page remains in plain HTML for readers and crawlers; the film is progressive enhancement.</description>
+      <guid isPermaLink="false">https://jasonobawemimo.com/#walkthrough</guid>
+      <pubDate>Tue, 01 Sep 2026 22:00:00 GMT</pubDate>
+      <description>jasonobawemimo.com opens on a loading screen built from Jason Obawemimo's portrait, plays a short signature film, and asks whether you are an interviewer, a business partner, or just lurking. Jason then guides you through the page: the camera scrolls to each proof, phrases are underlined, circled or crossed out, and every line is spoken aloud. The laptop on the page shows Apohenia and Triple J Auto Investment live. Everything is skippable, and every fact stays in plain HTML.</description>
     </item>
     <item>
       <title>Jason Obawemimo Search and AI Knowledge Card</title>
