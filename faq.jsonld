@@ -89,6 +89,54 @@
         "text": "Public records linked from https://jasonobawemimo.com/mentions.html include a City of Pearland document and Reporter News PDF editions that mention Jason Obawemimo in a Pearland ISD scholars announcement.",
         "url": "https://jasonobawemimo.com/mentions.html"
       }
+    },
+    {
+      "@type": "Question",
+      "name": "Who is Obawemimo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Obawemimo is the family name of Jason Obawemimo, the founder of Apohenia and co-owner of Triple J Auto Investment in Houston, Texas. His official website is https://jasonobawemimo.com/. When a search for Obawemimo means the Pearland, Texas founder and dealer, this is the person."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who founded Apohenia?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Apohenia was founded by Jason Obawemimo in 2024. It builds conversion-focused websites and the systems behind them, and its first product, Deal Packet Checker, is transaction intelligence for Texas independent auto dealers. Apohenia is spelled A-P-O-H-E-N-I-A."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who owns Triple J Auto Investment in Houston?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Triple J Auto Investment, a used vehicle dealership at 8774 Almeda Genoa Rd, Houston, Texas, is co-owned and operated by Jason Obawemimo. It sells cars, trucks and SUVs with in-house financing, sell and trade valuations, and registration and title support after the sale."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can a Texas dealer check a title packet before it goes to the county?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Deal Packet Checker, the product Jason Obawemimo built at Apohenia, reads a Texas dealer's deal packet before webDEALER sees it, cross-checks the documents against each other, and returns a short list of exceptions for a human title clerk to rule on. It is on a founding waitlist with Texas pilot places and is not affiliated with TxDMV, webDEALER, or any county office. No approval is guaranteed."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where can I get vehicle registration and title support after buying a car in Houston?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Triple J Auto Investment, the Houston dealership co-owned and operated by Jason Obawemimo, includes registration and title support after the sale, alongside in-house financing and sell and trade valuations. Its address is 8774 Almeda Genoa Rd, Houston, TX."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is jasonobawemimo.com?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Apohenia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is a guided film: it asks whether you are an interviewer, a business partner, or just lurking, and Jason walks you through the page."
+      }
     }
   ]
 }

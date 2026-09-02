@@ -15,3 +15,5 @@ same crop and backdrop for all seven so the swap reads as one person reacting.
 
 `guide.js` falls back to `calm.png` for any missing file, and to the real headshot
 if `calm.png` is missing too, so the site never breaks on a partial set.
+
+Then list the files that exist in `faces.json`, for example `["calm","warm","attentive","serious","surprised","laugh","wink"]`. The guide only requests the faces named there and falls back to the headshot for the rest.

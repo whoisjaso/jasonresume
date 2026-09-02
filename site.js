@@ -104,19 +104,20 @@
     }, { passive: true });
     hero.addEventListener("pointerleave", function () { portrait.style.transform = ""; });
   }
-  var dustC = document.querySelector(".hero__dust");
-  if (dustC && !RM && !matchMedia("(prefers-reduced-data: reduce)").matches && innerWidth > 720) {
-    var dctx = dustC.getContext("2d"), dpr = Math.min(devicePixelRatio || 1, 2), motes = [];
-    function sizeDust() { var r = dustC.getBoundingClientRect(); dustC.width = r.width * dpr; dustC.height = r.height * dpr; dctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-    sizeDust(); addEventListener("resize", sizeDust, { passive: true });
-    for (var i = 0; i < 44; i++) motes.push({ x: Math.random(), y: Math.random(), r: 0.5 + Math.random() * 1.3, a: 0.08 + Math.random() * 0.3, v: 0.00012 + Math.random() * 0.00025, s: Math.random() * 6.28 });
-    (function dustFrame(t) {
-      if (hidden || !body.classList.contains("is-live") || scrollY > innerHeight) return requestAnimationFrame(dustFrame);
-      var w = dustC.clientWidth, h = dustC.clientHeight; dctx.clearRect(0, 0, w, h);
-      for (var i = 0; i < motes.length; i++) { var m = motes[i]; m.y -= m.v; if (m.y < -0.02) { m.y = 1.02; m.x = Math.random(); } var x = (m.x + Math.sin(t / 2600 + m.s) * 0.01) * w;
-        dctx.beginPath(); dctx.arc(x, m.y * h, m.r, 0, 6.283); dctx.fillStyle = "rgba(230,201,100," + (m.a * (0.6 + 0.4 * Math.sin(t / 1100 + m.s))) + ")"; dctx.fill(); }
-      requestAnimationFrame(dustFrame);
-    })(0);
+  /* The laptop plays only while it is on screen, and never on a metered connection */
+  var film = document.querySelector(".device__film");
+  if (film) {
+    var cheap = matchMedia("(prefers-reduced-data: reduce)").matches || (navigator.connection && navigator.connection.saveData);
+    if (cheap || RM) { film.removeAttribute("autoplay"); film.preload = "none"; }
+    else if ("IntersectionObserver" in window) {
+      var fio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { if (film.preload === "none") film.preload = "auto"; var p = film.play(); if (p && p.catch) p.catch(function () {}); }
+          else if (!film.paused) film.pause();
+        });
+      }, { threshold: 0.25 });
+      fio.observe(film);
+    }
   }
 
   /* ------------------------------------------------------------
@@ -133,14 +134,24 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  var burger = document.querySelector(".nav__burger");
+  var burger = document.querySelector(".nav__burger"), menu = document.getElementById("site-menu");
   function setMenu(o) {
     body.classList.toggle("menu-open", o);
     if (burger) { burger.setAttribute("aria-expanded", o ? "true" : "false"); burger.setAttribute("aria-label", o ? "Close menu" : "Open menu"); }
+    if (menu && o) setTimeout(function () { var f = menu.querySelector("a,button"); if (f) f.focus({ preventScroll: true }); }, 350);
+    if (!o && burger && menu && menu.contains(document.activeElement)) burger.focus({ preventScroll: true });
   }
   if (burger) burger.addEventListener("click", function () { setMenu(!body.classList.contains("menu-open")); });
   document.querySelectorAll(".menu a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") setMenu(false); });
+  document.addEventListener("keydown", function (e) {
+    if (!body.classList.contains("menu-open")) return;
+    if (e.key === "Escape") return setMenu(false);
+    if (e.key === "Tab" && menu) {
+      var f = menu.querySelectorAll("a,button"), first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === burger)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); burger.focus(); }
+    }
+  });
 
   /* ------------------------------------------------------------
      The intake. Nothing leaves the browser.
