@@ -23,6 +23,37 @@
   function plain(html) { return String(html).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(); }
   var hidden = false;
   document.addEventListener("visibilitychange", function () { hidden = document.hidden; });
+  var JG_V = "4"; /* bumps the small JSON fetches past the long asset cache */
+
+  /* ---------- Analytics: batched, first-party, off when Do Not Track is on ---------- */
+  var AN = (function () {
+    var dnt = navigator.doNotTrack === "1" || window.doNotTrack === "1";
+    var id = store.get("jg_id");
+    if (!id) { id = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); store.set("jg_id", id); }
+    var q = [], timer = null;
+    function common() {
+      var w = innerWidth, dev = w < 768 ? "Mobile" : w < 1100 && matchMedia("(pointer: coarse)").matches ? "Tablet" : "Desktop", refd = "";
+      try { refd = document.referrer ? new URL(document.referrer).hostname : ""; } catch (e) {}
+      return { url: location.href.split("#")[0], ref: document.referrer || "", refd: refd, w: screen.width, h: screen.height, device: dev, lang: navigator.language };
+    }
+    function flush() {
+      if (!q.length) return;
+      var payload = JSON.stringify({ id: id, events: q.splice(0, 25), common: common() });
+      try {
+        if (navigator.sendBeacon && navigator.sendBeacon("/api/track", new Blob([payload], { type: "application/json" }))) return;
+        fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch(function () {});
+      } catch (e) {}
+    }
+    function track(event, props, set) {
+      if (dnt) return;
+      var e = { event: event, props: props || {}, ts: Date.now() }; if (set) e.set = set;
+      q.push(e); clearTimeout(timer); timer = setTimeout(flush, 900);
+    }
+    addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", function () { if (document.hidden) { track("page_left", { y: Math.round(scrollY) }); flush(); } });
+    return { track: track, flush: flush };
+  })();
+  window.JG_TRACK = AN.track;
 
   var I = {
     sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
@@ -35,7 +66,7 @@
   var FACE_DIR = "assets/guide/", FACES = ["calm", "warm", "attentive", "serious", "surprised", "laugh", "wink"];
   var faceOk = {}, FALLBACK = "assets/jason-headshot-620.webp";
   /* assets/guide/faces.json lists which expression files exist, so nothing is requested blind */
-  fetch(FACE_DIR + "faces.json").then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
+  fetch(FACE_DIR + "faces.json?v=" + JG_V).then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
     (list || []).forEach(function (f) { if (FACES.indexOf(f) < 0) return; var im = new Image(); im.onload = function () { faceOk[f] = true; if (curFace === f) setFace(f, true); }; im.src = FACE_DIR + f + ".webp"; });
   }).catch(function () {});
   function faceSrc(f) { return faceOk[f] ? FACE_DIR + f + ".webp" : faceOk.calm ? FACE_DIR + "calm.webp" : FALLBACK; }
@@ -104,14 +135,14 @@
     document.querySelectorAll("[data-sound-label]").forEach(function (b) { b.textContent = m ? "Sound off" : "Sound on"; b.setAttribute("aria-pressed", m ? "false" : "true"); });
     if (m) { pad.stop(); voice.stop(); } else { unlock(); SFX.tick(); if (open) pad.start(); }
   }
-  document.addEventListener("click", function (e) { var b = e.target.closest("[data-sound-toggle],[data-sound-label]"); if (b) { e.preventDefault(); setMuted(!muted); } });
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-sound-toggle],[data-sound-label]"); if (b) { e.preventDefault(); setMuted(!muted); AN.track("sound_toggled", { on: !muted }); } });
 
   /* ============================================================
      VOICE. Scripted lines are pre-rendered files. Live answers
      fall back to the browser's own speech.
      ============================================================ */
   var voice = (function () {
-    var manifest = null, cur = null, ready = fetch("assets/voice/manifest.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { manifest = j; }).catch(function () { manifest = null; });
+    var manifest = null, cur = null, ready = fetch("assets/voice/manifest.json?v=" + JG_V).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { manifest = j; }).catch(function () { manifest = null; });
     function hash(s) { var h = 5381, i; for (i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(16); }
     function stop() {
       if (cur) { try { cur.pause(); } catch (e) {} cur = null; }
@@ -153,6 +184,7 @@
      ============================================================ */
 
   var seen = store.get("jg_seen") === "1";
+  AN.track("site_arrived", { returning: seen });
   var loader = el(
     '<div id="jg-loader" role="status" aria-live="polite" aria-label="Loading">' +
       '<div class="jg-loader__wrap">' +
@@ -251,7 +283,7 @@
     filmWrap.appendChild(filmVideo);
   }
   var skipBtn = loader.querySelector(".jg-loader__skip");
-  skipBtn.addEventListener("click", function () { unlock(); if (!finished) { skipped = true; return; } endLoader(true); });
+  skipBtn.addEventListener("click", function () { unlock(); AN.track("intro_skipped", { at: pctEl.textContent }); if (!finished) { skipped = true; return; } endLoader(true); });
 
   var loaderDone = false;
   function finishLoader() {
@@ -319,10 +351,41 @@
   }
   function choose(role) {
     removeEventListener("keydown", gateKeys); unlock();
-    if (role) { store.set("jg_role", role); SFX.select(); var hot = gate.querySelector('[data-role="' + role + '"]'); if (hot) hot.classList.add("is-hot"); } else SFX.close();
+    if (role) {
+      store.set("jg_role", role); SFX.select(); AN.track("role_chosen", { role: role }, { role: role });
+      var hot = gate.querySelector('[data-role="' + role + '"]'); if (hot) hot.classList.add("is-hot");
+      return setTimeout(function () { askName(role); }, RM ? 60 : 450);
+    }
+    SFX.close(); AN.track("role_chosen", { role: "skipped" });
+    leaveGate(); showFab();
+  }
+  function leaveGate() {
     gate.classList.add("is-leaving"); body.classList.remove("is-gated"); body.classList.add("is-live");
     setTimeout(function () { gate.remove(); }, 950);
-    if (role) setTimeout(function () { openGuide(role); }, RM ? 100 : 800); else showFab();
+  }
+  /* One more question, and it is skippable. The name is only used to greet you. */
+  var visitorName = store.get("jg_name") || "";
+  function askName(role) {
+    var wrap = gate.querySelector(".jg-gate__wrap");
+    wrap.classList.add("is-swapping");
+    setTimeout(function () {
+      wrap.innerHTML = '<h1 class="jg-gate__q" id="jg-gate-q">And your <em>name</em>?</h1>' +
+        '<form class="jg-namestep"><input type="text" name="name" maxlength="40" autocomplete="given-name" autocapitalize="words" spellcheck="false" placeholder="First name is plenty" aria-label="Your name" value="' + esc(visitorName) + '" />' +
+        '<div class="jg-namestep__row"><button class="jg-opt jg-opt--primary" type="submit">Continue</button><button class="jg-skip" type="button" data-skip>Skip</button></div>' +
+        '<p class="jg-namestep__note">Only used so Jason can say hello. Nothing else is asked.</p></form>';
+      wrap.classList.remove("is-swapping"); wrap.classList.add("is-in");
+      var form = wrap.querySelector("form"), input = form.querySelector("input");
+      setTimeout(function () { input.focus({ preventScroll: true }); }, 350);
+      function go(name) {
+        SFX.select();
+        if (name) { visitorName = name; store.set("jg_name", name); AN.track("name_given", { role: role, name: name }, { name: name, role: role }); }
+        else { visitorName = ""; store.set("jg_name", ""); AN.track("name_skipped", { role: role }); }
+        leaveGate(); setTimeout(function () { openGuide(role); }, RM ? 100 : 800);
+      }
+      form.addEventListener("submit", function (e) { e.preventDefault(); go(input.value.replace(/[^\p{L}\p{M}' .-]/gu, "").trim().slice(0, 40)); });
+      form.querySelector("[data-skip]").addEventListener("click", function () { go(""); });
+      addEventListener("keydown", function esc1(e) { if (e.key === "Escape") { removeEventListener("keydown", esc1); go(""); } });
+    }, RM ? 0 : 420);
   }
 
   /* ============================================================
@@ -403,25 +466,25 @@
   var fab = el('<button id="jg-fab" type="button" aria-label="Open the guide"><img alt="" src="' + FALLBACK + '" /><span>Guide</span></button>');
   body.appendChild(fab);
   function showFab() { fab.classList.add("is-in"); }
-  fab.addEventListener("click", function () { SFX.open(); openGuide(store.get("jg_role") || "lurker"); });
+  fab.addEventListener("click", function () { SFX.open(); AN.track("guide_reopened", {}); openGuide(store.get("jg_role") || "lurker"); });
   document.querySelectorAll("[data-open-guide]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); body.classList.remove("menu-open"); SFX.open(); openGuide(store.get("jg_role") || "lurker"); }); });
 
   var portraitEl = guide.querySelector(".jg-portrait"), imgs = guide.querySelectorAll(".jg-portrait img"), sayEl = guide.querySelector(".jg-say"), choicesEl = guide.querySelector(".jg-choices"), progEl = guide.querySelector(".jg-progress i"), noteEl = guide.querySelector(".jg-note");
   var chatForm = guide.querySelector(".jg-chat"), chatInput = chatForm.querySelector("input"), chatBtn = chatForm.querySelector("button");
   var curImg = 0, curFace = "";
   guide.querySelector(".jg-close").addEventListener("click", closeGuide);
-  guide.querySelector(".jg-guide__skip").addEventListener("click", function () { SFX.close(); closeGuide(); });
+  guide.querySelector(".jg-guide__skip").addEventListener("click", function () { SFX.close(); AN.track("guide_skipped", { role: role, step: S.i || 0 }); closeGuide(); });
   function setFace(face, force) { if (face === curFace && !force) return; curFace = face; var next = imgs[1 - curImg]; next.src = faceSrc(face); next.classList.add("is-in"); imgs[curImg].classList.remove("is-in"); curImg = 1 - curImg; }
 
   var typing = null, sayId = 0;
-  function say(text, done, who) {
+  function say(text, done, who, spoken) {
     if (typing) { clearTimeout(typing); typing = null; }
     var id = ++sayId;
     sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';
     var span = sayEl.firstChild, tokens = text.match(/<[^>]+>|[^<]/g) || [], chars = plain(text).length || 1;
     function finish() { if (id !== sayId) return; sayEl.classList.add("is-done"); typing = null; portraitEl.classList.remove("is-talking"); if (done) done(); }
-    if (RM) { span.innerHTML = text; voice.play(text, who); return finish(); }
-    voice.play(text, who).then(function (ms) {
+    if (RM) { span.innerHTML = text; voice.play(spoken || text, who); return finish(); }
+    voice.play(spoken || text, who).then(function (ms) {
       if (id !== sayId) return;
       var per = ms ? clamp((ms - 250) / chars, 14, 60) : 19, i = 0, html = "";
       if (ms) portraitEl.classList.add("is-talking");
@@ -532,7 +595,10 @@
     setTimeout(function () {
       if (S.i !== i || !open) return;
       if (st.mark) annotate(st.mark[0], st.mark[1]);
-      say(st.text, function () { setChoices(st.choices); });
+      var shown = st.text;
+      if (i === 0 && visitorName) shown = st.text.replace(/^(Good (?:morning|afternoon|evening))\./, "$1, " + esc(visitorName) + ".");
+      AN.track("guide_line", { role: role, step: i });
+      say(shown, function () { setChoices(st.choices); }, "jason", st.text);
     }, wait);
   }
   addEventListener("keydown", function (e) {
@@ -551,6 +617,7 @@
   var endEl = el('<div id="jg-end" role="dialog" aria-modal="true" aria-labelledby="jg-end-h"><div class="jg-end__wrap"><h2 id="jg-end-h"></h2><p class="jg-end__sum"></p><div class="jg-end__cta"></div><div class="jg-end__replay"></div></div></div>');
   body.appendChild(endEl);
   function showEnd() {
+    AN.track("guide_finished", { role: role });
     open = false; guide.classList.remove("is-open", "is-chat"); camera(null); clearMark(); voice.stop(); pad.stop();
     var R = { interviewer: "an <em>interviewer</em>", partner: "a <em>business partner</em>", lurker: "a <em>lurker</em>" }[role] || "a visitor";
     endEl.querySelector("h2").innerHTML = "You came as " + R + ".";
@@ -561,7 +628,7 @@
       partner: [['#intake', 'Send the message', true], ['mailto:' + CONTACT, 'Email Jason', false]],
       lurker: [['#work', 'Back to the proof', true], ['mailto:' + CONTACT, 'Say hello', false]]
     }[role] || [['mailto:' + CONTACT, 'Email Jason', true]];
-    CTAS.forEach(function (c) { var a = el('<a class="btn' + (c[2] ? " btn--solid" : "") + '" href="' + c[0] + '"' + (c[3] ? ' download="Jason Obawemimo - Resume.pdf"' : "") + '><span>' + c[1] + '</span></a>'); a.addEventListener("click", function (e) { hideEnd(); if (c[0].charAt(0) === "#") { e.preventDefault(); var n = document.querySelector(c[0]); if (n) scrollToY(n.getBoundingClientRect().top + scrollY - 80, 1200); } }); cta.appendChild(a); });
+    CTAS.forEach(function (c) { var a = el('<a class="btn' + (c[2] ? " btn--solid" : "") + '" href="' + c[0] + '"' + (c[3] ? ' download="Jason Obawemimo - Resume.pdf"' : "") + '><span>' + c[1] + '</span></a>'); a.addEventListener("click", function (e) { AN.track("cta_click", { label: c[1], role: role, where: "end" }); hideEnd(); if (c[0].charAt(0) === "#") { e.preventDefault(); var n = document.querySelector(c[0]); if (n) scrollToY(n.getBoundingClientRect().top + scrollY - 80, 1200); } }); cta.appendChild(a); });
     var rp = endEl.querySelector(".jg-end__replay"); rp.innerHTML = "<span>Replay as</span>";
     Object.keys(PATHS).filter(function (r) { return r !== role; }).forEach(function (r) { var b = el('<button type="button">' + PATHS[r].h.toLowerCase() + '</button>'); b.addEventListener("click", function () { hideEnd(); store.set("jg_role", r); openGuide(r); }); rp.appendChild(b); });
     var back = el('<button type="button">or return to the site</button>'); back.addEventListener("click", function () { hideEnd(); showFab(); }); rp.appendChild(back);
@@ -599,6 +666,7 @@
     var q = chatInput.value.trim(); if (!q) return;
     chatInput.value = ""; chatBtn.disabled = true; SFX.tick(); setChoices([]); setFace("attentive"); voice.stop();
     history.push({ role: "user", content: q });
+    AN.track("chat_asked", { q: q.slice(0, 160), role: role, live: liveDown !== false });
     sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';
     var handled = false;
     function reply(face, text, note, live) {
@@ -610,7 +678,7 @@
     }
     if (liveDown === false) { var s0 = scripted(q); return reply(s0.face, s0.text); }
     var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, 20000);
-    fetch("/api/guide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: role, messages: history.slice(-12) }), signal: ctrl.signal })
+    fetch("/api/guide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: role, name: visitorName, messages: history.slice(-12) }), signal: ctrl.signal })
       .then(function (r) { clearTimeout(timer); if (r.status === 503) { liveDown = false; throw new Error("unconfigured"); } if (!r.ok) throw new Error("http " + r.status); return r.json(); })
       .then(function (j) { liveDown = true; reply(FACES.indexOf(j.face) >= 0 ? j.face : "calm", j.text, "", true); })
       .catch(function () { var s = scripted(q); reply(s.face, s.text, liveDown === false ? "The live version of me isn’t switched on here, so this is the scripted one." : ""); });
