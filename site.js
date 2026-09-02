@@ -112,7 +112,7 @@
     else if ("IntersectionObserver" in window) {
       var fio = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
-          if (en.isIntersecting) { if (film.preload === "none") film.preload = "auto"; var p = film.play(); if (p && p.catch) p.catch(function () {}); }
+          if (en.isIntersecting) { if (film.preload === "none") film.preload = "auto"; var p = film.play(); if (p && p.catch) p.catch(function () {}); if (!film.dataset.seen) { film.dataset.seen = "1"; T("laptop_played", {}); } }
           else if (!film.paused) film.pause();
         });
       }, { threshold: 0.25 });
@@ -141,7 +141,15 @@
     if (menu && o) setTimeout(function () { var f = menu.querySelector("a,button"); if (f) f.focus({ preventScroll: true }); }, 350);
     if (!o && burger && menu && menu.contains(document.activeElement)) burger.focus({ preventScroll: true });
   }
-  if (burger) burger.addEventListener("click", function () { setMenu(!body.classList.contains("menu-open")); });
+  function T(e, p) { if (typeof window.JG_TRACK === "function") window.JG_TRACK(e, p); }
+  if (burger) burger.addEventListener("click", function () { var o = !body.classList.contains("menu-open"); setMenu(o); if (o) T("menu_opened", {}); });
+  document.addEventListener("click", function (e) {
+    var o = e.target.closest(".opt");
+    if (o) { var p = { step: Number(o.dataset.step) || 0 }; p[o.dataset.step === "1" ? "pain" : o.dataset.step === "2" ? "cost" : "when"] = o.dataset.key; T("intake_step", p); return; }
+    if (e.target.closest("#intake-send")) { var picked = {}; document.querySelectorAll('.opt[aria-pressed="true"]').forEach(function (b) { picked[b.dataset.step === "1" ? "pain" : b.dataset.step === "2" ? "cost" : "when"] = b.dataset.key; }); T("intake_sent", picked); return; }
+    var a = e.target.closest("a.btn, .contact__email, .venture__go, .credentials__actions a, .edu__proof, .device__foot a, .hero__meta a");
+    if (a) T("cta_click", { label: (a.textContent || "").trim().slice(0, 40), href: (a.getAttribute("href") || "").slice(0, 120), where: "page" });
+  });
   document.querySelectorAll(".menu a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
   document.addEventListener("keydown", function (e) {
     if (!body.classList.contains("menu-open")) return;

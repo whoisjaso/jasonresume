@@ -3,6 +3,8 @@
 
 User-agent: *
 Allow: /
+Disallow: /admin.html
+Disallow: /api/
 
 # Search engines
 User-agent: Googlebot
