@@ -31,6 +31,11 @@
 .jg-ibtn:hover, .jg-ibtn:focus-visible { border-color: var(--gold); color: var(--gold-2); background: var(--gold-wash); }
 .jg-ibtn svg { width: 15px; height: 15px; }
 
+/* ---------- Screen lock (iOS keeps scrolling through overflow:hidden) ---------- */
+html.is-locked, html.is-locked body { overscroll-behavior: none; touch-action: none; }
+html.is-locked #jg-loader, html.is-locked #jg-gate, html.is-locked #jg-end { touch-action: manipulation; }
+#jg-gate, #jg-end { overscroll-behavior: contain; }
+
 /* ---------- Loader ---------- */
 #jg-loader {
   position: fixed; inset: 0; z-index: 90; background: var(--lacquer);

@@ -137,6 +137,7 @@
   var burger = document.querySelector(".nav__burger"), menu = document.getElementById("site-menu");
   function setMenu(o) {
     body.classList.toggle("menu-open", o);
+    if (typeof window.JG_LOCK === "function") window.JG_LOCK(o);
     if (burger) { burger.setAttribute("aria-expanded", o ? "true" : "false"); burger.setAttribute("aria-label", o ? "Close menu" : "Open menu"); }
     if (menu && o) setTimeout(function () { var f = menu.querySelector("a,button"); if (f) f.focus({ preventScroll: true }); }, 350);
     if (!o && burger && menu && menu.contains(document.activeElement)) burger.focus({ preventScroll: true });
