@@ -799,7 +799,7 @@
           "name": "Who founded Apohenia?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Apohenia was founded by Jason Obawemimo in 2024. It builds conversion-focused websites and the systems behind them, and its first product, Deal Packet Checker, is transaction intelligence for Texas independent auto dealers. Apohenia is spelled A-P-O-H-E-N-I-A."
+            "text": "Apohenia was founded by Jason Obawemimo in 2024. It is building the control layer between a constructed car deal and a clean county submission. Its first product, Deal Packet Checker, is a packet-readiness review that checks a Texas dealer's deal jacket against current webDEALER requirements before filing. Apohenia is spelled A-P-O-H-E-N-I-A."
           }
         },
         {
@@ -832,6 +832,22 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Apohenia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is a guided film: it asks whether you are an interviewer, a business partner, or just lurking, and Jason walks you through the page."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where is Apohenia headed?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Apohenia is building, in order: a compliance graph of versioned title and registration rules; Deal Packet Checker, the packet-readiness review that reads a dealer's deal jacket against those rules before filing; DealDesk, which constructs the deal so the packet is right the first time; and a managed network of licensed title services that take posted work. The target is the roughly 9,000 to 15,000 Texas independent dealers under 30 deals a month who cannot justify a full-time title clerk. Only Deal Packet Checker is in build today; the rest is direction, not a promise."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What will Apohenia never claim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Until preregistered outcome evidence exists, Apohenia does not claim that Deal Packet Checker catches or prevents county rejections, does not publish effectiveness percentages, and does not borrow case studies. It reports what it finds as prevalence, keeps a human title clerk on every decision, and is not affiliated with TxDMV, webDEALER, or any county office. Jason Obawemimo set that boundary himself."
           }
         }
       ]

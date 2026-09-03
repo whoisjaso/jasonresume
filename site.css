@@ -185,7 +185,8 @@ body.menu-open .nav__burger span:last-child { width: 26px; transform: translateY
   visibility: hidden; transition: clip-path 0.9s var(--ease), visibility 0s linear 0.9s;
 }
 .menu::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(70% 50% at 100% 100%, rgba(201,166,66,0.07), transparent 70%); }
-body.menu-open { overflow: hidden; }
+body.menu-open { overflow: hidden; overscroll-behavior: none; }
+.menu { overscroll-behavior: contain; }
 body.menu-open .menu { clip-path: inset(0 0 0 0); visibility: visible; transition: clip-path 0.9s var(--ease), visibility 0s; }
 .menu__links { display: grid; align-content: end; }
 .menu__link {
@@ -411,6 +412,10 @@ body.is-live .hero__portrait { opacity: 1; transform: none; transition: opacity 
 .venture__go:hover { border-color: var(--hue-2); gap: 15px; }
 .venture__go svg { width: 13px; height: 13px; }
 .venture__note { font-size: 12.5px; color: var(--ivory-3); line-height: 1.5; }
+.venture__direction { display: grid; gap: 10px; padding: 22px 0 4px; border-top: 1px solid var(--line); }
+.venture__direction h3 { font-family: var(--serif); font-weight: 500; font-size: 1.3rem; line-height: 1.1; color: var(--ivory); }
+.venture__direction h3 + p { margin-bottom: 8px; }
+.venture__direction p { color: var(--ivory-2); font-size: 15.5px; line-height: 1.6; max-width: var(--measure); }
 
 .band { padding: clamp(56px, 8vh, 96px) var(--pad); background: var(--panel); border-top: 1px solid var(--gold-line-2); display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); align-items: center; }
 .band h3 { font-family: var(--serif); font-weight: 500; font-size: clamp(1.6rem, 3.1vw, 2.4rem); line-height: 1.06; }

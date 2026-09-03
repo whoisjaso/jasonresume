@@ -55,6 +55,17 @@
   })();
   window.JG_TRACK = AN.track;
 
+  /* Screen lock. overflow:hidden is ignored by iOS Safari, so the body is pinned in place
+     while the loader, the question or the close owns the screen, and released to the same scroll position. */
+  var lockY = 0, lockOn = false;
+  function lockScreen(on) {
+    if (on === lockOn) return; lockOn = on;
+    if (on) { lockY = scrollY; body.style.position = "fixed"; body.style.top = -lockY + "px"; body.style.left = "0"; body.style.right = "0"; body.style.width = "100%"; document.documentElement.classList.add("is-locked"); }
+    else { body.style.position = ""; body.style.top = ""; body.style.left = ""; body.style.right = ""; body.style.width = ""; document.documentElement.classList.remove("is-locked"); scrollTo(0, lockY); }
+  }
+  window.JG_LOCK = lockScreen;
+  lockScreen(true);
+
   var I = {
     sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
     mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4zM16 9.5l5 5M21 9.5l-5 5"/></svg>',
@@ -75,7 +86,7 @@
      SOUND. Glass, not piano: slow attacks, long tails, a
      pentatonic in D, and a little shimmer behind everything.
      ============================================================ */
-  var AC = null, muted = store.get("jg_muted") === "1", master = null, wet = null, padNodes = null;
+  var AC = null, muted = store.get("jg_muted") === "1", master = null, wet = null, padNodes = null, loaderDone = false, waterAlive = true;
   function unlock() {
     if (AC) return;
     try {
@@ -113,6 +124,34 @@
     stage: function () { glass(N.D3, 0, 3.2, 0.05); glass(N.A3, 0.04, 3.2, 0.036); glass(N.Fs4, 0.35, 2.6, 0.02); glass(N.D5, 0.7, 2.4, 0.016); },
     arrive: function () { glass(N.D4, 0, 2.2, 0.03); glass(N.A4, 0.2, 2, 0.022); glass(N.E5, 0.42, 1.8, 0.016); }
   };
+  /* Water. Starts on the first tap or click, because browsers keep audio silent before that. */
+  var water = { bed: null, alive: false };
+  function waterStart() {
+    if (!AC || muted || water.bed || RD || !waterAlive) return;
+    var len = AC.sampleRate * 2, buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0), last = 0;
+    for (var i = 0; i < len; i++) { var w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; }
+    var src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+    var bp = AC.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 520; bp.Q.value = 0.6;
+    var lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1400;
+    var lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.13; lg.gain.value = 260; lfo.connect(lg); lg.connect(bp.frequency); lfo.start();
+    var g = AC.createGain(); g.gain.setValueAtTime(0.0001, AC.currentTime); g.gain.exponentialRampToValueAtTime(0.05, AC.currentTime + 2.5);
+    src.connect(bp); bp.connect(lp); lp.connect(g); g.connect(master); src.start();
+    water.bed = { g: g, src: src, lfo: lfo }; water.alive = true;
+  }
+  function waterStop() {
+    if (!water.bed) return; var b = water.bed; water.bed = null; water.alive = false;
+    b.g.gain.cancelScheduledValues(AC.currentTime); b.g.gain.setValueAtTime(Math.max(b.g.gain.value, 0.0001), AC.currentTime); b.g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 1.4);
+    setTimeout(function () { try { b.src.stop(); b.lfo.stop(); } catch (e) {} }, 1600);
+  }
+  var lastPlink = 0;
+  function plink(strength) {
+    if (!AC || muted || !water.alive) return;
+    var now = performance.now(); if (now - lastPlink < (strength > 0.6 ? 40 : 110)) return; lastPlink = now;
+    var t0 = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(), f0 = 900 + Math.random() * 700;
+    o.type = "sine"; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * 1.9, t0 + 0.06);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.012 + strength * 0.045, t0 + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28 + strength * 0.25);
+    o.connect(g); g.connect(master); g.connect(wet); o.start(t0); o.stop(t0 + 0.6);
+  }
   var pad = {
     start: function () {
       if (!AC || muted || padNodes || RD) return;
@@ -133,7 +172,7 @@
     muted = m; store.set("jg_muted", m ? "1" : "0");
     document.querySelectorAll("[data-sound-toggle]").forEach(function (b) { b.innerHTML = m ? I.mute : I.sound; b.setAttribute("aria-label", m ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); b.setAttribute("aria-pressed", m ? "false" : "true"); });
     document.querySelectorAll("[data-sound-label]").forEach(function (b) { b.textContent = m ? "Sound off" : "Sound on"; b.setAttribute("aria-pressed", m ? "false" : "true"); });
-    if (m) { pad.stop(); voice.stop(); } else { unlock(); SFX.tick(); if (open) pad.start(); }
+    if (m) { pad.stop(); voice.stop(); waterStop(); } else { unlock(); SFX.tick(); if (open) pad.start(); if (waterAlive && !loaderDone) waterStart(); }
   }
   document.addEventListener("click", function (e) { var b = e.target.closest("[data-sound-toggle],[data-sound-label]"); if (b) { e.preventDefault(); setMuted(!muted); AN.track("sound_toggled", { on: !muted }); } });
 
@@ -206,7 +245,7 @@
 
   /* water: two height fields, then a displacement pass through the surface */
   var GN = LOW ? 128 : 192, cur = new Float32Array(GN * GN), prev = new Float32Array(GN * GN);
-  var src = null, out = null, octx = null, vctx = null, ripplesOn = !RM && !RD, waterAlive = true;
+  var src = null, out = null, octx = null, vctx = null, ripplesOn = !RM && !RD;
   function setupWater(img) {
     var off = document.createElement("canvas"); off.width = GN; off.height = GN;
     octx = off.getContext("2d", { willReadFrequently: true });
@@ -249,11 +288,13 @@
     if (!ripplesOn || !src) return;
     var r = canvas.getBoundingClientRect(), gx = ((e.clientX - r.left) / r.width) * GN, gy = ((e.clientY - r.top) / r.height) * GN;
     if (Math.abs(gx - lastGx) < 1.5 && Math.abs(gy - lastGy) < 1.5) return;
-    lastGx = gx; lastGy = gy; drop(gx, gy, 2.2, 5);
+    lastGx = gx; lastGy = gy; drop(gx, gy, 2.2, 5); plink(0.25);
   }, { passive: true });
-  canvas.addEventListener("pointerdown", function (e) { var r = canvas.getBoundingClientRect(); drop(((e.clientX - r.left) / r.width) * GN, ((e.clientY - r.top) / r.height) * GN, 5, 16); }, { passive: true });
+  canvas.addEventListener("pointerdown", function (e) { var r = canvas.getBoundingClientRect(); drop(((e.clientX - r.left) / r.width) * GN, ((e.clientY - r.top) / r.height) * GN, 5, 16); plink(1); }, { passive: true });
+  loader.addEventListener("pointerdown", function () { unlock(); waterStart(); }, { passive: true });
+  loader.addEventListener("keydown", function () { unlock(); waterStart(); });
   var autoTimer = null;
-  function autoRipple() { if (!ripplesOn || !src) return; var a = Math.random() * Math.PI * 2, rad = 30 + Math.random() * 50; drop(GN / 2 + Math.cos(a) * rad, GN / 2 + Math.sin(a) * rad, 3, 4); autoTimer = setTimeout(autoRipple, 700 + Math.random() * 900); }
+  function autoRipple() { if (!ripplesOn || !src) return; var a = Math.random() * Math.PI * 2, rad = 30 + Math.random() * 50; drop(GN / 2 + Math.cos(a) * rad, GN / 2 + Math.sin(a) * rad, 3, 4); plink(0.12); autoTimer = setTimeout(autoRipple, 700 + Math.random() * 900); }
 
   var DUR = seen ? 1500 : 3600, t0 = performance.now(), assetsReady = false, finished = false, skipped = false;
   function easeInOutSine(p) { return -(Math.cos(Math.PI * p) - 1) / 2; }
@@ -285,7 +326,6 @@
   var skipBtn = loader.querySelector(".jg-loader__skip");
   skipBtn.addEventListener("click", function () { unlock(); AN.track("intro_skipped", { at: pctEl.textContent }); if (!finished) { skipped = true; return; } endLoader(true); });
 
-  var loaderDone = false;
   function finishLoader() {
     if (finished) return; finished = true; pctEl.textContent = "100"; ringP.style.strokeDashoffset = 0; store.set("jg_seen", "1");
     var wrap = loader.querySelector(".jg-loader__wrap"), title = loader.querySelector(".jg-title");
@@ -305,7 +345,7 @@
     }, RM ? 0 : 600);
   }
   function endLoader(fast) {
-    if (loaderDone) return; loaderDone = true;
+    if (loaderDone) return; loaderDone = true; waterStop();
     loader.classList.add("is-done"); clearTimeout(autoTimer);
     if (filmVideo) { try { filmVideo.pause(); } catch (e) {} }
     setTimeout(function () { waterAlive = false; loader.remove(); }, fast ? 400 : 1000);
@@ -360,7 +400,7 @@
     leaveGate(); showFab();
   }
   function leaveGate() {
-    gate.classList.add("is-leaving"); body.classList.remove("is-gated"); body.classList.add("is-live");
+    gate.classList.add("is-leaving"); body.classList.remove("is-gated"); body.classList.add("is-live"); lockScreen(false);
     setTimeout(function () { gate.remove(); }, 950);
   }
   /* One more question, and it is skippable. The name is only used to greet you. */
@@ -528,7 +568,7 @@
       line("calm", "#thesis", ["handoff", C], "What I do is the stuff underneath a business. Honestly, most operations don’t break at the design. They break at the handoff, when one person passes something to the next and it just doesn’t land.", [next("Go on")]),
       line("attentive", "#thesis", ["sport", U], "And I co-own a dealership, so I’ve priced the deal, chased the title, and eaten the cost when the follow-up didn’t happen. That’s why I don’t automate stuff just to automate it.", [next("Proof")]),
       line("serious", "#work", ["signature", C], "Proof one. A Texas dealer sends a title packet to the county. Three weeks later it comes back because of one missing signature, and by then the deal is already sideways.", [next("And?")]),
-      line("calm", "#work", ["dpc", U], "So I built the thing that catches it before it leaves the building. It reads the packet before the state ever sees it, and hands a human a short list instead of a whole stack.", [next("The dealership")]),
+      line("calm", "#work", ["dpc", U], "So I built the thing that checks it before it leaves the building. It reads the deal jacket against what webDEALER wants right now, and hands your clerk a short list instead of a whole stack.", [next("The dealership")]),
       line("attentive", "#triple-j", ["terms", U], "Proof two. Triple J Auto Investment, Houston. We put the terms on the table early, the trade number is real, and the paperwork doesn’t turn into the customer’s problem after they drive off.", [next("The record")]),
       line("calm", "#experience", ["dates", B], "Here’s the record, in order. Two operating roles since 2024, both still running. I didn’t pad any of this.", [next("Credentials"), jump("Skip to the close", 9)]),
       line("serious", "#credentials", ["nineteen", C], "Nineteen Anthropic courses. An Associate’s in Business, 3.63, Dean’s List. And every claim on this site has a proof page behind it, so you don’t have to take my word for it.", [next("Wrap it up")]),
@@ -568,7 +608,7 @@
     lurker: [
       line("laugh", null, null, greet() + " Lurking. Respect, honestly. No pitch then.", [next("Quick version")]),
       line("calm", ".hero", ["happens", U], "Quick version. I’m Jason, Pearland, Texas. I build the systems underneath small businesses, and I co-own a car lot in Houston.", [next("The weird one")]),
-      line("surprised", "#work", ["signature", C], "The weird one. I built a thing that reads Texas title paperwork so the county doesn’t bounce it back three weeks later.", [next("The real one")]),
+      line("surprised", "#work", ["signature", C], "The weird one. I built a thing that reads Texas title paperwork before it goes to the county. Nobody was checking it before that.", [next("The real one")]),
       line("wink", "#triple-j", ["terms", U], "The real one. The dealership. Clear vehicles, clear terms, real people. That’s the whole promise.", [next("Okay")]),
       line("warm", null, null, "That’s it. Site’s yours, scroll wherever. I’m down in the corner if you want me.", [toChat("Actually, ask you something"), finish("Finish")])
     ]
@@ -632,10 +672,10 @@
     var rp = endEl.querySelector(".jg-end__replay"); rp.innerHTML = "<span>Replay as</span>";
     Object.keys(PATHS).filter(function (r) { return r !== role; }).forEach(function (r) { var b = el('<button type="button">' + PATHS[r].h.toLowerCase() + '</button>'); b.addEventListener("click", function () { hideEnd(); store.set("jg_role", r); openGuide(r); }); rp.appendChild(b); });
     var back = el('<button type="button">or return to the site</button>'); back.addEventListener("click", function () { hideEnd(); showFab(); }); rp.appendChild(back);
-    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.stage();
+    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.stage(); lockScreen(true);
     setTimeout(function () { var f = endEl.querySelector("a,button"); if (f) f.focus({ preventScroll: true }); }, 400);
   }
-  function hideEnd() { endEl.classList.remove("is-in"); body.classList.remove("is-card"); }
+  function hideEnd() { endEl.classList.remove("is-in"); body.classList.remove("is-card"); lockScreen(false); }
   endEl.addEventListener("keydown", function (e) { if (e.key === "Escape") { hideEnd(); showFab(); } });
 
   /* ============================================================
@@ -644,7 +684,7 @@
 
   var history = [], liveDown = null;
   var FACTS = [
-    [/apohenia|packet|webdealer|title|county|registration/i, "serious", "Apohenia is my company. The first product is Deal Packet Checker. It reads a Texas dealer’s title packet before webDEALER ever sees it, checks the documents against each other, and hands the clerk a short list of what’s wrong. We’re on a founding waitlist right now, Texas pilot. Not affiliated with TxDMV or any county office."],
+    [/apohenia|packet|webdealer|title|county|registration/i, "serious", "Apohenia is my company. We’re building the layer between a car deal getting put together and it getting accepted by the county. The first product is Deal Packet Checker. It reads a Texas dealer’s deal jacket against what webDEALER wants right now, and hands the clerk a short list of what to look at. It’s in build, Texas pilot places. Not affiliated with TxDMV or any county office, and I don’t claim it prevents rejections until I can prove it."],
     [/triple ?j|dealership|car lot|rental|finance|financing/i, "calm", "Triple J Auto Investment is the dealership I co-own and run in Houston. Cars, trucks and SUVs you can finance in house, sell and trade valuations, and we help with registration after the sale. Clear vehicles, clear terms, real people."],
     [/credential|certif|anthropic|course|claude/i, "serious", "Nineteen Anthropic courses. Claude, Claude Code, the API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI, the AI fluency series. The certificates are all in one PDF on this site."],
     [/degree|school|college|gpa|education|study/i, "calm", "Associate of Arts in Business from San Jacinto College, May 2026, 3.63, Dean’s Honor List. I’m working on a Bachelor’s in Neuroscience now, should be done 2027."],

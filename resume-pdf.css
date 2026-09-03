@@ -32,8 +32,8 @@ body {
   background: var(--ivory);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 9.35pt;
-  line-height: 1.42;
+  font-size: 9pt;
+  line-height: 1.38;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
