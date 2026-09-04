@@ -99,9 +99,14 @@
       d.delayTime.value = 0.34; fb.gain.value = 0.3; lp.type = "lowpass"; lp.frequency.value = 1400;
       wet = AC.createGain(); wet.gain.value = 0.22;
       wet.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(master);
+      var pr = AC.resume(); if (pr && pr.then) pr.then(function () { if (AC && AC.state === "running" && !loaderDone && waterAlive) waterStart(); }).catch(function () {});
     } catch (e) { AC = null; }
   }
+  function audioAllowed() { return (AC && AC.state === "running") || (navigator.userActivation && navigator.userActivation.hasBeenActive) || acted; }
+  var acted = false, holding = false;
+  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { acted = true; if (holding) { holding = false; loader.classList.remove("is-hold"); proceedLoader(); } }, { passive: true }); });
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, unlock, { once: true, passive: true }); });
+  setTimeout(unlock, 0);
   var N = { D3: 146.83, A3: 220, D4: 293.66, E4: 329.63, Fs4: 369.99, A4: 440, B4: 493.88, D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880 };
   function glass(freq, delay, dur, peak) {
     if (!AC || muted) return;
@@ -142,7 +147,7 @@
   }
   function waterStop() {
     if (!water.bed) return; var b = water.bed; water.bed = null; water.alive = false;
-    b.g.gain.cancelScheduledValues(AC.currentTime); b.g.gain.setValueAtTime(Math.max(b.g.gain.value, 0.0001), AC.currentTime); b.g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 1.4);
+    b.g.gain.cancelScheduledValues(AC.currentTime); b.g.gain.setValueAtTime(Math.max(b.g.gain.value, 0.0001), AC.currentTime); b.g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 0.6);
     setTimeout(function () { try { b.src.stop(); b.lfo.stop(); } catch (e) {} }, 1600);
   }
   var lastPlink = 0;
@@ -237,6 +242,7 @@
         '</div>' +
         '<div class="jg-loader__pct"><span>0</span><small>%</small></div>' +
         '<div class="jg-loader__name">Jason Obawemimo</div>' +
+      '<div class="jg-loader__hint" aria-live="polite">Tap anywhere to enter</div>' +
       '</div>' +
       '<div class="jg-film" aria-hidden="true"></div>' +
       '<div class="jg-title" aria-hidden="true"><div><h1>Jason <em>Obawemimo</em></h1><p>Founder of Apohenia</p></div></div>' +
@@ -332,13 +338,22 @@
 
   function finishLoader() {
     if (finished) return; finished = true; pctEl.textContent = "100"; ringP.style.strokeDashoffset = 0; store.set("jg_seen", "1");
-    var wrap = loader.querySelector(".jg-loader__wrap"), title = loader.querySelector(".jg-title");
     if (skipped) return endLoader(true);
+    /* Browsers keep audio silent until the visitor touches the page. Rather
+       than let the film and the question play mute, the loader waits at 100
+       for the first tap or key, then everything that follows has its sound. */
+    if (!audioAllowed()) { holding = true; loader.classList.add("is-hold"); return; }
+    proceedLoader();
+  }
+  function proceedLoader() {
+    var wrap = loader.querySelector(".jg-loader__wrap"), title = loader.querySelector(".jg-title");
+    if (skipped || loaderDone) return endLoader(true);
+    unlock(); if (AC && AC.state === "suspended") AC.resume();
     setTimeout(function () {
       wrap.classList.add("is-out"); clearTimeout(autoTimer); S2("splash", { gain: 0.9 }); S2("swoosh-long", { delay: 0.05 });
       if (filmWanted && filmVideo && filmVideo.readyState >= 2) {
         skipBtn.textContent = "Skip";
-        filmWrap.classList.add("is-in"); S2("swoosh-deep", { delay: 0.1 });
+        filmWrap.classList.add("is-in"); S2("swoosh-deep", { delay: 0.1 }); S2("swoosh", { delay: 0.75, gain: 0.55 }); S2("swoosh", { delay: 1.0, gain: 0.4, rate: 1.1 });
         filmVideo.play().catch(function () { title.classList.add("is-in"); setTimeout(function () { endLoader(false); }, 1800); });
         filmVideo.addEventListener("ended", function () { endLoader(false); });
         setTimeout(function () { endLoader(false); }, 6500);
@@ -413,11 +428,12 @@
   document.addEventListener("keydown", function (e) {
     var t = e.target; if (!t || !t.matches || !t.matches(".jg-namestep input, .jg-chat input, .jg-chat textarea")) return;
     if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
-    if (e.key === "Backspace") S2("key-back", { gain: 0.9, throttle: 30 });
+    if (e.key === "Backspace") S2("key", { throttle: 25 });
     else if (e.key === "Enter") S2("select");
     else if (e.key.length === 1) S2("key", { throttle: 25 });
   }, true);
   function askName(role) {
+    S2("swoosh", { gain: 0.5, rate: 1.08 });
     var wrap = gate.querySelector(".jg-gate__wrap");
     wrap.classList.add("is-swapping");
     setTimeout(function () {
@@ -629,7 +645,7 @@
   var open = false, role = null, steps = [];
   function openGuide(r) {
     role = r; steps = SCRIPTS[r] || SCRIPTS.lurker; S = { i: 0 };
-    guide.classList.remove("is-chat"); guide.classList.add("is-open"); fab.classList.remove("is-in"); noteEl.textContent = ""; open = true;
+    guide.classList.remove("is-chat"); guide.classList.add("is-open"); fab.classList.remove("is-in"); noteEl.textContent = ""; open = true; S2("swoosh", { gain: 0.45, rate: 1.05 });
     setMuted(muted); pad.start(); go(0);
   }
   function closeGuide() { open = false; guide.classList.remove("is-open", "is-chat"); camera(null); clearMark(); voice.stop(); pad.stop(); showFab(); sayId++; }

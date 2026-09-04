@@ -76,7 +76,7 @@
 
   /* Decoding does not need a gesture, only playback does, so the small
      files come down as soon as the page is idle. */
-  var first = document.body && document.body.classList.contains("is-loading") ? ["drop", "splash", "swoosh-long", "swoosh-deep", "swoosh", "select", "key", "key-back", "open"] : ["select", "sparkle", "swoosh", "key", "key-back"];
+  var first = document.body && document.body.classList.contains("is-loading") ? ["drop", "splash", "swoosh-long", "swoosh-deep", "swoosh", "select", "key", "open"] : ["select", "sparkle", "swoosh", "key"];
   if ("requestIdleCallback" in window) requestIdleCallback(function () { warm(first); }, { timeout: 1500 }); else setTimeout(function () { warm(first); }, 300);
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { warm(); }, { once: true, passive: true }); });
 })();

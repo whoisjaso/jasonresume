@@ -59,6 +59,10 @@ html.is-locked #jg-loader, html.is-locked #jg-gate, html.is-locked #jg-end { tou
 }
 .jg-loader__pct small { font-size: 0.42em; color: var(--gold); letter-spacing: 0.04em; }
 .jg-loader__name { font-size: 11px; font-weight: 500; letter-spacing: 0.34em; text-transform: uppercase; color: var(--ivory-3); }
+.jg-loader__hint { font-size: 11px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold-2); opacity: 0; transform: translateY(6px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); pointer-events: none; }
+#jg-loader.is-hold .jg-loader__hint { opacity: 1; transform: none; animation: jgHint 2.6s ease-in-out 0.7s infinite; }
+#jg-loader.is-hold .jg-loader__pct { opacity: 0.35; }
+@keyframes jgHint { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 .jg-loader__skip { position: absolute; right: clamp(18px, 3vw, 36px); bottom: clamp(18px, 3vh, 34px); opacity: 0; transition: opacity 0.8s var(--ease) 0.9s; }
 #jg-loader.is-ready .jg-loader__skip { opacity: 1; }
 
