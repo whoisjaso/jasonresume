@@ -1,0 +1,110 @@
+{
+ "drop-1": {
+  "f": "drop-1.wav",
+  "d": 0.7,
+  "kb": 43.8,
+  "src": "water-bubble.wav"
+ },
+ "drop-2": {
+  "f": "drop-2.wav",
+  "d": 0.7,
+  "kb": 43.8,
+  "src": "water-bubble.wav"
+ },
+ "drop-3": {
+  "f": "drop-3.wav",
+  "d": 0.7,
+  "kb": 43.8,
+  "src": "water-bubble.wav"
+ },
+ "drop-4": {
+  "f": "drop-4.wav",
+  "d": 0.8,
+  "kb": 50.1,
+  "src": "deep-water-bubbles.wav"
+ },
+ "splash": {
+  "f": "splash.mp3",
+  "d": 1.6,
+  "kb": 19.6,
+  "src": "water-splash.wav"
+ },
+ "plunge": {
+  "f": "plunge.mp3",
+  "d": 0.988,
+  "kb": 12.3,
+  "src": "jump-into-the-water.wav"
+ },
+ "swoosh": {
+  "f": "swoosh.mp3",
+  "d": 0.83,
+  "kb": 10.5,
+  "src": "air-woosh.wav"
+ },
+ "swoosh-long": {
+  "f": "swoosh-long.mp3",
+  "d": 1.8,
+  "kb": 21.8,
+  "src": "fast-whoosh-transition.wav"
+ },
+ "swoosh-deep": {
+  "f": "swoosh-deep.mp3",
+  "d": 0.597,
+  "kb": 7.7,
+  "src": "cinematic-tunnel-reverb-woosh.wav"
+ },
+ "sparkle": {
+  "f": "sparkle.wav",
+  "d": 0.416,
+  "kb": 26.1,
+  "src": "magic-sparkle-whoosh.wav"
+ },
+ "open": {
+  "f": "open.wav",
+  "d": 0.766,
+  "kb": 48.0,
+  "src": "opening-software-interface.wav"
+ },
+ "select": {
+  "f": "select.wav",
+  "d": 0.072,
+  "kb": 4.6,
+  "src": "select-click.wav"
+ },
+ "key-1": {
+  "f": "key-1.wav",
+  "d": 0.151,
+  "kb": 9.5,
+  "src": "single-key-type.wav"
+ },
+ "key-2": {
+  "f": "key-2.wav",
+  "d": 0.066,
+  "kb": 4.2,
+  "src": "single-key-press-in-a-laptop.wav"
+ },
+ "key-3": {
+  "f": "key-3.wav",
+  "d": 0.066,
+  "kb": 4.2,
+  "src": "single-key-press-in-a-laptop.wav"
+ },
+ "key-4": {
+  "f": "key-4.wav",
+  "d": 0.065,
+  "kb": 4.2,
+  "src": "single-key-press-in-a-laptop.wav"
+ },
+ "key-back": {
+  "f": "key-back.wav",
+  "d": 0.16,
+  "kb": 10.1,
+  "src": "laptop-backspace-typing-sequence.wav"
+ },
+ "chime-soft": {
+  "f": "chime-soft.wav",
+  "d": 0.341,
+  "kb": 21.4,
+  "src": "positive-interface-beep.wav"
+ }
+}

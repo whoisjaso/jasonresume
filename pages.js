@@ -51,7 +51,7 @@
     } catch (e) {}
   }
   var flash = document.createElement("div"); flash.className = "flash"; flash.setAttribute("aria-hidden", "true"); body.appendChild(flash);
-  function unlock() { flash.classList.remove("is-on"); void flash.offsetWidth; flash.classList.add("is-on"); H("unlock"); tone(); }
+  function unlock() { flash.classList.remove("is-on"); void flash.offsetWidth; flash.classList.add("is-on"); H("unlock"); tone(); if (window.JG_SFX) window.JG_SFX.play("sparkle", { delay: 0.05 }); }
 
   /* ---------- the film ---------- */
   var vsl = document.querySelector(".vsl");
@@ -60,7 +60,7 @@
     function start() {
       vsl.classList.add("is-playing"); video.controls = true; video.muted = false;
       var p = video.play(); if (p && p.catch) p.catch(function () { video.muted = true; video.play(); });
-      H("select"); track("vsl_play", {});
+      H("select"); if (window.JG_SFX) window.JG_SFX.play("select"); track("vsl_play", {});
     }
     if (play) play.addEventListener("click", start);
     video.addEventListener("ended", function () { if (!done) { done = true; track("vsl_complete", {}); } vsl.classList.remove("is-playing"); });
@@ -84,7 +84,7 @@
     });
   }
   document.querySelectorAll("[data-book]").forEach(function (a) {
-    a.addEventListener("click", function () { H("select"); track("book_click", { booked: false, where: a.dataset.book }); });
+    a.addEventListener("click", function () { H("select"); if (window.JG_SFX) window.JG_SFX.play("select"); track("book_click", { booked: false, where: a.dataset.book }); });
   });
 
   /* ---------- the desks ---------- */
