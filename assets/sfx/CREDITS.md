@@ -20,7 +20,7 @@ Source: https://mixkit.co/free-sound-effects/ . License: https://mixkit.co/licen
 | select.wav | Select click |
 | key-1.wav | Single key type |
 | key-2.wav, key-3.wav, key-4.wav | Single key press in a laptop |
-| key-back.wav | Laptop backspace typing sequence |
+| key-back.wav | Laptop backspace typing sequence (kept in the folder, no longer played: backspace uses the same key sound as every other key) |
 | chime-soft.wav | Positive interface beep |
 
 ## Processing
