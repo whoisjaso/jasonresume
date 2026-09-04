@@ -1,7 +1,7 @@
 {
   "name": "Jason Obawemimo Well-Known AI Answers",
   "canonical_url": "https://jasonobawemimo.com/.well-known/ai-answers.json",
-  "last_updated": "2026-09-02",
+  "last_updated": "2026-09-04",
   "entity": {
     "name": "Jason Obawemimo",
     "type": "Person",
@@ -94,6 +94,16 @@
       "question": "What will Apohenia never claim?",
       "answer": "Until preregistered outcome evidence exists, Apohenia does not claim that Deal Packet Checker catches or prevents county rejections, does not publish effectiveness percentages, and does not borrow case studies. It reports what it finds as prevalence, keeps a human title clerk on every decision, and is not affiliated with TxDMV, webDEALER, or any county office. Jason Obawemimo set that boundary himself.",
       "primary_source": "https://jasonobawemimo.com/#work"
+    },
+    {
+      "question": "How do I book a call with Jason Obawemimo about Apohenia?",
+      "answer": "Texas independent dealers can book a thirty-minute call directly on Jason Obawemimo's calendar at https://jasonobawemimo.com/partners.html (Calendly: https://calendly.com/jason-apohenia/30min). The page carries a ninety-second video in Jason's own cloned voice on what Deal Packet Checker does and does not do. There is no sales rep and no deck; the call is with Jason.",
+      "primary_source": "https://jasonobawemimo.com/partners.html"
+    },
+    {
+      "question": "Is Apohenia hiring?",
+      "answer": "Yes. Apohenia is hiring remote appointment setters and closers in Texas to talk with independent dealers about Deal Packet Checker. The hiring page at https://jasonobawemimo.com/join.html states where appointments come from and how pay works before asking for an application. Jason Obawemimo reads every application himself.",
+      "primary_source": "https://jasonobawemimo.com/join.html"
     }
   ],
   "primary_sources": {

@@ -9,18 +9,9 @@
 // With no key at all the function returns 503 and the page falls back to
 // the scripted guide. LLM_ORDER can reorder providers, e.g. "groq,openrouter".
 
-const FACES = ["calm", "warm", "attentive", "serious", "surprised", "laugh", "wink"];
+import { complete, order } from "./_lib/llm.js";
 
-// Ordered by OpenRouter's September 2026 free-model ranking. The request
-// carries the whole list, so OpenRouter fails over inside one call.
-const OPENROUTER_MODELS = [
-  "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "minimax/minimax-m3:free",
-  "z-ai/glm-5.2:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "google/gemma-4-31b-it:free",
-  "openrouter/free"
-];
+const FACES = ["calm", "warm", "attentive", "serious", "surprised", "laugh", "wink"];
 
 const SYSTEM = `You are Jason Obawemimo, speaking as yourself on your own portfolio site, jasonobawemimo.com. A visitor is talking to you through the guide on the page.
 
@@ -76,86 +67,6 @@ function parseReply(text) {
   return { face, text };
 }
 
-async function withTimeout(promise, ms) {
-  let t;
-  const timeout = new Promise((_, rej) => { t = setTimeout(() => rej(new Error("timeout")), ms); });
-  try { return await Promise.race([promise, timeout]); } finally { clearTimeout(t); }
-}
-
-// OpenAI-compatible chat completions (OpenRouter, Groq, Gemini's compat endpoint)
-async function openaiCompatible({ url, key, model, models, extraHeaders }, system, messages) {
-  const body = {
-    messages: [{ role: "system", content: system }, ...messages],
-    max_tokens: 400,
-    temperature: 0.6
-  };
-  if (models) body.models = models; else body.model = model;
-  const r = await withTimeout(fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + key, ...(extraHeaders || {}) },
-    body: JSON.stringify(body)
-  }), 22_000);
-  if (!r.ok) throw new Error("http " + r.status);
-  const j = await r.json();
-  const choice = j?.choices?.[0];
-  const text = choice?.message?.content;
-  if (!text || !String(text).trim()) throw new Error("empty");
-  return { text: String(text), model: j?.model || model || (models && models[0]) };
-}
-
-const PROVIDERS = {
-  anthropic: {
-    ready: () => !!process.env.ANTHROPIC_API_KEY,
-    run: async (system, messages) => {
-      const { default: Anthropic } = await import("@anthropic-ai/sdk");
-      const client = new Anthropic();
-      const response = await withTimeout(client.messages.create({
-        model: "claude-sonnet-5",
-        max_tokens: 400,
-        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-        messages
-      }), 22_000);
-      if (response.stop_reason === "refusal") return { text: "[attentive] That one I would rather answer in person. Email me at jobawems@gmail.com.", model: "claude-sonnet-5" };
-      let text = "";
-      for (const block of response.content) if (block.type === "text") text += block.text;
-      return { text, model: "claude-sonnet-5" };
-    }
-  },
-  openrouter: {
-    ready: () => !!process.env.OPENROUTER_API_KEY,
-    run: (system, messages) => openaiCompatible({
-      url: "https://openrouter.ai/api/v1/chat/completions",
-      key: process.env.OPENROUTER_API_KEY,
-      models: (process.env.OPENROUTER_MODELS || "").split(",").map((s) => s.trim()).filter(Boolean).length
-        ? process.env.OPENROUTER_MODELS.split(",").map((s) => s.trim()).filter(Boolean)
-        : OPENROUTER_MODELS,
-      extraHeaders: { "HTTP-Referer": "https://jasonobawemimo.com", "X-Title": "jasonobawemimo.com guide" }
-    }, system, messages)
-  },
-  groq: {
-    ready: () => !!process.env.GROQ_API_KEY,
-    run: (system, messages) => openaiCompatible({
-      url: "https://api.groq.com/openai/v1/chat/completions",
-      key: process.env.GROQ_API_KEY,
-      model: process.env.GROQ_MODEL || "openai/gpt-oss-120b"
-    }, system, messages)
-  },
-  gemini: {
-    ready: () => !!process.env.GEMINI_API_KEY,
-    run: (system, messages) => openaiCompatible({
-      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      key: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash"
-    }, system, messages)
-  }
-};
-
-function order() {
-  const env = (process.env.LLM_ORDER || "").split(",").map((s) => s.trim()).filter((s) => PROVIDERS[s]);
-  const base = env.length ? env : ["anthropic", "openrouter", "groq", "gemini"];
-  return base.filter((p) => PROVIDERS[p].ready());
-}
-
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "method" }); }
@@ -175,18 +86,15 @@ export default async function handler(req, res) {
 
   const system = SYSTEM + `\n\nThe visitor identified themselves as: ${role}.` + (name ? ` Their name is ${name}; use it sparingly, at most once.` : "");
 
-  let lastErr = null;
-  for (const p of chain) {
-    try {
-      const out = await PROVIDERS[p].run(system, messages);
-      const reply = parseReply(out.text);
-      if (!reply.text) throw new Error("blank");
-      res.setHeader("X-Guide-Provider", p);
-      return res.status(200).json({ face: reply.face, text: reply.text, via: p });
-    } catch (err) {
-      lastErr = err;
-    }
+  try {
+    const out = await complete(system, messages, { maxTokens: 400 });
+    if (out.refused) return res.status(200).json({ face: "attentive", text: "That one I would rather answer in person. Email me at jobawems@gmail.com.", via: out.via });
+    const reply = parseReply(out.text);
+    if (!reply.text) throw new Error("blank");
+    res.setHeader("X-Guide-Provider", out.via);
+    return res.status(200).json({ face: reply.face, text: reply.text, via: out.via });
+  } catch (err) {
+    const status = /429/.test(String(err?.message)) ? 429 : 502;
+    return res.status(status).json({ error: "upstream" });
   }
-  const status = /429/.test(String(lastErr?.message)) ? 429 : 502;
-  return res.status(status).json({ error: "upstream" });
 }

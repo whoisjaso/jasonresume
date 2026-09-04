@@ -30,6 +30,24 @@ Events are relayed through `/api/track`, so the browser never talks to
 PostHog directly and the key never ships to the client. Visitors who type a
 name become identified people in PostHog with `name` and `role` set.
 
+## Partner and hiring desks (`/api/lead`, `/api/apply`)
+
+Both desks work with no configuration: the page shows a mailto fallback when
+nothing is switched on. Each variable adds a layer.
+
+| Variable | Where to get it | What it switches on |
+|---|---|---|
+| any model key above | see Live chat | The pre-call brief for partners and the screening read for applicants, drafted by the free-model chain and included in the email to you. |
+| `RESEND_API_KEY` | resend.com, API keys (free tier, no card) | The email to you. Without a verified sender it uses Resend's test sender, which can only reach the account owner's inbox. |
+| `RESEND_FROM` | a sender on a domain verified in Resend, e.g. `Jason Obawemimo <jason@apohenia.com>` | Confirmation emails to the dealer or applicant in your voice. Skipped until this exists, so nobody gets an email from a test address. |
+| `NOTIFY_TO` | optional, default `jobawems@gmail.com` | Where desk emails land. |
+| `POSTHOG_KEY` | see Tracking | Every note and application also becomes an identified person in PostHog (`lead_note`, `application`). |
+
+The calendar on `/partners.html` is Calendly's inline embed of
+`https://calendly.com/jason-apohenia/30min` and needs nothing here. A booking
+made in the embed fires the page's unlock moment and flips the note form to
+"booked".
+
 ## Admin page (`/admin.html`)
 
 | Variable | Where to get it |

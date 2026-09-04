@@ -23,6 +23,16 @@
       ],
       "destination": "https://jasonobawemimo.com/$1",
       "permanent": true
+    },
+    {
+      "source": "/partners",
+      "destination": "/partners.html",
+      "permanent": false
+    },
+    {
+      "source": "/join",
+      "destination": "/join.html",
+      "permanent": false
     }
   ],
   "headers": [
