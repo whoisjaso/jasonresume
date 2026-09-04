@@ -82,6 +82,7 @@ h1 {
   color: var(--ink);
 }
 
+.role { font-family: var(--sans, "Hanken Grotesk", sans-serif); font-size: 9.2pt; letter-spacing: 0.02em; color: #2a2a2a; margin: 3pt 0 6pt; font-weight: 500; }
 .summary {
   max-width: 5.35in;
   margin: 0.13in 0 0;

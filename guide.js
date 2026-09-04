@@ -64,6 +64,7 @@
     else { body.style.position = ""; body.style.top = ""; body.style.left = ""; body.style.right = ""; body.style.width = ""; document.documentElement.classList.remove("is-locked"); scrollTo(0, lockY); }
   }
   window.JG_LOCK = lockScreen;
+  function H(k) { if (typeof window.JG_HAPTIC === "function") window.JG_HAPTIC(k); }
   lockScreen(true);
 
   var I = {
@@ -339,7 +340,7 @@
         filmVideo.addEventListener("ended", function () { endLoader(false); });
         setTimeout(function () { endLoader(false); }, 6500);
       } else {
-        title.classList.add("is-in"); SFX.arrive();
+        title.classList.add("is-in"); SFX.arrive(); H("arrive");
         setTimeout(function () { endLoader(false); }, RM ? 100 : 1900);
       }
     }, RM ? 0 : 600);
@@ -392,7 +393,7 @@
   function choose(role) {
     removeEventListener("keydown", gateKeys); unlock();
     if (role) {
-      store.set("jg_role", role); SFX.select(); AN.track("role_chosen", { role: role }, { role: role });
+      store.set("jg_role", role); SFX.select(); H("select"); AN.track("role_chosen", { role: role }, { role: role });
       var hot = gate.querySelector('[data-role="' + role + '"]'); if (hot) hot.classList.add("is-hot");
       return setTimeout(function () { askName(role); }, RM ? 60 : 450);
     }
@@ -417,7 +418,7 @@
       var form = wrap.querySelector("form"), input = form.querySelector("input");
       setTimeout(function () { input.focus({ preventScroll: true }); }, 350);
       function go(name) {
-        SFX.select();
+        SFX.select(); H("tap");
         if (name) { visitorName = name; store.set("jg_name", name); AN.track("name_given", { role: role, name: name }, { name: name, role: role }); }
         else { visitorName = ""; store.set("jg_name", ""); AN.track("name_skipped", { role: role }); }
         leaveGate(); setTimeout(function () { openGuide(role); }, RM ? 100 : 800);
@@ -543,7 +544,7 @@
     (list || []).forEach(function (c, i) {
       var b = el('<button class="jg-opt' + (c.primary ? " jg-opt--primary" : "") + '" type="button" style="--i:' + i + '">' + esc(c.label) + '</button>');
       b.addEventListener("click", function () {
-        SFX.select(); setChoices([]);
+        SFX.select(); H("tap"); setChoices([]);
         voice.play(c.label, "you").then(function (ms) { setTimeout(function () { if (open) c.go(); }, ms ? Math.min(ms + 80, 1600) : 0); });
       });
       choicesEl.appendChild(b);
@@ -630,7 +631,7 @@
     sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span>';
     clearMark();
     var moved = !!st.at;
-    if (moved) { camera(st.at, st.mark && st.mark[0]); SFX.stage(); } else { camera(null); SFX.chime(); }
+    if (moved) { camera(st.at, st.mark && st.mark[0]); SFX.stage(); H("arrive"); } else { camera(null); SFX.chime(); }
     var wait = moved && !RM ? 900 : 0;
     setTimeout(function () {
       if (S.i !== i || !open) return;
@@ -661,18 +662,18 @@
     open = false; guide.classList.remove("is-open", "is-chat"); camera(null); clearMark(); voice.stop(); pad.stop();
     var R = { interviewer: "an <em>interviewer</em>", partner: "a <em>business partner</em>", lurker: "a <em>lurker</em>" }[role] || "a visitor";
     endEl.querySelector("h2").innerHTML = "You came as " + R + ".";
-    endEl.querySelector(".jg-end__sum").textContent = "That’s me, top to bottom. Nobody else built this. Grab what you need.";
+    var nm = (store.get("jg_name") || "").trim(); endEl.querySelector(".jg-end__sum").textContent = "That’s me, top to bottom" + (nm ? ", " + nm : "") + ". Nobody else built this. Grab what you need.";
     var cta = endEl.querySelector(".jg-end__cta"); cta.innerHTML = "";
     var CTAS = {
       interviewer: [['assets/Jason_Obawemimo_Resume_2026.pdf', 'Resume', true, 'download'], ['mailto:' + CONTACT, 'Email Jason', false]],
-      partner: [['#intake', 'Send the message', true], ['mailto:' + CONTACT, 'Email Jason', false]],
+      partner: [['/partners.html#book', 'Pick a time with me', true], ['mailto:' + CONTACT, 'Email Jason', false]],
       lurker: [['#work', 'Back to the proof', true], ['mailto:' + CONTACT, 'Say hello', false]]
     }[role] || [['mailto:' + CONTACT, 'Email Jason', true]];
     CTAS.forEach(function (c) { var a = el('<a class="btn' + (c[2] ? " btn--solid" : "") + '" href="' + c[0] + '"' + (c[3] ? ' download="Jason Obawemimo - Resume.pdf"' : "") + '><span>' + c[1] + '</span></a>'); a.addEventListener("click", function (e) { AN.track("cta_click", { label: c[1], role: role, where: "end" }); hideEnd(); if (c[0].charAt(0) === "#") { e.preventDefault(); var n = document.querySelector(c[0]); if (n) scrollToY(n.getBoundingClientRect().top + scrollY - 80, 1200); } }); cta.appendChild(a); });
     var rp = endEl.querySelector(".jg-end__replay"); rp.innerHTML = "<span>Replay as</span>";
     Object.keys(PATHS).filter(function (r) { return r !== role; }).forEach(function (r) { var b = el('<button type="button">' + PATHS[r].h.toLowerCase() + '</button>'); b.addEventListener("click", function () { hideEnd(); store.set("jg_role", r); openGuide(r); }); rp.appendChild(b); });
     var back = el('<button type="button">or return to the site</button>'); back.addEventListener("click", function () { hideEnd(); showFab(); }); rp.appendChild(back);
-    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.stage(); lockScreen(true);
+    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.stage(); H("success"); lockScreen(true);
     setTimeout(function () { var f = endEl.querySelector("a,button"); if (f) f.focus({ preventScroll: true }); }, 400);
   }
   function hideEnd() { endEl.classList.remove("is-in"); body.classList.remove("is-card"); lockScreen(false); }
@@ -704,7 +705,7 @@
   chatForm.addEventListener("submit", function (e) {
     e.preventDefault();
     var q = chatInput.value.trim(); if (!q) return;
-    chatInput.value = ""; chatBtn.disabled = true; SFX.tick(); setChoices([]); setFace("attentive"); voice.stop();
+    chatInput.value = ""; chatBtn.disabled = true; SFX.tick(); H("tap"); setChoices([]); setFace("attentive"); voice.stop();
     history.push({ role: "user", content: q });
     AN.track("chat_asked", { q: q.slice(0, 160), role: role, live: liveDown !== false });
     sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span><span class="jg-caret"></span>';

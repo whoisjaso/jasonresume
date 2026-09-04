@@ -143,13 +143,14 @@
     if (!o && burger && menu && menu.contains(document.activeElement)) burger.focus({ preventScroll: true });
   }
   function T(e, p) { if (typeof window.JG_TRACK === "function") window.JG_TRACK(e, p); }
+  function H(k) { if (typeof window.JG_HAPTIC === "function") window.JG_HAPTIC(k); }
   if (burger) burger.addEventListener("click", function () { var o = !body.classList.contains("menu-open"); setMenu(o); if (o) T("menu_opened", {}); });
   document.addEventListener("click", function (e) {
     var o = e.target.closest(".opt");
     if (o) { var p = { step: Number(o.dataset.step) || 0 }; p[o.dataset.step === "1" ? "pain" : o.dataset.step === "2" ? "cost" : "when"] = o.dataset.key; T("intake_step", p); return; }
     if (e.target.closest("#intake-send")) { var picked = {}; document.querySelectorAll('.opt[aria-pressed="true"]').forEach(function (b) { picked[b.dataset.step === "1" ? "pain" : b.dataset.step === "2" ? "cost" : "when"] = b.dataset.key; }); T("intake_sent", picked); return; }
     var a = e.target.closest("a.btn, .contact__email, .venture__go, .credentials__actions a, .edu__proof, .device__foot a, .hero__meta a");
-    if (a) T("cta_click", { label: (a.textContent || "").trim().slice(0, 40), href: (a.getAttribute("href") || "").slice(0, 120), where: "page" });
+    if (a) { H("select"); } if (a) T("cta_click", { label: (a.textContent || "").trim().slice(0, 40), href: (a.getAttribute("href") || "").slice(0, 120), where: "page" });
   });
   document.querySelectorAll(".menu a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
   document.addEventListener("keydown", function (e) {

@@ -8,7 +8,8 @@ const ALLOWED = new Set([
   "site_arrived", "intro_skipped", "role_chosen", "name_given", "name_skipped",
   "guide_line", "guide_skipped", "guide_finished", "guide_reopened",
   "chat_asked", "intake_step", "intake_sent", "cta_click", "menu_opened",
-  "laptop_played", "sound_toggled", "page_left"
+  "laptop_played", "sound_toggled", "page_left",
+  "page_view", "vsl_play", "vsl_complete", "book_click", "lead_sent", "apply_sent"
 ]);
 const STR = (v, n) => String(v == null ? "" : v).slice(0, n);
 
