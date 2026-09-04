@@ -78,3 +78,15 @@ Decision for the hiring page: say what the product is, say where the appointment
 - Choices in the guide now fire touch, sound and ink within the same frame. Skips and cancels fire nothing.
 - No gradients on text, no glassmorphism, no three-card rows, no emoji icons, no em dashes anywhere on the site. The fonts are Cormorant Garamond and Hanken Grotesk, not Inter.
 - The guide stays the tutorial nobody notices. One surprise at the end, not ten.
+
+## 7. Where free, commercially safe sounds actually live
+
+Checked 2026-09-04 against the source pages, not summaries. The community answer (r/gamedev threads on free assets, the 2026 game-audio roundups) converges on four names:
+
+- **Kenney** (kenney.nl): CC0, no attribution, direct zip downloads. Clean, synthetic game-UI timbre. Downloaded and reviewed; not used here because it sounds like a game menu, not a room.
+- **Mixkit** (mixkit.co): its Sound Effects Free License allows commercial use, websites included, without attribution. Real recordings, direct file URLs, no account. This is where the site's water, air and key sounds come from. Full list in assets/sfx/CREDITS.md.
+- **Pixabay** sound effects: free commercial license, but downloads sit behind an account, so nothing was pulled.
+- **Sonniss GDC bundles**: royalty-free for commercial use, tens of gigabytes, worth mining on the Mac later for a bespoke set.
+- Not usable for this site: BBC Sound Effects (personal and educational only), and anything on Freesound not filtered to CC0.
+
+What the sound designers say to do with them: one family of timbres, real recordings under synthesized tones rather than instead of them, pitch varied a few percent on every repeat so the ear does not detect a machine, and nothing on hover that the visitor did not ask for.

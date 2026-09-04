@@ -65,6 +65,7 @@
   }
   window.JG_LOCK = lockScreen;
   function H(k) { if (typeof window.JG_HAPTIC === "function") window.JG_HAPTIC(k); }
+  function S2(n, o) { return !!(window.JG_SFX && window.JG_SFX.play(n, o)); }
   lockScreen(true);
 
   var I = {
@@ -91,7 +92,7 @@
   function unlock() {
     if (AC) return;
     try {
-      AC = new (window.AudioContext || window.webkitAudioContext)();
+      AC = (window.JG_SFX && window.JG_SFX.ctx()) || new (window.AudioContext || window.webkitAudioContext)();
       if (AC.state === "suspended") AC.resume();
       master = AC.createGain(); master.gain.value = 0.55; master.connect(AC.destination);
       var d = AC.createDelay(1.5), fb = AC.createGain(), lp = AC.createBiquadFilter();
@@ -146,6 +147,7 @@
   }
   var lastPlink = 0;
   function plink(strength) {
+    if (S2("drop", { gain: 0.35 + 0.65 * strength, rate: 0.9 + (1 - strength) * 0.35, throttle: strength < 0.5 ? 140 : 40 })) return;
     if (!AC || muted || !water.alive) return;
     var now = performance.now(); if (now - lastPlink < (strength > 0.6 ? 40 : 110)) return; lastPlink = now;
     var t0 = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(), f0 = 900 + Math.random() * 700;
@@ -173,6 +175,7 @@
     muted = m; store.set("jg_muted", m ? "1" : "0");
     document.querySelectorAll("[data-sound-toggle]").forEach(function (b) { b.innerHTML = m ? I.mute : I.sound; b.setAttribute("aria-label", m ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); b.setAttribute("aria-pressed", m ? "false" : "true"); });
     document.querySelectorAll("[data-sound-label]").forEach(function (b) { b.textContent = m ? "Sound off" : "Sound on"; b.setAttribute("aria-pressed", m ? "false" : "true"); });
+    if (window.JG_SFX) window.JG_SFX.mute(m);
     if (m) { pad.stop(); voice.stop(); waterStop(); } else { unlock(); SFX.tick(); if (open) pad.start(); if (waterAlive && !loaderDone) waterStart(); }
   }
   document.addEventListener("click", function (e) { var b = e.target.closest("[data-sound-toggle],[data-sound-label]"); if (b) { e.preventDefault(); setMuted(!muted); AN.track("sound_toggled", { on: !muted }); } });
@@ -332,22 +335,22 @@
     var wrap = loader.querySelector(".jg-loader__wrap"), title = loader.querySelector(".jg-title");
     if (skipped) return endLoader(true);
     setTimeout(function () {
-      wrap.classList.add("is-out"); clearTimeout(autoTimer);
+      wrap.classList.add("is-out"); clearTimeout(autoTimer); S2("splash", { gain: 0.9 }); S2("swoosh-long", { delay: 0.05 });
       if (filmWanted && filmVideo && filmVideo.readyState >= 2) {
         skipBtn.textContent = "Skip";
-        filmWrap.classList.add("is-in");
+        filmWrap.classList.add("is-in"); S2("swoosh-deep", { delay: 0.1 });
         filmVideo.play().catch(function () { title.classList.add("is-in"); setTimeout(function () { endLoader(false); }, 1800); });
         filmVideo.addEventListener("ended", function () { endLoader(false); });
         setTimeout(function () { endLoader(false); }, 6500);
       } else {
-        title.classList.add("is-in"); SFX.arrive(); H("arrive");
+        title.classList.add("is-in"); S2("swoosh", { gain: 0.6 }); SFX.arrive(); H("arrive");
         setTimeout(function () { endLoader(false); }, RM ? 100 : 1900);
       }
     }, RM ? 0 : 600);
   }
   function endLoader(fast) {
     if (loaderDone) return; loaderDone = true; waterStop();
-    loader.classList.add("is-done"); clearTimeout(autoTimer);
+    loader.classList.add("is-done"); clearTimeout(autoTimer); if (!fast) S2("swoosh", { rate: 0.85, gain: 0.5 });
     if (filmVideo) { try { filmVideo.pause(); } catch (e) {} }
     setTimeout(function () { waterAlive = false; loader.remove(); }, fast ? 400 : 1000);
     body.classList.remove("is-loading"); showGate();
@@ -393,7 +396,7 @@
   function choose(role) {
     removeEventListener("keydown", gateKeys); unlock();
     if (role) {
-      store.set("jg_role", role); SFX.select(); H("select"); AN.track("role_chosen", { role: role }, { role: role });
+      store.set("jg_role", role); SFX.select(); H("select"); S2("select"); AN.track("role_chosen", { role: role }, { role: role });
       var hot = gate.querySelector('[data-role="' + role + '"]'); if (hot) hot.classList.add("is-hot");
       return setTimeout(function () { askName(role); }, RM ? 60 : 450);
     }
@@ -406,6 +409,14 @@
   }
   /* One more question, and it is skippable. The name is only used to greet you. */
   var visitorName = store.get("jg_name") || "";
+  /* keys under the name and chat fields: a soft laptop key per character, a different one for backspace */
+  document.addEventListener("keydown", function (e) {
+    var t = e.target; if (!t || !t.matches || !t.matches(".jg-namestep input, .jg-chat input, .jg-chat textarea")) return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+    if (e.key === "Backspace") S2("key-back", { gain: 0.9, throttle: 30 });
+    else if (e.key === "Enter") S2("select");
+    else if (e.key.length === 1) S2("key", { throttle: 25 });
+  }, true);
   function askName(role) {
     var wrap = gate.querySelector(".jg-gate__wrap");
     wrap.classList.add("is-swapping");
@@ -418,7 +429,7 @@
       var form = wrap.querySelector("form"), input = form.querySelector("input");
       setTimeout(function () { input.focus({ preventScroll: true }); }, 350);
       function go(name) {
-        SFX.select(); H("tap");
+        SFX.select(); H("tap"); S2("select", { gain: 0.8 });
         if (name) { visitorName = name; store.set("jg_name", name); AN.track("name_given", { role: role, name: name }, { name: name, role: role }); }
         else { visitorName = ""; store.set("jg_name", ""); AN.track("name_skipped", { role: role }); }
         leaveGate(); setTimeout(function () { openGuide(role); }, RM ? 100 : 800);
@@ -507,8 +518,8 @@
   var fab = el('<button id="jg-fab" type="button" aria-label="Open the guide"><img alt="" src="' + FALLBACK + '" /><span>Guide</span></button>');
   body.appendChild(fab);
   function showFab() { fab.classList.add("is-in"); }
-  fab.addEventListener("click", function () { SFX.open(); AN.track("guide_reopened", {}); openGuide(store.get("jg_role") || "lurker"); });
-  document.querySelectorAll("[data-open-guide]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); body.classList.remove("menu-open"); SFX.open(); openGuide(store.get("jg_role") || "lurker"); }); });
+  fab.addEventListener("click", function () { SFX.open(); S2("open", { gain: 0.8 }); AN.track("guide_reopened", {}); openGuide(store.get("jg_role") || "lurker"); });
+  document.querySelectorAll("[data-open-guide]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); body.classList.remove("menu-open"); SFX.open(); S2("open", { gain: 0.8 }); openGuide(store.get("jg_role") || "lurker"); }); });
 
   var portraitEl = guide.querySelector(".jg-portrait"), imgs = guide.querySelectorAll(".jg-portrait img"), sayEl = guide.querySelector(".jg-say"), choicesEl = guide.querySelector(".jg-choices"), progEl = guide.querySelector(".jg-progress i"), noteEl = guide.querySelector(".jg-note");
   var chatForm = guide.querySelector(".jg-chat"), chatInput = chatForm.querySelector("input"), chatBtn = chatForm.querySelector("button");
@@ -544,7 +555,7 @@
     (list || []).forEach(function (c, i) {
       var b = el('<button class="jg-opt' + (c.primary ? " jg-opt--primary" : "") + '" type="button" style="--i:' + i + '">' + esc(c.label) + '</button>');
       b.addEventListener("click", function () {
-        SFX.select(); H("tap"); setChoices([]);
+        SFX.select(); H("tap"); S2("select", { gain: 0.8 }); setChoices([]);
         voice.play(c.label, "you").then(function (ms) { setTimeout(function () { if (open) c.go(); }, ms ? Math.min(ms + 80, 1600) : 0); });
       });
       choicesEl.appendChild(b);
@@ -631,7 +642,7 @@
     sayEl.classList.remove("is-done"); sayEl.innerHTML = '<span class="jg-text"></span>';
     clearMark();
     var moved = !!st.at;
-    if (moved) { camera(st.at, st.mark && st.mark[0]); SFX.stage(); H("arrive"); } else { camera(null); SFX.chime(); }
+    if (moved) { camera(st.at, st.mark && st.mark[0]); SFX.stage(); H("arrive"); S2("swoosh", { gain: 0.35, rate: 1.15 }); } else { camera(null); SFX.chime(); }
     var wait = moved && !RM ? 900 : 0;
     setTimeout(function () {
       if (S.i !== i || !open) return;
@@ -673,7 +684,7 @@
     var rp = endEl.querySelector(".jg-end__replay"); rp.innerHTML = "<span>Replay as</span>";
     Object.keys(PATHS).filter(function (r) { return r !== role; }).forEach(function (r) { var b = el('<button type="button">' + PATHS[r].h.toLowerCase() + '</button>'); b.addEventListener("click", function () { hideEnd(); store.set("jg_role", r); openGuide(r); }); rp.appendChild(b); });
     var back = el('<button type="button">or return to the site</button>'); back.addEventListener("click", function () { hideEnd(); showFab(); }); rp.appendChild(back);
-    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.stage(); H("success"); lockScreen(true);
+    body.classList.add("is-card"); endEl.classList.add("is-in"); SFX.stage(); H("success"); S2("sparkle", { delay: 0.15 }); lockScreen(true);
     setTimeout(function () { var f = endEl.querySelector("a,button"); if (f) f.focus({ preventScroll: true }); }, 400);
   }
   function hideEnd() { endEl.classList.remove("is-in"); body.classList.remove("is-card"); lockScreen(false); }
