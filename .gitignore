@@ -6,3 +6,15 @@ assets/jason-obawemimo-og.png
 node_modules/
 package-lock.json
 _*.mjs
+
+# tools: heavy or private inputs stay local
+tools/film/node_modules/
+tools/film/out/
+tools/voice/ref*.wav
+tools/voice/out_*.wav
+tools/voice/you_*.wav
+tools/vsl/out_*.wav
+tools/vsl/you_*.wav
+tools/verify/out/*
+!tools/verify/out/.gitkeep
+tools/sfx/raw/
