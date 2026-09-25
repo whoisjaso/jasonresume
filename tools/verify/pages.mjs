@@ -1,4 +1,4 @@
-// Verifies partners.html and join.html on desktop and mobile against the local server.
+// Verifies obavia.html and join.html on desktop and mobile against the local server.
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -14,7 +14,7 @@ const fontRoute = async (ctx) => {
 for (const [name, vp, mobile] of [["desktop", { width: 1440, height: 900 }, false], ["mobile", { width: 390, height: 844 }, true]]) {
   const ctx = await browser.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: mobile ? 2 : 1 });
   await fontRoute(ctx);
-  for (const page of ["partners", "join"]) {
+  for (const page of ["obavia", "join"]) {
     const p = await ctx.newPage();
     const errors = [];
     p.on("pageerror", (e) => errors.push("pageerror: " + e.message));

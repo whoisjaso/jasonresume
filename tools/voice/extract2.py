@@ -24,3 +24,17 @@ def djb2(s):
 out=[{"id":djb2("jason:"+plain(t)),"face":f,"text":plain(t)} for t,f in items.items()]
 json.dump(out,open(TOOLS+'/voice/lines.json','w'),ensure_ascii=False,indent=1)
 print(len(out),"jason lines")
+
+# visitor replies: every choice label the guide can speak for the visitor
+labels=set()
+for m in re.finditer(r'(?:next|jump|toChat|finish)\("((?:[^"\\]|\\.)*)"', src): labels.add(m.group(1))
+for m in re.finditer(r'label:\s*"((?:[^"\\]|\\.)*)"', src): labels.add(m.group(1))
+labels.update(["Continue","Ask me something","Finish"])
+you=[{"id":djb2("you:"+plain(t)),"face":"calm","text":plain(t)} for t in sorted(labels)]
+json.dump(you,open(TOOLS+'/voice/you_lines.json','w'),ensure_ascii=False,indent=1)
+man=json.load(open(REPO+'/assets/voice/manifest.json'))
+need=[l["id"] for l in out if l["id"] not in man]; needyou=[l["id"] for l in you if l["id"] not in man]
+keep=set(l["id"] for l in out)|set(l["id"] for l in you)
+stale=[k for k in man if k not in keep]
+json.dump({"jason":need,"you":needyou,"stale":stale},open(TOOLS+'/voice/todo.json','w'),indent=1)
+print(len(you),"visitor labels;",len(need),"jason lines to render;",len(needyou),"visitor lines to render;",len(stale),"stale clips")

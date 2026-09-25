@@ -10,7 +10,8 @@
     "https://github.com/whoisjaso",
     "https://github.com/whoisjaso/whoisjaso",
     "https://whoisjaso.github.io/whoisjaso/",
-    "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
+    "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+    "https://www.instagram.com/0bawemimo/"
   ],
   "links": [
     {
@@ -27,6 +28,16 @@
       "rel": "me",
       "type": "text/html",
       "href": "https://github.com/whoisjaso"
+    },
+    {
+      "rel": "me",
+      "type": "text/html",
+      "href": "https://www.instagram.com/0bawemimo/"
+    },
+    {
+      "rel": "related",
+      "type": "text/html",
+      "href": "https://obavia.co"
     },
     {
       "rel": "describedby",
@@ -136,8 +147,9 @@
   ],
   "properties": {
     "http://schema.org/name": "Jason Obawemimo",
-    "http://schema.org/jobTitle": "Web Design and Workflow Systems Builder",
+    "http://schema.org/jobTitle": "Founder, Obavia; co-owner and operator, Triple J Auto Investment",
     "http://schema.org/homeLocation": "Pearland, Texas, United States",
-    "http://schema.org/url": "https://jasonobawemimo.com/"
+    "http://schema.org/url": "https://jasonobawemimo.com/",
+    "http://schema.org/worksFor": "Obavia (https://obavia.co)"
   }
 }

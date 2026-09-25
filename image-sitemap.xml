@@ -6,7 +6,7 @@
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
       <image:title>Jason Obawemimo professional headshot</image:title>
-      <image:caption>Portrait of Jason Obawemimo, Pearland Texas web design and workflow systems builder.</image:caption>
+      <image:caption>Portrait of Jason Obawemimo, founder of Obavia and co-owner and operator of Triple J Auto Investment, Pearland, Texas.</image:caption>
       <image:geo_location>Pearland, Texas, United States</image:geo_location>
     </image:image>
     <image:image>
@@ -17,33 +17,42 @@
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/og-film.jpg</image:loc>
       <image:title>Jason Obawemimo, the film</image:title>
-      <image:caption>Title card for jasonobawemimo.com: are you an interviewer, a business partner, or just lurking?</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/brand/apohenia-logo.png</image:loc>
-      <image:title>Apohenia mark</image:title>
-      <image:caption>Logo of Apohenia, the company founded by Jason Obawemimo.</image:caption>
+      <image:caption>Title card for jasonobawemimo.com, the official website of Jason Obawemimo.</image:caption>
     </image:image>
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/brand/triplej-logo.png</image:loc>
       <image:title>Triple J Auto Investment monogram</image:title>
       <image:caption>Monogram of Triple J Auto Investment, co-owned by Jason Obawemimo.</image:caption>
     </image:image>
-      <image:image>
+    <image:image>
       <image:loc>https://jasonobawemimo.com/assets/film/signature-poster.jpg</image:loc>
       <image:title>Jason Obawemimo, signature film poster</image:title>
     </image:image>
     <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/film/screen-poster.jpg</image:loc>
-      <image:title>Apohenia Deal Packet Checker on screen at jasonobawemimo.com</image:title>
+      <image:loc>https://jasonobawemimo.com/assets/film/triple-j-sale-desk.jpg</image:loc>
+      <image:title>Triple J: Handle a Sale, film poster</image:title>
+      <image:caption>Poster for the demo film of the Handle a Sale desk Jason Obawemimo built for Triple J Auto Investment.</image:caption>
     </image:image>
-</url>
+  </url>
+  <url>
+    <loc>https://jasonobawemimo.com/obavia.html</loc>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/film/obavia-closer.jpg</image:loc>
+      <image:title>Obavia: The closer, film poster</image:title>
+      <image:caption>Poster for The closer, a vertical ad film for Obavia, sales software in development. People in the film are fictional.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/film/obavia-owner.jpg</image:loc>
+      <image:title>Obavia: The owner, film poster</image:title>
+      <image:caption>Poster for The owner, a vertical ad film for Obavia, sales software in development. People in the film are fictional.</image:caption>
+    </image:image>
+  </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.html</loc>
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
       <image:title>Jason Obawemimo official entity profile image</image:title>
-      <image:caption>Official profile image for Jason Obawemimo, web design and workflow systems builder.</image:caption>
+      <image:caption>Official profile image for Jason Obawemimo, founder of Obavia and co-owner and operator of Triple J Auto Investment.</image:caption>
       <image:geo_location>Pearland, Texas, United States</image:geo_location>
     </image:image>
   </url>

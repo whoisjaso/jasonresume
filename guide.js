@@ -23,7 +23,7 @@
   function plain(html) { return String(html).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(); }
   var hidden = false;
   document.addEventListener("visibilitychange", function () { hidden = document.hidden; });
-  var JG_V = "4"; /* bumps the small JSON fetches past the long asset cache */
+  var JG_V = "5"; /* bumps the small JSON fetches past the long asset cache */
 
   /* ---------- Analytics: batched, first-party, off when Do Not Track is on ---------- */
   var AN = (function () {
@@ -245,7 +245,7 @@
       '<div class="jg-loader__hint" aria-live="polite">Tap anywhere to enter</div>' +
       '</div>' +
       '<div class="jg-film" aria-hidden="true"></div>' +
-      '<div class="jg-title" aria-hidden="true"><div><h1>Jason <em>Obawemimo</em></h1><p>Founder of Apohenia</p></div></div>' +
+      '<div class="jg-title" aria-hidden="true"><div><h1>Jason <em>Obawemimo</em></h1><p>Founder of Obavia</p></div></div>' +
       '<button class="jg-skip jg-loader__skip" type="button">Skip intro</button>' +
     '</div>'
   );
@@ -329,7 +329,7 @@
   if (filmWanted) {
     var portrait = innerHeight > innerWidth * 1.15;
     filmVideo = document.createElement("video"); filmVideo.muted = true; filmVideo.playsInline = true; filmVideo.setAttribute("playsinline", ""); filmVideo.setAttribute("muted", ""); filmVideo.preload = "auto";
-    filmVideo.src = portrait ? "assets/film/signature-portrait.mp4" : "assets/film/signature.mp4";
+    filmVideo.src = (portrait ? "assets/film/signature-portrait.mp4" : "assets/film/signature.mp4") + "?v=" + JG_V;
     filmVideo.addEventListener("error", function () { filmWanted = false; });
     filmWrap.appendChild(filmVideo);
   }
@@ -377,7 +377,7 @@
 
   var PATHS = {
     interviewer: { key: "1", h: "I’m interviewing", p: "Proof, record, resume. About five minutes, no jargon." },
-    partner: { key: "2", h: "I’m a business partner", p: "Where your business is leaking, what I built for that, and I’ll write your first message for you." },
+    partner: { key: "2", h: "I’m a business partner", p: "Where your sales floor is leaking, what I’m building for it, and I’ll write your first message for you." },
     lurker: { key: "3", h: "Just lurking", p: "No pitch. Five lines and then the site’s yours." }
   };
   var gate = el(
@@ -505,6 +505,8 @@
   var litNode = null;
   function camera(sel, markId) {
     if (litNode) litNode.classList.remove("jg-lit");
+    var at = -1, cut = sel ? sel.indexOf("@") : -1;
+    if (cut > 0) { at = parseFloat(sel.slice(cut + 1)) || 0; sel = sel.slice(0, cut); }
     litNode = sel ? document.querySelector(sel) : null;
     if (!litNode) { body.classList.remove("jg-focus"); return; }
     litNode.classList.add("jg-lit", "is-lit"); body.classList.add("jg-focus");
@@ -512,7 +514,8 @@
     var head = litNode.querySelector(".section__head"); if (head) head.classList.add("in-view");
     var target = markId ? document.querySelector('[data-mark="' + markId + '"]') : null, room = innerHeight - (guide.offsetHeight || 0) - 24;
     var y;
-    if (target) { var tr = target.getBoundingClientRect(); y = tr.top + scrollY - room * 0.42 + tr.height / 2; }
+    if (at >= 0) { var sr = litNode.getBoundingClientRect(); y = sr.top + scrollY + at * Math.max(0, sr.height - innerHeight); }
+    else if (target) { var tr = target.getBoundingClientRect(); y = tr.top + scrollY - room * 0.42 + tr.height / 2; }
     else { y = litNode.getBoundingClientRect().top + scrollY - Math.round(innerHeight * 0.1); }
     scrollToY(Math.max(0, y), 1500);
   }
@@ -592,36 +595,35 @@
   var SCRIPTS = {
     interviewer: [
       line("wink", null, null, greet() + " Real quick, I’m gonna skip the jargon. You’re hiring, or you’re figuring out if you should, and you’ve probably read forty of these this week.", [next("Fair.")]),
-      line("serious", ".hero", ["happens", U], "So here’s the part that matters. <em>This site is the work sample.</em> The loading screen, the question you just answered, me talking to you right now. I built all of it, and you’re standing in it.", [next("Show me what you do")]),
-      line("calm", "#thesis", ["handoff", C], "What I do is the stuff underneath a business. Honestly, most operations don’t break at the design. They break at the handoff, when one person passes something to the next and it just doesn’t land.", [next("Go on")]),
-      line("attentive", "#thesis", ["sport", U], "And I co-own a dealership, so I’ve priced the deal, chased the title, and eaten the cost when the follow-up didn’t happen. That’s why I don’t automate stuff just to automate it.", [next("Proof")]),
-      line("serious", "#work", ["signature", C], "Proof one. A Texas dealer sends a title packet to the county. Three weeks later it comes back because of one missing signature, and by then the deal is already sideways.", [next("And?")]),
-      line("calm", "#work", ["dpc", U], "So I built the thing that checks it before it leaves the building. It reads the deal jacket against what webDEALER wants right now, and hands your clerk a short list instead of a whole stack.", [next("The dealership")]),
-      line("attentive", "#triple-j", ["terms", U], "Proof two. Triple J Auto Investment, Houston. We put the terms on the table early, the trade number is real, and the paperwork doesn’t turn into the customer’s problem after they drive off.", [next("The record")]),
-      line("calm", "#experience", ["dates", B], "Here’s the record, in order. Two operating roles since 2024, both still running. I didn’t pad any of this.", [next("Credentials"), jump("Skip to the close", 9)]),
+      line("serious", "#open", ["builder", U], "So here’s the part that matters. <em>This site is the work sample.</em> The loading screen, the question you just answered, me talking to you right now. I built all of it, and you’re standing in it.", [next("Show me what you do")]),
+      line("calm", "#obavia@.1", ["hear", U], "This is my company, Obavia. It’s sales software for agency owners. It hears what a client really means on a call, and carries those words all the way to collected cash.", [next("Show me")]),
+      line("attentive", "#listen", ["chose", C], "Here’s the idea in one line. A buyer says his team waits on a Babe Ruth to save the quarter. Out of every name, he picked that one. So the next question uses his words, not mine.", [next("Is it live?")]),
+      line("serious", "#obavia@.84", ["waitlist", U], "Straight answer, it’s in development. No customers yet and no results to brag about. What exists is the method, the product, and these two films.", [next("The dealership")]),
+      line("attentive", "#triple-j@.14", ["desk", U], "Proof two, and this one’s already running. Handle a Sale is the desk we close on at Triple J. One plain question at a time, scan the license once, and every form fills itself.", [next("The record")]),
+      line("calm", "#record", ["dates", B], "Here’s the record, in order. Every role on it is still running, and I didn’t pad any of it.", [next("Credentials"), jump("Skip to the close", 8)]),
       line("serious", "#credentials", ["nineteen", C], "Nineteen Anthropic courses. An Associate’s in Business, 3.63, Dean’s List. And every claim on this site has a proof page behind it, so you don’t have to take my word for it.", [next("Wrap it up")]),
       line("warm", "#contact", ["email", B], "That’s the tour. Resume and email are right here. You can ask me something first, or just grab what you need.", [toChat("Ask me something"), finish("Finish")])
     ],
     partner: [
-      line("wink", null, null, greet() + " I’m gonna skip the pitch. You run a business, and somewhere in it something’s being done by hand that really shouldn’t be.", [next("Go on")]),
-      line("calm", "#thesis", ["handoff", C], "Most operations don’t break at the design, they break at the <em>handoff</em>. A lead comes in and nobody owns it, or a packet leaves the building without anybody checking it, or the whole process is living in one person’s head.", [next("Which one is mine")]),
+      line("wink", null, null, greet() + " I’m gonna skip the pitch. You run an agency, and somewhere between the first call and the cash, something’s leaking.", [next("Go on")]),
+      line("calm", "#obavia@.1", ["hear", U], "Most sales floors don’t lose the deal on the call. They lose it in the <em>handoff</em>. The setter hears what the buyer means, and the closer gets a summary.", [next("Which one is mine")]),
       line("attentive", null, null, "Pick whichever one’s closest.", [
-        { label: "Nobody finds us", go: function () { S.pain = "found"; go(3); } },
-        { label: "Traffic that never becomes a lead", go: function () { S.pain = "convert"; go(3); } },
-        { label: "Paperwork and compliance", go: function () { S.pain = "paper"; go(3); } },
-        { label: "Follow-up after first contact", go: function () { S.pain = "followup"; go(3); } },
+        { label: "Leads nobody owns", go: function () { S.pain = "owned"; go(3); } },
+        { label: "Booked calls that never show", go: function () { S.pain = "noshow"; go(3); } },
+        { label: "The setter to closer handoff", go: function () { S.pain = "handoff"; go(3); } },
+        { label: "Signed, but not collected", go: function () { S.pain = "collect"; go(3); } },
         { label: "It all lives in my head", go: function () { S.pain = "tribal"; go(3); } }
       ]),
       { dynamic: function () {
-        var T = { found: ["calm", "Being hard to find is the cheapest problem on that list, and the slowest one to pay back. Before you spend a dollar on traffic, I’d check whether your pages say what you sell in the first screen."],
-          convert: ["serious", "Traffic that won’t convert is almost never a traffic problem. The page is asking for a decision before it’s earned one, or the lead lands somewhere nobody’s watching."],
-          paper: ["surprised", "Okay, that one I’ve lived the hardest. A returned packet costs you three weeks, sometimes the whole deal. It starts with finding the one document that causes the kickback."],
-          followup: ["serious", "Follow-up doesn’t fail because people are lazy. It fails because the next step isn’t written down and given to somebody, so it doesn’t survive a busy Tuesday."],
+        var T = { owned: ["serious", "A lead nobody owns is a lead with no next step. One name on every lead, and the buyer’s own words written down where the next person will actually read them."],
+          noshow: ["calm", "A call booked without a clear purpose is easy to skip. I’d look at what the buyer said when they booked, and whether anything after that said it back to them."],
+          handoff: ["surprised", "Okay, that’s the exact one I’m building for. The buyer’s words have to travel with the lead, so the closer starts where the setter left off."],
+          collect: ["serious", "A signature isn’t cash. I’d count progress on collected cash, and look hard at what the buyer heard between the yes and the first payment."],
           tribal: ["laugh", "A process that lives in one head is a single point of failure that draws a salary. I’ve been that head. Writing it down is boring, I know. It’s also usually the best week of work you can do."] }[S.pain || "tribal"];
-        return line(T[0], "#value", ["slides", X], T[1], [next("What did you build for it")]);
+        return line(T[0], "#loop@.3", null, T[1], [next("What are you building for it")]);
       } },
-      line("calm", "#work", ["dpc", U], "This, for the one I lived the hardest. Deal Packet Checker reads the packet before the state sees it and hands a human a short list instead of a stack.", [next("And the dealership")]),
-      line("attentive", "#triple-j", ["scripts", U], "And the business I run it in. Intake, follow-up, reporting, all of it runs off written scripts, not somebody’s memory.", [next("What it’s costing me")]),
+      line("calm", "#obavia@.84", ["waitlist", U], "That’s Obavia. It works inside your funnel, your scripts, your words. It’s in development, so the honest next step is the waitlist, or a call with me.", [next("You build this stuff?")]),
+      line("attentive", "#triple-j@.14", ["desk", U], "I do, and I run on it. Every sale at Triple J goes through a desk I built. One question at a time, and nothing gets typed twice.", [next("What it’s costing me")]),
       line("attentive", null, null, "Rough guess. What’s it costing you right now?", [
         { label: "Under 5 hours a week", go: function () { S.cost = "under5"; go(7); } },
         { label: "5 to 15 hours a week", go: function () { S.cost = "5to15"; go(7); } },
@@ -635,9 +637,9 @@
     ],
     lurker: [
       line("laugh", null, null, greet() + " Lurking. Respect, honestly. No pitch then.", [next("Quick version")]),
-      line("calm", ".hero", ["happens", U], "Quick version. I’m Jason, Pearland, Texas. I build the systems underneath small businesses, and I co-own a car lot in Houston.", [next("The weird one")]),
-      line("surprised", "#work", ["signature", C], "The weird one. I built a thing that reads Texas title paperwork before it goes to the county. Nobody was checking it before that.", [next("The real one")]),
-      line("wink", "#triple-j", ["terms", U], "The real one. The dealership. Clear vehicles, clear terms, real people. That’s the whole promise.", [next("Okay")]),
+      line("calm", "#open", ["builder", U], "Quick version. I’m Jason, Pearland, Texas. I build the systems underneath a business, then I run them. And I co-own a car lot in Houston.", [next("The weird one")]),
+      line("surprised", "#listen", ["chose", C], "The weird one. I’m building software that reads a sales call the way a good closer does. The buyer says Babe Ruth, and it notices he chose Babe Ruth.", [next("The real one")]),
+      line("wink", "#triple-j@.14", ["desk", U], "The real one. The dealership. Every sale runs on a desk I built, in English or Spanish. Clear vehicles, clear terms, real people.", [next("Okay")]),
       line("warm", null, null, "That’s it. Site’s yours, scroll wherever. I’m down in the corner if you want me.", [toChat("Actually, ask you something"), finish("Finish")])
     ]
   };
@@ -692,11 +694,11 @@
     var nm = (store.get("jg_name") || "").trim(); endEl.querySelector(".jg-end__sum").textContent = "That’s me, top to bottom" + (nm ? ", " + nm : "") + ". Nobody else built this. Grab what you need.";
     var cta = endEl.querySelector(".jg-end__cta"); cta.innerHTML = "";
     var CTAS = {
-      interviewer: [['assets/Jason_Obawemimo_Resume_2026.pdf', 'Resume', true, 'download'], ['mailto:' + CONTACT, 'Email Jason', false]],
-      partner: [['/partners.html#book', 'Pick a time with me', true], ['mailto:' + CONTACT, 'Email Jason', false]],
-      lurker: [['#work', 'Back to the proof', true], ['mailto:' + CONTACT, 'Say hello', false]]
+      interviewer: [['assets/Jason_Obawemimo_Resume_2026.pdf?v=obavia', 'Resume', true, 'download'], ['mailto:' + CONTACT, 'Email Jason', false]],
+      partner: [['https://calendly.com/jason-apohenia/30min', 'Pick a time with me', true], ['https://obavia.co/waitlist', 'Join the waitlist', false]],
+      lurker: [['#films', 'Watch the films', true], ['mailto:' + CONTACT, 'Say hello', false]]
     }[role] || [['mailto:' + CONTACT, 'Email Jason', true]];
-    CTAS.forEach(function (c) { var a = el('<a class="btn' + (c[2] ? " btn--solid" : "") + '" href="' + c[0] + '"' + (c[3] ? ' download="Jason Obawemimo - Resume.pdf"' : "") + '><span>' + c[1] + '</span></a>'); a.addEventListener("click", function (e) { AN.track("cta_click", { label: c[1], role: role, where: "end" }); hideEnd(); if (c[0].charAt(0) === "#") { e.preventDefault(); var n = document.querySelector(c[0]); if (n) scrollToY(n.getBoundingClientRect().top + scrollY - 80, 1200); } }); cta.appendChild(a); });
+    CTAS.forEach(function (c) { var a = el('<a class="btn' + (c[2] ? " btn--solid" : "") + '" href="' + c[0] + '"' + (/^https?:/.test(c[0]) ? ' target="_blank" rel="noopener"' : "") + (c[3] ? ' download="Jason Obawemimo - Resume.pdf"' : "") + '><span>' + c[1] + '</span></a>'); a.addEventListener("click", function (e) { AN.track("cta_click", { label: c[1], role: role, where: "end" }); hideEnd(); if (c[0].charAt(0) === "#") { e.preventDefault(); var n = document.querySelector(c[0]); if (n) scrollToY(n.getBoundingClientRect().top + scrollY - 80, 1200); } }); cta.appendChild(a); });
     var rp = endEl.querySelector(".jg-end__replay"); rp.innerHTML = "<span>Replay as</span>";
     Object.keys(PATHS).filter(function (r) { return r !== role; }).forEach(function (r) { var b = el('<button type="button">' + PATHS[r].h.toLowerCase() + '</button>'); b.addEventListener("click", function () { hideEnd(); store.set("jg_role", r); openGuide(r); }); rp.appendChild(b); });
     var back = el('<button type="button">or return to the site</button>'); back.addEventListener("click", function () { hideEnd(); showFab(); }); rp.appendChild(back);
@@ -712,14 +714,17 @@
 
   var history = [], liveDown = null;
   var FACTS = [
-    [/apohenia|packet|webdealer|title|county|registration/i, "serious", "Apohenia is my company. We’re building the layer between a car deal getting put together and it getting accepted by the county. The first product is Deal Packet Checker. It reads a Texas dealer’s deal jacket against what webDEALER wants right now, and hands the clerk a short list of what to look at. It’s in build, Texas pilot places. Not affiliated with TxDMV or any county office, and I don’t claim it prevents rejections until I can prove it."],
-    [/triple ?j|dealership|car lot|rental|finance|financing/i, "calm", "Triple J Auto Investment is the dealership I co-own and run in Houston. Cars, trucks and SUVs you can finance in house, sell and trade valuations, and we help with registration after the sale. Clear vehicles, clear terms, real people."],
+    [/obavia|agenc|setter|closer|sales software|waitlist|discovery/i, "serious", "Obavia is my company. It’s sales software for agency owners doing a hundred thousand to a million a month, and for their setters and closers. It hears what a client really means on a call and carries those words from the first call to collected cash. It’s in development, so there are no customers or results to claim yet. The waitlist is free."],
+    [/pricing|how much|plans?\b/i, "calm", "Obavia’s prelaunch pricing: Core is planned at three thousand a month for up to ten sellers. Scale and Enterprise are proposed, and setup is a one-time five thousand. None of it is live yet."],
+    [/apohenia|packet|webdealer|county/i, "calm", "Apohenia was an earlier project of mine, a Texas deal paperwork project. Obavia is what I’m building now."],
+    [/triple ?j|dealership|car lot|finance|financing|sale desk|handle a sale/i, "calm", "Triple J Auto Investment is the dealership I co-own and run in Houston. Cars, trucks and SUVs you can finance in house, sell and trade valuations, and registration help after the sale. Every sale goes through Handle a Sale, the desk I built for it."],
     [/credential|certif|anthropic|course|claude/i, "serious", "Nineteen Anthropic courses. Claude, Claude Code, the API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI, the AI fluency series. The certificates are all in one PDF on this site."],
     [/degree|school|college|gpa|education|study/i, "calm", "Associate of Arts in Business from San Jacinto College, May 2026, 3.63, Dean’s Honor List. I’m working on a Bachelor’s in Neuroscience now, should be done 2027."],
     [/stack|tools?|tech|supabase|postgres|vercel|mcp|codex/i, "attentive", "Supabase and Postgres underneath, Vercel in production, Claude and Codex for the agent work, MCP wired all the way through. Obsidian for notes."],
-    [/obawemimo|last name|surname|pronounce/i, "warm", "Obawemimo. Family name. As far as the internet is concerned there’s one of me: founder of Apohenia, co-owner of Triple J Auto Investment, Pearland, Texas."],
+    [/obawemimo|last name|surname|pronounce/i, "warm", "Obawemimo. Family name. As far as the internet is concerned there’s one of me: founder of Obavia, co-owner of Triple J Auto Investment, Pearland, Texas."],
     [/where|based|location|pearland|houston|texas/i, "calm", "Pearland, Texas. The dealership is in Houston, at 8774 Almeda Genoa Rd."],
-    [/hire|rate|price|cost|budget|available|contract|work with/i, "warm", "Easiest way: the intake at the bottom of the page writes your first message for you. Or honestly, just email me at " + CONTACT + "."],
+    [/join|job|hiring|work for|commission/i, "warm", "I’m hiring remote setters and closers to sell Obavia to agency owners. The join page has the details, and the pay is written down before any work starts."],
+    [/hire|rate|price|cost|budget|available|contract|work with|book|call/i, "warm", "Easiest way is to book a call from the button up top. Or the intake at the bottom writes your first message for you. Or just email me at " + CONTACT + "."],
     [/site|website|this|built|how.*(make|build)|game|loader|water|voice/i, "wink", "This site is plain HTML, CSS and JavaScript on Vercel. The loader is a water simulation on a canvas, the films are rendered with Remotion, and the voice is a clone of mine reading lines I wrote. No framework. Didn’t need one."],
     [/email|contact|reach|talk/i, "warm", "Email is " + CONTACT + ". Real inbox, I read it."]
   ];

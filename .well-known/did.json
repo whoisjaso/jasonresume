@@ -18,13 +18,19 @@
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "https://github.com/whoisjaso",
     "https://github.com/whoisjaso/whoisjaso",
-    "https://whoisjaso.github.io/whoisjaso/"
+    "https://whoisjaso.github.io/whoisjaso/",
+    "https://www.instagram.com/0bawemimo/"
   ],
   "service": [
     {
       "id": "did:web:jasonobawemimo.com#official-profile",
       "type": "LinkedDomains",
       "serviceEndpoint": "https://jasonobawemimo.com/"
+    },
+    {
+      "id": "did:web:jasonobawemimo.com#obavia",
+      "type": "LinkedDomains",
+      "serviceEndpoint": "https://jasonobawemimo.com/obavia.html"
     },
     {
       "id": "did:web:jasonobawemimo.com#schema",

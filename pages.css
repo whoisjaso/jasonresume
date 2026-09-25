@@ -116,3 +116,35 @@
   .sent.is-in, .flash.is-on { animation: none; opacity: 1; }
   .flash.is-on { opacity: 0; }
 }
+
+/* ------------------------------------------------------------
+   Obavia page
+   ------------------------------------------------------------ */
+.o-hero__mark { display: block; width: 56px; height: 56px; margin-bottom: 24px; }
+.o-films__row { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 48px; align-items: center; }
+.o-phone--low { margin-top: 72px; }
+.o-films__note { display: grid; gap: 18px; max-width: 30ch; }
+.o-films__note h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 4vw, 52px); line-height: 1.04; }
+.o-films__note h2 em { color: var(--gold); }
+.o-films__note p { font-size: 15px; line-height: 1.65; color: var(--ivory-2); }
+.o-listen { padding-left: 0; padding-right: 0; }
+.o-loop { list-style: none; counter-reset: none; display: grid; }
+.o-loop li { display: grid; grid-template-columns: minmax(120px, 200px) minmax(0, 1fr); gap: 24px; align-items: baseline; padding: 18px 0; border-top: 1px solid #252724; }
+.o-loop li:last-child { border-bottom: 1px solid #252724; }
+.o-loop b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(30px, 3.4vw, 44px); line-height: 1; color: var(--ivory); }
+.o-loop li:last-child b { color: var(--gold); }
+.o-loop span { font-size: 15px; color: var(--ivory-2); }
+.o-plans { display: grid; }
+.o-plans div { display: grid; grid-template-columns: minmax(120px, 200px) minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid #252724; }
+.o-plans div:last-child { border-bottom: 1px solid #252724; }
+.o-plans dt { font-family: var(--serif); font-size: 26px; color: var(--ivory); line-height: 1.1; }
+.o-plans dt small { display: block; margin-top: 6px; font-family: var(--sans); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ivory-3); }
+.o-plans dd { font-size: 15px; line-height: 1.6; color: var(--ivory-2); }
+.o-plans dd b { display: block; font-family: var(--serif); font-weight: 500; font-size: 24px; color: var(--gold); margin-bottom: 2px; }
+@media (max-width: 860px) {
+  .o-films__row { grid-template-columns: auto auto; justify-content: center; gap: 16px; }
+  .o-films__row .c-phone__screen { width: min(42vw, 30svh); border-radius: 22px; }
+  .o-phone--low { margin-top: 40px; }
+  .o-films__note { grid-column: 1 / -1; max-width: none; text-align: center; justify-items: center; }
+  .o-loop li, .o-plans div { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+}

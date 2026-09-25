@@ -9,7 +9,7 @@ import { NOTIFY_TO, STR, EMAIL_OK, esc, sendMail, capture, limited, readBody, cl
 
 const ROLES = { setter: "Appointment setter", closer: "Closer", either: "Either role" };
 
-const SCREEN_SYSTEM = `You help Jason Obawemimo read an application for a sales role at Apohenia (Texas car-deal paperwork software, in build, sold to independent dealers by phone). Write a screening read for Jason only. Plain text, no markdown, no headings, no bullets, no emoji, no em dashes. Three short paragraphs: what the applicant actually said, in their words, without embellishment; what stands out for a phone-sales role (specifics, ownership of what happened after a sale, honesty about a loss) and what is missing; two questions for the first call. Say plainly if the answer reads as generic or AI-written. This is a read, not a decision, and say so in the last line. Under 150 words.`;
+const SCREEN_SYSTEM = `You help Jason Obawemimo read an application for a remote sales role selling Obavia (sales operating software in development for agency owners at $100K to $1M a month; sold by setting and closing calls with those owners). Write a screening read for Jason only. Plain text, no markdown, no headings, no bullets, no emoji, no em dashes. Three short paragraphs: what the applicant actually said, in their words, without embellishment; what stands out for a setting or closing role with agency owners (specifics, listening for what a buyer actually meant, ownership of what happened after a sale, honesty about a loss) and what is missing; two questions for the first call. Say plainly if the answer reads as generic or AI-written. This is a read, not a decision, and say so in the last line. Under 150 words.`;
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   let confirmed = false;
   if (toJason.sent && verifiedSender()) {
     const body = `Got it, ${name.split(" ")[0]}. I read applications myself, usually within a few days.\n\nIf it is a fit, the next step is a twenty-minute call with me. I will tell you the pay structure in writing before that call, so you can decide before you spend any time. If it is not a fit I will still write back and say so.\n\nJason`;
-    const r = await sendMail({ to: email, subject: "Your application to Apohenia", text: body, html: `<div style="font:15px/1.6 -apple-system,Helvetica,Arial,sans-serif;color:#1a1a1a;max-width:560px;white-space:pre-wrap">${esc(body)}</div>`, replyTo: NOTIFY_TO });
+    const r = await sendMail({ to: email, subject: "Your application to sell Obavia", text: body, html: `<div style="font:15px/1.6 -apple-system,Helvetica,Arial,sans-serif;color:#1a1a1a;max-width:560px;white-space:pre-wrap">${esc(body)}</div>`, replyTo: NOTIFY_TO });
     confirmed = r.sent;
   }
 

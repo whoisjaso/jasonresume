@@ -3,7 +3,7 @@
 // falls back to a mailto link.
 //   RESEND_API_KEY   resend.com, API keys
 //   RESEND_FROM      a sender on a domain you verified in Resend, e.g.
-//                    "Jason Obawemimo <jason@apohenia.com>". Without it the
+//                    "Jason Obawemimo <jason@obavia.co>". Without it the
 //                    Resend test sender is used, which can only reach your
 //                    own inbox, so visitor confirmations are skipped.
 //   NOTIFY_TO        where the desk emails land, default jobawems@gmail.com

@@ -1,13 +1,13 @@
 {
   "name": "Jason Obawemimo Discovery Index",
   "canonical_url": "https://jasonobawemimo.com/",
-  "last_updated": "2026-06-17",
+  "last_updated": "2026-09-25",
   "entity": {
     "type": "Person",
     "name": "Jason Obawemimo",
     "identifier": "jason-obawemimo",
-    "preferred_title": "Web Design and Workflow Systems Builder",
-    "occupation": "Web Design and Workflow Systems Builder",
+    "preferred_title": "Founder of Obavia; co-owner and operator of Triple J Auto Investment",
+    "occupation": "Founder of Obavia; co-owner and operator of Triple J Auto Investment",
     "location": "Pearland, Texas, United States",
     "email": "jobawems@gmail.com",
     "contact_type": "professional inquiries",
@@ -20,14 +20,32 @@
       "https://whoisjaso.github.io/whoisjaso/",
       "https://github.com/whoisjaso/jasonresume",
       "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
-      "https://thetriplejauto.com/"
-    ]
+      "https://thetriplejauto.com/",
+      "https://www.instagram.com/0bawemimo/"
+    ],
+    "company": {
+      "name": "Obavia",
+      "url": "https://obavia.co",
+      "role": "founder",
+      "status": "in development",
+      "page": "https://jasonobawemimo.com/obavia.html"
+    },
+    "business": {
+      "name": "Triple J Auto Investment",
+      "url": "https://thetriplejauto.com/",
+      "role": "co-owner and operator",
+      "address": "8774 Almeda Genoa Rd, Houston, TX",
+      "hours": "Monday to Saturday, 9 to 7"
+    }
   },
   "preferred_positioning": {
-    "summary": "Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.",
-    "occupation_description": "Builds conversion-focused websites, landing pages, workflow systems, CRM/database handoffs, SOPs, and practical AI-assisted operating layers for service businesses.",
+    "summary": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.",
+    "occupation_description": "Founds and runs businesses by building the systems underneath them: sales operating software (Obavia, in development), the sale desk Triple J Auto Investment closes sales on, workflow systems, CRM and database handoffs, SOPs, and practical AI-assisted operations.",
     "primary_topics": [
-      "web design",
+      "Obavia (sales operating software, in development)",
+      "Triple J Auto Investment (co-owner and operator)",
+      "sales operations",
+      "setter and closer handoffs",
       "workflow systems",
       "AI-assisted operations",
       "business value",
@@ -40,7 +58,8 @@
     ],
     "not_primary": [
       "voice-agent specialist"
-    ]
+    ],
+    "earlier_project": "Jason also founded Apohenia (2024), a Texas deal-paperwork project building Deal Packet Checker (apohenia.com). It is not affiliated with TxDMV, webDEALER, or any county office."
   },
   "credential_summary": {
     "anthropic_course_completion_portfolio": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
@@ -48,9 +67,12 @@
     "resume": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
     "education": "Associate of Arts in Business, San Jacinto College, May 2026",
     "gpa": "3.63",
-    "honor": "Dean's Honor List"
+    "honor": "Dean's Honor List",
+    "in_progress": "Pursuing a bachelor's in neuroscience, expected 2027"
   },
   "html_pages": {
+    "obavia": "https://jasonobawemimo.com/obavia.html",
+    "hiring": "https://jasonobawemimo.com/join.html",
     "home": "https://jasonobawemimo.com/",
     "entity_profile": "https://jasonobawemimo.com/jason-obawemimo.html",
     "knowledge_card": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
