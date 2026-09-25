@@ -728,10 +728,10 @@
     [/site|website|this|built|how.*(make|build)|game|loader|water|voice/i, "wink", "This site is plain HTML, CSS and JavaScript on Vercel. The loader is a water simulation on a canvas, the films are rendered with Remotion, and the voice is a clone of mine reading lines I wrote. No framework. Didn’t need one."],
     [/email|contact|reach|talk/i, "warm", "Email is " + CONTACT + ". Real inbox, I read it."]
   ];
-  function scripted(q) { for (var i = 0; i < FACTS.length; i++) if (FACTS[i][0].test(q)) return { face: FACTS[i][1], text: FACTS[i][2] }; return { face: "attentive", text: "That one I’d rather answer for real. Email it to " + CONTACT + " and I’ll get back to you." }; }
+  function scripted(q) { for (var i = 0; i < FACTS.length; i++) if (FACTS[i][0].test(q)) return { face: FACTS[i][1], text: FACTS[i][2] }; return { face: "attentive", text: "That one needs the live version of me. Email it to " + CONTACT + " and I’ll answer properly." }; }
   function enterChat() {
     guide.classList.add("is-chat"); camera(null); clearMark(); setChoices([]); setProgress(0, 0); setFace("attentive");
-    say("Ask me whatever about the work. I’ll answer as me.", function () { setChoices([finish("Finish")]); });
+    say("Ask me anything about the work. I’ll answer as myself.", function () { setChoices([finish("Finish")]); });
     setTimeout(function () { chatInput.focus({ preventScroll: true }); }, 400);
   }
   chatForm.addEventListener("submit", function (e) {
