@@ -174,21 +174,21 @@
   var flashEl = document.getElementById("intake-flash");
 
   var PAIN = {
-    found: { phrase: "nobody finds us", subject: "getting found", take: "Being hard to find is the cheapest problem here to fix and the slowest to pay back. Before spending on traffic I would check whether the pages you already have state the offer inside the first screen." },
-    convert: { phrase: "traffic that never becomes a lead", subject: "traffic that does not convert", take: "Traffic that does not convert is rarely a traffic problem. Usually the page asks for a decision before it has earned one, or the lead lands somewhere nobody owns." },
-    paper: { phrase: "paperwork and compliance", subject: "paperwork and compliance", take: "This is the one I have lived hardest. Deal Packet Checker exists because a returned packet costs three weeks and sometimes the deal. The work starts with finding which single document actually causes the kickback." },
-    followup: { phrase: "follow-up after first contact", subject: "follow-up that does not happen", take: "Follow-up failure is structural, not effort. If the next action is not written down and assigned to a person, it does not survive a busy day." },
-    tribal: { phrase: "a process that only lives in my head", subject: "undocumented process", take: "A process that lives in one head is a single point of failure drawing a salary. Writing it down is boring, and it is usually the highest-return week of work on the table." }
+    owned: { phrase: "leads nobody owns", subject: "leads nobody owns", take: "A lead with no owner is a lead with no next step. The fix starts with one name on every lead and the buyer's own words written down where the next person will read them." },
+    noshow: { phrase: "booked calls that never show", subject: "booked calls that never show", take: "A call booked without a clear purpose is easy to skip. I would look at what the buyer said when they booked, and whether anything after that repeated it back to them." },
+    handoff: { phrase: "the setter to closer handoff", subject: "the setter to closer handoff", take: "This is the leak Obavia is built around. The setter hears what the buyer means, and the closer starts from a summary instead. The buyer's exact words have to travel with the lead." },
+    collect: { phrase: "deals signed but not collected", subject: "signed but not collected", take: "A signature is not cash. I would count progress on collected cash and look at what the buyer was told between the yes and the first payment." },
+    tribal: { phrase: "a method that lives in my head", subject: "a method that lives in one head", take: "A method that lives in one head is a single point of failure drawing a salary. Writing it down in your team's own vocabulary is boring, and it is usually the highest-return week on the table." }
   };
   var COST = {
     under5: { phrase: "under 5 hours a week", take: "Under five hours a week, this is worth tightening rather than rebuilding." },
-    "5to15": { phrase: "5 to 15 hours a week", take: "At five to fifteen hours a week there is real money in systemising it." },
+    "5to15": { phrase: "5 to 15 hours a week", take: "At five to fifteen hours a week there is real money in giving it a system." },
     "15to40": { phrase: "15 to 40 hours a week", take: "At fifteen to forty hours a week you are already paying for a system, just not one that exists." },
-    role: { phrase: "more than one full-time role", take: "More than a full-time role means this is quietly the most expensive employee in the business." }
+    role: { phrase: "more than one full-time role", take: "More than a full-time role means this is quietly the most expensive seat on the floor." }
   };
   var WHEN = {
-    "30": { phrase: "inside 30 days", take: "Inside thirty days means we scope narrow and ship one thing that works, then widen." },
-    quarter: { phrase: "this quarter", take: "A quarter is enough to build it properly and leave the documentation behind." },
+    "30": { phrase: "inside 30 days", take: "Inside thirty days means we scope narrow and fix one thing that holds, then widen." },
+    quarter: { phrase: "this quarter", take: "A quarter is enough to fix it properly and leave the playbook behind." },
     scoping: { phrase: "as soon as it is scoped", take: "Scoping first is the right instinct. A short call normally settles whether this is a one-week fix or a build." }
   };
   var state = { 1: null, 2: null, 3: null };
@@ -197,8 +197,8 @@
     var p = PAIN[state[1]], c = COST[state[2]], w = WHEN[state[3]];
     if (!p || !c || !w) return null;
     return {
-      subject: "Systems brief: " + p.subject,
-      body: "Jason,\n\nThe part of the business eating the most time right now is " + p.phrase + ".\nIt costs us roughly " + c.phrase + ".\nWe would want it running " + w.phrase + ".\n\nA bit more context:\n\n\nBusiness:\nWebsite:\nBest number to reach me:\n"
+      subject: "Sales floor brief: " + p.subject,
+      body: "Jason,\n\nThe part costing us the most right now is " + p.phrase + ".\nIt costs us roughly " + c.phrase + ".\nWe would want it fixed " + w.phrase + ".\n\nA bit more context:\n\n\nAgency:\nMonthly revenue, roughly:\nWebsite:\nBest number to reach me:\n"
     };
   }
   function render() {
@@ -206,7 +206,7 @@
     var ghost = '<span class="intake__ghost">&hellip;</span>';
     board.innerHTML = (!p && !c && !w)
       ? '<span class="intake__ghost">Pick the three above and your brief writes itself here.</span>'
-      : "The part eating the most time is " + (p ? "<b>" + p.phrase + "</b>" : ghost) + ". It costs " + (c ? "<b>" + c.phrase + "</b>" : ghost) + ". It needs to be running " + (w ? "<b>" + w.phrase + "</b>" : ghost) + ".";
+      : "The part costing the most is " + (p ? "<b>" + p.phrase + "</b>" : ghost) + ". It costs " + (c ? "<b>" + c.phrase + "</b>" : ghost) + ". It needs fixing " + (w ? "<b>" + w.phrase + "</b>" : ghost) + ".";
     takeEl.textContent = [p && p.take, c && c.take, w && w.take].filter(Boolean).join(" ");
     var b = brief(), ready = !!b;
     sendEl.setAttribute("aria-disabled", ready ? "false" : "true");

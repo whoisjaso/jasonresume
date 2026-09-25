@@ -1,7 +1,7 @@
 {
   "name": "Jason Obawemimo",
   "short_name": "Jason Obawemimo",
-  "description": "Official portfolio for Jason Obawemimo, web design and workflow systems builder in Pearland, Texas.",
+  "description": "Official website of Jason Obawemimo, founder of Obavia and co-owner and operator of Triple J Auto Investment in Houston.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -21,6 +21,19 @@
       "short_name": "Profile",
       "description": "Exact-name entity profile for Jason Obawemimo.",
       "url": "/jason-obawemimo.html",
+      "icons": [
+        {
+          "src": "/assets/favicon-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Obavia",
+      "short_name": "Obavia",
+      "description": "Obavia, sales software in development for agency owners.",
+      "url": "/obavia.html",
       "icons": [
         {
           "src": "/assets/favicon-32.png",

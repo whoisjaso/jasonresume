@@ -9,6 +9,11 @@ This checklist is for the post-deploy step after the SEO/AEO/GEO files are live.
 Confirm each URL returns `200 OK` before submitting:
 
 - https://jasonobawemimo.com/
+- https://jasonobawemimo.com/obavia.html
+- https://jasonobawemimo.com/join.html
+- https://jasonobawemimo.com/assets/film/obavia-closer.mp4
+- https://jasonobawemimo.com/assets/film/obavia-owner.mp4
+- https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4
 - https://jasonobawemimo.com/credentials.html
 - https://jasonobawemimo.com/answers.html
 - https://jasonobawemimo.com/jason-obawemimo.html
@@ -77,6 +82,8 @@ Important crawler tokens now explicitly allowed in `robots.txt`:
 Request inspection/indexing for these URLs first:
 
 - `https://jasonobawemimo.com/`
+- `https://jasonobawemimo.com/obavia.html`
+- `https://jasonobawemimo.com/join.html`
 - `https://jasonobawemimo.com/credentials.html`
 - `https://jasonobawemimo.com/answers.html`
 - `https://jasonobawemimo.com/jason-obawemimo.html`
@@ -154,9 +161,11 @@ Use the same name, title, URL, and credential wording across controlled profiles
 
 - Name: Jason Obawemimo
 - Website: https://jasonobawemimo.com/
-- Short title: Web Design and Workflow Systems Builder
+- Short title: Founder of Obavia; co-owner and operator of Triple J Auto Investment
+- Company: Obavia, https://obavia.co (in development; never described as live, as having customers, or as producing results)
+- Summary: Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.
 - Location: Pearland, Texas
-- Credential language: Anthropic course-completion portfolio; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
+- Credential language: nineteen completed Anthropic courses; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
 - Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, CITATION.cff, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, official site search, and the public mentions page.
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
@@ -166,7 +175,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 - External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
-Avoid positioning Jason primarily as a voice-agent specialist. The preferred positioning is web design, workflow systems, and business value.
+Avoid positioning Jason primarily as a voice-agent specialist. The preferred positioning is founder of Obavia and co-owner and operator of Triple J Auto Investment. Obavia (O-B-A-V-I-A) is his company; Obawemimo is his family name.
 
 ## 8. Monitor
 
@@ -177,6 +186,8 @@ Search manually over time:
 - `Jason Obawemimo credentials`
 - `Jason Obawemimo Anthropic`
 - `Jason Obawemimo Dean's Honor List`
-- `Jason Obawemimo web design workflow systems`
+- `Jason Obawemimo Obavia`
+- `Obavia sales software`
+- `Jason Obawemimo Triple J Auto Investment`
 
 Indexing is not instant. The goal is to make the entity clear, crawlable, and consistently reinforced across the site and platforms.

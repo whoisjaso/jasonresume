@@ -7,7 +7,7 @@
       "name": "Jason Obawemimo Credential and Honor Evidence Graph",
       "description": "Focused machine-readable evidence graph for Jason Obawemimo's official identity, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
       "url": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
-      "dateModified": "2026-06-17",
+      "dateModified": "2026-09-25",
       "inLanguage": "en-US",
       "about": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
@@ -41,7 +41,7 @@
       "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
       "name": "Jason Obawemimo Credentials and Dean's Honor List Evidence",
       "description": "Exact-name evidence page for Jason Obawemimo's Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
-      "dateModified": "2026-06-17",
+      "dateModified": "2026-09-25",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
       },
@@ -70,8 +70,8 @@
       "url": "https://jasonobawemimo.com/",
       "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
       "email": "mailto:jobawems@gmail.com",
-      "jobTitle": "Web Design and Workflow Systems Builder",
-      "description": "Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder focused on conversion-focused websites, workflow automation, AI-assisted operations, and business value.",
+      "jobTitle": "Founder, Obavia",
+      "description": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.",
       "homeLocation": {
         "@type": "Place",
         "name": "Pearland, Texas",
@@ -105,7 +105,8 @@
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume",
         "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
-        "https://thetriplejauto.com/"
+        "https://thetriplejauto.com/",
+        "https://www.instagram.com/0bawemimo/"
       ],
       "subjectOf": [
         "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
@@ -123,6 +124,21 @@
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
+      ],
+      "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), sales software in development for agency owners, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+      "worksFor": [
+        {
+          "@type": "Organization",
+          "@id": "https://jasonobawemimo.com/#obavia",
+          "name": "Obavia",
+          "url": "https://obavia.co"
+        },
+        {
+          "@type": "AutoDealer",
+          "@id": "https://jasonobawemimo.com/#triple-j-auto",
+          "name": "Triple J Auto Investment",
+          "url": "https://thetriplejauto.com/"
+        }
       ]
     },
     {

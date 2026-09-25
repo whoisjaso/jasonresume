@@ -10,9 +10,13 @@
   <Alias>https://github.com/whoisjaso</Alias>
   <Alias>https://github.com/whoisjaso/whoisjaso</Alias>
   <Alias>https://whoisjaso.github.io/whoisjaso/</Alias>
+  <Alias>https://www.instagram.com/0bawemimo/</Alias>
   <Link rel="lrdd" type="application/jrd+json" template="https://jasonobawemimo.com/.well-known/webfinger?resource={uri}" />
   <Link rel="me" type="text/html" href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" />
   <Link rel="me" type="text/html" href="https://github.com/whoisjaso" />
+  <Link rel="me" type="text/html" href="https://www.instagram.com/0bawemimo/" />
+  <Link rel="related" type="text/html" href="https://obavia.co" />
+  <Link rel="related" type="text/html" href="https://jasonobawemimo.com/obavia.html" />
   <Link rel="describedby" type="text/html" href="https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence" />
   <Link rel="describedby" type="text/html" href="https://github.com/whoisjaso/whoisjaso" />
   <Link rel="describedby" type="text/html" href="https://whoisjaso.github.io/whoisjaso/" />

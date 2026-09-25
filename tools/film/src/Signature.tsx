@@ -58,7 +58,7 @@ export const Signature: React.FC<{ portrait?: boolean }> = ({ portrait = false }
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
           <div style={{ width: unit * 0.22 * lineP, height: 1, background: `linear-gradient(90deg, rgba(201,166,66,0), rgba(201,166,66,0.7), rgba(201,166,66,0))` }} />
           <div style={{ fontFamily: theme.fonts.body, fontWeight: 500, fontSize: Math.round(unit * 0.017), letterSpacing: "0.36em", textTransform: "uppercase", color: theme.colors.textDim, opacity: tagP, transform: `translateY(${interpolate(tagP, [0, 1], [10, 0])}px)` }}>
-            Founder of Apohenia
+            Founder of Obavia
           </div>
         </div>
       </AbsoluteFill>

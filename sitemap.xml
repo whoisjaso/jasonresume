@@ -4,7 +4,7 @@
   xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://jasonobawemimo.com/</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -13,25 +13,27 @@
     </image:image>
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
-      <image:title>Jason Obawemimo web design and workflow systems</image:title>
+      <image:title>Jason Obawemimo, founder of Obavia and co-owner of Triple J Auto Investment</image:title>
     </image:image>
-      <video:video>
+    <video:video>
       <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/signature-poster.jpg</video:thumbnail_loc>
       <video:title>Jason Obawemimo, the signature film</video:title>
-      <video:description>A five second title film of Jason Obawemimo, founder of Apohenia, that opens jasonobawemimo.com.</video:description>
+      <video:description>A five second title film of Jason Obawemimo, founder of Obavia, that opens jasonobawemimo.com.</video:description>
       <video:content_loc>https://jasonobawemimo.com/assets/film/signature.mp4</video:content_loc>
       <video:duration>5</video:duration>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
     <video:video>
-      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/screen-poster.jpg</video:thumbnail_loc>
-      <video:title>Apohenia and Triple J Auto Investment on screen</video:title>
-      <video:description>The two businesses Jason Obawemimo runs, Apohenia's Deal Packet Checker and Triple J Auto Investment in Houston, shown on the laptop at jasonobawemimo.com.</video:description>
-      <video:content_loc>https://jasonobawemimo.com/assets/film/screen.mp4</video:content_loc>
-      <video:duration>12</video:duration>
+      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/triple-j-sale-desk.jpg</video:thumbnail_loc>
+      <video:title>Triple J: Handle a Sale</video:title>
+      <video:description>The sale desk Jason Obawemimo built and Triple J Auto Investment in Houston closes sales on: one plain question at a time, one license scan that fills every form, the registration math, and the right documents with nothing missing and nothing extra, in English or Spanish.</video:description>
+      <video:content_loc>https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4</video:content_loc>
+      <video:duration>82</video:duration>
+      <video:publication_date>2026-09-25</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
+      <video:live>no</video:live>
     </video:video>
-</url>
+  </url>
   <url>
     <loc>https://jasonobawemimo.com/resume-pdf.html</loc>
     <lastmod>2026-06-17</lastmod>
@@ -40,205 +42,205 @@
   </url>
   <url>
     <loc>https://jasonobawemimo.com/credentials.html</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/answers.html</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.html</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.md</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/mentions.html</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/search.html</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/llms.txt</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/llms-full.txt</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/ai.txt</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/discovery.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/identity.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/person.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/credentials.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/answers.json</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.vcf</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/llms.txt</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/ai.txt</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/ai-profile.jsonld</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/ai-answers.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/did.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/webfinger</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/.well-known/host-meta</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/humans.txt</loc>
-    <lastmod>2026-06-15</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/schema.json</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/feed.xml</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/profile.jsonld</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/credentials.jsonld</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/faq.jsonld</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/opensearch.xml</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/CITATION.cff</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -261,24 +263,34 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://jasonobawemimo.com/partners.html</loc>
-    <lastmod>2026-09-04</lastmod>
+    <loc>https://jasonobawemimo.com/obavia.html</loc>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
     <video:video>
-      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/vsl-poster.jpg</video:thumbnail_loc>
-      <video:title>Ninety seconds on Deal Packet Checker, in Jason Obawemimo's voice</video:title>
-      <video:description>Jason Obawemimo, founder of Apohenia and co-owner of Triple J Auto Investment, explains what Deal Packet Checker does and does not do for Texas independent dealers, then invites them to book a thirty-minute call.</video:description>
-      <video:content_loc>https://jasonobawemimo.com/assets/film/vsl.mp4</video:content_loc>
-      <video:duration>65</video:duration>
-      <video:publication_date>2026-09-04</video:publication_date>
+      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/obavia-closer.jpg</video:thumbnail_loc>
+      <video:title>Obavia: The closer</video:title>
+      <video:description>A vertical ad film for Obavia, the sales software Jason Obawemimo is building for agency owners at $100K to $1M a month. Obavia is in development. People and figures in the film are fictional.</video:description>
+      <video:content_loc>https://jasonobawemimo.com/assets/film/obavia-closer.mp4</video:content_loc>
+      <video:duration>33</video:duration>
+      <video:publication_date>2026-09-25</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:live>no</video:live>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/obavia-owner.jpg</video:thumbnail_loc>
+      <video:title>Obavia: The owner</video:title>
+      <video:description>A vertical ad film for Obavia, sales software in development for agency owners and their setters and closers, founded by Jason Obawemimo. People and figures in the film are fictional.</video:description>
+      <video:content_loc>https://jasonobawemimo.com/assets/film/obavia-owner.mp4</video:content_loc>
+      <video:duration>35</video:duration>
+      <video:publication_date>2026-09-25</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
       <video:live>no</video:live>
     </video:video>
   </url>
   <url>
     <loc>https://jasonobawemimo.com/join.html</loc>
-    <lastmod>2026-09-04</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

@@ -1,24 +1,28 @@
 # Handoff
 
-For whoever opens this repository next, on Jason's MacBook or anywhere else: this is the whole picture. What the company is, what the site is for, what has been built, where it stands on 2026-09-05, where it is going, and the rules that make it hold together. Read it once end to end. Then CLAUDE.md is the short version for a working session, CONFIG.md is the switchboard, RESEARCH.md is the evidence, OUTREACH.md is the voice, tools/README.md is the machinery.
+For whoever opens this repository next, on Jason's MacBook or anywhere else: this is the whole picture. What the company is, what the site is for, what has been built, where it stands on 2026-09-25, where it is going, and the rules that make it hold together. Read it once end to end. Then CLAUDE.md is the short version for a working session, CONFIG.md is the switchboard, RESEARCH.md is the evidence, OUTREACH.md is the voice, tools/README.md is the machinery.
 
 ## 1. Who and what
 
-**Jason Obawemimo.** Pearland, Texas. Co-owner and operator of Triple J Auto Investment, a used-vehicle dealership at 8774 Almeda Genoa Rd, Houston, open Monday to Saturday 9 to 7, in-house financing, sell and trade valuations, registration and title support. He runs pricing, customer intake, scheduling, payments, follow-up, and the title and registration workload. Founder of Apohenia. Associate of Arts in Business, San Jacinto College, May 2026, GPA 3.63, Dean's Honor List. Pursuing a bachelor's in neuroscience, expected 2027. Nineteen completed Anthropic courses. Email jobawems@gmail.com. LinkedIn, GitHub (whoisjaso), Instagram (0bawemimo, his surname with a zero for the first letter). Calendly: https://calendly.com/jason-apohenia/30min, a thirty-minute outbound call, Central time.
+**Jason Obawemimo.** Pearland, Texas. Founder of Obavia. Co-owner and operator of Triple J Auto Investment, a used-vehicle dealership at 8774 Almeda Genoa Rd, Houston, open Monday to Saturday 9 to 7, in-house financing, sell and trade valuations, registration and title support. He runs pricing, customer intake, scheduling, payments, follow-up, and the title and registration workload, and he built Handle a Sale, the sale desk Triple J closes on. Associate of Arts in Business, San Jacinto College, May 2026, GPA 3.63, Dean's Honor List. Pursuing a bachelor's in neuroscience, expected 2027. Nineteen completed Anthropic courses. Email jobawems@gmail.com. LinkedIn, GitHub (whoisjaso), Instagram (0bawemimo, his surname with a zero for the first letter). Calendly: https://calendly.com/jason-apohenia/30min, a thirty-minute call, Central time (the URL still carries the old name and cannot be changed from here).
 
-**Apohenia.** Founded 2024. The control layer between a constructed car deal and a clean county submission: no deal leaves until the evidence agrees. First product, Deal Packet Checker: a packet-readiness review for Texas independent dealers that checks the deal jacket against current webDEALER requirements before the dealer files, cross-checks the documents against each other, and hands the title clerk a short list to review. Findings are reported as prevalence, by how often they show up. A human clerk decides. Status: in build, run on Triple J's own packets first, founding waitlist, a few Texas pilot places. Sequence after that: a compliance graph underneath, then DealDesk for constructing the deal, then a managed network of licensed title services. Target: the roughly 9,000 to 15,000 Texas independents under thirty deals a month who cannot justify a title clerk. Spelled A-P-O-H-E-N-I-A, distinct from the psychology term apophenia. Site: https://apohenia.com. Its own headline is "Registration is a bitch." That is the register.
+**Obavia (https://obavia.co).** Sales operating software, in development, for agency owners generating $100K to $1M a month and their own setters and closers. Tagline: "Hear what clients really mean. Carry it from the first call to collected cash." Six stages: Capture (the inquiry becomes a lead), Connect (one owner, the buyer's exact words), Book (a call with a clear purpose), Discover (fit, from what actually happened), Agree (the buyer's words reach the closer), Collect (cash, counted when verified). It works inside the agency's own funnel, SOPs and vocabulary. The method is conversation psychology: inspect the buyer's exact words, consider what they reveal, ask a question that uses them. Owners see progress ranked on collected cash, not calls. Prelaunch pricing: Core planned at $3,000 a month (10 active sellers, 5,000 pooled meeting minutes); Scale ($6,000) and Enterprise (custom) proposed; implementation a one-time $5,000. Free waitlist at https://obavia.co/waitlist, which grants no access. Two vertical ad films, "The closer" (33 s) and "The owner" (34 s), from https://5ab678eb.obavia.pages.dev/ads, now in assets/film. Spelled O-B-A-V-I-A.
 
-**What we stand for.** Specificity and restraint. Say exactly what the product does and does not do, in the words a dealer uses on a Tuesday. Authority comes from being the person who runs a lot and built the thing that fixes the paperwork he fights with, not from volume, adjectives, or borrowed proof. Clean, professional, transparent. Opulent in the sense of a well-made object: quiet materials, gold on lacquer, nothing that shouts.
+**Handle a Sale.** Triple J's sale desk (repository whoisjaso/thetriplejauto, Remotion composition `SaleDesk` in remotion/src/sale-desk.ts). One plain question at a time, scan the license once and every form fills itself, the registration math, the right documents with nothing missing and nothing extra, English or Spanish, e-sign on the phone or in person, every sale on file. The 82-second demo film is assets/film/triple-j-sale-desk.mp4, rendered at 1440x810 and transcoded to 720p.
 
-**The claims boundary, which governs every sentence on the site, in the guide, in the emails, in the outreach, and in the film.** Never say the checker catches, prevents or reduces rejections. Never quote a percentage. Never borrow a case study or testimonial. Never show a real customer's packet. Never imply affiliation with TxDMV, webDEALER, or any county office. No approval guarantee. If pushed, the answer is: the evidence is being gathered on our own lot first and will be published as prevalence, not as a promise.
+**Apohenia** is an earlier project (2024, apohenia.com, Deal Packet Checker for Texas dealers). It is gone from the visible site. The answers layer carries one "earlier project" line so that searches for it resolve honestly, and the guide mentions it only if asked.
+
+**What we stand for.** Specificity and restraint. Say exactly what the product does and does not do, in the words an agency owner or a closer uses on a call. Authority comes from being the person who runs a sales floor and a dealership and builds the systems they run on, not from volume, adjectives, or borrowed proof. Cinematic, but quiet: gold on lacquer, film light, nothing that shouts.
+
+**The claims boundary, which governs every sentence on the site, in the guide, in the emails, in the outreach, and in the films.** Obavia is in development and not live. Never claim customers, results, a conversion rate, a percentage, or an outcome. Zoom, Calendly, GoHighLevel, HubSpot, Slack, Zapier, Google Calendar and Cal.com are planned connection targets, not active integrations. People and figures in demos and ads are fictional and say so near them. Only Core's price is planned; the rest is proposed. The waitlist grants no access. If pushed, the answer is: it is being built, and the honest next step is the waitlist or a call.
 
 ## 2. What the site is for
 
 jasonobawemimo.com is three things at once, and every screen has to know which one it is serving.
 
-1. **A proof of work for interviewers and recruiters.** A screener decides in ten seconds and the failure is not knowing what the person does. The first line of the resume and the first line of the hero both say it. The site itself is the work sample: he built it.
-2. **A landing page for business partners,** meaning Texas independent dealers who might take a pilot place. They watch ninety seconds in Jason's own voice, then book directly on his calendar. No form between the film and the calendar. No rep.
-3. **A door for people who want to work with him,** closers and appointment setters, and a plain answer for anyone (or any AI) asking who he is.
+1. **A proof of work for interviewers and recruiters.** A screener decides in ten seconds and the failure is not knowing what the person does. The first line of the resume and the first line of the hero both say it. The site itself is the work sample: he built it, and it plays like a film.
+2. **A landing page for business partners,** meaning agency owners at $100K to $1M a month. They watch the two Obavia films, see the loop and the prelaunch pricing on /obavia.html, then join the waitlist or book directly on his calendar. No rep.
+3. **A door for people who want to work with him,** setters and closers who will sell Obavia to agency owners, and a plain answer for anyone (or any AI) asking who he is.
 
 The visitor picks which of these they are at the gate, and the guide, an animated Jason with seven expressions and his own cloned voice, walks them to the parts that matter for them. That guide is the novelty, and the rule for it is Portal's rule: the whole thing is a tutorial and the visitor should never notice.
 
@@ -26,7 +30,7 @@ The visitor picks which of these they are at the gate, and the guide, an animate
 
 These words get used loosely. On this project they mean something specific.
 
-**Visuals** mean a committed world, not decoration. The world is The Vault: lacquer black (#0a0d0b), gold (#c9a642, #e6c964), ivory (#efe8d8), emerald (#2f8f6b), Cormorant Garamond for display, Hanken Grotesk for everything else, grain and vignette over the whole page, ink annotations drawn by hand in SVG. Every element either belongs to that world or is removed. Research on what reads as vibe-coded (RESEARCH.md, section 2) gives the anti-list: Inter, purple-to-blue gradients, glassmorphism, rounded-everything, three-card feature rows, emoji as icons, em dashes, the same writing voice as every other AI site. None of those are allowed to appear.
+**Visuals** mean a committed world, not decoration. The world is a dark theater: lacquer black (#0a0d0b, deeper #060807 behind films), gold (#c9a642) for the one thing that matters on screen, ivory (#efe8d8) for type, #c9c2b2 for secondary text and links, #252724 for edges. Cormorant Garamond for display (h1 up to 96px, h2 up to 64px), Hanken Grotesk at 15px for body, a 12px base unit, pill buttons (primary gold on lacquer, secondary #101512 with a #252724 edge), grain and vignette over everything, ink annotations drawn by hand in SVG. The home page is a film in reels: letterbox bars open when the loader ends, pinned scenes hold still while the story plays, words brighten as you scroll, films play only while on screen. Research on what reads as vibe-coded (RESEARCH.md, section 2) gives the anti-list: Inter, purple-to-blue gradients, gradient text, glassmorphism, three-card feature rows, emoji as icons, em dashes, the same writing voice as every other AI site. None of those are allowed to appear.
 
 **Optimizing for user experience** means four things in this order:
 
@@ -39,45 +43,47 @@ These words get used loosely. On this project they mean something specific.
 
 ## 4. What is built and live
 
-Production is `main`, deployed by Vercel to jasonobawemimo.com. As of 2026-09-05 everything below is live.
+Production is `main`, deployed by Vercel to jasonobawemimo.com.
 
-**Arrival.** A loader with a water simulation over Jason's portrait (canvas, two height fields), real water-drop samples under the ripple, a synthesized water bed underneath. The loader counts to 100, then waits with "Tap anywhere to enter" until the first touch, because browsers keep audio silent until then; visitors whose browser already allows sound are not held. Then a splash and a swoosh, the signature film (Remotion, his name in Cormorant, gold rule, "Founder of Apohenia"), and the question.
+**Arrival.** A loader with a water simulation over Jason's portrait (canvas, two height fields), real water-drop samples under the ripple, a synthesized water bed underneath. The loader counts to 100, then waits with "Tap anywhere to enter" until the first touch, because browsers keep audio silent until then. Then a splash and a swoosh, the signature film (Remotion, his name in Cormorant, gold rule, "Founder of Obavia"), and the question.
 
-**The gate.** Interviewer, business partner, or lurker. Then "what is your name?" with Continue and Skip side by side. Name is stored locally and used in the greeting and the end screen.
+**The gate.** Interviewer, business partner, or lurker. Then "what is your name?" with Continue and Skip side by side.
 
-**The guide.** A card with the illustrated face (calm, warm, attentive, serious, surprised, laugh, wink), the line in text and in Jason's cloned voice, and the visitor's replies also voiced. Teacher mode scrolls the page to the anchor and draws ink (underline, circle, box, strike) on the exact phrase. Scripts per role live in guide.js SCRIPTS, written in his voice and humanized. Behind the script, a live chat mode calls `/api/guide`, which runs a free-model chain (OpenRouter free models, Groq, Gemini, optional Anthropic) with a system prompt that carries the facts and the claims boundary. End screen with role-specific calls to action; the partner path leads to booking.
+**The guide.** A card with the illustrated face (calm, warm, attentive, serious, surprised, laugh, wink), the line in text and in Jason's cloned voice, and the visitor's replies also voiced. Teacher mode scrolls the page to the anchor and draws ink on the exact phrase. An anchor written `#scene@0.4` lands a pinned scene at that point of its story. Scripts per role live in guide.js SCRIPTS. Behind the script, a live chat mode calls `/api/guide` (free-model chain) with the facts and the claims boundary. End screen with role-specific calls to action: resume for interviewers, the calendar and the waitlist for partners, the films for lurkers.
 
-**Sound.** Two engines. guide.js synthesizes glass tones in D pentatonic (tick, select, chime, open, close, stage, arrive) and the water bed. sounds.js plays eighteen real recordings from Mixkit's free license (drops, splash, three swooshes, a click, laptop keys, a sparkle, a soft chime), decoded at idle, pitch-varied, throttled, sharing one AudioContext with the synth. One mute toggle silences both and persists. Credits and cut points are in assets/sfx/CREDITS.md and tools/sfx/process.py.
+**The projector (cinema.js, cinema.css).** Drives the home page. `data-scene="lead|pass|pin"` gives a section a clock; `data-cue="a,b[,c,d]"` gives an element its own entrance and exit on that clock; `data-words` brightens a line word by word; `data-pan` slides a pinned track sideways; `data-fire` plays a quiet swoosh the first time a cue lands; `video[data-src]` loads late and plays only in view; `[data-unmute]` buttons give one film sound at a time. One requestAnimationFrame loop that runs only while a scene is on screen. Reduced motion sets every clock to its finished state and nothing pins.
 
-**Haptics.** haptics.js: Vibration API on Android, the switch-toggle haptic on iOS 17.4+, patterns for tap, select, arrive, success, unlock, heart.
+**Home page (index.html, built by tools/site/assemble_home.py from tools/site/home.body.html).** The opening title over the portrait plate; Obavia as a pinned reel (the line, the mark, the two phone films rising in); the listening scene (one buyer sentence, ink on the words he chose); the loop, six stages panning sideways on a gold thread; Handle a Sale, the Triple J film growing from a frame into the full screen and settling; the lot; the record as credits; nineteen courses in a marquee; plain facts; the intake (three taps that write an email about where your sales floor leaks); the finale and a credits roll.
 
-**Home page.** Hero, thesis, the Apohenia section (problem, what it does, what it will not claim, where this is going, facts), Triple J, proof of work with the live laptop film, capabilities, credentials, intake (three taps that write an email), contact with LinkedIn, GitHub, Instagram.
+**Sound.** Two engines. guide.js synthesizes glass tones and the water bed. sounds.js plays eighteen real recordings from Mixkit's free license, decoded at idle, pitch-varied, throttled. The projector borrows the swoosh for scene arrivals. One mute toggle silences both and persists.
 
-**Partners page (`/partners`).** The film: fifty-six seconds, seven lines in his cloned voice, the illustrated face per line, words revealed at reading pace, captions as WebVTT, poster. Under it the Calendly event embedded inline, loaded when scrolled near. An optional pre-call note that goes to `/api/lead`. The claims boundary stated plainly. A booking inside the embed fires the unlock moment.
+**Haptics.** haptics.js: Vibration API on Android, the switch-toggle haptic on iOS 17.4+.
 
-**Hiring page (`/join`).** Where the appointments come from (this site, the outreach desk, his network, Triple J's counter), the two roles, how pay works (structure stated, numbers given in writing before any work; no numbers were invented), the application with one story field, `/api/apply`. JobPosting structured data for both roles.
+**Obavia page (`/obavia.html`; `/partners` and `/partners.html` redirect here).** The two films as phones with sound buttons, the listening scene, the loop, prelaunch pricing with what is planned and what is proposed, the Calendly event inline, an optional pre-call note to `/api/lead`, and what will not be claimed.
 
-**The desks (`api/lead.js`, `api/apply.js`).** Record the person in PostHog, ask the free-model chain for a pre-call brief or a screening read (labeled as a read, never a decision), email Jason through Resend with reply-to set to the sender, and with a verified sender write back to the dealer or applicant in his voice. Without keys, the page shows a mailto fallback, nothing is lost.
+**Hiring page (`/join`).** Setters and closers for Obavia: where the conversations come from (the Obavia page, the waitlist, the outreach desk), the two roles, how pay works (numbers in writing before any work; none published), the application with one story field, `/api/apply`. JobPosting structured data for both roles.
 
-**Analytics and admin.** guide.js and pages.js batch events to `/api/track`, which relays to PostHog server-side (the key never ships to the browser, Do Not Track honored). `/admin.html` is a token-gated, noindex board over `/api/metrics` (HogQL).
+**The desks (`api/lead.js`, `api/apply.js`).** Record the person in PostHog, ask the free-model chain for a pre-call brief or a screening read under the Obavia boundary, email Jason through Resend with reply-to set to the sender, and with a verified sender write back in his voice. Without keys, the page shows a mailto fallback.
 
-**Resume.** resume-pdf.html rendered to assets/Jason_Obawemimo_Resume_2026.pdf by tools/verify/resume.mjs, one page, role line under the name for the ten-second test, numbers only where real.
+**Analytics and admin.** guide.js and pages.js batch events to `/api/track`, which relays to PostHog server-side. `/admin.html` is a token-gated board over `/api/metrics`.
 
-**Answers layer (AEO, GEO, SEO).** llms.txt, llms-full.txt, jason-obawemimo.md, answers.json, .well-known/ai-answers.json, faq.jsonld, schema.json, answers.html, the knowledge card and credentials pages, sitemaps (with a video entry), feed, IndexNow key. All carry the same canon: who he is, what Apohenia is, its direction, the claims boundary, how to book, that he is hiring. Change a fact in every one of them or in none.
+**Resume.** resume-pdf.html rendered to assets/Jason_Obawemimo_Resume_2026.pdf by tools/verify/resume.mjs, one page, "Founder, Obavia" under the name.
 
-**Outreach desk.** OUTREACH.md is the voice and the rules. A weekly Routine fires Monday 7 am Central, researches the last thirty days in the dealer and title niche, drafts the week's LinkedIn, Reddit, Facebook group, X and video-outline set in his voice under the claims boundary, and opens a draft PR for approval. It never posts. Human approves every send.
+**Answers layer (AEO, GEO, SEO).** llms.txt, llms-full.txt, jason-obawemimo.md, answers.json, .well-known/, faq.jsonld, schema.json, answers.html, the knowledge card, credentials and mentions pages, sitemaps with the three film entries, feed. All carry the same canon. The home page's JSON-LD is generated from schema.json and faq.jsonld by the assembly script, so change those and re-run it.
+
+**Outreach desk.** OUTREACH.md is the voice and the rules, now aimed at agency owners and their setters and closers. A weekly Routine drafts the week's posts for approval as a draft PR. It never posts. Human approves every send.
 
 ## 5. Where the work stands
 
-Shipped and confirmed on production: PRs #7 through #13. Nothing is uncommitted. The working branch `claude/website-redesign-imagery-5py41u` tracks `main`.
+Shipped through PR #15 (the cinematic Obavia revamp). The working branch `claude/website-redesign-imagery-5py41u` tracks `main`.
 
 **Switched off until keys exist (CONFIG.md has every variable and where to get it):**
 
 - Live chat: OPENROUTER_API_KEY (free), or GROQ_API_KEY, or GEMINI_API_KEY. Until then the guide stays scripted, which still works.
 - Tracking: POSTHOG_KEY. Admin: ADMIN_TOKEN, POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID.
-- Desk emails: RESEND_API_KEY; confirmations to dealers and applicants need RESEND_FROM on a verified apohenia.com sender. NOTIFY_TO defaults to jobawems@gmail.com.
+- Desk emails: RESEND_API_KEY; confirmations to owners and applicants need RESEND_FROM on a verified sender domain (obavia.co once it is verified in Resend). NOTIFY_TO defaults to jobawems@gmail.com.
 
-**Verified by machine, not by ear.** Every voice clip, the film, and every sound were checked by duration, waveform, file presence and browser playback, not listened to. The first thing to do on the Mac is open the site with sound on and walk the whole path. If a clip is loud, long, early or late, each has its own gain and delay in sounds.js and guide.js.
+**Verified by machine, not by ear.** Every voice clip, the films, and every sound were checked by duration, waveform, file presence and browser playback, not listened to. The first thing to do on the Mac is open the site with sound on and walk the whole path. If a clip is loud, long, early or late, each has its own gain and delay in sounds.js and guide.js.
 
 **Known limits.**
 
@@ -90,27 +96,26 @@ Shipped and confirmed on production: PRs #7 through #13. Nothing is uncommitted.
 
 In order. Each one is a round: research if the answer could have changed, build, verify on desktop and mobile, ship, confirm live.
 
-1. **Listen and tune.** Walk the site with sound on. Adjust gains and delays. Re-render any voice line that reads wrong (tools/voice).
-2. **Keys in Vercel.** Turn on chat, tracking, the desks. Then watch the admin board for a week: where people drop, which role they pick, whether the film plays through, whether the calendar gets used.
-3. **The evidence.** As Triple J's packets go through the checker, publish prevalence findings on the Apohenia section and in the answers layer, as prevalence, never as a promise. This is the only kind of proof the boundary allows and it is the strongest kind.
-4. **Outreach with connectors.** Recreate the Routine with Gmail and Composio attached so drafts arrive as Gmail drafts with real research links. Keep every send human-approved.
-5. **Hiring in motion.** The first closer sits in on Jason's calls. Publish the pay numbers to that person in writing, never on the page.
-6. **The Mac.** Local Claude Code can drive a real browser, run Remotion and the voice clone at full speed, and use computer-use automation; the proxy limits that shaped some choices here are gone. Move the film rendering, the voice rendering and the verification to the Mac (tools/README.md), and keep the cloud session for research and routines.
-7. **Later, only if the numbers ask for it.** A Spanish version of the partner page for Houston lots. A short film per role at the gate. The DealDesk story once the checker has evidence.
+1. **Watch it with sound on.** Scroll the home page top to bottom on a phone and a laptop. Tune the scene lengths (the `height` of each pinned scene in cinema.css) and the cue points in tools/site/home.body.html until nothing feels rushed or held too long. Re-render any voice line that reads wrong.
+2. **Keys in Vercel.** Turn on chat, tracking, the desks. Then watch the admin board: which role people pick, how far they scroll, whether the films get sound, whether the calendar and the waitlist get used.
+3. **A Calendly event under the Obavia name,** then swap the URL everywhere it appears (grep for calendly).
+4. **Obavia's own evidence, when there is some.** Until Obavia is live, nothing on the site may imply results. When it is, publish what is true and dated, and update every answers-layer file at once.
+5. **Hiring in motion.** The first closer sits in on Jason's calls. Pay numbers go to that person in writing, never on the page.
+6. **The Mac.** Local Claude Code can run Remotion and the voice clone at full speed. Move film, voice and verification there (tools/README.md).
 
-**What not to do.** Do not add a loyalty system, streaks, badges, or points; the research on games says novelty wears off and the fans mislead you. Do not add a chatbot bubble that talks first. Do not widen the claims. Do not add a third-person bio. Do not buy followers or automate posting. Do not put a phone number or a street address for Jason on the site.
+**What not to do.** Do not add a loyalty system, streaks, badges, or points; the research on games says novelty wears off and the fans mislead you. Do not add a chatbot bubble that talks first. Do not widen the claims. Do not say Obavia is live. Do not add a third-person bio. Do not buy followers or automate posting. Do not put a phone number or a street address for Jason on the site.
 
 ## 7. Working on it
 
 **Run.** `python3 -m http.server 8765` at the repo root, open http://127.0.0.1:8765/. For the `api/` functions, `npx vercel dev` with the project's environment.
 
-**Verify.** tools/verify, both desktop and mobile, before every push: no horizontal overflow, no page errors, no em dashes, the loader holds and releases, the guide line renders, the screen lock engages on the loader and gate and releases on the guide, the new pages' forms fall back cleanly.
+**Verify.** tools/verify (cinema.mjs for the home page scenes, pages.mjs for /obavia and /join), both desktop and mobile, before every push: no horizontal overflow, no page errors, no em dashes, the loader holds and releases, the guide line renders, the screen lock engages on the loader and gate and releases on the guide, the new pages' forms fall back cleanly.
 
 **Ship.** Commit with a plain message that says what changed and why. Push the working branch, open a PR against main, merge, confirm the change is live with curl, ping IndexNow (key file is in the repo root) when the answers layer changed, then reset the working branch onto main.
 
-**Change a fact.** index.html, the guide's FACTS in guide.js and the system prompt in api/guide.js, llms.txt, llms-full.txt, jason-obawemimo.md, answers.json, .well-known/ai-answers.json, faq.jsonld, schema.json, answers.html, and the resume if it touches him. Re-render any voice line that changed.
+**Change a fact.** tools/site/home.body.html (then run tools/site/assemble_home.py), the guide's FACTS in guide.js and the system prompt in api/guide.js, llms.txt, llms-full.txt, jason-obawemimo.md, answers.json, .well-known/ai-answers.json, faq.jsonld, schema.json, answers.html, and the resume if it touches him. Re-render any voice line that changed.
 
-**Write copy.** Second person for the reader's situation, first person for what Jason did. Contractions. Specific nouns: deal jacket, webDEALER, title clerk, county return, GDN. No "solutions", "leverage", "seamless", "streamline", "elevate", "game-changer", "unlock". No tidy groups of three. No "it's not X, it's Y". No em dashes. No emoji. Vary sentence length. Read it aloud; if it sounds like a brochure, rewrite it.
+**Write copy.** Second person for the reader's situation, first person for what Jason did. Contractions. Specific nouns: setter, closer, the handoff, no-show, collected cash, the buyer's exact words. No "solutions", "leverage", "seamless", "streamline", "elevate", "game-changer", "unlock". No tidy groups of three. No "it's not X, it's Y". No em dashes. No emoji. Vary sentence length. Read it aloud; if it sounds like a brochure, rewrite it.
 
 **Design a new surface.** Decide which of the three jobs it serves (section 2). Pick its mode: persuade, operate, read, or experience. Use the Vault tokens in site.css. Build it, screenshot desktop and mobile once, fix everything the screenshots show in one pass, confirm once, stop polishing.
 
@@ -118,21 +123,24 @@ In order. Each one is a round: research if the answer could have changed, build,
 
 | Path | What it is |
 |---|---|
-| index.html, site.css, site.js | The home page, its styles, scroll feel, reveals, menu, intake, tracking hooks |
-| guide.css, guide.js | Loader, films, gate, name step, guide card, teacher camera and ink, synth sound, voice playback, chat, end screen, analytics batching |
+| index.html | Generated. Do not edit by hand; edit tools/site/home.body.html and run tools/site/assemble_home.py |
+| cinema.js, cinema.css | The projector: scenes, cues, word scrub, pans, films, letterbox |
+| site.css, site.js | Tokens, buttons, nav, menu, reveals, the intake |
+| guide.css, guide.js | Loader, signature film, gate, name step, guide card, teacher camera and ink, synth sound, voice playback, chat, end screen, analytics batching |
 | sounds.js, assets/sfx | Sample bank engine and the eighteen clips |
 | haptics.js | Touch feedback |
-| partners.html, join.html, pages.css, pages.js | The partner and hiring pages, the film player, the calendar, the desks' front end |
+| obavia.html, join.html, pages.css, pages.js | The Obavia and hiring pages, the calendar, the desks' front end |
 | api/guide.js, api/lead.js, api/apply.js, api/_lib | Live chat and the two desks; shared model chain and mail/analytics helpers |
 | api/track.js, api/metrics.js, admin.html | Analytics relay and the admin board |
 | resume-pdf.html, resume-pdf.css, assets/Jason_Obawemimo_Resume_2026.pdf | The resume and its PDF |
-| assets/voice, assets/guide, assets/film | Voice clips and manifest, the seven faces, the three films |
+| assets/film | obavia-closer, obavia-owner, triple-j-sale-desk (with posters), signature and signature-portrait |
+| assets/brand | The Obavia mark, recolored gold and ivory, and the original |
+| assets/voice, assets/guide | Voice clips and manifest, the seven faces |
 | llms.txt, llms-full.txt, answers.json, faq.jsonld, schema.json, .well-known/ | The answers layer |
 | CONFIG.md | Every environment variable |
-| RESEARCH.md | The anecdotal research and the decisions taken from it |
-| OUTREACH.md | The outreach voice, cadence, and rules |
-| tools/ | Film, voice, VSL, sound and verification machinery, portable |
-| vercel.json | Redirects (www, clean URLs), headers, cache rules |
+| RESEARCH.md, OUTREACH.md | The research and the outreach voice |
+| tools/ | Site assembly, film, voice, sound and verification machinery |
+| vercel.json | Redirects (www, clean URLs, /partners to /obavia.html), headers, cache rules |
 
 ## 9. If something breaks
 

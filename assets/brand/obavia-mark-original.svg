@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <title>Obavia connected paths</title>
+  <defs>
+    <linearGradient id="ice" x1="20" y1="22" x2="84" y2="102" gradientUnits="userSpaceOnUse"><stop stop-color="#E7EEFE"/><stop offset="1" stop-color="#A9BFF0"/></linearGradient>
+    <linearGradient id="blue" x1="96" y1="20" x2="46" y2="114" gradientUnits="userSpaceOnUse"><stop stop-color="#A8BFF0"/><stop offset="1" stop-color="#637FAE"/></linearGradient>
+  </defs>
+  <path d="M64 10C94 10 118 34 118 64S94 118 64 118C43 118 33 106 34 89C35 74 48 66 57 72C67 79 55 87 60 93C65 99 81 93 87 83C94 71 86 63 73 54L52 39C42 30 45 10 64 10Z" fill="url(#blue)"/>
+  <path d="M64 118C34 118 10 94 10 64S34 10 64 10C85 10 95 22 94 39C93 54 80 62 71 56C61 49 73 41 68 35C63 29 47 35 41 45C34 57 42 65 55 74L76 89C86 98 83 118 64 118Z" fill="url(#ice)"/>
+</svg>

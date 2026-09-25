@@ -26,7 +26,17 @@
     },
     {
       "source": "/partners",
-      "destination": "/partners.html",
+      "destination": "/obavia.html",
+      "permanent": true
+    },
+    {
+      "source": "/partners.html",
+      "destination": "/obavia.html",
+      "permanent": true
+    },
+    {
+      "source": "/obavia",
+      "destination": "/obavia.html",
       "permanent": false
     },
     {

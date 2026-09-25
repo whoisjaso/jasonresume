@@ -1,19 +1,21 @@
 /* TEAM */
 
 Name: Jason Obawemimo
-Role: Web Design and Workflow Systems Builder
+Role: Founder of Obavia (https://obavia.co); co-owner and operator of Triple J Auto Investment, Houston
 Location: Pearland, Texas, United States
 Website: https://jasonobawemimo.com/
 Contact: jobawems@gmail.com
 LinkedIn: https://www.linkedin.com/in/jason-obawemimo-51a76120a/
+Instagram: https://www.instagram.com/0bawemimo/
+Book a call: https://calendly.com/jason-apohenia/30min
 
 /* SITE */
 
 Canonical URL: https://jasonobawemimo.com/
 Entity profile: https://jasonobawemimo.com/jason-obawemimo.html
 Language: English
-Primary focus: Conversion-focused web design, workflow systems, AI-assisted operations, landing page architecture, CRM/database handoffs, SOPs, reporting, and business operations.
-Preferred positioning: Web design, workflow systems, and business value.
+Primary focus: Obavia, sales operating software in development for agency owners at $100K to $1M a month, and running Triple J Auto Investment in Houston.
+Preferred positioning: Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.
 Not primary positioning: Voice-agent specialist.
 
 /* CREDENTIALS */
@@ -23,9 +25,12 @@ Associate degree proof: https://jasonobawemimo.com/assets/Jason_Obawemimo_Associ
 Resume: https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf
 Education: Associate of Arts in Business, San Jacinto College, graduated May 2026.
 Honor: GPA 3.63 and Dean's Honor List.
+In progress: bachelor's in neuroscience, expected 2027.
+Anthropic coursework: nineteen completed courses.
 
 /* MACHINE READABLE */
 
+Obavia page: https://jasonobawemimo.com/obavia.html
 Sitemap: https://jasonobawemimo.com/sitemap.xml
 Sitemap index: https://jasonobawemimo.com/sitemap-index.xml
 Image sitemap: https://jasonobawemimo.com/image-sitemap.xml
@@ -56,4 +61,4 @@ City of Pearland record: https://documents.pearlandtx.gov/WebLink/DocView.aspx?d
 Reporter News Pearland PDF: https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf
 Reporter News Friendswood PDF: https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf
 
-Last updated: 2026-06-16
+Last updated: 2026-09-25

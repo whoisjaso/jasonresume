@@ -39,11 +39,11 @@ nothing is switched on. Each variable adds a layer.
 |---|---|---|
 | any model key above | see Live chat | The pre-call brief for partners and the screening read for applicants, drafted by the free-model chain and included in the email to you. |
 | `RESEND_API_KEY` | resend.com, API keys (free tier, no card) | The email to you. Without a verified sender it uses Resend's test sender, which can only reach the account owner's inbox. |
-| `RESEND_FROM` | a sender on a domain verified in Resend, e.g. `Jason Obawemimo <jason@apohenia.com>` | Confirmation emails to the dealer or applicant in your voice. Skipped until this exists, so nobody gets an email from a test address. |
+| `RESEND_FROM` | a sender on a domain verified in Resend, e.g. `Jason Obawemimo <jason@obavia.co>` | Confirmation emails to the agency owner or applicant in your voice. Skipped until this exists, so nobody gets an email from a test address. |
 | `NOTIFY_TO` | optional, default `jobawems@gmail.com` | Where desk emails land. |
 | `POSTHOG_KEY` | see Tracking | Every note and application also becomes an identified person in PostHog (`lead_note`, `application`). |
 
-The calendar on `/partners.html` is Calendly's inline embed of
+The calendar on `/obavia.html` is Calendly's inline embed of
 `https://calendly.com/jason-apohenia/30min` and needs nothing here. A booking
 made in the embed fires the page's unlock moment and flips the note form to
 "booked".

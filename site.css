@@ -174,9 +174,9 @@ body.menu-open .nav__burger span:last-child { width: 26px; transform: translateY
 
 .btn {
   display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px;
-  border: 1px solid var(--line-3); border-radius: 999px;
+  border: 1px solid #252724; border-radius: 999px;
   font-size: 11.5px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--ivory); background: transparent; cursor: pointer;
+  color: var(--ivory-2); background: var(--panel); cursor: pointer; box-shadow: none;
   transition: background-color 0.45s var(--ease), border-color 0.45s var(--ease), color 0.45s var(--ease), transform 0.45s var(--ease);
 }
 .btn svg { flex: none; }
@@ -184,6 +184,8 @@ body.menu-open .nav__burger span:last-child { width: 26px; transform: translateY
 .btn--solid { background: var(--gold); border-color: var(--gold); color: var(--lacquer); font-weight: 600; }
 .btn--solid:hover { background: var(--gold-2); border-color: var(--gold-2); color: var(--lacquer); }
 .btn--light { border-color: var(--line-3); }
+.btn--quiet { background: transparent; border-color: #252724; color: var(--ivory-2); }
+.btn--quiet:hover { background: var(--panel); }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; transform: none; border-color: var(--line); color: var(--ivory-3); background: transparent; }
 
 /* ------------------------------------------------------------
