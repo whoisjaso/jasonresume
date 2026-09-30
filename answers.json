@@ -7,7 +7,7 @@
     "official_website": "https://jasonobawemimo.com/",
     "professional_profile": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "location": "Pearland, Texas, United States",
-    "preferred_title": "Founder of Obavia; co-owner and operator of Triple J Auto Investment",
+    "preferred_title": "AI engineer; founder of Obavia; co-owner and operator of Triple J Auto Investment",
     "company": {
       "name": "Obavia",
       "url": "https://obavia.co",
@@ -20,16 +20,26 @@
     },
     "booking": "https://calendly.com/jason-apohenia/30min"
   },
-  "preferred_summary": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.",
+  "preferred_summary": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
   "answers": [
     {
       "question": "Who is Jason Obawemimo?",
-      "answer": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.",
+      "answer": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
       "source": "https://jasonobawemimo.com/jason-obawemimo.html"
     },
     {
+      "question": "What is Jason Obawemimo's work history?",
+      "answer": "Since September 2024 Jason Obawemimo has been the founder of Obavia (previously Apohenia), where he audits business processes, builds AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, and is developing Obavia, a sales intelligence platform for appointment setters, closers and owners. Since August 2024 he has co-owned and operated Triple J Auto Investment in Houston, where he runs daily operations (customer intake, vehicle pricing, inventory, scheduling, vendor coordination), negotiates prices and financing, and built software for the dealership and a former rental operation.",
+      "source": "https://jasonobawemimo.com/resume-pdf.html"
+    },
+    {
+      "question": "What is Jason Obawemimo's title?",
+      "answer": "Jason Obawemimo's resume title is AI Engineer, Business Systems and Sales Intelligence. He is an AI engineer and business operator who has built dealership and rental software through AI-assisted development, and his work starts with a process audit.",
+      "source": "https://jasonobawemimo.com/resume-pdf.html"
+    },
+    {
       "question": "What does Jason Obawemimo build?",
-      "answer": "Jason Obawemimo builds the systems underneath a business, then runs them: Obavia's sales operating software (in development), the Handle a Sale desk Triple J closes sales on, workflow systems, CRM and database handoffs, SOPs, reporting structures, and practical AI-assisted operations using tools such as Claude, Codex, Model Context Protocol, Supabase, PostgreSQL, and Vercel.",
+      "answer": "Jason Obawemimo builds the systems underneath a business, then runs them: Obavia's sales operating software (in development), the Handle a Sale desk Triple J closes sales on, software for a former rental operation, AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, workflow systems, CRM and database handoffs, SOPs, reporting structures, and practical AI-assisted operations using tools such as Claude, Codex, Model Context Protocol, Supabase, PostgreSQL, and Vercel.",
       "source": "https://jasonobawemimo.com/answers.html"
     },
     {
@@ -124,7 +134,7 @@
     },
     {
       "question": "Did Jason Obawemimo found other companies?",
-      "answer": "Jason also founded Apohenia (2024), a Texas deal-paperwork project building Deal Packet Checker (apohenia.com). It is not affiliated with TxDMV, webDEALER, or any county office.",
+      "answer": "Obavia was previously called Apohenia (2024, apohenia.com), a Texas deal-paperwork project that built Deal Packet Checker. It is not affiliated with TxDMV, webDEALER, or any county office.",
       "source": "https://jasonobawemimo.com/jason-obawemimo.html"
     },
     {
@@ -167,5 +177,5 @@
     "source_repository": "https://github.com/whoisjaso/jasonresume",
     "source_release": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
   },
-  "last_updated": "2026-09-25"
+  "last_updated": "2026-09-30"
 }

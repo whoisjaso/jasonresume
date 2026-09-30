@@ -8,7 +8,7 @@ A static site (index.html, tokens.css, home.css, chrome.js, desk.js, deck.js, ve
 
 ## Rules that do not bend
 
-- Claims boundary for Obavia: sales software in development for agency owners at $100K to $1M a month and their setters and closers. Never say it is live, has customers, or produces results; never a conversion rate or percentage; integrations (Zoom, Calendly, GoHighLevel, HubSpot, Slack, Zapier, Google Calendar, Cal.com) are planned, not active; people and figures in demos and ads are fictional; only Core ($3,000 a month) is planned, the rest is proposed; the waitlist grants no access. Apohenia is an earlier project and appears only as one line in the answers layer.
+- Claims boundary for Obavia: sales software in development for agency owners at $100K to $1M a month and their setters and closers. Never say it is live, has customers, or produces results; never a conversion rate or percentage; integrations (Zoom, Calendly, GoHighLevel, HubSpot, Slack, Zapier, Google Calendar, Cal.com) are planned, not active; people and figures in demos and ads are fictional; only Core ($3,000 a month) is planned, the rest is proposed; the waitlist grants no access. Apohenia is Obavia's earlier name and appears only as one line in the answers layer.
 - Never publish Jason's private phone or street address. Triple J's business address (8774 Almeda Genoa Rd, Houston) is fine.
 - No em dashes anywhere on the site. No gradients on text, no glassmorphism, no three-card rows, no emoji as icons. Fonts are Cormorant Garamond and Hanken Grotesk.
 - Second person for the reader's situation, first person for what Jason did, never third person.
