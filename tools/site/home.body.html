@@ -85,7 +85,7 @@
   </section>
 
   <!-- 2. Title card -->
-  <section class="card" id="desk-title" data-track="desk" aria-labelledby="desk-h">
+  <section class="card" id="desk-title" data-track="desk" data-scene="pass" aria-labelledby="desk-h">
     <div class="card__inner" data-rise>
       <h2 id="desk-h"><span class="mask"><span>Run the desk.</span></span></h2>
       <p class="card__sub"><span class="mask"><span>This is how a sale works at Triple J. You're behind the desk this time.</span></span></p>
@@ -226,12 +226,12 @@
   </section>
 
   <!-- 4. The real film, chaptered -->
-  <section class="film" id="film" data-track="film" aria-labelledby="film-h">
+  <section class="film" id="film" data-track="film" data-scene="pass" aria-labelledby="film-h">
     <div class="film__head">
       <p class="label">That was the sketch. This is the real one.</p>
       <h2 id="film-h">Handle a Sale.</h2>
     </div>
-    <div class="film__frame">
+    <div class="film__frame" data-cue=".04,.34">
       <video preload="none" playsinline poster="assets/film/triple-j-sale-desk.jpg" data-film="sale-desk" aria-label="Handle a Sale, Triple J's sale desk, 82 second film">
         <source src="assets/film/triple-j-sale-desk.mp4" type="video/mp4" />
       </video>
@@ -276,12 +276,12 @@
   </section>
 
   <!-- 6. The one I'm building: Obavia and Mark the Words -->
-  <section class="card card--short" id="listen-title" data-track="obavia" aria-labelledby="listen-h">
+  <section class="card card--short" id="listen-title" data-track="obavia" data-scene="pass" aria-labelledby="listen-h">
     <div class="card__inner" data-rise>
       <h2 id="listen-h"><span class="mask"><span>The one I'm building.</span></span></h2>
     </div>
   </section>
-  <section class="listen" id="listen" data-track="obavia" aria-label="Obavia and the listening exercise">
+  <section class="listen" id="listen" data-track="obavia" data-scene="pass" aria-label="Obavia and the listening exercise">
     <div class="listen__intro">
       <img class="listen__mark" src="assets/brand/obavia-mark.svg" width="48" height="48" alt="" />
       <p class="lede">Obavia is sales software for agency owners at $100K to $1M a month and their own setters and closers. It's in development and not live yet. The rule is simple: listen to the person.</p>
@@ -301,7 +301,7 @@
         <p class="fine">Ask with their words, not your script.</p>
       </div>
     </div>
-    <ol class="thread" aria-label="The six stages">
+    <ol class="thread" data-cue=".35,.7" aria-label="The six stages">
       <li><b>Capture</b> <span>The inquiry becomes a lead.</span></li>
       <li><b>Connect</b> <span>One owner. The buyer's exact words.</span></li>
       <li><b>Book</b> <span>A call with a clear purpose.</span></li>
