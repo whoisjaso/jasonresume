@@ -161,9 +161,9 @@ Use the same name, title, URL, and credential wording across controlled profiles
 
 - Name: Jason Obawemimo
 - Website: https://jasonobawemimo.com/
-- Short title: Founder of Obavia; co-owner and operator of Triple J Auto Investment
+- Short title: AI engineer; founder of Obavia; co-owner and operator of Triple J Auto Investment
 - Company: Obavia, https://obavia.co (in development; never described as live, as having customers, or as producing results)
-- Summary: Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business, then runs them.
+- Summary: Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.
 - Location: Pearland, Texas
 - Credential language: nineteen completed Anthropic courses; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
 - Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, CITATION.cff, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, official site search, and the public mentions page.

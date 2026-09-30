@@ -1,20 +1,20 @@
 {
   "_note": "The single source for the Slate, the record on the home page, the presentation deck and resume-pdf.html. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
   "name": "Jason Obawemimo",
-  "line": "I build the systems underneath a business, then I run them.",
+  "line": "AI engineer and operator. Process audit first, then the system.",
   "email": "jobawems@gmail.com",
   "site": "jasonobawemimo.com",
   "location": "Pearland, Texas",
   "calendar": "https://calendly.com/jason-apohenia/30min",
-  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=screening2",
+  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26",
   "slate": [
     {
       "k": "Obavia",
-      "v": "Founder. Sales software in development for agency owners at $100K to $1M a month and their setters and closers."
+      "v": "Founder, since September 2024. A sales intelligence platform in development for agency owners."
     },
     {
       "k": "Triple J",
-      "v": "Co-owner and operator of Triple J Auto Investment, Houston. I built the sale desk it closes on."
+      "v": "Co-owner and operator since August 2024. I built its sale desk."
     },
     {
       "k": "Pearland",
@@ -30,8 +30,8 @@
       "id": "obavia",
       "role": "Founder",
       "org": "Obavia",
-      "when": "In development",
-      "text": "Sales operating software for agency owners at $100K to $1M a month and their own setters and closers. It follows a sale through six stages, from the first inquiry to collected cash, inside the agency's own funnel, SOPs and vocabulary.",
+      "when": "September 2024 to now. In development.",
+      "text": "A sales intelligence platform for agency owners at $100K to $1M a month and their own setters and closers. It follows a sale through six stages, from the first inquiry to collected cash. I'm designing how it picks out a buyer's meaningful words, stated interests and motives, then gives the rep context for what to say or ask next.",
       "proof": [
         {
           "label": "The briefing",
@@ -52,8 +52,8 @@
       "id": "triplej",
       "role": "Co-owner and operator",
       "org": "Triple J Auto Investment, Houston",
-      "when": "",
-      "text": "A used vehicle dealership with in-house financing, sell and trade valuations, and registration and title support. I co-own and operate it, and I built Handle a Sale, the desk it closes sales on.",
+      "when": "August 2024 to now",
+      "text": "A used vehicle dealership with in-house financing, sell and trade valuations, and registration and title support. I run daily operations: customer intake, vehicle pricing, inventory, scheduling and vendor coordination, and I negotiate prices and financing. I built Handle a Sale, the desk it closes sales on, and software for a former rental operation, by writing the requirements and directing AI-assisted development.",
       "proof": [
         {
           "label": "The film",
@@ -72,10 +72,10 @@
     },
     {
       "id": "build",
-      "role": "What I build",
-      "org": "Systems underneath a business",
+      "role": "How I work",
+      "org": "Process audit first",
       "when": "",
-      "text": "Sales operations, intake, follow-up, CRM and database handoffs, SOPs, reporting and AI-assisted operations. Then I run them.",
+      "text": "I find where work gets delayed, information gets lost, or people repeat tasks. Then I turn that into requirements and procedures, and build AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, with a human checking the work.",
       "proof": [
         {
           "label": "This site's source",
@@ -92,7 +92,7 @@
       "role": "Tools",
       "org": "What I build with",
       "when": "",
-      "text": "Supabase, PostgreSQL, Vercel, Claude, Codex and Model Context Protocol workflows.",
+      "text": "Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.",
       "proof": [
         {
           "label": "GitHub whoisjaso",
@@ -291,7 +291,7 @@
   "deck": [
     {
       "t": "Jason Obawemimo.",
-      "s": "I build the systems underneath a business, then I run them."
+      "s": "AI engineer and business operator. My work starts with a process audit, then I build the system and run it."
     },
     {
       "t": "The short version.",
@@ -299,7 +299,7 @@
     },
     {
       "t": "Triple J Auto Investment.",
-      "s": "Cars, trucks and SUVs, in-house financing, sell and trade valuations, registration and title support. Clear vehicles. Clear terms. Real people.",
+      "s": "I've co-owned and run it since August 2024: intake, pricing, inventory, scheduling, vendors, and the negotiation. Cars, trucks and SUVs, in-house financing, sell and trade valuations, registration and title support.",
       "fine": "8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.",
       "proof": {
         "label": "thetriplejauto.com",
@@ -318,8 +318,12 @@
       }
     },
     {
+      "t": "Process audit first.",
+      "s": "Find where work gets delayed, information gets lost, or people repeat tasks. Write the requirements. Then build the workflow, with a human checking it."
+    },
+    {
       "t": "Obavia.",
-      "s": "Sales software for agency owners at $100K to $1M a month and their setters and closers. In development, not live yet.",
+      "s": "A sales intelligence platform for agency owners at $100K to $1M a month and their setters and closers. I founded it in September 2024. In development, not live yet.",
       "proof": {
         "label": "The briefing",
         "href": "/obavia.html"
@@ -336,7 +340,7 @@
     },
     {
       "t": "What I build with.",
-      "s": "Supabase, PostgreSQL, Vercel, Claude, Codex and Model Context Protocol workflows.",
+      "s": "Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.",
       "weight": true,
       "proof": {
         "label": "This site's source",
