@@ -11,7 +11,7 @@
 /* Slate */
 .b-slate { min-height: calc(92svh - var(--bar-h)); display: grid; align-content: center; padding: calc(var(--u) * 6) var(--pad); }
 .b-slate__inner { max-width: 880px; display: grid; gap: 18px; }
-.b-slate__mark { width: 64px; height: 64px; }
+.b-slate__mark { width: 72px; height: 72px; border-radius: 17px; }
 .b-slate h1 { font-size: clamp(64px, 11vw, 150px); line-height: 0.9; }
 .b-slate__tag { font-family: var(--serif); font-size: clamp(24px, 3vw, 38px); line-height: 1.18; }
 .b-status { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; letter-spacing: 0.08em; color: var(--gold-2); }
