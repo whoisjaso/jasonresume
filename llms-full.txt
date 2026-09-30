@@ -98,11 +98,11 @@ Obawemimo is Jason Obawemimo's family name. Obavia (O-B-A-V-I-A) is his company.
 - What is Triple J's Handle a Sale desk? It is the sale desk Jason built and Triple J closes sales on. It asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, routes the deal to the right documents with nothing missing and nothing extra, works in English or Spanish, and saves every sale on file.
 - How do I book a call with Jason? Book a thirty-minute call at https://calendly.com/jason-apohenia/30min, or email jobawems@gmail.com.
 - Is Jason hiring? Yes. https://jasonobawemimo.com/join.html is for remote appointment setters and closers selling Obavia to agency owners. The pay structure is stated in writing before any work; no numbers are published.
-- What is jasonobawemimo.com? jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is a guided film: it asks why you are here, and Jason walks you through the page.
+- What is jasonobawemimo.com? jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: it opens on the verdict, then lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim.
 
 ## Read This Site As A Film
 
-The page opens with a loading screen built on Jason's portrait, then asks one question about why you are here. Jason then walks the visitor through the page as a guide: the camera scrolls to each proof, key phrases are underlined, circled, or crossed out, and every line is spoken. Everything is skippable, and every fact stays in plain HTML for readers and crawlers.
+The page opens on the Slate: Jason's portrait, who he is, and the four facts that matter, readable in ten seconds with no loading screen and nothing in front of it. Scroll on and it plays like a film cut through black: you run a demo of Handle a Sale, the desk Triple J closes sales on, with a fictional buyer and fictional figures; then the desk's own film, the record, Obavia's Mark the Words game, and the next move. The resume opens as a keyboard deck (arrow keys, or #present/1 in the address), and Check me opens a drawer of every proof link. Sound and motion fire only when you press something, and nothing plays on its own. Every fact stays in plain HTML for readers and crawlers.
 
 ## Credentials
 

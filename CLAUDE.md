@@ -4,7 +4,7 @@ Read HANDOFF.md first. It is the brief: what Obavia is, what the site is for, wh
 
 ## What this is
 
-A static site (index.html, site.css, site.js, cinema.css, cinema.js, guide.css, guide.js, sounds.js, haptics.js, pages.css, pages.js) plus Vercel Node functions in `api/`, deployed from `main` to production at jasonobawemimo.com. No build step. No framework. The guide, the sound, the films and the voice are all first-party.
+A static site (index.html, tokens.css, home.css, chrome.js, desk.js, deck.js, verify.js, games.js, extras.js, cinema.js, track.js, sounds.js, haptics.js; obavia.html and join.html add briefing.css and pages.js) plus Vercel Node functions in `api/`, deployed from `main` to production at jasonobawemimo.com. No build step. No framework. The desk game, the sound, the films and the tracking are all first-party. SPEC.md is the build spec for this version.
 
 ## Rules that do not bend
 
@@ -18,16 +18,16 @@ A static site (index.html, site.css, site.js, cinema.css, cinema.js, guide.css, 
 
 ## Verify before pushing
 
-`python3 -m http.server 8765` then the harnesses in `tools/verify/` (see tools/README.md). Both desktop and mobile. No horizontal overflow, no page errors, no em dashes.
+`python3 -m http.server 8765` then `node tools/verify/screening.mjs` and `node tools/verify/briefing.mjs` (see tools/README.md). Both desktop and mobile. No horizontal overflow, no page errors, no em dashes.
 
 ## Where things are
 
-- Home page: edit tools/site/home.body.html, then `python3 tools/site/assemble_home.py` writes index.html (its JSON-LD comes from schema.json and faq.jsonld). Never hand-edit index.html.
-- Scroll scenes: cinema.js (the projector) and cinema.css; cue points live in the body markup.
-- Copy and facts: tools/site/home.body.html, llms.txt, llms-full.txt, answers.json, faq.jsonld. Change a fact in all of them.
-- Guide script and voice: guide.js SCRIPTS, `assets/voice/manifest.json`, tools/voice.
+- Home page: edit tools/site/home.body.html and tools/site/record.json (the Slate, record, deck, Check me and PDF link), then `python3 tools/site/assemble_home.py` writes index.html (its JSON-LD comes from schema.json and faq.jsonld). Never hand-edit index.html.
+- Scenes and look: home.css and tokens.css (design system, iOS layer); cinema.js is the projector, cue points live in the body markup. chrome.js owns FX, the island, banners, sheets and deep links.
+- Copy and facts: tools/site/record.json, tools/site/home.body.html, resume-pdf.html, api/guide.js, llms.txt, llms-full.txt, answers.json, faq.jsonld. Change a fact in all of them.
+- Games: games.js (home, obavia, join), desk.js (the Handle a Sale desk), deck.js (resume deck), extras.js (films, rig, trailer, water, commentary captions).
 - Sound: sounds.js (bank and gains), assets/sfx, tools/sfx.
 - Films: assets/film (Obavia ads, Triple J Handle a Sale, signature), tools/film. The Sale Desk film renders from whoisjaso/thetriplejauto, remotion/src/sale-desk.ts.
 - Desks and chat: api/guide.js, api/lead.js, api/apply.js, api/_lib. Config in CONFIG.md.
-- Analytics and admin: api/track.js, api/metrics.js, admin.html.
+- Analytics: track.js to api/track.js (allowlist there) to PostHog; api/metrics.js and admin.html are the Dailies board.
 - Outreach: OUTREACH.md. Research: RESEARCH.md.

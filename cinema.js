@@ -153,4 +153,10 @@
   if (!body.classList.contains("is-loading")) open();
   else new MutationObserver(function (m, obs) { if (!body.classList.contains("is-loading")) { obs.disconnect(); setTimeout(open, 80); } }).observe(body, { attributes: true, attributeFilter: ["class"] });
   setTimeout(open, 12000);
+
+  /* The rig reads this, so the numbers it shows are the projector's own */
+  window.JG_PROJECTOR = {
+    scenes: scenes.map(function (s) { return { el: s.el, mode: s.mode, cues: s.cues.length, get p() { return s.lp < 0 ? 0 : s.lp; }, get on() { return s.on; } }; }),
+    running: function () { return typeof raf !== "undefined" && !!raf; }
+  };
 })();

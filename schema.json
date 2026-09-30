@@ -86,10 +86,10 @@
       "speakable": {
         "@type": "SpeakableSpecification",
         "cssSelector": [
-          ".c-open__title",
-          ".c-open__sub",
-          ".c-mark__line",
-          ".c-facts__list"
+          ".slate__name",
+          ".slate__line",
+          ".slate__rows",
+          ".entry__text"
         ]
       },
       "video": [
@@ -1037,7 +1037,7 @@
           "name": "What is jasonobawemimo.com?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is a guided film: it asks why you are here, and Jason walks you through the page."
+            "text": "jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: it opens on the verdict, then lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim."
           }
         }
       ]

@@ -1,36 +1,10 @@
-/* Partner and hiring pages: the film, the calendar, the two desks. */
+/* The Obavia and hiring pages: the calendar and the two desks. Tracking lives in track.js. */
 (function () {
   "use strict";
   var body = document.body;
 
-  /* ---------- tracking, same relay and id as the guide ---------- */
-  var store = {
-    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
-    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-  };
-  var DNT = navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.globalPrivacyControl === true;
-  var id = store.get("jg_id");
-  if (!id) { id = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); store.set("jg_id", id); }
-  var queue = [], timer = null;
-  function common() {
-    var w = innerWidth;
-    return { url: location.href.slice(0, 300), ref: document.referrer.slice(0, 300), refd: (document.referrer.match(/^https?:\/\/([^/]+)/) || [])[1] || "", w: w, h: innerHeight, device: w < 700 ? "Mobile" : w < 1100 ? "Tablet" : "Desktop", lang: navigator.language };
-  }
-  function flush() {
-    timer = null;
-    if (!queue.length) return;
-    var payload = JSON.stringify({ id: id, common: common(), events: queue.splice(0, 25) });
-    try { if (navigator.sendBeacon) navigator.sendBeacon("/api/track", new Blob([payload], { type: "application/json" })); else fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }); } catch (e) {}
-  }
-  function track(event, props) {
-    if (DNT) return;
-    queue.push({ event: event, props: props || {}, ts: Date.now() });
-    if (!timer) timer = setTimeout(flush, 900);
-  }
-  window.JG_TRACK = track;
-  document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
-  track("page_view", { page: body.dataset.page || location.pathname });
-
+  /* Tracking goes through track.js (window.JG_TRACK), loaded first on every page */
+  function track(event, props) { if (window.JG_TRACK) window.JG_TRACK(event, props); }
   function H(k) { if (typeof window.JG_HAPTIC === "function") window.JG_HAPTIC(k); }
 
   /* ---------- a single glass tone for the unlock moment ---------- */
@@ -77,15 +51,13 @@
     window.addEventListener("message", function (e) {
       if (!e.data || typeof e.data.event !== "string" || e.data.event.indexOf("calendly.") !== 0) return;
       if (e.data.event === "calendly.event_scheduled") {
-        track("book_click", { booked: true }); unlock();
+        track("call_booked", {}); unlock();
         var b = document.querySelector('[name="booked"]'); if (b) b.value = "yes";
         var note = document.getElementById("note-head"); if (note) note.textContent = "Booked. One more thing helps me prepare.";
       }
     });
   }
-  document.querySelectorAll("[data-book]").forEach(function (a) {
-    a.addEventListener("click", function () { H("select"); if (window.JG_SFX) window.JG_SFX.play("select"); track("book_click", { booked: false, where: a.dataset.book }); });
-  });
+  /* [data-book] clicks are tracked and voiced by track.js and chrome.js */
 
   /* ---------- the desks ---------- */
   document.querySelectorAll("form[data-desk]").forEach(function (form) {
@@ -95,6 +67,7 @@
       e.preventDefault();
       if (!form.reportValidity()) { return; }
       var data = {}; new FormData(form).forEach(function (v, k) { data[k] = v; });
+      if (window.JG_ID) data.vid = window.JG_ID;
       btn.disabled = true; status.className = "form__status"; status.textContent = "Sending.";
       fetch("/api/" + form.dataset.desk, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
         .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
@@ -112,6 +85,7 @@
             sent.scrollIntoView({ behavior: "smooth", block: "center" });
           }
           unlock(); track(form.dataset.desk === "lead" ? "lead_sent" : "apply_sent", { delivered: r.j.delivered !== false });
+          if (window.JG_FX) window.JG_FX("send");
         })
         .catch(function (err) {
           btn.disabled = false; status.className = "form__status is-bad";

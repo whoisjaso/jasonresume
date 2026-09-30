@@ -9,7 +9,7 @@ Everything that produced the site's media and proved it works, moved out of the 
 | `voice/` | Guide lines in Jason's cloned voice (Chatterbox) and the visitor replies (Chatterbox default voice). | Python 3.11, `pip install chatterbox-tts soundfile imageio-ffmpeg`; your reference recording at `tools/voice/ref.wav` (gitignored, never commit it). |
 | `vsl/` | The partner film pipeline: narration, timing data, render, transcode, poster, captions. | The two above. |
 | `sfx/` | Rebuilds `assets/sfx` from the raw Mixkit recordings. | `pip install soundfile numpy imageio-ffmpeg`; raw files in `tools/sfx/raw/` (see `assets/sfx/CREDITS.md`). |
-| `verify/` | Playwright harnesses that load the site against a local server and check the loader hold, the guide, the lock, the new pages, the sound bank, the resume PDF. | `npm install playwright` at the repo root, a local server on port 8765. |
+| `verify/` | Playwright harnesses that play the home page, the Obavia and hiring pages, overflow, and the resume PDF against a local server. | `npm install playwright` at the repo root, a local server on port 8765. |
 
 ## Run the site locally
 
@@ -25,17 +25,17 @@ The `api/` functions need Vercel: `npx vercel dev` at the repo root runs them wi
 
 ```
 python3 -m http.server 8765 &
-node tools/verify/round3.mjs     # loader, gate, guide, screen lock, menu, desktop and mobile
-node tools/verify/hold.mjs       # the tap-to-enter hold with real-browser autoplay emulated
-node tools/verify/cinema.mjs     # the home page scene by scene, desktop and mobile, overflow, dashes, films
-node tools/verify/pages.mjs      # obavia.html and join.html, overflow, em dashes, form fallback
-node tools/verify/sfx.mjs        # every sound file loads and plays
+node tools/verify/screening.mjs  # home page end to end, desktop and mobile
+node tools/verify/briefing.mjs   # obavia.html and join.html, lessons, note game, form fallbacks
+node tools/verify/overflow.mjs   # names the element when a page scrolls sideways
 node tools/verify/resume.mjs     # regenerates assets/Jason_Obawemimo_Resume_2026.pdf, one page
 ```
 
 Screenshots land in `tools/verify/out/`.
 
 ## Re-render voice
+
+Retired with the guide: the extract scripts read guide.js, which is gone. The commentary captions in extras.js still look up `assets/voice/manifest.json` by line, so a clip rendered for a caption's exact text would play. Kept for that.
 
 1. Put your recording at `tools/voice/ref.wav` (mono or stereo, 20 to 40 seconds of you talking naturally; the one used so far was 31 s trimmed from a phone memo).
 2. Edit the lines in `guide.js`, then `python3 tools/voice/extract2.py` to regenerate `tools/voice/lines.json` and `tools/voice/items.json` with the ids the page will look up.
