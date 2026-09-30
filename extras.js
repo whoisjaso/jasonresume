@@ -12,9 +12,10 @@
 
   /* ---------- the real film: play on press, chapters, progress ---------- */
   document.querySelectorAll("video[data-film]").forEach(function (v) {
-    var name = v.getAttribute("data-film"), wrap = v.closest(".film") || v.parentNode, btn = wrap.querySelector('[data-play="' + name + '"]'), marks = {}, started = false;
+    var name = v.getAttribute("data-film"), wrap = v.closest(".film, .b-phone") || v.parentNode, btn = wrap.querySelector('[data-play="' + name + '"]'), marks = {}, started = false;
     function play(from) {
       if (from != null) { try { v.currentTime = from; } catch (e) {} }
+      document.querySelectorAll("video").forEach(function (o) { if (o !== v && !o.paused) o.pause(); });
       v.muted = false; v.controls = true;
       var p = v.play(); if (p && p.catch) p.catch(function () { v.muted = true; v.play(); });
       wrap.classList.add("is-playing");
@@ -35,7 +36,7 @@
     v.addEventListener("ended", function () { if (!marks[100]) { marks[100] = 1; T("film_complete", { film: name }); } wrap.classList.remove("is-playing"); });
     document.addEventListener("jg:seek", function (e) {
       if (e.detail.film !== name) return;
-      if (window.JG_JUMP) window.JG_JUMP("#" + wrap.id); play(e.detail.t);
+      if (window.JG_JUMP && wrap.id) window.JG_JUMP("#" + wrap.id); play(e.detail.t);
     });
   });
 

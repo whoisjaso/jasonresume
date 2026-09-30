@@ -5,7 +5,6 @@
 <div class="bars bars--top" aria-hidden="true"></div>
 <div class="bars bars--bottom" aria-hidden="true"></div>
 <div class="blackout" aria-hidden="true"></div>
-<div class="toast" role="status" aria-live="polite"></div>
 
 %%ICONS%%
 
@@ -95,6 +94,7 @@
   <!-- 3. Run the desk: the centerpiece, a sketch of the real Handle a Sale flow -->
   <section class="desk" id="desk" data-track="desk" aria-label="Run the desk">
     <div class="desk__frame">
+      <div class="desk__status" aria-hidden="true"><span>9:41</span><b>Handle a Sale</b><span class="desk__sig"></span></div>
       <div class="desk__top">
         <p class="desk__fiction">Fictional buyer, fictional deal.</p>
         <ol class="desk__track" aria-hidden="true">
@@ -217,6 +217,7 @@
     <div class="reveal" id="desk-reveal" hidden>
       <p class="reveal__kicker label">That was the sketch.</p>
       <h3 class="reveal__line">That's the desk Triple J closes sales on. <em>I built it.</em></h3>
+      <figure class="reveal__still"><img src="assets/brand/triplej-og.jpg" width="1200" height="630" alt="From thetriplejauto.com" loading="lazy" decoding="async" /><figcaption class="fine">From thetriplejauto.com</figcaption></figure>
       <p class="reveal__place">Triple J Auto Investment, 8774 Almeda Genoa Rd, Houston. Open Monday to Saturday, 9 to 7.</p>
       <div class="reveal__actions">
         <a class="btn btn--gold" href="#film" data-cta="film" data-where="reveal">Watch the real one, 82 seconds</a>
@@ -364,7 +365,7 @@
     <section class="verify-list" id="verify" aria-labelledby="verify-h">
       <h2 id="verify-h">Check me.</h2>
       <p class="fine">Same name, same titles, same town on every one of these.</p>
-      <ul>%%VERIFY%%</ul>
+      <ul class="group">%%VERIFY%%</ul>
     </section>
     <div class="credits__card">
       <p>Made in Pearland, Texas. Designed, written and built by me.</p>
@@ -420,7 +421,7 @@
   <div class="drawer__inner">
     <div class="drawer__head"><h2 id="vd-h">Check me.</h2><button class="x" type="button" data-close aria-label="Close"></button></div>
     <p class="fine">Same name, same titles, same town on every one of these.</p>
-    <ul class="vd__list"></ul>
+    <ul class="vd__list group"></ul>
     <form class="ask-form" data-ask-form>
       <label class="label" for="ask-q">Ask me something this page doesn't answer</label>
       <div class="ask-form__row"><input id="ask-q" name="q" type="text" maxlength="300" autocomplete="off" placeholder="What would you do in your first month?" /><button class="btn btn--sm" type="submit">Ask</button></div>

@@ -21,9 +21,11 @@
 <meta property="og:image" content="https://jasonobawemimo.com/assets/og-film.jpg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="site.css" />
-<link rel="stylesheet" href="pages.css" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="tokens.css?v=s1" />
+<link rel="stylesheet" href="home.css?v=s1" />
+<link rel="stylesheet" href="briefing.css?v=s1" />
+<script>document.documentElement.classList.add("js")</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -38,7 +40,7 @@
       "author": { "@id": "https://jasonobawemimo.com/#jason-obawemimo" },
       "inLanguage": "en-US",
       "datePublished": "2026-09-04",
-      "dateModified": "2026-09-25"
+      "dateModified": "2026-09-30"
     },
     {
       "@type": "JobPosting",
@@ -58,7 +60,7 @@
       "@type": "JobPosting",
       "@id": "https://jasonobawemimo.com/join.html#closer",
       "title": "Closer for Obavia (remote)",
-      "description": "Run the thirty-minute call with agency owners about Obavia, alongside Jason Obawemimo at first and then alone. Obavia is sales software in development. The pay structure is given in writing before any work. No unpaid meetings.",
+      "description": "Run the thirty-minute call with agency owners about Obavia, alongside Jason Obawemimo at first and then alone. Obavia is sales software in development. The pay structure is given in writing before any work.",
       "datePosted": "2026-09-25",
       "validThrough": "2026-12-31",
       "employmentType": ["CONTRACTOR"],
@@ -79,95 +81,139 @@
 }
 </script>
 </head>
-<body class="detail-page" data-page="join">
-
+<body class="briefing" data-page="join">
+<a class="skip" href="#apply">Skip to the application</a>
 <div class="grain" aria-hidden="true"></div>
-<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute"><defs>
-  <g id="i-arrow" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8.5 7H17v8.5"/></g>
-  <g id="i-mail" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5h17v11h-17zM3.5 7l8.5 6 8.5-6"/></g>
-</defs></svg>
+<div class="vignette" aria-hidden="true"></div>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <g id="i-arrow" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8.5 7H17v8.5"/></g>
+    <g id="i-download" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15"/></g>
+    <g id="i-check" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></g>
+    <g id="i-mail" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5h17v11h-17zM3.5 7l8.5 6 8.5-6"/></g>
+    <g id="i-copy" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8.5h11v11h-11zM15.5 8.5v-4h-11v11h4"/></g>
+    <path id="i-linkedin" d="M5.34 8.66H2.3v12.06h3.04V8.66Zm.22-3.73c0-.98-.8-1.77-1.77-1.77S2.02 3.95 2.02 4.93s.8 1.78 1.77 1.78 1.77-.8 1.77-1.78Zm16.42 9.06c0-3.24-1.73-5.08-4.52-5.08-2.08 0-3.02 1.14-3.54 1.94V8.66h-3.03v12.06h3.03v-6.7c0-1.8.34-3.53 2.56-3.53 2.19 0 2.22 2.05 2.22 3.65v6.58h3.04v-6.73h-.01Z"/>
+    <path id="i-instagram" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.6361.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/>
+    <path id="i-github" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48l-.01-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85l-.01 2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/>
+    <g id="i-play" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></g>
+    <g id="i-sound" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></g>
+  </defs>
+</svg>
 
-<header class="nav nav--static">
-  <a class="nav__brand" href="/" aria-label="Jason Obawemimo home">
-    <span class="nav__monogram" aria-hidden="true"><svg viewBox="0 0 34 40"><path d="M22.5 3.5h9M27 3.5v22.5c0 5.6-3.4 9.6-8.6 9.6-4.6 0-7.9-2.9-8.4-7.4"/><path d="M4 12.5c1.2-4.6 4.3-7.4 8.5-7.4"/></svg></span>
-    <span class="nav__name">Jason Obawemimo</span>
+<header class="bar" data-chrome>
+  <a class="bar__brand" href="/" aria-label="Jason Obawemimo, home">
+    <svg class="bar__mono" viewBox="0 0 34 40" aria-hidden="true"><path d="M22.5 3.5h9M27 3.5v22.5c0 5.6-3.4 9.6-8.6 9.6-4.6 0-7.9-2.9-8.4-7.4"/><path d="M4 12.5c1.2-4.6 4.3-7.4 8.5-7.4"/></svg>
+    <span class="bar__name">Jason Obawemimo</span>
   </a>
-  <nav class="nav__links" aria-label="Page navigation">
-    <a class="nav__link" href="/">Home</a>
-    <a class="nav__link" href="/obavia.html">Obavia</a>
-    <a class="nav__link" href="/answers.html">Facts</a>
-    <a class="btn btn--solid" href="#apply"><span>Apply</span></a>
-  </nav>
+  <div class="bar__right">
+    <a class="bar__link bar__link--resume" href="#apply" data-where="bar">Apply</a>
+    <a class="bar__link" href="/obavia.html" data-where="bar">Obavia</a>
+    <a class="bar__link" href="/" data-where="bar">Home</a>
+    <button class="bar__toggle" type="button" data-toggle="sound" aria-pressed="true">Sound</button>
+    <button class="bar__menu" type="button" aria-label="Open the menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+  </div>
 </header>
+<nav class="menu" id="menu" aria-label="Site">
+  <div class="menu__list">
+    <a href="#note">Rewrite the note <small>a sixty-second game</small></a>
+    <a href="#roles">The two roles</a>
+    <a href="#pay">How pay works</a>
+    <a href="#apply">Apply</a>
+    <a href="/obavia.html">What you'd be selling <small>The Obavia briefing</small></a>
+    <a href="/">Home <small>Jason Obawemimo</small></a>
+  </div>
+  <div class="menu__toggles"><button class="chip" type="button" data-toggle="sound" aria-pressed="true">Sound</button><button class="chip" type="button" data-toggle="still" aria-pressed="false">Still</button></div>
+</nav>
+<nav class="dock" aria-label="Quick actions">
+  <a href="#apply" data-where="dock">Apply</a>
+  <a href="/obavia.html" data-where="dock">Obavia</a>
+  <a href="mailto:jobawems@gmail.com" data-contact="email" data-where="dock">Email</a>
+</nav>
 
-<main class="page" id="top">
-  <section class="p-hero">
-    <div class="wrap">
-      <span class="label label--gold">Two roles. Remote.</span>
-      <h1>I need people who hear what a buyer means <em>and tell the truth.</em></h1>
-      <p class="detail-lede">Obavia is sales software I&rsquo;m building for agency owners at $100K to $1M a month and their own setters and closers. It is in development, it is not live, and it has no customers yet. Somebody has to book the conversations with those owners and somebody has to run them. This page tells you what the product is, where the conversations come from, and how pay works before it asks you for anything. That order is on purpose.</p>
-      <div class="p-hero__row">
-        <a class="btn btn--solid" href="#apply"><span>Apply</span><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="textlink" href="/obavia.html">See what an owner sees first</a>
+<main id="top">
+  <section class="b-slate" data-track="join-slate" aria-labelledby="j-h">
+    <div class="b-slate__inner" data-rise>
+      <p class="label">Two roles. Remote.</p>
+      <h1 id="j-h"><span class="mask"><span>Sell Obavia</span></span><span class="mask"><span><em>with me.</em></span></span></h1>
+      <p class="lede">I'm hiring remote appointment setters and closers to talk with agency owners at $100K to $1M a month about Obavia. It's in development, and I'll say that on every call. The pay structure is in writing before any work. I don't publish numbers.</p>
+      <div class="b-slate__actions">
+        <a class="btn btn--gold" href="#apply" data-where="slate">Apply</a>
+        <a class="btn" href="#note" data-where="slate">Try the note first</a>
+        <a class="btn btn--ghost" href="/obavia.html" data-where="slate">See what an owner sees</a>
       </div>
     </div>
   </section>
 
-  <section>
-    <div class="wrap split">
-      <div>
-        <h2>Where the conversations <em>come from.</em></h2>
-        <p class="lede">You are not cold-calling a purchased list. Every name has a reason to be on it.</p>
+  <section class="lesson" id="note" data-track="note-game" aria-labelledby="note-h">
+    <div class="b-wrap lesson__wrap note-game" data-note>
+      <p class="label">Sixty seconds</p>
+      <h2 id="note-h">Rewrite the note.</h2>
+      <p class="fine">Fictional call, fictional buyer.</p>
+      <p class="lesson__setup">A setter left this for the closer:</p>
+      <p class="note-game__thin">&ldquo;Good fit. Hot lead. Call him.&rdquo;</p>
+      <p class="lesson__setup">Tap each piece of the call. It drops into the line where a closer needs it.</p>
+      <div class="note-game__frags">
+        <button class="chip" type="button" data-frag="decides">&ldquo;My business partner has to sign off too.&rdquo;</button>
+        <button class="chip" type="button" data-frag="said">&ldquo;I never knew who was actually on my account.&rdquo;</button>
+        <button class="chip" type="button" data-frag="promised">We said nothing about price yet.</button>
+        <button class="chip" type="button" data-frag="purpose">He wants to see how the handoff would work.</button>
       </div>
-      <ol class="steps">
-        <li><div><strong>The Obavia page on this site.</strong> Owners who watched the films and left a note or booked a time. Warm, and they already know it is in development.</div></li>
-        <li><div><strong>The waitlist.</strong> Owners who joined it at obavia.co and asked to talk before launch.</div></li>
-        <li><div><strong>The outreach desk.</strong> A weekly set of posts on LinkedIn, Reddit and agency groups, written in my voice and approved by me. Replies and DMs come to you with the thread attached.</div></li>
+      <ol class="note-game__slots">
+        <li data-slot="said"><b>The buyer said</b><span></span></li>
+        <li data-slot="purpose"><b>This call is for</b><span></span></li>
+        <li data-slot="decides"><b>Who decides</b><span></span></li>
+        <li data-slot="promised"><b>What we promised or ruled out</b><span></span></li>
       </ol>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap roles">
-      <article class="role">
-        <h3>Appointment setter</h3>
-        <span class="label">Part-time to start. Phone, text and DMs.</span>
-        <p>You reach the people above, hold a real conversation about their sales floor, and book them onto a thirty-minute call. You are not reading a script. You are asking where their last deal leaked, and listening to the exact words they use.</p>
-        <ul>
-          <li>The pay structure is in writing before you do any work.</li>
-          <li>You have set appointments or sold by phone before and can say what happened after.</li>
-          <li>You will say plainly that Obavia is in development. Nobody gets booked on a promise.</li>
-        </ul>
-      </article>
-      <article class="role">
-        <h3>Closer</h3>
-        <span class="label">Contract. Runs the thirty-minute call.</span>
-        <p>You run the call with me on it at first, then alone. An owner walks you through how a lead gets from the first call to cash on their floor, you listen for the words they choose, and together you decide whether Obavia fits. You must be able to say "this is not for you" on the call.</p>
-        <ul>
-          <li>The pay structure is in writing before you do any work.</li>
-          <li>You have closed high-ticket offers by phone or video, ideally with agency owners.</li>
-          <li>You will never claim Obavia is live, has customers, or produces results. If that bothers you, this is the wrong room.</li>
-        </ul>
-      </article>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap split">
-      <div>
-        <h2>How pay <em>works.</em></h2>
+      <div class="leaks__result" data-note-result hidden>
+        <p class="lesson__setup">Now the closer's first line writes itself:</p>
+        <p class="lesson__quote">&ldquo;You said you never knew who was on your account. Before your partner sees anything, let me show you how the handoff would work.&rdquo;</p>
+        <p class="fine">That's the job: carry the buyer's words from one seat to the next.</p>
+        <button class="textlink" type="button" data-note-reset>Start over</button>
       </div>
-      <div class="pay">
-        <p><strong>You get the numbers in writing before you do any work.</strong> Not on this page, because they depend on your role and your hours, and because I would rather you hear them from me and be able to say no.</p>
-        <p><strong>There is no unpaid training week and no unpaid Saturday meeting.</strong> If I ask for your time, it is paid time or it is a twenty-minute call with me that you can decline.</p>
-        <p><strong>The first week is real work.</strong> Setters get warm names on day one. Closers sit in on my calls first, then run one with me listening, then run their own.</p>
-        <p><strong>I read every application myself and I answer every one,</strong> including the no's. I have been ghosted enough for one lifetime.</p>
+      <a class="textlink lesson__skip" href="#roles">Skip it</a>
+    </div>
+  </section>
+
+  <section class="lesson" id="roles" data-track="join-roles" aria-labelledby="roles-h">
+    <div class="b-wrap lesson__wrap">
+      <h2 id="roles-h">The two roles.</h2>
+      <div class="roles">
+        <article class="role">
+          <h3>Appointment setter</h3>
+          <p class="label">Phone, text and DMs</p>
+          <p>You reach agency owners who have shown interest, hold a real conversation about their sales floor, and book them onto a thirty-minute call. You're not reading a script. You're asking where their last deal leaked, and listening to the exact words they use.</p>
+          <ul>
+            <li>The pay structure is in writing before you do any work.</li>
+            <li>You've set appointments or sold by phone before and can say what happened after.</li>
+            <li>You'll say plainly that Obavia is in development. Nobody gets booked on a promise.</li>
+          </ul>
+        </article>
+        <article class="role">
+          <h3>Closer</h3>
+          <p class="label">Runs the thirty-minute call</p>
+          <p>You run the call with me on it at first, then alone. An owner walks you through how a lead gets from the first call to cash on their floor, you listen for the words they choose, and together you decide whether Obavia fits. You have to be able to say "this is not for you" on the call.</p>
+          <ul>
+            <li>The pay structure is in writing before you do any work.</li>
+            <li>You've closed high-ticket offers by phone or video, ideally with agency owners.</li>
+            <li>You'll never claim Obavia is live, has customers, or produces results. If that bothers you, this is the wrong room.</li>
+          </ul>
+        </article>
       </div>
     </div>
   </section>
 
-  <section id="apply">
-    <div class="wrap">
+  <section class="lesson" id="pay" data-track="join-pay" aria-labelledby="pay-h">
+    <div class="b-wrap b-split">
+      <div><h2 id="pay-h">How pay <em>works.</em></h2></div>
+      <div class="lesson__wrap">
+        <p class="lede">You get the numbers in writing before you do any work. They aren't on this page, because they depend on your role and your hours, and because I'd rather you hear them from me and be able to say no.</p>
+        <p class="lede">I read every application myself, and I answer every one, including the no's.</p>
+      </div>
+    </div>
+  </section>
+
+<section class="b-lead" id="apply" data-track="apply">
+    <div class="b-wrap">
       <h2 class="solo">Apply. <em>Four fields and one story.</em></h2>
       <p class="book__sub">The story matters more than the fields. Tell me about the last thing you sold and what happened after the sale, good or bad. Write it yourself. I can tell.</p>
       <form class="form" data-desk="apply" data-sent="apply-sent" data-subject="Application" autocomplete="on" novalidate>
@@ -189,18 +235,26 @@
       </form>
       <div class="sent" id="apply-sent" aria-live="polite">
         <h3>Got it. <em>You'll hear from me either way.</em></h3>
-        <p>Usually within a few days. If it is a fit, the next step is a twenty-minute call, and you will have the pay structure in writing before it.</p>
+        <p>I read every application myself and answer every one. If it's a fit, you'll have the pay structure in writing before any work.</p>
         <p data-fallback hidden>My inbox relay is not switched on yet, so <a href="mailto:jobawems@gmail.com">send the same thing by email</a> and it lands the same way.</p>
       </div>
     </div>
   </section>
 
-  <div class="footer" style="padding: 0 var(--pad);"><p>Jason Obawemimo, MMXXVI. <a href="/">Home</a> <a href="/obavia.html">Obavia</a> <a href="/answers.html">Facts</a></p><p><a href="#top">Back to top</a></p></div>
+  <footer class="credits b-credits" data-track="credits">
+    <div class="credits__card">
+      <p>Built by me, Jason Obawemimo, in Pearland, Texas.</p>
+      <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded. Anything you type and send reaches me.</p>
+      <p class="credits__links"><a href="/obavia.html">The Obavia briefing</a><a href="/">jasonobawemimo.com</a><a href="mailto:jobawems@gmail.com" data-contact="email" data-where="credits">jobawems@gmail.com</a></p>
+    </div>
+  </footer>
 </main>
 
-<script src="sounds.js"></script>
-<script src="haptics.js"></script>
-<script src="site.js"></script>
-<script src="pages.js"></script>
+<script src="track.js" defer></script>
+<script src="sounds.js" defer></script>
+<script src="haptics.js" defer></script>
+<script src="chrome.js" defer></script>
+<script src="games.js" defer></script>
+<script src="pages.js" defer></script>
 </body>
 </html>

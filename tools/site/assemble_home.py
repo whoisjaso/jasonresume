@@ -48,6 +48,20 @@ ld = json.dumps({"@context": "https://schema.org", "@graph": nodes}, indent=2, e
 head += '<script type="application/ld+json">\n' + ld + "\n</script>\n</head>\n"
 
 
+def icon(ic, size=""):
+    cls = "appicon" + ((" appicon--" + size) if size else "")
+    if not ic:
+        return ""
+    if "stack" in ic:
+        return '<span class="stack">' + "".join('<span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/%s.svg" alt="%s" width="20" height="20" loading="lazy" /></span>' % (n, n.title()) for n in ic["stack"]) + "</span>"
+    if "mono" in ic:
+        return '<span class="%s" aria-hidden="true"><span class="appicon__mono">%s</span></span>' % (cls, E(ic["mono"]))
+    if "sym" in ic:
+        return '<span class="%s appicon--logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--ivory);fill:currentColor"><use href="#%s"/></svg></span>' % (cls, ic["sym"])
+    style = {"full": "", "logo": " appicon--logo", "ink": " appicon--logo appicon--ink"}[ic.get("style", "full")]
+    return '<span class="%s%s" aria-hidden="true"><img src="%s" alt="" loading="lazy" /></span>' % (cls, style, E(ic["src"]))
+
+
 def slate():
     return "".join('<div><dt>%s</dt><dd>%s</dd></div>' % (E(r["k"]), E(r["v"])) for r in rec["slate"])
 
@@ -62,9 +76,9 @@ def record():
     for r in rec["record"]:
         when = '<p class="entry__when">%s</p>' % E(r["when"]) if r.get("when") else ""
         out.append(
-            '<li class="entry" data-entry="%s"><div class="entry__head"><h3 class="entry__role">%s</h3><p class="entry__org">%s</p>%s</div>'
+            '<li class="entry" data-entry="%s"><div class="entry__head">%s<div><h3 class="entry__role">%s</h3><p class="entry__org">%s</p>%s</div></div>'
             '<p class="entry__text">%s</p><p class="entry__proof">%s</p></li>'
-            % (E(r["id"]), E(r["role"]), E(r["org"]), when, E(r["text"]), " ".join(chip(p) for p in r.get("proof", [])))
+            % (E(r["id"]), icon(r.get("icon")) if "stack" not in r.get("icon", {}) else "", E(r["role"]), E(r["org"]), when, E(r["text"]) + (icon(r["icon"]) if "stack" in r.get("icon", {}) else ""), " ".join(chip(p) for p in r.get("proof", [])))
         )
     return "".join(out)
 
@@ -73,7 +87,7 @@ def verify():
     out = []
     for v in rec["verify"]:
         ext = ' target="_blank" rel="noopener"' if v["href"].startswith("http") else ""
-        out.append('<li><a href="%s"%s data-verify="%s"><b>%s</b> <span>%s</span></a></li>' % (E(v["href"]), ext, E(v["kind"]), E(v["k"]), E(v["v"])))
+        out.append('<li><a class="row" href="%s"%s data-verify="%s">%s<span class="row__txt"><b>%s</b> <span>%s</span></span><i class="row__chev" aria-hidden="true"></i></a></li>' % (E(v["href"]), ext, E(v["kind"]), icon(v.get("icon")), E(v["k"]), E(v["v"])))
     return "".join(out)
 
 

@@ -10,10 +10,8 @@
   function FX(k) { if (window.JG_FX) window.JG_FX(k); }
   function T(e, p) { if (window.JG_TRACK) window.JG_TRACK(e, p); }
   function E(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  dlg.querySelector(".vd__list").innerHTML = data.verify.map(function (v) {
-    var ext = /^http/.test(v.href) ? ' target="_blank" rel="noopener"' : "";
-    return '<li><a href="' + E(v.href) + '"' + ext + ' data-verify="' + E(v.kind) + '" data-where="drawer"><b>' + E(v.k) + "</b> <span>" + E(v.v) + "</span></a></li>";
-  }).join("");
+  var src = document.querySelector("#verify ul");
+  dlg.querySelector(".vd__list").innerHTML = src ? src.innerHTML.replace(/data-verify=/g, 'data-where="drawer" data-verify=') : "";
   function open(where) { window.JG_SHOW(dlg); FX("arrive"); T("verify_opened", { where: where || "" }); }
   document.addEventListener("jg:open", function (e) { if (e.detail.what === "verify") open(e.detail.where); });
   (window.JG_HAS = window.JG_HAS || {}).verify = true;

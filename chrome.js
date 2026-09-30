@@ -81,12 +81,32 @@
     }
   };
 
-  /* ---------- toast ---------- */
-  var toastEl = document.querySelector(".toast"), toastT = null;
+  /* ---------- the island: a black pill that springs open with a status ---------- */
+  var island = document.createElement("div"); island.className = "island"; island.setAttribute("role", "status"); island.setAttribute("aria-live", "polite");
+  island.innerHTML = '<span class="island__dot" aria-hidden="true"></span><span class="island__text"></span>';
+  body.appendChild(island);
+  var islandT = null;
   window.JG_TOAST = function (text) {
-    if (!toastEl) return; toastEl.textContent = text; toastEl.classList.add("is-on");
-    clearTimeout(toastT); toastT = setTimeout(function () { toastEl.classList.remove("is-on"); }, 2200);
+    island.querySelector(".island__text").textContent = text;
+    island.classList.remove("is-on"); void island.offsetWidth; island.classList.add("is-on");
+    clearTimeout(islandT); islandT = setTimeout(function () { island.classList.remove("is-on"); }, 2000);
   };
+
+  /* ---------- a notification banner, lock-screen style ---------- */
+  var notice = document.createElement("div"); notice.className = "notice"; notice.setAttribute("role", "status"); notice.setAttribute("aria-live", "polite");
+  notice.innerHTML = '<img class="notice__icon" alt="" /><div><p class="notice__app"><span></span><span>now</span></p><p class="notice__title"></p><p class="notice__body"></p></div>';
+  body.appendChild(notice);
+  var noticeT = null, noticeGo = null;
+  window.JG_NOTIFY = function (o) {
+    notice.querySelector(".notice__icon").src = o.icon || "assets/favicon-192.png";
+    notice.querySelector(".notice__app span").textContent = o.app || "";
+    notice.querySelector(".notice__title").textContent = o.title || "";
+    notice.querySelector(".notice__body").textContent = o.body || "";
+    noticeGo = o.go || null;
+    notice.classList.remove("is-on"); void notice.offsetWidth; notice.classList.add("is-on");
+    clearTimeout(noticeT); noticeT = setTimeout(function () { notice.classList.remove("is-on"); }, o.ms || 4200);
+  };
+  notice.addEventListener("click", function () { notice.classList.remove("is-on"); if (noticeGo) noticeGo(); });
 
   /* ---------- the hard cut through black ---------- */
   var black = document.querySelector(".blackout");
@@ -145,6 +165,16 @@
   document.querySelectorAll("dialog").forEach(function (d) {
     d.addEventListener("close", function () { if (d._locked) { d._locked = false; window.JG_LOCK(false); } });
     d.addEventListener("click", function (e) { if (e.target === d && d.classList.contains("drawer")) d.close(); });
+  });
+  document.querySelectorAll("dialog.drawer").forEach(function (d) {
+    var inner = d.querySelector(".drawer__inner"); if (!inner) return;
+    var g = document.createElement("div"); g.className = "drawer__grab"; g.setAttribute("aria-hidden", "true");
+    d.insertBefore(g, inner);
+    var y0 = 0, dy = 0, dragging = false;
+    g.addEventListener("pointerdown", function (e) { dragging = true; y0 = e.clientY; dy = 0; d.classList.add("is-dragging"); try { g.setPointerCapture(e.pointerId); } catch (x) {} });
+    g.addEventListener("pointermove", function (e) { if (!dragging) return; dy = Math.max(0, e.clientY - y0); d.style.transform = "translateY(" + dy + "px)"; });
+    var end = function () { if (!dragging) return; dragging = false; d.classList.remove("is-dragging"); if (dy > 90) { d.style.transform = "translateY(100%)"; setTimeout(function () { d.close(); d.style.transform = ""; }, 220); } else d.style.transform = ""; };
+    g.addEventListener("pointerup", end); g.addEventListener("pointercancel", end);
   });
   window.JG_SHOW = function (d) {
     if (!d || d.open) return;
@@ -249,7 +279,7 @@
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-ask]"); if (!b) return;
     var q = b.getAttribute("data-ask"), i = asks.indexOf(q);
-    if (i >= 0) asks.splice(i, 1); else { asks.push(q); FX.choice(); }
+    if (i >= 0) asks.splice(i, 1); else { asks.push(q); FX.choice(); window.JG_TOAST("Added to your questions"); }
     store.set("jg_asks", JSON.stringify(asks)); paintAsks();
     T("question_added", { on: i < 0, n: asks.length });
     var cp = e.target.closest("[data-questions-copy]"); if (cp) return;

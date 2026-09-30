@@ -21,6 +21,7 @@
   }
   function render(i) {
     var s = slides[i], h = '<div class="slide" data-slide="' + (i + 1) + '">';
+    if (s.img) h += '<img class="slide__img' + (/icon/.test(s.img) ? " slide__img--icon" : "") + '" src="' + E(s.img) + '" alt="" />';
     h += '<h2 class="slide__t" tabindex="-1"><span class="mask"><span>' + E(s.t) + "</span></span></h2>";
     if (s.rows) h += '<dl class="slide__rows">' + data.slate.map(function (r) { return "<div><dt>" + E(r.k) + "</dt><dd>" + E(r.v) + "</dd></div>"; }).join("") + "</dl>";
     if (s.s) h += '<p class="slide__s">' + E(s.s) + "</p>";

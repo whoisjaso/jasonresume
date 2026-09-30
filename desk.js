@@ -178,6 +178,7 @@
     FX("unlock");
     say("Saved on file. Nothing missing. Nothing extra.");
     T("desk_finished", { lang_flipped: flipped, typed_signature: typedSig });
+    if (window.JG_NOTIFY) window.JG_NOTIFY({ icon: "assets/brand/triplej-logo.png", app: "Handle a Sale", title: "Deal on file", body: "J. Martinez. Bill Of Sale, Form 130-U and two more. Fictional buyer, fictional deal." });
     setTimeout(function () {
       if (!reveal) return;
       var go = function () { reveal.hidden = false; reveal.classList.add("is-in"); window.JG_JUMP ? window.JG_JUMP("#desk-reveal") : reveal.scrollIntoView(); var a = reveal.querySelector("a"); if (a) a.focus({ preventScroll: true }); };
