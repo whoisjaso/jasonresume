@@ -98,6 +98,13 @@
     rig_toggled: function (p) { return "Rig " + (p.on ? "on" : "off"); },
     cues_toggled: function (p) { return "Cue sheet " + (p.on ? "on" : "off"); },
     mark_words: function () { return "Tried Mark the Words"; },
+    scene_interacted: function (p) { return "Started " + (p.scene === "desk" ? "the desk" : p.scene); },
+    proof_open: function (p) { return "Opened " + p.label; },
+    cta_click: function (p) { return "Clicked " + p.label; },
+    outbound_click: function (p) { return "Opened " + p.host; },
+    commentary_toggled: function (p) { return "Commentary " + (p.on ? "on" : "off"); },
+    sound_toggled: function (p) { return "Sound " + (p.on ? "on" : "off"); },
+    chat_asked: function () { return "Asked a question"; },
     question_added: function (p) { return p.on ? "Added a question" : "Removed a question"; },
     trailer_opened: function () { return "Opened the trailer"; },
     trailer_shot: function (p) { return "Trailer shot " + p.n; },
@@ -133,7 +140,7 @@
       nEl.textContent = "Shot " + (i + 1) + " of " + shots.length;
       if (!quiet) { if (window.JG_SFX) window.JG_SFX.play("swoosh", { gain: 0.45 }); if (window.JG_HAPTIC) window.JG_HAPTIC("tap"); }
       T("trailer_shot", { n: i + 1 });
-      if (i === shots.length - 1 && !done) { done = true; setTimeout(function () { end.hidden = false; FX("unlock"); T("trailer_finished", {}); }, still() ? 0 : 1200); }
+      if (i === shots.length - 1 && !done) { done = true; setTimeout(function () { end.hidden = false; tr.classList.add("is-ended"); FX("unlock"); T("trailer_finished", {}); }, still() ? 0 : 1200); }
     };
     var loop = function (now) {
       if (!holding) { raf = null; return; }
@@ -156,7 +163,7 @@
     tr.querySelector('[data-trailer="desk"]').addEventListener("click", function (e) { e.preventDefault(); tr.close(); FX("choice"); setTimeout(function () { window.JG_JUMP && window.JG_JUMP("#desk-title"); }, 60); });
     document.addEventListener("jg:open", function (e) {
       if (e.detail.what !== "trailer") return;
-      t = 0; cur = -1; done = false; end.hidden = true; ring(); showShot(0, true);
+      t = 0; cur = -1; done = false; end.hidden = true; tr.classList.remove("is-ended"); ring(); showShot(0, true);
       window.JG_SHOW(tr); FX("arrive"); T("trailer_opened", { where: e.detail.where });
       setTimeout(function () { holdBtn.focus({ preventScroll: true }); }, 50);
     });

@@ -101,7 +101,7 @@ section { scroll-margin-top: calc(var(--bar-h) + 12px); }
 .scan.is-filled .sheet:nth-child(2) { transform: translate(4%, 4px) rotate(-1.5deg); }
 .scan.is-filled .sheet:nth-child(3) { transform: translate(14%, 16px) rotate(2deg); }
 .scan.is-filled .sheet:nth-child(4) { transform: translate(24%, 30px) rotate(6deg); }
-@media (max-width: 560px) { .scan { grid-template-columns: minmax(0, 1fr); } .sheets { height: 150px; } }
+@media (max-width: 560px) { .scan { grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); gap: 10px; } .license { padding: 8px 9px; font-size: 8px; border-radius: 8px; gap: 2px 7px; } .license__name { font-size: 9px; } .license__sample { font-size: 7px; } .sheets { height: 128px; } .sheet { padding: 8px 9px; font-size: 8px; gap: 4px; width: 92%; } .sheet b { font-size: 11px; } .sheet i { min-height: 10px; } .hold { width: 112px; height: 112px; } }
 
 /* Hold button (shared with the trailer) */
 .hold { position: relative; display: inline-grid; place-items: center; width: 132px; height: 132px; border-radius: 50%; color: var(--ivory); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -209,6 +209,7 @@ section { scroll-margin-top: calc(var(--bar-h) + 12px); }
 .courses li { padding: 6px 0; break-inside: avoid; color: var(--link); font-size: 14px; border-bottom: 1px solid var(--edge); }
 
 /* ---------- 6. The one I'm building ---------- */
+.listen > *, .record > *, .questions > *, .film > *, .desk > * { min-width: 0; }
 .listen { padding: calc(var(--u) * 6) var(--pad) calc(var(--u) * 10); max-width: 1120px; margin: 0 auto; display: grid; gap: 44px; }
 .listen__intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
 .mark { display: grid; gap: 18px; padding: clamp(20px, 3vw, 40px); border: 1px solid var(--edge); border-radius: 18px; background: var(--panel); }
@@ -216,8 +217,8 @@ section { scroll-margin-top: calc(var(--bar-h) + 12px); }
 .mark__word { display: inline; padding: 0 2px; border-radius: 4px; color: inherit; font: inherit; line-height: inherit; position: relative; cursor: pointer; }
 .mark__word:hover { color: var(--gold-2); }
 .mark__word svg { position: absolute; left: -2%; width: 104%; bottom: -0.1em; height: 0.36em; overflow: visible; pointer-events: none; }
-.mark__word svg path { fill: none; stroke: var(--gold); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .25s var(--ease-io); }
-.mark__word[aria-pressed="true"] svg path { stroke-dashoffset: 0; }
+.mark__word svg path { fill: none; stroke: var(--gold); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; transition: stroke-dashoffset .25s var(--ease-io), opacity .1s; }
+.mark__word[aria-pressed="true"] svg path { stroke-dashoffset: 0; opacity: 1; }
 .mark__word.is-mine::after { content: ""; position: absolute; inset: -0.08em -0.18em; border: 1.8px solid var(--gold); border-radius: 50%; opacity: 0; transform: scale(1.12); transition: opacity .4s var(--ease), transform .5s var(--ease); pointer-events: none; }
 .mark.is-revealed .mark__word.is-mine::after { opacity: 1; transform: none; }
 .mark__prompt { color: var(--link); }
@@ -311,6 +312,7 @@ html.rig-on [data-track] { outline: 1px solid var(--edge-2); outline-offset: -1p
 .deck__top { position: relative; z-index: 2; display: flex; justify-content: flex-end; gap: 8px; padding: calc(7vh + 12px) var(--pad) 0; }
 .deck__stage { position: relative; display: grid; align-content: center; padding: 0 var(--pad); max-width: 1180px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .slide { display: grid; gap: 22px; max-width: 980px; }
+.slide__t:focus { outline: none; }
 .slide__t { font-size: clamp(48px, 8vw, 112px); line-height: 0.96; }
 .slide__t .mask > span { transition-duration: .55s; }
 .slide__s { font-size: clamp(18px, 2vw, 24px); line-height: 1.45; color: var(--link); max-width: 46ch; }
@@ -354,6 +356,7 @@ html.rig-on [data-track] { outline: 1px solid var(--edge-2); outline-offset: -1p
 .shot__stages { font-size: clamp(26px, 3.4vw, 44px); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; max-width: 900px; }
 .shot__stages i { width: 28px; height: 1.5px; background: var(--gold); display: inline-block; }
 .trailer__ctl { position: relative; z-index: 2; display: grid; justify-items: center; gap: 10px; padding-bottom: calc(9vh + 18px); }
+.trailer.is-ended .trailer__ctl { visibility: hidden; }
 .trailer__end { position: absolute; inset: auto 0 calc(9vh + 20px) 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 0 var(--pad); }
 
 .help__keys { display: grid; gap: 0; }
