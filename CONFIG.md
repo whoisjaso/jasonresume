@@ -1,7 +1,7 @@
 # Configuration
 
-Everything on jasonobawemimo.com works with no configuration at all: the guide
-is scripted, the voice is pre-rendered, nothing is tracked. Each feature below
+Everything on jasonobawemimo.com works with no configuration at all: the ask
+box offers email, the desks fall back to mailto, nothing is tracked. Each feature below
 switches on when its environment variable exists in the Vercel project
 (Settings, Environment Variables, then redeploy).
 
@@ -27,8 +27,12 @@ falls through to the next inside the same request.
 | `POSTHOG_HOST` | optional, default `https://us.i.posthog.com` (use `https://eu.i.posthog.com` for an EU project) |
 
 Events are relayed through `/api/track`, so the browser never talks to
-PostHog directly and the key never ships to the client. Visitors who type a
-name become identified people in PostHog with `name` and `role` set.
+PostHog directly and the key never ships to the client. The relay sends
+nothing when the request carries `Sec-GPC: 1` or `DNT: 1`, ignores obvious
+bots, and drops unknown event names (counted as one `relay_dropped` event so
+the Dailies can show them). In PostHog, turn on "Discard client IP data"
+(Settings, Project) if you want city-level location without stored IPs; the
+relay forwards the visitor IP only so PostHog can resolve the city.
 
 ## Partner and hiring desks (`/api/lead`, `/api/apply`)
 
@@ -56,6 +60,7 @@ made in the embed fires the page's unlock moment and flips the note form to
 | `POSTHOG_PERSONAL_API_KEY` | PostHog, Settings, Personal API keys (`phx_...`), scope `query:read` |
 | `POSTHOG_PROJECT_ID` | the number in the PostHog project URL |
 | `POSTHOG_API_HOST` | optional, default `https://us.posthog.com` |
+| `REF_CODES` | optional JSON, e.g. `{"k1": "Recruiter note, Sept"}`. Outreach links carry `?r=k1`; the Dailies shows the label. Kept server side. |
 
 The page is `noindex`, disallowed in robots.txt, and returns nothing without
 the token.

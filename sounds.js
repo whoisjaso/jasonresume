@@ -1,7 +1,7 @@
 /* The sample bank. Real recordings for the moments that need weight: water
-   for the loader, air for the transitions, keys for the name, one click
-   for a choice, one sparkle for the unlock. The synthesized glass tones in
-   guide.js still carry the melody; these sit underneath them.
+   for the portrait, air for the cuts, keys for the deck, one click for a
+   choice, one sparkle for the unlock. Nothing plays until someone presses
+   something.
 
    window.JG_SFX.play(name, { gain, rate, delay, variant, vary, throttle })
    returns true when a sample actually played, so callers can fall back to

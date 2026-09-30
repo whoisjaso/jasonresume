@@ -110,6 +110,19 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   notes.push(`${name} events sent: ${[...new Set(tracked)].join(', ')}`);
   await ctx.close();
 }
+// Privacy: with Global Privacy Control or Do Not Track on, nothing reaches /api/track
+for (const flag of ['globalPrivacyControl', 'doNotTrack']) {
+  if (only && only !== 'desktop') break;
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 800 } });
+  await ctx.addInitScript(f => Object.defineProperty(Navigator.prototype, f, { get: () => f === 'doNotTrack' ? '1' : true }), flag);
+  let sent = 0; await ctx.route('**/api/track', r => { sent++; r.fulfill({ status: 204, body: '' }); });
+  const p = await ctx.newPage();
+  await p.goto('http://127.0.0.1:8765/', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1200);
+  await p.evaluate(() => window.JG_OPEN && window.JG_OPEN('verify', 'test')); await p.waitForTimeout(400);
+  await p.evaluate(() => dispatchEvent(new Event('pagehide'))); await p.waitForTimeout(800);
+  if (sent) errs.push(`${flag}: ${sent} request(s) reached /api/track`); else notes.push(`${flag} on: nothing sent`);
+  await ctx.close();
+}
 await b.close();
 console.log(notes.join('\n'));
 console.log(errs.length ? 'ISSUES:\n' + errs.join('\n') : 'no page errors, no overflow, no dashes, no percent signs, every scene played');
