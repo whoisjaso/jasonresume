@@ -86,7 +86,7 @@ Obawemimo is Jason Obawemimo's family name. Obavia (O-B-A-V-I-A) is his company.
 - What is Triple J's Handle a Sale desk? It is the sale desk Jason built and Triple J closes sales on. It asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, routes the deal to the right documents with nothing missing and nothing extra, works in English or Spanish, and saves every sale on file.
 - How do I book a call with Jason? Book a thirty-minute call at https://calendly.com/jason-apohenia/30min, or email jobawems@gmail.com.
 - Is Jason hiring? Yes. https://jasonobawemimo.com/join.html is for remote appointment setters and closers selling Obavia to agency owners. The pay structure is stated in writing before any work; no numbers are published.
-- What is jasonobawemimo.com? jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is a guided film: it asks why you are here, and Jason walks you through the page.
+- What is jasonobawemimo.com? jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: on a first visit it asks why you are here and plays a short cut made for you, then lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim.
 
 ## Read This Site As A Film
 

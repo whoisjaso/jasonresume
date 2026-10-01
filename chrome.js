@@ -314,7 +314,7 @@
     try { greet = sessionStorage.getItem("jg_greet"); sessionStorage.removeItem("jg_greet"); } catch (e) {}
     if (greet) {
       setTimeout(function () { window.JG_TOAST(greet !== "1" ? "Welcome, " + greet : "Welcome in"); FX.arrive(); }, 500);
-      if (body.querySelector("#leaks")) setTimeout(function () { window.JG_NOTIFY({ app: "Your cut", title: "Find your leak", body: "Six yes or no questions. About a minute.", ms: 7000, go: function () { jump("#leaks"); } }); }, 2700);
+      if (body.querySelector("#leaks") && !location.hash) setTimeout(function () { window.JG_NOTIFY({ app: "Your cut", title: "Find your leak", body: "Six yes or no questions. About a minute.", ms: 7000, go: function () { jump("#leaks"); } }); }, 2700);
       return;
     }
     var wb = null; try { wb = sessionStorage.getItem("jg_wb"); sessionStorage.setItem("jg_wb", "1"); } catch (e) {}

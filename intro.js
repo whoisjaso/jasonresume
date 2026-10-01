@@ -273,6 +273,12 @@
   function leave(role, first) {
     phase = "leaving";
     T("intro_finished", { role: role, named: !!first });
+    if (window.JG_REEL) {
+      markCut(ROLES[role].cut);
+      window.JG_REEL.play(role, { name: first, from: "intro" });
+      setTimeout(function () { done(); el.remove(); }, wait(700));
+      return;
+    }
     if (role === "partner") {
       try { sessionStorage.setItem("jg_greet", first || "1"); } catch (e) {}
       el.classList.add("is-black"); fx("cut");
