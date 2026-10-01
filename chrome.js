@@ -306,4 +306,18 @@
       console.log("%cYou opened the console. Good.%c\nNo framework, no build step. The projector is cinema.js, the desk is desk.js.\nSource: github.com/whoisjaso/jasonresume\nIf you're hiring: jobawems@gmail.com", "font:600 14px Georgia,serif;color:#c9a642", "font:12px ui-monospace,monospace;color:#c9c2b2");
     }
   } catch (e) {}
+
+  /* ---------- greetings: by name if you gave one at the intro ---------- */
+  addEventListener("load", function () {
+    if (root.classList.contains("intro-pending")) return;
+    var name = (store.get("jg_name") || "").split(" ")[0], greet = null;
+    try { greet = sessionStorage.getItem("jg_greet"); sessionStorage.removeItem("jg_greet"); } catch (e) {}
+    if (greet) {
+      setTimeout(function () { window.JG_TOAST(greet !== "1" ? "Welcome, " + greet : "Welcome in"); FX.arrive(); }, 500);
+      if (body.querySelector("#leaks")) setTimeout(function () { window.JG_NOTIFY({ app: "Your cut", title: "Find your leak", body: "Six yes or no questions. About a minute.", ms: 7000, go: function () { jump("#leaks"); } }); }, 2700);
+      return;
+    }
+    var wb = null; try { wb = sessionStorage.getItem("jg_wb"); sessionStorage.setItem("jg_wb", "1"); } catch (e) {}
+    if (name && !wb && store.get("jg_intro") === "1") setTimeout(function () { window.JG_TOAST("Welcome back, " + name); }, 700);
+  });
 })();

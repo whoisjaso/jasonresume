@@ -35,13 +35,14 @@
     <button type="button" data-open="trailer" data-where="menu">Watch the trailer <small>60 seconds</small></button>
     <button type="button" data-open="rig" data-where="menu">Show the rig <small>the key under Esc</small></button>
     <button type="button" data-open="verify" data-where="menu">Check me <small>V</small></button>
+    <a href="/?intro=1" data-cta="replay_intro">Replay the intro</a>
   </div>
   <div class="menu__toggles">
     <button class="chip" type="button" data-toggle="sound" aria-pressed="true">Sound</button>
     <button class="chip" type="button" data-toggle="commentary" aria-pressed="false">Commentary</button>
     <button class="chip" type="button" data-toggle="still" aria-pressed="false">Still</button>
   </div>
-  <p class="fine menu__note">I count visits and what gets watched through my own server, with no ad trackers. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
+  <p class="fine menu__note">I count visits and what gets watched through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit so I know who stopped by. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
 </nav>
 
 <nav class="dock" aria-label="Quick actions">
@@ -371,7 +372,7 @@
       <p>Made in Pearland, Texas. Designed, written and built by me.</p>
       <p>Films: Handle a Sale, from Triple J's own desk. The closer and The owner, for Obavia; the people and figures in them are fictional.</p>
       <p>Sound: water, air and keys from Mixkit's free library.</p>
-      <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded. Anything you type and send reaches me.</p>
+      <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded. Anything you type and send reaches me.</p>
       <p class="credits__links">
         <a href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" target="_blank" rel="me noopener" data-verify="linkedin"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-linkedin"/></svg>LinkedIn</a>
         <a href="https://github.com/whoisjaso" target="_blank" rel="me noopener" data-verify="github"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
@@ -475,6 +476,7 @@
 <script src="sounds.js" defer></script>
 <script src="haptics.js" defer></script>
 <script src="chrome.js" defer></script>
+<script src="intro.js" defer></script>
 <script src="cinema.js" defer></script>
 <script src="desk.js" defer></script>
 <script src="games.js" defer></script>

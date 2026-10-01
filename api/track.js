@@ -18,10 +18,12 @@ const ALLOWED = new Set([
   // questions, forwards, extras
   "question_added", "questions_copied", "questions_mailed", "forward_copied", "share_opened", "rig_toggled", "cues_toggled",
   "trailer_opened", "trailer_shot", "trailer_finished", "water_touched", "copy_clicked",
+  // the intro: tap to begin, the question, the name
+  "intro_shown", "intro_started", "intro_finished", "intro_skipped", "name_given", "name_skipped",
   // conversion
   "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent", "apply_sent",
   // older pages still in the wild
-  "intro_skipped", "name_given", "name_skipped", "guide_line", "guide_skipped", "guide_finished", "guide_reopened",
+  "guide_line", "guide_skipped", "guide_finished", "guide_reopened",
   "chat_asked", "intake_step", "intake_sent", "laptop_played", "vsl_play", "vsl_complete"
 ]);
 const STR = (v, n) => String(v == null ? "" : v).slice(0, n);

@@ -15,7 +15,7 @@ const PULL = `select event, distinct_id, timestamp,
     properties.campaign as campaign, properties.ref_code as ref_code, properties.returning as returning, properties.visits as visits,
     properties.kind as kind, properties.label as label, properties.film as film, properties.pct as pct, properties.step as step,
     properties.format as format, properties.q as q, properties.stage as stage, properties.option as opt, properties.dwell as dwell,
-    properties.attention_s as attention, properties.names as names, properties.count as cnt,
+    properties.attention_s as attention, properties.names as names, properties.count as cnt, properties.name as vname,
     properties.$geoip_city_name as city, properties.$geoip_subdivision_1_code as region, properties.$geoip_country_code as country,
     properties.$device_type as device, properties.$referring_domain as refd
   from events
@@ -29,7 +29,7 @@ const POINTS = {
   film_chapter: 1, resume_open: 8, resume_print: 6, deck_slide: 0.5, deck_finished: 6, proof_open: 3, verify_opened: 6, verify_link: 6,
   chat_asked: 6, mark_words: 3, handoff_pick: 4, leak_stage: 6, counts_done: 4, note_done: 5, card_copied: 6, question_added: 5,
   questions_mailed: 15, questions_copied: 8, forward_copied: 10, share_opened: 10, trailer_finished: 3, cta_click: 2, outbound_click: 2,
-  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, apply_sent: 30
+  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, apply_sent: 30, intro_finished: 1, name_given: 6
 };
 const TERMINAL = new Set(["call_booked", "lead_sent", "apply_sent", "questions_mailed"]);
 const STORY = {
@@ -37,7 +37,7 @@ const STORY = {
   deck_finished: "went through the deck", verify_opened: "opened Check me", verify_link: "checked a proof link", chat_asked: "asked a question",
   leak_stage: "found their leak", handoff_pick: "did the handoff lesson", note_done: "rewrote the note", question_added: "saved questions for a call",
   questions_mailed: "emailed their questions", forward_copied: "copied the forward blurb", share_opened: "shared the site", contact_click: "clicked email",
-  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", apply_sent: "applied"
+  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", apply_sent: "applied", name_given: "said hello"
 };
 
 async function hogql(host, id, key, query) {
@@ -68,7 +68,7 @@ function build(rows, refCodes) {
     if (r.event === "relay_dropped") { drops.count += Number(r.cnt) || 0; String(r.names || "").split(",").filter(Boolean).forEach((n) => { drops.names[n] = (drops.names[n] || 0) + 1; }); continue; }
     const id = r.distinct_id; if (!id) continue;
     let v = people.get(id);
-    if (!v) { v = { id, first: r.timestamp, last: r.timestamp, score: 0, terminal: false, did: {}, pages: {}, moments: [], visits: 1, role: "", where: "", device: "", source: "", ref: "" }; people.set(id, v); }
+    if (!v) { v = { id, first: r.timestamp, last: r.timestamp, score: 0, terminal: false, did: {}, pages: {}, moments: [], visits: 1, role: "", name: "", named: "", where: "", device: "", source: "", ref: "" }; people.set(id, v); }
     v.last = r.timestamp;
     const age = (now - Date.parse(r.timestamp)) / DAY;
     v.score += (POINTS[r.event] || 0) * Math.pow(0.5, age / 14);
@@ -76,6 +76,7 @@ function build(rows, refCodes) {
     if (TERMINAL.has(r.event)) v.terminal = true;
     if (r.page) v.pages[r.page] = 1;
     if (r.event === "role_chosen" && r.role) v.role = r.role;
+    if (r.event === "name_given" && r.vname) { v.name = String(r.vname).slice(0, 40); v.named = r.timestamp; if (r.role && !v.role) v.role = r.role; }
     if (r.city || r.region) v.where = [r.city, r.region || r.country].filter(Boolean).join(", ");
     if (r.device) v.device = r.device;
     if (r.event === "site_arrived") {
@@ -94,13 +95,17 @@ function build(rows, refCodes) {
     const tier = v.terminal || score >= 40 ? "Hot" : score >= 15 ? "Warm" : "Cold";
     const j = journeys[aud];
     if (j) { j[0]++; if (v.did.desk_step || v.did.leak_stage || v.did.note_placed) j[1]++; if (v.did.resume_open || v.did.verify_opened || v.did.film_play || v.did.handoff_pick) j[2]++; if (v.terminal || v.did.contact_click || v.did.book_click) j[3]++; }
-    return { name: "", who: ["Someone", v.where ? "in " + v.where : "", v.device ? "on a " + v.device.toLowerCase() : "", v.source && v.source !== "direct" ? "from " + v.source : ""].filter(Boolean).join(" "), audience: aud, tier, score, visits: v.visits, ref: v.ref, story: v.moments.slice(-3), last: v.last };
+    const place = [v.where ? "in " + v.where : "", v.device ? "on a " + v.device.toLowerCase() : "", v.source && v.source !== "direct" ? "from " + v.source : ""].filter(Boolean).join(" ");
+    return { name: v.name, named: v.named, first: v.first, place, who: [v.name || "Someone", place].filter(Boolean).join(" "), audience: aud, tier, score, visits: v.visits, ref: v.ref, story: v.moments.slice(-3), last: v.last };
   });
   const week = list.filter((p) => now - Date.parse(p.last) < 7 * DAY);
+  const named = list.filter((p) => p.name).sort((a, b) => Date.parse(b.last) - Date.parse(a.last)).slice(0, 60)
+    .map((p) => ({ name: p.name, audience: p.audience, tier: p.tier, score: p.score, visits: p.visits, first: p.first, named: p.named, last: p.last, story: p.story, place: p.place }));
   const worth = list.filter((p) => p.tier !== "Cold").sort((a, b) => (b.tier === "Hot") - (a.tier === "Hot") || b.score - a.score).slice(0, 40);
   return {
     at: new Date().toISOString(),
-    headline: { week: week.length, worth: week.filter((p) => p.tier !== "Cold").length, outreach: week.filter((p) => p.ref).length, month: list.length },
+    headline: { week: week.length, worth: week.filter((p) => p.tier !== "Cold").length, outreach: week.filter((p) => p.ref).length, month: list.length, named: week.filter((p) => p.name).length },
+    named,
     worth,
     journeys: Object.entries(journeys).map(([k, v]) => ({ audience: k, arrived: v[0], played: v[1], checked: v[2], reached_out: v[3] })),
     attention: Object.entries(attention).sort((a, b) => b[1] - a[1]).map(([section, seconds]) => ({ section, seconds })),
