@@ -131,7 +131,7 @@
   pic.src = "assets/jason-loader.webp";
 
   /* ---------- loading: a real count, held at 96 until the portrait and fonts are in ---------- */
-  var t0 = performance.now(), MIN = RM ? 300 : 1600, assets = 0, NEED = 2, wantGo = false;
+  var t0 = performance.now(), MIN = RM ? 300 : 1100, assets = 0, NEED = 2, wantGo = false;
   function got() { assets++; }
   Promise.resolve(document.fonts && document.fonts.ready).then(got, got);
   setTimeout(function () { assets = NEED; }, 6000);
@@ -253,7 +253,7 @@
       '<p class="intro__cardline">' + esc(ROLES[role].line) + '</p>', function () {
       el.setAttribute("aria-labelledby", "intro-c");
       sfx("swoosh", { gain: 0.45, rate: 1.05 });
-      setTimeout(function () { leave(role, first); }, wait(1500));
+      setTimeout(function () { leave(role, first); }, wait(950));
     });
   }
 
@@ -276,7 +276,7 @@
     if (window.JG_REEL) {
       markCut(ROLES[role].cut);
       window.JG_REEL.play(role, { name: first, from: "intro" });
-      setTimeout(function () { done(); el.remove(); }, wait(700));
+      setTimeout(function () { done(); el.remove(); }, wait(400));
       return;
     }
     if (role === "partner") {

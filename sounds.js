@@ -72,11 +72,17 @@
     muted = !!m;
     if (out && AC) out.gain.setTargetAtTime(muted ? 0 : 1, AC.currentTime, 0.02);
   }
-  window.JG_SFX = { play: play, warm: warm, mute: mute, ctx: ctx, muted: function () { return muted; } };
+  window.JG_SFX = { play: play, warm: warm, mute: mute, ctx: ctx, out: function () { ctx(); return out; }, muted: function () { return muted; } };
+
+  /* iPhones mute Web Audio when the ringer switch is off unless the page asks
+     for playback, the way a music app does. */
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+  /* Browsers start audio suspended; every gesture nudges it until it runs. */
+  function wake() { var c = ctx(); if (c && c.state !== "running") { try { c.resume(); } catch (e) {} } }
+  ["pointerdown", "touchend", "keydown", "click"].forEach(function (ev) { addEventListener(ev, wake, { passive: true, capture: true }); });
 
   /* Decoding does not need a gesture, only playback does, so the small
      files come down as soon as the page is idle. */
-  var first = document.body && document.body.classList.contains("is-loading") ? ["drop", "splash", "swoosh-long", "swoosh-deep", "swoosh", "select", "key", "open"] : ["select", "open", "chime", "sparkle", "swoosh", "key", "key-back", "swoosh-deep"];
-  if ("requestIdleCallback" in window) requestIdleCallback(function () { warm(first); }, { timeout: 1500 }); else setTimeout(function () { warm(first); }, 300);
+  setTimeout(function () { warm(); }, 120);
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { warm(); }, { once: true, passive: true }); });
 })();

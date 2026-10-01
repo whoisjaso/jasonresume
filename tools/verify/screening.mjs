@@ -36,13 +36,13 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await p.fill('.intro__input', 'Test Visitor'); await p.keyboard.press('Enter');
   await p.waitForSelector('#intro', { state: 'detached', timeout: 8000 }).catch(() => errs.push(`${name} intro did not leave`));
   // The reel: the interviewer's cut plays itself; arrows step through, the end card offers the next move
-  await p.waitForSelector('.reel.is-on', { timeout: 5000 }).catch(() => errs.push(`${name} reel did not open after the intro`));
-  const shots = await p.$$eval('.rs', x => x.length);
-  for (let k = 1; k < shots; k++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(350); }
-  await p.waitForTimeout(1600); await shot(p, name, '00c-reel-end');
-  if (!(await p.$('.rs--end.is-on [data-reel-cta="email"]'))) errs.push(`${name} reel end card has no email`);
-  await p.click('[data-reel-go="site"]');
-  await p.waitForSelector('.reel', { state: 'detached', timeout: 4000 }).catch(() => errs.push(`${name} reel did not leave`));
+  await p.waitForSelector('.tr.is-on', { timeout: 5000 }).catch(() => errs.push(`${name} reel did not open after the intro`));
+  await p.waitForTimeout(2600); await shot(p, name, '00c-reel-open');
+  for (let k = 0; k < 30 && !(await p.$('.tr--end.is-on')); k++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(420); }
+  await p.waitForTimeout(1600); await shot(p, name, '00d-reel-end');
+  if (!(await p.$('.tr--end.is-on [data-reel-cta="email"]'))) errs.push(`${name} reel end card has no email`);
+  await p.click('.tr [data-reel-go="site"]');
+  await p.waitForSelector('.tr', { state: 'detached', timeout: 4000 }).catch(() => errs.push(`${name} reel did not leave`));
   await p.waitForTimeout(700);
   // The ten-second test: the actions are on screen at arrival, with nothing in front
   const fold = await p.evaluate(() => { const r = [...document.querySelectorAll('.slate__actions .btn')].map(x => x.getBoundingClientRect()); const dock = document.querySelector('.dock'); const dh = dock && getComputedStyle(dock).display !== 'none' ? dock.getBoundingClientRect().height : 0; return { maxBottom: Math.max(...r.map(x => x.bottom)), vh: innerHeight - dh, n: r.length, dialogs: document.querySelectorAll('dialog[open]').length }; });
@@ -135,9 +135,9 @@ if (!only || only === 'mobile') {
   await p.mouse.click(195, 700); await p.waitForSelector('[data-role="partner"]'); await p.waitForTimeout(900);
   await p.click('[data-role="partner"]'); await p.waitForSelector('.intro__input'); await p.waitForTimeout(500);
   await p.fill('.intro__input', 'Pat'); await p.keyboard.press('Enter');
-  await p.waitForSelector('.reel.is-on', { timeout: 6000 }); await p.waitForTimeout(2500); await p.screenshot({ path: path.join(OUT, 'screen-reel-partner-1.png') });
-  const ps = await p.$$eval('.rs', x => x.length); for (let k = 1; k < ps; k++) { await p.mouse.click(330, 420); await p.waitForTimeout(300); }
-  await p.waitForTimeout(1400);
+  await p.waitForSelector('.tr.is-on', { timeout: 6000 }); await p.waitForTimeout(2500); await p.screenshot({ path: path.join(OUT, 'screen-reel-partner-1.png') });
+  for (let k = 0; k < 30 && !(await p.$('.tr--end.is-on')); k++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(420); }
+  await p.waitForTimeout(1600);
   await Promise.all([p.waitForURL('**/obavia.html', { timeout: 9000 }), p.click('[data-reel-cta="briefing"]')]);
   await p.waitForTimeout(1200); const greet = await p.textContent('.island__text').catch(() => '');
   if (!/Welcome, Pat/.test(greet)) errs.push(`agency route greeting was "${greet}"`); else notes.push('agency route: reel, then obavia.html, greeted by name');
