@@ -8,7 +8,7 @@ A static site (index.html, tokens.css, home.css, intro.js, reel.js, today.css, t
 
 ## Rules that do not bend
 
-- Claims boundary for Obavia: Obavia's product is Obavia Desk, a dealership sale desk in development for Texas independent dealers ("Every sale, start to signed"), grown out of Handle a Sale at Triple J. Never say it is live or that dealers use it; never claim customers, results, a conversion rate or a percentage of anything it achieved; Text it to sign, Reach and dealer websites are in development, not live; pricing is not published, so never quote one; people and figures in demos and films are fictional and say so; early access is a conversation, not an account. Source of truth for Obavia is the whoisjaso/obavia repo (obavia-co/index.html and desk/README.md). Apohenia is Obavia's earlier name and appears only as one line in the answers layer. The agency sales product and the hiring page are retired.
+- Claims boundary for Obavia: the company and its product share the name. Obavia is a dealership sale desk in development for Texas independent dealers ("Every sale, start to signed"), grown out of Handle a Sale at Triple J. Never say it is live or that dealers use it; never claim customers, results, a conversion rate or a percentage of anything it achieved; Text it to sign, Reach and dealer websites are in development, not live; pricing is not published, so never quote one; people and figures in demos and films are fictional and say so; early access is a conversation, not an account. Source of truth for Obavia is the whoisjaso/obavia repo (obavia-co/index.html and desk/README.md). Apohenia is Obavia's earlier name and appears only as one line in the answers layer. The agency sales product and the hiring page are retired.
 - Never publish Jason's private phone or street address. Triple J's business address (8774 Almeda Genoa Rd, Houston) is fine.
 - No em dashes anywhere on the site. No gradients on text, no glassmorphism, no three-card rows, no emoji as icons. Fonts are Cormorant Garamond and Hanken Grotesk.
 - Second person for the reader's situation, first person for what Jason did, never third person.
@@ -30,6 +30,6 @@ A static site (index.html, tokens.css, home.css, intro.js, reel.js, today.css, t
 - Interactive: the desk app in today.js (fictional buyer, example figures), reel.js (the trailer, a cut per visitor, live score), deck.js (resume deck). /join redirects to /obavia.html; there is no hiring page.
 - Sound: sounds.js (bank and gains), assets/sfx, tools/sfx.
 - Films: assets/film (Obavia ads, Triple J Handle a Sale, signature), tools/film. The Sale Desk film renders from whoisjaso/thetriplejauto, remotion/src/sale-desk.ts.
-- Desks and chat: api/guide.js (ask box), api/lead.js (Obavia Desk early access), api/_lib. Config in CONFIG.md.
+- Desks and chat: api/guide.js (ask box), api/lead.js (Obavia early access), api/_lib. Config in CONFIG.md.
 - Analytics: track.js to api/track.js (allowlist there) to PostHog; api/metrics.js and admin.html are the Dailies board.
 - Outreach: OUTREACH.md. Research: RESEARCH.md.

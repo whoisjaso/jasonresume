@@ -1,4 +1,4 @@
-/* The Obavia Desk page: the films, the get bar, the calendar and the early-access desk. Tracking lives in track.js. */
+/* The Obavia page: the films, the get bar, the calendar and the early-access desk. Tracking lives in track.js. */
 (function () {
   "use strict";
   var body = document.body;

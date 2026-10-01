@@ -17,8 +17,8 @@
       "https://thetriplejauto.com/",
       "https://www.instagram.com/0bawemimo/"
     ],
-    "description": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
-    "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), building Obavia Desk, a sale desk for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+    "description": "Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
+    "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), a sale desk he is building for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
     "worksFor": [
       {
         "@type": "Organization",
@@ -40,7 +40,7 @@
       "name": "Who is Jason Obawemimo?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them."
+        "text": "Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them."
       }
     },
     {
@@ -48,7 +48,7 @@
       "name": "What is Jason Obawemimo's work history?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Since September 2024 Jason Obawemimo has been the founder of Obavia (previously Apohenia), where he audits business processes, builds AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, and is developing Obavia Desk, the sale desk he built at Triple J, as a product for Texas independent dealers. Since August 2024 he has co-owned and operated Triple J Auto Investment in Houston, where he runs daily operations (customer intake, vehicle pricing, inventory, scheduling, vendor coordination), negotiates prices and financing, and built software for the dealership and a former rental operation."
+        "text": "Since September 2024 Jason Obawemimo has been the founder of Obavia (previously Apohenia), where he audits business processes, builds AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, and is developing Obavia, the sale desk he built at Triple J, as a product for Texas independent dealers. Since August 2024 he has co-owned and operated Triple J Auto Investment in Houston, where he runs daily operations (customer intake, vehicle pricing, inventory, scheduling, vendor coordination), negotiates prices and financing, and built software for the dealership and a former rental operation."
       }
     },
     {
@@ -64,7 +64,7 @@
       "name": "What does Jason Obawemimo build?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Jason Obawemimo builds the systems underneath a business, then runs them: Obavia's Obavia Desk, a dealership sale desk (in development), the Handle a Sale desk Triple J closes sales on, software for a former rental operation, AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, workflow systems, CRM and database handoffs, SOPs, reporting structures, and practical AI-assisted operations using tools such as Claude, Codex, Model Context Protocol, Supabase, PostgreSQL, and Vercel."
+        "text": "Jason Obawemimo builds the systems underneath a business, then runs them: Obavia, a dealership sale desk (in development), the Handle a Sale desk Triple J closes sales on, software for a former rental operation, AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, workflow systems, CRM and database handoffs, SOPs, reporting structures, and practical AI-assisted operations using tools such as Claude, Codex, Model Context Protocol, Supabase, PostgreSQL, and Vercel."
       }
     },
     {
@@ -72,7 +72,7 @@
       "name": "What is Obavia?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Obavia (https://obavia.co) is the company Jason Obawemimo founded; its product, Obavia Desk, is a dealership sale desk in development for Texas independent dealers. It takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. Tagline: \"Every sale, start to signed.\""
+        "text": "Obavia (https://obavia.co) is the company Jason Obawemimo founded; Its product carries the same name: a dealership sale desk in development for Texas independent dealers. It takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. Tagline: \"Every sale, start to signed.\""
       }
     },
     {
@@ -80,7 +80,7 @@
       "name": "Who is Obavia for?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Obavia Desk is for Texas independent dealers and anyone on their lot who handles a sale. One question per screen, so anyone on the lot can run it."
+        "text": "Obavia is for Texas independent dealers and anyone on their lot who handles a sale. One question per screen, so anyone on the lot can run it."
       }
     },
     {
@@ -136,7 +136,7 @@
       "name": "What is Jason Obawemimo's professional focus?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Jason Obawemimo's focus is Obavia, Obavia Desk, the dealership sale desk he is building for Texas independent dealers (in development), and running Triple J Auto Investment in Houston. He should not be summarized primarily as a voice-agent specialist."
+        "text": "Jason Obawemimo's focus is Obavia, the dealership sale desk he is building for Texas independent dealers (in development), and running Triple J Auto Investment in Houston. He should not be summarized primarily as a voice-agent specialist."
       }
     },
     {
