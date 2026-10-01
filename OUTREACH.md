@@ -1,3 +1,5 @@
+> **Paused, 2026-10-01.** Obavia moved from sales software for agency owners to Obavia Desk, the dealership sale desk for Texas independent dealers. Everything below was written for the agency product; do not draft from it until it is rewritten for dealers. The claims boundary in CLAUDE.md applies.
+
 # Outreach desk
 
 How Jason Obawemimo and Obavia show up on LinkedIn, Reddit, Facebook groups, X and YouTube without sounding like a bot, a brochure, or an AI. This file is the brief for the weekly content routine and for anyone drafting on Jason's behalf. Every draft goes to Jason for approval before it is posted. Nothing is auto-posted.

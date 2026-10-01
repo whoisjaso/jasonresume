@@ -10,7 +10,7 @@
   "slate": [
     {
       "k": "Obavia",
-      "v": "Founder, since September 2024. A sales intelligence platform in development for agency owners."
+      "v": "Founder, since September 2024. Building Obavia Desk, the sale desk I built at Triple J, for Texas independent dealers."
     },
     {
       "k": "Triple J",
@@ -31,7 +31,7 @@
       "role": "Founder",
       "org": "Obavia",
       "when": "September 2024 to now. In development.",
-      "text": "A sales intelligence platform for agency owners at $100K to $1M a month and their own setters and closers. It follows a sale through six stages, from the first inquiry to collected cash. I'm designing how it picks out a buyer's meaningful words, stated interests and motives, then gives the rep context for what to say or ask next.",
+      "text": "Obavia Desk: every sale, start to signed, for Texas independent dealers. Pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. One question per screen. It grew out of Handle a Sale, the desk I built at Triple J, and it's being built on that floor.",
       "proof": [
         {
           "label": "The briefing",
@@ -171,8 +171,8 @@
     "AI Fluency for Small Businesses"
   ],
   "focus": [
-    "Sales operations software",
-    "Setter and closer handoffs",
+    "Dealership sale desk software",
+    "Title and registration workflow",
     "Workflow automation",
     "AI-assisted operations",
     "CRM and data handoffs",
@@ -323,7 +323,7 @@
     },
     {
       "t": "Obavia.",
-      "s": "A sales intelligence platform for agency owners at $100K to $1M a month and their setters and closers. I founded it in September 2024. In development, not live yet.",
+      "s": "Obavia Desk, the sale desk I built at Triple J, as a product for Texas independent dealers. Every sale, start to signed. In development, early access.",
       "proof": {
         "label": "The briefing",
         "href": "/obavia.html"

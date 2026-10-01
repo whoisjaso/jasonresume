@@ -10,7 +10,6 @@ Confirm each URL returns `200 OK` before submitting:
 
 - https://jasonobawemimo.com/
 - https://jasonobawemimo.com/obavia.html
-- https://jasonobawemimo.com/join.html
 - https://jasonobawemimo.com/assets/film/obavia-closer.mp4
 - https://jasonobawemimo.com/assets/film/obavia-owner.mp4
 - https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4
@@ -83,7 +82,6 @@ Request inspection/indexing for these URLs first:
 
 - `https://jasonobawemimo.com/`
 - `https://jasonobawemimo.com/obavia.html`
-- `https://jasonobawemimo.com/join.html`
 - `https://jasonobawemimo.com/credentials.html`
 - `https://jasonobawemimo.com/answers.html`
 - `https://jasonobawemimo.com/jason-obawemimo.html`

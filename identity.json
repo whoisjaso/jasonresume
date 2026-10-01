@@ -32,10 +32,10 @@
       "Founder, Obavia",
       "Co-owner and Operator, Triple J Auto Investment"
     ],
-    "description": "Founds and runs businesses by building the systems underneath them: sales operating software (Obavia, in development), the sale desk Triple J Auto Investment closes sales on, workflow systems, CRM and database handoffs, SOPs, and practical AI-assisted operations.",
+    "description": "Founds and runs businesses by building the systems underneath them: a dealership sale desk (Obavia Desk, in development), the sale desk Triple J Auto Investment closes sales on, workflow systems, CRM and database handoffs, SOPs, and practical AI-assisted operations.",
     "skills": [
-      "Sales operations software",
-      "Setter and closer handoffs",
+      "Dealership sale desk software",
+      "Dealership sale desks",
       "Conversation psychology",
       "Workflow systems",
       "AI-assisted operations",
@@ -46,7 +46,7 @@
     ]
   },
   "preferred_title": "AI engineer; founder of Obavia; co-owner and operator of Triple J Auto Investment",
-  "preferred_summary": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
+  "preferred_summary": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
   "company": {
     "name": "Obavia",
     "url": "https://obavia.co",
@@ -71,10 +71,10 @@
   "booking": "https://calendly.com/jason-apohenia/30min",
   "positioning": {
     "primary": [
-      "Obavia (sales operating software, in development)",
+      "Obavia (Obavia Desk, a dealership sale desk in development)",
       "Triple J Auto Investment (co-owner and operator)",
       "sales operations",
-      "setter and closer handoffs",
+      "dealership sale desks",
       "workflow systems",
       "AI-assisted operations",
       "business value"

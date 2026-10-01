@@ -14,7 +14,7 @@ from chatterbox.tts import ChatterboxTTS as M; turbo=False
 print("model", "turbo" if turbo else "standard", flush=True)
 model=M.from_pretrained(device="cpu")
 EXAG={"laugh":0.65,"surprised":0.65,"wink":0.6,"warm":0.55,"calm":0.45,"attentive":0.5,"serious":0.4}
-lines=json.load(open(S+'/lines.json'))
+lines=json.load(open(S+'/'+os.environ.get('LINES','lines.json')))
 if only: lines=[l for l in lines if l["id"] in only]
 manifest=json.load(open(OUT+'/manifest.json'))
 def chunks(t, n=220):

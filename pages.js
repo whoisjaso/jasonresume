@@ -1,4 +1,4 @@
-/* The Obavia and hiring pages: the calendar and the two desks. Tracking lives in track.js. */
+/* The Obavia Desk page: the films, the get bar, the calendar and the early-access desk. Tracking lives in track.js. */
 (function () {
   "use strict";
   var body = document.body;
@@ -27,19 +27,29 @@
   var flash = document.createElement("div"); flash.className = "flash"; flash.setAttribute("aria-hidden", "true"); body.appendChild(flash);
   function unlock() { flash.classList.remove("is-on"); void flash.offsetWidth; flash.classList.add("is-on"); H("unlock"); tone(); if (window.JG_SFX) window.JG_SFX.play("sparkle", { delay: 0.05 }); }
 
-  /* ---------- the film ---------- */
-  var vsl = document.querySelector(".vsl");
-  if (vsl) {
-    var video = vsl.querySelector("video"), play = vsl.querySelector(".vsl__play"), done = false;
+  /* ---------- the films: one plays at a time, with sound ---------- */
+  var boxes = [].slice.call(document.querySelectorAll("[data-film-box]"));
+  boxes.forEach(function (box) {
+    var video = box.querySelector("video"), play = box.querySelector("[data-film-play]"), name = video.getAttribute("data-film"), done = false;
     function start() {
-      vsl.classList.add("is-playing"); video.controls = true; video.muted = false;
-      var p = video.play(); if (p && p.catch) p.catch(function () { video.muted = true; video.play(); });
-      H("select"); if (window.JG_SFX) window.JG_SFX.play("select"); track("vsl_play", {});
+      boxes.forEach(function (b) { if (b !== box) b.querySelector("video").pause(); });
+      box.classList.add("is-playing"); video.controls = true; video.muted = false;
+      var p = video.play(); if (p && p.catch) p.catch(function () { video.muted = true; var q = video.play(); if (q && q.catch) q.catch(function () {}); });
+      if (window.JG_FX) window.JG_FX("choice"); track("film_play", { film: name });
     }
     if (play) play.addEventListener("click", start);
-    video.addEventListener("ended", function () { if (!done) { done = true; track("vsl_complete", {}); } vsl.classList.remove("is-playing"); });
-    video.addEventListener("pause", function () { if (video.currentTime > 0 && video.currentTime < video.duration - 0.5) vsl.classList.remove("is-playing"); });
-    video.addEventListener("play", function () { vsl.classList.add("is-playing"); });
+    video.addEventListener("play", function () { box.classList.add("is-playing"); });
+    video.addEventListener("ended", function () { if (!done) { done = true; track("film_complete", { film: name }); } box.classList.remove("is-playing"); video.controls = false; });
+  });
+
+  /* ---------- the get bar steps aside at the top and at the form ---------- */
+  var getbar = document.querySelector("[data-getbar]"), early = document.getElementById("early"), head = document.querySelector(".pp-head");
+  if (getbar && "IntersectionObserver" in window) {
+    var seen = { head: true, early: false };
+    var sync = function () { getbar.classList.toggle("is-away", seen.head || seen.early); };
+    new IntersectionObserver(function (en) { en.forEach(function (x) { seen[x.target === early ? "early" : "head"] = x.isIntersecting; }); sync(); }, { threshold: 0 }).observe(early);
+    if (head) new IntersectionObserver(function (en) { seen.head = en[0].isIntersecting; sync(); }).observe(head);
+    sync();
   }
 
   /* ---------- the calendar ---------- */
@@ -53,7 +63,7 @@
       if (e.data.event === "calendly.event_scheduled") {
         track("call_booked", {}); unlock();
         var b = document.querySelector('[name="booked"]'); if (b) b.value = "yes";
-        var note = document.getElementById("note-head"); if (note) note.textContent = "Booked. One more thing helps me prepare.";
+        var note = document.getElementById("note-head"); if (note) note.textContent = "Booked. Tell me about your lot.";
       }
     });
   }
@@ -84,7 +94,7 @@
             }
             sent.scrollIntoView({ behavior: "smooth", block: "center" });
           }
-          unlock(); track(form.dataset.desk === "lead" ? "lead_sent" : "apply_sent", { delivered: r.j.delivered !== false });
+          unlock(); track("lead_sent", { delivered: r.j.delivered !== false });
           if (window.JG_FX) window.JG_FX("send");
         })
         .catch(function (err) {

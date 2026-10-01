@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   You opened the source. Good.
-  No framework, no build step. The projector is cinema.js, the desk you can run is desk.js,
+  No framework, no build step. The feed is today.js, the trailer is reel.js, the desk you can run lives in today.js,
   and all of it is at github.com/whoisjaso/jasonresume.
   If you are hiring: jobawems@gmail.com
 -->
@@ -84,9 +84,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="preload" as="image" href="assets/jason-headshot-900.webp" type="image/webp" fetchpriority="high" />
-<link rel="stylesheet" href="tokens.css?v=s3" />
-<link rel="stylesheet" href="home.css?v=s3" />
+<link rel="preload" as="image" href="assets/jason-headshot-620.webp" type="image/webp" fetchpriority="high" />
+<link rel="stylesheet" href="tokens.css?v=s4" />
+<link rel="stylesheet" href="home.css?v=s4" />
+<link rel="stylesheet" href="today.css?v=s4" />
 <link rel="stylesheet" href="print.css" media="print" />
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{var q=location.search,h=location.hash,u=navigator.userAgent;var force=/[?&]intro=1/.test(q),seen=localStorage.getItem("jg_intro")==="1";if(force||(!seen&&!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(u)&&!/[?&](cut|intro)=/.test(q)&&!/^#(present|verify|trailer)/.test(h)))d.classList.add("intro-pending")}catch(e){}setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>
 <script type="application/ld+json">
@@ -146,7 +147,7 @@
       "@id": "https://jasonobawemimo.com/#homepage",
       "url": "https://jasonobawemimo.com/",
       "name": "Jason Obawemimo - Official Website",
-      "description": "Official homepage for Jason Obawemimo, founder of Obavia (sales software in development for agency owners) and co-owner and operator of Triple J Auto Investment in Houston, with Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
+      "description": "Official homepage for Jason Obawemimo, founder of Obavia (building Obavia Desk, a sale desk for Texas independent dealers) and co-owner and operator of Triple J Auto Investment in Houston, with Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
       "dateModified": "2026-09-25",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
@@ -164,7 +165,6 @@
         "@id": "https://jasonobawemimo.com/#breadcrumbs"
       },
       "significantLink": [
-        "https://jasonobawemimo.com/join.html",
         "https://obavia.co",
         "https://jasonobawemimo.com/obavia.html",
         "https://jasonobawemimo.com/jason-obawemimo.html",
@@ -234,14 +234,14 @@
           "addressCountry": "US"
         }
       },
-      "description": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
-      "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), sales software in development for agency owners, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+      "description": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
+      "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), building Obavia Desk, a sale desk for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
       "knowsLanguage": [
         "English"
       ],
       "knowsAbout": [
-        "Sales operations software",
-        "Setter and closer handoffs",
+        "Dealership sale desk software",
+        "Dealership sale desks",
         "Conversation psychology and active listening",
         "Lead to cash workflows",
         "Used vehicle dealership operations",
@@ -342,14 +342,14 @@
         "Founder, Obavia",
         "Co-owner and Operator, Triple J Auto Investment"
       ],
-      "description": "Founds and runs businesses by building the systems underneath them: sales operating software (Obavia, in development), the sale desk Triple J Auto Investment closes sales on, workflow systems, CRM and database handoffs, SOPs, and practical AI-assisted operations.",
+      "description": "Founds and runs businesses by building the systems underneath them: a dealership sale desk (Obavia Desk, in development), the sale desk Triple J Auto Investment closes sales on, workflow systems, CRM and database handoffs, SOPs, and practical AI-assisted operations.",
       "occupationLocation": {
         "@type": "Country",
         "name": "United States"
       },
       "skills": [
-        "Sales operations software",
-        "Setter and closer handoffs",
+        "Dealership sale desk software",
+        "Dealership sale desks",
         "Conversation psychology",
         "Workflow systems",
         "AI-assisted operations",
@@ -367,18 +367,15 @@
       "@id": "https://jasonobawemimo.com/#obavia",
       "name": "Obavia",
       "url": "https://obavia.co",
-      "description": "Sales operating software, in development, for agency owners generating $100,000 to $1,000,000 a month and their own setters and closers. It carries the buyer's exact words from the first call to collected cash, inside the agency's own funnel, SOPs and vocabulary. Not yet live.",
-      "slogan": "Hear what clients really mean. Carry it from the first call to collected cash.",
+      "description": "Obavia is the company Jason Obawemimo founded. Its product, Obavia Desk, is a dealership sale desk in development for Texas independent dealers: every sale, start to signed, one question per screen. It grew out of Handle a Sale, the desk Jason built at Triple J Auto Investment in Houston. Not yet live; early access for Texas dealers.",
+      "slogan": "Every sale, start to signed.",
       "founder": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
       },
-      "areaServed": "United States",
+      "areaServed": "Texas, United States",
       "subjectOf": [
         {
-          "@id": "https://jasonobawemimo.com/#film-obavia-closer"
-        },
-        {
-          "@id": "https://jasonobawemimo.com/#film-obavia-owner"
+          "@id": "https://jasonobawemimo.com/#film-obavia-desk"
         }
       ]
     },
@@ -407,30 +404,13 @@
     },
     {
       "@type": "VideoObject",
-      "@id": "https://jasonobawemimo.com/#film-obavia-closer",
-      "name": "Obavia: The closer",
-      "description": "A 33-second vertical ad film for Obavia, sales software in development for agency owners, titled The closer. People and figures in the film are fictional.",
-      "contentUrl": "https://jasonobawemimo.com/assets/film/obavia-closer.mp4",
-      "thumbnailUrl": "https://jasonobawemimo.com/assets/film/obavia-closer.jpg",
-      "uploadDate": "2026-09-25",
-      "duration": "PT33S",
-      "inLanguage": "en-US",
-      "about": {
-        "@id": "https://jasonobawemimo.com/#obavia"
-      },
-      "creator": {
-        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
-      }
-    },
-    {
-      "@type": "VideoObject",
-      "@id": "https://jasonobawemimo.com/#film-obavia-owner",
-      "name": "Obavia: The owner",
-      "description": "A 34-second vertical ad film for Obavia, sales software in development for agency owners, titled The owner. People and figures in the film are fictional.",
-      "contentUrl": "https://jasonobawemimo.com/assets/film/obavia-owner.mp4",
-      "thumbnailUrl": "https://jasonobawemimo.com/assets/film/obavia-owner.jpg",
-      "uploadDate": "2026-09-25",
-      "duration": "PT35S",
+      "@id": "https://jasonobawemimo.com/#film-obavia-desk",
+      "name": "Obavia Desk: every sale, start to signed",
+      "description": "A 42-second film of Obavia Desk, the dealership sale desk Jason Obawemimo is building for Texas independent dealers, cut from real Desk screens. Obavia Desk is in development. People and figures in the film are fictional.",
+      "contentUrl": "https://jasonobawemimo.com/assets/film/obavia-desk.mp4",
+      "thumbnailUrl": "https://jasonobawemimo.com/assets/film/obavia-desk.jpg",
+      "uploadDate": "2026-10-01",
+      "duration": "PT42S",
       "inLanguage": "en-US",
       "about": {
         "@id": "https://jasonobawemimo.com/#obavia"
@@ -554,8 +534,8 @@
           "https://thetriplejauto.com/",
           "https://www.instagram.com/0bawemimo/"
         ],
-        "description": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
-        "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), sales software in development for agency owners, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+        "description": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
+        "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), building Obavia Desk, a sale desk for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
         "worksFor": [
           {
             "@type": "Organization",
@@ -577,7 +557,7 @@
           "name": "Who is Jason Obawemimo?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them."
+            "text": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them."
           }
         },
         {
@@ -585,7 +565,7 @@
           "name": "What is Jason Obawemimo's work history?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Since September 2024 Jason Obawemimo has been the founder of Obavia (previously Apohenia), where he audits business processes, builds AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, and is developing Obavia, a sales intelligence platform for appointment setters, closers and owners. Since August 2024 he has co-owned and operated Triple J Auto Investment in Houston, where he runs daily operations (customer intake, vehicle pricing, inventory, scheduling, vendor coordination), negotiates prices and financing, and built software for the dealership and a former rental operation."
+            "text": "Since September 2024 Jason Obawemimo has been the founder of Obavia (previously Apohenia), where he audits business processes, builds AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, and is developing Obavia Desk, the sale desk he built at Triple J, as a product for Texas independent dealers. Since August 2024 he has co-owned and operated Triple J Auto Investment in Houston, where he runs daily operations (customer intake, vehicle pricing, inventory, scheduling, vendor coordination), negotiates prices and financing, and built software for the dealership and a former rental operation."
           }
         },
         {
@@ -601,7 +581,7 @@
           "name": "What does Jason Obawemimo build?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jason Obawemimo builds the systems underneath a business, then runs them: Obavia's sales operating software (in development), the Handle a Sale desk Triple J closes sales on, software for a former rental operation, AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, workflow systems, CRM and database handoffs, SOPs, reporting structures, and practical AI-assisted operations using tools such as Claude, Codex, Model Context Protocol, Supabase, PostgreSQL, and Vercel."
+            "text": "Jason Obawemimo builds the systems underneath a business, then runs them: Obavia's Obavia Desk, a dealership sale desk (in development), the Handle a Sale desk Triple J closes sales on, software for a former rental operation, AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, workflow systems, CRM and database handoffs, SOPs, reporting structures, and practical AI-assisted operations using tools such as Claude, Codex, Model Context Protocol, Supabase, PostgreSQL, and Vercel."
           }
         },
         {
@@ -609,7 +589,7 @@
           "name": "What is Obavia?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Obavia (https://obavia.co) is sales operating software, in development, founded by Jason Obawemimo, for agency owners generating $100,000 to $1,000,000 a month and their own setters and closers. It works inside the agency's own funnel, SOPs and vocabulary, and follows a sale in six stages: Capture (the inquiry becomes a lead), Connect (one owner, the buyer's exact words), Book (a call with a clear purpose), Discover (fit, from what actually happened), Agree (the buyer's words reach the closer), and Collect (cash, counted when verified). Tagline: \"Hear what clients really mean. Carry it from the first call to collected cash.\""
+            "text": "Obavia (https://obavia.co) is the company Jason Obawemimo founded; its product, Obavia Desk, is a dealership sale desk in development for Texas independent dealers. It takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. Tagline: \"Every sale, start to signed.\""
           }
         },
         {
@@ -617,7 +597,7 @@
           "name": "Who is Obavia for?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Obavia is for agency owners generating $100,000 to $1,000,000 a month, and for their own setters and closers. Owners see progress ranked on collected cash, not calls."
+            "text": "Obavia Desk is for Texas independent dealers and anyone on their lot who handles a sale. One question per screen, so anyone on the lot can run it."
           }
         },
         {
@@ -625,7 +605,7 @@
           "name": "Is Obavia available?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Not yet. Obavia is in development and not yet live. It has a free waitlist at https://obavia.co; joining the waitlist does not create an account or grant product access."
+            "text": "Not yet. Obavia is in development and not yet live. Texas dealers can ask for early access at https://jasonobawemimo.com/obavia.html; asking does not create an account or grant product access."
           }
         },
         {
@@ -633,7 +613,7 @@
           "name": "What does Obavia cost?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Prelaunch pricing: Core is planned at $3,000 a month (up to 10 active sellers, 5,000 pooled meeting minutes). Scale ($6,000 a month) and Enterprise (custom) are proposed. Implementation is a one-time $5,000. Only Core's price is planned; the rest is proposed."
+            "text": "Pricing for dealers has not been published."
           }
         },
         {
@@ -641,7 +621,7 @@
           "name": "What will Obavia never claim?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "While it is in development, Obavia does not claim to be live, to have customers, or to produce results, and it states no conversion rate, percentage, or outcome as fact. Zoom, Calendly, GoHighLevel, HubSpot, Slack, Zapier, Google Calendar and Cal.com are planned connection targets, not active integrations. People and figures in Obavia's demos and ads are fictional. Jason Obawemimo set that boundary himself."
+            "text": "While it is in development, Obavia does not claim to be live, to have customers, or to produce results, and it states no conversion rate, percentage, or outcome as fact. Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in Obavia's demos and films are fictional. Jason Obawemimo set that boundary himself."
           }
         },
         {
@@ -673,7 +653,7 @@
           "name": "What is Jason Obawemimo's professional focus?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jason Obawemimo's focus is Obavia, the sales operating software he is building for agency owners (in development), and running Triple J Auto Investment in Houston. He should not be summarized primarily as a voice-agent specialist."
+            "text": "Jason Obawemimo's focus is Obavia, Obavia Desk, the dealership sale desk he is building for Texas independent dealers (in development), and running Triple J Auto Investment in Houston. He should not be summarized primarily as a voice-agent specialist."
           }
         },
         {
@@ -745,7 +725,7 @@
           "name": "Is Jason hiring?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. https://jasonobawemimo.com/join.html is for remote appointment setters and closers selling Obavia to agency owners. The pay structure is stated in writing before any work; no numbers are published. Jason Obawemimo reads every application himself."
+            "text": "Not publicly right now."
           }
         },
         {
@@ -770,16 +750,18 @@
 }
 </script>
 </head>
-<body class="home">
+<body class="home today-page">
 <a class="skip" href="#record">Skip to the record</a>
 <div class="grain" aria-hidden="true"></div>
-<div class="vignette" aria-hidden="true"></div>
 <div class="bars bars--top" aria-hidden="true"></div>
 <div class="bars bars--bottom" aria-hidden="true"></div>
 <div class="blackout" aria-hidden="true"></div>
 
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
   <defs>
+    <g id="i-today" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v14H4z"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></g>
+    <g id="i-file" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12.5h6M9 16h6"/></g>
+    <g id="i-car" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6"/></g>
     <g id="i-hire" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M12 12v.01"/><path d="M3 13a20 20 0 0 0 18 0"/></g>
     <g id="i-grow" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></g>
     <g id="i-look" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><path d="M21 12c-2.4 4-5.4 6-9 6s-6.6-2-9-6c2.4-4 5.4-6 9-6s6.6 2 9 6"/></g>
@@ -795,401 +777,286 @@
     <g id="i-sound" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></g>
   </defs>
 </svg>
-<script type="application/json" id="record-data">{"deck": [{"t": "Jason Obawemimo.", "s": "AI engineer and business operator. My work starts with a process audit, then I build the system and run it."}, {"t": "The short version.", "rows": true}, {"t": "Triple J Auto Investment.", "s": "I've co-owned and run it since August 2024: intake, pricing, inventory, scheduling, vendors, and the negotiation. Cars, trucks and SUVs, in-house financing, sell and trade valuations, registration and title support.", "fine": "8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.", "proof": {"label": "thetriplejauto.com", "href": "https://thetriplejauto.com", "ext": true}, "img": "assets/brand/triplej-og.jpg"}, {"t": "Handle a Sale.", "s": "One plain question at a time. Scan the license once and every form fills itself. The registration math. English or Spanish. Signed on the phone or in person. Every sale on file.", "proof": {"label": "Watch the scan", "href": "#film", "seek": 37.3}}, {"t": "Process audit first.", "s": "Find where work gets delayed, information gets lost, or people repeat tasks. Write the requirements. Then build the workflow, with a human checking it."}, {"t": "Obavia.", "s": "A sales intelligence platform for agency owners at $100K to $1M a month and their setters and closers. I founded it in September 2024. In development, not live yet.", "proof": {"label": "The briefing", "href": "/obavia.html"}, "img": "assets/brand/obavia-icon.png"}, {"t": "Listen to the person.", "s": "Inspect the buyer's exact words, then ask a question that uses them.", "proof": {"label": "Try it", "href": "#listen"}}, {"t": "What I build with.", "s": "Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.", "weight": true, "proof": {"label": "This site's source", "href": "https://github.com/whoisjaso/jasonresume", "ext": true}}, {"t": "Education.", "s": "Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List. Bachelor's in neuroscience expected 2027. Nineteen Anthropic courses completed.", "proof": {"label": "Degree PDF", "href": "assets/Jason_Obawemimo_Associate_Degree.pdf"}, "proof2": {"label": "Certificates", "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf"}}, {"t": "Check me.", "s": "LinkedIn, GitHub, the dealership, the public record. Same name, same titles, same town on every one.", "verify": true}, {"t": "Your move.", "s": "If I'm a fit, email is fastest. If a time is easier, pick 30 minutes.", "move": true}], "slate": [{"k": "Obavia", "v": "Founder, since September 2024. A sales intelligence platform in development for agency owners."}, {"k": "Triple J", "v": "Co-owner and operator since August 2024. I built its sale desk."}, {"k": "Pearland", "v": "Texas."}, {"k": "Education", "v": "Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List."}], "verify": [{"k": "LinkedIn", "v": "Jason Obawemimo", "href": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/", "kind": "linkedin", "icon": {"sym": "i-linkedin"}}, {"k": "GitHub", "v": "whoisjaso", "href": "https://github.com/whoisjaso", "kind": "github", "icon": {"src": "assets/brand/stack/github.svg", "style": "ink"}}, {"k": "This site's source", "v": "github.com/whoisjaso/jasonresume", "href": "https://github.com/whoisjaso/jasonresume", "kind": "source", "icon": {"src": "assets/brand/stack/github.svg", "style": "ink"}}, {"k": "Triple J Auto Investment", "v": "8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.", "href": "https://thetriplejauto.com", "kind": "triplej", "icon": {"src": "assets/brand/triplej-logo.png", "style": "logo"}}, {"k": "Obavia", "v": "obavia.co", "href": "https://obavia.co", "kind": "obavia", "icon": {"src": "assets/brand/obavia-icon.png", "style": "full"}}, {"k": "Credentials", "v": "Credential and honor evidence", "href": "/credentials.html", "kind": "credentials", "icon": {"mono": "C"}}, {"k": "Degree", "v": "Associate degree PDF", "href": "assets/Jason_Obawemimo_Associate_Degree.pdf", "kind": "degree", "icon": {"mono": "SJ"}}, {"k": "Coursework", "v": "Anthropic certificates PDF", "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf", "kind": "certificates", "icon": {"src": "assets/brand/stack/claude.svg", "style": "ink"}}, {"k": "Public record", "v": "City of Pearland document", "href": "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland", "kind": "pearland", "icon": {"mono": "P"}}, {"k": "Older mentions", "v": "Reporter News, Pearland and Friendswood", "href": "/mentions.html", "kind": "mentions", "icon": {"mono": "R"}}, {"k": "Email", "v": "jobawems@gmail.com", "href": "mailto:jobawems@gmail.com", "kind": "email", "icon": {"sym": "i-mail"}}], "email": "jobawems@gmail.com", "calendar": "https://calendly.com/jason-apohenia/30min", "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26"}</script>
+<script type="application/json" id="record-data">{"deck": [{"t": "Jason Obawemimo.", "s": "AI engineer and business operator. My work starts with a process audit, then I build the system and run it."}, {"t": "The short version.", "rows": true}, {"t": "Triple J Auto Investment.", "s": "I've co-owned and run it since August 2024: intake, pricing, inventory, scheduling, vendors, and the negotiation. Cars, trucks and SUVs, in-house financing, sell and trade valuations, registration and title support.", "fine": "8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.", "proof": {"label": "thetriplejauto.com", "href": "https://thetriplejauto.com", "ext": true}, "img": "assets/brand/triplej-og.jpg"}, {"t": "Handle a Sale.", "s": "One plain question at a time. Scan the license once and every form fills itself. The registration math. English or Spanish. Signed on the phone or in person. Every sale on file.", "proof": {"label": "Watch the scan", "href": "#film", "seek": 37.3}}, {"t": "Process audit first.", "s": "Find where work gets delayed, information gets lost, or people repeat tasks. Write the requirements. Then build the workflow, with a human checking it."}, {"t": "Obavia.", "s": "Obavia Desk, the sale desk I built at Triple J, as a product for Texas independent dealers. Every sale, start to signed. In development, early access.", "proof": {"label": "The briefing", "href": "/obavia.html"}, "img": "assets/brand/obavia-icon.png"}, {"t": "Listen to the person.", "s": "Inspect the buyer's exact words, then ask a question that uses them.", "proof": {"label": "Try it", "href": "#listen"}}, {"t": "What I build with.", "s": "Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.", "weight": true, "proof": {"label": "This site's source", "href": "https://github.com/whoisjaso/jasonresume", "ext": true}}, {"t": "Education.", "s": "Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List. Bachelor's in neuroscience expected 2027. Nineteen Anthropic courses completed.", "proof": {"label": "Degree PDF", "href": "assets/Jason_Obawemimo_Associate_Degree.pdf"}, "proof2": {"label": "Certificates", "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf"}}, {"t": "Check me.", "s": "LinkedIn, GitHub, the dealership, the public record. Same name, same titles, same town on every one.", "verify": true}, {"t": "Your move.", "s": "If I'm a fit, email is fastest. If a time is easier, pick 30 minutes.", "move": true}], "slate": [{"k": "Obavia", "v": "Founder, since September 2024. Building Obavia Desk, the sale desk I built at Triple J, for Texas independent dealers."}, {"k": "Triple J", "v": "Co-owner and operator since August 2024. I built its sale desk."}, {"k": "Pearland", "v": "Texas."}, {"k": "Education", "v": "Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List."}], "verify": [{"k": "LinkedIn", "v": "Jason Obawemimo", "href": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/", "kind": "linkedin", "icon": {"sym": "i-linkedin"}}, {"k": "GitHub", "v": "whoisjaso", "href": "https://github.com/whoisjaso", "kind": "github", "icon": {"src": "assets/brand/stack/github.svg", "style": "ink"}}, {"k": "This site's source", "v": "github.com/whoisjaso/jasonresume", "href": "https://github.com/whoisjaso/jasonresume", "kind": "source", "icon": {"src": "assets/brand/stack/github.svg", "style": "ink"}}, {"k": "Triple J Auto Investment", "v": "8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.", "href": "https://thetriplejauto.com", "kind": "triplej", "icon": {"src": "assets/brand/triplej-logo.png", "style": "logo"}}, {"k": "Obavia", "v": "obavia.co", "href": "https://obavia.co", "kind": "obavia", "icon": {"src": "assets/brand/obavia-icon.png", "style": "full"}}, {"k": "Credentials", "v": "Credential and honor evidence", "href": "/credentials.html", "kind": "credentials", "icon": {"mono": "C"}}, {"k": "Degree", "v": "Associate degree PDF", "href": "assets/Jason_Obawemimo_Associate_Degree.pdf", "kind": "degree", "icon": {"mono": "SJ"}}, {"k": "Coursework", "v": "Anthropic certificates PDF", "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf", "kind": "certificates", "icon": {"src": "assets/brand/stack/claude.svg", "style": "ink"}}, {"k": "Public record", "v": "City of Pearland document", "href": "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland", "kind": "pearland", "icon": {"mono": "P"}}, {"k": "Older mentions", "v": "Reporter News, Pearland and Friendswood", "href": "/mentions.html", "kind": "mentions", "icon": {"mono": "R"}}, {"k": "Email", "v": "jobawems@gmail.com", "href": "mailto:jobawems@gmail.com", "kind": "email", "icon": {"sym": "i-mail"}}], "email": "jobawems@gmail.com", "calendar": "https://calendly.com/jason-apohenia/30min", "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26"}</script>
 
-<header class="bar" data-chrome>
-  <a class="bar__brand" href="#top" aria-label="Jason Obawemimo, back to the first frame">
-    <svg class="bar__mono" viewBox="0 0 34 40" aria-hidden="true"><path d="M22.5 3.5h9M27 3.5v22.5c0 5.6-3.4 9.6-8.6 9.6-4.6 0-7.9-2.9-8.4-7.4"/><path d="M4 12.5c1.2-4.6 4.3-7.4 8.5-7.4"/></svg>
-    <span class="bar__name">Jason Obawemimo</span>
-  </a>
-  <div class="bar__right">
-    <a class="bar__link bar__link--resume" href="#record" data-open="deck" data-where="bar" title="R also works">Resume</a>
-    <a class="bar__link" href="#verify" data-open="verify" data-where="bar" title="V also works">Check me</a>
-    <a class="bar__link" href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="bar">Talk</a>
-    <button class="bar__toggle" type="button" data-toggle="sound" aria-pressed="true">Sound</button>
-    <button class="bar__toggle" type="button" data-toggle="commentary" aria-pressed="false">Commentary</button>
-    <button class="bar__menu" type="button" aria-label="Open the menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+<!-- The compact bar: appears when the large title scrolls away, like iOS -->
+<header class="navbar" aria-label="Jason Obawemimo">
+  <a class="navbar__title" href="#top">Jason Obawemimo</a>
+  <div class="navbar__right">
+    <button class="navbar__btn navbar__sound" type="button" data-toggle="sound" data-icon aria-pressed="true" aria-label="Sound on"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><use href="#i-sound"/></svg></button>
+    <button class="bar__menu navbar__menu" type="button" aria-label="Open the menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
   </div>
 </header>
 
 <nav class="menu" id="menu" aria-label="Site">
   <div class="menu__list">
+    <button type="button" data-story-open="desk">Run the desk I built <small>P</small></button>
+    <button type="button" data-story-open="obavia">Obavia Desk <small>For Texas dealers</small></button>
+    <button type="button" data-story-open="lot">Triple J Auto Investment</button>
+    <button type="button" data-story-open="record">The record</button>
     <button type="button" data-open="deck" data-where="menu">Present the resume <small>R</small></button>
-    <a href="#desk">Run the desk <small>P</small></a>
-    <a href="#film">The real desk, 82 seconds</a>
-    <a href="#record">The record</a>
-    <a href="#listen">The one I'm building</a>
-    <a href="/obavia.html">The Obavia briefing <small>For agency owners</small></a>
-    <a href="/join.html">Sell Obavia with me <small>Setters and closers</small></a>
-    <button type="button" data-open="trailer" data-where="menu">Watch the trailer <small>60 seconds</small></button>
-    <button type="button" data-open="rig" data-where="menu">Show the rig <small>the key under Esc</small></button>
+    <button type="button" data-reel-play>Watch your cut <small>30 seconds, sound on</small></button>
     <button type="button" data-open="verify" data-where="menu">Check me <small>V</small></button>
+    <a href="/obavia.html">The Obavia Desk page <small>Early access</small></a>
     <a href="/?intro=1" data-cta="replay_intro">Replay the intro</a>
   </div>
   <div class="menu__toggles">
     <button class="chip" type="button" data-toggle="sound" aria-pressed="true">Sound</button>
-    <button class="chip" type="button" data-toggle="commentary" aria-pressed="false">Commentary</button>
     <button class="chip" type="button" data-toggle="still" aria-pressed="false">Still</button>
   </div>
   <p class="fine menu__note">I count visits and what gets watched through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit so I know who stopped by. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
 </nav>
 
-<nav class="dock" aria-label="Quick actions">
-  <a href="#record" data-open="deck" data-where="dock">Resume</a>
-  <a href="#verify" data-open="verify" data-where="dock">Check me</a>
-  <a href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="dock">Talk</a>
-</nav>
+<main id="top" class="today">
 
-<main id="top">
+  <!-- Large title, the App Store Today header -->
+  <header class="today__head">
+    <div>
+      <p class="today__date" data-today-date>Today</p>
+      <h1 class="today__title">Jason Obawemimo</h1>
+    </div>
+    <button class="today__avatar" type="button" data-open="verify" data-where="avatar" aria-label="Check me: every proof link">
+      <img src="assets/jason-headshot-620.webp" alt="" width="40" height="40" />
+    </button>
+  </header>
 
-  <!-- 1. The Slate. The ten-second answer, readable with nothing else loaded. -->
+  <!-- The ten-second answer, readable with nothing else loaded -->
   <section class="slate" id="slate" data-track="slate" aria-label="Jason Obawemimo, the short version">
-    <div class="slate__grid">
-      <figure class="slate__face">
-        <img src="assets/jason-headshot-900.webp" srcset="assets/jason-headshot-620.webp 620w, assets/jason-headshot-900.webp 900w" sizes="(max-width: 760px) 132px, 30vw" width="900" height="900" alt="Jason Obawemimo" fetchpriority="high" decoding="async" />
-      </figure>
-      <div class="slate__copy" data-rise>
-        <h1 class="slate__name"><span class="mask"><span>Jason</span></span><span class="mask"><span><em>Obawemimo</em></span></span></h1>
-        <svg class="slate__rule" viewBox="0 0 240 8" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5c40-3 80-3 118-1.5S200 6 238 3"/></svg>
-        <p class="slate__line">AI engineer and operator. Process audit first, then the system.</p>
-        <dl class="slate__rows"><div><dt>Obavia</dt><dd>Founder, since September 2024. A sales intelligence platform in development for agency owners.</dd></div><div><dt>Triple J</dt><dd>Co-owner and operator since August 2024. I built its sale desk.</dd></div><div><dt>Pearland</dt><dd>Texas.</dd></div><div><dt>Education</dt><dd>Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean&#x27;s Honor List.</dd></div></dl>
-        <div class="slate__actions">
-          <a class="btn btn--gold" href="#record" data-open="deck" data-where="slate">Resume</a>
-          <a class="btn" href="#desk" data-where="slate" data-cta="proof">Proof</a>
-          <a class="btn" href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="slate">Talk</a>
-          <a class="btn btn--ghost" href="#verify" data-open="verify" data-where="slate">Check me</a>
+    <div class="slate__card" data-rise>
+      <div class="slate__top">
+        <figure class="slate__face"><img src="assets/jason-headshot-620.webp" srcset="assets/jason-headshot-620.webp 620w, assets/jason-headshot-900.webp 900w" sizes="120px" width="620" height="620" alt="Jason Obawemimo" fetchpriority="high" decoding="async" /></figure>
+        <div>
+          <p class="slate__kicker">AI engineer and business operator</p>
+          <p class="slate__line">AI engineer and operator. Process audit first, then the system.</p>
         </div>
-        <p class="slate__pdf"><a class="textlink" href="assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26" data-resume="pdf" data-where="slate" download="Jason Obawemimo - Resume.pdf">One-page PDF</a> <span class="fine">That's the ten-second version. Everything below it is proof you can open.</span></p>
       </div>
-    </div>
-    <div class="cut" role="group" aria-labelledby="cut-q">
-      <p class="cut__q" id="cut-q">Want a different cut?</p>
-      <div class="cut__chips">
-        <button class="chip" type="button" data-cut="screening" aria-pressed="false">I'm screening you</button>
-        <a class="chip" href="/obavia.html" data-cut="agency">I run an agency</a>
-        <button class="chip" type="button" data-cut="trailer" aria-pressed="false">Just looking</button>
+      <dl class="slate__rows"><div><dt>Obavia</dt><dd>Founder, since September 2024. Building Obavia Desk, the sale desk I built at Triple J, for Texas independent dealers.</dd></div><div><dt>Triple J</dt><dd>Co-owner and operator since August 2024. I built its sale desk.</dd></div><div><dt>Pearland</dt><dd>Texas.</dd></div><div><dt>Education</dt><dd>Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean&#x27;s Honor List.</dd></div></dl>
+      <div class="slate__actions">
+        <a class="btn btn--gold" href="#record" data-open="deck" data-where="slate" data-resume="deck">Resume</a>
+        <a class="btn" href="#story-desk" data-story-open="desk" data-proof="desk">Proof</a>
+        <a class="btn" href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="slate">Talk</a>
+        <a class="btn" href="#verify" data-open="verify" data-where="slate">Check me</a>
       </div>
-      <p class="cut__join fine">Here to sell with me? <a class="textlink" href="/join.html" data-cta="join" data-where="slate">Setters and closers start here.</a></p>
+      <p class="slate__pdf"><a class="textlink" href="assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26" data-resume="pdf" data-where="slate" download="Jason Obawemimo - Resume.pdf">One-page PDF</a></p>
     </div>
   </section>
 
-  <!-- 2. Title card -->
-  <section class="card" id="desk-title" data-track="desk" data-scene="pass" aria-labelledby="desk-h">
-    <div class="card__inner" data-rise>
-      <h2 id="desk-h"><span class="mask"><span>Run the desk.</span></span></h2>
-      <p class="card__sub"><span class="mask"><span>This is how a sale works at Triple J. You're behind the desk this time.</span></span></p>
+  <!-- Live widgets -->
+  <section class="widgets" data-track="widgets" aria-label="Right now">
+    <div class="widget widget--clock" data-widget="clock">
+      <p class="widget__label">Houston</p>
+      <p class="widget__big" data-clock>9:41</p>
+      <p class="widget__small" data-clock-day>Central time</p>
+      <svg class="widget__dial" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/><line data-hand="h" x1="50" y1="50" x2="50" y2="28"/><line data-hand="m" x1="50" y1="50" x2="50" y2="14"/><line data-hand="s" x1="50" y1="56" x2="50" y2="10"/></svg>
     </div>
+    <a class="widget widget--lot" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-verify="triplej-widget">
+      <p class="widget__label">Triple J Auto</p>
+      <p class="widget__big" data-lot>Open</p>
+      <p class="widget__small" data-lot-note>Monday to Saturday, 9 to 7</p>
+    </a>
+    <a class="widget widget--num" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-verify="courses">
+      <p class="widget__label">Anthropic courses</p>
+      <p class="widget__big widget__big--serif" data-count="19">19</p>
+      <p class="widget__small">Completed. Certificates PDF.</p>
+    </a>
+    <a class="widget widget--num" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-verify="degree">
+      <p class="widget__label">GPA</p>
+      <p class="widget__big widget__big--serif" data-count="3.63" data-dec="2">3.63</p>
+      <p class="widget__small">Associate of Arts in Business. Dean's Honor List.</p>
+    </a>
   </section>
 
-  <!-- 3. Run the desk: the centerpiece, a sketch of the real Handle a Sale flow -->
-  <section class="desk" id="desk" data-track="desk" aria-label="Run the desk">
-    <div class="desk__frame">
-      <div class="desk__status" aria-hidden="true"><span>9:41</span><b>Handle a Sale</b><span class="desk__sig"></span></div>
-      <div class="desk__top">
-        <p class="desk__fiction">Fictional buyer, fictional deal.</p>
-        <ol class="desk__track" aria-hidden="true">
-          <li data-for="pay">Question</li><li data-for="files">Question</li><li data-for="scan">Scan</li><li data-for="math">Math</li><li data-for="lang">Language</li><li data-for="sign">Sign</li><li data-for="file">On file</li>
-        </ol>
-      </div>
+  <!-- The feed. Each card opens into its story. -->
+  <section class="feed" aria-label="Stories">
 
-      <ol class="desk__steps">
-        <li class="step" data-step="pay">
-          <fieldset>
-            <legend class="step__q">How is the buyer paying?</legend>
-            <p class="step__car fine">2019 Chevrolet Malibu</p>
-            <div class="step__opts">
-              <button class="opt" type="button" data-v="cash">Cash</button>
-              <button class="opt" type="button" data-v="bhph">Buy Here Pay Here <small>In-house financing</small></button>
-              <button class="opt" type="button" data-v="bank">Bank financing</button>
-            </div>
-          </fieldset>
-        </li>
-        <li class="step" data-step="files">
-          <fieldset>
-            <legend class="step__q">Who files the title and registration?</legend>
-            <p class="step__why fine">This decides most of the paperwork.</p>
-            <div class="step__opts">
-              <button class="opt" type="button" data-v="us">We do <small>We file it through webDEALER</small></button>
-              <button class="opt" type="button" data-v="customer">The customer does <small>They go to the county themselves</small></button>
-            </div>
-          </fieldset>
-        </li>
-        <li class="step" data-step="scan">
-          <div class="scan">
-            <div class="license" aria-hidden="true">
-              <span class="license__sample">Sample</span>
-              <span class="license__photo"></span>
-              <span class="license__name">JOHN A. MARTINEZ</span>
-              <span class="license__line">1402 ELM ST, HOUSTON TX</span>
-              <span class="license__line">DL 4821 **** 07</span>
-              <span class="license__beam"></span>
-            </div>
-            <div class="sheets" aria-hidden="true">
-              <div class="sheet"><b>Bill Of Sale</b><i data-f="name"></i><i data-f="addr"></i><i data-f="dl"></i></div>
-              <div class="sheet"><b>Form 130-U</b><i data-f="name"></i><i data-f="addr"></i><i data-f="dl"></i></div>
-              <div class="sheet"><b>Power Of Attorney</b><i data-f="name"></i><i data-f="addr"></i><i data-f="dl"></i></div>
-              <div class="sheet"><b>Vehicle Responsibility</b><i data-f="name"></i><i data-f="addr"></i><i data-f="dl"></i></div>
-            </div>
+    <article class="tcard tcard--video" id="story-desk" data-story="desk" data-track="desk">
+      <div class="tcard__hero">
+        <video class="tcard__bg" data-loop src="assets/film/loop-sale.mp4" poster="assets/film/loop-sale.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
+        <div class="tcard__shade" aria-hidden="true"></div>
+        <p class="tcard__label">The desk I built</p>
+        <div class="tcard__foot">
+          <h2 class="tcard__title">Every sale, <em>start to signed.</em></h2>
+          <p class="tcard__sub">Handle a Sale. Triple J closes sales on it. Run it yourself.</p>
+        </div>
+        <button class="tcard__open" type="button" aria-label="Open: the desk I built"></button>
+      </div>
+      <div class="tcard__body">
+        <p class="story__lead">I built the desk Triple J Auto Investment closes sales on. One plain question per screen. Scan the buyer's license once and every form fills itself. The money works itself out, and the buyer signs at the desk. <strong>Run a deal on it right here.</strong></p>
+        <div class="desk-demo">
+          <div class="iphone" data-desk-app aria-label="A demo of the desk, with a fictional buyer and example figures">
+            <noscript><p class="fine">The interactive desk needs JavaScript. The real film is below.</p></noscript>
           </div>
-          <p class="step__q">Scan the license once.</p>
-          <button class="hold" type="button" data-hold="scan" aria-describedby="scan-help"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/><circle class="hold__ring" cx="50" cy="50" r="46" pathLength="1"/></svg><span>Hold to scan</span></button>
-          <p class="fine" id="scan-help">Or tap once. Every form fills from one scan.</p>
-        </li>
-        <li class="step" data-step="math">
-          <fieldset>
-            <legend class="step__q">The car is marked $4,000. Does that include tax and fees?</legend>
-            <div class="step__opts">
-              <button class="opt" type="button" data-v="top">No <small>Tax and fees go on top</small></button>
-              <button class="opt" type="button" data-v="whole">Yes <small>That is the whole price</small></button>
-            </div>
-          </fieldset>
-          <dl class="ledger" aria-live="polite">
-            <div><dt>Car</dt><dd data-m="vehicle">$4,000.00</dd></div>
-            <div><dt>Sales tax</dt><dd data-m="tax">$250.00</dd></div>
-            <div><dt>Title fee</dt><dd data-m="title">$33.00</dd></div>
-            <div><dt>Doc fee</dt><dd data-m="doc">$292.00</dd></div>
-            <div><dt>Reg fee</dt><dd data-m="reg">$75.00</dd></div>
-            <div class="ledger__total"><dt>Total</dt><dd data-m="total">$4,650.00</dd></div>
-          </dl>
-          <p class="fine">Fictional figures. The desk does the math, so nobody reaches for a calculator.</p>
-        </li>
-        <li class="step" data-step="lang">
-          <div class="lang">
-            <div class="lang__switch" role="radiogroup" aria-label="Language">
-              <button type="button" role="radio" aria-checked="true" data-lang="en">English</button>
-              <button type="button" role="radio" aria-checked="false" data-lang="es">Espa&ntilde;ol</button>
-            </div>
-            <div class="lang__card">
-              <p class="step__q" data-en="Who files the title and registration?" data-es="&iquest;Qui&eacute;n tramita el t&iacute;tulo (title) y las placas?">Who files the title and registration?</p>
-              <p class="lang__opt"><b data-en="We do" data-es="Nosotros">We do</b> <span data-en="We file it through webDEALER" data-es="Lo tramitamos por webDEALER">We file it through webDEALER</span></p>
-              <p class="lang__opt"><b data-en="The customer does" data-es="El cliente">The customer does</b> <span data-en="They go to the county themselves" data-es="El cliente lo hace en el condado">They go to the county themselves</span></p>
-            </div>
-            <div class="lang__doc">
-              <b data-en="Bill Of Sale" data-es="Factura de venta">Bill Of Sale</b>
-              <p><span data-en="Vehicle" data-es="Veh&iacute;culo">Vehicle</span> <i>2019 Chevrolet Malibu LT</i></p>
-              <p><span data-en="Odometer" data-es="Od&oacute;metro">Odometer</span> <i>61,204 mi</i></p>
-            </div>
+          <ol class="desk-demo__notes" data-desk-notes>
+            <li data-note="car"><b>Pick the car.</b> From the lot, in one tap.</li>
+            <li data-note="odo"><b>The odometer.</b> Read back so nobody fat-fingers it.</li>
+            <li data-note="scan"><b>Scan the license once.</b> Name, address and license number land on every form.</li>
+            <li data-note="pay"><b>How they're paying.</b> Cash, buy here pay here, or the bank.</li>
+            <li data-note="money"><b>The money.</b> Tax, title, registration and the doc fee, worked out live.</li>
+            <li data-note="docs"><b>The paperwork.</b> Only the forms this deal needs.</li>
+            <li data-note="sign"><b>Signed at the desk.</b> The buyer reads, signs with a finger, done.</li>
+          </ol>
+        </div>
+        <p class="fine story__fiction">The buyer, the cars and the figures in this demo are fictional.</p>
+        <h3 class="story__h">The real one, 82 seconds.</h3>
+        <div class="film-frame">
+          <video data-film="sale-desk" src="assets/film/triple-j-sale-desk.mp4" poster="assets/film/triple-j-sale-desk.jpg" playsinline preload="none" controls></video>
+        </div>
+        <ul class="group story__facts">
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>English or Spanish</b> <span>Every question and every form.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>Nothing missing, nothing extra</b> <span>The deal decides which papers print.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>Every sale on file</b> <span>Signed or waiting on ink, in one list.</span></span></li>
+        </ul>
+        <button class="btn btn--gold story__next" type="button" data-story-open="obavia">Where it's going: Obavia Desk</button>
+      </div>
+    </article>
+
+    <article class="tcard tcard--video" id="story-obavia" data-story="obavia" data-track="obavia">
+      <div class="tcard__hero">
+        <video class="tcard__bg" data-loop src="assets/film/loop-find.mp4" poster="assets/film/loop-find.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
+        <div class="tcard__shade" aria-hidden="true"></div>
+        <p class="tcard__label">Now building</p>
+        <div class="tcard__foot">
+          <span class="appicon tcard__icon"><img src="assets/brand/obavia-icon.png" alt="" /></span>
+          <h2 class="tcard__title">Obavia <em>Desk.</em></h2>
+          <p class="tcard__sub">The desk from my lot, for Texas independent dealers. In development.</p>
+        </div>
+        <button class="tcard__open" type="button" aria-label="Open: Obavia Desk"></button>
+      </div>
+      <div class="tcard__body">
+        <p class="story__lead">Obavia is the company I founded. Its product is <strong>Obavia Desk</strong>: the sale desk I built at Triple J, made for every Texas independent dealer. Pick the car, take the buyer's details, work out the money and print the paperwork in your name. Then the buyer signs at the desk. One question per screen, so anyone on your lot can run it.</p>
+        <div class="film-frame">
+          <video data-film="obavia-desk" src="assets/film/obavia-desk.mp4" poster="assets/film/obavia-desk.jpg" playsinline preload="none" controls></video>
+        </div>
+        <p class="fine story__fiction">Cut from real Desk screens. People and figures in the film are fictional.</p>
+        <ul class="group story__facts">
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-car"/></svg></span><span class="row__txt"><b>Cash, buy here pay here or bank</b> <span>Texas sales tax, title, registration and your doc fee, worked out on every deal.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>The bill of sale and the 130-U</b> <span>Filled from the deal, in your name.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>Rebuilt and salvage titles</b> <span>Their own disclosures, every time.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>Ink where ink is required</b> <span>Those forms print for ink, never a screen.</span></span></li>
+        </ul>
+        <h3 class="story__h">In development. None of these is live yet.</h3>
+        <ul class="group story__facts story__facts--soon">
+          <li class="row"><span class="row__txt"><b>Text it to sign</b> <span>The buyer signs on their own phone.</span></span></li>
+          <li class="row"><span class="row__txt"><b>Reach</b> <span>Post each car once; list it on Facebook Marketplace from your phone, after you accept the terms.</span></span></li>
+          <li class="row"><span class="row__txt"><b>Your website</b> <span>Every car on your lot, from the Desk, gone when it sells.</span></span></li>
+        </ul>
+        <div class="story__ctas">
+          <a class="btn btn--gold" href="/obavia.html#early" data-cta="early_access">Ask for early access</a>
+          <a class="btn" href="/obavia.html" data-cta="obavia_page">The Obavia Desk page</a>
+        </div>
+        <p class="fine">No price is published yet. Asking for early access doesn't create an account.</p>
+      </div>
+    </article>
+
+    <article class="tcard tcard--photo" id="story-lot" data-story="lot" data-track="lot">
+      <div class="tcard__hero">
+        <img class="tcard__bg" src="assets/brand/triplej-og.jpg" alt="" loading="lazy" />
+        <div class="tcard__shade" aria-hidden="true"></div>
+        <p class="tcard__label">The operator</p>
+        <div class="tcard__foot">
+          <h2 class="tcard__title">Triple J Auto <em>Investment.</em></h2>
+          <p class="tcard__sub">The Houston dealership I co-own and run, since August 2024.</p>
+        </div>
+        <button class="tcard__open" type="button" aria-label="Open: Triple J Auto Investment"></button>
+      </div>
+      <div class="tcard__body">
+        <p class="story__lead">I run the daily operation: customer intake, vehicle pricing, inventory, scheduling and vendors. I write the intake scripts and procedures, and I negotiate the prices and the financing. Cars, trucks and SUVs, with in-house financing, sell and trade valuations, and registration and title support.</p>
+        <blockquote class="story__quote">Clear vehicles. Clear terms. <em>Real people.</em></blockquote>
+        <ul class="group story__facts">
+          <li class="row"><span class="appicon appicon--sm appicon--logo"><img src="assets/brand/triplej-logo.png" alt="" /></span><span class="row__txt"><b data-lot-status>Triple J</b> <span>8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.</span></span></li>
+        </ul>
+        <div class="story__ctas"><a class="btn" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-verify="triplej">thetriplejauto.com</a></div>
+      </div>
+    </article>
+
+    <article class="tcard tcard--record" id="story-record" data-story="record" data-track="record">
+      <div class="tcard__hero">
+        <img class="tcard__bg tcard__bg--face" src="assets/jason-headshot-900.webp" alt="" loading="lazy" />
+        <div class="tcard__shade" aria-hidden="true"></div>
+        <p class="tcard__label">The record</p>
+        <div class="tcard__foot">
+          <h2 class="tcard__title">Process audit first. <em>Then the system.</em></h2>
+          <p class="tcard__sub">Founder, operator, 19 courses, a 3.63. Every line checks out.</p>
+        </div>
+        <button class="tcard__open" type="button" aria-label="Open: the record"></button>
+      </div>
+      <div class="tcard__body" id="record">
+        <div class="story__ctas">
+          <button class="btn btn--gold" type="button" data-open="deck" data-where="record">Present it</button>
+          <a class="btn" href="assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26" data-resume="pdf" data-where="record" download="Jason Obawemimo - Resume.pdf">One-page PDF</a>
+        </div>
+        <ol class="record__list"><li class="entry" data-entry="obavia"><div class="entry__head"><span class="appicon" aria-hidden="true"><img src="assets/brand/obavia-icon.png" alt="" loading="lazy" /></span><div><h3 class="entry__role">Founder</h3><p class="entry__org">Obavia</p><p class="entry__when">September 2024 to now. In development.</p></div></div><p class="entry__text">Obavia Desk: every sale, start to signed, for Texas independent dealers. Pick the car, take the buyer&#x27;s details, work out the money and print the paperwork in the dealer&#x27;s name, then the buyer signs at the desk. One question per screen. It grew out of Handle a Sale, the desk I built at Triple J, and it&#x27;s being built on that floor.</p><p class="entry__proof"><a class="chip chip--proof" href="/obavia.html" data-proof="The briefing">The briefing</a> <a class="chip chip--proof" href="https://obavia.co" target="_blank" rel="noopener" data-proof="obavia.co">obavia.co</a></p></li><li class="entry" data-entry="triplej"><div class="entry__head"><span class="appicon appicon--logo" aria-hidden="true"><img src="assets/brand/triplej-logo.png" alt="" loading="lazy" /></span><div><h3 class="entry__role">Co-owner and operator</h3><p class="entry__org">Triple J Auto Investment, Houston</p><p class="entry__when">August 2024 to now</p></div></div><p class="entry__text">A used vehicle dealership with in-house financing, sell and trade valuations, and registration and title support. I run daily operations: customer intake, vehicle pricing, inventory, scheduling and vendor coordination, and I negotiate prices and financing. I built Handle a Sale, the desk it closes sales on, and software for a former rental operation, by writing the requirements and directing AI-assisted development.</p><p class="entry__proof"><a class="chip chip--proof" href="#film" data-proof="The film">The film</a> <a class="chip chip--proof" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-proof="thetriplejauto.com">thetriplejauto.com</a></p></li><li class="entry" data-entry="build"><div class="entry__head"><span class="appicon" aria-hidden="true"><span class="appicon__mono">J</span></span><div><h3 class="entry__role">How I work</h3><p class="entry__org">Process audit first</p></div></div><p class="entry__text">I find where work gets delayed, information gets lost, or people repeat tasks. Then I turn that into requirements and procedures, and build AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, with a human checking the work.</p><p class="entry__proof"><a class="chip chip--proof" href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener" data-proof="This site&#x27;s source">This site&#x27;s source</a></p></li><li class="entry" data-entry="tools"><div class="entry__head"><div><h3 class="entry__role">Tools</h3><p class="entry__org">What I build with</p></div></div><p class="entry__text">Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.<span class="stack"><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/supabase.svg" alt="Supabase" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/postgresql.svg" alt="Postgresql" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/vercel.svg" alt="Vercel" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/claude.svg" alt="Claude" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/modelcontextprotocol.svg" alt="Modelcontextprotocol" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/github.svg" alt="Github" width="20" height="20" loading="lazy" /></span></span></p><p class="entry__proof"><a class="chip chip--proof" href="https://github.com/whoisjaso" target="_blank" rel="noopener" data-proof="GitHub whoisjaso">GitHub whoisjaso</a></p></li><li class="entry" data-entry="education"><div class="entry__head"><span class="appicon" aria-hidden="true"><span class="appicon__mono">SJ</span></span><div><h3 class="entry__role">Associate of Arts in Business</h3><p class="entry__org">San Jacinto College</p><p class="entry__when">May 2026</p></div></div><p class="entry__text">GPA 3.63, Dean&#x27;s Honor List. Pursuing a bachelor&#x27;s in neuroscience, expected 2027.</p><p class="entry__proof"><a class="chip chip--proof" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-proof="Degree PDF">Degree PDF</a></p></li><li class="entry" data-entry="coursework"><div class="entry__head"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/anthropic.svg" alt="" loading="lazy" /></span><div><h3 class="entry__role">Anthropic coursework</h3><p class="entry__org">Nineteen completed courses</p></div></div><p class="entry__text">Claude, Claude Code, the Claude API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI and the AI Fluency series.</p><p class="entry__proof"><a class="chip chip--proof" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-proof="Certificates PDF">Certificates PDF</a> <a class="chip chip--proof" href="/credentials.html" data-proof="Credential proof">Credential proof</a></p></li></ol>
+        <details class="record__courses">
+          <summary>The nineteen Anthropic courses</summary>
+          <ul><li>Claude 101</li><li>Claude Code 101</li><li>Claude Platform 101</li><li>Introduction to Claude Cowork</li><li>Claude Code in Action</li><li>AI Fluency: Framework and Foundations</li><li>Building with the Claude API</li><li>Introduction to Model Context Protocol</li><li>AI Fluency for educators</li><li>AI Fluency for students</li><li>Model Context Protocol: Advanced Topics</li><li>Claude with Amazon Bedrock</li><li>Claude with Google Cloud Vertex AI</li><li>Teaching AI Fluency</li><li>AI Fluency for nonprofits</li><li>Introduction to agent skills</li><li>Introduction to subagents</li><li>AI Capabilities and Limitations</li><li>AI Fluency for Small Businesses</li></ul>
+        </details>
+      </div>
+    </article>
+
+    <article class="tcard tcard--cut" data-track="cut">
+      <div class="tcard__hero">
+        <canvas class="tcard__scope" data-card-scope aria-hidden="true"></canvas>
+        <p class="tcard__label">Your cut</p>
+        <div class="tcard__foot">
+          <h2 class="tcard__title">Thirty seconds. <em>Sound on.</em></h2>
+          <p class="tcard__sub">The music isn't a file. Your browser plays it live.</p>
+          <div class="tcard__chips">
+            <button class="chip" type="button" data-cut="screening">I'm hiring</button>
+            <button class="chip" type="button" data-cut="dealer">I run a dealership</button>
+            <button class="chip" type="button" data-cut="trailer">Just looking</button>
           </div>
-          <p class="fine">Same deal, in the desk's own Spanish. One tap.</p>
-        </li>
-        <li class="step" data-step="sign">
-          <div class="sign">
-            <p class="sign__dealer"><span class="fine">Dealer</span> <i>Jason Obawemimo</i></p>
-            <div class="sign__pad"><canvas aria-label="Signature pad. Draw the buyer's signature, or use Type it instead." role="img"></canvas><span class="sign__x" aria-hidden="true">x</span><span class="sign__typed" aria-hidden="true"></span></div>
-            <p class="fine"><span class="sign__label">Buyer</span>. The buyer can sign on their phone or in person.</p>
-          </div>
-          <div class="step__opts step__opts--row">
-            <button class="btn btn--gold btn--sm" type="button" data-sign="done">Sign and finish</button>
-            <button class="btn btn--sm" type="button" data-sign="type">Type it instead</button>
-          </div>
-        </li>
-        <li class="step" data-step="file">
-          <div class="file">
-            <p class="file__search fine">Search a name, a VIN</p>
-            <ul class="file__list">
-              <li class="file__new"><b>J. Martinez</b> <span>Bill Of Sale, Form 130-U, Power Of Attorney, Vehicle Responsibility</span></li>
-              <li><b>R. Alvarez</b> <span>Bill Of Sale, Form 130-U, Financing Contract</span></li>
-              <li><b>T. Nguyen</b> <span>Bill Of Sale, Form 130-U</span></li>
-              <li><b>K. Brooks</b> <span>Bill Of Sale, Insurance Acknowledgment</span></li>
-            </ul>
-          </div>
-          <p class="step__q">Saved on file. Nothing missing. Nothing extra.</p>
-        </li>
-      </ol>
-
-      <div class="desk__controls">
-        <a class="textlink" href="#film" data-desk="skip">Skip to the film</a>
-        <button class="textlink" type="button" data-desk="restart" hidden>Start over</button>
+        </div>
+        <button class="tcard__open" type="button" data-reel-play aria-label="Play your cut"></button>
       </div>
-      <p class="vh" aria-live="polite" data-desk-live></p>
-    </div>
+    </article>
 
-    <div class="reveal" id="desk-reveal" hidden>
-      <p class="reveal__kicker label">That was the sketch.</p>
-      <h3 class="reveal__line">That's the desk Triple J closes sales on. <em>I built it.</em></h3>
-      <figure class="reveal__still"><img src="assets/brand/triplej-og.jpg" width="1200" height="630" alt="From thetriplejauto.com" loading="lazy" decoding="async" /><figcaption class="fine">From thetriplejauto.com</figcaption></figure>
-      <p class="reveal__place">Triple J Auto Investment, 8774 Almeda Genoa Rd, Houston. Open Monday to Saturday, 9 to 7.</p>
-      <div class="reveal__actions">
-        <a class="btn btn--gold" href="#film" data-cta="film" data-where="reveal">Watch the real one, 82 seconds</a>
-        <a class="btn" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-cta="triplej" data-where="reveal">thetriplejauto.com</a>
+    <article class="tcard tcard--check" id="story-check" data-story="check" data-track="credits">
+      <div class="tcard__hero">
+        <div class="tcard__checks" aria-hidden="true"><span>LinkedIn</span><span>GitHub</span><span>Triple J</span><span>Degree</span><span>Coursework</span><span>Public record</span></div>
+        <p class="tcard__label">Check me</p>
+        <div class="tcard__foot">
+          <h2 class="tcard__title">Don't take <em>my word for it.</em></h2>
+          <p class="tcard__sub">Same name, same titles, same town on every one.</p>
+        </div>
+        <button class="tcard__open" type="button" aria-label="Open: check me"></button>
       </div>
-    </div>
-  </section>
-
-  <!-- 4. The real film, chaptered -->
-  <section class="film" id="film" data-track="film" data-scene="pass" aria-labelledby="film-h">
-    <div class="film__head">
-      <p class="label">That was the sketch. This is the real one.</p>
-      <h2 id="film-h">Handle a Sale.</h2>
-    </div>
-    <div class="film__frame" data-cue=".04,.34">
-      <video preload="none" playsinline poster="assets/film/triple-j-sale-desk.jpg" data-film="sale-desk" aria-label="Handle a Sale, Triple J's sale desk, 82 second film">
-        <source src="assets/film/triple-j-sale-desk.mp4" type="video/mp4" />
-      </video>
-      <button class="film__play" type="button" data-play="sale-desk"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-play"/></svg><span>Play, with sound</span></button>
-    </div>
-    <ol class="chapters" aria-label="Chapters">
-      <li><button type="button" data-seek="5.3">The old way</button></li>
-      <li><button type="button" data-seek="28.4">Question</button></li>
-      <li><button type="button" data-seek="37.3">Scan</button></li>
-      <li><button type="button" data-seek="43.0">Math</button></li>
-      <li><button type="button" data-seek="49.0">Documents</button></li>
-      <li><button type="button" data-seek="54.7">Language</button></li>
-      <li><button type="button" data-seek="57.9">Sign</button></li>
-      <li><button type="button" data-seek="63.9">On file</button></li>
-    </ol>
-    <div class="film__foot">
-      <p class="lede">Every sale is saved on file, in English or Spanish, with the buyer signing on their phone or in person.</p>
-      <details class="transcript">
-        <summary>Read it instead</summary>
-        <p>Still typing the same buyer into every single form? There's a faster way to close a sale. A generic bill of sale off the internet. A 130-U, filled in by hand. Registration math on a calculator. Cash or financed. Insured or not. Salvage or clean. Every answer changes the paperwork. And the whole time, the customer waits. Miss one form, and the deal comes right back to your desk.</p>
-        <p>So we built a sale desk that already knows the paperwork. Handle a Sale asks one plain question at a time. How are they paying? Who files the registration? Just tap the answer. Scan their license once. Every form fills itself. Nothing typed twice. Priced at $4,000, with registration or without? The math is already done. Every answer routes the deal. The right documents. Nothing missing. Nothing extra. In English, or in Spanish, with one tap.</p>
-        <p>Your signature is already on them. The customer signs on their phone, or in person. And every sale is saved. If the DMV asks, or the customer calls back, it's all on file. Anyone on your team can close it fast, and right. Triple J. Handle a Sale.</p>
-      </details>
-      <p class="ask"><span>Ask me on the call: why does the desk ask one question at a time instead of showing the whole form?</span> <button class="chip chip--proof" type="button" data-ask="Why does the desk ask one question at a time instead of showing the whole form?" aria-pressed="false">Add to my questions</button></p>
-    </div>
-  </section>
-
-  <!-- 5. The record: the whole resume, plain -->
-  <section class="record" id="record" data-track="record" aria-labelledby="record-h">
-    <div class="record__head">
-      <h2 id="record-h">The record.</h2>
-      <div class="record__actions">
-        <button class="btn btn--gold" type="button" data-open="deck" data-where="record">Present it</button>
-        <a class="btn" href="assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26" data-resume="pdf" data-where="record" download="Jason Obawemimo - Resume.pdf">PDF, one page</a>
+      <div class="tcard__body">
+        <section class="verify-list" id="verify" aria-labelledby="verify-h">
+          <h3 class="story__h" id="verify-h">Every claim, with the page behind it.</h3>
+          <ul class="group"><li><a class="row" href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" target="_blank" rel="noopener" data-verify="linkedin"><span class="appicon appicon--logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--ivory);fill:currentColor"><use href="#i-linkedin"/></svg></span><span class="row__txt"><b>LinkedIn</b> <span>Jason Obawemimo</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://github.com/whoisjaso" target="_blank" rel="noopener" data-verify="github"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/github.svg" alt="" loading="lazy" /></span><span class="row__txt"><b>GitHub</b> <span>whoisjaso</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener" data-verify="source"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/github.svg" alt="" loading="lazy" /></span><span class="row__txt"><b>This site&#x27;s source</b> <span>github.com/whoisjaso/jasonresume</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-verify="triplej"><span class="appicon appicon--logo" aria-hidden="true"><img src="assets/brand/triplej-logo.png" alt="" loading="lazy" /></span><span class="row__txt"><b>Triple J Auto Investment</b> <span>8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://obavia.co" target="_blank" rel="noopener" data-verify="obavia"><span class="appicon" aria-hidden="true"><img src="assets/brand/obavia-icon.png" alt="" loading="lazy" /></span><span class="row__txt"><b>Obavia</b> <span>obavia.co</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="/credentials.html" data-verify="credentials"><span class="appicon" aria-hidden="true"><span class="appicon__mono">C</span></span><span class="row__txt"><b>Credentials</b> <span>Credential and honor evidence</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-verify="degree"><span class="appicon" aria-hidden="true"><span class="appicon__mono">SJ</span></span><span class="row__txt"><b>Degree</b> <span>Associate degree PDF</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-verify="certificates"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/claude.svg" alt="" loading="lazy" /></span><span class="row__txt"><b>Coursework</b> <span>Anthropic certificates PDF</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&amp;id=1827555&amp;repo=City-Of-Pearland" target="_blank" rel="noopener" data-verify="pearland"><span class="appicon" aria-hidden="true"><span class="appicon__mono">P</span></span><span class="row__txt"><b>Public record</b> <span>City of Pearland document</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="/mentions.html" data-verify="mentions"><span class="appicon" aria-hidden="true"><span class="appicon__mono">R</span></span><span class="row__txt"><b>Older mentions</b> <span>Reporter News, Pearland and Friendswood</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="mailto:jobawems@gmail.com" data-verify="email"><span class="appicon appicon--logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--ivory);fill:currentColor"><use href="#i-mail"/></svg></span><span class="row__txt"><b>Email</b> <span>jobawems@gmail.com</span></span><i class="row__chev" aria-hidden="true"></i></a></li></ul>
+        </section>
       </div>
-    </div>
-    <ol class="record__list"><li class="entry" data-entry="obavia"><div class="entry__head"><span class="appicon" aria-hidden="true"><img src="assets/brand/obavia-icon.png" alt="" loading="lazy" /></span><div><h3 class="entry__role">Founder</h3><p class="entry__org">Obavia</p><p class="entry__when">September 2024 to now. In development.</p></div></div><p class="entry__text">A sales intelligence platform for agency owners at $100K to $1M a month and their own setters and closers. It follows a sale through six stages, from the first inquiry to collected cash. I&#x27;m designing how it picks out a buyer&#x27;s meaningful words, stated interests and motives, then gives the rep context for what to say or ask next.</p><p class="entry__proof"><a class="chip chip--proof" href="/obavia.html" data-proof="The briefing">The briefing</a> <a class="chip chip--proof" href="https://obavia.co" target="_blank" rel="noopener" data-proof="obavia.co">obavia.co</a></p></li><li class="entry" data-entry="triplej"><div class="entry__head"><span class="appicon appicon--logo" aria-hidden="true"><img src="assets/brand/triplej-logo.png" alt="" loading="lazy" /></span><div><h3 class="entry__role">Co-owner and operator</h3><p class="entry__org">Triple J Auto Investment, Houston</p><p class="entry__when">August 2024 to now</p></div></div><p class="entry__text">A used vehicle dealership with in-house financing, sell and trade valuations, and registration and title support. I run daily operations: customer intake, vehicle pricing, inventory, scheduling and vendor coordination, and I negotiate prices and financing. I built Handle a Sale, the desk it closes sales on, and software for a former rental operation, by writing the requirements and directing AI-assisted development.</p><p class="entry__proof"><a class="chip chip--proof" href="#film" data-proof="The film">The film</a> <a class="chip chip--proof" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-proof="thetriplejauto.com">thetriplejauto.com</a></p></li><li class="entry" data-entry="build"><div class="entry__head"><span class="appicon" aria-hidden="true"><span class="appicon__mono">J</span></span><div><h3 class="entry__role">How I work</h3><p class="entry__org">Process audit first</p></div></div><p class="entry__text">I find where work gets delayed, information gets lost, or people repeat tasks. Then I turn that into requirements and procedures, and build AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, with a human checking the work.</p><p class="entry__proof"><a class="chip chip--proof" href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener" data-proof="This site&#x27;s source">This site&#x27;s source</a></p></li><li class="entry" data-entry="tools"><div class="entry__head"><div><h3 class="entry__role">Tools</h3><p class="entry__org">What I build with</p></div></div><p class="entry__text">Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.<span class="stack"><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/supabase.svg" alt="Supabase" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/postgresql.svg" alt="Postgresql" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/vercel.svg" alt="Vercel" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/claude.svg" alt="Claude" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/modelcontextprotocol.svg" alt="Modelcontextprotocol" width="20" height="20" loading="lazy" /></span><span class="appicon appicon--sm appicon--logo appicon--ink"><img src="assets/brand/stack/github.svg" alt="Github" width="20" height="20" loading="lazy" /></span></span></p><p class="entry__proof"><a class="chip chip--proof" href="https://github.com/whoisjaso" target="_blank" rel="noopener" data-proof="GitHub whoisjaso">GitHub whoisjaso</a></p></li><li class="entry" data-entry="education"><div class="entry__head"><span class="appicon" aria-hidden="true"><span class="appicon__mono">SJ</span></span><div><h3 class="entry__role">Associate of Arts in Business</h3><p class="entry__org">San Jacinto College</p><p class="entry__when">May 2026</p></div></div><p class="entry__text">GPA 3.63, Dean&#x27;s Honor List. Pursuing a bachelor&#x27;s in neuroscience, expected 2027.</p><p class="entry__proof"><a class="chip chip--proof" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-proof="Degree PDF">Degree PDF</a></p></li><li class="entry" data-entry="coursework"><div class="entry__head"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/anthropic.svg" alt="" loading="lazy" /></span><div><h3 class="entry__role">Anthropic coursework</h3><p class="entry__org">Nineteen completed courses</p></div></div><p class="entry__text">Claude, Claude Code, the Claude API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI and the AI Fluency series.</p><p class="entry__proof"><a class="chip chip--proof" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-proof="Certificates PDF">Certificates PDF</a> <a class="chip chip--proof" href="/credentials.html" data-proof="Credential proof">Credential proof</a></p></li></ol>
-    <details class="courses">
-      <summary>See all nineteen Anthropic courses</summary>
-      <ul><li>Claude 101</li><li>Claude Code 101</li><li>Claude Platform 101</li><li>Introduction to Claude Cowork</li><li>Claude Code in Action</li><li>AI Fluency: Framework and Foundations</li><li>Building with the Claude API</li><li>Introduction to Model Context Protocol</li><li>AI Fluency for educators</li><li>AI Fluency for students</li><li>Model Context Protocol: Advanced Topics</li><li>Claude with Amazon Bedrock</li><li>Claude with Google Cloud Vertex AI</li><li>Teaching AI Fluency</li><li>AI Fluency for nonprofits</li><li>Introduction to agent skills</li><li>Introduction to subagents</li><li>AI Capabilities and Limitations</li><li>AI Fluency for Small Businesses</li></ul>
-    </details>
+    </article>
+
   </section>
 
-  <!-- 6. The one I'm building: Obavia and Mark the Words -->
-  <section class="card card--short" id="listen-title" data-track="obavia" data-scene="pass" aria-labelledby="listen-h">
-    <div class="card__inner" data-rise>
-      <h2 id="listen-h"><span class="mask"><span>The one I'm building.</span></span></h2>
-    </div>
-  </section>
-  <section class="listen" id="listen" data-track="obavia" data-scene="pass" aria-label="Obavia and the listening exercise">
-    <div class="listen__intro">
-      <img class="listen__mark" src="assets/brand/obavia-mark.svg" width="48" height="48" alt="" />
-      <p class="lede">Obavia is sales software for agency owners at $100K to $1M a month and their own setters and closers. It's in development and not live yet. The rule is simple: listen to the person.</p>
-    </div>
-    <div class="mark" data-mark-game>
-      <p class="mark__fiction label">Fictional buyer.</p>
-      <p class="mark__sentence" data-sentence="0">&ldquo;We paid an agency last year and I never knew who was actually on my account.&rdquo;</p>
-      <p class="mark__prompt">Tap the words a closer should carry into the next call.</p>
-      <div class="mark__actions">
-        <button class="btn btn--gold btn--sm" type="button" data-mark="show" disabled>Show me</button>
-        <button class="textlink" type="button" data-mark="just">Just show me</button>
-        <button class="textlink" type="button" data-mark="next" hidden>Try another sentence</button>
-      </div>
-      <div class="mark__reveal" hidden>
-        <p class="label">The question I'd ask</p>
-        <p class="mark__question"></p>
-        <p class="fine">Ask with their words, not your script.</p>
-      </div>
-    </div>
-    <ol class="thread" data-cue=".35,.7" aria-label="The six stages">
-      <li><b>Capture</b> <span>The inquiry becomes a lead.</span></li>
-      <li><b>Connect</b> <span>One owner. The buyer's exact words.</span></li>
-      <li><b>Book</b> <span>A call with a clear purpose.</span></li>
-      <li><b>Discover</b> <span>Fit, from what actually happened.</span></li>
-      <li><b>Agree</b> <span>The buyer's words reach the closer.</span></li>
-      <li><b>Collect</b> <span>Cash, counted when verified.</span></li>
-    </ol>
-    <p class="listen__more"><a class="btn btn--wrap" href="/obavia.html" data-cta="briefing" data-where="listen">The full briefing: both films and planned pricing</a></p>
-  </section>
-
-  <!-- 7. Questions worth asking me -->
-  <section class="questions" id="questions" data-track="questions" aria-labelledby="questions-h">
-    <h2 id="questions-h">Questions worth asking me.</h2>
-    <ul class="questions__list">
-      <li><p>Why does the desk ask one question at a time instead of showing the whole form?</p><button class="chip chip--proof" type="button" data-ask="Why does the desk ask one question at a time instead of showing the whole form?" aria-pressed="false">Add to my questions</button></li>
-      <li><p>What does Obavia deliberately leave out while it's in development, and why?</p><button class="chip chip--proof" type="button" data-ask="What does Obavia deliberately leave out while it's in development, and why?" aria-pressed="false">Add to my questions</button></li>
-      <li><p>How did you build this site without a framework, and what would you change?</p><button class="chip chip--proof" type="button" data-ask="How did you build this site without a framework, and what would you change?" aria-pressed="false">Add to my questions</button></li>
-    </ul>
-    <div class="questions__mine" data-questions hidden>
-      <p class="label">Your questions for the call</p>
-      <ol></ol>
-      <div class="questions__actions">
-        <a class="btn btn--gold btn--sm" href="mailto:jobawems@gmail.com" data-questions-mail>Email me these</a>
-        <button class="btn btn--sm" type="button" data-questions-copy>Copy</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 8. You're standing in it: colophon and the rig -->
-  <section class="rig-scene" id="rig" data-track="rig" aria-labelledby="rig-h">
-    <div class="rig-scene__copy">
-      <h2 id="rig-h">You're standing in it.</h2>
-      <p class="lede">I designed and built this site: plain HTML, CSS and JavaScript, no framework, no build step, deployed on Vercel. Claude and Codex helped me write it. The source is public, so you can check how any of it works.</p>
-      <p class="rig-scene__links"><a class="textlink" href="https://github.com/whoisjaso/jasonresume/blob/main/cinema.js" target="_blank" rel="noopener" data-cta="source" data-where="rig">Read the projector</a> <a class="textlink" href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener" data-cta="source" data-where="rig">The whole source</a></p>
-    </div>
-    <div class="rig-scene__switches">
-      <button class="switch" type="button" role="switch" aria-checked="false" data-open="rig"><span class="switch__knob"></span><span>Show the rig</span></button>
-      <button class="switch" type="button" role="switch" aria-checked="false" data-open="cues"><span class="switch__knob"></span><span>Show what this visit records</span></button>
-      <p class="fine">The rig outlines every scene with its live clock, the page's weight so far and every script it loaded. The second switch lists every event your visit has queued, in plain words.</p>
-    </div>
-  </section>
-
-  <!-- 9. Your move -->
+  <!-- The next move -->
   <section class="move" id="move" data-track="move" aria-labelledby="move-h">
-    <div class="move__inner" data-rise>
-      <h2 id="move-h"><span class="mask"><span>Your move.</span></span></h2>
-      <p class="lede">If you need someone who builds the system and then runs it, that's what I do at Triple J.</p>
-      <p class="move__proof fine">The proof: <a class="textlink" href="#film">the desk film, 82 seconds</a> and <a class="textlink" href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener" data-cta="source" data-where="move">this site's source</a>.</p>
-      <div class="move__actions" data-move>
-        <a class="btn btn--gold" href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="move" data-move-primary>Email me</a>
-        <a class="btn" href="https://calendly.com/jason-apohenia/30min" target="_blank" rel="noopener" data-book="move">If a time is easier, pick 30 minutes</a>
-      </div>
-      <p class="move__email fine"><span class="move__addr">jobawems@gmail.com</span> <button class="textlink" type="button" data-copy="jobawems@gmail.com">Copy</button></p>
-      <p class="fine">Here to sell Obavia with me? <a class="textlink" href="/join.html" data-cta="join" data-where="move">Setters and closers apply here.</a></p>
+    <h2 class="move__h" id="move-h">Your <em>move.</em></h2>
+    <p class="move__p">If I'm a fit, email is fastest. If a time is easier, pick thirty minutes.</p>
+    <div class="move__actions" data-move>
+      <a class="btn btn--gold" href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="move" data-move-primary>Email me</a>
+      <a class="btn" href="https://calendly.com/jason-apohenia/30min" target="_blank" rel="noopener" data-book="move">Book 30 minutes</a>
     </div>
+    <p class="fine"><button class="textlink" type="button" data-copy-email>jobawems@gmail.com</button></p>
   </section>
 
-  <!-- 10. End credits, with the verification list as plain links -->
-  <footer class="credits" id="credits" data-track="credits">
-    <section class="verify-list" id="verify" aria-labelledby="verify-h">
-      <h2 id="verify-h">Check me.</h2>
-      <p class="fine">Same name, same titles, same town on every one of these.</p>
-      <ul class="group"><li><a class="row" href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" target="_blank" rel="noopener" data-verify="linkedin"><span class="appicon appicon--logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--ivory);fill:currentColor"><use href="#i-linkedin"/></svg></span><span class="row__txt"><b>LinkedIn</b> <span>Jason Obawemimo</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://github.com/whoisjaso" target="_blank" rel="noopener" data-verify="github"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/github.svg" alt="" loading="lazy" /></span><span class="row__txt"><b>GitHub</b> <span>whoisjaso</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener" data-verify="source"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/github.svg" alt="" loading="lazy" /></span><span class="row__txt"><b>This site&#x27;s source</b> <span>github.com/whoisjaso/jasonresume</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-verify="triplej"><span class="appicon appicon--logo" aria-hidden="true"><img src="assets/brand/triplej-logo.png" alt="" loading="lazy" /></span><span class="row__txt"><b>Triple J Auto Investment</b> <span>8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://obavia.co" target="_blank" rel="noopener" data-verify="obavia"><span class="appicon" aria-hidden="true"><img src="assets/brand/obavia-icon.png" alt="" loading="lazy" /></span><span class="row__txt"><b>Obavia</b> <span>obavia.co</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="/credentials.html" data-verify="credentials"><span class="appicon" aria-hidden="true"><span class="appicon__mono">C</span></span><span class="row__txt"><b>Credentials</b> <span>Credential and honor evidence</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-verify="degree"><span class="appicon" aria-hidden="true"><span class="appicon__mono">SJ</span></span><span class="row__txt"><b>Degree</b> <span>Associate degree PDF</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-verify="certificates"><span class="appicon appicon--logo appicon--ink" aria-hidden="true"><img src="assets/brand/stack/claude.svg" alt="" loading="lazy" /></span><span class="row__txt"><b>Coursework</b> <span>Anthropic certificates PDF</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&amp;id=1827555&amp;repo=City-Of-Pearland" target="_blank" rel="noopener" data-verify="pearland"><span class="appicon" aria-hidden="true"><span class="appicon__mono">P</span></span><span class="row__txt"><b>Public record</b> <span>City of Pearland document</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="/mentions.html" data-verify="mentions"><span class="appicon" aria-hidden="true"><span class="appicon__mono">R</span></span><span class="row__txt"><b>Older mentions</b> <span>Reporter News, Pearland and Friendswood</span></span><i class="row__chev" aria-hidden="true"></i></a></li><li><a class="row" href="mailto:jobawems@gmail.com" data-verify="email"><span class="appicon appicon--logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--ivory);fill:currentColor"><use href="#i-mail"/></svg></span><span class="row__txt"><b>Email</b> <span>jobawems@gmail.com</span></span><i class="row__chev" aria-hidden="true"></i></a></li></ul>
-    </section>
-    <div class="credits__card">
-      <p>Made in Pearland, Texas. Designed, written and built by me.</p>
-      <p>Films: Handle a Sale, from Triple J's own desk. The closer and The owner, for Obavia; the people and figures in them are fictional.</p>
-      <p>Sound: water, air and keys from Mixkit's free library.</p>
-      <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded. Anything you type and send reaches me.</p>
-      <p class="credits__links">
-        <a href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" target="_blank" rel="me noopener" data-verify="linkedin"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-linkedin"/></svg>LinkedIn</a>
-        <a href="https://github.com/whoisjaso" target="_blank" rel="me noopener" data-verify="github"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
-        <a href="https://www.instagram.com/0bawemimo/" target="_blank" rel="me noopener" data-cta="instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-instagram"/></svg>Instagram</a>
-        <a href="mailto:jobawems@gmail.com" data-contact="email" data-where="credits">jobawems@gmail.com</a>
-      </p>
-    </div>
+  <footer class="credits" id="credits">
+    <p>Built by me. Plain HTML, CSS and JavaScript on Vercel. No framework, no build step. The trailer's music is synthesized live in your browser; sound effects are from Mixkit.</p>
+    <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
+    <p class="credits__links"><a href="/credentials.html">Credentials</a> <a href="/answers.html">Verified facts</a> <a href="/jason-obawemimo.html">Profile</a> <a href="/llms.txt">llms.txt</a> <a href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener">Source</a></p>
   </footer>
 
-  <!-- 11. Post-credits: the water portrait and the forward kit -->
-  <section class="post" id="post" data-track="post" aria-labelledby="post-h">
-    <div class="post__water">
-      <canvas class="post__canvas" width="320" height="320" aria-hidden="true"></canvas>
-      <img class="post__still" src="assets/jason-headshot-620.webp" width="620" height="620" alt="" loading="lazy" decoding="async" />
-      <button class="textlink post__drop" type="button" data-water="drop">Make a ripple</button>
-    </div>
-    <div class="post__copy">
-      <h2 id="post-h">Still here. <em>Touch the water.</em></h2>
-      <p class="label">Forwarding this to someone?</p>
-      <blockquote class="post__blurb" data-blurb>Jason Obawemimo. AI engineer and business operator. Founder of Obavia, a sales intelligence platform in development for agency owners. Co-owner and operator of Triple J Auto Investment in Houston; built the sale desk it closes on. jasonobawemimo.com</blockquote>
-      <div class="post__actions">
-        <button class="btn btn--gold btn--sm" type="button" data-forward="copy">Copy</button>
-        <button class="btn btn--sm" type="button" data-forward="share">Send this cut</button>
-      </div>
-    </div>
-  </section>
-
 </main>
+
+<!-- The tab bar -->
+<nav class="dock tabbar" aria-label="Sections">
+  <a class="tab is-on" href="#top" data-tab="today"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-today"/></svg><span>Today</span></a>
+  <a class="tab" href="#story-desk" data-story-open="desk" data-tab="desk"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-car"/></svg><span>The desk</span></a>
+  <a class="tab" href="#story-obavia" data-story-open="obavia" data-tab="obavia"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-grow"/></svg><span>Obavia</span></a>
+  <a class="tab" href="#record" data-open="deck" data-where="tab" data-tab="resume"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-file"/></svg><span>Resume</span></a>
+  <a class="tab" href="mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mail"/></svg><span>Talk</span></a>
+</nav>
 
 <!-- Overlays -->
 <dialog class="stage-dialog deck" id="deck" aria-label="The resume, presented">
@@ -1220,27 +1087,6 @@
   </div>
 </dialog>
 
-<dialog class="stage-dialog trailer" id="trailer" aria-label="The trailer">
-  <button class="x trailer__x" type="button" data-close aria-label="Close the trailer"></button>
-  <div class="trailer__shots">
-    <div class="shot" data-shot="0"><p class="shot__big serif">Jason <em>Obawemimo.</em></p><p class="shot__cap">AI engineer and business operator. Process audit first, then the system.</p></div>
-    <div class="shot" data-shot="1"><div class="shot__license"><span>JOHN A. MARTINEZ</span><span>SAMPLE</span></div><p class="shot__cap">Scan once. Every form fills.</p></div>
-    <div class="shot" data-shot="2"><p class="shot__big serif">&ldquo;I never knew who was <em>actually on my account.</em>&rdquo;</p><p class="shot__cap">Listen to the person.</p></div>
-    <div class="shot" data-shot="3"><p class="shot__stages serif">Capture <i></i> Connect <i></i> Book <i></i> Discover <i></i> Agree <i></i> <em>Collect</em></p><p class="shot__cap">From the first inquiry to collected cash.</p></div>
-    <div class="shot" data-shot="4"><p class="shot__big serif">Pearland, Texas.</p><p class="shot__cap">Founder of Obavia. Co-owner and operator of Triple J Auto Investment.</p></div>
-    <div class="shot" data-shot="5"><p class="shot__big serif">Your <em>move.</em></p><p class="shot__cap">Email is fastest.</p></div>
-  </div>
-  <div class="trailer__ctl">
-    <button class="hold hold--lg" type="button" data-hold="trailer"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/><circle class="hold__ring" cx="50" cy="50" r="46" pathLength="1"/></svg><span>Hold to roll</span></button>
-    <p class="fine trailer__help">Tap works too. <span data-trailer-n>Shot 1 of 6</span></p>
-  </div>
-  <div class="trailer__end" hidden>
-    <a class="btn btn--gold" href="#desk" data-trailer="desk">Try the desk yourself</a>
-    <a class="btn" href="https://www.instagram.com/0bawemimo/" target="_blank" rel="noopener" data-cta="follow">Follow the build</a>
-    <button class="btn btn--ghost" type="button" data-close>Back to the page</button>
-  </div>
-</dialog>
-
 <dialog class="drawer help" id="help" aria-labelledby="help-h">
   <div class="drawer__inner">
     <div class="drawer__head"><h2 id="help-h">Keys.</h2><button class="x" type="button" data-close aria-label="Close"></button></div>
@@ -1248,18 +1094,11 @@
       <div><dt>R</dt><dd>Present the resume</dd></div>
       <div><dt>V</dt><dd>Check me</dd></div>
       <div><dt>P</dt><dd>Run the desk</dd></div>
-      <div><dt>T</dt><dd>The trailer</dd></div>
-      <div><dt>`</dt><dd>Show the rig</dd></div>
+      <div><dt>T</dt><dd>Watch your cut</dd></div>
       <div><dt>Esc</dt><dd>Close anything</dd></div>
     </dl>
   </div>
 </dialog>
-
-<div class="cues" id="cues" hidden aria-live="off">
-  <div class="cues__head"><p class="label">What this visit records</p><button class="x" type="button" data-close-cues aria-label="Hide"></button></div>
-  <ol class="cues__list"></ol>
-</div>
-<div class="commentary" id="commentary" hidden aria-live="polite"><p class="commentary__line"></p><p class="commentary__note fine">Commentary. My notes on each scene, as captions.</p></div>
 
 <script src="track.js" defer></script>
 <script src="sounds.js" defer></script>
@@ -1267,11 +1106,8 @@
 <script src="chrome.js" defer></script>
 <script src="reel.js" defer></script>
 <script src="intro.js" defer></script>
-<script src="cinema.js" defer></script>
-<script src="desk.js" defer></script>
-<script src="games.js" defer></script>
 <script src="deck.js" defer></script>
 <script src="verify.js" defer></script>
-<script src="extras.js" defer></script>
+<script src="today.js" defer></script>
 </body>
 </html>
