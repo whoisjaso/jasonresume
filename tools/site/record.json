@@ -10,7 +10,7 @@
   "slate": [
     {
       "k": "Obavia",
-      "v": "Founder, since September 2024. Building Obavia Desk, the sale desk I built at Triple J, for Texas independent dealers."
+      "v": "Founder, since September 2024. Building Obavia, the sale desk I built at Triple J, for Texas independent dealers."
     },
     {
       "k": "Triple J",
@@ -31,7 +31,7 @@
       "role": "Founder",
       "org": "Obavia",
       "when": "September 2024 to now. In development.",
-      "text": "Obavia Desk: every sale, start to signed, for Texas independent dealers. Pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. One question per screen. It grew out of Handle a Sale, the desk I built at Triple J, and it's being built on that floor.",
+      "text": "Obavia: every sale, start to signed, for Texas independent dealers. Pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. One question per screen. It grew out of Handle a Sale, the desk I built at Triple J, and it's being built on that floor.",
       "proof": [
         {
           "label": "The briefing",
@@ -323,7 +323,7 @@
     },
     {
       "t": "Obavia.",
-      "s": "Obavia Desk, the sale desk I built at Triple J, as a product for Texas independent dealers. Every sale, start to signed. In development, early access.",
+      "s": "Obavia, the sale desk I built at Triple J, as a product for Texas independent dealers. Every sale, start to signed. In development, early access.",
       "proof": {
         "label": "The briefing",
         "href": "/obavia.html"

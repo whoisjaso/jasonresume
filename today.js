@@ -266,7 +266,7 @@
         var c = deal.car || CARS[0], tax = Math.round(c.price * TAX * 100) / 100, total = c.price + FEES.doc + tax + FEES.title + FEES.reg;
         var rows = [["Vehicle", c.price], ["Doc fee", FEES.doc], ["Sales tax", tax], ["Title", FEES.title], ["Registration", FEES.reg]];
         var extra = deal.pay === "bhph" ? '<li>Down payment<span class="val">' + money(-2500) + '</span></li><li class="app-total">Amount financed<span class="val val--b" data-m="' + (total - 2500) + '">$0.00</span></li>' : "";
-        var s5 = screen(5, "The money", '<ul class="app-list app-receipt">' + rows.map(function (r) { return "<li>" + r[0] + '<span class="val" data-m="' + r[1] + '">$0.00</span></li>'; }).join("") + '<li class="app-total">Out the door<span class="val val--b" data-m="' + total + '">$0.00</span></li>' + extra + '</ul><p class="app-fic">Example figures for a fictional deal. The Desk works these out from the deal on every sale.</p><button class="app-btn app-btn--gold" type="button" data-ok>The paperwork</button>', true);
+        var s5 = screen(5, "The money", '<ul class="app-list app-receipt">' + rows.map(function (r) { return "<li>" + r[0] + '<span class="val" data-m="' + r[1] + '">$0.00</span></li>'; }).join("") + '<li class="app-total">Out the door<span class="val val--b" data-m="' + total + '">$0.00</span></li>' + extra + '</ul><p class="app-fic">Example figures for a fictional deal. The desk works these out from the deal on every sale.</p><button class="app-btn app-btn--gold" type="button" data-ok>The paperwork</button>', true);
         setTimeout(function () { $$("[data-m]", s5).forEach(function (el, k) { setTimeout(function () { roll(el, parseFloat(el.getAttribute("data-m"))); sfx("key", { gain: 0.25, throttle: 40 }); }, k * 140); }); }, 420);
         s5.querySelector("[data-ok]").addEventListener("click", function () { fx("choice"); go(6); });
       }
@@ -303,7 +303,7 @@
       go(8); fx("unlock"); hap("success");
       island.classList.add("is-wide"); setTimeout(function () { island.classList.remove("is-wide"); }, 2600);
       T("desk_finished", { pay: deal.pay });
-      setTimeout(function () { if (window.JG_NOTIFY) window.JG_NOTIFY({ icon: "assets/brand/obavia-icon.png", app: "Obavia Desk", title: "Deal on file", body: "J. Martinez. Fictional buyer, example figures. This is the desk Obavia Desk is built from.", ms: 5200 }); }, 900);
+      setTimeout(function () { if (window.JG_NOTIFY) window.JG_NOTIFY({ icon: "assets/brand/obavia-icon.png", app: "Obavia", title: "Deal on file", body: "J. Martinez. Fictional buyer, example figures. This is the desk Obavia is built from.", ms: 5200 }); }, 900);
     }
     function type(el, v) { var k = 0; (function f() { el.textContent = v.slice(0, ++k); if (k % 2) sfx("key", { gain: 0.2, throttle: 35 }); if (k < v.length) setTimeout(f, RM ? 0 : 26); })(); }
     function roll(el, to) { var t0 = performance.now(), dur = RM ? 1 : 700; (function f(now) { var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3); el.textContent = money(to * e); if (p < 1) requestAnimationFrame(f); })(t0); }

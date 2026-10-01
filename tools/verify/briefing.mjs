@@ -1,4 +1,4 @@
-// /obavia.html, the Obavia Desk page, played on desktop and mobile: the
+// /obavia.html, the Obavia page, played on desktop and mobile: the
 // product header, the film button, the desk app from start to Filed, a
 // lesson, the early-access form and its email fallback, the get bar, the
 // /join redirect target, overflow, dashes, percent signs, and the fictional

@@ -37,9 +37,9 @@ GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 Source repository: https://github.com/whoisjaso/jasonresume
 Credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
-Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them. He lives in Pearland, Texas.
+Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them. He lives in Pearland, Texas.
 
-Obavia: Obavia Desk, a dealership sale desk in development for Texas independent dealers. "Every sale, start to signed." It is not yet live; it claims no customers, results or conversion rates, and Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in its demos and ads are fictional.
+Obavia: a dealership sale desk in development for Texas independent dealers. "Every sale, start to signed." It is not yet live; it claims no customers, results or conversion rates, and Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in its demos and ads are fictional.
 
 Triple J Auto Investment: Houston used vehicle dealership at 8774 Almeda Genoa Rd, co-owned and operated by Jason, open Monday to Saturday 9 to 7, with in-house financing, sell and trade valuations, and registration and title support. Jason built the Handle a Sale desk the dealership closes sales on.
 

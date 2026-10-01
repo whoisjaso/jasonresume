@@ -53,8 +53,8 @@
       "email": "mailto:jobawems@gmail.com",
       "image": "https://jasonobawemimo.com/assets/jason-headshot.png",
       "jobTitle": "Founder, Obavia",
-      "description": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
-      "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), building Obavia Desk, a sale desk for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+      "description": "Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
+      "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), a sale desk he is building for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
       "homeLocation": {
         "@type": "Place",
         "name": "Pearland, Texas",
@@ -149,7 +149,7 @@
           "name": "Who is Jason Obawemimo?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jason Obawemimo is the founder of Obavia, building Obavia Desk, a sale desk for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them."
+            "text": "Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them."
           }
         },
         {
@@ -181,7 +181,7 @@
           "name": "What is Obavia?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Obavia (https://obavia.co) is the company Jason Obawemimo founded; its product, Obavia Desk, is a dealership sale desk in development for Texas independent dealers. It takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. Tagline: \"Every sale, start to signed.\""
+            "text": "Obavia (https://obavia.co) is the company Jason Obawemimo founded; Its product carries the same name: a dealership sale desk in development for Texas independent dealers. It takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. Tagline: \"Every sale, start to signed.\""
           }
         },
         {

@@ -1,4 +1,4 @@
-> **Paused, 2026-10-01.** Obavia moved from sales software for agency owners to Obavia Desk, the dealership sale desk for Texas independent dealers. Everything below was written for the agency product; do not draft from it until it is rewritten for dealers. The claims boundary in CLAUDE.md applies.
+> **Paused, 2026-10-01.** Obavia moved from sales software for agency owners to the dealership sale desk for Texas independent dealers. Everything below was written for the agency product; do not draft from it until it is rewritten for dealers. The claims boundary in CLAUDE.md applies.
 
 # Outreach desk
 
