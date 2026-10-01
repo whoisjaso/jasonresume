@@ -33,16 +33,51 @@
     var bus = c.createGain(); bus.gain.value = 0.0001;
     var comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.18;
     var an = c.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.5;
-    bus.connect(comp); comp.connect(an); an.connect(dest);
+    var duck = c.createGain(); bus.connect(duck); duck.connect(comp); comp.connect(an); an.connect(dest);
     var n = c.createBuffer(1, c.sampleRate, c.sampleRate), d = n.getChannelData(0);
     for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     var len = Math.floor(c.sampleRate * 2.4), ir = c.createBuffer(2, len, c.sampleRate);
     for (var ch = 0; ch < 2; ch++) { var x = ir.getChannelData(ch); for (var k = 0; k < len; k++) x[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / len, 3.2); }
     var verb = c.createConvolver(); verb.buffer = ir; var vg = c.createGain(); vg.gain.value = 0.32; verb.connect(vg); vg.connect(comp);
-    A = { c: c, bus: bus, an: an, noise: n, verb: verb };
+    A = { c: c, bus: bus, duck: duck, an: an, noise: n, verb: verb };
     return A;
   }
   function env(g, t, peak, attack, decay) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay); }
+  /* ---------- the voice: Jason reads one line per shot when its clip exists.
+     Clips are keyed by a hash of the line's text (tools/voice/reel_lines.mjs
+     lists them, render_clone.py renders them into assets/voice). With no clip
+     the cut plays as before. The score ducks under the voice. ---------- */
+  var VO = { map: null, buf: {}, src: null };
+  function vid(t) { var h = 0x811c9dc5; for (var k = 0; k < t.length; k++) { h ^= t.charCodeAt(k); h = Math.imul(h, 16777619); } return "r" + (h >>> 0).toString(16); }
+  function voLoad(list) {
+    if (!A || !window.fetch) return;
+    var get = function () {
+      list.forEach(function (sh) {
+        if (!sh.vo) return; var id = vid(sh.vo), m = VO.map[id]; if (!m || VO.buf[id]) return;
+        VO.buf[id] = "loading";
+        fetch("assets/voice/" + m.f).then(function (r) { return r.arrayBuffer(); })
+          .then(function (ab) { return new Promise(function (ok, no) { A.c.decodeAudioData(ab, ok, no); }); })
+          .then(function (b) { VO.buf[id] = b; }).catch(function () { delete VO.buf[id]; });
+      });
+    };
+    if (VO.map) return get();
+    fetch("assets/voice/manifest.json").then(function (r) { return r.json(); }).then(function (j) { VO.map = j || {}; get(); }).catch(function () { VO.map = {}; });
+  }
+  function voStop() {
+    if (!VO.src || !A) return;
+    var t = A.c.currentTime; try { VO.src.g.gain.setTargetAtTime(0.0001, t, 0.04); VO.src.s.stop(t + 0.2); } catch (e) {}
+    A.duck.gain.cancelScheduledValues(t); A.duck.gain.setTargetAtTime(1, t, 0.12);
+    VO.src = null;
+  }
+  function voSay(sh) {
+    if (!A || !sh.vo) return;
+    var b = VO.buf[vid(sh.vo)]; if (!b || typeof b === "string") return;
+    voStop();
+    var c = A.c, t = c.currentTime + 0.06, s = c.createBufferSource(), g = c.createGain();
+    s.buffer = b; g.gain.value = 1.15; s.connect(g); g.connect(A.an); s.start(t);
+    A.duck.gain.cancelScheduledValues(t); A.duck.gain.setTargetAtTime(0.32, t - 0.04, 0.05); A.duck.gain.setTargetAtTime(1, t + b.duration, 0.25);
+    VO.src = { s: s, g: g }; s.onended = function () { if (VO.src && VO.src.s === s) VO.src = null; };
+  }
   function noiseSrc(t, dur) { var s = A.c.createBufferSource(); s.buffer = A.noise; s.loop = true; s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05); return s; }
   var I = {
     kick: function (t, v) { var o = A.c.createOscillator(), g = A.c.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.13); env(g, t, v || 0.9, 0.003, 0.4); o.connect(g); g.connect(A.bus); o.start(t); o.stop(t + 0.5); },
@@ -130,39 +165,39 @@
       interviewer: { label: "The screening cut", shots: [
         { k: "cold", b: 2, level: 0, cue: "riser" },
         { k: "name", b: 2, level: 1, cue: "boom", t: N },
-        { k: "slam", b: 4, level: 1, cue: "hit", lines: ["You've read the", "*AI-written* resumes."] },
-        { k: "slam", b: 3, level: 1, cue: "glitch", lines: ["So don't", "read mine."], glitch: true },
-        { k: "slam", b: 2, level: 2, cue: "boom", lines: ["*Watch it run.*"] },
-        { k: "id", b: 4, level: 2, cue: "boom" },
-        { k: "live", b: 6, level: 2, cue: "hit", lead: "The dealership I co-own and run, since August 2024." },
-        { k: "scan", level: 2, cue: "hit", lead: ["The desk it closes sales on?", "*I built it.*"] },
-        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia Desk. The sale desk I built at Triple J, now being built for Texas independent dealers. In development." },
-        { k: "count", b: 6, level: 3, cue: "hit" },
-        { k: "proof", b: 6, level: 3, cue: "boom" },
+        { k: "slam", b: 4, level: 1, cue: "hit", lines: ["You've read the", "*AI-written* resumes."], vo: "You've read the AI-written resumes." },
+        { k: "slam", b: 3, level: 1, cue: "glitch", lines: ["So don't", "read mine."], glitch: true, vo: "So don't read mine." },
+        { k: "slam", b: 2, level: 2, cue: "boom", lines: ["*Watch it run.*"], vo: "Watch it run." },
+        { k: "id", b: 4, level: 2, cue: "boom", vo: "I'm Jason Obawemimo." },
+        { k: "live", b: 6, level: 2, cue: "hit", lead: "The dealership I co-own and run, since August 2024.", vo: "This is the dealership I co-own and run, in Houston." },
+        { k: "scan", level: 2, cue: "hit", lead: ["The desk it closes sales on?", "*I built it.*"], vo: "And the desk it closes sales on? I built it." },
+        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia Desk. The sale desk I built at Triple J, now being built for Texas independent dealers. In development.", vo: "Now I'm building it for Texas independent dealers. It's called Obavia Desk." },
+        { k: "count", b: 6, level: 3, cue: "hit", vo: "Nineteen Anthropic courses. A three point six three." },
+        { k: "proof", b: 6, level: 3, cue: "boom", vo: "Don't take my word for it. Every link checks out." },
         { k: "slam", b: 3, level: 1, cue: "glitch", lines: ["P.S. This music isn't a file.", "*Your browser is playing it.*"], small: true },
-        { k: "end", level: 0, cue: "end", cta: "interviewer", h: "Your move" + P + "." }
+        { k: "end", level: 0, cue: "end", cta: "interviewer", h: "Your move" + P + ".", vo: "Your move." }
       ] },
       partner: { label: "The dealer cut", shots: [
         { k: "cold", b: 2, level: 0, cue: "riser" },
         { k: "name", b: 2, level: 1, cue: "boom", t: N },
-        { k: "slam", b: 4, level: 1, cue: "hit", lines: ["Every sale,", "*start to signed.*"] },
-        { k: "slam", b: 3, level: 2, cue: "glitch", lines: ["One question", "per screen."], glitch: true },
-        { k: "scan", level: 2, cue: "hit", lead: ["Scan the license once.", "*Every form fills.*"] },
-        { k: "slam", b: 5, level: 3, cue: "boom", lines: ["Cash. Buy here pay here.", "*Bank financing.*"], sub: "Texas sales tax, title, registration and your doc fee, worked out on every deal." },
-        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia Desk. From the car to the last signature, and the buyer signs at the desk." },
-        { k: "live", b: 6, level: 2, cue: "hit", lead: "Built on the floor of the dealership I co-own in Houston:" },
-        { k: "slam", b: 5, level: 1, cue: "hit", lines: ["I won't sell you", "*results I don't have yet.*"], sub: "Obavia Desk is in development, with early access for Texas dealers. No price is published yet." },
-        { k: "end", level: 0, cue: "end", cta: "partner", h: "Want it on your lot" + P + "?" }
+        { k: "slam", b: 4, level: 1, cue: "hit", lines: ["Every sale,", "*start to signed.*"], vo: "Every sale, start to signed." },
+        { k: "slam", b: 3, level: 2, cue: "glitch", lines: ["One question", "per screen."], glitch: true, vo: "One question per screen." },
+        { k: "scan", level: 2, cue: "hit", lead: ["Scan the license once.", "*Every form fills.*"], vo: "Scan the license once, and every form fills." },
+        { k: "slam", b: 5, level: 3, cue: "boom", lines: ["Cash. Buy here pay here.", "*Bank financing.*"], sub: "Texas sales tax, title, registration and your doc fee, worked out on every deal.", vo: "Cash, buy here pay here, or the bank." },
+        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia Desk. From the car to the last signature, and the buyer signs at the desk.", vo: "That's Obavia Desk. From the car to the last signature." },
+        { k: "live", b: 6, level: 2, cue: "hit", lead: "Built on the floor of the dealership I co-own in Houston:", vo: "I'm building it on our lot in Houston." },
+        { k: "slam", b: 5, level: 1, cue: "hit", lines: ["I won't sell you", "*results I don't have yet.*"], sub: "Obavia Desk is in development, with early access for Texas dealers. No price is published yet.", vo: "I won't sell you results I don't have yet." },
+        { k: "end", level: 0, cue: "end", cta: "partner", h: "Want it on your lot" + P + "?", vo: "Want it on your lot?" }
       ] },
       lurker: { label: "The fun cut", shots: [
         { k: "cold", b: 2, level: 0, cue: "riser" },
         { k: "name", b: 2, level: 1, cue: "boom", t: N },
-        { k: "slam", b: 2, level: 1, cue: "hit", lines: ["No pitch."] },
-        { k: "slam", b: 3, level: 2, cue: "glitch", lines: ["This music", "*isn't a file.*"], glitch: true },
-        { k: "drum", level: 3, cue: "boom" },
-        { k: "live", b: 5, level: 2, cue: "hit", lead: "Meanwhile, at the dealership I co-own in Houston:" },
-        { k: "scan", level: 2, cue: "hit", lead: ["I built the desk it", "*closes sales on.*"] },
-        { k: "end", level: 0, cue: "end", cta: "lurker", h: "Have a look around" + P + "." }
+        { k: "slam", b: 2, level: 1, cue: "hit", lines: ["No pitch."], vo: "No pitch." },
+        { k: "slam", b: 3, level: 2, cue: "glitch", lines: ["This music", "*isn't a file.*"], glitch: true, vo: "This music isn't a file." },
+        { k: "drum", level: 3, cue: "boom", vo: "Go on. Hit it." },
+        { k: "live", b: 5, level: 2, cue: "hit", lead: "Meanwhile, at the dealership I co-own in Houston:", vo: "Meanwhile, at our lot in Houston." },
+        { k: "scan", level: 2, cue: "hit", lead: ["I built the desk it", "*closes sales on.*"], vo: "I built the desk it closes sales on." },
+        { k: "end", level: 0, cue: "end", cta: "lurker", h: "Have a look around" + P + ".", vo: "Have a look around." }
       ] }
     };
   }
@@ -273,7 +308,7 @@
     cut = cuts(name)[r]; spec = cut.shots; i = 0; open = true;
     build();
     if (window.JG_LOCK) window.JG_LOCK(true);
-    audio(); scoreStart(); useAudio = !!(A && A.c.state === "running");
+    audio(); scoreStart(); useAudio = !!(A && A.c.state === "running"); voLoad(spec);
     startedAt = clock();
     requestAnimationFrame(function () { el.classList.add("is-on"); show(0); });
     T("reel_started", { role: r, where: o.from || "chip" });
@@ -288,7 +323,7 @@
     sh.querySelectorAll(".is-in").forEach(function (x) { x.classList.remove("is-in"); });
     el.classList.toggle("is-end", s.k === "end");
     el.classList.toggle("is-interactive", s.k === "scan" || s.k === "words" || s.k === "drum");
-    scoreCut(s.level);
+    scoreCut(s.level); voSay(s);
     if (s.cue === "end") { sample("sparkle", { gain: 0.8 }); hap("success"); T("reel_finished", { role: role }); var f = sh.querySelector(".btn"); if (f && !COARSE) setTimeout(function () { f.focus({ preventScroll: true }); }, 700); }
     else if (s.cue) { play(s.cue); if (s.cue === "boom") jolt(true); else if (s.cue === "hit") jolt(false); else if (s.cue === "glitch") { el.classList.remove("is-glitch"); void el.offsetWidth; el.classList.add("is-glitch"); } }
     el.querySelector(".tr__sr").textContent = sh.textContent.replace(/\s+/g, " ").trim().slice(0, 220);
@@ -496,7 +531,7 @@
   /* ---------- leaving: the portrait lands on the Slate ---------- */
   function leave(to, how) {
     if (!open) return;
-    open = false; cancelAnimationFrame(raf); scoreStop();
+    open = false; cancelAnimationFrame(raf); voStop(); scoreStop();
     removeEventListener("keydown", keys, true);
     if (spec[i].k !== "end") T("reel_exited", { role: role, at: i, how: how });
     var face = document.querySelector(".slate__face img"), slate = document.querySelector(".slate [data-rise]");

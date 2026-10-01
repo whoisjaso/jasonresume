@@ -26,7 +26,7 @@ The `api/` functions need Vercel: `npx vercel dev` at the repo root runs them wi
 ```
 python3 -m http.server 8765 &
 node tools/verify/screening.mjs  # home page end to end, desktop and mobile
-node tools/verify/briefing.mjs   # obavia.html and join.html, lessons, note game, form fallbacks
+node tools/verify/briefing.mjs   # obavia.html: header, film, the desk to Filed, lessons, early-access form, get bar
 node tools/verify/overflow.mjs   # names the element when a page scrolls sideways
 node tools/verify/resume.mjs     # regenerates assets/Jason_Obawemimo_Resume_2026.pdf, one page
 ```
