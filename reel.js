@@ -224,8 +224,8 @@
         partner: { p: "Ask for early access, or take thirty minutes with me. I run a lot too, so we'll talk about your paperwork, not a pitch.",
           b: [["Ask for early access", "/obavia.html#early", "gold", "briefing"], ["Book 30 minutes", CAL, "", "book"], ["Watch the Desk film", "/obavia.html#film", "", "film"]],
           s: [["Watch it again", "again"], ["Look around", "site"]] },
-        lurker: { p: "The desk is a game. The trailer is a minute. Both beat scrolling.",
-          b: [["Run the desk", "#desk", "gold", "desk"], ["Roll the trailer", "#trailer", "", "trailer"]],
+        lurker: { p: "The desk is a game you can finish in a minute. Obavia Desk is where it is going.",
+          b: [["Run the desk", "#story-desk", "gold", "desk"], ["See Obavia Desk", "#story-obavia", "", "obavia"]],
           s: [["Send this to someone", "share"], ["Watch it again", "again"], ["Look around", "site"]] }
       }[s.cta];
       return '<div class="tr__face"><img src="assets/jason-headshot-620.webp" alt="" /></div><h2 class="k k--end">' + words([s.h]) + '</h2><p class="tr__sub" data-at="1">' + c.p + "</p>" +
@@ -462,7 +462,7 @@
       if (a) {
         var k = a.getAttribute("data-reel-cta"); fx("choice"); T("cta_click", { label: "reel_" + k, role: role });
         if (k === "briefing" || k === "film") { try { sessionStorage.setItem("jg_greet", name || "1"); } catch (err) {} }
-        if (k === "desk" || k === "trailer") { e.preventDefault(); leave(k, "cta"); }
+        if (k === "desk" || k === "obavia") { e.preventDefault(); leave(k, "cta"); }
         return;
       }
       if (!g) return;
@@ -512,8 +512,7 @@
       el.remove(); tcEl = barEl = null;
       if (viaIntro && window.JG_TOAST) window.JG_TOAST(name ? "Welcome, " + name : "Welcome in");
       viaIntro = false;
-      if (to === "desk" && window.JG_CUT) window.JG_CUT(function () { window.JG_JUMP("#desk-title"); });
-      if (to === "trailer" && window.JG_OPEN) window.JG_OPEN("trailer", "reel");
+      if ((to === "desk" || to === "obavia") && window.JG_STORY) window.JG_STORY(to);
     }, RM ? 60 : 1000);
   }
   function fly(src, face) {

@@ -310,9 +310,11 @@
   function route(role) {
     if (!window.JG_NOTIFY) return;
     if (role === "interviewer") window.JG_NOTIFY({ app: "Your cut", title: "Start with the desk", body: "Run the sale desk I built for Triple J. About a minute.", ms: 7000,
-      go: function () { if (window.JG_CUT) window.JG_CUT(function () { window.JG_JUMP("#desk-title"); }); T("cta_click", { label: "intro_desk" }); } });
-    else window.JG_NOTIFY({ app: "Your cut", title: "Roll the trailer", body: "Six shots. Hold to play.", ms: 7000,
-      go: function () { if (window.JG_OPEN) window.JG_OPEN("trailer", "intro"); } });
+      go: function () { if (window.JG_STORY) window.JG_STORY("desk"); T("cta_click", { label: "intro_desk" }); } });
+    else if (role === "partner") window.JG_NOTIFY({ app: "Your cut", title: "See Obavia Desk", body: "Every sale, start to signed. For Texas independent dealers.", ms: 7000,
+      go: function () { if (window.JG_STORY) window.JG_STORY("obavia"); T("cta_click", { label: "intro_obavia" }); } });
+    else window.JG_NOTIFY({ app: "Your cut", title: "Run the desk", body: "Sell a car on the desk I built. About a minute.", ms: 7000,
+      go: function () { if (window.JG_STORY) window.JG_STORY("desk"); T("cta_click", { label: "intro_desk" }); } });
   }
 
   /* ---------- skip: silent, and it never comes back ---------- */

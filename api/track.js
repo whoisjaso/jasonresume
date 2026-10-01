@@ -22,6 +22,8 @@ const ALLOWED = new Set([
   "intro_shown", "intro_started", "intro_finished", "intro_skipped", "name_given", "name_skipped",
   // the reel: a cut for each visitor
   "reel_started", "reel_shot", "reel_finished", "reel_exited",
+  // the Today feed: a card opens into its story, the desk app
+  "story_opened", "desk_step", "desk_finished",
   // conversion
   "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent", "apply_sent",
   // older pages still in the wild

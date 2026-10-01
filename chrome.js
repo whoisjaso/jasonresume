@@ -7,7 +7,7 @@
    window.JG_CUT(fn)       a hard cut through black: fn runs while the frame is black
    window.JG_LOCK(on)      the iOS-safe screen lock for surfaces over the page
    window.JG_TOAST(text)   a short status line
-   window.JG_OPEN(what)    open an overlay by name (deck, verify, trailer, rig, cues, help)
+   window.JG_OPEN(what)    open an overlay by name (deck, verify, help)
    Events: document "jg:open" {what, where}, "jg:commentary" {on}, "jg:still" {on} */
 (function () {
   "use strict";
@@ -39,7 +39,7 @@
   var commentary = store.get("jg_commentary") === "1";
   if (still) root.setAttribute("data-still", "");
   function paint() {
-    document.querySelectorAll('[data-toggle="sound"]').forEach(function (b) { b.setAttribute("aria-pressed", muted ? "false" : "true"); b.textContent = muted ? "Sound off" : "Sound on"; });
+    document.querySelectorAll('[data-toggle="sound"]').forEach(function (b) { b.setAttribute("aria-pressed", muted ? "false" : "true"); if (b.hasAttribute("data-icon")) b.setAttribute("aria-label", muted ? "Sound off" : "Sound on"); else b.textContent = muted ? "Sound off" : "Sound on"; });
     document.querySelectorAll('[data-toggle="still"]').forEach(function (b) { b.setAttribute("aria-pressed", still ? "true" : "false"); b.textContent = still ? "Still on" : "Still"; });
     document.querySelectorAll('[data-toggle="commentary"]').forEach(function (b) { b.setAttribute("aria-pressed", commentary ? "true" : "false"); b.textContent = commentary ? "Commentary on" : "Commentary"; });
   }
@@ -207,18 +207,16 @@
     var k = c.getAttribute("data-cut");
     store.set("jg_cut", k); markCut(k); FX.choice();
     T("role_chosen", { role: ROLE[k] || k, where: "cut" }, { role: ROLE[k] || k });
-    if (k === "screening") { e.preventDefault(); FX.cut(); window.JG_CUT(function () { jump("#desk-title"); }); }
-    else if (k === "trailer") { e.preventDefault(); window.JG_OPEN("trailer", "cut"); }
   });
 
-  /* Deep links: ?cut=screening|dealer|trailer (agency still works), #present/N, #verify, #trailer */
+  /* Deep links: ?cut=screening|dealer|trailer (agency still works), #present/N, #verify, #trailer, #story-id */
   var qCut = new URLSearchParams(location.search).get("cut");
   function arrive() {
-    if (qCut && ROLE[qCut]) { store.set("jg_cut", qCut); markCut(qCut); orderMove(); T("role_chosen", { role: ROLE[qCut], where: "link" }, { role: ROLE[qCut] }); if (qCut === "screening") jump("#desk-title"); if (qCut === "trailer") window.JG_OPEN("trailer", "link"); if (qCut === "agency" || qCut === "dealer") location.replace("/obavia.html"); }
+    if (qCut && ROLE[qCut]) { store.set("jg_cut", qCut); markCut(qCut); orderMove(); T("role_chosen", { role: ROLE[qCut], where: "link" }, { role: ROLE[qCut] }); if (qCut === "screening" && window.JG_STORY) window.JG_STORY("desk"); if (qCut === "trailer" && window.JG_REEL) window.JG_REEL.play("lurker", { from: "link" }); if (qCut === "agency" || qCut === "dealer") location.replace("/obavia.html"); }
     var h = location.hash;
     if (/^#present(\/\d+)?$/.test(h)) window.JG_OPEN("deck", "link");
     else if (h === "#verify" && window.JG_HAS.verify) window.JG_OPEN("verify", "link");
-    else if (h === "#trailer") window.JG_OPEN("trailer", "link");
+    else if (h === "#trailer" && window.JG_REEL) window.JG_REEL.play("lurker", { from: "link" });
   }
   addEventListener("load", function () { setTimeout(arrive, 60); });
 
@@ -230,9 +228,6 @@
     var k = e.key;
     if (k === "r" || k === "R") { e.preventDefault(); window.JG_OPEN("deck", "key"); }
     else if (k === "v" || k === "V") { e.preventDefault(); window.JG_OPEN("verify", "key"); }
-    else if (k === "p" || k === "P") { e.preventDefault(); jump("#desk-title"); }
-    else if (k === "t" || k === "T") { e.preventDefault(); window.JG_OPEN("trailer", "key"); }
-    else if (k === "`") { e.preventDefault(); window.JG_OPEN("rig", "key"); }
     else if (k === "?") { e.preventDefault(); window.JG_OPEN("help", "key"); }
     else if (k === "Escape" && menu && menu.classList.contains("is-open")) setMenu(false);
   });
