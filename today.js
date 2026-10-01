@@ -184,7 +184,10 @@
     document.addEventListener("touchmove", function (e) { if (!dragging || !openCard) return; var dy = e.touches[0].clientY - y0; if (dy > 0 && openCard.scrollTop <= 0) { var s = Math.max(0.86, 1 - dy / 1400); openCard.style.transform = "scale(" + s + ")"; openCard.style.borderRadius = Math.min(26, dy / 4) + "px"; } }, { passive: true });
     document.addEventListener("touchend", function (e) { if (!dragging || !openCard) return; dragging = false; var dy = (e.changedTouches[0] || {}).clientY - y0; openCard.style.borderRadius = ""; if (dy > 110) closeStory(); else openCard.style.transform = ""; }, { passive: true });
   })();
-  addEventListener("load", function () { var m = /^#story-(\w+)/.exec(location.hash); if (m) setTimeout(function () { openStory(m[1], "link"); }, 200); });
+  /* #story-id opens its story, after the onboarding when it is playing */
+  function storyLink() { var m = /^#story-(\w+)/.exec(location.hash); if (m) setTimeout(function () { openStory(m[1], "link"); }, 200); }
+  document.addEventListener("jg:intro-done", storyLink);
+  addEventListener("load", function () { if (!root.classList.contains("intro-pending")) storyLink(); });
 
   /* ---------- the tab bar follows what you're looking at ---------- */
   function tabs(id) { $$(".tabbar .tab").forEach(function (t) { t.classList.toggle("is-on", t.getAttribute("data-tab") === id || (id !== "desk" && id !== "obavia" && t.getAttribute("data-tab") === "today")); }); }

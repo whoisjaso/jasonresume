@@ -218,7 +218,14 @@
     else if (h === "#verify" && window.JG_HAS.verify) window.JG_OPEN("verify", "link");
     else if (h === "#trailer" && window.JG_REEL) window.JG_REEL.play("lurker", { from: "link" });
   }
-  addEventListener("load", function () { setTimeout(arrive, 60); });
+  /* the onboarding plays first on every visit; a deep link opens when it ends */
+  var arrived = false;
+  function arriveOnce() { if (arrived) return; arrived = true; arrive(); }
+  document.addEventListener("jg:intro-done", function () { setTimeout(arriveOnce, 60); });
+  addEventListener("load", function () {
+    if (!root.classList.contains("intro-pending")) setTimeout(arriveOnce, 60);
+    else setTimeout(function () { if (!document.getElementById("intro")) arriveOnce(); }, 6000);
+  });
 
   /* ---------- keys ---------- */
   addEventListener("keydown", function (e) {

@@ -1,9 +1,11 @@
-/* The intro. Tap anywhere to begin, one question, an optional name, then the
-   cut that suits you. Shown once per browser; /?intro=1 replays it.
-   The page underneath is complete without it: crawlers, deep links and
-   returning visitors never see it, and every skip is silent.
-   The head script decides whether to show it (html.intro-pending) so the
-   Slate never flashes before the curtain. */
+/* The onboarding. Tap anywhere to begin, one question, an optional name, then
+   the cut that suits you. Every visitor sees it on every visit to the home
+   page; only crawlers go straight to the page, which is complete without it.
+   Its words and choices live in tools/site/onboarding.json, inlined as
+   #onboarding-data. Every skip is silent. A deep link (#present, #verify,
+   #story-..., ?cut=) opens once the onboarding ends, instead of the trailer.
+   The head script sets html.intro-pending so the page never flashes first.
+   When it ends, document gets "jg:intro-done". */
 (function () {
   "use strict";
   var root = document.documentElement, body = document.body;
@@ -22,14 +24,11 @@
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function wait(ms) { return RM ? Math.min(ms, 120) : ms; }
 
-  var ROLES = {
-    interviewer: { n: "1", icon: "i-hire", h: "I’m hiring", p: "Interviewer or recruiter. The proof, fast.", cut: "screening",
-      line: "The ten-second version first. Then the proof." },
-    partner: { n: "2", icon: "i-car", h: "I run a dealership", p: "Dealer or business partner. Every sale, start to signed.", cut: "dealer",
-      line: "Where your sales floor leaks, and what I’m building for it." },
-    lurker: { n: "3", icon: "i-look", h: "Just looking", p: "No pitch. The fun parts.", cut: "trailer",
-      line: "The fun parts. No pitch." }
-  };
+  var O = null; try { O = JSON.parse(document.getElementById("onboarding-data").textContent); } catch (e) {}
+  if (!O || !O.roles) { root.classList.remove("intro-pending"); document.dispatchEvent(new CustomEvent("jg:intro-done")); return; }
+  var ROLES = {}, KEYS = {};
+  O.roles.forEach(function (r, i) { r.n = String(i + 1); ROLES[r.id] = r; KEYS[r.n] = r.id; });
+  var DEEP = /[?&]cut=/.test(location.search) || /^#(present|verify|trailer|story-)/.test(location.hash);
 
   /* ---------- the curtain ---------- */
   if (/[?&]intro=1/.test(location.search)) { try { var u = new URL(location.href); u.searchParams.delete("intro"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {} }
@@ -39,16 +38,16 @@
   el.id = "intro"; el.className = "intro";
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "intro-title");
   el.innerHTML =
-    '<button class="intro__skip" type="button" data-intro-skip>Skip intro</button>' +
+    '<button class="intro__skip" type="button" data-intro-skip>' + esc(O.loading.skip) + '</button>' +
     '<div class="intro__stage">' +
       '<div class="intro__medal"><canvas aria-hidden="true"></canvas>' +
         '<svg class="intro__ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48.5"/><circle class="intro__ring-p" cx="50" cy="50" r="48.5" pathLength="100"/></svg>' +
         '<span class="intro__wave" aria-hidden="true"></span><span class="intro__wave intro__wave--2" aria-hidden="true"></span></div>' +
       '<div class="intro__scene intro__scene--a">' +
-        '<p class="intro__name" id="intro-title"><span class="mask"><span>Jason</span></span><span class="mask"><span><em>Obawemimo</em></span></span></p>' +
+        '<p class="intro__name" id="intro-title"><span class="mask"><span>' + esc(O.loading.first) + '</span></span><span class="mask"><span><em>' + esc(O.loading.last) + '</em></span></span></p>' +
         '<svg class="intro__rule" viewBox="0 0 240 8" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5c40-3 80-3 118-1.5S200 6 238 3"/></svg>' +
         '<p class="intro__count" aria-hidden="true"><span>0</span></p>' +
-        '<p class="intro__hint" aria-live="polite">' + (COARSE ? "Tap anywhere to begin" : "Click anywhere to begin") + '</p>' +
+        '<p class="intro__hint" aria-live="polite">' + esc(COARSE ? O.loading.hint_touch : O.loading.hint_pointer) + '</p>' +
       '</div>' +
       '<div class="intro__scene intro__scene--b" hidden></div>' +
     '</div>';
@@ -155,7 +154,7 @@
   el.addEventListener("pointerdown", function (e) {
     if (e.target.closest("[data-intro-skip]")) return;
     unlocked = true;
-    if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = "One moment"; rippleAt(e.clientX, e.clientY, true); return; }
+    if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = O.loading.waiting; rippleAt(e.clientX, e.clientY, true); return; }
     if (phase === "ready") { rippleAt(e.clientX, e.clientY, true); begin(); }
   });
   function begin() {
@@ -194,12 +193,12 @@
       var R = ROLES[k];
       return '<li style="--i:' + i + '"><button class="row intro__path" type="button" data-role="' + k + '">' +
         '<span class="appicon appicon--sm" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><use href="#' + R.icon + '"/></svg></span>' +
-        '<span class="row__txt"><b>' + R.h + '</b><span>' + R.p + '</span></span>' +
+        '<span class="row__txt"><b>' + esc(R.h) + '</b><span>' + esc(R.p) + '</span></span>' +
         '<kbd aria-hidden="true">' + R.n + '</kbd><i class="row__chev" aria-hidden="true"></i></button></li>';
     }).join("");
-    swap('<h2 class="intro__q" id="intro-q"><span class="mask"><span>What brings you</span></span><span class="mask"><span><em>here?</em></span></span></h2>' +
+    swap('<h2 class="intro__q" id="intro-q"><span class="mask"><span>' + esc(O.question.title) + '</span></span><span class="mask"><span><em>' + esc(O.question.title_em) + '</em></span></span></h2>' +
       '<ul class="group intro__paths">' + rows + '</ul>' +
-      '<p class="intro__fine">' + (COARSE ? "Pick one. You can switch later." : "Or press 1, 2 or 3.") + '</p>', function () {
+      '<p class="intro__fine">' + esc(COARSE ? O.question.fine_touch : O.question.fine_pointer) + '</p>', function () {
       el.setAttribute("aria-labelledby", "intro-q");
       sceneB.querySelectorAll("[data-role]").forEach(function (b) { b.addEventListener("click", function () { choose(b.getAttribute("data-role")); }); });
       var first = sceneB.querySelector("[data-role]"); if (first && !COARSE) setTimeout(function () { first.focus({ preventScroll: true }); }, wait(500));
@@ -216,14 +215,14 @@
   }
 
   /* ---------- the name, skippable ---------- */
-  var curRole = null;
+  var curRole = null, back = false;
   function askName(role) {
     phase = "name"; curRole = role;
     var prior = store.get("jg_name") || "";
-    swap('<h2 class="intro__q" id="intro-n"><span class="mask"><span>And your <em>name?</em></span></span></h2>' +
-      '<form class="intro__form" autocomplete="on"><input class="intro__input" type="text" name="name" maxlength="40" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="go" placeholder="First name is plenty" aria-label="Your name" value="' + esc(prior) + '" />' +
-      '<div class="intro__row"><button class="btn btn--gold" type="submit">Continue</button><button class="btn btn--ghost" type="button" data-intro-noname>Skip</button></div>' +
-      '<p class="intro__fine">So I know who stopped by. Only I see it.</p></form>', function () {
+    swap('<h2 class="intro__q" id="intro-n"><span class="mask"><span>' + esc(O.name.title) + ' <em>' + esc(O.name.title_em) + '</em></span></span></h2>' +
+      '<form class="intro__form" autocomplete="on"><input class="intro__input" type="text" name="name" maxlength="40" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="go" placeholder="' + esc(O.name.placeholder) + '" aria-label="Your name" value="' + esc(prior) + '" />' +
+      '<div class="intro__row"><button class="btn btn--gold" type="submit">' + esc(O.name.continue) + '</button><button class="btn btn--ghost" type="button" data-intro-noname>' + esc(O.name.skip) + '</button></div>' +
+      '<p class="intro__fine">' + esc(O.name.fine) + '</p></form>', function () {
       el.setAttribute("aria-labelledby", "intro-n");
       var form = sceneB.querySelector("form"), input = form.querySelector("input");
       setTimeout(function () { input.focus({ preventScroll: true }); }, wait(420));
@@ -239,7 +238,8 @@
   function named(role, raw) {
     if (phase !== "name") return;
     phase = "cut";
-    var name = clean(raw);
+    var name = clean(raw), before = clean(store.get("jg_name") || "");
+    back = !!name && name === before && store.get("jg_intro") === "1";
     if (name) { store.set("jg_name", name); fx("send"); T("name_given", { role: role, name: name }, { name: name, role: role }); }
     else T("name_skipped", { role: role });
     card(role, name);
@@ -248,7 +248,7 @@
   /* ---------- the title card, then the cut ---------- */
   function card(role, name) {
     var first = name ? name.split(" ")[0] : "";
-    swap('<p class="intro__card" id="intro-c"><span class="mask"><span>' + (first ? "Okay, <em>" + esc(first) + ".</em>" : "Okay. <em>Your cut.</em>") + '</span></span></p>' +
+    swap('<p class="intro__card" id="intro-c"><span class="mask"><span>' + (first ? esc(back ? O.card.returning : O.card.named) + " <em>" + esc(first) + ".</em>" : esc(O.card.anonymous) + " <em>" + esc(O.card.anonymous_em) + "</em>") + '</span></span></p>' +
       '<svg class="intro__rule intro__rule--card" viewBox="0 0 240 8" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5c40-3 80-3 118-1.5S200 6 238 3"/></svg>' +
       '<p class="intro__cardline">' + esc(ROLES[role].line) + '</p>', function () {
       el.setAttribute("aria-labelledby", "intro-c");
@@ -269,17 +269,18 @@
     root.classList.remove("intro-pending", "intro-mounted");
     if (window.JG_LOCK) window.JG_LOCK(false);
     removeEventListener("keydown", keys, true);
+    setTimeout(function () { document.dispatchEvent(new CustomEvent("jg:intro-done")); }, 0);
   }
   function leave(role, first) {
     phase = "leaving";
     T("intro_finished", { role: role, named: !!first });
-    if (window.JG_REEL) {
+    if (window.JG_REEL && !DEEP) {
       markCut(ROLES[role].cut);
       window.JG_REEL.play(role, { name: first, from: "intro" });
       setTimeout(function () { done(); el.remove(); }, wait(400));
       return;
     }
-    if (role === "partner") {
+    if (role === "partner" && !window.JG_REEL) {
       try { sessionStorage.setItem("jg_greet", first || "1"); } catch (e) {}
       el.classList.add("is-black"); fx("cut");
       setTimeout(function () { done(); location.href = "/obavia.html"; }, wait(420));
@@ -303,21 +304,17 @@
     setTimeout(function () { if (slate) slate.classList.add("is-in"); fx("arrive"); }, wait(420));
     setTimeout(function () {
       el.remove();
-      if (window.JG_TOAST) window.JG_TOAST(first ? "Welcome, " + first : "Welcome in");
+      if (window.JG_TOAST) window.JG_TOAST(first ? O.after.welcome_named + first : O.after.welcome_anonymous);
     }, wait(1250));
-    setTimeout(function () { route(role); }, wait(3400));
+    if (!DEEP) setTimeout(function () { route(role); }, wait(3400));
   }
   function route(role) {
-    if (!window.JG_NOTIFY) return;
-    if (role === "interviewer") window.JG_NOTIFY({ app: "Your cut", title: "Start with the desk", body: "Run the sale desk I built for Triple J. About a minute.", ms: 7000,
-      go: function () { if (window.JG_STORY) window.JG_STORY("desk"); T("cta_click", { label: "intro_desk" }); } });
-    else if (role === "partner") window.JG_NOTIFY({ app: "Your cut", title: "See Obavia", body: "Every sale, start to signed. For Texas independent dealers.", ms: 7000,
-      go: function () { if (window.JG_STORY) window.JG_STORY("obavia"); T("cta_click", { label: "intro_obavia" }); } });
-    else window.JG_NOTIFY({ app: "Your cut", title: "Run the desk", body: "Sell a car on the desk I built. About a minute.", ms: 7000,
-      go: function () { if (window.JG_STORY) window.JG_STORY("desk"); T("cta_click", { label: "intro_desk" }); } });
+    var n = ROLES[role] && ROLES[role].next; if (!window.JG_NOTIFY || !n) return;
+    window.JG_NOTIFY({ app: O.after.next_app, title: n.title, body: n.body, ms: 7000,
+      go: function () { if (window.JG_STORY) window.JG_STORY(n.story); T("cta_click", { label: "intro_" + n.story }); } });
   }
 
-  /* ---------- skip: silent, and it never comes back ---------- */
+  /* ---------- skip: silent; the onboarding is back on the next visit ---------- */
   function skip() {
     if (phase === "leaving") return;
     T("intro_skipped", { phase: phase });
@@ -342,13 +339,12 @@
       return;
     }
     if (phase === "question") {
-      var map = { "1": "interviewer", "2": "partner", "3": "lurker" };
-      if (map[e.key]) { e.preventDefault(); choose(map[e.key]); }
+      if (KEYS[e.key]) { e.preventDefault(); choose(KEYS[e.key]); }
       return;
     }
     if ((phase === "loading" || phase === "ready") && (e.key === "Enter" || e.key === " " || e.key.length === 1)) {
       e.preventDefault(); unlocked = true;
-      if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = "One moment"; } else begin();
+      if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = O.loading.waiting; } else begin();
     }
   }
   addEventListener("keydown", keys, true);

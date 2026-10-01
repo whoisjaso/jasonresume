@@ -114,7 +114,7 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   for (const ev of ['intro_shown', 'intro_started', 'role_chosen', 'name_given', 'intro_finished', 'reel_started', 'reel_finished']) if (!tracked.includes(ev)) errs.push(`${name} intro never sent ${ev}`);
   await ctx.close();
 }
-// The intro's other doors: the dealer route, Skip, a return visit, a deep link
+// The onboarding's other doors: the dealer route, every return visit, Skip, deep links after it
 if (!only || only === 'mobile') {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' })); await ctx.route(/calendly\.com/, r => r.abort());
@@ -131,7 +131,14 @@ if (!only || only === 'mobile') {
   if (!/Welcome, Pat/.test(greet)) errs.push(`dealer route greeting was "${greet}"`); else notes.push('dealer route: reel, then obavia.html, greeted by name');
   await p.waitForTimeout(1200); await p.screenshot({ path: path.join(OUT, 'screen-intro-dealer.png') });
   await p.goto('http://127.0.0.1:8765/'); await p.waitForTimeout(1200);
-  if (await p.$('#intro')) errs.push('intro showed again to a return visitor'); else notes.push('return visit: no intro');
+  if (!(await p.$('#intro'))) errs.push('onboarding did not show to a return visitor'); else notes.push('return visit: onboarding again');
+  // a returning visitor who gives the same name is welcomed back
+  await p.waitForSelector('.intro.is-ready', { timeout: 9000 }); await p.mouse.click(195, 700);
+  await p.waitForSelector('[data-role="lurker"]'); await p.waitForTimeout(900); await p.click('[data-role="lurker"]');
+  await p.waitForSelector('.intro__input'); await p.waitForTimeout(500);
+  const pre = await p.inputValue('.intro__input'); if (pre !== 'Pat') errs.push(`return visit name not prefilled: "${pre}"`);
+  await p.keyboard.press('Enter'); await p.waitForTimeout(500);
+  const card = await p.textContent('.intro__card').catch(() => ''); if (!/Welcome back, Pat/.test(card)) errs.push(`return visit card said "${card}"`); else notes.push('return visit: welcomed back by name');
   await ctx.close();
   const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await c2.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
@@ -142,8 +149,15 @@ if (!only || only === 'mobile') {
   await c2.close();
   const c3 = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await c3.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
-  const r3 = await c3.newPage(); await r3.goto('http://127.0.0.1:8765/?cut=screening'); await r3.waitForTimeout(1200);
-  if (await r3.$('#intro')) errs.push('intro showed on a deep link'); else notes.push('deep link: no intro');
+  const r3 = await c3.newPage(); r3.on('pageerror', e => errs.push(`deep link pageerror: ${e.message}`));
+  await r3.goto('http://127.0.0.1:8765/#present/2'); await r3.waitForTimeout(1200);
+  if (!(await r3.$('#intro'))) errs.push('onboarding did not show on a deep link');
+  if (await r3.evaluate(() => !!document.querySelector('dialog[open]'))) errs.push('deep link opened under the onboarding');
+  await r3.click('[data-intro-skip]'); await r3.waitForTimeout(1200);
+  const deck = await r3.evaluate(() => !!document.querySelector('#deck[open]'));
+  if (!deck) errs.push('deep link #present/2 did not open after the onboarding'); else notes.push('deep link: onboarding first, then the deck');
+  await r3.goto('http://127.0.0.1:8765/?from=test#story-obavia'); await r3.waitForSelector('#intro'); await r3.click('[data-intro-skip]'); await r3.waitForTimeout(1500);
+  if (!(await r3.evaluate(() => document.documentElement.classList.contains('is-story-open')))) errs.push('#story-obavia did not open after the onboarding'); else notes.push('deep link: onboarding first, then the story');
   await c3.close();
 }
 

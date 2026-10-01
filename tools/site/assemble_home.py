@@ -18,6 +18,10 @@ SITE = ROOT / "tools/site"
 E = lambda s: html.escape(s, quote=True)
 
 rec = json.loads((SITE / "record.json").read_text())
+# The onboarding (intro) script: every visitor, every visit. intro.js reads it.
+onboarding = json.loads((SITE / "onboarding.json").read_text())
+onboarding.pop("_about", None)
+onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 head = (SITE / "home.head.html").read_text()
 body = (SITE / "home.body.html").read_text()
 
@@ -33,9 +37,7 @@ head += (
     '<link rel="stylesheet" href="today.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="print.css" media="print" />\n'
     '<script>(function(){var d=document.documentElement;d.classList.add("js");'
-    'try{var q=location.search,h=location.hash,u=navigator.userAgent;'
-    'var force=/[?&]intro=1/.test(q),seen=localStorage.getItem("jg_intro")==="1";'
-    'if(force||(!seen&&!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(u)&&!/[?&](cut|intro)=/.test(q)&&!/^#(present|verify|trailer)/.test(h)))d.classList.add("intro-pending")}catch(e){}'
+    'try{if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent))d.classList.add("intro-pending")}catch(e){}'
     'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>\n'
 ) % {"v": "s4"}
 
@@ -100,7 +102,8 @@ icons = (SITE / "icons.html").read_text().strip()
 deck_json = json.dumps({"deck": rec["deck"], "slate": rec["slate"], "verify": rec["verify"], "email": rec["email"], "calendar": rec["calendar"], "pdf": rec["pdf"]}, ensure_ascii=False).replace("</", "<\\/")
 
 body = (
-    body.replace("%%ICONS%%", icons + '\n<script type="application/json" id="record-data">' + deck_json + "</script>")
+    body.replace("%%ICONS%%", icons + '\n<script type="application/json" id="record-data">' + deck_json + "</script>"
+                 + '\n<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>")
     .replace("%%SLATE%%", slate())
     .replace("%%RECORD%%", record())
     .replace("%%COURSES%%", "".join("<li>%s</li>" % E(c) for c in rec["courses"]))
