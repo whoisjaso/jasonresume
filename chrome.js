@@ -298,7 +298,7 @@
   try {
     if (!sessionStorage.getItem("jg_note")) {
       sessionStorage.setItem("jg_note", "1");
-      console.log("%cYou opened the console. Good.%c\nNo framework, no build step. The projector is cinema.js, the desk is desk.js.\nSource: github.com/whoisjaso/jasonresume\nIf you're hiring: jobawems@gmail.com", "font:600 14px Georgia,serif;color:#c9a642", "font:12px ui-monospace,monospace;color:#c9c2b2");
+      console.log("%cYou opened the console. Good.%c\nNo framework, no build step. The feed and the desk are today.js, the trailer is reel.js.\nSource: github.com/whoisjaso/jasonresume\nIf you're hiring: jobawems@gmail.com", "font:600 14px Georgia,serif;color:#c9a642", "font:12px ui-monospace,monospace;color:#c9c2b2");
     }
   } catch (e) {}
 
