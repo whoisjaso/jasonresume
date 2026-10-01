@@ -46,6 +46,12 @@
   .tag--warm { border-color: var(--gold-ink); color: var(--gold-2); }
   .tag--ref { border-style: dashed; }
   .p__when { font-size: 12px; color: var(--dim); text-align: right; white-space: nowrap; }
+  .hello { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px; opacity: 0; transform: translateY(8px); animation: in .6s var(--spring-soft) forwards; }
+  .hello__av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--panel-2); border: 1px solid var(--edge); font: 500 20px var(--serif); color: var(--gold-2); }
+  .hello__name { font-family: var(--serif); font-size: 22px; line-height: 1.1; }
+  .hello__meta { margin-top: 3px; font-size: var(--small); color: var(--link); line-height: 1.4; }
+  .hello__date { font-size: 12px; color: var(--dim); text-align: right; line-height: 1.5; }
+  .hello__date b { display: block; color: var(--ivory); font-weight: 600; font-size: 13px; }
 
   .meter { padding: 6px 16px 14px; }
   .bar-row { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) 3.2rem; gap: 12px; align-items: center; padding: 8px 0; font-size: var(--small); }
@@ -153,12 +159,25 @@
     return '<div class="funnel"><h3>' + esc(j.audience) + '</h3><div class="steps">' + s.map(function (k) { return '<div style="--f:' + ((j[k[0]] || 0) / top).toFixed(3) + '"><b>' + (j[k[0]] || 0) + "</b><small>" + k[1] + "</small></div>"; }).join("") + "</div></div>";
   }
 
+  function when(iso) {
+    var t = new Date(iso); if (isNaN(t)) return { d: "", h: "" };
+    return { d: t.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }), h: t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) };
+  }
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  function hello(p, i) {
+    var w = when(p.named || p.first);
+    return '<li class="hello" style="animation-delay:' + Math.min(i, 12) * 45 + 'ms"><span class="hello__av" aria-hidden="true">' + esc((p.name || "?").charAt(0).toUpperCase()) + "</span>" +
+      '<div><p class="hello__name">' + esc(p.name) + '</p><p class="hello__meta">' + esc(p.audience) + (p.place ? ", " + esc(p.place) : "") + (p.visits > 1 ? ". " + plural(p.visits, "visit", "visits") : "") + ". " + esc(cap((p.story || []).join(", then ") || "looked around")) + '</p></div>' +
+      '<p class="hello__date"><b>' + esc(w.d) + "</b>" + esc(w.h) + (p.last && p.last !== p.named ? "<br>last seen " + esc(ago(p.last)) : "") + "</p></li>";
+  }
   function render(d) {
     var h = d.headline || {};
     stamp.textContent = "as of " + ago(d.at);
-    var head = "This week, <b>" + plural(h.week || 0, "person", "people") + "</b> came. <b>" + (h.worth || 0) + "</b> " + ((h.worth === 1) ? "is" : "are") + " worth a look" + (h.outreach ? ", and <b>" + h.outreach + "</b> came from your outreach." : ".");
+    var head = "This week, <b>" + plural(h.week || 0, "person", "people") + "</b> came. <b>" + (h.worth || 0) + "</b> " + ((h.worth === 1) ? "is" : "are") + " worth a look" + (h.outreach ? ", and <b>" + h.outreach + "</b> came from your outreach." : ".") + (h.named ? " <b>" + h.named + "</b> told you their name." : "");
     var worth = d.worth || [];
     var html = '<p class="dl__head">' + head + '</p><p class="dl__sub">' + plural(h.month || 0, "visitor", "visitors") + " in the last thirty days. Hot means they reached out or scored 40 and up; warm is 15 and up. Scores fade by half every two weeks.</p>";
+    var named = d.named || [];
+    html += '<section class="sec"><div class="sec__h"><h2>Who said hello</h2><small>' + named.length + " named, last thirty days</small></div>" + (named.length ? '<ul class="group">' + named.map(hello).join("") + "</ul>" : '<ul class="group"><li class="empty">No names yet. Anyone who types a name at the start of the intro shows up here.</li></ul>') + "</section>";
     html += '<div class="split"><section class="sec"><div class="sec__h"><h2>Worth a look</h2><small>' + worth.length + "</small></div>" + (worth.length ? '<ul class="group">' + worth.map(person).join("") + "</ul>" : '<ul class="group"><li class="empty">No one warm yet. The desk and the resume are where it starts.</li></ul>') + "</section>";
     html += '<div><section class="sec"><div class="sec__h"><h2>Journeys</h2></div><div class="group">' + (d.journeys || []).map(funnel).join("") + "</div></section>";
     html += '<section class="sec"><div class="sec__h"><h2>Where they came from</h2></div><div class="group">' + bars(d.sources, function (r) { return r.source; }, function (r) { return r.people; }) + "</div></section></div></div>";
@@ -166,7 +185,7 @@
     html += '<div><section class="sec"><div class="sec__h"><h2>Questions they asked</h2></div><ul class="group">' + ((d.questions || []).length ? d.questions.map(function (q) { return '<li class="q">' + esc(q.q) + "<small>" + esc(ago(q.at)) + "</small></li>"; }).join("") : '<li class="empty">No questions yet.</li>') + "</ul></section>";
     html += '<section class="sec"><div class="sec__h"><h2>Leaks agency owners named</h2></div><div class="group">' + bars(d.leaks, function (r) { return r.stage; }, function (r) { return r.n; }) + "</div></section></div></div>";
     var dr = d.drops || { count: 0, names: {} }, names = Object.keys(dr.names || {});
-    html += '<p class="foot">' + (dr.count ? "The relay turned away " + plural(dr.count, "event", "events") + (names.length ? " (" + esc(names.slice(0, 6).join(", ")) + ")" : "") + ". Add their names to the allowlist in api/track.js if they matter. " : "") + "Visitors with Do Not Track or Global Privacy Control on are never counted. No names are known unless someone sends one.</p>";
+    html += '<p class="foot">' + (dr.count ? "The relay turned away " + plural(dr.count, "event", "events") + (names.length ? " (" + esc(names.slice(0, 6).join(", ")) + ")" : "") + ". Add their names to the allowlist in api/track.js if they matter. " : "") + "Visitors with Do Not Track or Global Privacy Control on are never counted. Names come only from people who type one at the start of the intro or send a form.</p>";
     view.innerHTML = html;
   }
 

@@ -85,10 +85,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="preload" as="image" href="assets/jason-headshot-900.webp" type="image/webp" fetchpriority="high" />
-<link rel="stylesheet" href="tokens.css?v=s1" />
-<link rel="stylesheet" href="home.css?v=s1" />
+<link rel="stylesheet" href="tokens.css?v=s2" />
+<link rel="stylesheet" href="home.css?v=s2" />
 <link rel="stylesheet" href="print.css" media="print" />
-<script>document.documentElement.classList.add("js")</script>
+<script>(function(){var d=document.documentElement;d.classList.add("js");try{var q=location.search,h=location.hash,u=navigator.userAgent;var force=/[?&]intro=1/.test(q),seen=localStorage.getItem("jg_intro")==="1";if(force||(!seen&&!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(u)&&!/[?&](cut|intro)=/.test(q)&&!/^#(present|verify|trailer)/.test(h)))d.classList.add("intro-pending")}catch(e){}setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -780,6 +780,9 @@
 
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
   <defs>
+    <g id="i-hire" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M12 12v.01"/><path d="M3 13a20 20 0 0 0 18 0"/></g>
+    <g id="i-grow" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></g>
+    <g id="i-look" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><path d="M21 12c-2.4 4-5.4 6-9 6s-6.6-2-9-6c2.4-4 5.4-6 9-6s6.6 2 9 6"/></g>
     <g id="i-arrow" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8.5 7H17v8.5"/></g>
     <g id="i-download" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15"/></g>
     <g id="i-check" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></g>
@@ -821,13 +824,14 @@
     <button type="button" data-open="trailer" data-where="menu">Watch the trailer <small>60 seconds</small></button>
     <button type="button" data-open="rig" data-where="menu">Show the rig <small>the key under Esc</small></button>
     <button type="button" data-open="verify" data-where="menu">Check me <small>V</small></button>
+    <a href="/?intro=1" data-cta="replay_intro">Replay the intro</a>
   </div>
   <div class="menu__toggles">
     <button class="chip" type="button" data-toggle="sound" aria-pressed="true">Sound</button>
     <button class="chip" type="button" data-toggle="commentary" aria-pressed="false">Commentary</button>
     <button class="chip" type="button" data-toggle="still" aria-pressed="false">Still</button>
   </div>
-  <p class="fine menu__note">I count visits and what gets watched through my own server, with no ad trackers. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
+  <p class="fine menu__note">I count visits and what gets watched through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit so I know who stopped by. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
 </nav>
 
 <nav class="dock" aria-label="Quick actions">
@@ -1157,7 +1161,7 @@
       <p>Made in Pearland, Texas. Designed, written and built by me.</p>
       <p>Films: Handle a Sale, from Triple J's own desk. The closer and The owner, for Obavia; the people and figures in them are fictional.</p>
       <p>Sound: water, air and keys from Mixkit's free library.</p>
-      <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded. Anything you type and send reaches me.</p>
+      <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded. Anything you type and send reaches me.</p>
       <p class="credits__links">
         <a href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" target="_blank" rel="me noopener" data-verify="linkedin"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-linkedin"/></svg>LinkedIn</a>
         <a href="https://github.com/whoisjaso" target="_blank" rel="me noopener" data-verify="github"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
@@ -1261,6 +1265,7 @@
 <script src="sounds.js" defer></script>
 <script src="haptics.js" defer></script>
 <script src="chrome.js" defer></script>
+<script src="intro.js" defer></script>
 <script src="cinema.js" defer></script>
 <script src="desk.js" defer></script>
 <script src="games.js" defer></script>

@@ -31,8 +31,12 @@ head += (
     '<link rel="stylesheet" href="tokens.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="home.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="print.css" media="print" />\n'
-    '<script>document.documentElement.classList.add("js")</script>\n'
-) % {"v": "s1"}
+    '<script>(function(){var d=document.documentElement;d.classList.add("js");'
+    'try{var q=location.search,h=location.hash,u=navigator.userAgent;'
+    'var force=/[?&]intro=1/.test(q),seen=localStorage.getItem("jg_intro")==="1";'
+    'if(force||(!seen&&!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(u)&&!/[?&](cut|intro)=/.test(q)&&!/^#(present|verify|trailer)/.test(h)))d.classList.add("intro-pending")}catch(e){}'
+    'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>\n'
+) % {"v": "s2"}
 
 # JSON-LD: the home-page nodes of schema.json plus the FAQ
 schema = json.loads((ROOT / "schema.json").read_text())

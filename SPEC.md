@@ -60,7 +60,7 @@ Slate, Rewrite the Note (place fragments of a fictional call into the four lines
 - desk.js, deck.js, games.js, verify.js, rig.js, trailer.js, water.js, hold.js, commentary.js: the scene modules, each lazy where possible.
 - sounds.js and haptics.js: kept.
 - tools/site/record.json: the single source for the Slate, the record, the deck and the PDF. tools/site/assemble_home.py builds index.html; tools/site/build_resume.py builds resume-pdf.html.
-- Retired: the loader, gate, name step and guide overlay (guide.js, guide.css), the intake (site.js on the home page), the illustrated faces on any default path.
+- Retired: the guide overlay (guide.js, guide.css), the intake (site.js on the home page), the illustrated faces. The loader, the question and the name step came back on 2026-10-01 as intro.js, at Jason's request: first visit only, skippable at every step.
 - api/track.js: a per-event schema instead of the silent allowlist; drops are counted. api/metrics.js and admin.html: the Dailies board with the warmth score.
 
 ## Verification

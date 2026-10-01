@@ -28,12 +28,19 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`${name} console: ${m.text().slice(0, 160)}`); });
   const t0 = Date.now();
   await p.goto('http://127.0.0.1:8765/', { waitUntil: 'domcontentloaded' });
-  await p.waitForTimeout(1400);
+  // The intro: tap anywhere, the question, the name, the cut
+  await p.waitForSelector('#intro', { timeout: 4000 }).catch(() => errs.push(`${name} intro did not appear`));
+  await p.waitForSelector('.intro.is-ready', { timeout: 9000 }); await p.waitForTimeout(300); await shot(p, name, '00a-intro');
+  await p.mouse.click(w / 2, h * 0.8); await p.waitForSelector('[data-role="interviewer"]'); await p.waitForTimeout(1100); await shot(p, name, '00b-question');
+  await p.click('[data-role="interviewer"]'); await p.waitForSelector('.intro__input'); await p.waitForTimeout(600);
+  await p.fill('.intro__input', 'Test Visitor'); await p.keyboard.press('Enter');
+  await p.waitForSelector('#intro', { state: 'detached', timeout: 8000 }).catch(() => errs.push(`${name} intro did not leave`));
+  await p.waitForTimeout(600);
   // The ten-second test: the actions are on screen at arrival, with nothing in front
   const fold = await p.evaluate(() => { const r = [...document.querySelectorAll('.slate__actions .btn')].map(x => x.getBoundingClientRect()); const dock = document.querySelector('.dock'); const dh = dock && getComputedStyle(dock).display !== 'none' ? dock.getBoundingClientRect().height : 0; return { maxBottom: Math.max(...r.map(x => x.bottom)), vh: innerHeight - dh, n: r.length, dialogs: document.querySelectorAll('dialog[open]').length }; });
   if (fold.maxBottom > fold.vh) errs.push(`${name} Slate actions below the fold (${Math.round(fold.maxBottom)} > ${fold.vh})`);
   if (fold.dialogs) errs.push(`${name} a dialog is open on arrival`);
-  notes.push(`${name} first frame ready in ${Date.now() - t0} ms, actions bottom ${Math.round(fold.maxBottom)} of ${fold.vh}`);
+  notes.push(`${name} intro played and site ready in ${Date.now() - t0} ms, actions bottom ${Math.round(fold.maxBottom)} of ${fold.vh}`);
   await shot(p, name, '01-slate');
 
   const go = async (sel, label, extra = 900) => {
@@ -108,13 +115,44 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await p.evaluate(() => { dispatchEvent(new Event('pagehide')); });
   await p.waitForTimeout(1200);
   notes.push(`${name} events sent: ${[...new Set(tracked)].join(', ')}`);
+  for (const ev of ['intro_shown', 'intro_started', 'role_chosen', 'name_given', 'intro_finished']) if (!tracked.includes(ev)) errs.push(`${name} intro never sent ${ev}`);
   await ctx.close();
 }
+// The intro's other doors: the agency route, Skip, a return visit, a deep link
+if (!only || only === 'mobile') {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' })); await ctx.route(/calendly\.com/, r => r.abort());
+  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`intro doors pageerror: ${e.message}`));
+  await p.goto('http://127.0.0.1:8765/'); await p.waitForSelector('.intro.is-ready', { timeout: 9000 });
+  await p.mouse.click(195, 700); await p.waitForSelector('[data-role="partner"]'); await p.waitForTimeout(900);
+  await p.click('[data-role="partner"]'); await p.waitForSelector('.intro__input'); await p.waitForTimeout(500);
+  await p.fill('.intro__input', 'Pat'); await Promise.all([p.waitForURL('**/obavia.html', { timeout: 9000 }), p.keyboard.press('Enter')]);
+  await p.waitForTimeout(1200); const greet = await p.textContent('.island__text').catch(() => '');
+  if (!/Welcome, Pat/.test(greet)) errs.push(`agency route greeting was "${greet}"`); else notes.push('agency route: obavia.html, greeted by name');
+  await p.waitForTimeout(1200); await p.screenshot({ path: path.join(OUT, 'screen-intro-agency.png') });
+  await p.goto('http://127.0.0.1:8765/'); await p.waitForTimeout(1200);
+  if (await p.$('#intro')) errs.push('intro showed again to a return visitor'); else notes.push('return visit: no intro');
+  await ctx.close();
+  const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await c2.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const q = await c2.newPage();
+  await q.goto('http://127.0.0.1:8765/'); await q.waitForSelector('#intro'); await q.click('[data-intro-skip]'); await q.waitForTimeout(700);
+  const sk = await q.evaluate(() => ({ intro: !!document.getElementById('intro'), locked: document.documentElement.classList.contains('is-locked') }));
+  if (sk.intro || sk.locked) errs.push(`skip left ${JSON.stringify(sk)}`); else notes.push('skip: gone, page unlocked');
+  await c2.close();
+  const c3 = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await c3.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const r3 = await c3.newPage(); await r3.goto('http://127.0.0.1:8765/?cut=screening'); await r3.waitForTimeout(1200);
+  if (await r3.$('#intro')) errs.push('intro showed on a deep link'); else notes.push('deep link: no intro');
+  await c3.close();
+}
+
 // Privacy: with Global Privacy Control or Do Not Track on, nothing reaches /api/track
 for (const flag of ['globalPrivacyControl', 'doNotTrack']) {
   if (only && only !== 'desktop') break;
   const ctx = await b.newContext({ viewport: { width: 1280, height: 800 } });
   await ctx.addInitScript(f => Object.defineProperty(Navigator.prototype, f, { get: () => f === 'doNotTrack' ? '1' : true }), flag);
+  await ctx.addInitScript(() => { try { localStorage.setItem('jg_intro', '1'); } catch (e) {} });
   let sent = 0; await ctx.route('**/api/track', r => { sent++; r.fulfill({ status: 204, body: '' }); });
   const p = await ctx.newPage();
   await p.goto('http://127.0.0.1:8765/', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1200);
