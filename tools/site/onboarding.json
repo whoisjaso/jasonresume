@@ -1,0 +1,65 @@
+{
+  "_about": "The onboarding every visitor sees on every visit to the home page: the loading screen (tap to begin), one question, an optional name, a title card, then the cut that suits them. intro.js reads this; tools/site/assemble_home.py inlines it into index.html as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
+  "loading": {
+    "first": "Jason",
+    "last": "Obawemimo",
+    "hint_touch": "Tap anywhere to begin",
+    "hint_pointer": "Click anywhere to begin",
+    "waiting": "One moment",
+    "skip": "Skip intro"
+  },
+  "question": {
+    "title": "What brings you",
+    "title_em": "here?",
+    "fine_touch": "Pick one. You can switch later.",
+    "fine_pointer": "Or press 1, 2 or 3."
+  },
+  "roles": [
+    {
+      "id": "interviewer",
+      "icon": "i-hire",
+      "h": "I’m hiring",
+      "p": "Interviewer or recruiter. The proof, fast.",
+      "cut": "screening",
+      "line": "The ten-second version first. Then the proof.",
+      "next": { "title": "Start with the desk", "body": "Run the sale desk I built for Triple J. About a minute.", "story": "desk" }
+    },
+    {
+      "id": "partner",
+      "icon": "i-car",
+      "h": "I run a dealership",
+      "p": "Dealer or business partner. Every sale, start to signed.",
+      "cut": "dealer",
+      "line": "Every sale, start to signed. Here’s what I’m building for your lot.",
+      "next": { "title": "See Obavia", "body": "Every sale, start to signed. For Texas independent dealers.", "story": "obavia" }
+    },
+    {
+      "id": "lurker",
+      "icon": "i-look",
+      "h": "Just looking",
+      "p": "No pitch. The fun parts.",
+      "cut": "trailer",
+      "line": "The fun parts. No pitch.",
+      "next": { "title": "Run the desk", "body": "Sell a car on the desk I built. About a minute.", "story": "desk" }
+    }
+  ],
+  "name": {
+    "title": "And your",
+    "title_em": "name?",
+    "placeholder": "First name is plenty",
+    "continue": "Continue",
+    "skip": "Skip",
+    "fine": "So I know who stopped by. Only I see it."
+  },
+  "card": {
+    "named": "Okay,",
+    "returning": "Welcome back,",
+    "anonymous": "Okay.",
+    "anonymous_em": "Your cut."
+  },
+  "after": {
+    "welcome_named": "Welcome, ",
+    "welcome_anonymous": "Welcome in",
+    "next_app": "Your cut"
+  }
+}
