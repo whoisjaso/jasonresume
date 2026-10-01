@@ -221,7 +221,14 @@
   /* the onboarding plays first on every visit; a deep link opens when it ends */
   var arrived = false;
   function arriveOnce() { if (arrived) return; arrived = true; arrive(); }
-  document.addEventListener("jg:intro-done", function () { setTimeout(arriveOnce, 60); });
+  document.addEventListener("jg:intro-done", function () {
+    setTimeout(function () {
+      arriveOnce();
+      var h = location.hash, t = null;
+      try { t = h.length > 1 && !/^#(present|verify|trailer|story-)/.test(h) ? document.getElementById(decodeURIComponent(h.slice(1))) : null; } catch (e) {}
+      if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  });
   addEventListener("load", function () {
     if (!root.classList.contains("intro-pending")) setTimeout(arriveOnce, 60);
     else setTimeout(function () { if (!document.getElementById("intro")) arriveOnce(); }, 6000);

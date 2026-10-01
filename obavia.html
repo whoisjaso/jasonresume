@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="home.css?v=s4" />
 <link rel="stylesheet" href="today.css?v=s4" />
 <link rel="stylesheet" href="briefing.css?v=s4" />
-<script>document.documentElement.classList.add("js")</script>
+<!-- onboarding:head --><script>(function(){var d=document.documentElement;d.classList.add("js");try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).host===location.host}catch(e){}if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script><!-- /onboarding:head -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -92,6 +92,7 @@
 </head>
 <body class="today-page product">
 <a class="skip" href="#early">Skip to early access</a>
+<!-- onboarding:data --><script type="application/json" id="onboarding-data">{"loading":{"first":"Jason","last":"Obawemimo","hint_touch":"Tap anywhere to begin","hint_pointer":"Click anywhere to begin","waiting":"One moment","skip":"Skip intro"},"question":{"title":"What brings you","title_em":"here?","fine_touch":"Pick one. You can switch later.","fine_pointer":"Or press 1, 2 or 3."},"roles":[{"id":"interviewer","icon":"i-hire","h":"I’m hiring","p":"Interviewer or recruiter. The proof, fast.","cut":"screening","line":"The ten-second version first. Then the proof.","next":{"title":"Start with the desk","body":"Run the sale desk I built for Triple J. About a minute.","story":"desk"}},{"id":"partner","icon":"i-car","h":"I run a dealership","p":"Dealer or business partner. Every sale, start to signed.","cut":"dealer","line":"Every sale, start to signed. Here’s what I’m building for your lot.","next":{"title":"See Obavia","body":"Every sale, start to signed. For Texas independent dealers.","story":"obavia"}},{"id":"lurker","icon":"i-look","h":"Just looking","p":"No pitch. The fun parts.","cut":"trailer","line":"The fun parts. No pitch.","next":{"title":"Run the desk","body":"Sell a car on the desk I built. About a minute.","story":"desk"}}],"name":{"title":"And your","title_em":"name?","placeholder":"First name is plenty","continue":"Continue","skip":"Skip","fine":"So I know who stopped by. Only I see it."},"card":{"named":"Okay,","returning":"Welcome back,","anonymous":"Okay.","anonymous_em":"Your cut."},"after":{"welcome_named":"Welcome, ","welcome_anonymous":"Welcome in","next_app":"Your cut"}}</script><!-- /onboarding:data -->
 
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
   <defs>
@@ -144,7 +145,7 @@
 <main id="top" class="pp">
 
   <!-- The product header, the way an app page opens -->
-  <section class="pp-head" data-track="briefing-slate" aria-labelledby="pp-h">
+  <section class="pp-head" data-story-alt="obavia" data-track="briefing-slate" aria-labelledby="pp-h">
     <img class="pp-head__icon" src="assets/brand/obavia-icon.png" alt="" width="128" height="128" />
     <div class="pp-head__txt">
       <h1 id="pp-h" class="today__title">Obavia</h1>
@@ -181,7 +182,7 @@
   </section>
 
   <!-- Run it -->
-  <section class="pp-sec" id="run" data-track="desk" aria-labelledby="run-h">
+  <section class="pp-sec" id="run" data-story-alt="desk" data-track="desk" aria-labelledby="run-h">
     <h2 class="pp-h" id="run-h">Run a sale on it</h2>
     <p class="pp-lead">This is the desk Triple J Auto Investment closes sales on, the one Obavia grows from. Pick a car, scan a license, sign. About a minute.</p>
     <div class="desk-demo">
@@ -292,6 +293,8 @@
 <script src="sounds.js" defer></script>
 <script src="haptics.js" defer></script>
 <script src="chrome.js" defer></script>
+<script src="reel.js" defer></script>
+<script src="intro.js" defer></script>
 <script src="today.js" defer></script>
 <script src="pages.js" defer></script>
 </body>

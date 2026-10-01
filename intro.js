@@ -1,16 +1,18 @@
 /* The onboarding. Tap anywhere to begin, one question, an optional name, then
-   the cut that suits you. Every visitor sees it on every visit to the home
-   page; only crawlers go straight to the page, which is complete without it.
+   the cut that suits you. Every visitor sees it on every arrival from outside
+   the site, on the home page or /obavia.html; clicks between the site's own
+   pages and crawlers go straight to the page, which is complete without it.
    Its words and choices live in tools/site/onboarding.json, inlined as
    #onboarding-data. Every skip is silent. A deep link (#present, #verify,
-   #story-..., ?cut=) opens once the onboarding ends, instead of the trailer.
+   #story-..., ?cut=, or any #section on the page) opens once the onboarding
+   ends, instead of the trailer.
    The head script sets html.intro-pending so the page never flashes first.
    When it ends, document gets "jg:intro-done". */
 (function () {
   "use strict";
   var root = document.documentElement, body = document.body;
   if (!root.classList.contains("intro-pending")) return;
-  if (!body.classList.contains("home")) { root.classList.remove("intro-pending"); return; }
+  if (!document.getElementById("onboarding-data")) { root.classList.remove("intro-pending"); return; }
 
   var RM = matchMedia("(prefers-reduced-motion: reduce)").matches || root.hasAttribute("data-still");
   var COARSE = matchMedia("(pointer: coarse)").matches;
@@ -28,7 +30,8 @@
   if (!O || !O.roles) { root.classList.remove("intro-pending"); document.dispatchEvent(new CustomEvent("jg:intro-done")); return; }
   var ROLES = {}, KEYS = {};
   O.roles.forEach(function (r, i) { r.n = String(i + 1); ROLES[r.id] = r; KEYS[r.n] = r.id; });
-  var DEEP = /[?&]cut=/.test(location.search) || /^#(present|verify|trailer|story-)/.test(location.hash);
+  var HASH = location.hash, DEEP = /[?&]cut=/.test(location.search) || /^#(present|verify|trailer|story-)/.test(HASH);
+  try { if (HASH.length > 1 && HASH !== "#top" && document.getElementById(decodeURIComponent(HASH.slice(1)))) DEEP = true; } catch (e) {}
 
   /* ---------- the curtain ---------- */
   if (/[?&]intro=1/.test(location.search)) { try { var u = new URL(location.href); u.searchParams.delete("intro"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {} }
@@ -280,7 +283,7 @@
       setTimeout(function () { done(); el.remove(); }, wait(400));
       return;
     }
-    if (role === "partner" && !window.JG_REEL) {
+    if (role === "partner" && !window.JG_REEL && !/obavia\.html$/.test(location.pathname)) {
       try { sessionStorage.setItem("jg_greet", first || "1"); } catch (e) {}
       el.classList.add("is-black"); fx("cut");
       setTimeout(function () { done(); location.href = "/obavia.html"; }, wait(420));

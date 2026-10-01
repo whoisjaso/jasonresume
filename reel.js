@@ -9,7 +9,7 @@
 (function () {
   "use strict";
   var root = document.documentElement, body = document.body;
-  if (!body.classList.contains("home")) return;
+  if (!body.classList.contains("home") && !document.getElementById("onboarding-data")) return;
   var RM = matchMedia("(prefers-reduced-motion: reduce)").matches || root.hasAttribute("data-still");
   var COARSE = matchMedia("(pointer: coarse)").matches;
   var T = window.JG_TRACK || function () {};
@@ -496,6 +496,13 @@
       var a = e.target.closest("[data-reel-cta]"), g = e.target.closest("[data-reel-go]");
       if (a) {
         var k = a.getAttribute("data-reel-cta"); fx("choice"); T("cta_click", { label: "reel_" + k, role: role });
+        var u = null; try { u = new URL(a.getAttribute("href") || "", location.href); } catch (err) {}
+        if (u && u.pathname === location.pathname && u.hash.length > 1 && document.getElementById(u.hash.slice(1))) {
+          /* a link to a section of this page: close the trailer, then go there */
+          e.preventDefault(); var id = u.hash.slice(1); leave("site", "cta");
+          setTimeout(function () { var t = document.getElementById(id); if (t) t.scrollIntoView({ behavior: RM ? "auto" : "smooth", block: "start" }); try { history.replaceState(null, "", "#" + id); } catch (err) {} }, RM ? 80 : 1050);
+          return;
+        }
         if (k === "briefing" || k === "film") { try { sessionStorage.setItem("jg_greet", name || "1"); } catch (err) {} }
         if (k === "desk" || k === "obavia") { e.preventDefault(); leave(k, "cta"); }
         return;

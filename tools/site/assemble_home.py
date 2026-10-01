@@ -12,6 +12,7 @@ Run from anywhere:  python3 tools/site/assemble_home.py
 import html
 import json
 import pathlib
+import re
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SITE = ROOT / "tools/site"
@@ -25,6 +26,16 @@ onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":
 head = (SITE / "home.head.html").read_text()
 body = (SITE / "home.body.html").read_text()
 
+# The onboarding plays for every arrival from outside the site, on whichever
+# page the visitor lands (home or /obavia.html); clicks between the site's own
+# pages skip it, crawlers skip it, ?intro=1 forces it. Shared by both pages.
+HEAD_SCRIPT = (
+    '<script>(function(){var d=document.documentElement;d.classList.add("js");'
+    'try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).host===location.host}catch(e){}'
+    'if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}'
+    'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>'
+)
+
 # Fonts and styles
 head += (
     '<link rel="preconnect" href="https://fonts.googleapis.com" />\n'
@@ -36,9 +47,7 @@ head += (
     '<link rel="stylesheet" href="home.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="today.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="print.css" media="print" />\n'
-    '<script>(function(){var d=document.documentElement;d.classList.add("js");'
-    'try{if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent))d.classList.add("intro-pending")}catch(e){}'
-    'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>\n'
+    + HEAD_SCRIPT + '\n'
 ) % {"v": "s4"}
 
 # JSON-LD: the home-page nodes of schema.json plus the FAQ
@@ -117,3 +126,14 @@ assert "%%" not in body, [l for l in body.splitlines() if "%%" in l][:3]
 out = head + body
 (ROOT / "index.html").write_text(out)
 print("index.html", len(out), "bytes,", len(nodes), "JSON-LD nodes")
+
+
+# The Obavia page carries the same onboarding: sync its head script and data.
+ob = ROOT / "obavia.html"
+o = ob.read_text()
+data_tag = '<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>"
+o2 = re.sub(r"<!-- onboarding:head -->.*?<!-- /onboarding:head -->", lambda m: "<!-- onboarding:head -->" + HEAD_SCRIPT + "<!-- /onboarding:head -->", o, flags=re.S)
+o2 = re.sub(r"<!-- onboarding:data -->.*?<!-- /onboarding:data -->", lambda m: "<!-- onboarding:data -->" + data_tag + "<!-- /onboarding:data -->", o2, flags=re.S)
+if o2 != o:
+    ob.write_text(o2)
+    print("obavia.html onboarding synced")

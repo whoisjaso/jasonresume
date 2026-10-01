@@ -69,6 +69,10 @@
   }
   /* [data-book] clicks are tracked and voiced by track.js and chrome.js */
 
+  /* ---------- the name given at the onboarding fills the form ---------- */
+  function prefill() { var n = document.getElementById("l-name"), v = ""; try { v = localStorage.getItem("jg_name") || ""; } catch (e) {} if (n && v && !n.value) n.value = v; }
+  prefill(); document.addEventListener("jg:intro-done", function () { setTimeout(prefill, 1200); });
+
   /* ---------- the desks ---------- */
   document.querySelectorAll("form[data-desk]").forEach(function (form) {
     var status = form.querySelector(".form__status"), btn = form.querySelector('button[type="submit"]'), sent = document.getElementById(form.dataset.sent);
