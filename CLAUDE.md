@@ -26,7 +26,7 @@ A static site (index.html, tokens.css, home.css, intro.js, reel.js, chrome.js, d
 - Scenes and look: home.css and tokens.css (design system, iOS layer); cinema.js is the projector, cue points live in the body markup. chrome.js owns FX, the island, banners, sheets and deep links.
 - Copy and facts: tools/site/record.json, tools/site/home.body.html, resume-pdf.html, api/guide.js, llms.txt, llms-full.txt, answers.json, faq.jsonld. Change a fact in all of them.
 - Intro: intro.js (first visit: tap to begin, the question, the optional name); the head script in tools/site/assemble_home.py decides whether it shows.
-- Reel: reel.js (a Stories-style cut per visitor, played after the intro and from the cut chips under the Slate; shots and copy live in CUTS at the top, and every line must be in llms.txt).
+- Reel: reel.js (a trailer cut per visitor with a live Web Audio score, played after the intro and from the cut chips under the Slate; shots and copy live in cuts() at the top, and every line must be in llms.txt).
 - Games: games.js (home, obavia, join), desk.js (the Handle a Sale desk), deck.js (resume deck), extras.js (films, rig, trailer, water, commentary captions).
 - Sound: sounds.js (bank and gains), assets/sfx, tools/sfx.
 - Films: assets/film (Obavia ads, Triple J Handle a Sale, signature), tools/film. The Sale Desk film renders from whoisjaso/thetriplejauto, remotion/src/sale-desk.ts.

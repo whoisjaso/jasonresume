@@ -26,7 +26,7 @@ head += (
     '<link rel="preconnect" href="https://fonts.googleapis.com" />\n'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n'
     '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500'
-    '&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />\n'
+    '&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />\n'
     '<link rel="preload" as="image" href="assets/jason-headshot-900.webp" type="image/webp" fetchpriority="high" />\n'
     '<link rel="stylesheet" href="tokens.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="home.css?v=%(v)s" />\n'
@@ -36,7 +36,7 @@ head += (
     'var force=/[?&]intro=1/.test(q),seen=localStorage.getItem("jg_intro")==="1";'
     'if(force||(!seen&&!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(u)&&!/[?&](cut|intro)=/.test(q)&&!/^#(present|verify|trailer)/.test(h)))d.classList.add("intro-pending")}catch(e){}'
     'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>\n'
-) % {"v": "s2"}
+) % {"v": "s3"}
 
 # JSON-LD: the home-page nodes of schema.json plus the FAQ
 schema = json.loads((ROOT / "schema.json").read_text())
