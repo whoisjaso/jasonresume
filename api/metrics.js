@@ -29,7 +29,7 @@ const POINTS = {
   film_chapter: 1, resume_open: 8, resume_print: 6, deck_slide: 0.5, deck_finished: 6, proof_open: 3, verify_opened: 6, verify_link: 6,
   chat_asked: 6, mark_words: 3, handoff_pick: 4, leak_stage: 6, counts_done: 4, note_done: 5, card_copied: 6, question_added: 5,
   questions_mailed: 15, questions_copied: 8, forward_copied: 10, share_opened: 10, trailer_finished: 3, cta_click: 2, outbound_click: 2,
-  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, apply_sent: 30, intro_finished: 1, name_given: 6
+  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, apply_sent: 30, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6
 };
 const TERMINAL = new Set(["call_booked", "lead_sent", "apply_sent", "questions_mailed"]);
 const STORY = {
@@ -37,7 +37,7 @@ const STORY = {
   deck_finished: "went through the deck", verify_opened: "opened Check me", verify_link: "checked a proof link", chat_asked: "asked a question",
   leak_stage: "found their leak", handoff_pick: "did the handoff lesson", note_done: "rewrote the note", question_added: "saved questions for a call",
   questions_mailed: "emailed their questions", forward_copied: "copied the forward blurb", share_opened: "shared the site", contact_click: "clicked email",
-  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", apply_sent: "applied", name_given: "said hello"
+  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", apply_sent: "applied", name_given: "said hello", reel_finished: "watched their cut"
 };
 
 async function hogql(host, id, key, query) {
@@ -94,7 +94,7 @@ function build(rows, refCodes) {
     const score = Math.min(100, Math.round(v.score)), aud = audience(v);
     const tier = v.terminal || score >= 40 ? "Hot" : score >= 15 ? "Warm" : "Cold";
     const j = journeys[aud];
-    if (j) { j[0]++; if (v.did.desk_step || v.did.leak_stage || v.did.note_placed) j[1]++; if (v.did.resume_open || v.did.verify_opened || v.did.film_play || v.did.handoff_pick) j[2]++; if (v.terminal || v.did.contact_click || v.did.book_click) j[3]++; }
+    if (j) { j[0]++; if (v.did.desk_step || v.did.leak_stage || v.did.note_placed || v.did.reel_finished) j[1]++; if (v.did.resume_open || v.did.verify_opened || v.did.film_play || v.did.handoff_pick) j[2]++; if (v.terminal || v.did.contact_click || v.did.book_click) j[3]++; }
     const place = [v.where ? "in " + v.where : "", v.device ? "on a " + v.device.toLowerCase() : "", v.source && v.source !== "direct" ? "from " + v.source : ""].filter(Boolean).join(" ");
     return { name: v.name, named: v.named, first: v.first, place, who: [v.name || "Someone", place].filter(Boolean).join(" "), audience: aud, tier, score, visits: v.visits, ref: v.ref, story: v.moments.slice(-3), last: v.last };
   });

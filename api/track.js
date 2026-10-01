@@ -20,6 +20,8 @@ const ALLOWED = new Set([
   "trailer_opened", "trailer_shot", "trailer_finished", "water_touched", "copy_clicked",
   // the intro: tap to begin, the question, the name
   "intro_shown", "intro_started", "intro_finished", "intro_skipped", "name_given", "name_skipped",
+  // the reel: a cut for each visitor
+  "reel_started", "reel_shot", "reel_finished", "reel_exited",
   // conversion
   "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent", "apply_sent",
   // older pages still in the wild
