@@ -25,7 +25,7 @@
   var ROLES = {
     interviewer: { n: "1", icon: "i-hire", h: "I’m hiring", p: "Interviewer or recruiter. The proof, fast.", cut: "screening",
       line: "The ten-second version first. Then the proof." },
-    partner: { n: "2", icon: "i-grow", h: "I run an agency", p: "Business partner. Where your sales floor leaks.", cut: "agency",
+    partner: { n: "2", icon: "i-car", h: "I run a dealership", p: "Dealer or business partner. Every sale, start to signed.", cut: "dealer",
       line: "Where your sales floor leaks, and what I’m building for it." },
     lurker: { n: "3", icon: "i-look", h: "Just looking", p: "No pitch. The fun parts.", cut: "trailer",
       line: "The fun parts. No pitch." }

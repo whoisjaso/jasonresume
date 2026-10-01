@@ -41,7 +41,12 @@
     },
     {
       "source": "/join",
-      "destination": "/join.html",
+      "destination": "/obavia.html",
+      "permanent": false
+    },
+    {
+      "source": "/join.html",
+      "destination": "/obavia.html",
       "permanent": false
     }
   ],

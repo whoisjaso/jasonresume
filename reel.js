@@ -121,7 +121,7 @@
      THE CUTS
      ================================================================= */
   var FORMS = ["Bill Of Sale", "Form 130-U", "Power Of Attorney", "Vehicle Responsibility"];
-  var STAGES = ["Capture", "Connect", "Book", "Discover", "Agree", "Collect"];
+  var STAGES = ["The car", "The odometer", "The buyer", "The money", "The paperwork", "Signed"];
   var PROOFS = ["LinkedIn", "GitHub", "Triple J Auto Investment", "Degree PDF", "Anthropic certificates", "City of Pearland record"];
   function cuts(name) {
     var N = name ? name.toUpperCase() + "." : "LISTEN.";
@@ -136,23 +136,23 @@
         { k: "id", b: 4, level: 2, cue: "boom" },
         { k: "live", b: 6, level: 2, cue: "hit", lead: "The dealership I co-own and run, since August 2024." },
         { k: "scan", level: 2, cue: "hit", lead: ["The desk it closes sales on?", "*I built it.*"] },
-        { k: "stages", b: 9, level: 3, cue: "boom", lead: "The sales intelligence platform I'm building. In development." },
+        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia Desk. The sale desk I built at Triple J, now being built for Texas independent dealers. In development." },
         { k: "count", b: 6, level: 3, cue: "hit" },
         { k: "proof", b: 6, level: 3, cue: "boom" },
         { k: "slam", b: 3, level: 1, cue: "glitch", lines: ["P.S. This music isn't a file.", "*Your browser is playing it.*"], small: true },
         { k: "end", level: 0, cue: "end", cta: "interviewer", h: "Your move" + P + "." }
       ] },
-      partner: { label: "The agency owner cut", shots: [
+      partner: { label: "The dealer cut", shots: [
         { k: "cold", b: 2, level: 0, cue: "riser" },
         { k: "name", b: 2, level: 1, cue: "boom", t: N },
-        { k: "slam", b: 4, level: 1, cue: "hit", lines: ["Most sales floors don't lose", "the deal *on the call.*"] },
-        { k: "slam", b: 3, level: 2, cue: "boom", lines: ["They lose it in", "*the handoff.*"], glitch: true },
-        { k: "words", level: 2, cue: "hit" },
-        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia. From the first inquiry to collected cash, inside your own funnel and vocabulary." },
-        { k: "slam", b: 4, level: 3, cue: "boom", lines: ["Ranked on", "*collected cash.*", "Not calls."] },
-        { k: "live", b: 6, level: 2, cue: "hit", lead: "I run a sales floor too. The dealership I co-own in Houston:" },
-        { k: "slam", b: 5, level: 1, cue: "hit", lines: ["I won't sell you", "*results I don't have yet.*"], sub: "Obavia is in development, not live. Core is planned at $3,000 a month. The waitlist is free and grants no access." },
-        { k: "end", level: 0, cue: "end", cta: "partner", h: "Where does yours leak" + P + "?" }
+        { k: "slam", b: 4, level: 1, cue: "hit", lines: ["Every sale,", "*start to signed.*"] },
+        { k: "slam", b: 3, level: 2, cue: "glitch", lines: ["One question", "per screen."], glitch: true },
+        { k: "scan", level: 2, cue: "hit", lead: ["Scan the license once.", "*Every form fills.*"] },
+        { k: "slam", b: 5, level: 3, cue: "boom", lines: ["Cash. Buy here pay here.", "*Bank financing.*"], sub: "Texas sales tax, title, registration and your doc fee, worked out on every deal." },
+        { k: "stages", b: 9, level: 3, cue: "boom", lead: "Obavia Desk. From the car to the last signature, and the buyer signs at the desk." },
+        { k: "live", b: 6, level: 2, cue: "hit", lead: "Built on the floor of the dealership I co-own in Houston:" },
+        { k: "slam", b: 5, level: 1, cue: "hit", lines: ["I won't sell you", "*results I don't have yet.*"], sub: "Obavia Desk is in development, with early access for Texas dealers. No price is published yet." },
+        { k: "end", level: 0, cue: "end", cta: "partner", h: "Want it on your lot" + P + "?" }
       ] },
       lurker: { label: "The fun cut", shots: [
         { k: "cold", b: 2, level: 0, cue: "riser" },
@@ -221,8 +221,8 @@
         interviewer: { p: "If I’m a fit, email is fastest. The one-page resume and every proof link are one tap away.",
           b: [["Email me", "mailto:" + EMAIL + "?subject=" + encodeURIComponent("Your site, and a role"), "gold", "email"], ["One-page resume", PDF, "", "pdf"], ["Book 30 minutes", CAL, "", "book"]],
           s: [["Run the desk yourself", "desk"], ["Watch it again", "again"], ["Look around", "site"]] },
-        partner: { p: "Thirty minutes on your funnel, or a minute on the leak finder. Either way you leave with something.",
-          b: [["Book 30 minutes", CAL, "gold", "book"], ["Find your leak", "/obavia.html#leaks", "", "leaks"], ["The Obavia briefing", "/obavia.html", "", "briefing"]],
+        partner: { p: "Ask for early access, or take thirty minutes with me. I run a lot too, so we'll talk about your paperwork, not a pitch.",
+          b: [["Ask for early access", "/obavia.html#early", "gold", "briefing"], ["Book 30 minutes", CAL, "", "book"], ["Watch the Desk film", "/obavia.html#film", "", "film"]],
           s: [["Watch it again", "again"], ["Look around", "site"]] },
         lurker: { p: "The desk is a game. The trailer is a minute. Both beat scrolling.",
           b: [["Run the desk", "#desk", "gold", "desk"], ["Roll the trailer", "#trailer", "", "trailer"]],
@@ -461,7 +461,7 @@
       var a = e.target.closest("[data-reel-cta]"), g = e.target.closest("[data-reel-go]");
       if (a) {
         var k = a.getAttribute("data-reel-cta"); fx("choice"); T("cta_click", { label: "reel_" + k, role: role });
-        if (k === "briefing" || k === "leaks") { try { sessionStorage.setItem("jg_greet", name || "1"); } catch (err) {} }
+        if (k === "briefing" || k === "film") { try { sessionStorage.setItem("jg_greet", name || "1"); } catch (err) {} }
         if (k === "desk" || k === "trailer") { e.preventDefault(); leave(k, "cta"); }
         return;
       }
@@ -535,7 +535,7 @@
   window.JG_REEL = { play: playReel, open: function () { return open; } };
 
   /* the cut chips under the Slate play the matching reel */
-  var CHIP = { screening: "interviewer", agency: "partner", trailer: "lurker" };
+  var CHIP = { screening: "interviewer", dealer: "partner", agency: "partner", trailer: "lurker" };
   document.addEventListener("click", function (e) {
     var c = e.target.closest && e.target.closest("[data-cut]"); if (!c || !CHIP[c.getAttribute("data-cut")]) return;
     e.preventDefault(); e.stopImmediatePropagation();

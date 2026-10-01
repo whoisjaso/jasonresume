@@ -37,14 +37,9 @@
   <url>
     <loc>https://jasonobawemimo.com/obavia.html</loc>
     <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/film/obavia-closer.jpg</image:loc>
-      <image:title>Obavia: The closer, film poster</image:title>
-      <image:caption>Poster for The closer, a vertical ad film for Obavia, sales software in development. People in the film are fictional.</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/film/obavia-owner.jpg</image:loc>
-      <image:title>Obavia: The owner, film poster</image:title>
-      <image:caption>Poster for The owner, a vertical ad film for Obavia, sales software in development. People in the film are fictional.</image:caption>
+      <image:loc>https://jasonobawemimo.com/assets/film/obavia-desk.jpg</image:loc>
+      <image:title>Obavia Desk film poster</image:title>
+      <image:caption>Poster for the Obavia Desk film, cut from real Desk screens. Obavia Desk is in development; people and figures in the film are fictional.</image:caption>
     </image:image>
   </url>
   <url>

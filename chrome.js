@@ -198,10 +198,10 @@
     var box = document.querySelector("[data-move]"); if (!box) return;
     var book = box.querySelector("[data-book]"), mail = box.querySelector("[data-move-primary]");
     if (!book || !mail) return;
-    if (store.get("jg_cut") === "agency") { box.insertBefore(book, mail); book.classList.add("btn--gold"); mail.classList.remove("btn--gold"); book.textContent = "Book 30 minutes"; }
+    if (store.get("jg_cut") === "dealer" || store.get("jg_cut") === "agency") { box.insertBefore(book, mail); book.classList.add("btn--gold"); mail.classList.remove("btn--gold"); book.textContent = "Book 30 minutes"; }
   }
   orderMove();
-  var ROLE = { screening: "interviewer", agency: "partner", trailer: "lurker" };
+  var ROLE = { screening: "interviewer", dealer: "partner", agency: "partner", trailer: "lurker" };
   document.addEventListener("click", function (e) {
     var c = e.target.closest && e.target.closest("[data-cut]"); if (!c) return;
     var k = c.getAttribute("data-cut");
@@ -211,10 +211,10 @@
     else if (k === "trailer") { e.preventDefault(); window.JG_OPEN("trailer", "cut"); }
   });
 
-  /* Deep links: ?cut=screening|agency|trailer, #present/N, #verify, #trailer */
+  /* Deep links: ?cut=screening|dealer|trailer (agency still works), #present/N, #verify, #trailer */
   var qCut = new URLSearchParams(location.search).get("cut");
   function arrive() {
-    if (qCut && ROLE[qCut]) { store.set("jg_cut", qCut); markCut(qCut); orderMove(); T("role_chosen", { role: ROLE[qCut], where: "link" }, { role: ROLE[qCut] }); if (qCut === "screening") jump("#desk-title"); if (qCut === "trailer") window.JG_OPEN("trailer", "link"); if (qCut === "agency") location.replace("/obavia.html"); }
+    if (qCut && ROLE[qCut]) { store.set("jg_cut", qCut); markCut(qCut); orderMove(); T("role_chosen", { role: ROLE[qCut], where: "link" }, { role: ROLE[qCut] }); if (qCut === "screening") jump("#desk-title"); if (qCut === "trailer") window.JG_OPEN("trailer", "link"); if (qCut === "agency" || qCut === "dealer") location.replace("/obavia.html"); }
     var h = location.hash;
     if (/^#present(\/\d+)?$/.test(h)) window.JG_OPEN("deck", "link");
     else if (h === "#verify" && window.JG_HAS.verify) window.JG_OPEN("verify", "link");

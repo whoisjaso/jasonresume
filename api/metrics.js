@@ -53,9 +53,8 @@ async function hogql(host, id, key, query) {
 }
 
 function audience(v) {
-  if (v.role) return { interviewer: "Screening", partner: "Agency owner", lurker: "Just looking" }[v.role] || v.role;
-  if (v.did.apply_sent || v.pages.join) return "Applicant";
-  if (v.did.leak_stage || v.did.handoff_pick || v.did.counts_done || v.pages.obavia) return "Agency owner";
+  if (v.role) return { interviewer: "Screening", partner: "Dealer", lurker: "Just looking" }[v.role] || v.role;
+    if (v.did.lead_sent || v.did.packet_done || v.did.leak_stage || v.pages.obavia) return "Dealer";
   if (v.did.resume_open || v.did.deck_slide || v.did.verify_opened || v.did.verify_link) return "Screening";
   return "Just looking";
 }
@@ -63,7 +62,7 @@ function audience(v) {
 function build(rows, refCodes) {
   const now = Date.now(), DAY = 864e5;
   const people = new Map(), sources = {}, attention = {}, questions = [], leaks = {}, drops = { count: 0, names: {} };
-  const journeys = { Screening: [0, 0, 0, 0], "Agency owner": [0, 0, 0, 0], Applicant: [0, 0, 0, 0] };
+  const journeys = { Screening: [0, 0, 0, 0], Dealer: [0, 0, 0, 0] };
   for (const r of rows) {
     if (r.event === "relay_dropped") { drops.count += Number(r.cnt) || 0; String(r.names || "").split(",").filter(Boolean).forEach((n) => { drops.names[n] = (drops.names[n] || 0) + 1; }); continue; }
     const id = r.distinct_id; if (!id) continue;
