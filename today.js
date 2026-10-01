@@ -109,7 +109,8 @@
   function geometry() { var pw = Math.min(innerWidth, 860), pl = Math.round((innerWidth - pw) / 2); return { pw: pw, pl: pl }; }
   function openStory(id, how) {
     var card = $('[data-story="' + id + '"]');
-    if (!card || openCard) return;
+    if (!card) { var alt = $('[data-story-alt="' + id + '"]'); if (alt) { alt.scrollIntoView({ behavior: RM ? "auto" : "smooth", block: "start" }); fx("arrive"); } return; }
+    if (openCard) return;
     if (document.querySelector("dialog[open]") || (window.JG_REEL && window.JG_REEL.open())) return;
     var menu = $("#menu"); if (menu && menu.classList.contains("is-open")) $(".bar__menu").click();
     openCard = card;

@@ -89,7 +89,7 @@
 <link rel="stylesheet" href="home.css?v=s4" />
 <link rel="stylesheet" href="today.css?v=s4" />
 <link rel="stylesheet" href="print.css" media="print" />
-<script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent))d.classList.add("intro-pending")}catch(e){}setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>
+<script>(function(){var d=document.documentElement;d.classList.add("js");try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).host===location.host}catch(e){}if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
