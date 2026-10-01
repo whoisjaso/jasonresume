@@ -35,13 +35,13 @@ Screenshots land in `tools/verify/out/`.
 
 ## Re-render voice
 
-Retired with the guide: the extract scripts read guide.js, which is gone. The commentary captions in extras.js still look up `assets/voice/manifest.json` by line, so a clip rendered for a caption's exact text would play. Kept for that.
+The trailer (reel.js) speaks one line per shot in Jason's cloned voice. Each line is a `vo: "..."` on a shot in `cuts()`; reel.js keys its clip by an FNV-1a hash of the text (`r` plus hex), looks it up in `assets/voice/manifest.json`, plays it over the score with the score ducked, and holds the shot until the line is said. A line with no clip simply plays silent, so edit freely and render after.
 
-1. Put your recording at `tools/voice/ref.wav` (mono or stereo, 20 to 40 seconds of you talking naturally; the one used so far was 31 s trimmed from a phone memo).
-2. Edit the lines in `guide.js`, then `python3 tools/voice/extract2.py` to regenerate `tools/voice/lines.json` and `tools/voice/items.json` with the ids the page will look up.
-3. `python3 tools/voice/render_some.py <id> <id>` (ids to render are listed in `tools/voice/todo.json`, which extract2.py also writes along with the visitor labels and the stale clips) renders only the changed guide lines into `assets/voice/` and updates `assets/voice/manifest.json`. `render_clone.py` does all of them (about three minutes a line on CPU, far less on an M1 with MPS if you set the device).
-4. `python3 tools/voice/render_you2.py` renders the visitor replies.
-5. Check parity: every id in `items.json` must exist in `manifest.json` and as an mp3. `render_some.py` never removes stale clips, so prune by hand.
+1. Reference: `tools/voice/ref.wav` (gitignored, never commit it). Best is 20 to 40 seconds of Jason talking naturally. The current clips were rendered from a reference stitched out of two earlier cloned-voice clips (`c5559b52.mp3` and `a167a0d3.mp3`); a fresh recording of Jason will sound closer.
+2. `node tools/voice/reel_lines.mjs` lists the lines that have no clip yet in `tools/voice/reel_lines.json` (`--all` lists every line, to re-render after a new reference).
+3. Python 3.11 with `torch==2.6.0 torchaudio==2.6.0` (CPU wheels from download.pytorch.org/whl/cpu), `chatterbox-tts`, `imageio-ffmpeg` and `soundfile`; a virtualenv outside the repo is fine.
+4. `LINES=reel_lines.json python3 tools/voice/render_clone.py` renders them into `assets/voice/` and updates the manifest (about 35 seconds a line on a 4-core CPU). Pass ids as arguments to render only those, which skips the manifest write.
+5. Retired guide lines (`lines.json`, `items.json`, `extract*.py`, `render_some.py`, `render_you2.py`) and their clips are kept for reference; the site no longer plays them.
 
 ## Films
 

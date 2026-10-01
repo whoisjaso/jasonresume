@@ -17,7 +17,7 @@ const seen = new Set(), lines = [];
 for (const m of src.matchAll(/vo: "((?:[^"\\]|\\.)*)"/g)) {
   const text = JSON.parse('"' + m[1] + '"'), id = vid(text);
   if (seen.has(id) || (!all && manifest[id])) continue;
-  seen.add(id); lines.push({ id, face: /\?$/.test(text) ? 'warm' : 'calm', text });
+  seen.add(id); lines.push({ id, face: 'warm', text });
 }
 fs.writeFileSync(path.join(HERE, 'reel_lines.json'), JSON.stringify(lines, null, 1) + '\n');
 console.log(`${lines.length} line(s) to render -> tools/voice/reel_lines.json`);
