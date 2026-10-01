@@ -76,6 +76,7 @@
     var c = A.c, t = c.currentTime + 0.06, s = c.createBufferSource(), g = c.createGain();
     s.buffer = b; g.gain.value = 1.15; s.connect(g); g.connect(A.an); s.start(t);
     A.duck.gain.cancelScheduledValues(t); A.duck.gain.setTargetAtTime(0.32, t - 0.04, 0.05); A.duck.gain.setTargetAtTime(1, t + b.duration, 0.25);
+    state.voB = (0.06 + b.duration + 0.2) / BEAT; /* the shot holds until the line is said */
     VO.src = { s: s, g: g }; s.onended = function () { if (VO.src && VO.src.s === s) VO.src = null; };
   }
   function noiseSrc(t, dur) { var s = A.c.createBufferSource(); s.buffer = A.noise; s.loop = true; s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05); return s; }
@@ -323,7 +324,7 @@
     sh.querySelectorAll(".is-in").forEach(function (x) { x.classList.remove("is-in"); });
     el.classList.toggle("is-end", s.k === "end");
     el.classList.toggle("is-interactive", s.k === "scan" || s.k === "words" || s.k === "drum");
-    scoreCut(s.level); voSay(s);
+    scoreCut(s.level); voStop(); voSay(s);
     if (s.cue === "end") { sample("sparkle", { gain: 0.8 }); hap("success"); T("reel_finished", { role: role }); var f = sh.querySelector(".btn"); if (f && !COARSE) setTimeout(function () { f.focus({ preventScroll: true }); }, 700); }
     else if (s.cue) { play(s.cue); if (s.cue === "boom") jolt(true); else if (s.cue === "hit") jolt(false); else if (s.cue === "glitch") { el.classList.remove("is-glitch"); void el.offsetWidth; el.classList.add("is-glitch"); } }
     el.querySelector(".tr__sr").textContent = sh.textContent.replace(/\s+/g, " ").trim().slice(0, 220);
@@ -352,7 +353,7 @@
     if (s.k === "scan") scanTick(sh, b);
     if (s.k === "words") wordsTick(sh, b);
     if (s.k === "drum") drumTick(sh, b);
-    if (s.b && b >= s.b) next();
+    if (s.b && b >= Math.max(s.b, state.voB || 0)) next();
     hud();
     raf = requestAnimationFrame(loop);
   }
