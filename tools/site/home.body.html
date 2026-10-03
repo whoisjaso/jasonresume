@@ -1,4 +1,12 @@
-<body class="home today-page">
+<body class="home dash-page">
+<!--
+  THESIS: The site is the instrument cluster of the car Jason drives to work. Facts are gauges, actions live on the center screen, and the desk he built is mounted on the dash, live. It refuses the dark portfolio hero with a showreel and a list of case studies.
+  OWN-WORLD: Black dash leather with cognac stitching, ivory gauge faces with black ticks and one signal-red needle, brushed-chrome bezels, tell-tale lamps in their real colors (green open, amber in development), a CarPlay screen in iOS grammar. Hanken Grotesk with tabular numerals throughout; brass only on the badge.
+  STORY: In one look a visitor knows who Jason is (the display), what is true (the dials), whether Triple J is open right now (the lamp), and what to press (the screen). Then they sell a car on the mounted phone.
+  FIRST VIEWPORT: Desktop: the cluster hood spans the top, courses dial left, display center with portrait, name, line and the four facts, GPA dial right, lamps beneath; below it the CarPlay screen with Resume, Proof, Talk, Check me and the stories, and the phone mount with the desk. Phone: display first, two dials side by side, lamps, then the four actions, all above the fold.
+  FORM: Instrument cluster and CarPlay, grounded candidate 5 of 7, seed 93fc5525.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
 <a class="skip" href="#record">Skip to the record</a>
 <div class="grain" aria-hidden="true"></div>
 <div class="bars bars--top" aria-hidden="true"></div>
@@ -7,8 +15,9 @@
 
 %%ICONS%%
 
-<!-- The compact bar: appears when the large title scrolls away, like iOS -->
-<header class="navbar" aria-label="Jason Obawemimo">
+<!-- The top bar: the badge, sound, and the menu -->
+<header class="topbar navbar" aria-label="Jason Obawemimo">
+  <a class="badge" href="#top" aria-label="Jason Obawemimo, top of the page"><span>JO</span></a>
   <a class="navbar__title" href="#top">Jason Obawemimo</a>
   <div class="navbar__right">
     <button class="navbar__btn navbar__sound" type="button" data-toggle="sound" data-icon aria-pressed="true" aria-label="Sound on"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><use href="#i-sound"/></svg></button>
@@ -25,8 +34,8 @@
     <button type="button" data-open="deck" data-where="menu">Present the resume <small>R</small></button>
     <button type="button" data-reel-play>Watch your cut <small>30 seconds, sound on</small></button>
     <button type="button" data-open="verify" data-where="menu">Check me <small>V</small></button>
-    <a href="/obavia.html">The Obavia page <small>Early access</small></a>
-    <a href="/?intro=1" data-cta="replay_intro">Replay the intro</a>
+    <a href="/obavia.html">The Obavia page <small>Early access for dealers</small></a>
+    <a href="/?intro=1" data-cta="replay_intro">Start it again</a>
   </div>
   <div class="menu__toggles">
     <button class="chip" type="button" data-toggle="sound" aria-pressed="true">Sound</button>
@@ -35,96 +44,102 @@
   <p class="fine menu__note">I count visits and what gets watched through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit so I know who stopped by. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
 </nav>
 
-<main id="top" class="today">
+<main id="top" class="cabin">
 
-  <!-- Large title, the App Store Today header -->
-  <header class="today__head">
-    <div>
-      <p class="today__date" data-today-date>Today</p>
-      <h1 class="today__title">Jason Obawemimo</h1>
-    </div>
-    <button class="today__avatar" type="button" data-open="verify" data-where="avatar" aria-label="Check me: every proof link">
-      <img src="assets/jason-headshot-620.webp" alt="" width="40" height="40" />
-    </button>
-  </header>
+  <!-- The cluster: two dials, the display between them, the lamps beneath -->
+  <section class="cluster slate" id="slate" data-track="slate" aria-label="Jason Obawemimo, the short version">
+    <div class="cluster__hood">
+      <a class="dial dial--left" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-verify="courses" aria-label="19 completed Anthropic courses. Open the certificates">
+        <svg class="dial__svg" viewBox="0 0 200 200" data-gauge data-min="0" data-max="20" data-value="19" data-major="5" data-minor="1" data-label="Courses" data-fmt="int" aria-hidden="true"></svg>
+        <span class="dial__cap"><b>19</b> Anthropic courses</span>
+      </a>
 
-  <!-- The ten-second answer, readable with nothing else loaded -->
-  <section class="slate" id="slate" data-track="slate" aria-label="Jason Obawemimo, the short version">
-    <div class="slate__card" data-rise>
-      <div class="slate__top">
-        <figure class="slate__face"><img src="assets/jason-headshot-620.webp" srcset="assets/jason-headshot-620.webp 620w, assets/jason-headshot-900.webp 900w" sizes="120px" width="620" height="620" alt="Jason Obawemimo" fetchpriority="high" decoding="async" /></figure>
-        <div>
-          <p class="slate__kicker">AI engineer and business operator</p>
-          <p class="slate__line">%%LINE%%</p>
+      <div class="mfd" data-rise>
+        <div class="mfd__bar"><span data-today-date>Today</span><span class="mfd__clock"><b data-clock>9:41</b> <span data-clock-day>Houston</span></span></div>
+        <div class="mfd__id">
+          <figure class="slate__face mfd__face"><img src="assets/jason-headshot-620.webp" srcset="assets/jason-headshot-620.webp 620w, assets/jason-headshot-900.webp 900w" sizes="96px" width="620" height="620" alt="Jason Obawemimo" fetchpriority="high" decoding="async" /></figure>
+          <div>
+            <h1 class="mfd__name">Jason Obawemimo</h1>
+            <p class="mfd__line">%%LINE%%</p>
+          </div>
         </div>
+        <dl class="mfd__rows slate__rows">%%SLATE%%</dl>
       </div>
-      <dl class="slate__rows">%%SLATE%%</dl>
-      <div class="slate__actions">
-        <a class="btn btn--gold" href="#record" data-open="deck" data-where="slate" data-resume="deck">Resume</a>
-        <a class="btn" href="#story-desk" data-story-open="desk" data-proof="desk">Proof</a>
-        <a class="btn" href="mailto:%%EMAIL%%?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="slate">Talk</a>
-        <a class="btn" href="#verify" data-open="verify" data-where="slate">Check me</a>
-      </div>
-      <p class="slate__pdf"><a class="textlink" href="%%PDF%%" data-resume="pdf" data-where="slate" download="Jason Obawemimo - Resume.pdf">One-page PDF</a></p>
+
+      <a class="dial dial--right" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-verify="degree" aria-label="GPA 3.63, Dean's Honor List. Open the degree">
+        <svg class="dial__svg" viewBox="0 0 200 200" data-gauge data-min="0" data-max="4" data-value="3.63" data-major="1" data-minor="0.25" data-label="GPA" data-fmt="2" aria-hidden="true"></svg>
+        <span class="dial__cap"><b>3.63</b> Dean's Honor List</span>
+      </a>
     </div>
+
+    <ul class="lamps" aria-label="Right now">
+      <li><a class="lamp lamp--lot" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-verify="triplej-lamp" data-lamp="lot"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-car"/></svg><span><b data-lot>Triple J</b> <span data-lot-note>Monday to Saturday, 9 to 7</span></span></a></li>
+      <li><button class="lamp lamp--amber" type="button" data-story-open="obavia"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-tool"/></svg><span><b>Obavia</b> <span>In development</span></span></button></li>
+      <li><span class="lamp lamp--on"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock"/></svg><span><b data-clock>9:41</b> <span>Houston</span></span></span></li>
+    </ul>
   </section>
 
-  <!-- Live widgets -->
-  <section class="widgets" data-track="widgets" aria-label="Right now">
-    <div class="widget widget--clock" data-widget="clock">
-      <p class="widget__label">Houston</p>
-      <p class="widget__big" data-clock>9:41</p>
-      <p class="widget__small" data-clock-day>Central time</p>
-      <svg class="widget__dial" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/><line data-hand="h" x1="50" y1="50" x2="50" y2="28"/><line data-hand="m" x1="50" y1="50" x2="50" y2="14"/><line data-hand="s" x1="50" y1="56" x2="50" y2="10"/></svg>
+  <!-- The console: the CarPlay screen and the phone on its mount -->
+  <section class="console" aria-label="The screen">
+    <div class="carplay" data-rise>
+      <div class="carplay__status" aria-hidden="true"><b data-clock>9:41</b><svg viewBox="0 0 24 24"><use href="#i-bars"/></svg></div>
+      <nav class="carplay__dock" aria-label="Apps">
+        <a class="carplay__dockapp is-on" href="#top" data-tab="today" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-home"/></svg></a>
+        <a class="carplay__dockapp" href="#story-desk" data-story-open="desk" aria-label="The desk"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-car"/></svg></a>
+        <a class="carplay__dockapp" href="#story-obavia" data-story-open="obavia" aria-label="Obavia"><img src="assets/brand/obavia-icon.png" alt="" width="28" height="28" /></a>
+        <a class="carplay__dockapp" href="mailto:%%EMAIL%%?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="dock" aria-label="Email Jason"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mail"/></svg></a>
+      </nav>
+      <div class="carplay__main">
+        <div class="carplay__actions slate__actions">
+          <a class="key key--start btn" href="#record" data-open="deck" data-where="slate" data-resume="deck"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-file"/></svg><span>Resume</span></a>
+          <a class="key btn" href="#story-desk" data-story-open="desk" data-proof="desk"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg><span>Proof</span></a>
+          <a class="key btn" href="mailto:%%EMAIL%%?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="slate"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mail"/></svg><span>Talk</span></a>
+          <a class="key btn" href="#verify" data-open="verify" data-where="slate"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg><span>Check me</span></a>
+        </div>
+        <ul class="carplay__apps" aria-label="Stories">
+          <li><button type="button" data-story-open="desk"><span class="app app--desk"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-car"/></svg></span><span class="app__txt"><b>The desk I built</b><span>Triple J sells on it. Run a sale.</span></span><i class="chev" aria-hidden="true"></i></button></li>
+          <li><button type="button" data-story-open="obavia"><span class="app app--img"><img src="assets/brand/obavia-icon.png" alt="" width="40" height="40" /></span><span class="app__txt"><b>Obavia</b><span>The desk, for Texas dealers. In development.</span></span><i class="chev" aria-hidden="true"></i></button></li>
+          <li><button type="button" data-story-open="lot"><span class="app app--img app--lot"><img src="assets/brand/triplej-logo.png" alt="" width="26" height="40" /></span><span class="app__txt"><b>Triple J Auto Investment</b><span>The Houston lot I co-own and run.</span></span><i class="chev" aria-hidden="true"></i></button></li>
+          <li><button type="button" data-story-open="record"><span class="app app--record"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-file"/></svg></span><span class="app__txt"><b>The record</b><span>Founder, operator, nineteen courses.</span></span><i class="chev" aria-hidden="true"></i></button></li>
+          <li><button type="button" data-reel-play><span class="app app--cut"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-play"/></svg></span><span class="app__txt"><b>Your cut</b><span>Thirty seconds, sound on.</span></span><i class="chev" aria-hidden="true"></i></button></li>
+        </ul>
+        <p class="carplay__pdf"><a class="textlink" href="%%PDF%%" data-resume="pdf" data-where="slate" download="Jason Obawemimo - Resume.pdf"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><use href="#i-download"/></svg> One-page PDF</a></p>
+      </div>
     </div>
-    <a class="widget widget--lot" href="https://thetriplejauto.com" target="_blank" rel="noopener" data-verify="triplej-widget">
-      <p class="widget__label">Triple J Auto</p>
-      <p class="widget__big" data-lot>Open</p>
-      <p class="widget__small" data-lot-note>Monday to Saturday, 9 to 7</p>
-    </a>
-    <a class="widget widget--num" href="assets/Jason_Obawemimo_Anthropic_Certificates.pdf" data-verify="courses">
-      <p class="widget__label">Anthropic courses</p>
-      <p class="widget__big widget__big--serif" data-count="19">19</p>
-      <p class="widget__small">Completed. Certificates PDF.</p>
-    </a>
-    <a class="widget widget--num" href="assets/Jason_Obawemimo_Associate_Degree.pdf" data-verify="degree">
-      <p class="widget__label">GPA</p>
-      <p class="widget__big widget__big--serif" data-count="3.63" data-dec="2">3.63</p>
-      <p class="widget__small">Associate of Arts in Business. Dean's Honor List.</p>
-    </a>
+
+    <figure class="mount" data-rise data-story-alt="drive">
+      <div class="mount__arm" aria-hidden="true"></div>
+      <div class="iphone" data-desk-app aria-label="The desk I built, running a sale with a fictional buyer and example figures">
+        <noscript><p class="fine">The desk you can run needs JavaScript. The film of the real one is in the desk story.</p></noscript>
+      </div>
+      <figcaption>Sell a car on the desk I built. Fictional buyer, example figures.</figcaption>
+    </figure>
   </section>
 
-  <!-- The feed. Each card opens into its story. -->
+  <!-- The stories: each one opens to fill the screen -->
   <section class="feed" aria-label="Stories">
 
-    <article class="tcard tcard--video" id="story-desk" data-story="desk" data-track="desk">
+    <article class="tcard tcard--wide" id="story-desk" data-story="desk" data-track="desk">
       <div class="tcard__hero">
         <video class="tcard__bg" data-loop src="assets/film/loop-sale.mp4" poster="assets/film/loop-sale.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
         <div class="tcard__shade" aria-hidden="true"></div>
-        <p class="tcard__label">The desk I built</p>
         <div class="tcard__foot">
-          <h2 class="tcard__title">Every sale, <em>start to signed.</em></h2>
-          <p class="tcard__sub">Handle a Sale. Triple J closes sales on it. Run it yourself.</p>
+          <h2 class="tcard__title">Every sale, start to signed.</h2>
+          <p class="tcard__sub">Handle a Sale. Triple J closes sales on it.</p>
         </div>
         <button class="tcard__open" type="button" aria-label="Open: the desk I built"></button>
       </div>
       <div class="tcard__body">
-        <p class="story__lead">I built the desk Triple J Auto Investment closes sales on. One plain question per screen. Scan the buyer's license once and every form fills itself. The money works itself out, and the buyer signs at the desk. <strong>Run a deal on it right here.</strong></p>
-        <div class="desk-demo">
-          <div class="iphone" data-desk-app aria-label="A demo of the desk, with a fictional buyer and example figures">
-            <noscript><p class="fine">The interactive desk needs JavaScript. The real film is below.</p></noscript>
-          </div>
-          <ol class="desk-demo__notes" data-desk-notes>
-            <li data-note="car"><b>Pick the car.</b> From the lot, in one tap.</li>
-            <li data-note="odo"><b>The odometer.</b> Read back so nobody fat-fingers it.</li>
-            <li data-note="scan"><b>Scan the license once.</b> Name, address and license number land on every form.</li>
-            <li data-note="pay"><b>How they're paying.</b> Cash, buy here pay here, or the bank.</li>
-            <li data-note="money"><b>The money.</b> Tax, title, registration and the doc fee, worked out live.</li>
-            <li data-note="docs"><b>The paperwork.</b> Only the forms this deal needs.</li>
-            <li data-note="sign"><b>Signed at the desk.</b> The buyer reads, signs with a finger, done.</li>
-          </ol>
-        </div>
-        <p class="fine story__fiction">The buyer, the cars and the figures in this demo are fictional.</p>
+        <p class="story__lead">I built the desk Triple J Auto Investment closes sales on. One plain question per screen. Scan the buyer's license once and every form fills itself. The money works itself out, and the buyer signs at the desk. <strong>The phone on the dash runs it.</strong></p>
+        <ol class="desk-demo__notes steps" data-desk-notes>
+          <li data-note="car"><b>Pick the car.</b> From the lot, in one tap.</li>
+          <li data-note="odo"><b>The odometer.</b> Read back so nobody fat-fingers it.</li>
+          <li data-note="scan"><b>Scan the license once.</b> Name, address and license number land on every form.</li>
+          <li data-note="pay"><b>How they're paying.</b> Cash, buy here pay here, or the bank.</li>
+          <li data-note="money"><b>The money.</b> Tax, title, registration and the doc fee, worked out live.</li>
+          <li data-note="docs"><b>The paperwork.</b> Only the forms this deal needs.</li>
+          <li data-note="sign"><b>Signed at the desk.</b> The buyer reads, signs with a finger, done.</li>
+        </ol>
         <h3 class="story__h">The real one, 82 seconds.</h3>
         <div class="film-frame">
           <video data-film="sale-desk" src="assets/film/triple-j-sale-desk.mp4" poster="assets/film/triple-j-sale-desk.jpg" playsinline preload="none" controls></video>
@@ -138,14 +153,12 @@
       </div>
     </article>
 
-    <article class="tcard tcard--video" id="story-obavia" data-story="obavia" data-track="obavia">
+    <article class="tcard" id="story-obavia" data-story="obavia" data-track="obavia">
       <div class="tcard__hero">
-        <video class="tcard__bg" data-loop src="assets/film/loop-find.mp4" poster="assets/film/loop-find.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
+        <video class="tcard__bg" data-loop src="assets/film/dash-obavia.mp4" poster="assets/film/dash-obavia.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
         <div class="tcard__shade" aria-hidden="true"></div>
-        <p class="tcard__label">Now building</p>
         <div class="tcard__foot">
-          <span class="appicon tcard__icon"><img src="assets/brand/obavia-icon.png" alt="" /></span>
-          <h2 class="tcard__title">Obavia. <em>Start to signed.</em></h2>
+          <h2 class="tcard__title">Obavia</h2>
           <p class="tcard__sub">The desk from my lot, for Texas independent dealers. In development.</p>
         </div>
         <button class="tcard__open" type="button" aria-label="Open: Obavia"></button>
@@ -158,15 +171,15 @@
         <p class="fine story__fiction">Cut from real Obavia screens. People and figures in the film are fictional.</p>
         <ul class="group story__facts">
           <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-car"/></svg></span><span class="row__txt"><b>Cash, buy here pay here or bank</b> <span>Texas sales tax, title, registration and your doc fee, worked out on every deal.</span></span></li>
-          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>The bill of sale and the 130-U</b> <span>Filled from the deal, in your name.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-file"/></svg></span><span class="row__txt"><b>The bill of sale and the 130-U</b> <span>Filled from the deal, in your name.</span></span></li>
           <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>Rebuilt and salvage titles</b> <span>Their own disclosures, every time.</span></span></li>
-          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-check"/></svg></span><span class="row__txt"><b>Ink where ink is required</b> <span>Those forms print for ink, never a screen.</span></span></li>
+          <li class="row"><span class="appicon appicon--sm"><svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-download"/></svg></span><span class="row__txt"><b>Ink where ink is required</b> <span>Those forms print for ink.</span></span></li>
         </ul>
         <h3 class="story__h">In development. None of these is live yet.</h3>
         <ul class="group story__facts story__facts--soon">
           <li class="row"><span class="row__txt"><b>Text it to sign</b> <span>The buyer signs on their own phone.</span></span></li>
-          <li class="row"><span class="row__txt"><b>Reach</b> <span>Post each car once; list it on Facebook Marketplace from your phone, after you accept the terms.</span></span></li>
-          <li class="row"><span class="row__txt"><b>Your website</b> <span>Every car on your lot, from Obavia, gone when it sells.</span></span></li>
+          <li class="row"><span class="row__txt"><b>Reach</b> <span>Post a car to Facebook Marketplace from your salesperson's own phone, after you accept the terms.</span></span></li>
+          <li class="row"><span class="row__txt"><b>Your website</b> <span>The cars on your lot, from Obavia.</span></span></li>
         </ul>
         <div class="story__ctas">
           <a class="btn btn--gold" href="/obavia.html#early" data-cta="early_access">Ask for early access</a>
@@ -176,13 +189,12 @@
       </div>
     </article>
 
-    <article class="tcard tcard--photo" id="story-lot" data-story="lot" data-track="lot">
+    <article class="tcard" id="story-lot" data-story="lot" data-track="lot">
       <div class="tcard__hero">
-        <img class="tcard__bg" src="assets/brand/triplej-og.jpg" alt="" loading="lazy" />
+        <video class="tcard__bg" data-loop src="assets/film/dash-lot.mp4" poster="assets/film/dash-lot.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
         <div class="tcard__shade" aria-hidden="true"></div>
-        <p class="tcard__label">The operator</p>
         <div class="tcard__foot">
-          <h2 class="tcard__title">Triple J Auto <em>Investment.</em></h2>
+          <h2 class="tcard__title">Triple J Auto Investment</h2>
           <p class="tcard__sub">The Houston dealership I co-own and run, since August 2024.</p>
         </div>
         <button class="tcard__open" type="button" aria-label="Open: Triple J Auto Investment"></button>
@@ -197,14 +209,13 @@
       </div>
     </article>
 
-    <article class="tcard tcard--record" id="story-record" data-story="record" data-track="record">
+    <article class="tcard" id="story-record" data-story="record" data-track="record">
       <div class="tcard__hero">
-        <img class="tcard__bg tcard__bg--face" src="assets/jason-headshot-900.webp" alt="" loading="lazy" />
+        <video class="tcard__bg" data-loop src="assets/film/dash-record.mp4" poster="assets/film/dash-record.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
         <div class="tcard__shade" aria-hidden="true"></div>
-        <p class="tcard__label">The record</p>
         <div class="tcard__foot">
-          <h2 class="tcard__title">Process audit first. <em>Then the system.</em></h2>
-          <p class="tcard__sub">Founder, operator, 19 courses, a 3.63. Every line checks out.</p>
+          <h2 class="tcard__title">The record</h2>
+          <p class="tcard__sub">Process audit first. Then the system.</p>
         </div>
         <button class="tcard__open" type="button" aria-label="Open: the record"></button>
       </div>
@@ -223,10 +234,9 @@
 
     <article class="tcard tcard--cut" data-track="cut">
       <div class="tcard__hero">
-        <canvas class="tcard__scope" data-card-scope aria-hidden="true"></canvas>
-        <p class="tcard__label">Your cut</p>
+        <video class="tcard__bg" data-loop src="assets/film/dash-cut.mp4" poster="assets/film/dash-cut.jpg" muted playsinline loop preload="none" aria-hidden="true"></video>
         <div class="tcard__foot">
-          <h2 class="tcard__title">Thirty seconds. <em>Sound on.</em></h2>
+          <h2 class="tcard__title">Your cut</h2>
           <p class="tcard__sub">The music isn't a file. Your browser plays it live.</p>
           <div class="tcard__chips">
             <button class="chip" type="button" data-cut="screening">I'm hiring</button>
@@ -238,12 +248,11 @@
       </div>
     </article>
 
-    <article class="tcard tcard--check" id="story-check" data-story="check" data-track="credits">
+    <article class="tcard tcard--check tcard--wide" id="story-check" data-story="check" data-track="credits">
       <div class="tcard__hero">
-        <div class="tcard__checks" aria-hidden="true"><span>LinkedIn</span><span>GitHub</span><span>Triple J</span><span>Degree</span><span>Coursework</span><span>Public record</span></div>
-        <p class="tcard__label">Check me</p>
+        <ul class="tcard__checks" aria-hidden="true"><li>LinkedIn</li><li>GitHub</li><li>Triple J</li><li>Degree</li><li>Coursework</li><li>Public record</li></ul>
         <div class="tcard__foot">
-          <h2 class="tcard__title">Don't take <em>my word for it.</em></h2>
+          <h2 class="tcard__title">Check me</h2>
           <p class="tcard__sub">Same name, same titles, same town on every one.</p>
         </div>
         <button class="tcard__open" type="button" aria-label="Open: check me"></button>
@@ -260,7 +269,7 @@
 
   <!-- The next move -->
   <section class="move" id="move" data-track="move" aria-labelledby="move-h">
-    <h2 class="move__h" id="move-h">Your <em>move.</em></h2>
+    <h2 class="move__h" id="move-h">Your move.</h2>
     <p class="move__p">If I'm a fit, email is fastest. If a time is easier, pick thirty minutes.</p>
     <div class="move__actions" data-move>
       <a class="btn btn--gold" href="mailto:%%EMAIL%%?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="move" data-move-primary>Email me</a>
@@ -270,18 +279,18 @@
   </section>
 
   <footer class="credits" id="credits">
-    <p>Built by me. Plain HTML, CSS and JavaScript on Vercel. No framework, no build step. The trailer's music is synthesized live in your browser; sound effects are from Mixkit.</p>
+    <p>Built by me. Plain HTML, CSS and JavaScript on Vercel, with films rendered in Remotion. No framework, no build step. The trailer's music is synthesized live in your browser; sound effects are from Mixkit.</p>
     <p>Privacy: I count visits and what gets watched, through my own server, with no ad trackers. If you type your name at the start, it's saved with your visit. If your browser sends Do Not Track or Global Privacy Control, nothing is recorded.</p>
     <p class="credits__links"><a href="/credentials.html">Credentials</a> <a href="/answers.html">Verified facts</a> <a href="/jason-obawemimo.html">Profile</a> <a href="/llms.txt">llms.txt</a> <a href="https://github.com/whoisjaso/jasonresume" target="_blank" rel="noopener">Source</a></p>
   </footer>
 
 </main>
 
-<!-- The tab bar -->
+<!-- The tab bar, on phones -->
 <nav class="dock tabbar" aria-label="Sections">
-  <a class="tab is-on" href="#top" data-tab="today"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-today"/></svg><span>Today</span></a>
+  <a class="tab is-on" href="#top" data-tab="today"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg><span>Dash</span></a>
   <a class="tab" href="#story-desk" data-story-open="desk" data-tab="desk"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-car"/></svg><span>The desk</span></a>
-  <a class="tab" href="#story-obavia" data-story-open="obavia" data-tab="obavia"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-grow"/></svg><span>Obavia</span></a>
+  <a class="tab" href="#story-obavia" data-story-open="obavia" data-tab="obavia"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-tool"/></svg><span>Obavia</span></a>
   <a class="tab" href="#record" data-open="deck" data-where="tab" data-tab="resume"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-file"/></svg><span>Resume</span></a>
   <a class="tab" href="mailto:%%EMAIL%%?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mail"/></svg><span>Talk</span></a>
 </nav>
@@ -336,6 +345,7 @@
 <script src="intro.js" defer></script>
 <script src="deck.js" defer></script>
 <script src="verify.js" defer></script>
-<script src="today.js" defer></script>
+<script src="desk-app.js" defer></script>
+<script src="dash.js" defer></script>
 </body>
 </html>

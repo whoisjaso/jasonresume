@@ -45,10 +45,10 @@ head += (
     '<link rel="preload" as="image" href="assets/jason-headshot-620.webp" type="image/webp" fetchpriority="high" />\n'
     '<link rel="stylesheet" href="tokens.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="home.css?v=%(v)s" />\n'
-    '<link rel="stylesheet" href="today.css?v=%(v)s" />\n'
+    '<link rel="stylesheet" href="dash.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="print.css" media="print" />\n'
     + HEAD_SCRIPT + '\n'
-) % {"v": "s4"}
+) % {"v": "s5"}
 
 # JSON-LD: the home-page nodes of schema.json plus the FAQ
 schema = json.loads((ROOT / "schema.json").read_text())
@@ -134,6 +134,8 @@ o = ob.read_text()
 data_tag = '<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>"
 o2 = re.sub(r"<!-- onboarding:head -->.*?<!-- /onboarding:head -->", lambda m: "<!-- onboarding:head -->" + HEAD_SCRIPT + "<!-- /onboarding:head -->", o, flags=re.S)
 o2 = re.sub(r"<!-- onboarding:data -->.*?<!-- /onboarding:data -->", lambda m: "<!-- onboarding:data -->" + data_tag + "<!-- /onboarding:data -->", o2, flags=re.S)
+# and the same icon sheet the home page draws from
+o2 = re.sub(r'<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">.*?</svg>', lambda m: (SITE / "icons.html").read_text().strip(), o2, count=1, flags=re.S)
 if o2 != o:
     ob.write_text(o2)
     print("obavia.html onboarding synced")

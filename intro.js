@@ -43,8 +43,9 @@
   el.innerHTML =
     '<button class="intro__skip" type="button" data-intro-skip>' + esc(O.loading.skip) + '</button>' +
     '<div class="intro__stage">' +
-      '<div class="intro__medal"><canvas aria-hidden="true"></canvas>' +
-        '<svg class="intro__ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48.5"/><circle class="intro__ring-p" cx="50" cy="50" r="48.5" pathLength="100"/></svg>' +
+      '<div class="intro__medal"><img class="intro__face" src="assets/jason-headshot-620.webp" alt="" width="620" height="620" />' +
+        '<svg class="intro__ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48.5"/><circle class="intro__ring-p" cx="50" cy="50" r="48.5" pathLength="100"/>' + ticks() + '</svg>' +
+        '<span class="intro__needle" aria-hidden="true"></span>' +
         '<span class="intro__wave" aria-hidden="true"></span><span class="intro__wave intro__wave--2" aria-hidden="true"></span></div>' +
       '<div class="intro__scene intro__scene--a">' +
         '<p class="intro__name" id="intro-title"><span class="mask"><span>' + esc(O.loading.first) + '</span></span><span class="mask"><span><em>' + esc(O.loading.last) + '</em></span></span></p>' +
@@ -64,73 +65,42 @@
   requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-shown"); }); });
   T("intro_shown", {});
 
-  /* ---------- water on the portrait: two height fields and a displacement pass ---------- */
-  var LOW = (navigator.hardwareConcurrency || 4) <= 4, GN = LOW ? 140 : 200, alive = true, hidden = false;
-  var cur = new Float32Array(GN * GN), prev = new Float32Array(GN * GN), src = null, out = null, octx = null, vctx = null;
+  /* ---------- the bezel: a tachometer's ticks around the portrait ---------- */
+  function ticks() {
+    var out = "";
+    for (var k = 0; k <= 30; k++) {
+      var d = -135 + k * 9, r1 = 44.6, r2 = k % 5 ? 42.6 : 40.6, a = (d - 90) * Math.PI / 180;
+      out += '<line x1="' + (50 + r1 * Math.cos(a)).toFixed(2) + '" y1="' + (50 + r1 * Math.sin(a)).toFixed(2) + '" x2="' + (50 + r2 * Math.cos(a)).toFixed(2) + '" y2="' + (50 + r2 * Math.sin(a)).toFixed(2) + '" class="intro__tick' + (k >= 26 ? " is-red" : "") + '"/>';
+    }
+    return out;
+  }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-  function setup(img) {
-    var off = document.createElement("canvas"); off.width = GN; off.height = GN;
-    octx = off.getContext("2d", { willReadFrequently: true });
-    var s = Math.min(img.naturalWidth, img.naturalHeight);
-    octx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) * 0.25, s, s, 0, 0, GN, GN);
-    src = octx.getImageData(0, 0, GN, GN).data; out = octx.createImageData(GN, GN);
-    var dpr = Math.min(devicePixelRatio || 1, 2), size = canvas.clientWidth || 240;
-    canvas.width = size * dpr; canvas.height = size * dpr;
-    vctx = canvas.getContext("2d"); vctx.imageSmoothingEnabled = true; vctx.imageSmoothingQuality = "high";
-    if (RM) { vctx.drawImage(off, 0, 0, canvas.width, canvas.height); return; }
-    drop(GN / 2, GN / 2, 6, 14); requestAnimationFrame(frame); ambient();
+  function rippleAt() {}
+  var unlocked = false;
+  var pic = el.querySelector(".intro__face");
+  if (pic.complete) setTimeout(got, 0); else { pic.addEventListener("load", got); pic.addEventListener("error", got); }
+
+  /* ---------- the engine: a starter that chugs, then catches and settles ---------- */
+  function crank() {
+    var S = window.JG_SFX; if (!S || !S.ctx) return;
+    var c = S.ctx(); if (!c) return;
+    var out = (S.out && S.out()) || c.destination, t = c.currentTime + 0.02;
+    try {
+      var len = Math.floor(c.sampleRate * 0.8), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      var src = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain();
+      src.buffer = buf; lp.type = "lowpass"; lp.frequency.value = 760; g.gain.value = 0.0001;
+      for (var k = 0; k < 6; k++) { var st = t + k * 0.092; g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.32, st + 0.014); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.075); }
+      src.connect(lp); lp.connect(g); g.connect(out); src.start(t); src.stop(t + 0.62);
+      var o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), eg = c.createGain(), on = t + 0.56;
+      o.type = "sawtooth"; o2.type = "square"; f.type = "lowpass";
+      o.frequency.setValueAtTime(36, on); o.frequency.exponentialRampToValueAtTime(74, on + 0.28); o.frequency.exponentialRampToValueAtTime(41, on + 1.1);
+      o2.frequency.setValueAtTime(18, on); o2.frequency.exponentialRampToValueAtTime(37, on + 0.28); o2.frequency.exponentialRampToValueAtTime(20.5, on + 1.1);
+      f.frequency.setValueAtTime(240, on); f.frequency.exponentialRampToValueAtTime(720, on + 0.28); f.frequency.exponentialRampToValueAtTime(210, on + 1.1);
+      eg.gain.setValueAtTime(0.0001, on); eg.gain.exponentialRampToValueAtTime(0.3, on + 0.12); eg.gain.exponentialRampToValueAtTime(0.09, on + 0.9); eg.gain.exponentialRampToValueAtTime(0.0001, on + 1.5);
+      o.connect(f); o2.connect(f); f.connect(eg); eg.connect(out); o.start(on); o2.start(on); o.stop(on + 1.6); o2.stop(on + 1.6);
+    } catch (e) {}
   }
-  function drop(cx, cy, r, strength) {
-    var r2 = r * r;
-    for (var y = -r; y <= r; y++) for (var x = -r; x <= r; x++) {
-      if (x * x + y * y > r2) continue;
-      var px = (cx + x) | 0, py = (cy + y) | 0;
-      if (px < 1 || py < 1 || px >= GN - 1 || py >= GN - 1) continue;
-      prev[py * GN + px] += strength * (1 - (x * x + y * y) / r2);
-    }
-  }
-  function frame() {
-    if (!alive) return;
-    if (hidden) return requestAnimationFrame(frame);
-    var i, x, y;
-    for (y = 1; y < GN - 1; y++) { var row = y * GN; for (x = 1; x < GN - 1; x++) { i = row + x; cur[i] = ((prev[i - 1] + prev[i + 1] + prev[i - GN] + prev[i + GN]) * 0.5 - cur[i]) * 0.982; } }
-    var d = out.data;
-    for (y = 0; y < GN; y++) for (x = 0; x < GN; x++) {
-      i = y * GN + x; var dx = 0, dy = 0;
-      if (x > 0 && x < GN - 1 && y > 0 && y < GN - 1) { dx = cur[i - 1] - cur[i + 1]; dy = cur[i - GN] - cur[i + GN]; }
-      var si = (clamp((y + dy * 0.9) | 0, 0, GN - 1) * GN + clamp((x + dx * 0.9) | 0, 0, GN - 1)) * 4, oi = i * 4, sh = dx * 2.4;
-      d[oi] = clamp(src[si] + sh, 0, 255); d[oi + 1] = clamp(src[si + 1] + sh, 0, 255); d[oi + 2] = clamp(src[si + 2] + sh, 0, 255); d[oi + 3] = 255;
-    }
-    var t = cur; cur = prev; prev = t;
-    octx.putImageData(out, 0, 0); vctx.drawImage(octx.canvas, 0, 0, canvas.width, canvas.height);
-    requestAnimationFrame(frame);
-  }
-  var ambT = null, unlocked = false;
-  function ambient() {
-    if (!alive || !src) return;
-    var a = Math.random() * Math.PI * 2, rad = GN * (0.18 + Math.random() * 0.26);
-    drop(GN / 2 + Math.cos(a) * rad, GN / 2 + Math.sin(a) * rad, 3, 4);
-    ambT = setTimeout(ambient, 800 + Math.random() * 1000);
-  }
-  function rippleAt(cx, cy, big) {
-    if (!src || RM) return;
-    var r = canvas.getBoundingClientRect();
-    var gx = ((cx - r.left) / r.width) * GN, gy = ((cy - r.top) / r.height) * GN;
-    if (gx < 0 || gy < 0 || gx > GN || gy > GN) { gx = GN / 2; gy = GN / 2; }
-    drop(gx, gy, big ? 7 : 2.2, big ? 22 : 5);
-  }
-  var lastX = -99, lastY = -99;
-  canvas.addEventListener("pointermove", function (e) {
-    if (phase !== "loading" && phase !== "ready") return;
-    if (Math.abs(e.clientX - lastX) < 4 && Math.abs(e.clientY - lastY) < 4) return;
-    lastX = e.clientX; lastY = e.clientY; rippleAt(e.clientX, e.clientY, false);
-    if (unlocked) sfx("drop", { gain: 0.18, throttle: 140 });
-  }, { passive: true });
-  document.addEventListener("visibilitychange", function () { hidden = document.hidden; });
-  var pic = new Image();
-  pic.onload = function () { setup(pic); got(); };
-  pic.onerror = got;
-  pic.src = "assets/jason-loader.webp";
 
   /* ---------- loading: a real count, held at 96 until the portrait and fonts are in ---------- */
   var t0 = performance.now(), MIN = RM ? 300 : 1100, assets = 0, NEED = 2, wantGo = false;
@@ -157,15 +127,17 @@
   el.addEventListener("pointerdown", function (e) {
     if (e.target.closest("[data-intro-skip]")) return;
     unlocked = true;
-    if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = O.loading.waiting; rippleAt(e.clientX, e.clientY, true); return; }
-    if (phase === "ready") { rippleAt(e.clientX, e.clientY, true); begin(); }
+    if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = O.loading.waiting; return; }
+    if (phase === "ready") begin();
   });
   function begin() {
     if (phase !== "ready") return;
     phase = "begun"; el.classList.add("is-go");
-    sfx("splash", { gain: 0.85 }); fx("cut");
+    crank(); fx("cut");
+    if (window.JG_HAPTIC) window.JG_HAPTIC("tap");
+    document.dispatchEvent(new CustomEvent("jg:ignition"));
     T("intro_started", {});
-    setTimeout(question, wait(560));
+    setTimeout(question, wait(1250));
   }
 
   /* shared-element move: measure, change, measure, play the difference */
@@ -267,7 +239,6 @@
     });
   }
   function done() {
-    alive = false; clearTimeout(ambT);
     store.set("jg_intro", "1");
     root.classList.remove("intro-pending", "intro-mounted");
     if (window.JG_LOCK) window.JG_LOCK(false);
