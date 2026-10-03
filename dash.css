@@ -60,7 +60,7 @@ body.dash-page {
 
 /* stitched leather: the seam language used for every divider and frame */
 .stitched { position: relative; }
-.stitched::after, .cluster::after, .tcard::after, .move::after {
+.stitched::after, .cluster::after, .tcard--check::after, .move::after {
   content: ""; position: absolute; inset: 8px; border: 1.5px dashed rgba(160, 98, 45, 0.5); border-radius: calc(var(--r, 22px) - 6px); pointer-events: none;
 }
 
@@ -182,14 +182,19 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .tcard--wide { grid-column: 1 / -1; }
 .tcard--wide .tcard__bg { aspect-ratio: 21 / 9; }
 .tcard--cut .tcard__bg { object-position: 50% 58%; }
-.tcard--check .tcard__hero { padding: 26px 22px 0; }
+.tcard--check .tcard__hero { padding: 0; }
+.tcard.tcard--check .tcard__foot { padding: 24px; }
+.tcard.tcard--check .tcard__checks { margin-top: 12px; }
 .tcard__checks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tcard__checks li { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; background: var(--key); font: 600 13px/1 var(--sans); color: var(--ivory); }
 .tcard__checks li::before { content: ""; width: 7px; height: 12px; border-right: 2px solid var(--lamp-green); border-bottom: 2px solid var(--lamp-green); transform: rotate(45deg) translateY(-2px); }
 
 /* ---------- the next move, the credits ---------- */
 .move { --r: var(--card-r); position: relative; margin-top: 44px; padding: clamp(28px, 4vw, 44px) 24px; border-radius: var(--card-r); background: linear-gradient(180deg, #1d1a17, #161412); text-align: center; display: grid; justify-items: center; gap: 14px; }
-.move__h { font: 800 clamp(34px, 5vw, 52px)/1 var(--sans); letter-spacing: -0.035em; }
+.dash-page .move { min-height: 0; place-items: initial; justify-items: center; align-content: start; gap: 0; }
+.move__h, .dash-page .move h2 { margin: 0 0 22px; font: 800 clamp(44px, 6vw, 76px)/1 var(--sans); letter-spacing: -0.035em; }
+.move .move__actions { margin-top: 30px; }
+.move .fine { margin: 16px 0 0; }
 .move__p { margin: 0; color: var(--link); max-width: 40ch; }
 .move__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .move .textlink { appearance: none; background: none; border: 0; cursor: pointer; font: inherit; }
@@ -304,14 +309,14 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 
 /* ---------- the iPhone desk app (shared with /obavia.html) ---------- */
 .iphone { position: relative; width: 300px; height: 620px; border-radius: 50px; padding: 11px; background: #1c1f1d; box-shadow: inset 0 0 0 1.5px #3a3e3a, inset 0 0 0 5px #0b0d0c, 0 40px 80px rgba(0, 0, 0, .55); flex: none; }
-.iphone__screen { position: relative; width: 100%; height: 100%; border-radius: 40px; overflow: hidden; background: #f2f2f7; color: #111; font-family: -apple-system, "SF Pro Text", var(--sans); -webkit-font-smoothing: antialiased; }
-.iphone__island { position: absolute; top: 9px; left: 50%; width: 92px; height: 27px; margin-left: -46px; border-radius: 20px; background: #000; z-index: 9; transition: width .45s var(--spring), margin .45s var(--spring), height .45s var(--spring); display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font: 600 11px/1 -apple-system, var(--sans); overflow: hidden; }
+.iphone__screen { position: relative; width: 100%; height: 100%; border-radius: 40px; overflow: hidden; background: #f2f2f7; color: #111; font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+.iphone__island { position: absolute; top: 9px; left: 50%; width: 92px; height: 27px; margin-left: -46px; border-radius: 20px; background: #000; z-index: 9; transition: width .45s var(--spring), margin .45s var(--spring), height .45s var(--spring); display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font: 600 11px/1 var(--sans); overflow: hidden; }
 .iphone__island.is-wide { width: 200px; margin-left: -100px; height: 34px; }
 .iphone__island span { opacity: 0; transition: opacity .2s; white-space: nowrap; }
 .iphone__island.is-wide span { opacity: 1; transition-delay: .2s; }
 .iphone__island i { width: 18px; height: 18px; border-radius: 50%; background: #34c759; display: grid; place-items: center; opacity: 0; transition: opacity .2s; }
 .iphone__island.is-wide i { opacity: 1; transition-delay: .2s; }
-.iphone__status { position: absolute; top: 0; left: 0; right: 0; height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 6px 26px 0; font: 600 13px -apple-system, var(--sans); z-index: 8; color: #111; }
+.iphone__status { position: absolute; top: 0; left: 0; right: 0; height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 6px 26px 0; font: 600 13px var(--sans); z-index: 8; color: #111; }
 .iphone__status b { font-weight: 600; }
 .iphone__status svg { width: 42px; height: 12px; }
 .iphone__home { position: absolute; bottom: 7px; left: 50%; width: 110px; height: 4px; margin-left: -55px; border-radius: 3px; background: #111; opacity: .85; z-index: 9; }
@@ -319,11 +324,13 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .app-screen.is-on { transform: none; }
 .app-screen.is-past { transform: translateX(-28%); filter: brightness(.94); }
 .app-nav { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 15px; }
-.app-nav button { appearance: none; background: none; border: 0; color: #a07f21; font: 500 15px -apple-system, var(--sans); cursor: pointer; padding: 6px 0; display: flex; align-items: center; gap: 2px; }
+.app-nav button { appearance: none; background: none; border: 0; color: #c2391f; font: 500 15px var(--sans); cursor: pointer; padding: 6px 0; display: flex; align-items: center; gap: 2px; }
 .app-nav button::before { content: ""; width: 9px; height: 9px; border-left: 2.2px solid currentColor; border-bottom: 2.2px solid currentColor; transform: rotate(45deg); margin-right: 3px; }
 .app-nav .app-step { font-size: 12.5px; color: #8a8a8e; }
-.app-title { padding: 0 16px 10px; font: 700 26px/1.1 -apple-system, "SF Pro Display", var(--sans); letter-spacing: -.02em; }
-.app-scroll { flex: 1; overflow-y: auto; padding: 0 14px 12px; }
+.app-title { padding: 0 16px 10px; font: 700 26px/1.1 "SF Pro Display", var(--sans); letter-spacing: -.02em; }
+.app-scroll { flex: 1; overflow-y: auto; padding: 0 14px 12px; display: flex; flex-direction: column; }
+.app-scroll > * { flex-shrink: 0; }
+.app-scroll > .app-btn:last-child { margin-top: auto; }
 .app-list { list-style: none; margin: 0 0 14px; padding: 0; background: #fff; border-radius: 12px; overflow: hidden; }
 .app-list li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; min-height: 46px; font-size: 14px; border-top: .5px solid #d8d8dc; }
 .app-list li:first-child { border-top: 0; }
@@ -336,19 +343,19 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .app-tile { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; flex: none; }
 .app-tile svg { width: 20px; height: 20px; }
 .app-cap { font-size: 12px; color: #8a8a8e; padding: 0 4px 6px; text-transform: uppercase; letter-spacing: .02em; }
-.app-btn { display: block; width: calc(100% - 28px); margin: 6px 14px 0; padding: 14px; border-radius: 14px; border: 0; background: #111; color: #fff; font: 600 16px -apple-system, var(--sans); cursor: pointer; transition: transform .25s var(--spring), opacity .2s; }
+.app-btn { display: block; width: calc(100% - 28px); margin: 6px 14px 0; padding: 14px; border-radius: 14px; border: 0; background: #111; color: #fff; font: 600 16px var(--sans); cursor: pointer; transition: transform .25s var(--spring), opacity .2s; }
 .app-btn:active { transform: scale(.97); }
 .app-btn[disabled] { opacity: .35; }
-.app-btn--gold { background: #c9a642; color: #111; }
-.app-odo { margin: 8px 0 16px; text-align: center; font: 700 52px/1 -apple-system, var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.app-odo small { display: block; font: 500 13px -apple-system, var(--sans); color: #8a8a8e; margin-top: 6px; letter-spacing: 0; }
+.app-btn--gold { background: var(--needle); color: #111; }
+.app-odo { margin: 8px 0 16px; text-align: center; font: 700 52px/1 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.app-odo small { display: block; font: 500 13px var(--sans); color: #8a8a8e; margin-top: 6px; letter-spacing: 0; }
 .app-switch { margin-left: auto; width: 51px; height: 31px; border-radius: 16px; background: #34c759; position: relative; flex: none; }
 .app-switch::after { content: ""; position: absolute; top: 2px; right: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, .2); }
 .app-seg { display: grid; grid-template-columns: repeat(3, 1fr); background: #e3e3e8; border-radius: 9px; padding: 2px; margin: 0 0 14px; position: relative; }
-.app-seg button { position: relative; z-index: 1; appearance: none; background: none; border: 0; padding: 8px 2px; font: 600 12px/1.2 -apple-system, var(--sans); color: #111; cursor: pointer; }
+.app-seg button { position: relative; z-index: 1; appearance: none; background: none; border: 0; padding: 8px 2px; font: 600 12px/1.2 var(--sans); color: #111; cursor: pointer; }
 .app-seg i { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / 3); border-radius: 7px; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, .12); transition: transform .35s var(--spring); }
 .app-cam { position: relative; height: 210px; margin: 0 0 12px; border-radius: 16px; background: #1b1d1c; overflow: hidden; }
-.app-cam::before { content: ""; position: absolute; inset: 22px 26px; border-radius: 14px; background: linear-gradient(#c9a642, #c9a642) top left / 22px 3px, linear-gradient(#c9a642, #c9a642) top left / 3px 22px, linear-gradient(#c9a642, #c9a642) top right / 22px 3px, linear-gradient(#c9a642, #c9a642) top right / 3px 22px, linear-gradient(#c9a642, #c9a642) bottom left / 22px 3px, linear-gradient(#c9a642, #c9a642) bottom left / 3px 22px, linear-gradient(#c9a642, #c9a642) bottom right / 22px 3px, linear-gradient(#c9a642, #c9a642) bottom right / 3px 22px; background-repeat: no-repeat; z-index: 2; }
+.app-cam::before { content: ""; position: absolute; inset: 22px 26px; border-radius: 14px; background: linear-gradient(var(--needle-2), var(--needle-2)) top left / 22px 3px, linear-gradient(var(--needle-2), var(--needle-2)) top left / 3px 22px, linear-gradient(var(--needle-2), var(--needle-2)) top right / 22px 3px, linear-gradient(var(--needle-2), var(--needle-2)) top right / 3px 22px, linear-gradient(var(--needle-2), var(--needle-2)) bottom left / 22px 3px, linear-gradient(var(--needle-2), var(--needle-2)) bottom left / 3px 22px, linear-gradient(var(--needle-2), var(--needle-2)) bottom right / 22px 3px, linear-gradient(var(--needle-2), var(--needle-2)) bottom right / 3px 22px; background-repeat: no-repeat; z-index: 2; }
 .app-cam__hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 12px; color: rgba(255, 255, 255, .7); z-index: 3; }
 .app-lic { position: absolute; left: 38px; right: 38px; top: 40px; height: 126px; border-radius: 10px; background: #ebe6d8; color: #1b1d1a; padding: 26px 12px 8px; font-family: var(--sans); transform: translateY(150%) rotate(-6deg); transition: transform .7s var(--spring-soft); z-index: 1; }
 .app-lic::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 18px; border-radius: 10px 10px 0 0; background: #2d4a3e; }
@@ -356,7 +363,7 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .app-lic i { display: block; font-style: normal; font-size: 9.5px; color: #4a4c46; }
 .app-lic em { position: absolute; right: 8px; bottom: 6px; font-style: normal; font-size: 7.5px; letter-spacing: .08em; text-transform: uppercase; color: #8a3a2a; font-weight: 700; }
 .app-cam.is-in .app-lic { transform: none; }
-.app-cam__beam { position: absolute; left: 30px; right: 30px; top: 30px; height: 2px; background: #c9a642; box-shadow: 0 0 14px 3px rgba(201, 166, 66, .8); opacity: 0; z-index: 3; }
+.app-cam__beam { position: absolute; left: 30px; right: 30px; top: 30px; height: 2px; background: var(--needle-2); box-shadow: 0 0 14px 3px rgba(242, 114, 88, .8); opacity: 0; z-index: 3; }
 .app-cam.is-scanning .app-cam__beam { animation: camBeam .9s ease-in-out 2; }
 @keyframes camBeam { 0% { top: 30px; opacity: 1; } 100% { top: 176px; opacity: 1; } }
 .app-cam__flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 4; pointer-events: none; }
@@ -383,7 +390,7 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .app-done__ring circle { fill: none; stroke: #34c759; stroke-width: 6; stroke-dasharray: 290; stroke-dashoffset: 290; transition: stroke-dashoffset .8s var(--ease) .1s; }
 .app-done__ring path { fill: none; stroke: #34c759; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 60; stroke-dashoffset: 60; transition: stroke-dashoffset .45s var(--ease) .75s; }
 .app-screen.is-on .app-done__ring circle, .app-screen.is-on .app-done__ring path { stroke-dashoffset: 0; }
-.app-done h4 { font: 700 24px/1.1 -apple-system, var(--sans); }
+.app-done h4 { font: 700 24px/1.1 var(--sans); }
 .app-done p { margin-top: 6px; font-size: 13.5px; color: #6c6c70; }
 .app-fic { padding: 0 16px 6px; font-size: 10.5px; color: #8a8a8e; }
 .app-open { display: flex; justify-content: space-between; align-items: center; }
@@ -408,7 +415,8 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 /* ---------- the ignition: the portrait is the face of the tach ---------- */
 .dash-page .intro::before { background: radial-gradient(90% 60% at 50% 30%, #241f1b 0%, var(--lacquer) 70%); }
 .dash-page .intro__medal { padding: 7px; background: linear-gradient(135deg, #eef0f2, #9a9ea3 45%, #44484d 55%, #eef0f2); box-shadow: 0 24px 44px rgba(0, 0, 0, .55); }
-.intro__face { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 26%; background: var(--deep); box-shadow: inset 0 0 0 3px #0a0909; }
+.dash-page .intro__medal::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #1f1d1b, #0c0b0b 72%); }
+.intro__face { position: absolute; inset: 21%; display: block; width: 58%; height: 58%; border-radius: 50%; object-fit: cover; object-position: 50% 26%; background: var(--deep); box-shadow: inset 0 0 0 3px #0a0909; }
 .dash-page .intro__ring { transform: none; }
 .dash-page .intro__ring .intro__ring-p { stroke: var(--needle); stroke-width: 1.4; transform: rotate(-90deg); transform-origin: 50% 50%; transform-box: view-box; }
 .dash-page .intro.is-ready .intro__ring { animation: none; }
@@ -418,8 +426,13 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .intro__tick.is-red { stroke: var(--needle); }
 .intro.is-go .intro__tick { stroke: var(--ivory); }
 .intro.is-go .intro__tick.is-red { stroke: var(--needle-2); }
-.intro__needle { position: absolute; left: 50%; bottom: 50%; z-index: 2; width: 3px; height: 43%; margin-left: -1.5px; border-radius: 3px 3px 1px 1px; background: var(--needle); transform-origin: 50% 100%; transform: rotate(-135deg); opacity: 0; box-shadow: 0 2px 6px rgba(0, 0, 0, .5); transition: opacity .5s var(--ease); }
-.intro__needle::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #eef0f2, #44484d 70%); box-shadow: 0 0 0 3px #161514; }
+.intro__num { font: 700 5px/1 var(--sans); fill: var(--dim); text-anchor: middle; font-variant-numeric: tabular-nums; transition: fill .2s; }
+.intro__num.is-red { fill: var(--needle); }
+.intro.is-go .intro__num { fill: var(--ivory); }
+.intro.is-q .intro__num { opacity: 0; }
+/* the pointer rides the bezel band only: its pivot is the dial center, but it never crosses the portrait */
+.intro__needle { position: absolute; left: 50%; bottom: 50%; z-index: 2; width: 4px; height: 47%; margin-left: -2px; border-radius: 3px; background: linear-gradient(to top, transparent 0 62%, var(--needle) 62%); transform-origin: 50% 100%; transform: rotate(-135deg); opacity: 0; transition: opacity .5s var(--ease); }
+
 .intro.is-ready .intro__needle { opacity: 1; }
 .intro.is-go .intro__needle { opacity: 1; animation: needleSweep 1.2s cubic-bezier(.3, .7, .2, 1) both; }
 .intro.is-q .intro__needle { opacity: 0; transition-duration: .2s; }
@@ -446,3 +459,6 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 @media (max-width: 759px) { .desk-demo .desk-demo__notes { display: none; } }
 .dash-page .skip:hover, .dash-page .skip:focus { color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .intro.is-ready .intro__hint { opacity: 1; animation: none; } }
+.dash-page .tabbar .tab, .dash-page .tabbar .tab span { text-transform: none; letter-spacing: 0; }
+/* the desk film sets its phone the full height of the frame, so it keeps its own 16:9 */
+#story-desk .tcard__bg { aspect-ratio: 16 / 9; }

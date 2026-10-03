@@ -54,7 +54,7 @@
     }
     function make(i) {
       if (i === 0) {
-        var s0 = screen(0, "Handle A Sale", '<p class="app-cap">Open sales</p><ul class="app-list"><li><span class="app-open" style="flex:1"><span>R. Alvarez<span class="sub">2016 Honda Accord</span></span><span class="app-pill app-pill--ink">Waiting on ink</span></span></li><li><span class="app-open" style="flex:1"><span>K. Nguyen<span class="sub">2018 Toyota Camry</span></span><span class="app-pill">3 of 3 signed</span></span></li></ul><p class="app-fic">Fictional buyers and cars.</p>');
+        var s0 = screen(0, "Handle A Sale", '<p class="app-cap">Open sales</p><ul class="app-list"><li><span class="app-open" style="flex:1"><span>R. Alvarez<span class="sub">2016 Honda Accord</span></span><span class="app-pill app-pill--ink">Waiting on ink</span></span></li><li><span class="app-open" style="flex:1"><span>K. Nguyen<span class="sub">2018 Toyota Camry</span></span><span class="app-pill">3 of 3 signed</span></span></li></ul><p class="app-cap">On the lot</p><ul class="app-list">' + CARS.slice(0, 2).map(function (c) { return '<li><span class="app-tile" style="background:' + c.c + '">' + CAR_SVG + '</span><span>' + c.y + ' ' + c.mk + '<span class="sub">Stock ' + c.st + '</span></span></li>'; }).join("") + '</ul><p class="app-fic">Fictional buyers and cars.</p>');
         var b = document.createElement("button"); b.className = "app-btn app-btn--gold"; b.type = "button"; b.textContent = "Start A Sale"; s0.querySelector(".app-scroll").appendChild(b);
         b.addEventListener("click", function () { fx("choice"); T("scene_interacted", { scene: "desk_start" }); go(1); });
       }

@@ -4,7 +4,9 @@
 set -e
 B=${REMOTION_BROWSER:-/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell}
 A=../../assets/film
-for id in DashRecord:dash-record DashObavia:dash-obavia DashLot:dash-lot DashCut:dash-cut; do
+# the desk film crops the Handle a Sale screen out of the existing loop
+mkdir -p public/vid && cp $A/loop-sale.mp4 public/vid/loop-sale.mp4
+for id in DashDesk:dash-desk DashRecord:dash-record DashObavia:dash-obavia DashLot:dash-lot DashCut:dash-cut; do
   c=${id%%:*}; f=${id##*:}
   npx remotion render src/index.ts $c $A/$f.mp4 --codec h264 --crf 23 --muted --browser-executable=$B --log=error
   npx remotion still src/index.ts $c out/$f-poster.png --frame 200 --browser-executable=$B --log=error

@@ -69,8 +69,9 @@
   function ticks() {
     var out = "";
     for (var k = 0; k <= 30; k++) {
-      var d = -135 + k * 9, r1 = 44.6, r2 = k % 5 ? 42.6 : 40.6, a = (d - 90) * Math.PI / 180;
+      var d = -135 + k * 9, r1 = 46.4, r2 = k % 5 ? 44.6 : 42.4, a = (d - 90) * Math.PI / 180;
       out += '<line x1="' + (50 + r1 * Math.cos(a)).toFixed(2) + '" y1="' + (50 + r1 * Math.sin(a)).toFixed(2) + '" x2="' + (50 + r2 * Math.cos(a)).toFixed(2) + '" y2="' + (50 + r2 * Math.sin(a)).toFixed(2) + '" class="intro__tick' + (k >= 26 ? " is-red" : "") + '"/>';
+      if (!(k % 5)) out += '<text x="' + (50 + 38.9 * Math.cos(a)).toFixed(2) + '" y="' + (50 + 38.9 * Math.sin(a) + 1.5).toFixed(2) + '" class="intro__num' + (k >= 26 ? " is-red" : "") + '">' + k / 5 + '</text>';
     }
     return out;
   }

@@ -48,7 +48,7 @@ head += (
     '<link rel="stylesheet" href="dash.css?v=%(v)s" />\n'
     '<link rel="stylesheet" href="print.css" media="print" />\n'
     + HEAD_SCRIPT + '\n'
-) % {"v": "s5"}
+) % {"v": "s6"}
 
 # JSON-LD: the home-page nodes of schema.json plus the FAQ
 schema = json.loads((ROOT / "schema.json").read_text())

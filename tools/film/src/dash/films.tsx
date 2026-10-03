@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, OffthreadVideo, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { dash, clamp } from "./theme";
 import { Cabin, Finish, Gauge, Lamp, LoopFade, Odometer, Rise, Words, breathe, sweep } from "./parts";
 
@@ -156,6 +156,46 @@ export const CutTile: React.FC = () => {
       ))}
       <Finish />
       <LoopFade inF={8} outF={8} />
+    </AbsoluteFill>
+  );
+};
+
+/* =====================================================================
+   THE DESK: Handle a Sale running on a phone set into the dash, its
+   screen cropped out of the original screen film, the facts beside it.
+   ===================================================================== */
+const SRC = { w: 1000, h: 1100, x: 297, y: 92, sw: 408, sh: 924 };
+export const DeskFilm: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const sw = 318, s = sw / SRC.sw, sh = SRC.sh * s;
+  const phone = spring({ frame: frame - 2, fps, config: dash.spring.smooth });
+  const lamps: [string, "check" | "sign" | "car", number][] = [["One plain question at a time", "check", 70], ["English or Spanish", "check", 82], ["Every sale saved on file", "check", 94]];
+  return (
+    <AbsoluteFill>
+      <Cabin />
+      <div style={{ position: "absolute", left: 230, top: (900 - sh - 28) / 2, padding: 14, borderRadius: 58, background: `linear-gradient(145deg, ${C.chromeMid}, ${C.chromeLo} 40%, #1a1b1d 60%, ${C.chromeLo})`, boxShadow: "0 40px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)", opacity: phone, transform: `translateY(${(1 - phone) * 60}px) scale(${interpolate(phone, [0, 1], [0.94, 1])}) rotate(${Math.sin(frame / 40) * 0.4}deg)` }}>
+        <div style={{ width: sw, height: sh, borderRadius: 44, overflow: "hidden", position: "relative", background: "#f4f5f8" }}>
+          <OffthreadVideo src={staticFile("vid/loop-sale.mp4")} muted style={{ position: "absolute", width: SRC.w * s, height: SRC.h * s, left: -SRC.x * s, top: -SRC.y * s, maxWidth: "none" }} />
+        </div>
+      </div>
+      <div style={{ position: "absolute", left: 720, top: 210, width: 760 }}>
+        <Words text="Handle a Sale" start={8} size={104} />
+        <div style={{ height: 20 }} />
+        <Words text="The desk I built. Triple J closes sales on it." start={24} per={3} size={40} weight={600} color={C.dim} em={["closes"]} />
+        <div style={{ height: 52 }} />
+        {lamps.map(([t, icon, at]) => {
+          const on = spring({ frame: frame - at, fps, config: dash.spring.smooth });
+          return (
+            <div key={t} style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 22, opacity: on, transform: `translateX(${(1 - on) * -24}px)` }}>
+              <Lamp icon={icon} on={on} color={C.green} size={36} />
+              <span style={{ fontFamily: sans, fontWeight: 600, fontSize: 30, color: C.text }}>{t}</span>
+            </div>
+          );
+        })}
+      </div>
+      <Finish />
+      <LoopFade />
     </AbsoluteFill>
   );
 };

@@ -5,7 +5,7 @@ import { Signature } from "./Signature";
 import { Screen } from "./Screen";
 import { Vsl } from "./Vsl";
 import { LINES, LEAD_IN, TAIL } from "./vsl-data";
-import { RecordReel, ObaviaFilm, LotFilm, CutTile, OgHome } from "./dash/films";
+import { RecordReel, ObaviaFilm, LotFilm, CutTile, OgHome, DeskFilm } from "./dash/films";
 
 export const Root: React.FC = () => (
   <>
@@ -17,6 +17,7 @@ export const Root: React.FC = () => (
     <Composition id="DashRecord" component={RecordReel} durationInFrames={300} fps={30} width={1600} height={900} />
     <Composition id="DashObavia" component={ObaviaFilm} durationInFrames={300} fps={30} width={1600} height={900} defaultProps={{ compact: false }} />
     <Composition id="DashLot" component={LotFilm} durationInFrames={300} fps={30} width={1600} height={900} />
+    <Composition id="DashDesk" component={DeskFilm} durationInFrames={288} fps={30} width={1600} height={900} />
     <Composition id="DashCut" component={CutTile} durationInFrames={257} fps={30} width={1080} height={1080} />
     <Composition id="OgHome" component={OgHome} durationInFrames={90} fps={30} width={1200} height={630} />
     <Composition id="OgObavia" component={ObaviaFilm} durationInFrames={30} fps={30} width={1200} height={630} defaultProps={{ compact: true }} />
