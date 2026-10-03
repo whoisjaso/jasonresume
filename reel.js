@@ -555,7 +555,7 @@
       el.remove(); tcEl = barEl = null;
       if (viaIntro && window.JG_TOAST) window.JG_TOAST(name ? "Welcome, " + name : "Welcome in");
       viaIntro = false;
-      if ((to === "desk" || to === "obavia") && window.JG_STORY) window.JG_STORY(to);
+      if ((to === "desk" || to === "obavia") && window.JG_STORY) window.JG_STORY(to === "desk" ? "drive" : to);
     }, RM ? 60 : 1000);
   }
   function fly(src, face) {

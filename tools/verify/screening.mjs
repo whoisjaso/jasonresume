@@ -58,13 +58,17 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
 
   // The feed: widgets live, then the desk story opens full screen and the app runs to Filed
   const live = await p.evaluate(() => ({ date: document.querySelector('[data-today-date]').textContent, lot: document.querySelector('[data-lot]').textContent }));
-  if (!/,/.test(live.date) || !/Open|Closed/.test(live.lot)) errs.push(`${name} widgets not live ${JSON.stringify(live)}`);
-  await go('.widgets', '02-widgets');
+  if (!/,/.test(live.date) || !/open|closed/i.test(live.lot)) errs.push(`${name} widgets not live ${JSON.stringify(live)}`);
+  await go('.lamps', '02-lamps');
+  const needles = await p.evaluate(() => [...document.querySelectorAll('.dial__readout')].map(n => n.textContent));
+  if (needles.join(',') !== '19,3.63') errs.push(`${name} gauges did not settle on the truth: ${needles}`);
   await go('#story-desk', '03-card', 600);
   await p.click('#story-desk .tcard__open'); await p.waitForTimeout(1200); await shot(p, name, '04-story-open');
   const top = await p.evaluate(() => { const r = document.querySelector('#story-desk').getBoundingClientRect(); const el = document.elementFromPoint(innerWidth / 2, 200); return { top: Math.round(r.top), mine: !!(el && el.closest('#story-desk')), hash: location.hash }; });
   if (top.top !== 0 || !top.mine || top.hash !== '#story-desk') errs.push(`${name} desk story did not open over the page ${JSON.stringify(top)}`);
-  await p.evaluate(() => document.querySelector('[data-desk-app]').scrollIntoView({ block: 'center' })); await p.waitForTimeout(500);
+  await p.keyboard.press('Escape'); await p.waitForTimeout(1400);
+  // the desk lives on the dash, on its mount
+  await p.evaluate(() => document.querySelector('[data-desk-app]').scrollIntoView({ block: 'center' })); await p.waitForTimeout(700);
   const c = sel => p.click(`[data-desk-app] .app-screen.is-on ${sel}`);
   await c('.app-btn--gold'); await p.waitForTimeout(500);
   await c('[data-car="2"]'); await p.waitForTimeout(1100); await shot(p, name, '05-desk-odo');
@@ -79,12 +83,11 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await c('[data-ok]'); await p.waitForTimeout(500);
   await c('[data-auto]'); await c('[data-ok]'); await p.waitForTimeout(1200); await shot(p, name, '09-desk-filed');
   if (!(await p.evaluate(() => /Filed/.test(document.querySelector('[data-desk-app] .app-screen.is-on').textContent)))) errs.push(`${name} desk did not reach Filed`);
-  await p.keyboard.press('Escape'); await p.waitForTimeout(1600);
   const closed = await p.evaluate(() => ({ open: document.documentElement.classList.contains('is-story-open'), locked: document.documentElement.classList.contains('is-locked'), hash: location.hash, style: document.querySelector('#story-desk').getAttribute('style') || '' }));
   if (closed.open || closed.locked || closed.hash || closed.style) errs.push(`${name} story did not close cleanly ${JSON.stringify(closed)}`);
   // the tab bar opens the Obavia story; the story's link goes to the page
-  await p.click('.tabbar [data-story-open="obavia"]'); await p.waitForTimeout(1300); await shot(p, name, '10-obavia-story');
-  if (!(await p.evaluate(() => location.hash === '#story-obavia'))) errs.push(`${name} Obavia tab did not open its story`);
+  await p.click(mobile ? '.tabbar [data-story-open="obavia"]' : '.carplay__apps [data-story-open="obavia"]'); await p.waitForTimeout(1300); await shot(p, name, '10-obavia-story');
+  if (!(await p.evaluate(() => location.hash === '#story-obavia'))) errs.push(`${name} Obavia app did not open its story`);
   await p.keyboard.press('Escape'); await p.waitForTimeout(1300);
   await go('#story-record', '11-record');
   await go('#move', '12-move');

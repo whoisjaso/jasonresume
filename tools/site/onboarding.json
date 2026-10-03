@@ -1,11 +1,11 @@
 {
-  "_about": "The onboarding every visitor sees on every visit to the home page: the loading screen (tap to begin), one question, an optional name, a title card, then the cut that suits them. intro.js reads this; tools/site/assemble_home.py inlines it into index.html as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
+  "_about": "The onboarding every visitor sees on every arrival from outside the site, on the home page and /obavia.html: the ignition (Jason's portrait in a tachometer bezel, tap to start), one question, an optional name, a title card, then the cut that suits them. intro.js reads this; tools/site/assemble_home.py inlines it into both pages as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
   "loading": {
     "first": "Jason",
     "last": "Obawemimo",
-    "hint_touch": "Tap anywhere to begin",
-    "hint_pointer": "Click anywhere to begin",
-    "waiting": "One moment",
+    "hint_touch": "Tap to start",
+    "hint_pointer": "Click to start",
+    "waiting": "Starting",
     "skip": "Skip intro"
   },
   "question": {
@@ -22,7 +22,11 @@
       "p": "Interviewer or recruiter. The proof, fast.",
       "cut": "screening",
       "line": "The ten-second version first. Then the proof.",
-      "next": { "title": "Start with the desk", "body": "Run the sale desk I built for Triple J. About a minute.", "story": "desk" }
+      "next": {
+        "title": "Start with the desk",
+        "body": "Run the sale desk I built for Triple J, with a fictional buyer.",
+        "story": "drive"
+      }
     },
     {
       "id": "partner",
@@ -31,7 +35,11 @@
       "p": "Dealer or business partner. Every sale, start to signed.",
       "cut": "dealer",
       "line": "Every sale, start to signed. Here’s what I’m building for your lot.",
-      "next": { "title": "See Obavia", "body": "Every sale, start to signed. For Texas independent dealers.", "story": "obavia" }
+      "next": {
+        "title": "See Obavia",
+        "body": "Every sale, start to signed. For Texas independent dealers.",
+        "story": "obavia"
+      }
     },
     {
       "id": "lurker",
@@ -40,7 +48,11 @@
       "p": "No pitch. The fun parts.",
       "cut": "trailer",
       "line": "The fun parts. No pitch.",
-      "next": { "title": "Run the desk", "body": "Sell a car on the desk I built. About a minute.", "story": "desk" }
+      "next": {
+        "title": "Run the desk",
+        "body": "Sell a car on the desk I built, from the car to the signature.",
+        "story": "drive"
+      }
     }
   ],
   "name": {
