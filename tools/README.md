@@ -37,7 +37,7 @@ Screenshots land in `tools/verify/out/`.
 
 The trailer (reel.js) speaks one line per shot in Jason's cloned voice. Each line is a `vo: "..."` on a shot in `cuts()`; reel.js keys its clip by an FNV-1a hash of the text (`r` plus hex), looks it up in `assets/voice/manifest.json`, plays it over the score with the score ducked, and holds the shot until the line is said. A line with no clip simply plays silent, so edit freely and render after.
 
-1. Reference: `tools/voice/ref.wav` (gitignored, never commit it). Best is 20 to 40 seconds of Jason talking naturally. The current clips were rendered from a reference stitched out of two earlier cloned-voice clips (`c5559b52.mp3` and `a167a0d3.mp3`); a fresh recording of Jason will sound closer.
+1. Reference: `tools/voice/ref.wav` (gitignored, never commit it): 20 to 40 seconds of Jason's real voice talking naturally. Nothing else: the narration in the Triple J films is an AI voice, and a clone of a clone did not sound like him, so the trailer ships silent until his recording arrives.
 2. `node tools/voice/reel_lines.mjs` lists the lines that have no clip yet in `tools/voice/reel_lines.json` (`--all` lists every line, to re-render after a new reference).
 3. Python 3.11 with `torch==2.6.0 torchaudio==2.6.0` (CPU wheels from download.pytorch.org/whl/cpu), `chatterbox-tts`, `imageio-ffmpeg` and `soundfile`; a virtualenv outside the repo is fine.
 4. `LINES=reel_lines.json python3 tools/voice/render_clone.py` renders them into `assets/voice/` and updates the manifest (about 35 seconds a line on a 4-core CPU). Pass ids as arguments to render only those, which skips the manifest write.
