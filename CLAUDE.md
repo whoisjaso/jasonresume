@@ -4,7 +4,7 @@ Read HANDOFF.md first. It is the brief: what Obavia is, what the site is for, wh
 
 ## What this is
 
-A static site (index.html, tokens.css, home.css, intro.js, reel.js, today.css, today.js, chrome.js, deck.js, verify.js, track.js, sounds.js, haptics.js; obavia.html adds briefing.css and pages.js and reuses today.css and today.js for the desk app; the proof pages (credentials, answers, profile, knowledge card, mentions, honor, search) use tokens.css and proof.css) plus Vercel Node functions in `api/`, deployed from `main` to production at jasonobawemimo.com. No build step. No framework. The desk game, the sound, the films and the tracking are all first-party. SPEC.md is the build spec for this version.
+A static site (index.html, tokens.css, home.css, intro.js, reel.js, dash.css, dash.js, desk-app.js, chrome.js, deck.js, verify.js, track.js, sounds.js, haptics.js; obavia.html adds briefing.css and pages.js and shares dash.css, dash.js and desk-app.js; the proof pages (credentials, answers, profile, knowledge card, mentions, honor, search) use tokens.css and proof.css) plus Vercel Node functions in `api/`, deployed from `main` to production at jasonobawemimo.com. No build step. No framework. The desk game, the sound, the films and the tracking are all first-party. SPEC.md is the build spec for this version.
 
 ## Rules that do not bend
 
@@ -23,13 +23,13 @@ A static site (index.html, tokens.css, home.css, intro.js, reel.js, today.css, t
 ## Where things are
 
 - Home page: edit tools/site/home.body.html and tools/site/record.json (the Slate, record, deck, Check me and PDF link), then `python3 tools/site/assemble_home.py` writes index.html (its JSON-LD comes from schema.json and faq.jsonld). Never hand-edit index.html.
-- Look: tokens.css (design system, iOS layer), home.css (shared components, intro, reel), today.css (the Today feed, story cards, the iPhone desk app, the tab bar). chrome.js owns FX, the island, banners, sheets and deep links; today.js owns the feed, the story cards (window.JG_STORY) and the desk app.
+- Look: the dash (an instrument cluster: gauges, lamps, a CarPlay screen, the desk on a phone mount). tokens.css (base), home.css (shared components, intro, reel), dash.css (the dash world; its tokens re-skin everything, the accent is the needle red #e8553b, brass only on the badge). chrome.js owns FX, the island, banners, sheets and deep links; dash.js owns the clock and lot lamp, the gauges and the ignition sweep, the story cards (window.JG_STORY; [data-story-alt] for parts of a page) and keys; desk-app.js is the desk app. The direction contract is the comment at the top of home.body.html.
 - Copy and facts: tools/site/record.json, tools/site/home.body.html, resume-pdf.html, api/guide.js, llms.txt, llms-full.txt, answers.json, faq.jsonld. Change a fact in all of them.
 - Onboarding: plays for every visitor on every arrival, on the home page and /obavia.html (only crawlers and clicks between the site's own pages skip it). assemble_home.py writes its head script and data into both pages, so run it after changing onboarding.json. Its words, the three roles and where each one goes live in tools/site/onboarding.json (inlined by assemble_home.py as #onboarding-data); intro.js runs it. Deep links open after it ends (document event jg:intro-done).
 - Reel: reel.js (a trailer cut per visitor with a live Web Audio score, played after the intro and from the cut chips under the Slate; shots and copy live in cuts() at the top, and every line must be in llms.txt).
-- Interactive: the desk app in today.js (fictional buyer, example figures), reel.js (the trailer, a cut per visitor, live score), deck.js (resume deck). /join redirects to /obavia.html; there is no hiring page.
+- Interactive: the desk app in desk-app.js (fictional buyer, example figures), reel.js (the trailer, a cut per visitor, live score), deck.js (resume deck). /join redirects to /obavia.html; there is no hiring page.
 - Sound: sounds.js (bank and gains), assets/sfx, tools/sfx.
-- Films: assets/film (Obavia ads, Triple J Handle a Sale, signature), tools/film. The Sale Desk film renders from whoisjaso/thetriplejauto, remotion/src/sale-desk.ts.
+- Films: assets/film (the dash films dash-*.mp4 rendered from tools/film/src/dash with `sh render-dash.sh`, Triple J Handle a Sale, the Obavia film and lessons, signature), tools/film. The Sale Desk film renders from whoisjaso/thetriplejauto, remotion/src/sale-desk.ts.
 - Desks and chat: api/guide.js (ask box), api/lead.js (Obavia early access), api/_lib. Config in CONFIG.md.
 - Analytics: track.js to api/track.js (allowlist there) to PostHog; api/metrics.js and admin.html are the Dailies board.
 - Outreach: OUTREACH.md. Research: RESEARCH.md.

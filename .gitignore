@@ -18,3 +18,4 @@ tools/vsl/you_*.wav
 tools/verify/out/*
 !tools/verify/out/.gitkeep
 tools/sfx/raw/
+.impeccable/review/

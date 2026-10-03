@@ -1,5 +1,5 @@
 {
-  "_about": "The onboarding every visitor sees on every visit to the home page: the loading screen (tap to begin), one question, an optional name, a title card, then the cut that suits them. intro.js reads this; tools/site/assemble_home.py inlines it into index.html as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
+  "_about": "The onboarding every visitor sees on every arrival from outside the site, on the home page and /obavia.html: the ignition (Jason's portrait in a tachometer bezel, tap to start), one question, an optional name, a title card, then the cut that suits them. intro.js reads this; tools/site/assemble_home.py inlines it into both pages as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
   "loading": {
     "first": "Jason",
     "last": "Obawemimo",

@@ -46,7 +46,9 @@ body.dash-page {
 }
 .dash-page :focus-visible { outline: 2px solid var(--needle-2); outline-offset: 3px; }
 .dash-page h1, .dash-page h2, .dash-page h3, .dash-page h4 { font-family: var(--sans); font-weight: 800; letter-spacing: -0.03em; }
-.dash-page a:hover { color: var(--needle-2); }
+.dash-page a:not(.btn):not(.key):not(.pill):not(.carplay__dockapp):not(.badge):hover { color: var(--needle-2); }
+.dash-page .pill--gold:hover { color: var(--ink); }
+.dash-page .label { text-transform: none; letter-spacing: 0; font-size: 13px; }
 
 /* buttons speak sentence case, like an iPhone */
 .dash-page .btn { font: 600 14px/1 var(--sans); letter-spacing: 0; text-transform: none; color: var(--ivory); background: var(--key); border-color: var(--edge-2); }
@@ -198,7 +200,7 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 
 /* ---------- the tab bar, phones only ---------- */
 .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: calc(var(--z-chrome) + 2); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 6px calc(env(safe-area-inset-bottom) + 10px); background: #0e0d0c; box-shadow: 0 -1px 0 #050505, 0 -2px 0 rgba(160, 98, 45, 0.3); transition: transform .35s var(--spring); }
-.tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; text-decoration: none; color: var(--dim); font: 600 10px/1 var(--sans); -webkit-tap-highlight-color: transparent; transition: color .2s, transform .3s var(--spring); }
+.tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; text-decoration: none; color: var(--dim); font: 600 11px/1 var(--sans); -webkit-tap-highlight-color: transparent; transition: color .2s, transform .3s var(--spring); }
 .tabbar .tab svg { width: 24px; height: 24px; }
 .tabbar .tab.is-on { color: var(--needle-2); }
 .tabbar .tab:active { transform: scale(0.9); }
@@ -442,3 +444,5 @@ a.lamp:hover, button.lamp:hover { color: var(--link); }
 .desk-demo { display: grid; gap: 22px; align-items: start; justify-items: center; }
 @media (min-width: 760px) { .desk-demo { grid-template-columns: auto minmax(0, 1fr); justify-items: start; } }
 @media (max-width: 759px) { .desk-demo .desk-demo__notes { display: none; } }
+.dash-page .skip:hover, .dash-page .skip:focus { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .intro.is-ready .intro__hint { opacity: 1; animation: none; } }
