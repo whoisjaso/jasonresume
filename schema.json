@@ -186,10 +186,12 @@
       ],
       "alumniOf": [
         {
-          "@id": "https://jasonobawemimo.com/#ut-austin"
-        },
-        {
           "@id": "https://jasonobawemimo.com/#san-jacinto-college"
+        }
+      ],
+      "affiliation": [
+        {
+          "@id": "https://jasonobawemimo.com/#ut-austin"
         }
       ],
       "hasCredential": [
@@ -349,9 +351,6 @@
         "addressCountry": "US"
       },
       "openingHours": "Mo-Sa 09:00-19:00",
-      "employee": {
-        "@id": "https://jasonobawemimo.com/#jason-obawemimo"
-      },
       "member": {
         "@type": "OrganizationRole",
         "member": {

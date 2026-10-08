@@ -88,10 +88,12 @@
       ],
       "alumniOf": [
         {
-          "@id": "https://jasonobawemimo.com/#ut-austin"
-        },
-        {
           "@id": "https://jasonobawemimo.com/#san-jacinto-college"
+        }
+      ],
+      "affiliation": [
+        {
+          "@id": "https://jasonobawemimo.com/#ut-austin"
         }
       ],
       "hasCredential": [

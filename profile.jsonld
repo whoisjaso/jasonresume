@@ -128,14 +128,16 @@
   ],
   "alumniOf": [
     {
-      "@type": "CollegeOrUniversity",
-      "name": "The University of Texas at Austin",
-      "url": "https://www.utexas.edu/"
-    },
-    {
       "@type": "EducationalOrganization",
       "name": "San Jacinto College",
       "url": "https://www.sanjac.edu/"
+    }
+  ],
+  "affiliation": [
+    {
+      "@type": "CollegeOrUniversity",
+      "name": "The University of Texas at Austin",
+      "url": "https://www.utexas.edu/"
     }
   ],
   "hasCredential": [
