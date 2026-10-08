@@ -24,6 +24,8 @@ const ALLOWED = new Set([
   "reel_started", "reel_shot", "reel_finished", "reel_exited",
   // the Today feed: a card opens into its story, the desk app
   "story_opened", "desk_step", "desk_finished",
+  // the library: titles, trophies, screens, the platinum
+  "trophy_unlocked", "trophies_opened", "screen_opened", "level_clear",
   // conversion
   "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent", "apply_sent",
   // older pages still in the wild

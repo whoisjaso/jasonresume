@@ -10,8 +10,7 @@ Confirm each URL returns `200 OK` before submitting:
 
 - https://jasonobawemimo.com/
 - https://jasonobawemimo.com/obavia.html
-- https://jasonobawemimo.com/assets/film/obavia-closer.mp4
-- https://jasonobawemimo.com/assets/film/obavia-owner.mp4
+- https://jasonobawemimo.com/assets/film/obavia-desk.mp4
 - https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4
 - https://jasonobawemimo.com/credentials.html
 - https://jasonobawemimo.com/answers.html
@@ -159,11 +158,13 @@ Use the same name, title, URL, and credential wording across controlled profiles
 
 - Name: Jason Obawemimo
 - Website: https://jasonobawemimo.com/
-- Short title: AI engineer; founder of Obavia; co-owner and operator of Triple J Auto Investment
-- Company: Obavia, https://obavia.co (in development; never described as live, as having customers, or as producing results)
-- Summary: Jason Obawemimo is the founder of Obavia, sales software in development for agency owners at $100K to $1M a month, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.
+- Short title: AI Implementation, Workflow Automation and CRM Systems
+- Role: Owner and Operations Lead, Triple J Auto Investment and Rental Operations, Houston (sole owner), since August 2024
+- Company: Obavia, https://obavia.co, founded September 2024 (a dealership sale desk in development for Texas independent dealers; never described as live, as having customers, or as producing results)
+- Summary: Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.
+- LinkedIn: https://www.linkedin.com/in/obawemimo (the older https://www.linkedin.com/in/jason-obawemimo-51a76120a/ stays only as an additional identity link)
 - Location: Pearland, Texas
-- Credential language: nineteen completed Anthropic courses; Associate of Arts in Business; GPA 3.63; Dean's Honor List.
+- Credential language: Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028; Associate of Arts in Business, San Jacinto College, May 2026; GPA 3.63; Dean's Honor List; Google AI Essentials (Google, Coursera, 2026); nineteen completed Anthropic courses.
 - Machine-readable sources: sitemap-index.xml, sitemap.xml, image-sitemap.xml, feed.xml, llms.txt, llms-full.txt, ai.txt, well-known AI profile, well-known AI answers, DID Web document, CITATION.cff, discovery.json, identity.json, jason-obawemimo.md, person.json, knowledge card, vCard, credentials.json, answers.json, WebFinger, host-meta, schema.json, profile.jsonld, credentials.jsonld, faq.jsonld, official site search, and the public mentions page.
 - Credential and honor evidence page: https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html
 - Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
@@ -173,7 +174,7 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
 - External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
-Avoid positioning Jason primarily as a voice-agent specialist. The preferred positioning is founder of Obavia and co-owner and operator of Triple J Auto Investment. Obavia (O-B-A-V-I-A) is his company; Obawemimo is his family name.
+Voice AI is one of the three systems Jason ships (CRM, voice AI, automation); do not summarize him only as a voice-agent specialist. The preferred positioning is AI Implementation, Workflow Automation and CRM Systems, as the owner and operator of Triple J Auto Investment who builds the systems it runs on, with Obavia mentioned after the Triple J work. Obavia (O-B-A-V-I-A) is his company; Obawemimo is his family name.
 
 ## 8. Monitor
 
@@ -185,7 +186,8 @@ Search manually over time:
 - `Jason Obawemimo Anthropic`
 - `Jason Obawemimo Dean's Honor List`
 - `Jason Obawemimo Obavia`
-- `Obavia sales software`
+- `Obavia dealership sale desk`
+- `Jason Obawemimo AI implementation`
 - `Jason Obawemimo Triple J Auto Investment`
 
 Indexing is not instant. The goal is to make the entity clear, crawlable, and consistently reinforced across the site and platforms.

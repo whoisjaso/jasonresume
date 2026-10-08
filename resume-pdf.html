@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jason Obawemimo Resume | AI Engineer, Founder of Obavia</title>
-<meta name="description" content="Resume for Jason Obawemimo, AI engineer and business operator in Pearland, Texas: founder of Obavia, a sale desk he is building for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston." />
+<title>Jason Obawemimo Resume | AI Implementation, Workflow Automation and CRM Systems</title>
+<meta name="description" content="Resume for Jason Obawemimo, Pearland, Texas: AI implementation, workflow automation and CRM systems. Owner and operations lead of Triple J Auto Investment in Houston, shipping the CRM, voice AI and automation systems that run the dealership." />
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 <meta name="author" content="Jason Obawemimo" />
 <meta name="application-name" content="Jason Obawemimo" />
@@ -15,6 +15,7 @@
 <link rel="canonical" href="https://jasonobawemimo.com/resume-pdf.html" />
 <link rel="cite-as" href="https://jasonobawemimo.com/" />
 <link rel="me" href="https://github.com/whoisjaso" />
+<link rel="me" href="https://www.linkedin.com/in/obawemimo" />
 <link rel="me" href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/" />
 <link rel="author" href="/humans.txt" />
 <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
@@ -56,138 +57,148 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="resume-pdf.css" />
+<style>
+  /* One column, in the resume's own order: Summary, Education, Experience, Selected Implementations, Skills. */
+  .content-grid { grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 0.18in; }
+  .side-column { border-left: 0; padding-left: 0; margin-top: 0.18in; }
+  .section + .section { margin-top: 0.18in; }
+  .education article + article { margin-top: 0.06in; padding-top: 0.06in; }
+  .experience-item + .experience-item { margin-top: 0.09in; padding-top: 0.09in; }
+  .resume-header { grid-template-columns: minmax(0, 1fr) 2.6in; align-items: end; }
+  .contact { gap: 0.045in; }
+  .role { margin: 0.1in 0 0; font-size: 10pt; color: var(--accent); font-weight: 600; letter-spacing: 0.03em; }
+  .section .summary { max-width: none; margin: 0; color: var(--ink); font-size: 10pt; line-height: 1.48; }
+  .edu-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.24in; align-items: baseline; }
+  .edu-row .date { line-height: 1.5; }
+  .education p { font-size: 8.8pt; }
+  .education span { font-size: 7.6pt; }
+  li { font-size: 9.2pt; line-height: 1.38; }
+  .impl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.02in 0.14in; margin-bottom: 0.05in; }
+  .impl-head p { margin: 0; color: var(--ink-soft); font-size: 8.4pt; font-weight: 700; }
+  .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.07in 0.36in; }
+  .skills-grid p { margin: 0; color: var(--ink-soft); font-size: 9pt; line-height: 1.4; }
+  .skills-grid strong { color: var(--ink); font-weight: 800; }
+</style>
 </head>
 <body>
   <main class="page" aria-label="Jason Obawemimo resume">
     <header class="resume-header">
       <div>
         <h1>Jason Obawemimo</h1>
-        <p class="role">AI Engineer. Business Systems and Sales Intelligence.</p>
-        <p class="summary">
-          AI engineer and business operator who has built dealership and rental software through
-          AI-assisted development. Work starts with a process audit: understand the business, find
-          the bottlenecks, and design the system. Now developing Obavia, a sale desk for Texas independent dealers.
-        </p>
+        <p class="role">AI Implementation | Workflow Automation | CRM Systems</p>
       </div>
       <aside class="contact" aria-label="Contact details">
+        <span>Pearland, TX</span>
         <a href="mailto:jobawems@gmail.com">jobawems@gmail.com</a>
         <a href="https://jasonobawemimo.com">jasonobawemimo.com</a>
-        <a href="https://www.linkedin.com/in/jason-obawemimo-51a76120a/">LinkedIn</a>
-        <span>Pearland, TX</span>
+        <a href="https://www.linkedin.com/in/obawemimo">linkedin.com/in/obawemimo</a>
       </aside>
     </header>
 
-    <section class="band" aria-label="At a glance">
-      <div>
-        <span class="band-label">Running</span>
-        <strong>Obavia, Triple J Auto</strong>
-      </div>
-      <div>
-        <span class="band-label">Builds with</span>
-        <strong>Claude, Codex, MCP, Supabase</strong>
-      </div>
-      <div>
-        <span class="band-label">Proof</span>
-        <strong>Every claim has a page behind it</strong>
-      </div>
-    </section>
-
     <div class="content-grid">
-      <section class="main-column" aria-label="Experience and education">
+      <section class="main-column" aria-label="Summary, education, experience and selected implementations">
         <section class="section">
-          <h2>Experience</h2>
-
-          <article class="experience-item">
-            <div class="experience-head">
-              <div>
-                <h3>Founder</h3>
-                <p>Obavia (obavia.co). Business Systems and Sales Intelligence</p>
-              </div>
-              <span class="date">Sep 2024 - Present</span>
-            </div>
-            <ul>
-              <li>Audit existing processes to understand where work gets delayed, information gets lost, or staff repeat tasks that AI could help handle.</li>
-              <li>Turn those findings into workflow requirements and operating procedures. Built AI-assisted workflows for customer intake, qualification, follow-up, and CRM and data handoffs.</li>
-              <li>In development: Obavia, the sale desk I built at Triple J, as a product for Texas independent dealers.</li>
-              <li>Design how the system identifies meaningful word choices, stated interests, and motivations in sales conversations, then gives reps relevant context for what to say or ask next.</li>
-              <li>Define coaching and reporting around each sales stage and revenue per lead, so managers can see where opportunities stall and where reps need support.</li>
-            </ul>
-          </article>
-
-          <article class="experience-item">
-            <div class="experience-head">
-              <div>
-                <h3>Co-Owner and Operator</h3>
-                <p>Triple J Auto Investment and Rental Operations (thetriplejauto.com)</p>
-              </div>
-              <span class="date">Aug 2024 - Present</span>
-            </div>
-            <ul>
-              <li>Built software for the dealership and a former rental operation by defining business requirements and directing AI-assisted development.</li>
-              <li>Run daily dealership operations, including customer intake, vehicle pricing, inventory, scheduling, and vendor coordination.</li>
-              <li>Write intake scripts and procedures that carry customer information through sales follow-up and title and registration support.</li>
-              <li>Negotiate vehicle prices and financing options, balancing customer needs with the margin on each sale.</li>
-            </ul>
-          </article>
+          <h2>Summary</h2>
+          <p class="summary">
+            I own and operate a Houston dealership and ship the CRM, voice AI, and automation systems that run it.
+            I have personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while
+            building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.
+          </p>
         </section>
 
         <section class="section education">
           <h2>Education</h2>
           <article>
-            <h3>Associate of Arts, Business</h3>
-            <p>San Jacinto College, Houston, TX</p>
-            <span>Graduated May 2026 | GPA 3.63 | Dean&apos;s Honor List</span>
-            <a href="https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf">View degree PDF</a>
+            <div class="edu-row">
+              <div>
+                <h3>The University of Texas at Austin</h3>
+                <p>Bachelor of Science, Neuroscience</p>
+              </div>
+              <div class="date">Austin, TX<br />Expected 2028</div>
+            </div>
+          </article>
+          <article>
+            <div class="edu-row">
+              <div>
+                <h3>San Jacinto College</h3>
+                <p>Associate of Arts, Business</p>
+                <span>GPA 3.63 | Dean&apos;s Honor List</span>
+              </div>
+              <div class="date">Houston, TX<br />May 2026</div>
+            </div>
+          </article>
+          <article>
+            <div class="edu-row">
+              <div>
+                <h3>Google AI Essentials, Google (Coursera)</h3>
+              </div>
+              <div class="date">2026</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="section">
+          <h2>Experience</h2>
+          <article class="experience-item">
+            <div class="experience-head">
+              <div>
+                <h3>Owner and Operations Lead</h3>
+                <p>Triple J Auto Investment and Rental Operations (thetriplejauto.com)</p>
+              </div>
+              <span class="date">Houston, TX<br />Aug 2024 to Present</span>
+            </div>
+            <ul>
+              <li>Manage dealership operations across pricing, inventory, vendors, logistics, financing, and title processing; personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="section">
+          <h2>Selected Implementations: Triple J Auto</h2>
+          <article class="experience-item">
+            <div class="impl-head">
+              <h3>Custom Dealership CRM</h3>
+              <p>TypeScript, React/Next.js, SQL (PostgreSQL), Supabase, Vercel, Edge Functions</p>
+            </div>
+            <ul>
+              <li>Designed the lead-to-title data model, roles, and validation; tested Supabase RLS policies to prevent unauthorized role access; added validation that prevents invalid deal and inventory records from being written.</li>
+              <li>Executed production schema migrations while preserving existing records and operational tables; shipped the app on Vercel with Edge Functions for voice and texting webhooks.</li>
+              <li>Used daily by three staff across inventory, deals, and follow-up.</li>
+            </ul>
+          </article>
+          <article class="experience-item">
+            <div class="impl-head">
+              <h3>Voice AI Inbound</h3>
+              <p>Retell AI, Bland AI, Twilio, CRM webhooks</p>
+            </div>
+            <ul>
+              <li>Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.</li>
+              <li>Across August to September 2026, averaged 41 inbound calls, 14 booked appointments, and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).</li>
+            </ul>
+          </article>
+          <article class="experience-item">
+            <div class="impl-head">
+              <h3>Prospecting Workflow Automation</h3>
+              <p>Python, Claude API, n8n, CRM webhooks</p>
+            </div>
+            <ul>
+              <li>Built a Python workflow using the Claude API to research Facebook Marketplace leads, write findings to the CRM, and generate SOP-based reply text for automatic follow-up.</li>
+            </ul>
           </article>
         </section>
       </section>
 
-      <aside class="side-column" aria-label="Core skills, tools, and AI training">
+      <aside class="side-column" aria-label="Skills">
         <section class="section">
-          <h2>Core Skills</h2>
-          <div class="skill-group">
-            <h3>AI and automation</h3>
-            <ul>
-              <li>AI-assisted development</li>
-              <li>Prompt engineering</li>
-              <li>Workflow automation</li>
-              <li>Conversation-intelligence design</li>
-              <li>Human review checkpoints</li>
-            </ul>
+          <h2>Skills</h2>
+          <div class="skills-grid">
+            <p><strong>Languages:</strong> TypeScript, JavaScript, Python, SQL</p>
+            <p><strong>Web and data:</strong> React, Next.js, PostgreSQL, Supabase, Vercel</p>
+            <p><strong>Backend:</strong> Edge Functions, REST APIs, RLS, webhook services</p>
+            <p><strong>Automation:</strong> n8n, API integrations, Retell AI, Bland AI, Twilio</p>
+            <p><strong>AI development:</strong> Claude Code, Claude API, Codex</p>
+            <p><strong>Operations:</strong> Dealership operations, sales pipelines, inventory and vendor management</p>
           </div>
-          <div class="skill-group">
-            <h3>Business systems</h3>
-            <ul>
-              <li>Process audits</li>
-              <li>Requirements gathering</li>
-              <li>Process mapping</li>
-              <li>CRM and data handoffs</li>
-              <li>Standard operating procedures</li>
-              <li>Sales negotiation</li>
-            </ul>
-          </div>
-        </section>
-
-        <section class="section">
-          <h2>Tools</h2>
-          <div class="tool-list">
-            <span>Claude</span>
-            <span>Claude Code</span>
-            <span>OpenAI Codex</span>
-            <span>MCP</span>
-            <span>Supabase</span>
-            <span>PostgreSQL</span>
-            <span>Vercel</span>
-          </div>
-        </section>
-
-        <section class="section certification">
-          <h2>AI Training</h2>
-          <article>
-            <h3>Anthropic Course Portfolio</h3>
-            <p>19 completed courses: Claude, Claude Code, Claude API, MCP, agent skills, subagents, Amazon Bedrock, Google Cloud Vertex AI, and AI fluency.</p>
-            <a href="https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf">View certificate PDF</a>
-          </article>
         </section>
       </aside>
     </div>

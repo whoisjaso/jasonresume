@@ -1,5 +1,5 @@
-// One completion call over the free-model chain shared by the guide, the
-// partner desk and the hiring desk. Providers are tried in order until one
+// One completion call over the free-model chain shared by the guide and the
+// Obavia early-access desk (api/lead.js). Providers are tried in order until one
 // answers. Keys live in the Vercel project (see CONFIG.md):
 //   OPENROUTER_API_KEY, GROQ_API_KEY, GEMINI_API_KEY, optional ANTHROPIC_API_KEY.
 
@@ -11,6 +11,17 @@ export const OPENROUTER_MODELS = [
   "google/gemma-4-31b-it:free",
   "openrouter/free"
 ];
+
+// The site never shows an em dash, an en dash or a percent sign, and models
+// ignore the prompt rule often enough that every reply a visitor or a dealer
+// reads goes through this first.
+export function scrubCopy(text) {
+  return String(text || "")
+    .replace(/(\d)[ \t]*[\u2012-\u2015][ \t]*(\d)/g, "$1 to $2")
+    .replace(/[ \t]*[\u2012-\u2015][ \t]*/g, ", ")
+    .replace(/(\d)[ \t]*%/g, "$1 percent")
+    .replace(/[ \t]?%/g, " percent");
+}
 
 export async function withTimeout(promise, ms) {
   let t;

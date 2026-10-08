@@ -123,7 +123,7 @@
     },
     {
       "question": "What will Obavia never claim?",
-      "answer": "While it is in development, Obavia does not claim to be live, to have customers, or to produce results, and it states no conversion rate, percentage, or outcome as fact. Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in Obavia's demos and films are fictional. Jason Obawemimo set that boundary himself.",
+      "answer": "While it is in development, Obavia does not claim to be live, to have customers, or to produce results, and it states no conversion rate, percentage, or outcome as fact. Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in Obavia's demos and films are fictional.",
       "primary_source": "https://jasonobawemimo.com/obavia.html"
     },
     {
@@ -167,13 +167,13 @@
       "primary_source": "https://jasonobawemimo.com/"
     },
     {
-      "question": "Did Jason Obawemimo found other companies?",
-      "answer": "Obavia was previously called Apohenia (2024, apohenia.com), a Texas deal-paperwork project that built Deal Packet Checker. It is not affiliated with TxDMV, webDEALER, or any county office.",
-      "primary_source": "https://jasonobawemimo.com/jason-obawemimo.html"
+      "question": "What was Obavia called before?",
+      "answer": "Apohenia is Obavia's earlier name.",
+      "primary_source": "https://jasonobawemimo.com/llms.txt"
     },
     {
       "question": "What is jasonobawemimo.com?",
-      "answer": "jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: on a first visit it asks why you are here and plays a short cut made for you, then lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim.",
+      "answer": "jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Obavia and Triple J Auto Investment profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: it lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim.",
       "primary_source": "https://jasonobawemimo.com/"
     }
   ],

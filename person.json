@@ -15,34 +15,52 @@
     "contentUrl": "https://jasonobawemimo.com/assets/jason-headshot.png",
     "caption": "Portrait of Jason Obawemimo in a deep green suit"
   },
-  "jobTitle": "Founder, Obavia",
+  "jobTitle": "AI Implementation, Workflow Automation and CRM Systems",
   "hasOccupation": {
     "@type": "Occupation",
-    "@id": "https://jasonobawemimo.com/#occupation-web-design-workflow-systems-builder",
-    "name": "Founder and Operator",
+    "@id": "https://jasonobawemimo.com/#occupation-ai-implementation-workflow-automation-crm-systems",
+    "name": "AI Implementation, Workflow Automation and CRM Systems",
     "alternateName": [
-      "Founder, Obavia",
-      "Co-owner and Operator, Triple J Auto Investment"
+      "Owner and Operations Lead, Triple J Auto Investment",
+      "Founder, Obavia"
     ],
-    "description": "Founds and runs businesses by building the systems underneath them: a dealership sale desk (Obavia, in development), the sale desk Triple J Auto Investment closes sales on, workflow systems, CRM and database handoffs, SOPs, and practical AI-assisted operations.",
+    "description": "Owns and operates a Houston dealership and builds the systems that run it: a custom dealership CRM with its Handle a Sale desk (one system), an inbound voice AI that books appointments into the CRM, and a prospecting workflow that researches leads with the Claude API and writes findings to the CRM. Also founded Obavia, a dealership sale desk in development for Texas independent dealers.",
     "occupationLocation": {
       "@type": "Country",
       "name": "United States"
     },
     "skills": [
-      "Dealership sale desk software",
-      "Dealership sale desks",
-      "Conversation psychology",
-      "Workflow systems",
-      "AI-assisted operations",
-      "Supabase",
+      "AI implementation",
+      "Workflow automation",
+      "CRM systems",
+      "TypeScript",
+      "JavaScript",
+      "Python",
+      "SQL",
+      "React",
+      "Next.js",
       "PostgreSQL",
+      "Supabase",
       "Vercel",
-      "Model Context Protocol"
+      "Edge Functions",
+      "REST APIs",
+      "Row-level security (RLS)",
+      "Webhook services",
+      "n8n",
+      "API integrations",
+      "Retell AI",
+      "Bland AI",
+      "Twilio",
+      "Claude Code",
+      "Claude API",
+      "Codex",
+      "Dealership operations",
+      "Sales pipelines",
+      "Inventory and vendor management"
     ]
   },
-  "description": "Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
-  "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), a sale desk he is building for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+  "description": "Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.",
+  "disambiguatingDescription": "Pearland, Texas owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia (spelled O-B-A-V-I-A), a dealership sale desk in development for Texas independent dealers. Obawemimo is his family name.",
   "knowsLanguage": [
     "English"
   ],
@@ -57,40 +75,89 @@
     }
   },
   "knowsAbout": [
-    "Dealership sale desk software",
+    "AI implementation",
+    "Workflow automation",
+    "CRM systems",
+    "Dealership CRM",
+    "Voice AI",
     "Dealership sale desks",
-    "Conversation psychology and active listening",
-    "Lead to cash workflows",
+    "Lead to title workflows",
+    "Dealership operations",
     "Used vehicle dealership operations",
-    "Workflow systems",
-    "AI-assisted operations",
-    "Model Context Protocol",
+    "Sales pipelines",
+    "Inventory and vendor management",
+    "TypeScript",
+    "JavaScript",
+    "Python",
+    "SQL",
+    "React",
+    "Next.js",
+    "PostgreSQL",
+    "Supabase",
+    "Vercel",
+    "Edge Functions",
+    "REST APIs",
+    "Row-level security (RLS)",
+    "Webhook services",
+    "n8n",
+    "API integrations",
+    "Retell AI",
+    "Bland AI",
+    "Twilio",
     "Claude",
     "Claude Code",
-    "OpenAI Codex",
-    "Supabase",
-    "PostgreSQL",
-    "Vercel",
-    "CRM and database handoffs",
-    "Business operations",
+    "Claude API",
+    "Codex",
+    "Model Context Protocol",
     "SOP documentation"
   ],
   "award": [
-    "Dean's Honor List - San Jacinto College",
-    "GPA 3.63 - Associate of Arts in Business"
+    "Dean's Honor List, San Jacinto College",
+    "GPA 3.63, Associate of Arts in Business"
   ],
-  "alumniOf": {
-    "@type": "EducationalOrganization",
-    "name": "San Jacinto College",
-    "url": "https://www.sanjac.edu/"
-  },
+  "alumniOf": [
+    {
+      "@type": "CollegeOrUniversity",
+      "name": "The University of Texas at Austin",
+      "url": "https://www.utexas.edu/"
+    },
+    {
+      "@type": "EducationalOrganization",
+      "name": "San Jacinto College",
+      "url": "https://www.sanjac.edu/"
+    }
+  ],
   "hasCredential": [
     {
       "@type": "EducationalOccupationalCredential",
-      "name": "Associate of Arts - Business",
+      "name": "Bachelor of Science in Neuroscience, expected 2028",
+      "credentialCategory": "degree",
+      "educationalLevel": "Bachelor's degree",
+      "creativeWorkStatus": "In progress",
+      "recognizedBy": {
+        "@type": "CollegeOrUniversity",
+        "name": "The University of Texas at Austin",
+        "url": "https://www.utexas.edu/"
+      },
+      "description": "Bachelor of Science in Neuroscience at The University of Texas at Austin, in progress, expected 2028. Not yet conferred."
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "name": "Associate of Arts in Business",
       "credentialCategory": "degree",
       "educationalLevel": "Associate degree",
       "url": "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf"
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "name": "Google AI Essentials",
+      "credentialCategory": "certificate",
+      "recognizedBy": {
+        "@type": "Organization",
+        "name": "Google",
+        "url": "https://www.google.com/"
+      },
+      "dateCreated": "2026"
     },
     {
       "@type": "EducationalOccupationalCredential",
@@ -105,6 +172,7 @@
     "https://github.com/whoisjaso",
     "https://whoisjaso.github.io/whoisjaso/",
     "https://github.com/whoisjaso/jasonresume",
+    "https://www.linkedin.com/in/obawemimo",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "https://thetriplejauto.com/",
     "https://www.instagram.com/0bawemimo/"
@@ -149,19 +217,19 @@
     "https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf",
     "https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf"
   ],
-  "dateModified": "2026-09-25",
+  "dateModified": "2026-10-08",
   "worksFor": [
-    {
-      "@type": "Organization",
-      "@id": "https://jasonobawemimo.com/#obavia",
-      "name": "Obavia",
-      "url": "https://obavia.co"
-    },
     {
       "@type": "AutoDealer",
       "@id": "https://jasonobawemimo.com/#triple-j-auto",
       "name": "Triple J Auto Investment",
       "url": "https://thetriplejauto.com/"
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://jasonobawemimo.com/#obavia",
+      "name": "Obavia",
+      "url": "https://obavia.co"
     }
   ]
 }

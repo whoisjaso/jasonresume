@@ -556,7 +556,16 @@
       ]
     },
     {
-      "source": "/(HANDOFF|RESEARCH|OUTREACH|CONFIG|CLAUDE|PRODUCT|README)\\.md",
+      "source": "/scripts/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(HANDOFF|RESEARCH|OUTREACH|CONFIG|CLAUDE|PRODUCT|README|SPEC|DESIGN|PUBLISH_NOW)\\.md",
       "headers": [
         {
           "key": "X-Robots-Tag",

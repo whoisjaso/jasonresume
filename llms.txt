@@ -73,9 +73,7 @@ Film: the Obavia film (42 seconds, https://jasonobawemimo.com/assets/film/obavia
 
 Obavia is spelled O-B-A-V-I-A. It is Jason's company; Obawemimo is his family name.
 
-### Earlier project
-
-Obavia was previously called Apohenia (2024, apohenia.com), a Texas deal-paperwork project that built Deal Packet Checker. It is not affiliated with TxDMV, webDEALER, or any county office.
+Apohenia is Obavia's earlier name.
 
 ## Resume (October 2026)
 
@@ -108,10 +106,10 @@ Obawemimo is Jason Obawemimo's family name. Obavia (O-B-A-V-I-A) is his company.
 - Who is Obavia for? Texas independent dealers, and anyone on their lot who handles a sale. One question per screen, so anyone on the lot can run it.
 - Is Obavia available? Not yet. Obavia is in development. Texas dealers can ask for early access; asking does not create an account or grant product access. It is not yet live.
 - What does Obavia cost? Pricing for dealers has not been published.
-- What will Obavia never claim? While it is in development, Obavia does not claim to be live, to have customers, or to produce results. It states no conversion rate, percentage, or outcome as fact. Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in its demos and ads are fictional.
+- What will Obavia never claim? While it is in development, Obavia does not claim to be live, to have customers, or to produce results. It states no conversion rate, percentage, or outcome as fact. Text it to sign, Reach (posting cars to Facebook Marketplace from the salesperson's own phone) and dealer websites are in development, not live. People and figures in its demos and films are fictional.
 - How do I book a call with Jason? Book a thirty-minute call at https://calendly.com/jason-apohenia/30min, or email jobawems@gmail.com.
 - Is Jason hiring? Not publicly right now.
-- What is jasonobawemimo.com? jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Triple J Auto Investment and Obavia profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: on a first visit it asks why you are here and plays a short cut made for you, then lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim.
+- What is jasonobawemimo.com? jasonobawemimo.com is the official website of Jason Obawemimo. It holds his resume, the Triple J Auto Investment and Obavia profiles, verified answers, credential proof pages, and machine-readable files such as llms.txt and answers.json. The site itself is the work sample: it lets you run the sale desk Jason built, flip through the resume as a deck, and check every claim.
 
 ## Read This Site As A Film
 
@@ -164,7 +162,7 @@ Nineteen completed Anthropic courses:
 - Dealership operations, sales pipelines, inventory and vendor management
 - Dealership sale desk software (Obavia, in development)
 
-## Obavia, Calls And Hiring
+## Obavia And Calls
 
 - Obavia page: https://jasonobawemimo.com/obavia.html (the old /partners.html redirects there). Company site: https://obavia.co.
 - Book a thirty-minute call with Jason: https://calendly.com/jason-apohenia/30min.
