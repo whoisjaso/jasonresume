@@ -27,17 +27,17 @@ const PULL = `select event, distinct_id, timestamp,
 const POINTS = {
   page_view: 1, section_viewed: 0.5, role_chosen: 2, desk_step: 1, desk_finished: 8, film_play: 4, film_progress: 1, film_complete: 6,
   film_chapter: 1, resume_open: 8, resume_print: 6, deck_slide: 0.5, deck_finished: 6, proof_open: 3, verify_opened: 6, verify_link: 6,
-  chat_asked: 6, mark_words: 3, handoff_pick: 4, leak_stage: 6, counts_done: 4, note_done: 5, card_copied: 6, question_added: 5,
+  chat_asked: 6, mark_words: 3, card_copied: 6, question_added: 5,
   questions_mailed: 15, questions_copied: 8, forward_copied: 10, share_opened: 10, trailer_finished: 3, cta_click: 2, outbound_click: 2,
-  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, apply_sent: 30, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6
+  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6
 };
-const TERMINAL = new Set(["call_booked", "lead_sent", "apply_sent", "questions_mailed"]);
+const TERMINAL = new Set(["call_booked", "lead_sent", "questions_mailed"]);
 const STORY = {
   desk_finished: "ran the desk", film_complete: "watched the whole film", film_play: "played the film", resume_open: "opened the resume",
   deck_finished: "went through the deck", verify_opened: "opened Check me", verify_link: "checked a proof link", chat_asked: "asked a question",
-  leak_stage: "found their leak", handoff_pick: "did the handoff lesson", note_done: "rewrote the note", question_added: "saved questions for a call",
+  question_added: "saved questions for a call",
   questions_mailed: "emailed their questions", forward_copied: "copied the forward blurb", share_opened: "shared the site", contact_click: "clicked email",
-  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", apply_sent: "applied", name_given: "said hello", reel_finished: "watched their cut"
+  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", name_given: "said hello", reel_finished: "watched their cut"
 };
 
 async function hogql(host, id, key, query) {
@@ -54,14 +54,14 @@ async function hogql(host, id, key, query) {
 
 function audience(v) {
   if (v.role) return { interviewer: "Screening", partner: "Dealer", lurker: "Just looking" }[v.role] || v.role;
-    if (v.did.lead_sent || v.did.packet_done || v.did.leak_stage || v.pages.obavia) return "Dealer";
+    if (v.did.lead_sent || v.did.packet_done || v.pages.obavia) return "Dealer";
   if (v.did.resume_open || v.did.deck_slide || v.did.verify_opened || v.did.verify_link) return "Screening";
   return "Just looking";
 }
 
 function build(rows, refCodes) {
   const now = Date.now(), DAY = 864e5;
-  const people = new Map(), sources = {}, attention = {}, questions = [], leaks = {}, drops = { count: 0, names: {} };
+  const people = new Map(), sources = {}, attention = {}, questions = [], drops = { count: 0, names: {} };
   const journeys = { Screening: [0, 0, 0, 0], Dealer: [0, 0, 0, 0] };
   for (const r of rows) {
     if (r.event === "relay_dropped") { drops.count += Number(r.cnt) || 0; String(r.names || "").split(",").filter(Boolean).forEach((n) => { drops.names[n] = (drops.names[n] || 0) + 1; }); continue; }
@@ -87,13 +87,12 @@ function build(rows, refCodes) {
     if (STORY[r.event] && v.moments[v.moments.length - 1] !== STORY[r.event]) v.moments.push(STORY[r.event]);
     if (r.event === "page_left" && r.dwell) String(r.dwell).split(",").forEach((pair) => { const [k, s] = pair.split(":"); if (k) attention[k] = (attention[k] || 0) + (Number(s) || 0); });
     if (r.event === "chat_asked" && r.q) questions.push({ q: r.q, at: r.timestamp });
-    if (r.event === "leak_stage" && r.stage) leaks[r.stage] = (leaks[r.stage] || 0) + 1;
   }
   const list = [...people.values()].map((v) => {
     const score = Math.min(100, Math.round(v.score)), aud = audience(v);
     const tier = v.terminal || score >= 40 ? "Hot" : score >= 15 ? "Warm" : "Cold";
     const j = journeys[aud];
-    if (j) { j[0]++; if (v.did.desk_step || v.did.leak_stage || v.did.note_placed || v.did.reel_finished) j[1]++; if (v.did.resume_open || v.did.verify_opened || v.did.film_play || v.did.handoff_pick) j[2]++; if (v.terminal || v.did.contact_click || v.did.book_click) j[3]++; }
+    if (j) { j[0]++; if (v.did.desk_step || v.did.reel_finished) j[1]++; if (v.did.resume_open || v.did.verify_opened || v.did.film_play) j[2]++; if (v.terminal || v.did.contact_click || v.did.book_click) j[3]++; }
     const place = [v.where ? "in " + v.where : "", v.device ? "on a " + v.device.toLowerCase() : "", v.source && v.source !== "direct" ? "from " + v.source : ""].filter(Boolean).join(" ");
     return { name: v.name, named: v.named, first: v.first, place, who: [v.name || "Someone", place].filter(Boolean).join(" "), audience: aud, tier, score, visits: v.visits, ref: v.ref, story: v.moments.slice(-3), last: v.last };
   });
@@ -110,7 +109,6 @@ function build(rows, refCodes) {
     attention: Object.entries(attention).sort((a, b) => b[1] - a[1]).map(([section, seconds]) => ({ section, seconds })),
     sources: Object.entries(sources).map(([k, s]) => ({ source: k, people: s.size })).sort((a, b) => b.people - a.people).slice(0, 10),
     questions: questions.slice(-20).reverse(),
-    leaks: Object.entries(leaks).map(([stage, n]) => ({ stage, n })).sort((a, b) => b.n - a.n),
     drops
   };
 }

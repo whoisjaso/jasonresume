@@ -34,7 +34,7 @@ Lurkers are the third audience: they get the trailer, the desk to play and the s
 
 ## 4. What is built and live
 
-Production is `main`, deployed by Vercel to jasonobawemimo.com. SPEC.md is the build spec for this version ("The Screening").
+Production is `main`, deployed by Vercel to jasonobawemimo.com. SPEC.md was the build spec for "The Screening" and is superseded: this section and the direction contract at the top of tools/site/home.body.html are current, and SPEC.md marks its agency, hiring and pricing passages as retired.
 
 **The onboarding (intro.js, words in tools/site/onboarding.json, styles in home.css and the ignition skin in dash.css).** The portrait sits inside a tachometer bezel; tapping starts the engine: the needle sweeps, a synthesized starter chugs and catches (Web Audio, no file), and the dash's gauges sweep with it. Every visitor, every arrival, on the home page and /obavia.html; only crawlers and clicks between the site's own pages skip it (assemble_home.py syncs its head script and data into obavia.html). On the Obavia page the dealer's cut ends on early access on that page, and the form takes the name given. A returning visitor who gives the same name gets "Welcome back", and a deep link (#present, #verify, #story-, ?cut=) opens once it ends instead of the trailer. The portrait under live water with a gold ring that fills as the page loads, your name rising in masks, then "Tap anywhere to begin". The tap splashes and sends a gold shockwave; the portrait shrinks to an avatar over "What brings you here?" with three rows (I'm hiring, I run a dealership, Just looking; keys 1 to 3); then "And your name?" with Continue and Skip side by side; then a title card ("Okay, Dana.") and the reel.
 

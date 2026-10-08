@@ -110,7 +110,9 @@ for (const file of crawlableTextFiles) {
     if (body.includes(marker)) throw new Error(`${file} contains mojibake marker ${marker}`);
   }
 }
-const retiredWording = [/\bco-own/i, /expected 2027/i, /Web Design and Workflow Systems Builder/i, /Process audit first/i, /agency owners at \$100K/i];
+const retiredWording = [/\bco-own/i, /expected 2027/i, /Web Design and Workflow Systems Builder/i, /Process audit first/i, /agency owners at \$100K/i, /AI Engineer, Business Systems and Sales Intelligence/i, /directing AI-assisted development/i, /summarized primarily as a voice-agent/i, /\bsetters?\b|\bclosers?\b/i, /Deal Packet Checker/i];
+// Apohenia is Obavia's earlier name: one line in the answers layer, nowhere else. The Calendly URL (jason-apohenia) is not a mention.
+const apoheniaAllowed = new Set(['answers.json', '.well-known/ai-answers.json', 'llms.txt', 'llms-full.txt']);
 const phoneMarkers = [/\btel:/i, /"telephone"/i, /^TEL[;:]/im];
 for (const file of crawlableTextFiles) {
   const body = fs.readFileSync(file, 'utf8');
@@ -120,6 +122,9 @@ for (const file of crawlableTextFiles) {
   for (const pattern of phoneMarkers) {
     if (pattern.test(body)) throw new Error(`${file} carries a phone field ${pattern}; no phone number is ever published`);
   }
+  const apohenia = body.replace(/calendly\.com\/jason-apohenia/gi, '').match(/apohenia/gi) || [];
+  if (apohenia.length && !apoheniaAllowed.has(file)) throw new Error(`${file} mentions Apohenia outside the answers layer`);
+  if (apohenia.length > 1) throw new Error(`${file} mentions Apohenia more than once; the answers layer carries one line`);
 }
 const schema = JSON.parse(fs.readFileSync('schema.json', 'utf8'));
 const profile = JSON.parse(fs.readFileSync('profile.jsonld', 'utf8'));

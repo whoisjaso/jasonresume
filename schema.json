@@ -86,8 +86,6 @@
       "speakable": {
         "@type": "SpeakableSpecification",
         "cssSelector": [
-          ".slate__name",
-          ".slate__line",
           ".slate__rows",
           ".entry__text"
         ]
@@ -610,7 +608,7 @@
       "@id": "https://jasonobawemimo.com/resume-pdf.html#webpage",
       "url": "https://jasonobawemimo.com/resume-pdf.html",
       "name": "Jason Obawemimo Resume",
-      "description": "Resume page for Jason Obawemimo, AI Implementation, Workflow Automation and CRM Systems: owner and operations lead of Triple J Auto Investment and founder of Obavia.",
+      "description": "Resume page for Jason Obawemimo, AI Implementation, Workflow Automation and CRM Systems: Owner and Operations Lead of Triple J Auto Investment in Houston, with the CRM, voice AI and automation systems he built there.",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
       },

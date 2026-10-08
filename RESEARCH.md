@@ -12,7 +12,7 @@ The brief for this desk: first-hand accounts, not studies. People talking about 
 
 **Ghosting is the baseline, so a person who communicates stands out.** r/recruitinghell's top thread of the month is five rounds, ten people, thirteen days of silence. The recurring complaint is not rejection, it is silence. A reply with 35 upvotes: "I ALWAYS respond to people even if I'll never see them again."
 
-**Bait-and-switch is remembered forever.** r/recruitinghell, 6,531 upvotes: a candidate demoted during the interview. "They want a senior level performer at a bargain price." The lesson for a hiring page: state the role and the pay structure before the call.
+**Bait-and-switch is remembered forever.** r/recruitinghell, 6,531 upvotes: a candidate demoted during the interview. "They want a senior level performer at a bargain price."
 
 Pushback worth keeping: nurses, interpreters and forklift drivers in that same thread say "what statistics am I supposed to use?" Numbers only when they are real. A resume with no number beats one with a made-up one.
 
@@ -58,7 +58,9 @@ Reddit had nothing usable this month. Web sources in the window (a growth blog, 
 
 Decision: keep second person for the reader's situation and the offer, first person for what Jason did and saw, no third person anywhere on the site. The resume is the one place that reads in implied first person without pronouns, which is the convention screeners expect.
 
-## 6. What setters and closers respond to
+## 6. What setters and closers respond to (retired)
+
+Retired 2026-10: the agency product, setters, closers, the partner page and the hiring page are gone. This section is kept as research history only; nothing on the site acts on it.
 
 From r/sales this month, two threads with real replies.
 
@@ -72,8 +74,7 @@ Decision for the hiring page: say what the product is, say where the appointment
 
 ## What we changed because of this
 
-- The partner page is one video, one calendar, one paragraph. The video is Jason's own voice, cloned from his recording, saying what the checker does and does not do.
-- The hiring page states the role, the source of leads, and the pay structure before it asks for anything.
+- Retired 2026-10, kept for history: the partner page (one video, one calendar, one paragraph) and the hiring page (the role, the source of leads, the pay structure). Both are gone, along with the agency product, setters and closers.
 - The resume passes the ten-second test: the first line says what Jason does. Numbers appear only where they are real.
 - Choices in the guide now fire touch, sound and ink within the same frame. Skips and cancels fire nothing.
 - No gradients on text, no glassmorphism, no three-card rows, no emoji icons, no em dashes anywhere on the site. The fonts are Cormorant Garamond and Hanken Grotesk, not Inter.

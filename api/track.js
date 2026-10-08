@@ -14,7 +14,7 @@ const ALLOWED = new Set([
   // the resume and proof
   "resume_open", "resume_print", "deck_slide", "deck_finished", "proof_open", "verify_opened", "verify_link", "chat_asked",
   // games and lessons
-  "mark_words", "handoff_pick", "leak_stage", "counts_done", "note_placed", "note_done", "card_copied",
+  "mark_words", "card_copied",
   // questions, forwards, extras
   "question_added", "questions_copied", "questions_mailed", "forward_copied", "share_opened", "rig_toggled", "cues_toggled",
   "trailer_opened", "trailer_shot", "trailer_finished", "water_touched", "copy_clicked",
@@ -27,7 +27,7 @@ const ALLOWED = new Set([
   // the library: titles, trophies, screens, the platinum
   "trophy_unlocked", "trophies_opened", "screen_opened", "level_clear",
   // conversion
-  "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent", "apply_sent",
+  "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent",
   // older pages still in the wild
   "guide_line", "guide_skipped", "guide_finished", "guide_reopened",
   "chat_asked", "intake_step", "intake_sent", "laptop_played", "vsl_play", "vsl_complete"

@@ -22,7 +22,7 @@ export const RecordReel: React.FC = () => {
       <AbsoluteFill style={{ alignItems: "center", paddingTop: 70 }}>
         <Words text="Jason Obawemimo" start={6} size={70} />
         <div style={{ height: 14 }} />
-        <Rise start={20}><div style={{ fontFamily: sans, fontWeight: 500, fontSize: 30, color: C.dim }}>AI engineer and business operator.</div></Rise>
+        <Rise start={20}><div style={{ fontFamily: sans, fontWeight: 500, fontSize: 30, color: C.dim }}>AI Implementation, Workflow Automation and CRM Systems.</div></Rise>
       </AbsoluteFill>
       <div style={{ position: "absolute", left: 110, top: 250, transform: `scale(${b})` }}>
         <Gauge size={420} min={0} max={20} value={courses} major={5} minor={1} label="Courses" readout={String(Math.round(courses))} />
@@ -215,7 +215,7 @@ export const OgHome: React.FC = () => {
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", paddingBottom: 30 }}>
         <div style={{ fontFamily: sans, fontWeight: 800, fontSize: 58, letterSpacing: "-0.03em", color: C.text, textAlign: "center", lineHeight: 1.02 }}>Jason<br />Obawemimo</div>
         <div style={{ height: 18 }} />
-        <div style={{ fontFamily: sans, fontWeight: 600, fontSize: 22, color: C.dim, textAlign: "center", lineHeight: 1.35 }}>AI engineer and<br />business operator</div>
+        <div style={{ fontFamily: sans, fontWeight: 600, fontSize: 22, color: C.dim, textAlign: "center", lineHeight: 1.35 }}>AI Implementation,<br />Workflow Automation<br />and CRM Systems</div>
         <div style={{ height: 26 }} />
         <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 18, color: C.needle }}>jasonobawemimo.com</div>
       </AbsoluteFill>

@@ -57,7 +57,7 @@ Jason Obawemimo designs, builds and runs:
 
 ### Triple J Auto Investment
 
-Triple J Auto Investment (https://thetriplejauto.com/) is a Houston, Texas used vehicle dealership at 8774 Almeda Genoa Rd, owned and operated by Jason Obawemimo. It is open Monday to Saturday, 9 to 7. It sells cars, trucks and SUVs with in-house financing, sell and trade valuations, and registration and title support, under the promise "Clear vehicles. Clear terms. Real people."
+Triple J Auto Investment (https://thetriplejauto.com/) is a Houston, Texas used vehicle dealership at 8774 Almeda Genoa Rd, Houston, TX 77075, owned and operated by Jason Obawemimo. It is open Monday to Saturday, 9 to 7. It sells cars, trucks and SUVs with in-house financing, sell and trade valuations, and registration and title support, under the promise "Clear vehicles. Clear terms. Real people."
 
 Jason has been Owner and Operations Lead of Triple J Auto Investment and Rental Operations since August 2024. He manages dealership operations across pricing, inventory, vendors, logistics, financing and title processing. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds.
 
@@ -84,7 +84,7 @@ Stack: Python, Claude API, n8n, CRM webhooks. A Python workflow uses the Claude 
 
 Obavia (https://obavia.co) is the company Jason Obawemimo founded in September 2024. Its product carries the same name: a dealership sale desk in development for Texas independent dealers. Tagline: "Every sale, start to signed."
 
-Obavia takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. One question per screen, so anyone on the lot can run it. It handles cash, buy here pay here and bank financing; works out Texas sales tax, title, registration and the dealer's doc fee on every deal; fills the bill of sale and the Title Application (Form 130-U) from the deal; gives rebuilt and salvage titles their own disclosures; and prints forms that need ink for ink.
+Obavia takes a sale from the car to the last signature: pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. One question per screen, so anyone on the lot can run it. It handles cash, buy here pay here and bank financing; works out Texas sales tax, title, registration and the dealer's doc fee on every deal; fills the bill of sale and the Title Application (Form 130-U) from the deal; gives rebuilt and salvage titles their own disclosures; and prints forms that need ink for ink. Setting up, a dealer finds their dealership by name. In a sale the odometer is entered once and every document reads it.
 
 It grew out of Handle a Sale, the sale desk in the CRM Jason built for Triple J Auto Investment in Houston, and it is being built on that dealership's floor. Short paperwork lessons made at Triple J (the 130-U seller line, the title packet in order, the webDEALER order) are free to watch.
 
@@ -107,7 +107,7 @@ Title: AI Implementation, Workflow Automation and CRM Systems. Resume summary, i
 - Education: The University of Texas at Austin, Bachelor of Science in Neuroscience, expected 2028. San Jacinto College, Houston, Associate of Arts in Business, May 2026, GPA 3.63, Dean's Honor List.
 - Credential: Google AI Essentials, Google (Coursera), 2026.
 - Skills. Languages: TypeScript, JavaScript, Python, SQL. Web and data: React, Next.js, PostgreSQL, Supabase, Vercel. Backend: Edge Functions, REST APIs, RLS, webhook services. Automation: n8n, API integrations, Retell AI, Bland AI, Twilio. AI development: Claude Code, Claude API, Codex. Operations: dealership operations, sales pipelines, inventory and vendor management.
-- Also: founder of Obavia (obavia.co), September 2024 to present, a dealership sale desk in development for Texas independent dealers.
+- Not on the one-page resume: Jason also founded Obavia (obavia.co) in September 2024, a dealership sale desk in development for Texas independent dealers (see the Obavia section above).
 - One-page PDF: https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf
 
 ## The Name
@@ -197,7 +197,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 ## Obavia And Calls
 
 - Obavia page: https://jasonobawemimo.com/obavia.html (the old /partners.html redirects there). Company site: https://obavia.co.
-- Book a thirty-minute call with Jason: https://calendly.com/jason-apohenia/30min.
+- Book a thirty-minute call with Jason, Central time: https://calendly.com/jason-apohenia/30min.
 - Jason's Instagram is https://www.instagram.com/0bawemimo/ (the handle is his surname with a zero in place of the first letter).
 
 ## Important URLs
@@ -261,6 +261,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - City of Pearland public record: https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland
 - Reporter News Pearland PDF: https://myreporternews.com/wp-content/uploads/2023/08/Pearland-September-14-2022.pdf
 - Reporter News Friendswood PDF: https://myreporternews.com/wp-content/uploads/2023/08/Friendswood-September-14-2022.pdf
+- The City of Pearland record and the Reporter News Pearland and Friendswood PDFs (September 14, 2022 editions) list Jason Obawemimo under the Pearland High School National African American Recognition Award in a Pearland ISD scholars announcement.
 - These are secondary public mentions, not replacements for the official website or credential PDFs.
 - GitHub profile README corroboration: https://github.com/whoisjaso/whoisjaso
 - GitHub Pages profile mirror corroboration: https://whoisjaso.github.io/whoisjaso/

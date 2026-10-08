@@ -25,7 +25,7 @@ Source: https://mixkit.co/free-sound-effects/ . License: https://mixkit.co/licen
 
 ## Processing
 
-ffmpeg trims to the hit, a high-pass to keep the low end clean, a 4 ms fade in, a short fade out, peak normalized to -3 dBFS. Short hits are 16-bit mono WAV at 32 kHz so they start on the sample with no codec padding; tails are mono MP3 at 96 kbps. Playback gain per sound is set in `sounds.js`, and every play varies pitch by a few percent so repeats do not sound like a machine.
+ffmpeg trims to the hit, a high-pass to keep the low end clean, a 4 ms fade in, a short fade out, peak normalized to -3 dBFS. Short hits are 16-bit mono WAV at 32 kHz so they start on the sample with no codec padding; tails are mono MP3 at 96 kbps. Playback gain per sound is set in `sounds.js`, and every play varies the pitch slightly so repeats do not sound like a machine.
 
 ## Not used
 

@@ -11,7 +11,7 @@ You're screening me, so the site is a screening room. The first frame is the ver
 ## Audience goals
 
 - **Interviewer.** Knows who I am and what to do next within ten seconds with no interaction. Resume, PDF, proof and email one tap from every frame at every width. Can operate a real system of mine in under a minute. Can verify every claim in one tap.
-- **Agency owner.** Gets something useful in under two minutes even if they never buy: a handoff card, their first leak and a Monday fix, the rule that only verified cash counts. Obavia is described inside the claims boundary. The calendar sits under the films.
+- **Dealer.** Retired, never current: the agency-owner audience and its lessons (a handoff card, a first leak and a Monday fix, the rule that only verified cash counts). Dealers now get /obavia.html: Obavia inside the claims boundary, the desk to run, and the calendar.
 - **Lurker.** One optional tap starts a sixty-second trailer rolled by holding a button. A water portrait to touch at the end.
 - **Jason.** First-party tracking of every meaningful moment through /api/track, a warmth score, and a one-screen board.
 
@@ -28,18 +28,18 @@ You're screening me, so the site is a screening room. The first frame is the ver
 
 ## Storyboard (home)
 
-1. **The Slate.** Name, one line, four rows (Obavia, Triple J, Pearland, Education), actions Resume (primary), Proof, Talk, Check me, the one-page PDF, and "That's the ten-second version." Real headshot. Cold open: letterbox bars close and open, the name rises out of a line mask, the gold rule draws in ink, the headshot comes up from black. Readable with JavaScript off.
-2. **The cut.** "Want a different cut?" I'm screening you (goes to the desk), I run an agency (goes to /obavia.html), Just looking (opens the trailer). Optional, remembered, deep-linkable with ?cut=. A small line for setters and closers.
+1. **The Slate.** Name, one line, four rows (Triple J, Obavia, Pearland, Education), actions Resume (primary), Proof, Talk, Check me, the one-page PDF, and "That's the ten-second version." Real headshot. Cold open: letterbox bars close and open, the name rises out of a line mask, the gold rule draws in ink, the headshot comes up from black. Readable with JavaScript off.
+2. **The cut.** "Want a different cut?" I'm screening you (goes to the desk), I run a dealership (goes to /obavia.html), Just looking (opens the trailer). Optional, remembered, deep-linkable with ?cut=. (The agency cut and the line for setters and closers are retired, never current.)
 3. **Chrome.** An opaque top bar that hides on scroll down: monogram, Resume, Check me, Talk, Sound, Commentary, menu. On phones a fixed bottom dock with Resume, Check me, Talk. Keyboard shortcuts: R resume deck, V verify, P proof, ? help, backtick rig.
 4. **Title card: Run the desk.**
 5. **Run the desk.** A hands-on sketch of Triple J's Handle a Sale flow with the film's own fictional buyer: how is the buyer paying, who files the title and registration, hold to scan the license (every form fills at once), the registration math with the film's fictional figures, English or Spanish, sign (typed name on the dealer line, never an image of a real signature), on file. Then a hard cut to the reveal: the desk Triple J closes sales on, the public address and hours, the real film.
 6. **The real one.** The 82-second film, play on press, with a chapter row (The old way, Question, Scan, Math, Documents, Language, Sign, On file) and a readable transcript. Short pin on desktop only.
 7. **The record.** The plain resume on the page, every line with a proof chip, "Present it" and "PDF, one page". Generated from tools/site/record.json, which also feeds the deck and resume-pdf.html.
 8. **Presentation mode.** Ten slides in a native dialog: arrow keys, swipe, click halves, number keys, #present/N deep links, print. The resume button's label match-cuts into slide one.
-9. **The one I'm building.** Obavia in three lines, then Mark the Words: tap the words in a fictional buyer's sentence a closer should carry, then Show me reveals my marks and one question built from them. The six stages as a gold thread. Link to the briefing.
+9. **The one I'm building.** Obavia in three lines, then Mark the Words: tap the words that matter in a fictional buyer's sentence, then Show me reveals my marks and one question built from them. The six stages as a gold thread. Link to the briefing.
 10. **Questions worth asking me.** Two questions for the call, each with "Add to my questions". The collected list can be emailed with one tap.
 11. **You're standing in it.** The colophon and the Show the rig switch: live scene clocks, cue ticks, page weight, scripts loaded, and the Cue Sheet listing every analytics event this visit has queued (or "Your browser asked not to be tracked. Nothing is being sent.").
-12. **Your move.** Email first for screeners, 30 minutes on the calendar second, the reverse for agency owners. Setters and closers link.
+12. **Your move.** Email first for screeners, 30 minutes on the calendar second, the reverse for dealers.
 13. **End credits.** A held final card: who made it, the films and their fictional labels, the sound source, the privacy line, the links.
 14. **Post-credits.** "Still here. Touch the water." The real headshot under the water simulation, and the forward kit (copy a two-line blurb, or share this cut).
 
@@ -47,11 +47,11 @@ Overlays: **Check me** (verification drawer with an Ask field grounded in llms.t
 
 ## Obavia briefing (/obavia.html)
 
-Slate with the mark, tagline, one paragraph, "In development". Both films with the fictional label and the calendar directly under them. Three lessons, each under ninety seconds with a silent Skip: The Handoff (pick the closer's first line, keep a four-line handoff card), Where Your Floor Leaks (six yes, not sure, no questions, one per stage, returns the first leak and a Monday fix), Counts Yet? (sort a fictional week's events into counts or not yet). Pricing as a ledger, planned connections in plain text, what I won't claim, waitlist and calendar.
+Slate with the mark, tagline, one paragraph, "In development". Both films with the fictional label and the calendar directly under them. Retired, never current: the three agency lessons (The Handoff, Where Your Floor Leaks, Counts Yet?), the pricing ledger and the waitlist. No price is published and early access is a conversation, not an account; the current Obavia page is described in HANDOFF.md, section 4. Planned connections in plain text, what I won't claim, and the calendar stay.
 
-## Hiring (/join.html)
+## Hiring (/join.html): retired, never current
 
-Slate, Rewrite the Note (place fragments of a fictional call into the four lines a closer needs), the two roles, the application to /api/apply with the mailto fallback. Only verified promises.
+The hiring page, Rewrite the Note, the two roles and the application to /api/apply are gone. /join and /join.html redirect to /obavia.html, and Jason is not hiring publicly.
 
 ## Architecture
 
