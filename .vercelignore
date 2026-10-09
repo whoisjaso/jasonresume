@@ -16,3 +16,6 @@
 /PRODUCT.md
 /tools/
 /.impeccable/
+
+# Working documents, such as the VSL script, stay in the repo only
+/docs/
