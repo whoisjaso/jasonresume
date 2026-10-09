@@ -102,12 +102,12 @@ Apohenia is Obavia's earlier name.
 
 ## Resume (October 2026)
 
-Title: AI Implementation, Workflow Automation and CRM Systems. Resume summary, in Jason's words: "I own and operate a Houston dealership and ship the CRM, voice AI, and automation systems that run it. I have personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up."
+Title: AI Implementation, Workflow Automation and CRM Systems. The resume summary leads with the work rather than the ownership, in Jason's words: "I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve. At a Houston used vehicle dealership I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up."
 
 - Owner and Operations Lead, Triple J Auto Investment and Rental Operations (thetriplejauto.com), Houston, Texas, August 2024 to present. Manages dealership operations across pricing, inventory, vendors, logistics, financing and title processing. Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.
-- Selected implementations at Triple J: the custom dealership CRM (Handle a Sale); Voice AI Inbound; Prospecting Workflow Automation. Each is described above.
+- Under the Triple J job, the resume lists the three systems Jason built there as sub-bullets: the custom dealership CRM with its Handle a Sale desk; inbound voice AI; and the prospecting workflow. Each is described above. Its sections, in order: Summary, Experience, Education, Certificates and Courses, Skills.
 - Education: The University of Texas at Austin, Bachelor of Science in Neuroscience, expected 2028. San Jacinto College, Houston, Associate of Arts in Business, May 2026, GPA 3.63, Dean's Honor List.
-- Credential: Google AI Essentials, Google (Coursera), 2026.
+- Certificates and courses: Google AI Essentials, Google (Coursera), 2026; nineteen completed Anthropic courses.
 - Skills. Languages: TypeScript, JavaScript, Python, SQL. Web and data: React, Next.js, PostgreSQL, Supabase, Vercel. Backend: Edge Functions, REST APIs, RLS, webhook services. Automation: n8n, API integrations, Retell AI, Bland AI, Twilio. AI development: Claude Code, Claude API, Codex. Operations: dealership operations, sales pipelines, inventory and vendor management.
 - Not on the one-page resume: Jason also founded Obavia (obavia.co) in September 2024, a dealership sale desk in development for Texas independent dealers (see the Obavia section above).
 - One-page PDF: https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf
@@ -124,6 +124,17 @@ The same verified record, read for eight kinds of role. Nothing changes between 
 - Sales and Phones (for Automotive Sales Consultant, BDC Representative, Internet Sales Consultant, Sales Development Representative and Customer Success Associate roles). 53 vehicle sales personally closed and $206,777 collected since June 2025. I sell, and I build the tools a sales team works from. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds at a Houston used vehicle dealership. I take sales calls, follow up by phone and text, negotiate deals and handle service issues after the sale. Across August and September 2026 the inbound voice AI I deployed averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).
 - People and Office (for HR Coordinator, People Operations Coordinator, Office Manager, Payroll Coordinator and Office Administrator roles). Hiring, training, scheduling and payroll. I keep a team staffed, trained and paid. At a Houston used vehicle dealership I hire, train, schedule and manage the staff and run payroll. I support them on the CRM, phones and computers, manage their user accounts and permissions, and keep the dealer license compliance and record-keeping in order.
 - Dealer Technology (for Implementation Specialist, Dealer Onboarding Specialist, CRM Administrator, Customer Success Manager and Solutions Consultant roles). A dealer-side operator who built the CRM and sale desk a dealership runs on. I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it.
+
+Each reading has its own one-page resume at https://jasonobawemimo.com/resume/<id>.html, with its PDF and a plain-text copy under https://jasonobawemimo.com/assets/resume/:
+
+- AI and Automation: https://jasonobawemimo.com/resume/ai.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_AI_and_Automation.pdf)
+- Software and CRM: https://jasonobawemimo.com/resume/software.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_Software_and_CRM.pdf)
+- IT and Systems Support: https://jasonobawemimo.com/resume/it.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_IT_and_Systems_Support.pdf)
+- Operations and Logistics: https://jasonobawemimo.com/resume/ops.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_Operations_and_Logistics.pdf)
+- Title and Back Office: https://jasonobawemimo.com/resume/title.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_Title_and_Back_Office.pdf)
+- Sales and Phones: https://jasonobawemimo.com/resume/sales.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_Sales_and_Phones.pdf)
+- People and Office: https://jasonobawemimo.com/resume/people.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_People_and_Office.pdf)
+- Dealer Technology: https://jasonobawemimo.com/resume/dealer-tech.html (PDF: https://jasonobawemimo.com/assets/resume/Jason_Obawemimo_Resume_Dealer_Technology.pdf)
 
 For dealers the same record answers six lot problems: calls I miss, paperwork that comes back, leads that go cold, deals in a notebook, staff who need tech help, and buy here pay here accounts.
 
