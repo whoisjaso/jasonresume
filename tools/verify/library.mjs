@@ -49,7 +49,7 @@ async function textRules(p, label) {
   if (/%/.test(t.text + ' ' + t.attrs)) errs.push(`${label} percent sign in text or labels`);
   if (/apohenia/i.test(t.text + ' ' + t.attrs + ' ' + t.data)) errs.push(`${label} Apohenia on the page`);
   if (/\(?\b832\)?[\s.-]?\d{3}[\s.-]?\d{4}\b|tel:/.test(all + t.head)) errs.push(`${label} a phone number on the page`);
-  const nums = new Set((t.facts.match(/\$?\d[\d,]*(\.\d+)?/g) || []).filter(n => n.replace(/[$,.]/g, '').length >= 2));
+  const nums = new Set((t.facts.replace(/\b\d{1,2}:\d\d\s?(AM|PM)?/gi, '').replace(/\bCC BY( SA)? \d\.\d\b/g, '').match(/\$?\d[\d,]*(\.\d+)?/g) || []).filter(n => n.replace(/[$,.]/g, '').length >= 2));
   const unknown = [...nums].filter(n => !LLMS.includes(n.replace(/^\$/, '')) && !/^\d{1,2}:\d\d$/.test(n));
   const clock = /^(1[0-2]|[1-9])$/;
   const bad = unknown.filter(n => !clock.test(n));

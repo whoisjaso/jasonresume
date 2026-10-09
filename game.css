@@ -477,3 +477,9 @@ html.intro-pending body > :not(#intro):not(script):not(dialog) { visibility: hid
   .sys__lvl { display: none; }
   .sys__name { font-size: 14px; }
 }
+
+/* status toasts stack their title over the line; the title screen keeps Skip legible over bright art */
+.toast--status { flex-direction: column; align-items: flex-start; gap: 0; }
+.toast--status .toast__s { margin-top: 4px; }
+.intro:not(.is-started) .intro__shade { background: linear-gradient(180deg, rgba(10, 15, 13, .8) 0%, rgba(10, 15, 13, .55) 8%, rgba(10, 15, 13, 0) 22%), linear-gradient(90deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .45) 42%, rgba(10, 15, 13, .05) 75%), linear-gradient(0deg, rgba(10, 15, 13, .75) 0%, rgba(10, 15, 13, 0) 45%); }
+@media (max-width: 899px) { .intro:not(.is-started) .intro__shade { background: linear-gradient(180deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .7) 7%, rgba(10, 15, 13, 0) 22%), linear-gradient(0deg, rgba(10, 15, 13, .94) 0%, rgba(10, 15, 13, .7) 40%, rgba(10, 15, 13, .1) 75%); } }

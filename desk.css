@@ -18,7 +18,8 @@
 .iphone__home { position: absolute; bottom: 7px; left: 50%; width: 110px; height: 4px; margin-left: -55px; border-radius: 3px; background: #111; opacity: .85; z-index: 9; }
 .app-screen { position: absolute; inset: 0; padding: 46px 0 28px; display: flex; flex-direction: column; background: #f2f2f7; transform: translateX(100%); transition: transform .45s cubic-bezier(.32, .72, 0, 1); will-change: transform; }
 .app-screen.is-on { transform: none; }
-.app-screen.is-past { transform: translateX(-28%); filter: brightness(.94); }
+.app-screen.is-past { transform: translateX(-28%); filter: brightness(.94); visibility: hidden; transition: transform .45s cubic-bezier(.32, .72, 0, 1), visibility 0s .45s; }
+.app-screen.is-on { visibility: visible; transition: transform .45s cubic-bezier(.32, .72, 0, 1), visibility 0s; }
 .app-nav { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 15px; }
 .app-nav button { appearance: none; background: none; border: 0; color: #c2391f; font: 500 15px var(--sans); cursor: pointer; padding: 6px 0; display: flex; align-items: center; gap: 2px; }
 .app-nav button::before { content: ""; width: 9px; height: 9px; border-left: 2.2px solid currentColor; border-bottom: 2.2px solid currentColor; transform: rotate(45deg); margin-right: 3px; }

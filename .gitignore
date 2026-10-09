@@ -24,3 +24,5 @@ tools/art/candidates/
 *.wav
 .impeccable/mocks/
 tools/film/public/library/
+__pycache__/
+*.pyc
