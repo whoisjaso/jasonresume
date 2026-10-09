@@ -62,8 +62,9 @@
 
   function tailor(M, wanted) {
     var onPage = {};
+    // A skills line names its skill proofs, space separated; a bullet or entry names one.
     Array.prototype.forEach.call(page.querySelectorAll("[data-proof]"), function (el) {
-      onPage[el.getAttribute("data-proof")] = true;
+      el.getAttribute("data-proof").split(/\s+/).forEach(function (p) { if (p) onPage[p] = true; });
     });
     var matched = {};
     var relevant = [];

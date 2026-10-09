@@ -1,4 +1,4 @@
-// Prints the nine resumes to PDF and plain text, then gates every file and fails loudly.
+// Prints the ten resumes to PDF and plain text, then gates every file and fails loudly.
 //
 //   python3 tools/site/build_resume.py     # writes resume-pdf.html and resume/<build>.html
 //   python3 -m http.server 8765            # at the repo root

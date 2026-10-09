@@ -219,3 +219,19 @@ html:not(.lib-on) .sys__p2 { display: none; }
 }
 .build__acts--top { margin-top: 22px; padding-top: 0; border-top: 0; }
 .cls__for + .cls__k, .cls__chips + .cls__k, .cls__proofs + .cls__k { margin-top: 20px; }
+
+/* ---------- the funnel: one quiet line beside the actions, never on the card ---------- */
+/* a fine line in the actions takes its own row: the line under the buttons, not beside the last one */
+.build__acts .build__fine { flex-basis: 100%; max-width: none; }
+.build__open { margin: 4px 0 0; }
+.build__obavia + .build__open { margin-top: 0; }
+.build__textbtn { padding: 0; background: none; border: 0; color: var(--bone); font: inherit; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--hair-2); cursor: pointer; transition: text-decoration-color .3s var(--ease); }
+.build__textbtn:hover { text-decoration-color: var(--bone); }
+.build__hl { margin: 22px 0 0; max-width: 52ch; font: 500 20px/1.4 var(--sans); color: var(--bone); }
+.build__hl + .build__head { margin-top: 10px; }
+.intro__built-side .intro__acts { flex-wrap: wrap; }
+.intro__built-side .intro__open { max-width: 46ch; }
+@media (max-width: 899px) {
+  .intro__built.has-resume .intro__cardwrap { width: min(260px, 66vw, 40vh); }
+  .intro__built-side .intro__acts .btn { flex: 1 1 auto; }
+}

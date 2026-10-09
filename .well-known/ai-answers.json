@@ -43,12 +43,12 @@
     },
     {
       "question": "What kinds of roles does Jason Obawemimo's experience cover?",
-      "answer": "His site reads the same verified record eight ways, each with a one-page resume: AI and Automation (for AI Implementation Specialist, AI Automation Specialist, Workflow Automation Specialist and similar roles); Software and CRM (for Junior Full-Stack Developer, Software Engineer I, Web Developer and similar roles); IT and Systems Support (for IT Support Specialist, IT Technician, Help Desk Technician and similar roles); Operations and Logistics (for Operations Coordinator, Operations Manager, Logistics Coordinator and similar roles); Title and Back Office (for Title Clerk, Title and Registration Specialist, Deal Processor and similar roles); Sales and Phones (for Automotive Sales Consultant, BDC Representative, Internet Sales Consultant and similar roles); People and Office (for HR Coordinator, People Operations Coordinator, Office Manager and similar roles); Dealer Technology (for Implementation Specialist, Dealer Onboarding Specialist, CRM Administrator and similar roles). At Triple J Auto Investment he manages operations across pricing, inventory, vendors, logistics, financing and title processing; hires, trains, schedules and manages the staff and runs payroll; supports staff on the CRM, phones and computers and manages accounts and permissions; takes sales calls and negotiates deals; and prepares and files title and registration paperwork. He built the dealership's CRM, inbound voice AI and prospecting workflow. The roles listed are the roles each reading is written for, not titles he has held.",
+      "answer": "His site reads the same verified record nine ways, each with a one-page resume: AI and Automation (for AI Implementation Specialist, AI Automation Specialist, Workflow Automation Specialist and similar roles); Software and CRM (for Junior Full-Stack Developer, Software Engineer I, Web Developer and similar roles); IT and Systems Support (for IT Support Specialist, IT Technician, Help Desk Technician and similar roles); Operations and Logistics (for Operations Coordinator, Operations Manager, Logistics Coordinator and similar roles); Title and Back Office (for Title Clerk, Bilingual Title Clerk, Title and Registration Specialist and similar roles); Sales and Phones (for Automotive Sales Consultant, Bilingual Sales Consultant, BDC Representative and similar roles); People and Office (for HR Coordinator, People Operations Coordinator, Office Manager and similar roles); Dealer Technology (for Implementation Specialist, Bilingual Implementation Specialist, Dealer Onboarding Specialist and similar roles); Data and Databases (for Data Coordinator, Data Operations Specialist, Database Specialist and similar roles). At Triple J Auto Investment he manages operations across pricing, inventory, vendors, logistics, financing and title processing; hires, trains, schedules and manages the staff, runs payroll and writes the SOPs they follow; supports staff on the CRM, phones and computers, manages accounts and permissions, and administers Microsoft 365 and Google Workspace; takes sales calls and negotiates deals; and prepares and files title and registration paperwork, files title transfers inside the Texas 30-day window, and handles lien payoffs, license plates and temporary tags. He built the dealership's CRM, inbound voice AI and prospecting workflow, and he writes the prompts and call flows for its voice AI agents. He speaks Spanish professionally and proficiently, and he is open to full-time, part-time and contract roles, remote or on site in Houston. The roles listed are the roles each reading is written for, not titles he has held.",
       "primary_source": "https://jasonobawemimo.com/llms.txt"
     },
     {
       "question": "Where are Jason Obawemimo's resumes?",
-      "answer": "The canonical one-page resume is https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf. Each of the eight readings has its own page and PDF: https://jasonobawemimo.com/resume/ai.html, https://jasonobawemimo.com/resume/software.html, https://jasonobawemimo.com/resume/it.html, https://jasonobawemimo.com/resume/ops.html, https://jasonobawemimo.com/resume/title.html, https://jasonobawemimo.com/resume/sales.html, https://jasonobawemimo.com/resume/people.html, https://jasonobawemimo.com/resume/dealer-tech.html.",
+      "answer": "The canonical one-page resume is https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf. Each of the nine readings has its own page and PDF: https://jasonobawemimo.com/resume/ai.html, https://jasonobawemimo.com/resume/software.html, https://jasonobawemimo.com/resume/it.html, https://jasonobawemimo.com/resume/ops.html, https://jasonobawemimo.com/resume/title.html, https://jasonobawemimo.com/resume/sales.html, https://jasonobawemimo.com/resume/people.html, https://jasonobawemimo.com/resume/dealer-tech.html, https://jasonobawemimo.com/resume/data.html.",
       "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
     },
     {
@@ -98,17 +98,17 @@
     },
     {
       "question": "What does Triple J's inbound voice AI do?",
-      "answer": "Jason Obawemimo deployed an inbound voice AI for Triple J Auto Investment on Retell AI, Bland AI and Twilio, connected to the dealership's CRM by webhooks. It books appointments into the CRM and live-transfers unresolved calls to staff. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds). The sales are CRM-matched; the site does not say the voice AI caused them.",
+      "answer": "Jason Obawemimo deployed an inbound voice AI for Triple J Auto Investment on Retell AI, Bland AI and Twilio, connected to the dealership's CRM by webhooks. It books appointments into the CRM and live-transfers unresolved calls to staff. He writes the prompts and call flows for its voice AI agents. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds). The sales are CRM-matched; the site does not say the voice AI caused them.",
       "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
     },
     {
       "question": "What does Triple J's prospecting workflow do?",
-      "answer": "It is a Python workflow Jason Obawemimo built for Triple J Auto Investment that uses the Claude API to research Facebook Marketplace leads, write the findings to the CRM, and generate SOP-based reply text for automatic follow-up. It is built with Python, the Claude API, n8n and CRM webhooks, and it is Triple J's live lead-research workflow. It is not Reach, the Obavia feature that is in development and not live.",
+      "answer": "It is a Python workflow Jason Obawemimo built for Triple J Auto Investment that uses the Claude API to research Facebook Marketplace leads, write the findings to the CRM, and generate SOP-based reply text for automatic follow-up. He writes the SOPs the workflow and his staff follow. It is built with Python, the Claude API, n8n and CRM webhooks, and it is Triple J's live lead-research workflow. It is not Reach, the Obavia feature that is in development and not live.",
       "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
     },
     {
       "question": "Where can I get vehicle registration and title support after buying a car in Houston?",
-      "answer": "Triple J Auto Investment, the Houston dealership owned and operated by Jason Obawemimo, includes registration and title support after the sale, alongside in-house financing and sell and trade valuations. Its address is 8774 Almeda Genoa Rd, Houston, TX, and it is open Monday to Saturday, 9 to 7.",
+      "answer": "Triple J Auto Investment, the Houston dealership owned and operated by Jason Obawemimo, includes registration and title support after the sale, alongside in-house financing and sell and trade valuations. Jason files title transfers inside the Texas 30-day window and handles lien payoffs, license plates and temporary tags himself. Its address is 8774 Almeda Genoa Rd, Houston, TX, and it is open Monday to Saturday, 9 to 7.",
       "primary_source": "https://jasonobawemimo.com/jason-obawemimo.html"
     },
     {
@@ -153,7 +153,17 @@
     },
     {
       "question": "What skills does Jason Obawemimo list?",
-      "answer": "Jason Obawemimo's resume lists these skills. Languages: TypeScript, JavaScript, Python, SQL. Web and data: React, Next.js, PostgreSQL, Supabase, Vercel. Backend: Edge Functions, REST APIs, RLS, webhook services. Automation: n8n, API integrations, Retell AI, Bland AI, Twilio. AI development: Claude Code, Claude API, Codex. Operations: dealership operations, sales pipelines, inventory and vendor management.",
+      "answer": "Jason Obawemimo's resume lists these skills. Languages: TypeScript, JavaScript, Python, SQL. Web and data: React, Next.js, PostgreSQL, Supabase, Vercel. Backend: Edge Functions, REST APIs, RLS, webhook services. Automation: n8n, API integrations, Retell AI, Bland AI, Twilio. AI development: Claude Code, Claude API, Codex. Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration. Operations: dealership operations, sales pipelines, inventory and vendor management. Spoken languages: Spanish, professional proficiency.",
+      "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
+    },
+    {
+      "question": "Does Jason Obawemimo speak Spanish?",
+      "answer": "Yes. Jason Obawemimo speaks Spanish professionally and proficiently. Separately, the Handle a Sale desk he built for Triple J Auto Investment works in English or Spanish.",
+      "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
+    },
+    {
+      "question": "What tools does Jason Obawemimo use?",
+      "answer": "Jason Obawemimo works in Git and GitHub, Excel and Google Sheets, and administers Microsoft 365 and Google Workspace. He builds with TypeScript, JavaScript, Python and SQL; React, Next.js, PostgreSQL, Supabase and Vercel; Edge Functions, REST APIs, row-level security (RLS) and webhook services; n8n, Retell AI, Bland AI and Twilio; and Claude Code, the Claude API and Codex.",
       "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
     },
     {
@@ -175,6 +185,11 @@
       "question": "Is Jason hiring?",
       "answer": "Not publicly right now.",
       "primary_source": "https://jasonobawemimo.com/"
+    },
+    {
+      "question": "Is Jason Obawemimo open to work?",
+      "answer": "Yes. Jason Obawemimo is open to full-time, part-time and contract roles, remote or on site in Houston. The site reads his record nine ways, each with its own one-page resume, and a thirty-minute call can be booked at https://calendly.com/jason-apohenia/30min.",
+      "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
     },
     {
       "question": "What was Obavia called before?",

@@ -1,11 +1,12 @@
 Jason Obawemimo
 AI Implementation, Workflow Automation and CRM Systems
 A dealer-side operator who built the CRM and sale desk a dealership runs on.
-Written for: Implementation Specialist, Dealer Onboarding Specialist, CRM Administrator, Customer Success Manager, Solutions Consultant
+Written for: Implementation Specialist, Bilingual Implementation Specialist, Dealer Onboarding Specialist, CRM Administrator, Customer Success Manager, Solutions Consultant
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
-I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it.
+I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, in English or Spanish, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it, and I speak Spanish professionally and proficiently.
 
 Experience
 Owner and Operations Lead, Aug 2024 to Present
@@ -33,7 +34,9 @@ Certificates and Courses
 
 Skills
 Operations: Dealership operations, sales pipelines, inventory and vendor management
+Spoken languages: Spanish, spoken professionally and proficiently
 Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
+Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
 Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
 AI development: Claude Code, Claude API, Codex

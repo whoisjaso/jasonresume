@@ -15,7 +15,18 @@
      .save(build, where)       the card as a PNG: the share sheet or a download
      .load(hash)               "#build" or a shared "#build/v1/..." before the screen opens
      .label(build)
-   Events: document "jg:build" { build } */
+     .resume(build, cls)       the "Resume for this role" link, as HTML (the PDF, or the tailored print after a listing match)
+     .copyLink(build, where)   copy the build's link (where "referral" is the lurker's "send them your build")
+   Events: document "jg:build" { build }
+
+   The funnel: my availability shows only where a visitor is already deciding.
+   Hiring (or no seat yet) on a role reading: one fine line beside the actions.
+   A ?for= link with nothing built yet: the reading as I sent it, with the
+   resume, the line, and Make it yours. A dealer: the lot answer and its call to
+   action, then one quiet line for a dealer who is really hiring, which switches
+   the build to the reading their lot problem points to. Just looking: never the
+   line, a referral instead. The card never carries any of it. Words in
+   tools/site/onboarding.json (funnel). */
 (function () {
   "use strict";
   var el = document.getElementById("builds-data"); if (!el) return;
@@ -24,6 +35,9 @@
   var LIB = {}; try { LIB = JSON.parse(libEl.textContent); } catch (e) {}
   var root = document.documentElement;
   var COARSE = matchMedia("(pointer: coarse)").matches;
+  var OB = {}; try { OB = JSON.parse((document.getElementById("onboarding-data") || {}).textContent || "{}"); } catch (e) {}
+  var FN = OB.funnel || {};
+  function say(k, d) { return FN[k] || d; }
   var BY = {}, LOT = {}, P = D.proofs;
   D.builds.forEach(function (b) { BY[b.id] = b; });
   D.lot.forEach(function (l) { LOT[l.id] = l; });
@@ -94,6 +108,12 @@
   function resumePdf(b) { return b && b.kind === "role" ? "assets/resume/Jason_Obawemimo_Resume_" + BY[b.id].label.replace(/[^A-Za-z0-9]+/g, "_") + ".pdf" + (RV ? "?v=" + RV : "") : (LIB.pdf || ""); }
   /* the tailored print: each on-record term, with the listing's own spelling when it differs */
   function resumePage(b, on) { return "resume/" + b.id + ".html" + (on && on.length ? "#t=" + on.map(function (x) { return encodeURIComponent(x.term) + (x.as && x.as !== x.term ? ":" + encodeURIComponent(x.as) : ""); }).join(",") : ""); }
+  /* Resume for this role: the role's PDF, or after a listing match the print that marks its words */
+  function resumeLink(b, cls, view) {
+    if (!b || b.kind !== "role") return "";
+    var m = matched && !view;
+    return '<a class="' + (cls || "btn btn--primary") + '" href="' + E(m ? resumePage(b, matched.on) : resumePdf(b)) + '"' + (m ? ' target="_blank" rel="noopener"' : ' download="Jason Obawemimo - Resume, ' + E(BY[b.id].label) + '.pdf"') + ' data-build-resume><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-doc"/></svg>' + E(say("resume", "Resume for this role")) + "</a>";
+  }
 
   /* ---------- the card ---------- */
   function medalSrc(slug, size) { return "assets/game/medals/" + slug + "-" + size + ".webp"; }
@@ -239,16 +259,18 @@
   function render() {
     if (!scr) return;
     var v = viewing, b = v || mine(), role = store.get("jg_role");
+    var sent = !b && sentFor && BY[sentFor] ? current() : null;
     var html = '<a class="btn btn--ghost screen__back" href="#library" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-back"/></svg>Back</a>';
-    html += '<div class="build__grid"><div class="build__cardwrap" data-cardwrap>' + cardHTML(b) + "</div><div class=\"build__panel\">";
-    if (v) {
+    html += '<div class="build__grid"><div class="build__cardwrap" data-cardwrap>' + cardHTML(b || sent) + "</div><div class=\"build__panel\">";
+    if (sent) html += sentHTML(sent);
+    else if (v) {
       var who = v.n ? E(v.n) + " built me for " : "Someone built me for ";
-      html += '<header class="screen__head"><h2 class="screen__h build__h" id="build-h">Player 2</h2><p class="screen__sub build__lede">' + who + "<b>" + E(label(v)) + "</b>.</p></header>";
+      html += '<header class="screen__head"><h2 class="screen__h build__h" id="build-h" tabindex="-1">Player 2</h2><p class="screen__sub build__lede">' + who + "<b>" + E(label(v)) + "</b>.</p></header>";
       html += '<div class="build__acts build__acts--top">' + acts(v, true) + "</div>";
       html += '<p class="build__head">' + E(v.kind === "role" ? BY[v.id].summary : LOT[v.id].line) + "</p>";
       if (v.kind === "role") html += '<p class="build__for">Written for ' + E(BY[v.id].targets.join(", ")) + ".</p>";
     } else {
-      html += '<header class="screen__head"><h2 class="screen__h build__h" id="build-h">' + (b ? (b.n ? E(b.n) + "'s build" : "Your build") : "Player 2") + '</h2><p class="screen__sub">' + (b ? "Every line on the card is a verified fact. Change anything; it's yours to keep." : "Build me for the role you're hiring for, or the problem on your lot. You keep the card.") + "</p></header>";
+      html += '<header class="screen__head"><h2 class="screen__h build__h" id="build-h" tabindex="-1">' + (b ? (b.n ? E(b.n) + "'s build" : "Your build") : "Player 2") + '</h2><p class="screen__sub">' + (b ? "Every line on the card is a verified fact. Change anything; it's yours to keep." : "Build me for the role you're hiring for, or the problem on your lot. You keep the card.") + "</p></header>";
       var lotFirst = role === "partner";
       var roleChips = '<section class="build__sec"><h3>Read me for a role</h3><div class="chips" role="radiogroup" aria-label="Read me for a role">' + D.builds.map(function (x) { return chip("role", x.id, x.label, b); }).join("") + "</div>" + (b && b.kind === "role" ? '<p class="build__for">' + E(BY[b.id].headline) + " Written for " + E(BY[b.id].targets.join(", ")) + ".</p>" : "") + "</section>";
       var lotChips = '<section class="build__sec"><h3>Or for a problem on your lot</h3><div class="chips" role="radiogroup" aria-label="Or for a problem on your lot">' + D.lot.map(function (x) { return chip("lot", x.id, x.label, b); }).join("") + "</div>" + (b && b.kind === "lot" ? '<p class="build__for">' + E(LOT[b.id].line) + "</p>" : "") + "</section>";
@@ -278,20 +300,38 @@
     var on = b && b.kind === kind && b.id === id;
     return '<button type="button" role="radio" class="chip' + (on ? " is-on" : "") + '" aria-checked="' + !!on + '" data-pick="' + kind + ":" + id + '">' + E(text) + "</button>";
   }
+  /* ---------- the funnel: who sees my availability, and where ---------- */
+  function seat() { return store.get("jg_role") || ""; }
+  function openLine() { return '<p class="build__fine build__open" data-open-line>' + E(say("open", "I'm open to full-time, part-time and contract roles, remote or on site in Houston.")) + "</p>"; }
+  function hireFor(b) { var to = LOT[b.id] && LOT[b.id].build; return BY[to] ? to : "dealer-tech"; }
+  function hireLine(b) { var to = hireFor(b); return '<p class="build__fine build__open build__hire" data-hire-line>' + E(say("hiring", "Hiring for your lot? I'm open to full-time, part-time and contract work.")) + ' <button class="build__textbtn" type="button" data-hire="' + to + '">' + E(say("hiring_link", "Read me for")) + " " + E(BY[to].label) + "</button></p>"; }
+  function referLine() { return '<p class="build__fine build__open build__ref" data-referral-line>' + E(say("referral", "Know someone hiring?")) + ' <button class="build__textbtn" type="button" data-referral>' + E(say("referral_link", "Send them your build.")) + "</button></p>"; }
   function acts(b, view) {
-    var a = [];
-    if (b.kind === "role") a.push('<a class="btn btn--primary" href="' + E(matched && !view ? resumePage(b, matched.on) : resumePdf(b)) + '"' + (matched && !view ? ' target="_blank" rel="noopener"' : ' download="Jason Obawemimo - Resume, ' + E(BY[b.id].label) + '.pdf"') + ' data-build-resume><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-doc"/></svg>Resume for this role</a>');
+    var a = [], lurk = seat() === "lurker";
+    /* just looking: the card leads and the resume stays one plain button; anyone else on a role gets the resume first */
+    if (b.kind === "role" && (view || !lurk)) a.push(resumeLink(b, "btn btn--primary", view));
     if (view) {
       a.push('<a class="btn" href="mailto:' + E(LIB.email || "jobawems@gmail.com") + "?subject=" + encodeURIComponent(b.kind === "role" ? "Your site, and a role in " + BY[b.id].label : "Your site, and my lot: " + LOT[b.id].label) + "&body=" + encodeURIComponent("The build: " + link(b) + "\n\n") + '" data-contact="email" data-where="build"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-mail"/></svg>Email me about it</a>');
       a.push('<button class="btn btn--ghost" type="button" data-make-own>Make your own</button>');
+      if (b.kind === "role" && !lurk) a.push(openLine());
       return a.join("");
     }
     if (b.kind === "lot") a.push(LOT[b.id].cta === "obavia" ? '<a class="btn btn--primary" href="/obavia.html#early" data-build-obavia>Ask for Obavia early access</a>' : '<a class="btn btn--primary" href="https://calendly.com/jason-apohenia/30min" target="_blank" rel="noopener" data-book="build">Talk shop for 30 minutes</a>');
-    a.push('<button class="btn" type="button" data-save><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>Save the card</button>');
+    a.push('<button class="btn' + (lurk && b.kind === "role" ? " btn--primary" : "") + '" type="button" data-save><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>Save the card</button>');
     a.push('<button class="btn" type="button" data-copy-link><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-link"/></svg>Copy the link</button>');
+    if (lurk && b.kind === "role") a.push(resumeLink(b, "btn", false));
     a.push('<button class="btn btn--ghost" type="button" data-send-open><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-send"/></svg>Send it to me</button>');
     if (b.kind === "lot" && LOT[b.id].obavia) a.push('<p class="build__fine build__obavia">' + E(LOT[b.id].obavia) + "</p>");
+    if (lurk) a.push(referLine());
+    else a.push(b.kind === "role" ? openLine() : hireLine(b));
     return a.join("");
+  }
+  /* a ?for= link, nothing built yet: the reading as I sent it */
+  function sentHTML(r) {
+    var x = BY[r.id];
+    return '<header class="screen__head"><h2 class="screen__h build__h" id="build-h" tabindex="-1">Player 2</h2><p class="screen__sub build__lede">' + E(say("sent", "The reading I sent you:")) + " <b>" + E(x.label) + "</b></p></header>" +
+      '<div class="build__acts build__acts--top">' + resumeLink(r, "btn btn--primary", true) + '<button class="btn" type="button" data-make-yours="' + r.id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-plus"/></svg>' + E(say("make", "Make it yours")) + "</button>" + openLine() + "</div>" +
+      '<p class="build__hl">' + E(x.headline) + '</p><p class="build__head">' + E(x.summary) + '</p><p class="build__for">Written for ' + E(x.targets.join(", ")) + ".</p>";
   }
   function sendForm(b) {
     return '<form class="build__send" data-send hidden novalidate>' +
@@ -330,12 +370,22 @@
         edit(function (b) { b.f = f; }, "finish", f); $$("[data-fin]", scr).forEach(function (x) { var on = x === t; x.classList.toggle("is-on", on); x.setAttribute("aria-checked", on); }); return;
       }
       if (t.hasAttribute("data-save")) { e.preventDefault(); save(mine(), "screen"); return; }
-      if (t.hasAttribute("data-copy-link")) { e.preventDefault(); copy(link(mine())); return; }
+      if (t.hasAttribute("data-copy-link")) { e.preventDefault(); copyLink(mine(), "screen"); return; }
       if (t.hasAttribute("data-send-open")) { var fm = $("[data-send]", scr); fm.hidden = false; FX("choice"); $("#bs-email", fm).focus(); return; }
       if (t.hasAttribute("data-send-close")) { $("[data-send]", scr).hidden = true; return; }
+      if (t.hasAttribute("data-make-yours")) { var mb = make("role", t.getAttribute("data-make-yours"), "sent"); if (!mb) return; FX("choice"); render(); repaintCard(mb, true); scr.scrollTop = 0; focusIn("#build-h"); return; }
+      if (t.hasAttribute("data-hire")) {
+        var pv = mine(), hb = make("role", t.getAttribute("data-hire"), "hiring"); if (!hb) return;
+        if (pv) { hb.n = pv.n; keep(hb); paintSlot(hb); }
+        matched = null; FX("choice"); T("cta_click", { cta: "hiring", where: "build", lot: pv && pv.kind === "lot" ? pv.id : "" });
+        render(); repaintCard(hb, true);
+        var rl = $("[data-build-resume]", scr); if (rl) { rl.focus({ preventScroll: true }); rl.scrollIntoView({ block: "center" }); }
+        return;
+      }
+      if (t.hasAttribute("data-referral")) { e.preventDefault(); copyLink(mine(), "referral"); return; }
       if (t.hasAttribute("data-make-own")) { viewing = null; try { history.replaceState(null, "", location.pathname + location.search + "#build"); } catch (e2) {} FX("choice"); render(); return; }
       if (t.hasAttribute("data-match")) { runMatch(); return; }
-      if (t.hasAttribute("data-build-resume")) { var bb = viewing || mine(); T("build_resume", { build: bb ? bb.id : "", matched: !!matched, viewing: !!viewing }); FX("send"); return; }
+      if (t.hasAttribute("data-build-resume")) { var bb = viewing || mine() || current(); T("build_resume", { build: bb ? bb.id : "", matched: !!matched, viewing: !!viewing, where: viewing ? "shared" : mine() ? "screen" : "sent" }); FX("send"); return; }
       if (t.hasAttribute("data-build-obavia")) { var lb = mine(); if (lb) store.set("jg_lot", LOT[lb.id].label); T("cta_click", { cta: "obavia_early", where: "build" }); return; }
     });
     scr.addEventListener("input", function (e) {
@@ -361,8 +411,10 @@
     render();
     var out = $("[data-match-out]", scr); if (out) out.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
-  function copy(text) {
-    var ok = function () { FX("send"); if (window.JG_TOAST) window.JG_TOAST("Link copied"); var b = mine(); T("build_link_copied", { build: b ? b.id : "" }); };
+  function copyLink(b, where) {
+    b = b || mine(); if (!b) return;
+    var text = link(b);
+    var ok = function () { FX("send"); if (window.JG_TOAST) window.JG_TOAST("Link copied"); T("build_link_copied", { build: b.id, kind: b.kind, where: where || "" }); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, function () { prompt("Copy the link", text); });
     else prompt("Copy the link", text);
   }
@@ -390,5 +442,5 @@
   apply();
   document.addEventListener("jg:intro-done", function () { apply(); });
 
-  window.JG_BUILD = { data: D, get: mine, make: make, sign: sign, cardHTML: cardHTML, save: save, load: load, label: label, link: link, apply: apply, line: line, setMatch: function (m) { matched = m || null; } };
+  window.JG_BUILD = { data: D, get: mine, make: make, sign: sign, cardHTML: cardHTML, save: save, load: load, label: label, link: link, apply: apply, line: line, resume: resumeLink, copyLink: copyLink, setMatch: function (m) { matched = m || null; } };
 })();

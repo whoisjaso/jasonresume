@@ -54,15 +54,20 @@
       "Claude Code",
       "Claude API",
       "Codex",
+      "Git and GitHub",
+      "Excel and Google Sheets",
+      "Microsoft 365 and Google Workspace administration",
       "Dealership operations",
       "Sales pipelines",
-      "Inventory and vendor management"
+      "Inventory and vendor management",
+      "Spanish, professional proficiency"
     ]
   },
   "description": "Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.",
   "disambiguatingDescription": "Pearland, Texas owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia (spelled O-B-A-V-I-A), a dealership sale desk in development for Texas independent dealers. Obawemimo is his family name.",
   "knowsLanguage": [
-    "English"
+    "English",
+    "Spanish"
   ],
   "homeLocation": {
     "@type": "Place",
@@ -80,12 +85,15 @@
     "CRM systems",
     "Dealership CRM",
     "Voice AI",
+    "Voice AI prompts and call flows",
     "Dealership sale desks",
     "Lead to title workflows",
     "Dealership operations",
     "Used vehicle dealership operations",
     "Sales pipelines",
     "Inventory and vendor management",
+    "Texas title transfers",
+    "Lien payoffs, license plates and temporary tags",
     "TypeScript",
     "JavaScript",
     "Python",
@@ -109,6 +117,12 @@
     "Claude API",
     "Codex",
     "Model Context Protocol",
+    "Git",
+    "GitHub",
+    "Excel",
+    "Google Sheets",
+    "Microsoft 365 administration",
+    "Google Workspace administration",
     "SOP documentation"
   ],
   "award": [

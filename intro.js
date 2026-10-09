@@ -7,8 +7,11 @@
    for, the problem on their lot, or a class (build.js keeps it); then an
    optional player name that signs it; then the card and the library. Every
    skip is silent. A ?for=<build> link (from an application) highlights that
-   role first. Its words live in
-   tools/site/onboarding.json, inlined as #onboarding-data.
+   role first. On the card, the funnel: someone hiring who built a role gets
+   Resume for this role and one fine line saying what I'm open to; someone
+   just looking gets a referral instead (send your build to someone hiring);
+   a dealer gets neither here (Player 2 carries the lot answer). Its words
+   live in tools/site/onboarding.json, inlined as #onboarding-data.
    The head script sets html.intro-pending so the page never flashes first.
    While it is up, html has .intro-on. When it ends, document gets
    "jg:intro-done" { role, named }. */
@@ -91,7 +94,7 @@
     "</section>" +
     '<section class="intro__scene intro__scene--card" data-scene="card" hidden aria-live="polite">' +
       '<p class="intro__card"></p>' +
-      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts"><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + "</button></div></div></div>" +
+      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts" data-built-acts><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + '</button></div><p class="intro__fine intro__open" data-built-more hidden></p></div></div>' +
     "</section>";
   body.appendChild(el);
   root.classList.add("intro-on");
@@ -271,6 +274,7 @@
       var box = el.querySelector("[data-built]"); box.hidden = false;
       el.querySelector("[data-built-hi]").textContent = line;
       var cw = el.querySelector("[data-built-card]"); cw.innerHTML = window.JG_BUILD.cardHTML(built); cw.classList.add("is-minting");
+      funnel();
       scene("card");
       if (S()) setTimeout(function () { S().sting("trophy-gold"); }, wait(500));
       if (window.JG_HAPTIC) setTimeout(function () { window.JG_HAPTIC("success"); }, wait(500));
@@ -280,9 +284,24 @@
     scene("card");
     setTimeout(done, wait(1500));
   }
+  /* the funnel on the card: never on the card itself, only beside it */
+  function funnel() {
+    var F = O.funnel || {}, more = el.querySelector("[data-built-more]"), B = window.JG_BUILD;
+    if (!more || !built || !F.open) return;
+    if (role === "lurker") {
+      more.innerHTML = E(F.referral) + ' <button class="intro__textbtn" type="button" data-referral>' + E(F.referral_link) + "</button>";
+      more.hidden = false;
+    } else if (built.kind === "role" && B.resume) {
+      el.querySelector("[data-enter]").insertAdjacentHTML("afterend", B.resume(built, "btn"));
+      el.querySelector("[data-built]").classList.add("has-resume");
+      more.textContent = F.open; more.hidden = false;
+    }
+  }
   el.addEventListener("click", function (e) {
     if (e.target.closest("[data-enter]")) { if (window.JG_FX) window.JG_FX("arrive"); done(); }
     else if (e.target.closest("[data-save-card]") && window.JG_BUILD) window.JG_BUILD.save(built, "intro");
+    else if (e.target.closest("[data-build-resume]")) { if (window.JG_FX) window.JG_FX("send"); T("build_resume", { build: built ? built.id : "", matched: !!pendingMatch, viewing: false, where: "intro" }); }
+    else if (e.target.closest("[data-referral]") && window.JG_BUILD && window.JG_BUILD.copyLink) window.JG_BUILD.copyLink(built, "referral");
   });
 
   /* ---------- the end: into the library ---------- */

@@ -28,13 +28,19 @@ export const LibraryTripleJ: React.FC = () => {
   return (
     <LoopStage id="triple-j">
       <defs>
-        {/* below the pole heads and the office glazing: the beam only reaches cars and ground */}
-        <linearGradient id="tj-low" gradientUnits="userSpaceOnUse" x1="0" y1="430" x2="0" y2="510">
+        {/* below the pole heads (the lowest sits at y 498) and the tree line: the beam
+            only reaches the cars' rear quarters and the ground */}
+        <linearGradient id="tj-low" gradientUnits="userSpaceOnUse" x1="0" y1="505" x2="0" y2="548">
           <stop offset="0" stopColor="#fff" stopOpacity="0" />
           <stop offset="1" stopColor="#fff" stopOpacity="1" />
         </linearGradient>
+        <filter id="tj-feather" filterUnits="userSpaceOnUse" x="1600" y="440" width="400" height="200">
+          <feGaussianBlur stdDeviation="8" />
+        </filter>
         <mask id="tj-floor" maskUnits="userSpaceOnUse" x="0" y="0" width={LOOP.w} height={LOOP.h}>
           <rect x="0" y="0" width={LOOP.w} height={LOOP.h} fill="url(#tj-low)" />
+          {/* the showroom's glazing far back right holds, like the poles */}
+          <rect x="1668" y="490" width="300" height="80" fill="#000" filter="url(#tj-feather)" />
         </mask>
       </defs>
       <Relight id="beam" tint={lib.light.headlamp} gain={1.0 * env} gamma={1.05}>

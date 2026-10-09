@@ -7,7 +7,7 @@
   "site": "jasonobawemimo.com",
   "location": "Pearland, Texas",
   "calendar": "https://calendly.com/jason-apohenia/30min",
-  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=oct26r",
+  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=oct26s",
   "slate": [
     {
       "k": "Triple J",
@@ -111,7 +111,7 @@
       "role": "Skills",
       "org": "What I build with",
       "when": "",
-      "text": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs, row-level security and webhook services. n8n, API integrations, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex. Dealership operations, sales pipelines, inventory and vendor management.",
+      "text": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs, row-level security and webhook services. n8n, API integrations, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex. Git and GitHub, Excel and Google Sheets, and Microsoft 365 and Google Workspace, which I administer. Dealership operations, sales pipelines, inventory and vendor management. I speak Spanish professionally and proficiently.",
       "proof": [
         {
           "label": "GitHub whoisjaso",
@@ -354,7 +354,7 @@
     },
     {
       "t": "What I build with.",
-      "s": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs and webhooks. n8n, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex.",
+      "s": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs and webhooks. n8n, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex. Git and GitHub, Excel and Google Sheets. I administer Microsoft 365 and Google Workspace.",
       "weight": true,
       "proof": {
         "label": "This site's source",
@@ -386,8 +386,8 @@
     }
   ],
   "resume": {
-    "_note": "Read by tools/site/build_resume.py. The proofs themselves live in builds.json. bullets holds the resume wording (no leading I) for proofs whose first-person line does not start with I or repeats what its system heading already says; it changes no fact, number or date. Skills groups with lead_for come first on those builds, before the build's own skills order. courses names two or three of the nineteen Anthropic courses per build.",
-    "v": "oct26r",
+    "_note": "Read by tools/site/build_resume.py. The proofs themselves live in builds.json. bullets holds the resume wording (no leading I) for proofs whose first-person line does not start with I or repeats what its system heading already says; it changes no fact, number or date. Skills groups with lead_for come first on those builds, before the build's own skills order. courses names two or three of the nineteen Anthropic courses per build. A skills group's proofs name the proofs behind it (every builds.json proof marked skill: true must be printed by one), so a listing-tailored print can name them. availability prints under the contact line on every resume.",
+    "v": "oct26s",
     "title": "AI Implementation, Workflow Automation and CRM Systems",
     "contact": [
       {
@@ -406,6 +406,7 @@
         "href": "https://www.linkedin.com/in/obawemimo"
       }
     ],
+    "availability": "Open to full-time, part-time and contract roles, remote or on site in Houston.",
     "job": {
       "role": "Owner and Operations Lead",
       "org": "Triple J Auto Investment and Rental Operations",
@@ -434,7 +435,10 @@
       "daily": "Used daily by three staff across inventory, deals and follow-up.",
       "sale-desk": "Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.",
       "voice": "Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
-      "sop-replies": "The workflow generates SOP-based reply text for automatic follow-up."
+      "sop-replies": "The workflow generates SOP-based reply text for automatic follow-up.",
+      "prompts": "Write the voice AI agents' prompts and call flows.",
+      "sops": "Write the SOPs the staff and the prospecting workflow follow.",
+      "liens-tags": "Handle lien payoffs, license plates and temporary tags."
     },
     "education": [
       {
@@ -499,6 +503,11 @@
         "Building with the Claude API",
         "AI Fluency for Small Businesses",
         "Introduction to Claude Cowork"
+      ],
+      "data": [
+        "Building with the Claude API",
+        "Claude Code in Action",
+        "AI Capabilities and Limitations"
       ]
     },
     "skills": [
@@ -553,8 +562,24 @@
         "items": "Claude Code, Claude API, Codex"
       },
       {
+        "group": "Tools",
+        "items": "Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration",
+        "proofs": [
+          "git",
+          "sheets",
+          "workspace"
+        ]
+      },
+      {
         "group": "Operations",
         "items": "Dealership operations, sales pipelines, inventory and vendor management"
+      },
+      {
+        "group": "Spoken languages",
+        "items": "Spanish, spoken professionally and proficiently",
+        "proofs": [
+          "spanish"
+        ]
       }
     ],
     "canonical": {
@@ -564,14 +589,11 @@
         "daily",
         "crm-model",
         "rls",
-        "validation",
-        "migrations",
-        "shipped",
         "sale-desk",
         "voice",
+        "prompts",
         "voice-figures",
-        "prospect",
-        "sop-replies"
+        "prospect"
       ],
       "skills": [
         "Languages",
@@ -579,7 +601,9 @@
         "Backend",
         "Automation",
         "AI development",
-        "Operations"
+        "Tools",
+        "Operations",
+        "Spoken languages"
       ]
     }
   }

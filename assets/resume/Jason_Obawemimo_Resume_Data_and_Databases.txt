@@ -1,24 +1,22 @@
 Jason Obawemimo
 AI Implementation, Workflow Automation and CRM Systems
-A TypeScript, Next.js and Supabase CRM in daily production use.
-Written for: Junior Full-Stack Developer, Software Engineer I, Web Developer, Internal Tools Developer, CRM Developer
+The data model, validation and migrations behind a live CRM.
+Written for: Data Coordinator, Data Operations Specialist, Database Specialist, Junior Database Administrator, SQL Developer
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
 Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
-I build software people use every day. I designed and shipped a custom dealership CRM in TypeScript, React, Next.js, PostgreSQL and Supabase that three staff use daily across inventory, deals and follow-up. I designed its lead-to-title data model, roles and validation, tested its row-level security (RLS) policies to prevent unauthorized role access, and executed production schema migrations that preserved existing records.
+I keep a business's data structured, clean and intact. For a Houston used vehicle dealership I designed the lead-to-title data model and roles of the CRM three staff use daily, added validation that prevents invalid deal and inventory records from being written, tested its row-level security (RLS) policies to prevent unauthorized role access, and executed production schema migrations that preserved existing records. I work in SQL, PostgreSQL, Python, Excel and Google Sheets.
 
 Experience
 Owner and Operations Lead, Aug 2024 to Present
 Triple J Auto Investment and Rental Operations, Houston, Texas
 Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
   - Designed the lead-to-title data model, roles and validation.
-  - Used daily by three staff across inventory, deals and follow-up.
-  - Tested Supabase row-level security (RLS) policies to prevent unauthorized role access.
-  - Executed production schema migrations while preserving existing records and operational tables.
   - Added validation that prevents invalid deal and inventory records from being written.
-  - Shipped the CRM on Vercel with Edge Functions for voice and texting webhooks.
-  - Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.
+  - Executed production schema migrations while preserving existing records and operational tables.
+  - Tested Supabase row-level security (RLS) policies to prevent unauthorized role access.
+  - Used daily by three staff across inventory, deals and follow-up.
 Prospecting workflow (Python, Claude API, n8n, CRM webhooks)
   - Built a prospecting workflow in Python with the Claude API and n8n that researches Facebook Marketplace leads and writes findings to the CRM.
 
@@ -30,14 +28,14 @@ Associate of Arts in Business, GPA 3.63, Dean's Honor List
 
 Certificates and Courses
 - Google AI Essentials, Google (Coursera), 2026
-- Anthropic: nineteen completed courses, including Claude Code in Action; Building with the Claude API; Model Context Protocol: Advanced Topics
+- Anthropic: nineteen completed courses, including Building with the Claude API; Claude Code in Action; AI Capabilities and Limitations
 
 Skills
-Languages: TypeScript, JavaScript, Python, SQL
 Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
-Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
+Languages: TypeScript, JavaScript, Python, SQL
 Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration
-AI development: Claude Code, Claude API, Codex
+Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
+AI development: Claude Code, Claude API, Codex
 Operations: Dealership operations, sales pipelines, inventory and vendor management
 Spoken languages: Spanish, spoken professionally and proficiently

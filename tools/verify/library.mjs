@@ -2,8 +2,10 @@
 //   python3 -m http.server 8765 &   then   node tools/verify/library.mjs [desktop|mobile]
 // Checks: the title screen on arrival (Start, who's playing, the build, the
 // name and the card), Player 2 (the build screen, its edits, the card saved
-// as a 1080 by 1350 PNG, a shared build link, a ?for= link), the
-// first frame's actions, moving focus, opening every title, trophies and the
+// as a 1080 by 1350 PNG, a shared build link, a ?for= link), the funnel
+// (availability only beside a hiring visitor's actions, a ?for= reading as
+// sent, a dealer's quiet hiring line, a referral for someone just looking,
+// and never on the card), the first frame's actions, moving focus, opening every title, trophies and the
 // Platinum, the desk demo run to Filed, the screens, the deck and Check me;
 // the doors (return visits, skip, deep links, legacy links, the dealer cut);
 // privacy; the score staying silent until Start; the no-JS document; and the
@@ -51,7 +53,8 @@ async function textRules(p, label) {
   if (/%/.test(t.text + ' ' + t.attrs)) errs.push(`${label} percent sign in text or labels`);
   if (/apohenia/i.test(t.text + ' ' + t.attrs + ' ' + t.data)) errs.push(`${label} Apohenia on the page`);
   if (/\(?\b832\)?[\s.-]?\d{3}[\s.-]?\d{4}\b|tel:/.test(all + t.head)) errs.push(`${label} a phone number on the page`);
-  const nums = new Set((t.facts.replace(/\b\d{1,2}:\d\d\s?(AM|PM)?/gi, '').replace(/\bCC BY( SA)? \d\.\d\b/g, '').match(/\$?\d[\d,]*(\.\d+)?/g) || []).filter(n => n.replace(/[$,.]/g, '').length >= 2));
+  // a comma after a number is punctuation ("Microsoft 365, Google Workspace"), not part of it
+  const nums = new Set((t.facts.replace(/\b\d{1,2}:\d\d\s?(AM|PM)?/gi, '').replace(/\bCC BY( SA)? \d\.\d\b/g, '').match(/\$?\d[\d,]*(\.\d+)?/g) || []).map(n => n.replace(/,+$/, '')).filter(n => n.replace(/[$,.]/g, '').length >= 2));
   const unknown = [...nums].filter(n => !LLMS.includes(n.replace(/^\$/, '')) && !/^\d{1,2}:\d\d$/.test(n));
   const clock = /^(1[0-2]|[1-9])$/;
   const bad = unknown.filter(n => !clock.test(n));
@@ -98,6 +101,11 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await p.waitForTimeout(1800); await shot('00e-card');
   const cardTxt = await p.textContent('[data-built-card]').catch(() => '');
   if (!/Operations and Logistics/i.test(cardTxt) || !/Built by Test Visitor/.test(cardTxt)) errs.push(`${name} card text wrong: ${cardTxt.slice(0, 120)}`);
+  // the funnel for someone hiring: the role's resume beside Enter, one fine line, nothing on the card
+  const fun = await p.evaluate(() => ({ resume: document.querySelector('#intro [data-built] [data-build-resume]')?.getAttribute('href') || '', line: (document.querySelector('#intro [data-built-more]:not([hidden])') || {}).textContent || '', ref: !!document.querySelector('#intro [data-referral]') }));
+  if (!/Resume_Operations_and_Logistics\.pdf/.test(fun.resume)) errs.push(`${name} hiring card has no Resume for this role: ${fun.resume}`);
+  if (!/open to full-time, part-time and contract roles/.test(fun.line) || fun.ref) errs.push(`${name} hiring card line wrong ${JSON.stringify(fun)}`);
+  if (/open to/i.test(cardTxt)) errs.push(`${name} availability is on the card itself`);
   await textRules(p, `${name} card`); await overflow(p, `${name} card`);
   await p.click('[data-enter]');
   await p.waitForSelector('#intro', { state: 'detached', timeout: 6000 }).catch(() => errs.push(`${name} title screen did not leave`));
@@ -190,6 +198,8 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await p.click('#build [data-art="the-inbound"]'); await p.waitForTimeout(500);
   const bs = await p.evaluate(() => { const b = window.JG_BUILD.get(); return { id: b.id, a: b.a, p: b.p.length, n: b.n, card: document.querySelector('#build .bcard__class')?.textContent }; });
   if (bs.id !== 'it' || bs.a !== 'the-inbound' || bs.p !== 4 || !/IT and Systems Support/i.test(bs.card || '')) errs.push(`${name} build edits did not stick ${JSON.stringify(bs)}`);
+  const p2f = await p.evaluate(() => ({ line: !!document.querySelector('#build .build__acts [data-open-line]'), hire: !!document.querySelector('#build [data-hire-line]'), ref: !!document.querySelector('#build [data-referral-line]'), card: document.querySelector('#build .bcard')?.textContent || '' }));
+  if (!p2f.line || p2f.hire || p2f.ref || /open to/i.test(p2f.card)) errs.push(`${name} Player 2 funnel for someone hiring ${JSON.stringify({ ...p2f, card: undefined })}`);
   await shot('09c-build-edited'); await textRules(p, `${name} build screen`); await overflow(p, `${name} build screen`);
   const dl = p.waitForEvent('download', { timeout: 8000 }).catch(() => null);
   await p.click('#build [data-save]');
@@ -277,6 +287,7 @@ if (!only || only === 'mobile') {
   const sh = await q.evaluate(() => ({ open: !!document.querySelector('#build.is-open'), lede: document.querySelector('#build .build__lede')?.textContent || '', card: document.querySelector('#build .bcard__class')?.textContent || '', fin: !!document.querySelector('#build .bcard--silver') }));
   if (!sh.open || !/Sam built me for/.test(sh.lede) || !/IT and Systems Support/i.test(sh.card) || !sh.fin) errs.push(`shared build did not open as left ${JSON.stringify(sh)}`);
   else notes.push('shared build link: title screen first, then Sam\'s build');
+  if (!(await q.evaluate(() => !!document.querySelector('#build [data-open-line]')))) errs.push('shared build opened by someone hiring has no availability line');
   await q.screenshot({ path: path.join(OUT, 'lib-shared-build.png') }); await overflow(q, 'shared build');
   // ?for=it from an application: the role is highlighted, and the library reads for it even when skipped
   const c3 = await ctxFor(1280, 800, false); await c3.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
@@ -289,11 +300,62 @@ if (!only || only === 'mobile') {
   const f3 = await r3.evaluate(() => ({ url: location.search, slot: document.querySelector('[data-p2]')?.textContent || '', resume: document.querySelector('.sys [data-resume]')?.getAttribute('href') || '', focus: document.querySelector('.tile.is-focus')?.dataset.title }));
   if (f3.url || !/Read for IT/.test(f3.slot) || !/IT_and_Systems_Support/.test(f3.resume) || f3.focus !== 'lead-to-title') errs.push(`?for=it did not read the library for IT ${JSON.stringify(f3)}`);
   else notes.push('?for=it: role highlighted, library and Resume read for IT');
+  // nothing built yet: Player 2 is the reading as I sent it, then Make it yours
+  await r3.keyboard.press('j'); await r3.waitForSelector('#build.is-open', { timeout: 4000 }).catch(() => {}); await r3.waitForTimeout(800);
+  const sent = await r3.evaluate(() => ({ lede: document.querySelector('#build .build__lede')?.textContent || '', hl: document.querySelector('#build .build__hl')?.textContent || '', resume: document.querySelector('#build [data-build-resume]')?.getAttribute('href') || '', line: !!document.querySelector('#build [data-open-line]'), make: !!document.querySelector('#build [data-make-yours]'), chips: document.querySelectorAll('#build [data-pick]').length }));
+  if (!/reading I sent you/.test(sent.lede) || !/IT and Systems Support/.test(sent.lede) || !sent.hl || !/IT_and_Systems_Support/.test(sent.resume) || !sent.line || !sent.make || sent.chips) errs.push(`?for=it Player 2 did not show the reading as sent ${JSON.stringify(sent)}`);
+  await textRules(r3, '?for=it Player 2'); await overflow(r3, '?for=it Player 2');
+  await r3.click('#build [data-make-yours]'); await r3.waitForTimeout(700);
+  const made = await r3.evaluate(() => ({ b: window.JG_BUILD.get(), chips: document.querySelectorAll('#build [data-pick]').length }));
+  if (!made.b || made.b.id !== 'it' || !made.chips) errs.push(`Make it yours did not start a build ${JSON.stringify(made)}`);
+  else notes.push('?for=it Player 2: the reading as sent, the resume and the line, then Make it yours');
   await c3.close();
   await q.goto('about:blank');
   await q.goto(URL0 + '?cut=dealer'); await q.waitForSelector('#intro'); await q.click('[data-intro-skip]');
   await q.waitForURL(/obavia\.html/, { timeout: 6000 }).then(() => notes.push('?cut=dealer: on to /obavia.html')).catch(() => errs.push('?cut=dealer did not go to /obavia.html'));
   await c2.close();
+
+  // The dealer: the lot answer and its call to action, then one quiet line for a dealer who is hiring
+  const c5 = await ctxFor(390, 844, true); await c5.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const d5 = await c5.newPage(); d5.on('pageerror', e => errs.push(`dealer funnel pageerror: ${e.message}`));
+  await d5.goto(URL0); await d5.waitForSelector('#intro'); await d5.click('[data-start="off"]'); await d5.waitForSelector('[data-scene="seat"].is-on');
+  await d5.click('[data-role="partner"]'); await d5.waitForSelector('[data-scene="build"].is-on'); await d5.waitForTimeout(500);
+  await d5.click('[data-build-menu] [data-i="1"]'); await d5.waitForSelector('[data-scene="name"].is-on'); await d5.fill('#intro-name', 'Pat'); await d5.keyboard.press('Enter');
+  await d5.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await d5.waitForTimeout(600);
+  const dc = await d5.evaluate(() => ({ more: !document.querySelector('#intro [data-built-more]').hidden, resume: !!document.querySelector('#intro [data-build-resume]') }));
+  if (dc.more || dc.resume) errs.push(`dealer card carries a hiring pitch ${JSON.stringify(dc)}`);
+  await d5.click('[data-enter]'); await d5.waitForSelector('#intro', { state: 'detached', timeout: 6000 }); await d5.waitForTimeout(700);
+  await d5.click('[data-p2]'); await d5.waitForSelector('#build.is-open .bcard'); await d5.waitForTimeout(700);
+  const dl5 = await d5.evaluate(() => ({ cta: !!document.querySelector('#build [data-build-obavia], #build [data-book]'), hire: document.querySelector('#build [data-hire-line]')?.textContent || '', to: document.querySelector('#build [data-hire]')?.getAttribute('data-hire') || '', line: !!document.querySelector('#build [data-open-line]:not([data-hire-line])') }));
+  if (!dl5.cta || !/^Hiring for your lot\? I'm open to full-time, part-time and contract work\./.test(dl5.hire) || dl5.to !== 'title' || dl5.line) errs.push(`dealer Player 2 funnel ${JSON.stringify(dl5)}`);
+  await textRules(d5, 'dealer Player 2'); await overflow(d5, 'dealer Player 2');
+  await d5.click('#build [data-hire]'); await d5.waitForTimeout(800);
+  const dh = await d5.evaluate(() => ({ b: window.JG_BUILD.get(), line: !!document.querySelector('#build [data-open-line]'), resume: document.querySelector('#build [data-build-resume]')?.getAttribute('href') || '', card: document.querySelector('#build .bcard')?.textContent || '' }));
+  if (dh.b.kind !== 'role' || dh.b.id !== 'title' || dh.b.n !== 'Pat' || !dh.line || !/Title_and_Back_Office/.test(dh.resume) || /open to/i.test(dh.card)) errs.push(`dealer hiring link did not switch the build ${JSON.stringify({ ...dh, card: undefined })}`);
+  else notes.push('dealer: lot answer and its call to action, then the hiring line switches to Title and Back Office');
+  await c5.close();
+
+  // Just looking: no availability anywhere, a referral that copies the build link
+  const c6 = await ctxFor(390, 844, true); await c6.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const ev6 = []; await c6.route('**/api/track', r => { try { ev6.push(...JSON.parse(r.request().postData() || '{}').events); } catch {} r.fulfill({ status: 204, body: '' }); });
+  const l6 = await c6.newPage(); l6.on('pageerror', e => errs.push(`lurker funnel pageerror: ${e.message}`));
+  await l6.goto(URL0); await l6.waitForSelector('#intro'); await l6.click('[data-start="off"]'); await l6.waitForSelector('[data-scene="seat"].is-on');
+  await l6.click('[data-role="lurker"]'); await l6.waitForSelector('[data-scene="build"].is-on'); await l6.waitForTimeout(500);
+  await l6.click('[data-build-menu] [data-i="5"]'); await l6.waitForSelector('[data-scene="name"].is-on'); await l6.fill('#intro-name', 'Lou'); await l6.keyboard.press('Enter');
+  await l6.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await l6.waitForTimeout(600);
+  const lc = await l6.evaluate(() => ({ text: document.getElementById('intro').innerText, ref: !!document.querySelector('#intro [data-referral]'), resume: !!document.querySelector('#intro [data-build-resume]') }));
+  if (!lc.ref || lc.resume || /open to/i.test(lc.text)) errs.push(`lurker card funnel ${JSON.stringify({ ref: lc.ref, resume: lc.resume })}`);
+  await l6.click('#intro [data-referral]'); await l6.waitForTimeout(500);
+  const clip = await l6.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+  if (!/#build\/v1\/[a-z-]+\/.+\/Lou$/.test(clip)) errs.push(`referral copied "${clip}"`);
+  await l6.click('[data-enter]'); await l6.waitForSelector('#intro', { state: 'detached', timeout: 6000 }); await l6.waitForTimeout(700);
+  await l6.click('[data-p2]'); await l6.waitForSelector('#build.is-open .bcard'); await l6.waitForTimeout(700);
+  const lp = await l6.evaluate(() => ({ text: document.getElementById('build').innerText, ref: !!document.querySelector('#build [data-referral-line]'), hire: !!document.querySelector('#build [data-hire-line]') }));
+  if (!lp.ref || lp.hire || /open to/i.test(lp.text)) errs.push(`lurker Player 2 funnel ${JSON.stringify({ ref: lp.ref, hire: lp.hire, open: /open to/i.test(lp.text) })}`);
+  await l6.evaluate(() => dispatchEvent(new Event('pagehide'))); await l6.waitForTimeout(900);
+  if (!ev6.some(e => e.event === 'build_link_copied' && e.props && e.props.where === 'referral')) errs.push('the referral was not tracked as build_link_copied where referral');
+  else notes.push('just looking: no availability, the referral copies the build link');
+  await c6.close();
 
   // phone landscape: no overflow, the actions on screen
   const c4 = await ctxFor(844, 390, true); await c4.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
