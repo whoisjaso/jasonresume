@@ -1,6 +1,6 @@
 # The Screening: build spec for the rebuilt jasonobawemimo.com
 
-> Superseded on 2026-10-03 by the dash (HANDOFF.md, section 4, and the direction contract at the top of tools/site/home.body.html). Earlier note, 2026-10-01: The home page is now an App Store Today feed with story cards and the desk as an iPhone app (HANDOFF.md, section 4, is current). The Obavia page is the Obavia app page for Texas dealers. The hiring page is retired. cinema.js, desk.js, games.js and extras.js are removed. The intro and the reel described here still apply.
+> History. Superseded on 2026-10-09 by the After Hours Library (HANDOFF.md, section 4, and the direction contract at the top of tools/site/home.body.html), which replaced the dash of 2026-10-03, which replaced the Today feed of 2026-10-01. Nothing below describes the current site; the claims boundary and the retirements it names still hold.
 
 Written 2026-09-30 from five research tracks (interviewer psychology in the AI-application era, cinematic web craft, the agency-owner buyer, first-party analytics, and a blunt audit of the previous site), three competing concepts, and a judge panel. The winning concept was "The Screening". This file is what the build follows. HANDOFF.md holds the product canon and CLAUDE.md the rules.
 
