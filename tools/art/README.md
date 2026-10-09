@@ -31,3 +31,23 @@ python3 tools/art/grade.py <plate.png> <id> [focus_x] --prompt "<the exact gener
 Bone text has to hold 4.5:1 over the brightest pixel in the zone x 0 to 0.42, y 0.38 to 0.92. Bone's relative luminance is 0.8027, so the zone's max relative luminance must stay at or under 0.1395. The script measures the decoded 1920 WebP, 1920 AVIF and 1280 WebP (grain and compression included), aims for 4.6:1 before encoding, and prints a JSON report with each file's max, p99 and mean luminance and bone's contrast on the max, plus the mobile bottom band (y 0.62 to 0.96 of the portrait crop) for information.
 
 Tested on a synthetic 2560x1440 night plate (a sodium light pool, a wet-floor streak, material swatches, a grey ramp, and a stray lamp left in the text zone on purpose): the limiter caught the lamp and the zone measured 0.134 max luminance, 4.63:1 on the 1920 WebP (4.70:1 on the 1280, 4.76:1 on the AVIF), with the recompose warning. The same plate without the lamp measured 0.0115, 13.9:1, shade at its base strength and the limiter untouched. 1920 WebP about 195KB at quality 90, AVIF about 137KB. Test outputs were deleted.
+
+# Medals: trophies and proof medals
+
+`medal_glyphs.py` authors every glyph as geometry on a 48 unit grid (stroke 3, round caps and joins, no fills, under lines cut back where another line crosses over them) and writes the SVGs to `assets/game/medals/glyphs`. `medals.py` reads those SVGs back, cuts each one as a recessed V groove into the one nickel-silver base (`candidates/medal-base.png`), strikes it in its tier's metal and writes `<slug>-160.webp` and `<slug>-80.webp` to `assets/game/medals`, each with a provenance `.json` sidecar through `embed-prompt.mjs`. The 80 pixel file is cut 12 percent wider for its smaller optical size.
+
+There are two sets. The 18 trophies (`TROPHIES` in medals.py) belong to the library. The 16 proof medals (`PROOFS`, silver except `neuron` in bronze) belong to the visitor's build card: crew, payroll, help-desk, access, network, built-not-bought, on-the-line, handshake, filed, deal-jacket, in-order, collections, data-model, shipped, every-form, neuron.
+
+```
+python3 tools/art/medal_glyphs.py --proofs          # rewrite the proof glyph SVGs
+python3 tools/art/medal_glyphs.py crew,payroll      # rewrite named glyphs; no argument rewrites all 34
+python3 tools/art/medals.py --proofs                # strike the 16 proof medals only
+python3 tools/art/medals.py --only crew,payroll     # strike named medals only (commas or spaces)
+python3 tools/art/medals.py --trophies              # strike the 18 trophies only
+python3 tools/art/medals.py                         # everything: all 34, the blanks, the sheen, both sheets
+```
+
+- A partial run (`--proofs`, `--trophies` or `--only`) writes only the medals it names and their sidecars, so the rest stay byte-identical. The blanks, `sheen.webp` and `candidates/medals-contact.png` come only from a full run. An unknown slug stops the run before anything is written.
+- Any run that strikes a proof medal also writes `candidates/medals-contact-proofs.png`: all 34 as they stand on disk, at 80 and 40 pixels on ink. Read it before shipping: each glyph has to read at 40 pixels, sit centred, match the family's weight and stay distinct from its neighbours.
+- `OFFSETS` in medal_glyphs.py nudges a glyph's mass onto the medal's centre; a glyph that runs large is scaled inside its own function. medals.py warns when a stroke reaches the bevel.
+- `--no-provenance` is for test runs you delete; `--embed-script` or `EMBED_PROMPT` points at `embed-prompt.mjs` when it is not under `~/.claude/skills`. Check with `node <embed-prompt.mjs> --scan assets/game/medals` (0 missing).

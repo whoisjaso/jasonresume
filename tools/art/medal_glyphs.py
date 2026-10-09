@@ -819,9 +819,10 @@ def g_every_form():
     card = rrect(7.5, 24.5, 30.5, 40.5, 2.5)
     forms = behind(behind(back, front) + [front] + rows, card)
     photo = rrect(11.5, 28.5, 17.5, 34.5, 1.5)
-    lines = [poly((21.5, 30), (26.5, 30)), poly((21.5, 34.5), (23, 34.5))]
-    corners = [poly((3, 26.5), (3, 20.5), (9, 20.5)), poly((3, 38.5), (3, 44.5), (9, 44.5)), poly((35, 38.5), (35, 44.5), (29, 44.5))]
-    return [xf(q, Xf(s=0.88)) for q in forms + [card, photo] + lines + corners]
+    line = poly((21.5, 31.5), (26.5, 31.5))
+    # two of the scanner's corners, across the diagonal: four read as a frame round nothing at 40 pixels
+    corners = [poly((3, 26.5), (3, 20.5), (9, 20.5)), poly((35, 38.5), (35, 44.5), (29, 44.5))]
+    return [xf(q, Xf(s=0.92)) for q in forms + [card, photo, line] + corners]
 
 def g_neuron():
     """A neuron: the cell body, its forked dendrites, the axon and its terminals."""
@@ -889,7 +890,7 @@ OFFSETS = {
     # the proof medals
     "crew": (0.4, -0.8), "help-desk": (0.5, -1.2), "network": (0, -2.4), "built-not-bought": (-1.0, 2.4),
     "on-the-line": (-0.5, 0.6), "handshake": (0, -1.0), "filed": (1.5, 0), "deal-jacket": (-0.4, -1.4),
-    "in-order": (0, -0.7), "shipped": (0, -2.0), "every-form": (1.6, -0.9), "neuron": (1.0, 0.6), "data-model": (0.6, 0),
+    "in-order": (0, -0.7), "shipped": (0, -2.0), "every-form": (1.4, -0.9), "neuron": (1.0, 0.6), "data-model": (0.6, 0),
 }
 
 
