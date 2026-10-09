@@ -104,22 +104,24 @@ export const Relight: React.FC<{ id: string; tint: Tint; gain: number; gamma?: n
   </>
 );
 
-/* film grain, fresh every frame: overlay, so it rides the plate's tones and never lifts black */
-export const Grain: React.FC<{ amount?: number }> = ({ amount = lib.grain }) => {
+/* film grain, fresh every frame, as a filter over the finished stage: overlay,
+   so it rides the plate's tones and never lifts black, then mixed back in with
+   exact arithmetic. (A blended layer with opacity rounds up in the compositor
+   and lifts every dark pixel by half a level; this keeps the grain zero-mean.) */
+export const GrainFilter: React.FC<{ amount?: number }> = ({ amount = lib.grain }) => {
   const frame = useCurrentFrame();
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: "absolute", inset: 0, mixBlendMode: "overlay", opacity: amount, pointerEvents: "none" }}>
-      <filter id="grain" filterUnits="userSpaceOnUse" x="0" y="0" width={W} height={H} colorInterpolationFilters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.92" numOctaves="2" seed={(frame % LOOP.frames) + 1} stitchTiles="noStitch" />
-        <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0 1" />
-        <feComponentTransfer>
-          <feFuncR type="linear" slope="2.6" intercept="-0.8" />
-          <feFuncG type="linear" slope="2.6" intercept="-0.8" />
-          <feFuncB type="linear" slope="2.6" intercept="-0.8" />
-        </feComponentTransfer>
-      </filter>
-      <rect x="0" y="0" width={W} height={H} filter="url(#grain)" />
-    </svg>
+    <filter id="film" filterUnits="userSpaceOnUse" x="0" y="0" width={W} height={H} colorInterpolationFilters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.92" numOctaves="2" seed={(frame % LOOP.frames) + 1} stitchTiles="noStitch" result="noise" />
+      <feColorMatrix in="noise" type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0 1" result="grey" />
+      <feComponentTransfer in="grey" result="grain">
+        <feFuncR type="linear" slope="2.6" intercept="-0.787" />
+        <feFuncG type="linear" slope="2.6" intercept="-0.787" />
+        <feFuncB type="linear" slope="2.6" intercept="-0.787" />
+      </feComponentTransfer>
+      <feBlend in="grain" in2="SourceGraphic" mode="overlay" result="filmic" />
+      <feComposite in="filmic" in2="SourceGraphic" operator="arithmetic" k1="0" k2={amount} k3={1 - amount} k4="0" />
+    </filter>
   );
 };
 
@@ -133,13 +135,15 @@ export const LoopStage: React.FC<{ id: string; children?: React.ReactNode }> = (
       <PlateCtx.Provider value={href}>
         <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: "absolute", inset: 0 }}>
           <SharedDefs />
-          <g transform={`translate(${PUSH.ox} ${PUSH.oy}) scale(${s}) translate(${-PUSH.ox} ${-PUSH.oy})`}>
-            <PlateImage />
-            {children}
+          <GrainFilter />
+          <g filter="url(#film)">
+            <g transform={`translate(${PUSH.ox} ${PUSH.oy}) scale(${s}) translate(${-PUSH.ox} ${-PUSH.oy})`}>
+              <PlateImage />
+              {children}
+            </g>
           </g>
         </svg>
       </PlateCtx.Provider>
-      <Grain />
     </AbsoluteFill>
   );
 };

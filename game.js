@@ -210,7 +210,7 @@
     showing = true;
     var q = queue.shift(), tr = LIB.trophies[q.slug];
     var el = document.createElement("div"); el.className = "toast toast--trophy toast--" + tr.tier;
-    el.innerHTML = '<span class="toast__medal">' + medal(q.slug, 52) + '<img class="toast__sheen" src="assets/game/medals/sheen.webp" alt="" /></span><span class="toast__txt"><p class="toast__k">' + tierWord(tr.tier) + ' trophy</p><p class="toast__t">' + E(tr.name) + '</p><p class="toast__s">' + E(tr.desc) + (q.more > 0 ? " And " + q.more + " more in this title." : "") + "</p></span>";
+    el.innerHTML = '<span class="toast__medal">' + medal(q.slug, 52) + '<img class="toast__sheen" src="assets/game/medals/sheen.webp" alt="" /></span><span class="toast__txt"><p class="toast__t">' + E(tr.name) + "<small>" + tierWord(tr.tier) + ' trophy</small></p><p class="toast__s">' + E(tr.desc) + (q.more > 0 ? " And " + q.more + " more in this title." : "") + "</p></span>";
     tbox.appendChild(el);
     if (live) live.textContent = tierWord(tr.tier) + " trophy. " + tr.name + ". " + tr.desc;
     requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-on"); }); });

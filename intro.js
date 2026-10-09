@@ -192,7 +192,7 @@
     if (it.kind === "spin") { pv.innerHTML = ""; return; }
     var src = it.kind === "role" ? BD.builds.filter(function (b) { return b.id === it.id; })[0] : BD.lot.filter(function (l) { return l.id === it.id; })[0];
     var proofs = src.proofs.slice(0, BD.equip);
-    pv.innerHTML = '<p class="cls__k">' + E(it.kind === "lot" ? "At Triple J" : W.preview_k) + '</p><h3 class="cls__name">' + E(src.label) + '</h3><p class="cls__line">' + E(it.kind === "lot" ? src.line : src.headline) + '</p><ul class="cls__proofs">' + proofs.map(function (x) { var p = BD.proofs[x]; return '<li><img class="bcard__medal" src="assets/game/medals/' + p.medal + '-80.webp" data-tier="' + p.tier + '" alt="" width="44" height="44" /><span>' + E(p.short) + "</span></li>"; }).join("") + "</ul>" + (it.kind === "role" ? '<p class="cls__for">Written for ' + E(src.targets.join(", ")) + ".</p>" : "");
+    pv.innerHTML = '<h3 class="cls__name">' + E(src.label) + '</h3><p class="cls__line">' + E(it.kind === "lot" ? src.line : src.headline) + '</p><ul class="cls__proofs">' + proofs.map(function (x) { var p = BD.proofs[x]; return '<li><img class="bcard__medal" src="assets/game/medals/' + p.medal + '-80.webp" data-tier="' + p.tier + '" alt="" width="44" height="44" /><span>' + E(p.short) + "</span></li>"; }).join("") + "</ul>" + (it.kind === "role" ? '<p class="cls__for">Written for ' + E(src.targets.join(", ")) + ".</p>" : "");
     showArt(bTitle(it));
   }
   function showArt(id) {

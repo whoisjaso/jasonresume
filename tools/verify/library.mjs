@@ -138,7 +138,7 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
 
   // Opening a title: its own page, a trophy, the sections, the desk demo
   if (mobile) await p.click('article.title.is-focus [data-open-title]'); else await p.keyboard.press('Enter');
-  await p.waitForTimeout(1300);
+  await p.waitForSelector('article.title.is-open', { timeout: 4000 }).catch(() => {}); await p.waitForTimeout(600);
   const opened = await p.evaluate(() => ({ open: !!document.querySelector('article.title.is-open'), hash: location.hash, toast: !!document.querySelector('.toast--trophy') }));
   if (!opened.open || opened.hash !== '#title/lead-to-title') errs.push(`${name} title did not open ${JSON.stringify(opened)}`);
   if (!opened.toast) errs.push(`${name} first open gave no trophy toast`);

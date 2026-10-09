@@ -108,7 +108,7 @@
       '<img class="bcard__portrait" src="assets/game/portrait/jason-relit-800.webp" alt="" decoding="async" />' +
       '<div class="bcard__frame"></div>' +
       '<header class="bcard__top"><p class="bcard__name">Jason Obawemimo</p><p class="bcard__title">' + E(LIB.profile && LIB.profile.title || "AI Implementation, Workflow Automation, CRM Systems") + "</p></header>" +
-      '<div class="bcard__mid"><p class="bcard__k">' + (b.kind === "lot" ? "Your lot" : "Built for") + '</p><h3 class="bcard__class">' + E(label(b)) + '</h3><p class="bcard__line">' + E(line(b)) + "</p></div>" +
+      '<div class="bcard__mid"><h3 class="bcard__class">' + E(label(b)) + '</h3><p class="bcard__line">' + E(line(b)) + "</p></div>" +
       '<ul class="bcard__proofs">' + b.p.map(function (x) {
         var p = P[x];
         return '<li><img class="bcard__medal" src="' + medalSrc(p.medal, 80) + '" data-tier="' + p.tier + '" alt="" />' + "<span>" + E(p.short) + "</span></li>";
@@ -155,13 +155,12 @@
       c.textBaseline = "alphabetic"; c.fillStyle = "#ede7db";
       c.font = '600 ' + (4.1 * U) + 'px "Cormorant Garamond", Garamond, serif'; tracked(c, "JASON OBAWEMIMO", L, 11.9 * U, 0.6 * U);
       c.fillStyle = "#9a9890"; c.font = '400 ' + (2.05 * U) + 'px "Hanken Grotesk", sans-serif'; c.fillText((LIB.profile && LIB.profile.title) || "AI Implementation, Workflow Automation, CRM Systems", L, 16.05 * U);
-      c.fillStyle = fin; c.font = '500 ' + (1.85 * U) + 'px "Hanken Grotesk", sans-serif'; tracked(c, (b.kind === "lot" ? "YOUR LOT" : "BUILT FOR"), L, 30.5 * U, 0.55 * U);
       c.fillStyle = "#ede7db"; c.font = '500 ' + (6.2 * U) + 'px "Cormorant Garamond", Garamond, serif';
       if ("letterSpacing" in c) c.letterSpacing = (0.434 * U) + "px";
       var cl = wrap(c, label(b).toUpperCase(), 56 * U); if ("letterSpacing" in c) c.letterSpacing = "0px";
-      cl.forEach(function (t, i) { tracked(c, t, L, (38 + i * 6.6) * U, 0.434 * U); });
+      cl.forEach(function (t, i) { tracked(c, t, L, (35.16 + i * 6.6) * U, 0.434 * U); });
       c.fillStyle = "#d9d2c4"; c.font = '400 ' + (2.75 * U) + 'px "Hanken Grotesk", sans-serif';
-      wrap(c, line(b), 52 * U).slice(0, 4).forEach(function (t, i) { c.fillText(t, L, (37.83 + 6.6 * cl.length + i * 3.9) * U); });
+      wrap(c, line(b), 52 * U).slice(0, 4).forEach(function (t, i) { c.fillText(t, L, (34.98 + 6.6 * cl.length + i * 3.9) * U); });
       /* the proofs: medal and line */
       var py = 72 * U, row = 9.6 * U;
       c.font = '500 ' + (2.6 * U) + 'px "Hanken Grotesk", sans-serif';
@@ -240,7 +239,7 @@
   function render() {
     if (!scr) return;
     var v = viewing, b = v || mine(), role = store.get("jg_role");
-    var html = '<a class="screen__back btn btn--sm btn--ghost" href="#library" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-left"/></svg>Library</a>';
+    var html = '<a class="btn btn--ghost screen__back" href="#library" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-back"/></svg>Back</a>';
     html += '<div class="build__grid"><div class="build__cardwrap" data-cardwrap>' + cardHTML(b) + "</div><div class=\"build__panel\">";
     if (v) {
       var who = v.n ? E(v.n) + " built me for " : "Someone built me for ";
