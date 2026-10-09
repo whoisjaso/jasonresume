@@ -8,6 +8,7 @@ Everything that produced the site's media and proved it works, moved out of the 
 | `film/` | The Remotion project: the signature film (`Signature`, `SignaturePortrait`). `Screen` and `Vsl` are retired compositions kept for reference. | Node 20+, `npm install` inside `tools/film`, Chromium (Remotion downloads one, or set `PW_CHROMIUM`). |
 | `voice/` | Trailer lines in Jason's cloned voice (Chatterbox). The guide lines and the visitor replies are retired. | Python 3.11, `pip install chatterbox-tts soundfile imageio-ffmpeg`; your reference recording at `tools/voice/ref.wav` (gitignored, never commit it). |
 | `vsl/` | Retired, never current: the partner (agency) film pipeline. Its scripts read `tools/vsl/lines.json`, which is gone; kept for reference only. | The two above. |
+| `score/` | The adaptive score in `assets/score/`: the notes as data (`score.py`), a theory check, the SFZ sampler, render, encode and verify. See `tools/score/README.md`. | Python 3.11 with numpy, scipy, soundfile, pyloudnorm, matplotlib, mido, numba; an ffmpeg with libopus and libmp3lame; the sample libraries in a work folder outside the repo (the README lists the downloads). |
 | `sfx/` | Rebuilds `assets/sfx` from the raw Mixkit recordings. | `pip install soundfile numpy imageio-ffmpeg`; raw files in `tools/sfx/raw/` (see `assets/sfx/CREDITS.md`). |
 | `verify/` | Playwright harnesses that play the home page, the Obavia page, overflow, and the resume PDF against a local server. | `npm install playwright` at the repo root, a local server on port 8765. |
 

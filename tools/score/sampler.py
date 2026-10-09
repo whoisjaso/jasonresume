@@ -132,8 +132,9 @@ def _resampled(path, offset, ratio, need_out):
 
 
 class Instrument:
-    def __init__(self, sfz_path, seed=1):
+    def __init__(self, sfz_path, seed=1, pedal_noise=False):
         self.regions = parse_sfz(sfz_path)
+        self.pedal_noise = pedal_noise
         self.rng = np.random.default_rng(seed)
         self.seq = {}
 
@@ -204,7 +205,7 @@ class Instrument:
                 t = np.arange(n - k) / SR
                 level = env[k] if k < n else 1.0
                 env[k:] = level * np.power(10.0, -3.0 * t / rel)     # -60 dB at `rel`
-                cut = k + int(rel * SR)
+                cut = k + int(1.5 * rel * SR)                         # zero only below -90 dB
                 if cut < n:
                     env[cut:] = 0
         yy = y * (env * amp)[:, None]
@@ -260,7 +261,7 @@ class Instrument:
                 att = 10 ** (-(r['rt_decay'] * dur) / 20.0)
                 self._voice(r, n, v, off, None, out, gain_extra=att)
         # pedal mechanics noises
-        for (pt, v) in pedal:
+        for (pt, v) in (pedal if self.pedal_noise else []):
             rnd = self.rng.random()
             for r in self.regions:
                 if r['on_cc64'] and r['on_cc64'][0] <= v <= r['on_cc64'][1] and r['lorand'] <= rnd < r['hirand']:

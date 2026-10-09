@@ -112,22 +112,43 @@ HEADER = {'ogg': opus_info, 'm4a': m4a_info, 'mp3': mp3_info}
 
 
 # -------------------------------------------------------------- measures ---
-def seam(x, ref_at):
-    """jump ratio and HF ratio at the wrap, plus the same at ordinary bar lines."""
-    def at(y, k):
-        d = np.abs(np.diff(y, axis=0)).max(1)
-        jump = d[k - 1]
-        ref = np.percentile(np.delete(d, [k - 1]), 99.9)
-        h = A.hpf(y, 5000, 4)
-        e = (h ** 2).sum(1)
-        w = int(0.002 * SR)
-        wins = np.array([e[i:i + w].sum() for i in range(0, len(e) - w, w)])
-        sw = wins[(k - w // 2) // w]
-        return float(jump / (ref + 1e-20)), float(10 * np.log10((sw + 1e-30) / (np.median(wins) + 1e-30)))
-    wrap = at(np.vstack([x[-SR:], x[:SR]]), SR)
-    refs = [at(x[r - SR:r + SR], SR) for r in ref_at]
-    return {'wrap_jump_ratio': round(wrap[0], 3), 'wrap_hf_db': round(wrap[1], 2),
-            'barline_jump_ratio_max': round(max(r[0] for r in refs), 3), 'barline_hf_db_max': round(max(r[1] for r in refs), 2)}
+def _hf_max(y, c, half_ms=10.0):
+    """Largest 2 ms high-frequency (>5 kHz) energy within +-half_ms of sample c."""
+    h = A.hpf(y, 5000, 4)
+    e = (h ** 2).sum(1)
+    w = int(0.002 * SR)
+    lo, hi = c - int(half_ms * SR / 1000), c + int(half_ms * SR / 1000)
+    return 10 * np.log10(max(e[i:i + w].sum() for i in range(lo, hi - w)) + 1e-30)
+
+
+def seam(x, bar_n, master=None):
+    """Wrap point versus ordinary bar lines. A click would make the wrap's HF
+    burst stand above every bar line, and its sample jump far above the
+    99.9th percentile of neighbouring differences. With a master, also the
+    codec residual (decoded minus master) at the wrap versus elsewhere."""
+    y = np.vstack([x[-SR:], x[:SR]])
+    d = np.abs(np.diff(y, axis=0)).max(1)
+    jump = float(d[SR - 1] / (np.percentile(np.delete(d, [SR - 1]), 99.9) + 1e-20))
+    wrap = _hf_max(y, SR)
+    bars = [_hf_max(x[b - SR:b + SR], SR) for b in range(bar_n, len(x) - bar_n // 2, bar_n)]
+    out = {'wrap_jump_ratio': round(jump, 3), 'wrap_hf_minus_max_barline_db': round(wrap - max(bars), 2),
+           'wrap_hf_minus_median_barline_db': round(wrap - float(np.median(bars)), 2)}
+    if master is not None:
+        r = x[:len(master)] - master[:len(x)]
+        ry = np.vstack([r[-SR:], r[:SR]])
+        w = int(0.02 * SR)
+        e_wrap = (ry[SR - w // 2:SR + w // 2] ** 2).sum()
+        segs = np.array([(r[i:i + w] ** 2).sum() for i in range(0, len(r) - w, w)])
+        out['codec_residual_at_wrap_vs_median_db'] = round(10 * np.log10((e_wrap + 1e-30) / (np.median(segs) + 1e-30)), 2)
+        out['codec_residual_at_wrap_vs_p99_db'] = round(10 * np.log10((e_wrap + 1e-30) / (np.percentile(segs, 99) + 1e-30)), 2)
+    return out
+
+
+def lag(x, ref):
+    a, b = x[:5 * SR].mean(1), ref[:5 * SR].mean(1)
+    c = signal.correlate(a, b, mode='full', method='fft')
+    m = len(b) - 1
+    return int(np.argmax(c[m - 3000:m + 3001])) - 3000
 
 
 def ebur(x):
@@ -174,15 +195,17 @@ def main():
     masters = {k: sf.read(os.path.join(WAV, '%s.wav' % k), always_2d=True)[0] for k in man['stems']}
     decoded = {f: {} for f in FMTS}
     for k, ent in man['stems'].items():
-        r = {'master_samples': len(masters[k]), 'master_seam': seam(masters[k], refs)}
+        r = {'master_samples': len(masters[k]), 'master_seam': seam(masters[k], bar_n)}
         for f in FMTS:
             path = os.path.join(ASSETS, ent[f])
             x = A.decode(path)
             decoded[f][k] = x
             info = HEADER[f](path)
             n = len(x)
+            xn = x[:N] if n >= N else np.vstack([x, np.zeros((N - n, 2))])
             r[f] = {'decoded_samples': n, 'delta_samples': n - N, 'within_one_frame': abs(n - N) <= 1024,
-                    'header': info, 'seam': seam(x[:N] if n >= N else np.vstack([x, np.zeros((N - n, 2))]), refs),
+                    'offset_vs_master_samples': lag(x, masters[k]),
+                    'header': info, 'seam': seam(xn, bar_n, masters[k]),
                     'clipped': int((np.abs(x) >= 1.0).sum()), 'peak_dbfs': round(A.peak_db(x), 2),
                     'size_kb': round(os.path.getsize(path) / 1024, 1)}
         rep['loops'][k] = r
@@ -241,11 +264,12 @@ def main():
                     'bed_ogg_kb': round(os.path.getsize(os.path.join(ASSETS, man['stems']['bed']['ogg'])) / 1024, 1)}
     json.dump(rep, open(os.path.join(WAV, 'verify_report.json'), 'w'), indent=1, default=float)
     # summary
-    print('loops (decoded samples vs %d; wrap jump ratio / HF dB, bar-line max for comparison)' % N)
+    print('loops: decoded length vs %d, offset vs master, wrap jump ratio, wrap HF minus loudest bar line (dB), codec residual at wrap vs median (dB)' % N)
     for k, r in rep['loops'].items():
-        print('  %-14s ' % k + '  '.join('%s %+d %s j%.2f/%.1fdB' % (f, r[f]['delta_samples'], 'ok' if r[f]['within_one_frame'] else 'BAD',
-                                                                     r[f]['seam']['wrap_jump_ratio'], r[f]['seam']['wrap_hf_db']) for f in FMTS)
-              + '  | bars j%.2f/%.1fdB' % (r['ogg']['seam']['barline_jump_ratio_max'], r['ogg']['seam']['barline_hf_db_max']))
+        print('  %-14s master j%.2f hf%+.1f | ' % (k, r['master_seam']['wrap_jump_ratio'], r['master_seam']['wrap_hf_minus_max_barline_db'])
+              + '  '.join('%s %+d off%+d j%.2f hf%+.1f res%+.1f' % (f, r[f]['delta_samples'], r[f]['offset_vs_master_samples'],
+                          r[f]['seam']['wrap_jump_ratio'], r[f]['seam']['wrap_hf_minus_max_barline_db'],
+                          r[f]['seam']['codec_residual_at_wrap_vs_median_db']) for f in FMTS))
     print('headers', json.dumps({f: rep['loops']['bed'][f]['header'] for f in FMTS}))
     print('pairs (I LUFS / TP dBTP / LRA), wav and decoded ogg:')
     for k, r in rep['pairs'].items():

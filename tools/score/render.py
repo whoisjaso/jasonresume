@@ -51,8 +51,8 @@ FAMILY = {
     'cb': dict(hpf=28, lpf=5000, eq=[('peak', 220, -2.0, 0.9)], tape=-34, send={'hall': 0.14}),
     'vla_trem': dict(hpf=110, lpf=6000, eq=[('peak', 300, -2.0, 1.0), ('peak', 3500, -2.0, 1.0)], tape=-40, send={'hall': 0.40}),
     'vln_trem': dict(hpf=150, lpf=6500, eq=[('peak', 3500, -2.0, 1.0)], tape=-40, send={'hall': 0.40}),
-    'felt': dict(hpf=38, eq=[('peak', 240, -1.5, 0.9)], tape=-42, send={'hall': 0.26, 'chamber': 0.16}),
-    'piano': dict(hpf=40, eq=[('peak', 280, -2.0, 0.9), ('peak', 3200, -1.0, 1.2), ('highshelf', 9000, 1.0, 0.7)],
+    'felt': dict(hpf=38, eq=[('peak', 180, -2.0, 0.9), ('peak', 300, -1.5, 1.0)], tape=-42, send={'hall': 0.26, 'chamber': 0.16}),
+    'piano': dict(hpf=60, eq=[('peak', 280, -2.0, 0.9), ('peak', 3200, -1.0, 1.2), ('highshelf', 9000, 1.0, 0.7)],
                   tape=-42, send={'chamber': 0.18, 'hall': 0.24, 'plate': 0.05}),
     'vibes': dict(hpf=120, eq=[('peak', 3000, -1.0, 1.0)], tape=None, send={'plate': 0.20, 'hall': 0.26}),
     'vibes_short': dict(hpf=140, eq=[('peak', 3000, -1.0, 1.0)], tape=None, send={'plate': 0.20, 'hall': 0.24}),
@@ -62,19 +62,20 @@ FAMILY = {
 }
 # per part: (pan, loudness target LUFS within the stem, extra overrides)
 PART = {
-    'bed': {'cb': (0.2, -27.0, {}), 'vc': (0.3, -28.0, {}), 'pad_vla': (0.15, -29.5, {'send': {'hall': 0.38}}),
+    'bed': {'cb': (0.2, -29.0, {}), 'vc': (0.3, -29.5, {'eq': [('peak', 250, -3.0, 0.9)]}), 'pad_vla': (0.15, -29.5, {'send': {'hall': 0.38}}),
             'pad_vln2': (-0.15, -30.5, {'send': {'hall': 0.38}}), 'pad_vln1': (-0.3, -30.5, {'send': {'hall': 0.38}}),
             'felt': (0.0, -24.0, {}), 'glass': (0.05, -34.0, {})},
-    'triple-j': {'melody': (0.1, -21.0, {'hpf': 80}), 'chord_vla': (0.25, -28.0, {}), 'chord_vln2': (-0.2, -29.0, {}),
+    'triple-j': {'melody': (0.1, -21.0, {'hpf': 80, 'eq': [('peak', 250, -3.0, 0.9), ('peak', 2200, 2.0, 0.8)]}), 'chord_vla': (0.25, -28.0, {}), 'chord_vln2': (-0.2, -29.0, {}),
                  'chord_vln1': (-0.35, -29.5, {})},
     'lead-to-title': {'vibes_l': (-0.6, -24.0, {}), 'vibes_r': (0.6, -25.0, {}), 'chimes': (0.0, -31.0, {})},
-    'the-inbound': {'cello': (0.25, -22.0, {'hpf': 70}), 'piano': (-0.15, -23.0, {})},
+    'the-inbound': {'cello': (0.25, -22.0, {'hpf': 70, 'eq': [('peak', 250, -3.0, 0.9), ('peak', 2200, 1.5, 0.8)]}), 'piano': (-0.15, -23.0, {})},
     'prospector': {'marimba': (-0.25, -22.0, {}), 'marimba_echo': (0.5, -28.5, {})},
     'neuroscience': {'q_vc': (0.35, -27.0, {'hpf': 60}), 'q_vla': (0.15, -28.0, {}), 'q_vln2': (-0.15, -28.5, {}),
                      'q_vln1': (-0.35, -28.0, {}), 'piano': (0.0, -22.0, {})},
     'obavia': {'trem_lo': (0.25, -27.5, {}), 'trem_hi': (-0.25, -27.5, {}), 'voice': (0.0, -24.0, {'lpf': 4500}),
                'voice_glass': (0.0, -30.0, {})},
 }
+AIR_DB = {'bed': 1.5, 'lead-to-title': 1.5, 'prospector': 1.5}
 REVERBS = {'hall': (18.0, 180.0, 8500.0, 1.0), 'chamber': (6.0, 220.0, 9000.0, 0.9), 'plate': (10.0, 300.0, 10000.0, 0.8)}
 _INST = {}
 _IRS = {}
@@ -180,6 +181,8 @@ def render_stem(layer):
             sends[rv] += x * amt
         report[name] = dict(info, lufs=round(A.lufs(x), 1))
     stem = dry + reverb_returns(sends, TOTAL)
+    # a little air on every stem (the sampled strings and felt are dark)
+    stem = A.eq(stem, [('highshelf', 7000, AIR_DB.get(layer, 2.0), 0.7)])
     end_db = 20 * np.log10(np.abs(stem[-int(0.5 * SR):]).max() + 1e-12) - A.peak_db(stem)
     loop = fold(stem)
     return loop, report, end_db
@@ -204,6 +207,12 @@ def render_sting(name):
         cfg = dict(FAMILY.get(fam, FAMILY['vibes'])) if sfz != 'perc' else dict(hpf=150, eq=[('highshelf', 9000, -2.0, 0.7)], tape=None, send={'hall': 0.35})
         if name == 'select':
             cfg['send'] = {'plate': 0.10, 'chamber': 0.10}
+        if sfz in ('cb', 'vc'):
+            cfg['hpf'] = 55
+        if sfz == 'piano':
+            cfg['hpf'] = 70
+        if name.startswith('trophy'):
+            cfg['send'] = dict(cfg.get('send', {}), plate=cfg.get('send', {}).get('plate', 0.0) + 0.12)
         if cfg.get('hpf'):
             x = A.hpf(x, cfg['hpf'], 2)
         x = A.eq(x, cfg.get('eq', []))
@@ -212,6 +221,7 @@ def render_sting(name):
             sends.setdefault(rv, np.zeros((total, 2)))
             sends[rv] += x * amt
     y = dry + reverb_returns(sends, total)
+    y = A.eq(y, [('highshelf', 7000, 2.0, 0.7)])
     y = y[:length]
     # natural ending: fade the last 35% (min 0.15 s) with a raised cosine
     f = max(int(0.15 * SR), int(0.35 * length))
@@ -221,8 +231,8 @@ def render_sting(name):
     g = STING_TARGET[name] - eff - A.momentary_max(y)
     y = y * 10 ** (g / 20)
     tp = A.tp_db(y)
-    if tp + eff > -10.0:                   # keep sting peaks well under the music
-        y *= 10 ** ((-10.0 - eff - tp) / 20)
+    if tp + eff > -12.0:                   # keep sting peaks well under the music
+        y *= 10 ** ((-12.0 - eff - tp) / 20)
     return y
 
 
@@ -233,7 +243,7 @@ def render_ticks():
         total = int(0.6 * SR)
         a = inst('felt').render([(0.0, 0.05, q, 38 + 3 * k)], total)
         b = inst('vibes_short').render([(0.0, 0.05, q, 30)], total)
-        y = A.hpf(a, 300, 2) + 0.35 * A.hpf(b, 300, 2)
+        y = 0.7 * A.hpf(a, 600, 2) + 0.8 * A.hpf(b, 450, 2)
         t = np.arange(total) / SR
         env = np.exp(-t / 0.055)
         env[t > 0.16] *= 0.5 + 0.5 * np.cos(np.pi * np.clip((t[t > 0.16] - 0.16) / 0.06, 0, 1))
