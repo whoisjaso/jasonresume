@@ -153,18 +153,20 @@
     setInert(true, s); window.JG_LOCK && window.JG_LOCK(true);
     var h = $(".screen__h", s) || $("h2", s); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
     s.scrollTop = 0;
-    if (location.hash !== "#" + name) { try { history.pushState({ s: name }, "", "#" + name); } catch (e) {} }
+    if (location.hash.indexOf("#" + name) !== 0) { try { history.pushState({ s: name }, "", "#" + name); } catch (e) {} }
+    document.dispatchEvent(new CustomEvent("jg:screen", { detail: { name: name } }));
     FX("arrive");
     T(name === "trophies" ? "trophies_opened" : "screen_opened", { screen: name, how: how || "" });
-    if (S()) S().focus(name === "profile" ? "profile" : "bed");
+    if (S()) S().focus(name === "profile" || name === "build" ? "profile" : "bed");
   }
   function closeScreen(quiet) {
     if (!screen) return;
-    var s = screens[screen]; screen = null;
+    var s = screens[screen], was = screen; screen = null;
+    document.dispatchEvent(new CustomEvent("jg:screen-closed", { detail: { name: was } }));
     s.classList.remove("is-open"); root.classList.remove("screen-open");
     setInert(false); window.JG_LOCK && window.JG_LOCK(false);
     if (S()) S().focus(focusId);
-    if (!quiet) { if (tiles[focusId]) tiles[focusId].focus({ preventScroll: true }); if (/^#(trophies|profile)$/.test(location.hash)) { try { history.pushState({}, "", location.pathname + location.search); } catch (e) {} } }
+    if (!quiet) { if (tiles[focusId]) tiles[focusId].focus({ preventScroll: true }); if (/^#(trophies|profile|build)(\/.*)?$/.test(location.hash)) { try { history.pushState({}, "", location.pathname + location.search); } catch (e) {} } }
   }
   function back() {
     if (clear && !clear.hidden) { closeClear(); return true; }
@@ -178,6 +180,7 @@
     var m = h.match(/^#title\/([a-z0-9-]+)$/);
     if (m && arts[m[1]]) { open(m[1], how || "link"); return; }
     if (h === "#trophies" || h === "#profile") { openScreen(h.slice(1), how || "link"); return; }
+    if (/^#build(\/.*)?$/.test(h) && screens.build) { if (window.JG_BUILD) window.JG_BUILD.load(h); openScreen("build", how || "link"); return; }
     var t = h.match(/^#title-([a-z0-9-]+)$/);
     if (t && arts[t[1]]) { open(t[1], how || "link"); return; }
     if (!h || h === "#" || h === "#library") { if (openId) closeTitle(true); if (screen) closeScreen(true); }
@@ -191,6 +194,7 @@
     if (!list.length) return;
     list.forEach(function (s) { seen[s] = 1; T("trophy_unlocked", { trophy: s, tier: LIB.trophies[s].tier, title: id }); });
     store.set("jg_trophies", JSON.stringify(Object.keys(seen)));
+    document.dispatchEvent(new CustomEvent("jg:trophy", { detail: { title: id, list: list } }));
     var top = list.slice().sort(function (a, b) { return rank(LIB.trophies[b].tier) - rank(LIB.trophies[a].tier); })[0];
     queue.push({ slug: top, more: list.length - 1 });
     pump();
@@ -236,19 +240,26 @@
   if (clear) clear.addEventListener("click", function (e) { if (e.target.closest("[data-clear-close]") || e.target === clear) closeClear(); });
 
   /* ---------- seats: who's playing reorders the library ---------- */
-  function seat(role, where) {
-    var s = LIB.seats[role]; if (!s) return;
-    store.set("jg_role", role);
+  /* a seat or a build reorders the shelf: tiles glide to their new places */
+  function arrange(list, to, how) {
+    list = (list || []).filter(function (id) { return tiles[id]; });
+    Object.keys(tiles).forEach(function (id) { if (list.indexOf(id) < 0) list.push(id); });
     var first = {}; Object.keys(tiles).forEach(function (k) { first[k] = tiles[k].getBoundingClientRect(); });
-    s.order.forEach(function (id) { if (tiles[id]) row.appendChild(tiles[id].parentNode); });
-    order = s.order.slice();
+    list.forEach(function (id) { row.appendChild(tiles[id].parentNode); });
+    order = list.slice();
     if (!RM.matches) Object.keys(tiles).forEach(function (k) {
       var b = tiles[k].getBoundingClientRect(), dx = first[k].left - b.left;
       if (!dx) return;
       tiles[k].style.transition = "none"; tiles[k].style.transform = "translateX(" + dx + "px)";
       requestAnimationFrame(function () { requestAnimationFrame(function () { tiles[k].style.transition = ""; tiles[k].style.transform = ""; }); });
     });
-    focus(s.focus, "seat");
+    if (to && tiles[to] && !openId) focus(to, how || "seat");
+    if (to && tiles[to]) row.scrollTo({ left: Math.max(0, tiles[to].parentNode.offsetLeft - 16), behavior: "auto" });
+  }
+  function seat(role, where) {
+    var s = LIB.seats[role]; if (!s) return;
+    store.set("jg_role", role);
+    arrange(s.order, s.focus, "seat");
     $$("[data-seat-label]").forEach(function (e) { e.textContent = s.label; });
     if (where && where !== "init") T("role_chosen", { role: role, where: where }, { role: role });
   }
@@ -338,6 +349,7 @@
     else if (k === "End") { e.preventDefault(); focus(order[order.length - 1], "key"); }
     else if (k === "t" || k === "T") { e.preventDefault(); openScreen("trophies", "key"); }
     else if (k === "p" || k === "P") { e.preventDefault(); openScreen("profile", "key"); }
+    else if ((k === "j" || k === "J") && screens.build) { e.preventDefault(); openScreen("build", "key"); }
   });
 
   /* ---------- input: gamepad, polled only while one is connected ---------- */
@@ -377,5 +389,5 @@
   if (!root.classList.contains("intro-pending")) root.classList.add("lib-in");
   RM.addEventListener && RM.addEventListener("change", function () { if (RM.matches) Object.keys(plates).forEach(function (k) { sleep(plates[k]); }); });
 
-  window.JG_GAME = { route: route, seat: seat, focus: function (id) { focus(id, "api"); }, open: open, back: back };
+  window.JG_GAME = { route: route, seat: seat, arrange: arrange, screen: openScreen, focus: function (id) { focus(id, "api"); }, open: open, back: back };
 })();

@@ -1,6 +1,8 @@
 // The After Hours Library, played end to end on desktop and mobile.
 //   python3 -m http.server 8765 &   then   node tools/verify/library.mjs [desktop|mobile]
-// Checks: the title screen on arrival (Start, who's playing, the name), the
+// Checks: the title screen on arrival (Start, who's playing, the build, the
+// name and the card), Player 2 (the build screen, its edits, the card saved
+// as a 1080 by 1350 PNG, a shared build link, a ?for= link), the
 // first frame's actions, moving focus, opening every title, trophies and the
 // Platinum, the desk demo run to Filed, the screens, the deck and Check me;
 // the doors (return visits, skip, deep links, legacy links, the dealer cut);
@@ -82,9 +84,22 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await p.waitForTimeout(700); await shot('00b-seat');
   if (!(await p.evaluate(() => document.documentElement.classList.contains('score-on')))) errs.push(`${name} Start did not turn the score on`);
   await p.click('[data-role="interviewer"]');
+  // The build: what you're hiring for
+  await p.waitForSelector('[data-scene="build"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name} no build step after the seat`));
+  await p.waitForTimeout(900); await shot('00c-build');
+  const rowsN = await p.$$eval('[data-build-menu] .menu__row', r => r.length);
+  if (rowsN < 8) errs.push(`${name} build step shows ${rowsN} roles`);
+  await textRules(p, `${name} build step`); await overflow(p, `${name} build step`);
+  await p.click('[data-build-menu] [data-i="3"]');
   await p.waitForSelector('[data-scene="name"].is-on', { timeout: 4000 }); await p.waitForTimeout(500);
-  await p.fill('#intro-name', 'Test Visitor'); await shot('00c-name'); await p.keyboard.press('Enter');
-  await p.waitForTimeout(500); await shot('00d-card');
+  if (!/Sign your build/i.test(await p.textContent('[data-name-h]'))) errs.push(`${name} name step should ask to sign the build`);
+  await p.fill('#intro-name', 'Test Visitor'); await shot('00d-name'); await p.keyboard.press('Enter');
+  await p.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden]) .bcard', { timeout: 4000 }).catch(() => errs.push(`${name} no card after signing`));
+  await p.waitForTimeout(1800); await shot('00e-card');
+  const cardTxt = await p.textContent('[data-built-card]').catch(() => '');
+  if (!/Operations and Logistics/i.test(cardTxt) || !/Built by Test Visitor/.test(cardTxt)) errs.push(`${name} card text wrong: ${cardTxt.slice(0, 120)}`);
+  await textRules(p, `${name} card`); await overflow(p, `${name} card`);
+  await p.click('[data-enter]');
   await p.waitForSelector('#intro', { state: 'detached', timeout: 6000 }).catch(() => errs.push(`${name} title screen did not leave`));
   await p.waitForTimeout(1200);
 
@@ -107,6 +122,10 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   if (!first.open || !first.pdf || !first.mail || !first.logo) errs.push(`${name} first frame is missing an action or the title ${JSON.stringify(first)}`);
   if (first.stats !== 2) errs.push(`${name} first frame should show the two Triple J stats`);
   if (first.dialogs || first.locked) errs.push(`${name} something open or locked on arrival`);
+  const p2 = await p.evaluate(() => ({ slot: document.querySelector('[data-p2]')?.textContent || '', resume: document.querySelector('.sys [data-resume]')?.getAttribute('href') || '' }));
+  if (!/Operations/.test(p2.slot)) errs.push(`${name} Player 2 slot does not show the build: ${p2.slot}`);
+  if (!/Resume_Operations_and_Logistics\.pdf$/.test(p2.resume)) errs.push(`${name} Resume does not serve the build's PDF: ${p2.resume}`);
+  else if (!fs.existsSync(path.join(ROOT, p2.resume))) errs.push(`${name} the build's PDF is missing: ${p2.resume}`);
   notes.push(`${name} title screen to library in ${Date.now() - t0} ms`);
   await shot('01-library'); await textRules(p, `${name} library`); await overflow(p, `${name} library`);
 
@@ -162,6 +181,24 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   await textRules(p, `${name} profile`); await overflow(p, `${name} profile`);
   await p.keyboard.press('Escape'); await p.waitForTimeout(500);
 
+  // Player 2: the build screen, edits, the card as an image, the link
+  if (mobile) await p.click('[data-p2]'); else await p.keyboard.press('j');
+  await p.waitForSelector('#build.is-open .bcard', { timeout: 4000 }).catch(() => errs.push(`${name} Player 2 did not open the build screen`));
+  await p.waitForTimeout(900); await shot('09b-build');
+  await p.click('#build [data-pick="role:it"]'); await p.waitForTimeout(700);
+  await p.click('#build [data-equip="daily"]').catch(() => {}); await p.waitForTimeout(300);
+  await p.click('#build [data-art="the-inbound"]'); await p.waitForTimeout(500);
+  const bs = await p.evaluate(() => { const b = window.JG_BUILD.get(); return { id: b.id, a: b.a, p: b.p.length, n: b.n, card: document.querySelector('#build .bcard__class')?.textContent }; });
+  if (bs.id !== 'it' || bs.a !== 'the-inbound' || bs.p !== 4 || !/IT and Systems Support/i.test(bs.card || '')) errs.push(`${name} build edits did not stick ${JSON.stringify(bs)}`);
+  await shot('09c-build-edited'); await textRules(p, `${name} build screen`); await overflow(p, `${name} build screen`);
+  const dl = p.waitForEvent('download', { timeout: 8000 }).catch(() => null);
+  await p.click('#build [data-save]');
+  const d = await dl;
+  if (!d) errs.push(`${name} Save the card gave no download`);
+  else { const f = path.join(OUT, `lib-${name}-card.png`); await d.saveAs(f); const buf = fs.readFileSync(f); const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20); if (w !== 1080 || h !== 1350) errs.push(`${name} card image is ${w}x${h}`); else notes.push(`${name} card saved as a 1080 by 1350 PNG`); }
+  await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+  if (await p.evaluate(() => !!document.querySelector('#build.is-open'))) errs.push(`${name} Escape did not close the build screen`);
+
   // Overlays: the deck and Check me
   await p.evaluate(() => window.JG_OPEN('deck', 'test')); await p.waitForTimeout(900); await shot('10-deck');
   for (let i = 0; i < 4; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(250); }
@@ -175,7 +212,7 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
 
   await p.evaluate(() => { dispatchEvent(new Event('pagehide')); }); await p.waitForTimeout(1200);
   notes.push(`${name} events sent: ${[...new Set(tracked)].join(', ')}`);
-  for (const ev of ['intro_shown', 'intro_started', 'role_chosen', 'name_given', 'intro_finished', 'story_opened', 'trophy_unlocked', 'level_clear', 'trophies_opened']) if (!tracked.includes(ev)) errs.push(`${name} never sent ${ev}`);
+  for (const ev of ['intro_shown', 'intro_started', 'role_chosen', 'build_shown', 'build_chosen', 'name_given', 'intro_finished', 'story_opened', 'trophy_unlocked', 'level_clear', 'trophies_opened', 'build_opened', 'build_edited', 'card_saved']) if (!tracked.includes(ev)) errs.push(`${name} never sent ${ev}`);
   await ctx.close();
 }
 
@@ -195,7 +232,10 @@ if (!only || only === 'mobile') {
   const score = []; p.on('request', r => { if (/assets\/score\//.test(r.url())) score.push(r.url()); });
   await p.goto(URL0); await p.waitForSelector('#intro');
   await p.click('[data-start="off"]'); await p.waitForSelector('[data-scene="seat"].is-on');
-  await p.click('[data-role="partner"]'); await p.waitForSelector('[data-scene="name"].is-on'); await p.waitForTimeout(400);
+  await p.click('[data-role="partner"]'); await p.waitForSelector('[data-scene="build"].is-on'); await p.waitForTimeout(500);
+  if (!/slowing your lot/i.test(await p.textContent('[data-build-h]'))) errs.push('dealer seat did not ask about the lot');
+  await p.click('[data-build-skip]'); await p.waitForSelector('[data-scene="name"].is-on'); await p.waitForTimeout(400);
+  if (/Sign your build/i.test(await p.textContent('[data-name-h]'))) errs.push('skipping the build still asked to sign it');
   await p.fill('#intro-name', 'Pat'); await p.keyboard.press('Enter');
   await p.waitForSelector('#intro', { state: 'detached', timeout: 6000 }); await p.waitForTimeout(700);
   if (score.length) errs.push('Start muted still fetched the score');
@@ -205,6 +245,7 @@ if (!only || only === 'mobile') {
   await p.goto(URL0); await p.waitForTimeout(1000);
   if (!(await p.$('#intro'))) errs.push('title screen did not show to a return visitor');
   await p.click('[data-start="off"]'); await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
+  await p.waitForSelector('[data-scene="build"].is-on'); await p.waitForTimeout(400); await p.keyboard.press('Escape');
   await p.waitForSelector('[data-scene="name"].is-on'); await p.waitForTimeout(400);
   const pre = await p.inputValue('#intro-name'); if (pre !== 'Pat') errs.push(`return visit name not prefilled: "${pre}"`);
   await p.keyboard.press('Enter'); await p.waitForTimeout(400);
@@ -227,6 +268,28 @@ if (!only || only === 'mobile') {
     await q.click('[data-intro-skip]'); await q.waitForTimeout(1500);
     if (!(await q.evaluate(test))) errs.push(`deep link ${u} did not open ${label}`); else notes.push(`deep link ${u}: title screen first, then ${label}`);
   }
+  // A shared build: the title screen first, no build step, then the build as its maker left it
+  await q.goto('about:blank');
+  await q.goto(URL0 + '#build/v1/it/help-desk+access+network+rls/lead-to-title/silver/Sam'); await q.waitForSelector('#intro');
+  await q.click('[data-start="off"]'); await q.waitForSelector('[data-scene="seat"].is-on'); await q.click('[data-role="interviewer"]');
+  await q.waitForSelector('[data-scene="name"].is-on', { timeout: 4000 }).catch(() => errs.push('a shared build link still asked for a build'));
+  await q.click('[data-name-skip]'); await q.waitForTimeout(3600);
+  const sh = await q.evaluate(() => ({ open: !!document.querySelector('#build.is-open'), lede: document.querySelector('#build .build__lede')?.textContent || '', card: document.querySelector('#build .bcard__class')?.textContent || '', fin: !!document.querySelector('#build .bcard--silver') }));
+  if (!sh.open || !/Sam built me for/.test(sh.lede) || !/IT and Systems Support/i.test(sh.card) || !sh.fin) errs.push(`shared build did not open as left ${JSON.stringify(sh)}`);
+  else notes.push('shared build link: title screen first, then Sam\'s build');
+  await q.screenshot({ path: path.join(OUT, 'lib-shared-build.png') }); await overflow(q, 'shared build');
+  // ?for=it from an application: the role is highlighted, and the library reads for it even when skipped
+  const c3 = await ctxFor(1280, 800, false); await c3.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const r3 = await c3.newPage(); await r3.goto(URL0 + '?for=it'); await r3.waitForSelector('#intro');
+  await r3.click('[data-start="off"]'); await r3.waitForSelector('[data-scene="seat"].is-on'); await r3.click('[data-role="interviewer"]');
+  await r3.waitForSelector('[data-scene="build"].is-on'); await r3.waitForTimeout(500);
+  const hi = await r3.textContent('[data-build-menu] .menu__row.is-on');
+  if (!/IT and Systems Support/.test(hi)) errs.push(`?for=it highlighted "${hi}"`);
+  await r3.keyboard.press('Escape'); await r3.waitForSelector('[data-scene="name"].is-on'); await r3.click('[data-name-skip]'); await r3.waitForTimeout(3600);
+  const f3 = await r3.evaluate(() => ({ url: location.search, slot: document.querySelector('[data-p2]')?.textContent || '', resume: document.querySelector('.sys [data-resume]')?.getAttribute('href') || '', focus: document.querySelector('.tile.is-focus')?.dataset.title }));
+  if (f3.url || !/Read for IT/.test(f3.slot) || !/IT_and_Systems_Support/.test(f3.resume) || f3.focus !== 'lead-to-title') errs.push(`?for=it did not read the library for IT ${JSON.stringify(f3)}`);
+  else notes.push('?for=it: role highlighted, library and Resume read for IT');
+  await c3.close();
   await q.goto('about:blank');
   await q.goto(URL0 + '?cut=dealer'); await q.waitForSelector('#intro'); await q.click('[data-intro-skip]');
   await q.waitForURL(/obavia\.html/, { timeout: 6000 }).then(() => notes.push('?cut=dealer: on to /obavia.html')).catch(() => errs.push('?cut=dealer did not go to /obavia.html'));

@@ -1,200 +1,515 @@
 {
-  "_about": "The After Hours Library: the home page as a game library. One title per part of the resume, each with key art, its own score layer, stats and trophies. Every trophy is a verified fact from llms.txt, and every line here must already be in llms.txt. assemble_home.py renders this into plain HTML (crawlers and screen readers read it as a document); game.js only arranges and reveals it. No em dashes, no percent signs, first person for what Jason did.",
-  "profile": {
-    "name": "Jason Obawemimo",
-    "title": "AI Implementation, Workflow Automation, CRM Systems",
-    "place": "Pearland, Texas",
-    "level": 53,
-    "level_label": "Level 53",
-    "level_note": "One level for every car I've personally sold since June 2025.",
-    "bio": "I own and operate a Houston dealership and ship the CRM, voice AI, and automation systems that run it. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.",
-    "links": [
-      { "k": "Email", "v": "jobawems@gmail.com", "href": "mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role", "contact": "email" },
-      { "k": "LinkedIn", "v": "linkedin.com/in/obawemimo", "href": "https://www.linkedin.com/in/obawemimo", "ext": true, "verify": "linkedin" },
-      { "k": "GitHub", "v": "github.com/whoisjaso", "href": "https://github.com/whoisjaso", "ext": true, "verify": "github" },
-      { "k": "Site", "v": "jasonobawemimo.com", "href": "https://jasonobawemimo.com/" }
-    ],
-    "loadout": [
-      { "slot": "Languages", "items": ["TypeScript", "JavaScript", "Python", "SQL"] },
-      { "slot": "Web and data", "items": ["React", "Next.js", "PostgreSQL", "Supabase", "Vercel"] },
-      { "slot": "Backend", "items": ["Edge Functions", "REST APIs", "RLS", "Webhook services"] },
-      { "slot": "Automation", "items": ["n8n", "API integrations", "Retell AI", "Bland AI", "Twilio"] },
-      { "slot": "AI development", "items": ["Claude Code", "Claude API", "Codex"] },
-      { "slot": "Operations", "items": ["Dealership operations", "Sales pipelines", "Inventory and vendor management"] }
-    ]
-  },
-  "seats": {
-    "interviewer": { "label": "I'm hiring", "order": ["triple-j", "lead-to-title", "the-inbound", "prospector", "neuroscience", "obavia"], "focus": "triple-j" },
-    "partner": { "label": "I run a dealership", "order": ["triple-j", "the-inbound", "lead-to-title", "prospector", "obavia", "neuroscience"], "focus": "the-inbound" },
-    "lurker": { "label": "Just looking", "order": ["triple-j", "lead-to-title", "the-inbound", "prospector", "neuroscience", "obavia"], "focus": "prospector" }
-  },
-  "titles": [
-    {
-      "id": "triple-j",
-      "logo": "Triple J Auto",
-      "name": "Triple J Auto Investment",
-      "kind": "Main campaign",
-      "role": "Owner and Operations Lead, August 2024 to present",
-      "line": "My Houston dealership.",
-      "summary": "I own and operate a Houston dealership and ship the CRM, voice AI, and automation systems that run it.",
-      "stats": [
-        { "n": "53", "k": "vehicle sales I personally closed since June 2025" },
-        { "n": "$206,777", "k": "in sale proceeds I collected since June 2025" }
-      ],
-      "overview": [
-        "I run the dealership's pricing, inventory, vendors, logistics, financing and title processing.",
-        "Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",
-        "Everything else in this library runs here: the CRM, the voice AI and the prospecting workflow."
-      ],
-      "details": [
-        { "k": "Business", "v": "Triple J Auto Investment and Rental Operations" },
-        { "k": "Lot", "v": "8774 Almeda Genoa Rd, Houston" },
-        { "k": "Hours", "v": "Monday to Saturday, 9 to 7" },
-        { "k": "Site", "v": "thetriplejauto.com", "href": "https://thetriplejauto.com", "ext": true }
-      ],
-      "stack": [],
-      "trophies": ["fifty-three", "proceeds", "keys-to-the-lot", "title-run"],
-      "career": true
-    },
-    {
-      "id": "lead-to-title",
-      "logo": "Lead to Title",
-      "name": "Dealership CRM, Handle a Sale",
-      "kind": "Selected implementation",
-      "role": "The CRM I built for Triple J, used daily by three staff",
-      "line": "The CRM I built, lead to title.",
-      "summary": "I designed the lead-to-title data model, roles and validation, and shipped it on Vercel with Edge Functions for voice and texting webhooks.",
-      "stats": [
-        { "n": "3", "k": "staff use it daily across inventory, deals and follow-up" }
-      ],
-      "overview": [
-        "I designed the lead-to-title data model, roles and validation, and tested Supabase RLS policies to prevent unauthorized role access.",
-        "I added validation that prevents invalid deal and inventory records from being written.",
-        "I executed production schema migrations while preserving existing records and operational tables.",
-        "Its sale desk, Handle a Sale, asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, and routes the deal to the right documents. It works in English or Spanish, and the customer signs on their phone or in person."
-      ],
-      "film": { "src": "assets/film/triple-j-sale-desk.mp4", "poster": "assets/film/triple-j-sale-desk.jpg", "title": "Handle a Sale, the sale desk Triple J closes sales on", "note": "About 82 seconds. Example buyer and figures." },
-      "demo": true,
-      "stack": ["TypeScript", "React", "Next.js", "PostgreSQL", "Supabase", "Vercel", "Edge Functions"],
-      "trophies": ["daily-driver", "locked-rows", "clean-books", "nothing-lost"],
-      "career": true
-    },
-    {
-      "id": "the-inbound",
-      "logo": "The Inbound",
-      "name": "Voice AI Inbound",
-      "kind": "Selected implementation",
-      "role": "Inbound voice AI that answers Triple J's calls",
-      "line": "Voice AI that books the appointment.",
-      "summary": "I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
-      "stats_note": "Monthly average, August to September 2026",
-      "stats": [
-        { "n": "41", "k": "inbound calls a month" },
-        { "n": "14", "k": "booked appointments a month" },
-        { "n": "4", "k": "CRM-matched vehicle sales a month" },
-        { "n": "$15,000", "k": "a month in sale proceeds" }
-      ],
-      "overview": [
-        "I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
-        "Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales a month, $15,000 a month in sale proceeds."
-      ],
-      "stack": ["Retell AI", "Bland AI", "Twilio", "CRM webhooks"],
-      "trophies": ["booked", "matched", "hand-off"],
-      "career": true
-    },
-    {
-      "id": "prospector",
-      "logo": "Prospector",
-      "name": "Prospecting Workflow Automation",
-      "kind": "Selected implementation",
-      "role": "Triple J's lead research, automated",
-      "line": "Lead research that writes itself into the CRM.",
-      "summary": "I built a Python workflow that uses the Claude API to research Facebook Marketplace leads, write findings to the CRM, and generate SOP-based reply text for automatic follow-up.",
-      "stats": [],
-      "overview": [
-        "I built a Python workflow that uses the Claude API to research Facebook Marketplace leads.",
-        "It writes its findings to the CRM and generates SOP-based reply text for automatic follow-up."
-      ],
-      "stack": ["Python", "Claude API", "n8n", "CRM webhooks"],
-      "trophies": ["field-notes", "by-the-book"],
-      "career": true
-    },
-    {
-      "id": "neuroscience",
-      "logo": "Neuroscience",
-      "name": "The University of Texas at Austin",
-      "kind": "Education",
-      "role": "Bachelor of Science in Neuroscience, expected 2028",
-      "line": "Neuroscience at UT Austin.",
-      "summary": "I'm studying for a Bachelor of Science in Neuroscience at The University of Texas at Austin, expected 2028.",
-      "stats": [
-        { "n": "3.63", "k": "GPA, Associate of Arts in Business, San Jacinto College" },
-        { "n": "19", "k": "completed Anthropic courses" }
-      ],
-      "overview": [
-        "The University of Texas at Austin: Bachelor of Science in Neuroscience, expected 2028.",
-        "San Jacinto College, Houston: Associate of Arts in Business, May 2026. GPA 3.63, Dean's Honor List.",
-        "Google AI Essentials, Google on Coursera, 2026.",
-        "Nineteen completed Anthropic courses."
-      ],
-      "proof": [
-        { "label": "Degree PDF", "href": "assets/Jason_Obawemimo_Associate_Degree.pdf", "verify": "degree" },
-        { "label": "Anthropic certificates PDF", "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf", "verify": "courses" }
-      ],
-      "stack": [],
-      "trophies": ["deans-list", "associate", "nineteen", "essentials"],
-      "career": true
-    },
-    {
-      "id": "obavia",
-      "logo": "Obavia",
-      "name": "Obavia",
-      "kind": "Side quest",
-      "tag": "In development",
-      "role": "A sale desk I'm building for Texas independent dealers",
-      "line": "Every sale, start to signed.",
-      "summary": "Every sale, start to signed. A dealership sale desk I'm building for Texas independent dealers, grown out of Handle a Sale at Triple J. It's in development.",
-      "stats": [],
-      "overview": [
-        "Obavia is a dealership sale desk in development for Texas independent dealers, grown out of Handle a Sale at Triple J.",
-        "It isn't live yet, so it has no trophies. Early access is a conversation, not an account."
-      ],
-      "film": { "src": "assets/film/obavia-desk.mp4", "poster": "assets/film/obavia-desk.jpg", "title": "Obavia, the sale desk in development", "note": "People and figures in the film are fictional." },
-      "actions": [
-        { "label": "Ask about early access", "href": "mailto:jobawems@gmail.com?subject=Obavia%20early%20access", "contact": "email" },
-        { "label": "See Obavia", "href": "/obavia.html", "cta": "obavia" }
-      ],
-      "stack": [],
-      "trophies": [],
-      "career": false
-    }
+ "_about": "The After Hours Library: the home page as a game library. One title per part of the resume, each with key art, its own score layer, stats and trophies. Every trophy is a verified fact from llms.txt, and every line here must already be in llms.txt. assemble_home.py renders this into plain HTML (crawlers and screen readers read it as a document); game.js only arranges and reveals it. No em dashes, no percent signs, first person for what Jason did.",
+ "profile": {
+  "name": "Jason Obawemimo",
+  "title": "AI Implementation, Workflow Automation, CRM Systems",
+  "place": "Pearland, Texas",
+  "level": 53,
+  "level_label": "Level 53",
+  "level_note": "One level for every car I've personally sold since June 2025.",
+  "bio": "I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve, at the Houston dealership I own and operate. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.",
+  "links": [
+   {
+    "k": "Email",
+    "v": "jobawems@gmail.com",
+    "href": "mailto:jobawems@gmail.com?subject=Your%20site%2C%20and%20a%20role",
+    "contact": "email"
+   },
+   {
+    "k": "LinkedIn",
+    "v": "linkedin.com/in/obawemimo",
+    "href": "https://www.linkedin.com/in/obawemimo",
+    "ext": true,
+    "verify": "linkedin"
+   },
+   {
+    "k": "GitHub",
+    "v": "github.com/whoisjaso",
+    "href": "https://github.com/whoisjaso",
+    "ext": true,
+    "verify": "github"
+   },
+   {
+    "k": "Site",
+    "v": "jasonobawemimo.com",
+    "href": "https://jasonobawemimo.com/"
+   }
   ],
-  "trophies": {
-    "fifty-three": { "tier": "gold", "name": "Fifty-Three", "desc": "Personally closed 53 vehicle sales since June 2025." },
-    "proceeds": { "tier": "gold", "name": "Proceeds", "desc": "Collected $206,777 in sale proceeds since June 2025." },
-    "keys-to-the-lot": { "tier": "silver", "name": "Keys to the Lot", "desc": "Owner and Operations Lead of Triple J since August 2024." },
-    "title-run": { "tier": "bronze", "name": "Title Run", "desc": "Runs the dealership's financing and title processing." },
-    "daily-driver": { "tier": "gold", "name": "Daily Driver", "desc": "The CRM is used daily by three staff across inventory, deals and follow-up." },
-    "locked-rows": { "tier": "silver", "name": "Locked Rows", "desc": "Tested Supabase RLS policies to prevent unauthorized role access." },
-    "clean-books": { "tier": "silver", "name": "Clean Books", "desc": "Validation that prevents invalid deal and inventory records from being written." },
-    "nothing-lost": { "tier": "bronze", "name": "Nothing Lost", "desc": "Production schema migrations that preserved existing records and operational tables." },
-    "booked": { "tier": "gold", "name": "Booked", "desc": "The voice AI averaged 14 booked appointments a month, August to September 2026." },
-    "matched": { "tier": "gold", "name": "Matched", "desc": "4 CRM-matched vehicle sales a month, August to September 2026." },
-    "hand-off": { "tier": "silver", "name": "Hand-off", "desc": "Live-transfers unresolved calls to staff." },
-    "field-notes": { "tier": "silver", "name": "Field Notes", "desc": "Researches Facebook Marketplace leads and writes findings to the CRM." },
-    "by-the-book": { "tier": "bronze", "name": "By the Book", "desc": "Generates SOP-based reply text for automatic follow-up." },
-    "deans-list": { "tier": "gold", "name": "Dean's List", "desc": "Dean's Honor List, San Jacinto College." },
-    "associate": { "tier": "silver", "name": "Associate", "desc": "Associate of Arts in Business, San Jacinto College, May 2026.", "href": "assets/Jason_Obawemimo_Associate_Degree.pdf" },
-    "nineteen": { "tier": "silver", "name": "Nineteen", "desc": "Nineteen completed Anthropic courses.", "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf" },
-    "essentials": { "tier": "bronze", "name": "Essentials", "desc": "Google AI Essentials, Google on Coursera, 2026." },
-    "operator": { "tier": "platinum", "name": "Operator", "desc": "I own and operate a Houston dealership and ship the systems that run it. Earned by opening every career title." }
-  },
-  "platinum": "operator",
-  "legend": [
-    { "keys": ["Enter"], "label": "Open" },
-    { "keys": ["Esc"], "label": "Back" },
-    { "keys": ["←", "→"], "label": "Move" },
-    { "keys": ["T"], "label": "Trophies" },
-    { "keys": ["M"], "label": "Score" }
+  "loadout": [
+   {
+    "slot": "Languages",
+    "items": [
+     "TypeScript",
+     "JavaScript",
+     "Python",
+     "SQL"
+    ]
+   },
+   {
+    "slot": "Web and data",
+    "items": [
+     "React",
+     "Next.js",
+     "PostgreSQL",
+     "Supabase",
+     "Vercel"
+    ]
+   },
+   {
+    "slot": "Backend",
+    "items": [
+     "Edge Functions",
+     "REST APIs",
+     "RLS",
+     "Webhook services"
+    ]
+   },
+   {
+    "slot": "Automation",
+    "items": [
+     "n8n",
+     "API integrations",
+     "Retell AI",
+     "Bland AI",
+     "Twilio"
+    ]
+   },
+   {
+    "slot": "AI development",
+    "items": [
+     "Claude Code",
+     "Claude API",
+     "Codex"
+    ]
+   },
+   {
+    "slot": "Operations",
+    "items": [
+     "Dealership operations",
+     "Sales pipelines",
+     "Inventory and vendor management"
+    ]
+   }
   ]
+ },
+ "seats": {
+  "interviewer": {
+   "label": "I'm hiring",
+   "order": [
+    "triple-j",
+    "lead-to-title",
+    "the-inbound",
+    "prospector",
+    "neuroscience",
+    "obavia"
+   ],
+   "focus": "triple-j"
+  },
+  "partner": {
+   "label": "I run a dealership",
+   "order": [
+    "triple-j",
+    "the-inbound",
+    "lead-to-title",
+    "prospector",
+    "obavia",
+    "neuroscience"
+   ],
+   "focus": "the-inbound"
+  },
+  "lurker": {
+   "label": "Just looking",
+   "order": [
+    "triple-j",
+    "lead-to-title",
+    "the-inbound",
+    "prospector",
+    "neuroscience",
+    "obavia"
+   ],
+   "focus": "prospector"
+  }
+ },
+ "titles": [
+  {
+   "id": "triple-j",
+   "logo": "Triple J Auto",
+   "name": "Triple J Auto Investment",
+   "kind": "Main campaign",
+   "role": "Owner and Operations Lead, August 2024 to present",
+   "line": "My Houston dealership.",
+   "summary": "I build the CRM, voice AI and automation systems a Houston dealership runs on, and I run the operations they serve.",
+   "stats": [
+    {
+     "n": "53",
+     "k": "vehicle sales I personally closed since June 2025"
+    },
+    {
+     "n": "$206,777",
+     "k": "in sale proceeds I collected since June 2025"
+    }
+   ],
+   "overview": [
+    "I run the dealership's pricing, inventory, vendors, logistics, financing and title processing.",
+    "Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",
+    "Everything else in this library runs here: the CRM, the voice AI and the prospecting workflow."
+   ],
+   "details": [
+    {
+     "k": "Business",
+     "v": "Triple J Auto Investment and Rental Operations"
+    },
+    {
+     "k": "Lot",
+     "v": "8774 Almeda Genoa Rd, Houston"
+    },
+    {
+     "k": "Hours",
+     "v": "Monday to Saturday, 9 to 7"
+    },
+    {
+     "k": "Site",
+     "v": "thetriplejauto.com",
+     "href": "https://thetriplejauto.com",
+     "ext": true
+    }
+   ],
+   "stack": [],
+   "trophies": [
+    "fifty-three",
+    "proceeds",
+    "keys-to-the-lot",
+    "title-run"
+   ],
+   "career": true
+  },
+  {
+   "id": "lead-to-title",
+   "logo": "Lead to Title",
+   "name": "Dealership CRM, Handle a Sale",
+   "kind": "Selected implementation",
+   "role": "The CRM I built for Triple J, used daily by three staff",
+   "line": "The CRM I built, lead to title.",
+   "summary": "I designed the lead-to-title data model, roles and validation, and shipped it on Vercel with Edge Functions for voice and texting webhooks.",
+   "stats": [
+    {
+     "n": "3",
+     "k": "staff use it daily across inventory, deals and follow-up"
+    }
+   ],
+   "overview": [
+    "I designed the lead-to-title data model, roles and validation, and tested Supabase RLS policies to prevent unauthorized role access.",
+    "I added validation that prevents invalid deal and inventory records from being written.",
+    "I executed production schema migrations while preserving existing records and operational tables.",
+    "Its sale desk, Handle a Sale, asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, and routes the deal to the right documents. It works in English or Spanish, and the customer signs on their phone or in person."
+   ],
+   "film": {
+    "src": "assets/film/triple-j-sale-desk.mp4",
+    "poster": "assets/film/triple-j-sale-desk.jpg",
+    "title": "Handle a Sale, the sale desk Triple J closes sales on",
+    "note": "About 82 seconds. Example buyer and figures."
+   },
+   "demo": true,
+   "stack": [
+    "TypeScript",
+    "React",
+    "Next.js",
+    "PostgreSQL",
+    "Supabase",
+    "Vercel",
+    "Edge Functions"
+   ],
+   "trophies": [
+    "daily-driver",
+    "locked-rows",
+    "clean-books",
+    "nothing-lost"
+   ],
+   "career": true
+  },
+  {
+   "id": "the-inbound",
+   "logo": "The Inbound",
+   "name": "Voice AI Inbound",
+   "kind": "Selected implementation",
+   "role": "Inbound voice AI that answers Triple J's calls",
+   "line": "Voice AI that books the appointment.",
+   "summary": "I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
+   "stats_note": "Monthly average, August to September 2026",
+   "stats": [
+    {
+     "n": "41",
+     "k": "inbound calls a month"
+    },
+    {
+     "n": "14",
+     "k": "booked appointments a month"
+    },
+    {
+     "n": "4",
+     "k": "CRM-matched vehicle sales a month"
+    },
+    {
+     "n": "$15,000",
+     "k": "a month in sale proceeds"
+    }
+   ],
+   "overview": [
+    "I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
+    "Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales a month, $15,000 a month in sale proceeds."
+   ],
+   "stack": [
+    "Retell AI",
+    "Bland AI",
+    "Twilio",
+    "CRM webhooks"
+   ],
+   "trophies": [
+    "booked",
+    "matched",
+    "hand-off"
+   ],
+   "career": true
+  },
+  {
+   "id": "prospector",
+   "logo": "Prospector",
+   "name": "Prospecting Workflow Automation",
+   "kind": "Selected implementation",
+   "role": "Triple J's lead research, automated",
+   "line": "Lead research that writes itself into the CRM.",
+   "summary": "I built a Python workflow that uses the Claude API to research Facebook Marketplace leads, write findings to the CRM, and generate SOP-based reply text for automatic follow-up.",
+   "stats": [],
+   "overview": [
+    "I built a Python workflow that uses the Claude API to research Facebook Marketplace leads.",
+    "It writes its findings to the CRM and generates SOP-based reply text for automatic follow-up."
+   ],
+   "stack": [
+    "Python",
+    "Claude API",
+    "n8n",
+    "CRM webhooks"
+   ],
+   "trophies": [
+    "field-notes",
+    "by-the-book"
+   ],
+   "career": true
+  },
+  {
+   "id": "neuroscience",
+   "logo": "Neuroscience",
+   "name": "The University of Texas at Austin",
+   "kind": "Education",
+   "role": "Bachelor of Science in Neuroscience, expected 2028",
+   "line": "Neuroscience at UT Austin.",
+   "summary": "I'm studying for a Bachelor of Science in Neuroscience at The University of Texas at Austin, expected 2028.",
+   "stats": [
+    {
+     "n": "3.63",
+     "k": "GPA, Associate of Arts in Business, San Jacinto College"
+    },
+    {
+     "n": "19",
+     "k": "completed Anthropic courses"
+    }
+   ],
+   "overview": [
+    "The University of Texas at Austin: Bachelor of Science in Neuroscience, expected 2028.",
+    "San Jacinto College, Houston: Associate of Arts in Business, May 2026. GPA 3.63, Dean's Honor List.",
+    "Google AI Essentials, Google on Coursera, 2026.",
+    "Nineteen completed Anthropic courses."
+   ],
+   "proof": [
+    {
+     "label": "Degree PDF",
+     "href": "assets/Jason_Obawemimo_Associate_Degree.pdf",
+     "verify": "degree"
+    },
+    {
+     "label": "Anthropic certificates PDF",
+     "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
+     "verify": "courses"
+    }
+   ],
+   "stack": [],
+   "trophies": [
+    "deans-list",
+    "associate",
+    "nineteen",
+    "essentials"
+   ],
+   "career": true
+  },
+  {
+   "id": "obavia",
+   "logo": "Obavia",
+   "name": "Obavia",
+   "kind": "Side quest",
+   "tag": "In development",
+   "role": "A sale desk I'm building for Texas independent dealers",
+   "line": "Every sale, start to signed.",
+   "summary": "Every sale, start to signed. A dealership sale desk I'm building for Texas independent dealers, grown out of Handle a Sale at Triple J. It's in development.",
+   "stats": [],
+   "overview": [
+    "Obavia is a dealership sale desk in development for Texas independent dealers, grown out of Handle a Sale at Triple J.",
+    "It isn't live yet, so it has no trophies. Early access is a conversation, not an account."
+   ],
+   "film": {
+    "src": "assets/film/obavia-desk.mp4",
+    "poster": "assets/film/obavia-desk.jpg",
+    "title": "Obavia, the sale desk in development",
+    "note": "People and figures in the film are fictional."
+   },
+   "actions": [
+    {
+     "label": "Ask about early access",
+     "href": "mailto:jobawems@gmail.com?subject=Obavia%20early%20access",
+     "contact": "email"
+    },
+    {
+     "label": "See Obavia",
+     "href": "/obavia.html",
+     "cta": "obavia"
+    }
+   ],
+   "stack": [],
+   "trophies": [],
+   "career": false
+  }
+ ],
+ "trophies": {
+  "fifty-three": {
+   "tier": "gold",
+   "name": "Fifty-Three",
+   "desc": "Personally closed 53 vehicle sales since June 2025."
+  },
+  "proceeds": {
+   "tier": "gold",
+   "name": "Proceeds",
+   "desc": "Collected $206,777 in sale proceeds since June 2025."
+  },
+  "keys-to-the-lot": {
+   "tier": "silver",
+   "name": "Keys to the Lot",
+   "desc": "Owner and Operations Lead of Triple J since August 2024."
+  },
+  "title-run": {
+   "tier": "bronze",
+   "name": "Title Run",
+   "desc": "Runs the dealership's financing and title processing."
+  },
+  "daily-driver": {
+   "tier": "gold",
+   "name": "Daily Driver",
+   "desc": "The CRM is used daily by three staff across inventory, deals and follow-up."
+  },
+  "locked-rows": {
+   "tier": "silver",
+   "name": "Locked Rows",
+   "desc": "Tested Supabase RLS policies to prevent unauthorized role access."
+  },
+  "clean-books": {
+   "tier": "silver",
+   "name": "Clean Books",
+   "desc": "Validation that prevents invalid deal and inventory records from being written."
+  },
+  "nothing-lost": {
+   "tier": "bronze",
+   "name": "Nothing Lost",
+   "desc": "Production schema migrations that preserved existing records and operational tables."
+  },
+  "booked": {
+   "tier": "gold",
+   "name": "Booked",
+   "desc": "The voice AI averaged 14 booked appointments a month, August to September 2026."
+  },
+  "matched": {
+   "tier": "gold",
+   "name": "Matched",
+   "desc": "4 CRM-matched vehicle sales a month, August to September 2026."
+  },
+  "hand-off": {
+   "tier": "silver",
+   "name": "Hand-off",
+   "desc": "Live-transfers unresolved calls to staff."
+  },
+  "field-notes": {
+   "tier": "silver",
+   "name": "Field Notes",
+   "desc": "Researches Facebook Marketplace leads and writes findings to the CRM."
+  },
+  "by-the-book": {
+   "tier": "bronze",
+   "name": "By the Book",
+   "desc": "Generates SOP-based reply text for automatic follow-up."
+  },
+  "deans-list": {
+   "tier": "gold",
+   "name": "Dean's List",
+   "desc": "Dean's Honor List, San Jacinto College."
+  },
+  "associate": {
+   "tier": "silver",
+   "name": "Associate",
+   "desc": "Associate of Arts in Business, San Jacinto College, May 2026.",
+   "href": "assets/Jason_Obawemimo_Associate_Degree.pdf"
+  },
+  "nineteen": {
+   "tier": "silver",
+   "name": "Nineteen",
+   "desc": "Nineteen completed Anthropic courses.",
+   "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf"
+  },
+  "essentials": {
+   "tier": "bronze",
+   "name": "Essentials",
+   "desc": "Google AI Essentials, Google on Coursera, 2026."
+  },
+  "operator": {
+   "tier": "platinum",
+   "name": "Operator",
+   "desc": "I own and operate a Houston dealership and ship the systems that run it. Earned by opening every career title."
+  }
+ },
+ "platinum": "operator",
+ "legend": [
+  {
+   "keys": [
+    "Enter"
+   ],
+   "label": "Open"
+  },
+  {
+   "keys": [
+    "Esc"
+   ],
+   "label": "Back"
+  },
+  {
+   "keys": [
+    "←",
+    "→"
+   ],
+   "label": "Move"
+  },
+  {
+   "keys": [
+    "T"
+   ],
+   "label": "Trophies"
+  },
+  {
+   "keys": [
+    "J"
+   ],
+   "label": "Player 2"
+  },
+  {
+   "keys": [
+    "M"
+   ],
+   "label": "Score"
+  }
+ ]
 }

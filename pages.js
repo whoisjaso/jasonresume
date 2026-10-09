@@ -158,7 +158,12 @@
   /* [data-book] clicks are tracked by track.js and given their feedback by hud.js */
 
   /* ---------- the name given at the title screen fills the form ---------- */
-  function prefill() { var n = document.getElementById("l-name"), v = ""; try { v = localStorage.getItem("jg_name") || ""; } catch (e) {} if (n && v && !n.value) n.value = v; }
+  function prefill() {
+    var n = document.getElementById("l-name"), v = "", lot = ""; try { v = localStorage.getItem("jg_name") || ""; lot = localStorage.getItem("jg_lot") || ""; } catch (e) {}
+    if (n && v && !n.value) n.value = v;
+    /* a dealer who built a card for the problem on their lot arrives with it named */
+    var t = document.getElementById("l-note"); if (t && lot && !t.value) t.value = "What's slowing my lot down: " + lot.toLowerCase() + ". ";
+  }
   prefill(); document.addEventListener("jg:intro-done", function () { setTimeout(prefill, 100); });
 
   /* ---------- the desks ---------- */

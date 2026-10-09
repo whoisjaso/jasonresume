@@ -13,7 +13,7 @@ let cache = { at: 0, data: null };
 const PULL = `select event, distinct_id, timestamp,
     properties.role as role, properties.section as section, properties.page as page, properties.source as source,
     properties.campaign as campaign, properties.ref_code as ref_code, properties.returning as returning, properties.visits as visits,
-    properties.kind as kind, properties.label as label, properties.film as film, properties.pct as pct, properties.step as step,
+    properties.kind as kind, properties.build as build, properties.label as label, properties.film as film, properties.pct as pct, properties.step as step,
     properties.format as format, properties.q as q, properties.stage as stage, properties.option as opt, properties.dwell as dwell,
     properties.attention_s as attention, properties.names as names, properties.count as cnt, properties.name as vname,
     properties.$geoip_city_name as city, properties.$geoip_subdivision_1_code as region, properties.$geoip_country_code as country,
@@ -29,15 +29,21 @@ const POINTS = {
   film_chapter: 1, resume_open: 8, resume_print: 6, deck_slide: 0.5, deck_finished: 6, proof_open: 3, verify_opened: 6, verify_link: 6,
   chat_asked: 6, mark_words: 3, card_copied: 6, question_added: 5,
   questions_mailed: 15, questions_copied: 8, forward_copied: 10, share_opened: 10, trailer_finished: 3, cta_click: 2, outbound_click: 2,
-  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6
+  contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6,
+  story_opened: 2, trophy_unlocked: 0.5, level_clear: 8, build_chosen: 5, build_edited: 0.5, card_saved: 12, build_link_copied: 12,
+  listing_matched: 15, build_resume: 10, build_viewed: 6, build_sent: 40
 };
-const TERMINAL = new Set(["call_booked", "lead_sent", "questions_mailed"]);
+const TERMINAL = new Set(["call_booked", "lead_sent", "questions_mailed", "build_sent"]);
+const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology",
+  calls: "lot: calls", paperwork: "lot: paperwork", leads: "lot: leads", notebook: "lot: deals in a notebook", tech: "lot: tech help", bhph: "lot: buy here pay here" };
 const STORY = {
   desk_finished: "ran the desk", film_complete: "watched the whole film", film_play: "played the film", resume_open: "opened the resume",
   deck_finished: "went through the deck", verify_opened: "opened Check me", verify_link: "checked a proof link", chat_asked: "asked a question",
   question_added: "saved questions for a call",
   questions_mailed: "emailed their questions", forward_copied: "copied the forward blurb", share_opened: "shared the site", contact_click: "clicked email",
-  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", name_given: "said hello", reel_finished: "watched their cut"
+  book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", name_given: "said hello", reel_finished: "watched their cut",
+  build_chosen: "built a card", card_saved: "saved their card", build_link_copied: "copied their build link", listing_matched: "matched a job listing",
+  build_resume: "took the resume for their role", build_viewed: "opened a shared build", build_sent: "sent me their build", level_clear: "earned the platinum"
 };
 
 async function hogql(host, id, key, query) {
@@ -75,6 +81,7 @@ function build(rows, refCodes) {
     if (TERMINAL.has(r.event)) v.terminal = true;
     if (r.page) v.pages[r.page] = 1;
     if (r.event === "role_chosen" && r.role) v.role = r.role;
+    if ((r.event === "build_chosen" || r.event === "listing_matched") && r.build) v.build = BUILDS[r.build] || r.build;
     if (r.event === "name_given" && r.vname) { v.name = String(r.vname).slice(0, 40); v.named = r.timestamp; if (r.role && !v.role) v.role = r.role; }
     if (r.city || r.region) v.where = [r.city, r.region || r.country].filter(Boolean).join(", ");
     if (r.device) v.device = r.device;
@@ -94,11 +101,11 @@ function build(rows, refCodes) {
     const j = journeys[aud];
     if (j) { j[0]++; if (v.did.desk_step || v.did.reel_finished) j[1]++; if (v.did.resume_open || v.did.verify_opened || v.did.film_play) j[2]++; if (v.terminal || v.did.contact_click || v.did.book_click) j[3]++; }
     const place = [v.where ? "in " + v.where : "", v.device ? "on a " + v.device.toLowerCase() : "", v.source && v.source !== "direct" ? "from " + v.source : ""].filter(Boolean).join(" ");
-    return { name: v.name, named: v.named, first: v.first, place, who: [v.name || "Someone", place].filter(Boolean).join(" "), audience: aud, tier, score, visits: v.visits, ref: v.ref, story: v.moments.slice(-3), last: v.last };
+    return { name: v.name, named: v.named, first: v.first, place, who: [v.name || "Someone", place].filter(Boolean).join(" "), audience: aud, build: v.build || "", tier, score, visits: v.visits, ref: v.ref, story: v.moments.slice(-3), last: v.last };
   });
   const week = list.filter((p) => now - Date.parse(p.last) < 7 * DAY);
   const named = list.filter((p) => p.name).sort((a, b) => Date.parse(b.last) - Date.parse(a.last)).slice(0, 60)
-    .map((p) => ({ name: p.name, audience: p.audience, tier: p.tier, score: p.score, visits: p.visits, first: p.first, named: p.named, last: p.last, story: p.story, place: p.place }));
+    .map((p) => ({ name: p.name, audience: p.audience, build: p.build, tier: p.tier, score: p.score, visits: p.visits, first: p.first, named: p.named, last: p.last, story: p.story, place: p.place }));
   const worth = list.filter((p) => p.tier !== "Cold").sort((a, b) => (b.tier === "Hot") - (a.tier === "Hot") || b.score - a.score).slice(0, 40);
   return {
     at: new Date().toISOString(),

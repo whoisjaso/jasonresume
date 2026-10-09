@@ -22,13 +22,16 @@ import re
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SITE = ROOT / "tools/site"
 E = lambda s: html.escape(str(s), quote=True)
-V = "g1"
+V = "g2"
 
 rec = json.loads((SITE / "record.json").read_text())
 lib = json.loads((SITE / "library.json").read_text())
 lib.pop("_about", None)
 onboarding = json.loads((SITE / "onboarding.json").read_text())
 onboarding.pop("_about", None)
+builds = json.loads((SITE / "builds.json").read_text())
+builds.pop("_about", None)
+builds_json = json.dumps(builds, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 head = (SITE / "home.head.html").read_text()
 body = (SITE / "home.body.html").read_text()
@@ -64,6 +67,7 @@ head += (
     '<link rel="preload" as="image" href="' + ART + first + '-m.webp" type="image/webp" media="(max-width: 760px)" fetchpriority="high" />\n'
     '<link rel="stylesheet" href="game.css?v=' + V + '" />\n'
     '<link rel="stylesheet" href="desk.css?v=' + V + '" />\n'
+    '<link rel="stylesheet" href="build.css?v=' + V + '" />\n'
     + HEAD_SCRIPT + "\n"
 )
 
@@ -272,6 +276,15 @@ def verify():
     return "".join(out)
 
 
+def readings():
+    out = []
+    for b in builds["builds"]:
+        slug = "Jason_Obawemimo_Resume_" + re.sub(r"[^A-Za-z0-9]+", "_", b["label"]) + ".pdf"
+        out.append('<li><a class="row" href="resume/%s.html"><span class="row__txt"><b>%s</b> <span>%s Written for %s.</span></span><i class="row__chev" aria-hidden="true"></i></a> <a class="readings__pdf" href="assets/resume/%s" download>PDF</a></li>'
+                   % (E(b["id"]), E(b["label"]), E(b["headline"]), E(", ".join(b["targets"])), E(slug)))
+    return "".join(out)
+
+
 def legend():
     out = []
     for l in lib["legend"]:
@@ -291,7 +304,8 @@ body = (
     body.replace("%%ICONS%%", icons
                  + '\n<script type="application/json" id="record-data">' + deck_json + "</script>"
                  + '\n<script type="application/json" id="library-data">' + lib_json + "</script>"
-                 + '\n<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>")
+                 + '\n<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>"
+                 + '\n<script type="application/json" id="builds-data">' + builds_json + "</script>")
     .replace("%%PLATES%%", plates())
     .replace("%%TILES%%", tiles())
     .replace("%%TITLES%%", "".join(title_article(i, t) for i, t in enumerate(lib["titles"])))
@@ -299,6 +313,7 @@ body = (
     .replace("%%PROFILE%%", profile())
     .replace("%%VERIFY%%", verify())
     .replace("%%LEGEND%%", legend())
+    .replace("%%READINGS%%", readings())
     .replace("%%MUSIC_CREDITS%%", E(music_credits()))
     .replace("%%LEVEL_NOTE%%", E(lib["profile"]["level_note"]))
     .replace("%%LEVEL%%", E(lib["profile"]["level"]))

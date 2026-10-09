@@ -26,6 +26,9 @@ const ALLOWED = new Set([
   "story_opened", "desk_step", "desk_finished",
   // the library: titles, trophies, screens, the platinum
   "trophy_unlocked", "trophies_opened", "screen_opened", "level_clear",
+  // Player 2: the build, the card, the listing match, the send
+  "build_shown", "build_chosen", "build_skipped", "build_edited", "build_opened", "build_viewed", "card_saved", "build_link_copied",
+  "listing_matched", "build_resume", "build_sent",
   // conversion
   "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent",
   // older pages still in the wild

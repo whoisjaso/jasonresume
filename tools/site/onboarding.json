@@ -1,5 +1,5 @@
 {
-  "_about": "The title screen every visitor sees on every arrival from outside the site, on the home page and /obavia.html: key art behind Jason's name, Press start (with the score) or Start muted, Who's playing (three seats that reorder the library), an optional player name, a welcome card, then the library. intro.js reads this; tools/site/assemble_home.py inlines it into both pages as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
+  "_about": "The title screen every visitor sees on every arrival from outside the site, on the home page and /obavia.html: key art behind Jason's name, Press start (with the score) or Start muted, Who's playing (three seats), then on the home page a build (the visitor picks the role they're hiring for, the problem on their lot, or a class, and builds Jason for it from verified facts), an optional player name that signs the card, the card, then the library. intro.js reads this; tools/site/assemble_home.py inlines it into both pages as #onboarding-data. Every line must be true and in llms.txt. No em dashes.",
   "art": "assets/game/art/triple-j",
   "title": {
     "first": "Jason",
@@ -18,20 +18,66 @@
     "fine_touch": "You can switch later."
   },
   "roles": [
-    { "id": "interviewer", "h": "I'm hiring", "p": "Interviewer or recruiter. The record first, then the systems." },
-    { "id": "partner", "h": "I run a dealership", "p": "Dealer or partner. What answers my phones and runs my lot." },
-    { "id": "lurker", "h": "Just looking", "p": "No pitch. Play the library." }
+    {
+      "id": "interviewer",
+      "h": "I'm hiring",
+      "p": "Interviewer or recruiter. The record first, then the systems."
+    },
+    {
+      "id": "partner",
+      "h": "I run a dealership",
+      "p": "Dealer or partner. What answers my phones and runs my lot."
+    },
+    {
+      "id": "lurker",
+      "h": "Just looking",
+      "p": "No pitch. Play the library."
+    }
   ],
   "name": {
     "title": "Enter your name",
     "placeholder": "First name is plenty",
     "continue": "Continue",
     "skip": "Skip",
-    "fine": "So I know who stopped by. Only I see it."
+    "fine": "So I know who stopped by. Only I see it.",
+    "title_build": "Sign your build",
+    "fine_build": "Your name goes on the card. It also tells me who stopped by."
   },
   "card": {
     "named": "Welcome,",
     "returning": "Welcome back,",
-    "anonymous": "Welcome in."
+    "anonymous": "Welcome in.",
+    "enter": "Enter the library",
+    "save": "Save the card",
+    "edit": "Change it any time from Player 2 in the top bar."
+  },
+  "build": {
+    "interviewer": {
+      "title": "What are you hiring for?",
+      "sub": "Pick the role and build me for it. You keep the card and a one-page resume written for that job."
+    },
+    "partner": {
+      "title": "What's slowing your lot down?",
+      "sub": "Pick one. You'll see what runs at Triple J for it, and keep the card."
+    },
+    "lurker": {
+      "title": "Pick a class",
+      "sub": "Build me however you like and keep the card. Every line on it is a verified fact.",
+      "surprise": "Surprise me",
+      "surprise_p": "Let the library pick"
+    },
+    "paste": "Paste the listing",
+    "paste_p": "I'll match its words to my record",
+    "paste_h": "Paste the job listing",
+    "paste_fine": "Read on your device. It never leaves this page.",
+    "match": "Match it",
+    "on": "On my record",
+    "off": "Not on my record",
+    "none": "Nothing in it matched my record. Pick the closest role instead.",
+    "preview_k": "Built for",
+    "go": "Build it",
+    "skip": "Skip",
+    "fine_pointer": "Arrows and Enter, or press a number. You can change it later.",
+    "fine_touch": "You can change it later."
   }
 }
