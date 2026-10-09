@@ -455,3 +455,25 @@ html.intro-pending body > :not(#intro):not(script):not(dialog) { visibility: hid
 .steps li.is-done::before { background: var(--bottle); border-color: var(--bottle-2); color: var(--bone); }
 .demo .iphone { margin: 0; }
 @media (max-width: 899px) { .demo .iphone { width: 280px; height: 580px; } }
+
+/* ---------- open layers own the screen ---------- */
+.title-open .hud-trophies, .screen-open .hud-trophies { visibility: hidden; animation: none; }
+.title-open .sys__me, .title-open .sys__lvl, .title-open .sys__tro, .screen-open .sys__me, .screen-open .sys__lvl, .screen-open .sys__tro { visibility: hidden; }
+.lib-on.screen-open article.title:not(.is-open) { display: none; }
+.lib-on .screen.is-open { background: rgba(10, 15, 13, 0.9); }
+.tabs a { white-space: nowrap; }
+.sys__name { white-space: nowrap; }
+@media (max-width: 899px) {
+  .intro__logo { font-size: clamp(38px, 11.4vw, 60px); letter-spacing: 0.06em; }
+  .intro__logo span:last-child { letter-spacing: 0.04em; }
+  .intro__h { font-size: clamp(32px, 10vw, 48px); }
+  .title__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 0; }
+  .stat { margin: 0; padding: 0 12px 0 0; border-right: 0; max-width: none; }
+  .stat + .stat { padding-left: 12px; border-left: 1px solid var(--hair-2); }
+  .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .stat dd { font-size: 30px; }
+}
+@media (max-width: 430px) {
+  .sys__lvl { display: none; }
+  .sys__name { font-size: 14px; }
+}

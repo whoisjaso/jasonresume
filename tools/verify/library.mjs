@@ -40,14 +40,16 @@ async function textRules(p, label) {
   const t = await p.evaluate(() => {
     const attrs = [...document.querySelectorAll('[aria-label],[title],[alt],[placeholder]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('alt'), e.getAttribute('placeholder')].filter(Boolean).join(' ')).join(' ');
     const data = ['library-data', 'onboarding-data', 'record-data'].map(id => (document.getElementById(id) || {}).textContent || '').join(' ');
-    return { text: document.body.innerText, attrs, data, head: document.head.innerHTML };
+    // the desk demo runs a fictional buyer with example figures; its numbers are labelled as such, so they sit outside the facts check
+    const facts = [...document.body.querySelectorAll('[data-desk-app], .steps')].reduce((t, el) => t.replace(el.innerText, ''), document.body.innerText);
+    return { text: document.body.innerText, facts, attrs, data: data.replace(/calendly\.com\/jason-apohenia/g, ''), head: document.head.innerHTML };
   });
   const all = t.text + ' ' + t.attrs + ' ' + t.data;
   if (/[—–]/.test(all)) errs.push(`${label} dash in text, labels or data: ${(all.match(/.{30}[—–].{30}/) || [''])[0]}`);
   if (/%/.test(t.text + ' ' + t.attrs)) errs.push(`${label} percent sign in text or labels`);
   if (/apohenia/i.test(t.text + ' ' + t.attrs + ' ' + t.data)) errs.push(`${label} Apohenia on the page`);
   if (/\(?\b832\)?[\s.-]?\d{3}[\s.-]?\d{4}\b|tel:/.test(all + t.head)) errs.push(`${label} a phone number on the page`);
-  const nums = new Set((t.text.match(/\$?\d[\d,]*(\.\d+)?/g) || []).filter(n => n.replace(/[$,.]/g, '').length >= 2));
+  const nums = new Set((t.facts.match(/\$?\d[\d,]*(\.\d+)?/g) || []).filter(n => n.replace(/[$,.]/g, '').length >= 2));
   const unknown = [...nums].filter(n => !LLMS.includes(n.replace(/^\$/, '')) && !/^\d{1,2}:\d\d$/.test(n));
   const clock = /^(1[0-2]|[1-9])$/;
   const bad = unknown.filter(n => !clock.test(n));

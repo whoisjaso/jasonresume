@@ -36,7 +36,7 @@
 
   /* ---------- the title screen, mounted before anything else loads ---------- */
   var t = O.title, mob = innerWidth < 760;
-  var art = O.art || "assets/game/art/triple-j";
+  var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/triple-j";
   var el = document.createElement("div");
   el.id = "intro"; el.className = "intro";
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "intro-title");
