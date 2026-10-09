@@ -38,6 +38,8 @@ Triple J Auto Investment (https://thetriplejauto.com/) is a Houston, Texas used 
 
 Jason has been Owner and Operations Lead of Triple J Auto Investment and Rental Operations since August 2024. He manages dealership operations across pricing, inventory, vendors, logistics, financing and title processing. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds.
 
+At Triple J, Jason also runs the people side, the technology and the back office (confirmed by Jason, October 2026). People: he hires, trains, schedules and manages the dealership's staff and runs payroll. Technology: he supports staff on the CRM, phones and computers, manages user accounts and permissions, and sets up the dealership's hardware and network; rather than buying software, he builds AI software for the dealership's bottlenecks. Customers: he takes sales calls, follows up by phone and text, negotiates deals, and handles service issues after the sale. Paperwork and compliance: he prepares and files title and registration paperwork (including the Form 130-U and webDEALER), prepares deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures), keeps the dealer license compliance and record-keeping in order, and services buy here pay here accounts and collections.
+
 ### Triple J's CRM and its Handle a Sale desk
 
 The custom dealership CRM Jason built for Triple J and Handle a Sale, the sale desk Triple J closes sales on, are one system. Stack: TypeScript, React and Next.js, SQL (PostgreSQL), Supabase, Vercel, Edge Functions.
