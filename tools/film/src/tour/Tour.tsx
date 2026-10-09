@@ -247,7 +247,7 @@ const DeskShot: React.FC<{ shot: Shot; tall: boolean }> = ({ shot, tall }) => {
       <div style={{ position: "absolute", left: cx - pw / 2, top: cy - ph / 2 + float + (1 - arrive) * 60, width: pw, height: ph, opacity: arrive,
         transform: `scale(${z})`, filter: "drop-shadow(0 50px 80px rgba(0,0,0,.7))" }}>
         {DESK.map((s, i) => {
-          const a = i === 0 ? 1 : interpolate(f, [10 + i * seg - 2, 10 + i * seg + 3], [0, 1], { ...clamp, easing: T.ease.out });
+          const a = i === 0 ? 1 : interpolate(f, [10 + i * seg - 4, 10 + i * seg + 4], [0, 1], { ...clamp, easing: T.ease.out });
           return <Img key={s} src={shotSrc(s)} style={{ position: "absolute", inset: 0, width: pw, height: ph, opacity: a }} />;
         })}
       </div>
@@ -313,7 +313,7 @@ const BootShot: React.FC<{ shot: Shot; tall: boolean; next: string }> = ({ shot,
   const f = useCurrentFrame();
   const dur = shot.frames + T.overlap;
   const drawEnd = Math.round(dur * 0.55);
-  const p = interpolate(f, [6, drawEnd], [0, 1], { ...clamp, easing: T.ease.cam });
+  const p = interpolate(f, [0, drawEnd], [0, 1], { ...clamp, easing: T.ease.out });
   const lit = interpolate(f, [drawEnd, drawEnd + 14], [0, 1], { ...clamp, easing: T.ease.out });
   /* the photo is whole before the title screen's shot takes over (it starts 2 overlaps before this one ends) */
   const photo = interpolate(f, [drawEnd + 10, dur - 2 * T.overlap - 2], [0, 1], { ...clamp, easing: T.ease.cam });
@@ -321,7 +321,7 @@ const BootShot: React.FC<{ shot: Shot; tall: boolean; next: string }> = ({ shot,
   const k = 1080 / 390;
   const svg: React.CSSProperties = tall ? { left: -1018.2 * k, top: -208.5, width: 1500.2 * k, height: 844 * k } : { left: 0, top: 0, width: 1920, height: 1080 };
   const still = tall ? "m-title" : "title";
-  const label = interpolate(f, [8, 26, drawEnd, drawEnd + 12], [0, 1, 1, 0], { ...clamp, easing: T.ease.out });
+  const label = interpolate(f, [0, 14, drawEnd, drawEnd + 12], [0, 1, 1, 0], { ...clamp, easing: T.ease.out });
   return (
     <AbsoluteFill style={{ background: T.c.ink }}>
       <LineLot p={p} lit={lit} style={{ ...svg, transform: `scale(${1 + 0.02 * photo})`, transformOrigin: "60% 50%" }} />
@@ -387,7 +387,7 @@ export const Tour: React.FC<{ tall: boolean }> = ({ tall }) => {
         else if (plan) body = tall ? <TallShot shot={s} plan={plan} first={s.shot === "title"} /> : <WideShot shot={s} plan={plan} first={s.shot === "title"} />;
         return (
           <Sequence key={s.shot} from={from} durationInFrames={dur} name={s.shot}>
-            <ShotFade dur={dur} first={i === 0} last={i === shots.length - 1} hard={s.shot === "title"}>{body}</ShotFade>
+            <ShotFade dur={dur} first={i === 0} last={i === shots.length - 1} hard={s.shot === "title"} slow={BRIGHT.has(s.shot) || BRIGHT.has(shots[i - 1]?.shot)}>{body}</ShotFade>
           </Sequence>
         );
       })}
@@ -412,9 +412,17 @@ export const Tour: React.FC<{ tall: boolean }> = ({ tall }) => {
 };
 
 /* every cut is a dissolve with a breath of scale; the title screen arrives without one (the drawing hands it over) */
-const ShotFade: React.FC<{ dur: number; first: boolean; last: boolean; hard: boolean; children: React.ReactNode }> = ({ dur, first, last, hard, children }) => {
+/* shots with something bright in them (the phone's white screen, the paper resume): their cuts dissolve slower, so the light changes gently */
+const BRIGHT = new Set(["desk", "resume"]);
+const ShotFade: React.FC<{ dur: number; first: boolean; last: boolean; hard: boolean; slow: boolean; children: React.ReactNode }> = ({ dur, first, last, hard, slow, children }) => {
   const f = useCurrentFrame();
   const O = T.overlap;
+  if (slow && !first && !hard) {
+    const a2 = interpolate(f, [0, O * 2], [0, 1], { ...clamp, easing: T.ease.cam });
+    const z2 = interpolate(f, [0, O * 2 + 6], [1.04, 1], { ...clamp, easing: T.ease.out });
+    const inner2 = <AbsoluteFill style={{ opacity: a2, transform: `scale(${z2})` }}>{children}</AbsoluteFill>;
+    return f < O * 2 ? <CameraMotionBlur samples={6} shutterAngle={180}>{inner2}</CameraMotionBlur> : inner2;
+  }
   /* a quick dissolve (two screens of UI never sit on each other for long) under a slower push */
   const a = first || hard ? 1 : interpolate(f, [O - 5, O + 5], [0, 1], { ...clamp, easing: T.ease.out });
   const z = first || hard ? 1 : interpolate(f, [O - 5, O * 2 + 4], [1.07, 1], { ...clamp, easing: T.ease.out });
