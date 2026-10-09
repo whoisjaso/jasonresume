@@ -37,12 +37,12 @@ export const LibraryTripleJ: React.FC = () => {
           <rect x="0" y="0" width={LOOP.w} height={LOOP.h} fill="url(#tj-low)" />
         </mask>
       </defs>
-      <Relight id="beam" tint={lib.light.headlamp} gain={0.85 * env} gamma={1.05}>
+      <Relight id="beam" tint={lib.light.headlamp} gain={1.0 * env} gamma={1.05}>
         <g mask="url(#tj-floor)">
           <Soft cx={x} cy={640} rx={200} ry={320} rot={-12} />
         </g>
       </Relight>
-      <Relight id="wet" tint={lib.light.headlamp} gain={1.6 * env} gamma={1.45} sheen={0.03 * env}>
+      <Relight id="wet" tint={lib.light.headlamp} gain={1.8 * env} gamma={1.45} sheen={0.035 * env}>
         <g mask="url(#tj-floor)">
           {TJ_STREAKS.map((s, i) => (
             <Soft key={i} cx={x + s.dx} cy={s.y} rx={s.w} ry={s.h} o={s.o} />
