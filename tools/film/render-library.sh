@@ -32,6 +32,10 @@ comp() {
   esac
 }
 
+# VP9 quality per plate: the cut-paper map is the busiest picture, so it sits a
+# step lower to land near its mp4's size
+vcrf() { case $1 in prospector) echo 33 ;; *) echo 31 ;; esac; }
+
 plate() {
   src=$ART/$1-1920.webp
   dst=public/library/$1.png
@@ -63,11 +67,12 @@ for id in $ids; do
   # cannot reference frame 0 from frame 239, so its keyframe would pop back to
   # full detail at the seam; the zones lift the keyframe and the last half second
   # so both sides of the seam sit close to the source. VP9 keeps frame 0 as its
-  # golden frame and closes the loop on its own; constrained quality caps the
-  # busiest plate near the mp4's size.
+  # golden frame and closes the loop on its own, but only in pure constant
+  # quality (-b:v 0): a bitrate cap makes it refresh the golden frame and the
+  # seam comes back.
   ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libx264 -preset slow -crf 27 -tune grain -g 240 \
     -x264-params "zones=0,0,q=22/225,239,q=23" $COLOR -movflags +faststart -an "$OUT/$id.mp4"
-  ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libvpx-vp9 -crf 30 -b:v 1400k -row-mt 1 \
+  ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libvpx-vp9 -b:v 0 -crf "$(vcrf "$id")" -row-mt 1 \
     -deadline good -cpu-used 2 -g 240 $COLOR -an "$OUT/$id.webm"
   [ -n "$KEEP" ] || rm -rf "out/library/$id"
   ls -l "$OUT/$id.mp4" "$OUT/$id.webm"
