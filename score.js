@@ -23,7 +23,7 @@
   };
   function T(e, p) { if (window.JG_TRACK) window.JG_TRACK(e, p); }
   var AC = window.AudioContext || window.webkitAudioContext;
-  var ctx = null, master = null, music = null, fxBus = null, comp = null;
+  var ctx = null, master = null, music = null, fxBus = null, comp = null, veil = null, veilLp = null, veiled = false;
   var manifest = null, manifestP = null;
   var buffers = {}, loading = {};
   var layers = {}; /* id -> { gain, src } */
@@ -39,7 +39,7 @@
   var EXT = ext();
 
   function loadManifest() {
-    if (!manifestP) manifestP = fetch(BASE + "score.json", { cache: "force-cache" }).then(function (r) { if (!r.ok) throw new Error("no score"); return r.json(); }).then(function (m) { manifest = m; return m; });
+    if (!manifestP) manifestP = fetch(BASE + "score.json?v=2", { cache: "force-cache" }).then(function (r) { if (!r.ok) throw new Error("no score"); return r.json(); }).then(function (m) { manifest = m; return m; });
     return manifestP;
   }
   function srcOf(entry) {
@@ -67,7 +67,11 @@
     var shelf = ctx.createBiquadFilter(); shelf.type = "highshelf"; shelf.frequency.value = 9000; shelf.gain.value = -1.5;
     music = ctx.createGain(); music.gain.value = 1;
     fxBus = ctx.createGain(); fxBus.gain.value = 0.9;
-    music.connect(comp); fxBus.connect(comp); comp.connect(shelf); shelf.connect(master); master.connect(ctx.destination);
+    /* the veil: when the visitor goes into something to read, the score steps back and goes soft, as if heard from the next room */
+    veil = ctx.createGain(); veil.gain.value = 1;
+    veilLp = ctx.createBiquadFilter(); veilLp.type = "lowpass"; veilLp.frequency.value = 18000; veilLp.Q.value = 0.5;
+    music.connect(veilLp); veilLp.connect(veil); veil.connect(comp); fxBus.connect(comp);
+    setTimeout(syncVeil, 0); comp.connect(shelf); shelf.connect(master); master.connect(ctx.destination);
     return true;
   }
 
@@ -110,7 +114,7 @@
         playing = true; t0 = ctx.currentTime + 0.1;
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setValueAtTime(0, ctx.currentTime);
-        master.gain.linearRampToValueAtTime(m.master != null ? m.master : 0.9, ctx.currentTime + 2.5);
+        master.gain.linearRampToValueAtTime(MASTER, ctx.currentTime + 2.5);
         startLayer("bed");
         /* the focused title's layer first, then the rest stream in */
         var order = [focusId].concat(Object.keys(m.stems).filter(function (k) { return k !== "bed" && k !== focusId; }));
@@ -160,6 +164,28 @@
     if (!layers[focusId] && manifest && manifest.stems[focusId]) load(focusId, manifest.stems[focusId]).then(function () { startLayer(focusId); }).catch(function () {});
   }
 
+  /* the overall level sits a little under the mix, and lower still (and muffled) while the visitor reads */
+  var MASTER = 0.72, VEIL = { gain: 0.42, hz: 1600 };
+  function setVeil(on, secs) {
+    veiled = on;
+    if (!ctx || !veil) return;
+    var now = ctx.currentTime, t = secs || (on ? 0.9 : 1.6);
+    veil.gain.cancelScheduledValues(now); veil.gain.setValueAtTime(veil.gain.value, now);
+    veil.gain.linearRampToValueAtTime(on ? VEIL.gain : 1, now + t);
+    veilLp.frequency.cancelScheduledValues(now); veilLp.frequency.setValueAtTime(veilLp.frequency.value, now);
+    veilLp.frequency.exponentialRampToValueAtTime(on ? VEIL.hz : 18000, now + t);
+  }
+  function reading() {
+    var c = document.documentElement.classList;
+    return c.contains("title-open") || c.contains("screen-open") || c.contains("clear-on") || !!document.querySelector("dialog[open]");
+  }
+  function syncVeil() { var r = reading(); if (r !== veiled) setVeil(r); }
+  if (window.MutationObserver) {
+    var mo = new MutationObserver(syncVeil);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    document.addEventListener("DOMContentLoaded", function () { [].forEach.call(document.querySelectorAll("dialog"), function (d) { mo.observe(d, { attributes: true, attributeFilter: ["open"] }); }); });
+  }
+
   function duck(secs) {
     if (!playing) return;
     var now = ctx.currentTime, g = music.gain;
@@ -193,7 +219,7 @@
     if (!ctx || !playing) return;
     var now = ctx.currentTime;
     if (document.hidden) { master.gain.cancelScheduledValues(now); master.gain.setValueAtTime(master.gain.value, now); master.gain.linearRampToValueAtTime(0, now + 0.6); setTimeout(function () { if (document.hidden && ctx.state === "running") ctx.suspend(); }, 700); }
-    else { ctx.resume().then(function () { var t = ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(0, t); master.gain.linearRampToValueAtTime((manifest && manifest.master) || 0.9, t + 1.2); }); }
+    else { ctx.resume().then(function () { var t = ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(0, t); master.gain.linearRampToValueAtTime(MASTER, t + 1.2); }); }
   });
 
   /* the score button anywhere on the page */
