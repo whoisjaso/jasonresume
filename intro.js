@@ -1,326 +1,352 @@
-/* The onboarding. Tap anywhere to begin, one question, an optional name, then
-   the cut that suits you. Every visitor sees it on every arrival from outside
-   the site, on the home page or /obavia.html; clicks between the site's own
-   pages and crawlers go straight to the page, which is complete without it.
-   Its words and choices live in tools/site/onboarding.json, inlined as
-   #onboarding-data. Every skip is silent. A deep link (#present, #verify,
-   #story-..., ?cut=, or any #section on the page) opens once the onboarding
-   ends, instead of the trailer.
+/* The title screen. Every visitor sees it on every arrival from outside the
+   site, on the home page and /obavia.html; clicks between the site's own pages
+   and crawlers go straight to the page, which is complete without it.
+
+   Press start (with the score) or Start muted; then who's playing (a game
+   menu, keys 1 to 3); on the home page, the build: the role they're hiring
+   for, the problem on their lot, or a class (build.js keeps it); then an
+   optional player name that signs it; then the card and the library. Every
+   skip is silent. A ?for=<build> link (from an application) highlights that
+   role first. Its words live in
+   tools/site/onboarding.json, inlined as #onboarding-data.
    The head script sets html.intro-pending so the page never flashes first.
-   When it ends, document gets "jg:intro-done". */
+   While it is up, html has .intro-on. When it ends, document gets
+   "jg:intro-done" { role, named }. */
 (function () {
   "use strict";
   var root = document.documentElement, body = document.body;
   if (!root.classList.contains("intro-pending")) return;
-  if (!document.getElementById("onboarding-data")) { root.classList.remove("intro-pending"); return; }
+  var dataEl = document.getElementById("onboarding-data");
+  var O = null; try { O = JSON.parse(dataEl.textContent); } catch (e) {}
+  if (!O || !O.roles) { root.classList.remove("intro-pending"); document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: {} })); return; }
 
-  var RM = matchMedia("(prefers-reduced-motion: reduce)").matches || root.hasAttribute("data-still");
+  var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var COARSE = matchMedia("(pointer: coarse)").matches;
-  var T = window.JG_TRACK || function () {};
-  function fx(k) { if (window.JG_FX) window.JG_FX(k); }
-  function sfx(n, o) { return window.JG_SFX ? window.JG_SFX.play(n, o) : false; }
+  function T(e, p, s) { if (window.JG_TRACK) window.JG_TRACK(e, p, s); }
+  function hap(k) { if (window.JG_HAPTIC) window.JG_HAPTIC(k); }
+  function S() { return window.JG_SCORE; }
   var store = {
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function E(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function wait(ms) { return RM ? Math.min(ms, 120) : ms; }
+  var KEYS = {}; O.roles.forEach(function (r, i) { r.n = String(i + 1); KEYS[r.n] = r.id; });
+  var BD = null; try { BD = JSON.parse(document.getElementById("builds-data").textContent); } catch (e) {}
+  var W = O.build || null; if (!W) BD = null;
+  var FOR = null;
+  (function () {
+    var m = location.search.match(/[?&]for=([a-z-]+)/); if (!m) return;
+    if (BD && BD.builds.some(function (b) { return b.id === m[1]; })) { FOR = m[1]; store.set("jg_for", m[1]); }
+    try { var u = new URL(location.href); u.searchParams.delete("for"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+  })();
+  if (/^#build\/v1\//.test(location.hash)) BD = null; /* a shared build opens after the title screen; no need to build one first */
 
-  var O = null; try { O = JSON.parse(document.getElementById("onboarding-data").textContent); } catch (e) {}
-  if (!O || !O.roles) { root.classList.remove("intro-pending"); document.dispatchEvent(new CustomEvent("jg:intro-done")); return; }
-  var ROLES = {}, KEYS = {};
-  O.roles.forEach(function (r, i) { r.n = String(i + 1); ROLES[r.id] = r; KEYS[r.n] = r.id; });
-  var HASH = location.hash, DEEP = /[?&]cut=/.test(location.search) || /^#(present|verify|trailer|story-)/.test(HASH);
-  try { if (HASH.length > 1 && HASH !== "#top" && document.getElementById(decodeURIComponent(HASH.slice(1)))) DEEP = true; } catch (e) {}
-
-  /* ---------- the curtain ---------- */
   if (/[?&]intro=1/.test(location.search)) { try { var u = new URL(location.href); u.searchParams.delete("intro"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {} }
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   scrollTo(0, 0);
+
+  /* ---------- the title screen, mounted before anything else loads ---------- */
+  var t = O.title, mob = innerWidth < 760;
+  var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/triple-j";
   var el = document.createElement("div");
   el.id = "intro"; el.className = "intro";
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "intro-title");
   el.innerHTML =
-    '<button class="intro__skip" type="button" data-intro-skip>' + esc(O.loading.skip) + '</button>' +
-    '<div class="intro__stage">' +
-      '<div class="intro__medal"><img class="intro__face" src="assets/jason-headshot-620.webp" alt="" width="620" height="620" />' +
-        '<svg class="intro__ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48.5"/><circle class="intro__ring-p" cx="50" cy="50" r="48.5" pathLength="100"/>' + ticks() + '</svg>' +
-        '<span class="intro__needle" aria-hidden="true"></span>' +
-        '<span class="intro__wave" aria-hidden="true"></span><span class="intro__wave intro__wave--2" aria-hidden="true"></span></div>' +
-      '<div class="intro__scene intro__scene--a">' +
-        '<p class="intro__name" id="intro-title"><span class="mask"><span>' + esc(O.loading.first) + '</span></span><span class="mask"><span><em>' + esc(O.loading.last) + '</em></span></span></p>' +
-        '<svg class="intro__rule" viewBox="0 0 240 8" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5c40-3 80-3 118-1.5S200 6 238 3"/></svg>' +
-        '<p class="intro__count" aria-hidden="true"><span>0</span></p>' +
-        '<p class="intro__hint" aria-live="polite">' + esc(COARSE ? O.loading.hint_touch : O.loading.hint_pointer) + '</p>' +
-      '</div>' +
-      '<div class="intro__scene intro__scene--b" hidden></div>' +
-    '</div>';
+    '<div class="intro__art" aria-hidden="true"><img src="' + art + (mob ? "-m.webp" : "-1920.webp") + '" alt="" decoding="async" fetchpriority="high" /></div>' +
+    '<div class="intro__shade" aria-hidden="true"></div>' +
+    '<button class="intro__skip" type="button" data-intro-skip>' + E(t.skip) + "</button>" +
+    '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
+      '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
+      '<p class="intro__line">' + E(t.line) + "</p>" +
+      '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
+      '<div class="intro__start">' +
+        '<button class="btn btn--primary btn--lg" type="button" data-start="on"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.start) + "</button>" +
+        '<button class="btn btn--ghost" type="button" data-start="off">' + E(t.muted) + "</button>" +
+      "</div>" +
+      '<p class="intro__fine">' + E(t.note) + "</p>" +
+    "</section>" +
+    '<section class="intro__scene intro__scene--seat" data-scene="seat" hidden>' +
+      '<h2 class="intro__h">' + E(O.question.title) + "</h2>" +
+      '<ol class="menu" role="listbox" aria-label="' + E(O.question.title) + '">' + O.roles.map(function (r, i) {
+        return '<li><button class="menu__row' + (i === 0 ? " is-on" : "") + '" type="button" role="option" aria-selected="' + (i === 0 ? "true" : "false") + '" data-role="' + r.id + '"><span class="menu__n" aria-hidden="true">' + r.n + '</span><span class="menu__txt"><b>' + E(r.h) + "</b><small>" + E(r.p) + "</small></span></button></li>";
+      }).join("") + "</ol>" +
+      '<p class="intro__fine">' + E(COARSE ? O.question.fine_touch : O.question.fine_pointer) + "</p>" +
+    "</section>" +
+    (BD ? '<section class="intro__scene intro__scene--build" data-scene="build" hidden>' +
+      '<div class="cls"><div class="cls__menu">' +
+        '<h2 class="intro__h" data-build-h></h2><p class="intro__sub" data-build-sub></p>' +
+        '<ol class="menu menu--cls" role="listbox" data-build-menu></ol>' +
+        '<p class="intro__fine">' + E(COARSE ? W.fine_touch : W.fine_pointer) + ' <button class="intro__textbtn" type="button" data-build-skip>' + E(W.skip) + "</button></p>" +
+      '</div><aside class="cls__preview" data-build-preview aria-live="polite"></aside></div>' +
+    "</section>" : "") +
+    '<section class="intro__scene intro__scene--name" data-scene="name" hidden>' +
+      '<h2 class="intro__h" data-name-h>' + E(O.name.title) + "</h2>" +
+      '<form class="intro__form" data-name-form autocomplete="off">' +
+        '<label class="vh" for="intro-name">' + E(O.name.title) + "</label>" +
+        '<input id="intro-name" name="name" type="text" maxlength="40" spellcheck="false" autocapitalize="words" enterkeyhint="go" placeholder="' + E(O.name.placeholder) + '" />' +
+        '<div class="intro__acts"><button class="btn btn--primary" type="submit">' + E(O.name.continue) + '</button><button class="btn btn--ghost" type="button" data-name-skip>' + E(O.name.skip) + "</button></div>" +
+      "</form>" +
+      '<p class="intro__fine" data-name-fine>' + E(O.name.fine) + "</p>" +
+    "</section>" +
+    '<section class="intro__scene intro__scene--card" data-scene="card" hidden aria-live="polite">' +
+      '<p class="intro__card"></p>' +
+      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts"><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + "</button></div></div></div>" +
+    "</section>";
   body.appendChild(el);
-  root.classList.add("intro-mounted");
+  root.classList.add("intro-on");
   if (window.JG_LOCK) window.JG_LOCK(true);
-  var medal = el.querySelector(".intro__medal"), canvas = medal.querySelector("canvas");
-  var sceneA = el.querySelector(".intro__scene--a"), sceneB = el.querySelector(".intro__scene--b");
-  var ring = el.querySelector(".intro__ring-p"), count = el.querySelector(".intro__count span"), hint = el.querySelector(".intro__hint");
-  var phase = "loading";
-  requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-shown"); }); });
   T("intro_shown", {});
+  requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-shown"); }); });
 
-  /* ---------- the bezel: a tachometer's ticks around the portrait ---------- */
-  function ticks() {
-    var out = "";
-    for (var k = 0; k <= 30; k++) {
-      var d = -135 + k * 9, r1 = 46.4, r2 = k % 5 ? 44.6 : 42.4, a = (d - 90) * Math.PI / 180;
-      out += '<line x1="' + (50 + r1 * Math.cos(a)).toFixed(2) + '" y1="' + (50 + r1 * Math.sin(a)).toFixed(2) + '" x2="' + (50 + r2 * Math.cos(a)).toFixed(2) + '" y2="' + (50 + r2 * Math.sin(a)).toFixed(2) + '" class="intro__tick' + (k >= 26 ? " is-red" : "") + '"/>';
-      if (!(k % 5)) out += '<text x="' + (50 + 38.9 * Math.cos(a)).toFixed(2) + '" y="' + (50 + 38.9 * Math.sin(a) + 1.5).toFixed(2) + '" class="intro__num' + (k >= 26 ? " is-red" : "") + '">' + k / 5 + '</text>';
-    }
-    return out;
+  var phase = "title", role = store.get("jg_role") || O.roles[0].id, named = false;
+  function scene(name) {
+    phase = name;
+    [].forEach.call(el.querySelectorAll("[data-scene]"), function (s) {
+      var on = s.getAttribute("data-scene") === name;
+      if (on) { s.hidden = false; requestAnimationFrame(function () { requestAnimationFrame(function () { s.classList.add("is-on"); }); }); }
+      else { s.classList.remove("is-on"); s.hidden = true; }
+    });
+    var f = name === "seat" ? el.querySelector(".menu__row.is-on") : name === "build" ? el.querySelector("[data-build-menu] .menu__row.is-on") : name === "name" ? el.querySelector("#intro-name") : name === "card" ? el.querySelector("[data-built]:not([hidden]) [data-enter]") : null;
+    if (f) setTimeout(function () { f.focus({ preventScroll: true }); }, wait(260));
   }
-  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-  function rippleAt() {}
-  var unlocked = false;
-  var pic = el.querySelector(".intro__face");
-  if (pic.complete) setTimeout(got, 0); else { pic.addEventListener("load", got); pic.addEventListener("error", got); }
+  var startBtn = el.querySelector('[data-start="on"]');
+  setTimeout(function () { startBtn.focus({ preventScroll: true }); }, 60);
 
-  /* ---------- the engine: a starter that chugs, then catches and settles ---------- */
-  function crank() {
-    var S = window.JG_SFX; if (!S || !S.ctx) return;
-    var c = S.ctx(); if (!c) return;
-    var out = (S.out && S.out()) || c.destination, t = c.currentTime + 0.02;
-    try {
-      var len = Math.floor(c.sampleRate * 0.8), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
-      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      var src = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain();
-      src.buffer = buf; lp.type = "lowpass"; lp.frequency.value = 760; g.gain.value = 0.0001;
-      for (var k = 0; k < 6; k++) { var st = t + k * 0.092; g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.32, st + 0.014); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.075); }
-      src.connect(lp); lp.connect(g); g.connect(out); src.start(t); src.stop(t + 0.62);
-      var o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), eg = c.createGain(), on = t + 0.56;
-      o.type = "sawtooth"; o2.type = "square"; f.type = "lowpass";
-      o.frequency.setValueAtTime(36, on); o.frequency.exponentialRampToValueAtTime(74, on + 0.28); o.frequency.exponentialRampToValueAtTime(41, on + 1.1);
-      o2.frequency.setValueAtTime(18, on); o2.frequency.exponentialRampToValueAtTime(37, on + 0.28); o2.frequency.exponentialRampToValueAtTime(20.5, on + 1.1);
-      f.frequency.setValueAtTime(240, on); f.frequency.exponentialRampToValueAtTime(720, on + 0.28); f.frequency.exponentialRampToValueAtTime(210, on + 1.1);
-      eg.gain.setValueAtTime(0.0001, on); eg.gain.exponentialRampToValueAtTime(0.3, on + 0.12); eg.gain.exponentialRampToValueAtTime(0.09, on + 0.9); eg.gain.exponentialRampToValueAtTime(0.0001, on + 1.5);
-      o.connect(f); o2.connect(f); f.connect(eg); eg.connect(out); o.start(on); o2.start(on); o.stop(on + 1.6); o2.stop(on + 1.6);
-    } catch (e) {}
+  /* ---------- start: with the score, or muted ---------- */
+  function start(sound, how) {
+    if (phase !== "title") return;
+    if (S()) { S().set(sound, "intro"); if (sound) setTimeout(function () { S().sting("start"); }, 120); }
+    hap("tap");
+    T("intro_started", { sound: sound, how: how || "" });
+    el.classList.add("is-started");
+    setTimeout(function () { scene("seat"); }, wait(520));
   }
-
-  /* ---------- loading: a real count, held at 96 until the portrait and fonts are in ---------- */
-  var t0 = performance.now(), MIN = RM ? 300 : 1100, assets = 0, NEED = 2, wantGo = false;
-  function got() { assets++; }
-  Promise.resolve(document.fonts && document.fonts.ready).then(got, got);
-  setTimeout(function () { assets = NEED; }, 6000);
-  function ease(p) { return -(Math.cos(Math.PI * p) - 1) / 2; }
-  function tick(now) {
-    if (phase !== "loading") return;
-    var p = clamp((now - t0) / MIN, 0, 1), shown = Math.round(ease(p) * 100);
-    if (assets < NEED && shown > 96) shown = 96;
-    count.textContent = shown; ring.style.strokeDashoffset = 100 - shown;
-    if (shown >= 100) return ready();
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-  function ready() {
-    phase = "ready"; count.textContent = "100"; ring.style.strokeDashoffset = 0;
-    el.classList.add("is-ready");
-    if (wantGo) begin();
-  }
-
-  /* ---------- tap anywhere ---------- */
-  el.addEventListener("pointerdown", function (e) {
-    if (e.target.closest("[data-intro-skip]")) return;
-    unlocked = true;
-    if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = O.loading.waiting; return; }
-    if (phase === "ready") begin();
+  el.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-start]");
+    if (b) { start(b.getAttribute("data-start") === "on", "button"); return; }
+    if (phase === "title" && !e.target.closest("button,a,input")) start(true, "tap");
   });
-  function begin() {
-    if (phase !== "ready") return;
-    phase = "begun"; el.classList.add("is-go");
-    crank(); fx("cut");
-    if (window.JG_HAPTIC) window.JG_HAPTIC("tap");
-    document.dispatchEvent(new CustomEvent("jg:ignition"));
-    T("intro_started", {});
-    setTimeout(question, wait(1250));
+
+  /* ---------- who's playing ---------- */
+  var rows = [].slice.call(el.querySelectorAll(".menu__row"));
+  function mark(i) {
+    rows.forEach(function (r, j) { r.classList.toggle("is-on", j === i); r.setAttribute("aria-selected", j === i ? "true" : "false"); });
+    rows[i].focus({ preventScroll: true });
+    if (S()) S().tick();
+  }
+  function choose(id, how) {
+    if (phase !== "seat") return;
+    role = id; store.set("jg_role", id);
+    if (window.JG_FX) window.JG_FX("choice");
+    T("role_chosen", { role: id, where: "intro" }, { role: id });
+    var r = rows.filter(function (x) { return x.getAttribute("data-role") === id; })[0];
+    if (r) r.classList.add("is-picked");
+    setTimeout(function () { if (BD && window.JG_BUILD) { buildScene(id); scene("build"); } else toName(); }, wait(420));
+  }
+  function toName() {
+    var h = el.querySelector("[data-name-h]"), fi = el.querySelector("[data-name-fine]");
+    if (built) { h.textContent = O.name.title_build || O.name.title; fi.textContent = O.name.fine_build || O.name.fine; }
+    scene("name"); var inp = el.querySelector("#intro-name"); var prior = store.get("jg_name"); if (prior && inp) inp.value = prior;
   }
 
-  /* shared-element move: measure, change, measure, play the difference */
-  function flip(node, mutate, ms, curve) {
-    var a = node.getBoundingClientRect(); mutate(); var b = node.getBoundingClientRect();
-    if (RM || !b.width) return;
-    var dx = a.left + a.width / 2 - (b.left + b.width / 2), dy = a.top + a.height / 2 - (b.top + b.height / 2), s = a.width / b.width;
-    node.style.transition = "none"; node.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
-    void node.offsetWidth;
-    node.style.transition = "transform " + ms + "ms " + (curve || "var(--spring-soft)"); node.style.transform = "";
-  }
-  function swap(html, then) {
-    if (!sceneB.hidden && sceneB.innerHTML) {
-      sceneB.classList.add("is-out");
-      setTimeout(function () { put(html); then && then(); }, wait(260));
-    } else { put(html); then && then(); }
-  }
-  function put(html) {
-    sceneB.classList.remove("is-in", "is-out"); sceneB.innerHTML = html; sceneB.hidden = false;
-    void sceneB.offsetWidth; requestAnimationFrame(function () { sceneB.classList.add("is-in"); });
-  }
-
-  /* ---------- the question ---------- */
-  function question() {
-    phase = "question";
-    flip(medal, function () { sceneA.hidden = true; el.classList.add("is-q"); }, 800);
-    var rows = Object.keys(ROLES).map(function (k, i) {
-      var R = ROLES[k];
-      return '<li style="--i:' + i + '"><button class="row intro__path" type="button" data-role="' + k + '">' +
-        '<span class="appicon appicon--sm" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><use href="#' + R.icon + '"/></svg></span>' +
-        '<span class="row__txt"><b>' + esc(R.h) + '</b><span>' + esc(R.p) + '</span></span>' +
-        '<kbd aria-hidden="true">' + R.n + '</kbd><i class="row__chev" aria-hidden="true"></i></button></li>';
+  /* ---------- the build: what they're hiring for, what's slowing their lot, or a class ---------- */
+  var built = null, bitems = [], brows = [], spinning = false, armed = false;
+  /* a mouse resting where the menu draws shouldn't pick for you: hover counts once it moves */
+  el.addEventListener("pointermove", function (e) { if (phase === "build" && (e.movementX || e.movementY)) armed = true; });
+  function bTitle(it) { return it.kind === "role" ? BD.builds.filter(function (b) { return b.id === it.id; })[0].titles[0] : BD.lot.filter(function (l) { return l.id === it.id; })[0].titles[0]; }
+  function buildScene(seatId) {
+    var w = W[seatId] || W.interviewer;
+    el.querySelector("[data-build-h]").textContent = w.title;
+    el.querySelector("[data-build-sub]").textContent = w.sub;
+    bitems = seatId === "partner" ? BD.lot.map(function (l) { return { kind: "lot", id: l.id, h: l.label, p: "" }; })
+      : BD.builds.map(function (b) { return { kind: "role", id: b.id, h: b.label, p: b.targets.slice(0, 3).join(", ") }; });
+    if (seatId === "lurker") bitems.push({ kind: "spin", id: "spin", h: w.surprise, p: w.surprise_p });
+    if (seatId === "interviewer" && window.JG_MATCH) bitems.push({ kind: "paste", id: "paste", h: W.paste, p: W.paste_p });
+    armed = false;
+    var start = 0; if (FOR) bitems.forEach(function (it, i) { if (it.kind === "role" && it.id === FOR) start = i; });
+    var menu = el.querySelector("[data-build-menu]");
+    menu.setAttribute("aria-label", w.title);
+    menu.innerHTML = bitems.map(function (it, i) {
+      return '<li><button class="menu__row' + (i === start ? " is-on" : "") + (it.kind === "spin" || it.kind === "paste" ? " menu__row--alt" : "") + '" type="button" role="option" aria-selected="' + (i === start) + '" data-i="' + i + '"><span class="menu__n" aria-hidden="true">' + (i + 1) + '</span><span class="menu__txt"><b>' + E(it.h) + "</b>" + (it.p ? "<small>" + E(it.p) + "</small>" : "") + "</span></button></li>";
     }).join("");
-    swap('<h2 class="intro__q" id="intro-q"><span class="mask"><span>' + esc(O.question.title) + '</span></span><span class="mask"><span><em>' + esc(O.question.title_em) + '</em></span></span></h2>' +
-      '<ul class="group intro__paths">' + rows + '</ul>' +
-      '<p class="intro__fine">' + esc(COARSE ? O.question.fine_touch : O.question.fine_pointer) + '</p>', function () {
-      el.setAttribute("aria-labelledby", "intro-q");
-      sceneB.querySelectorAll("[data-role]").forEach(function (b) { b.addEventListener("click", function () { choose(b.getAttribute("data-role")); }); });
-      var first = sceneB.querySelector("[data-role]"); if (first && !COARSE) setTimeout(function () { first.focus({ preventScroll: true }); }, wait(500));
+    brows = [].slice.call(menu.querySelectorAll(".menu__row"));
+    brows.forEach(function (r) {
+      r.addEventListener("click", function () { pick(+r.getAttribute("data-i"), "tap"); });
+      r.addEventListener("pointerenter", function () { if (!COARSE && !spinning && armed) bmark(+r.getAttribute("data-i"), true); });
     });
+    preview(start);
+    T("build_shown", { seat: seatId });
   }
-  function choose(role) {
-    if (phase !== "question" || !ROLES[role]) return;
-    phase = "chosen";
-    var b = sceneB.querySelector('[data-role="' + role + '"]'); if (b) b.classList.add("is-picked");
-    fx("choice");
-    store.set("jg_role", role); store.set("jg_cut", ROLES[role].cut);
-    T("role_chosen", { role: role, where: "intro" }, { role: role });
-    setTimeout(function () { askName(role); }, wait(480));
+  function bmark(i, quiet) {
+    brows.forEach(function (r, j) { r.classList.toggle("is-on", j === i); r.setAttribute("aria-selected", j === i ? "true" : "false"); });
+    if (!quiet) brows[i].focus({ preventScroll: true });
+    preview(i);
+    if (S() && !spinning) S().tick();
   }
+  var artNow = "";
+  function preview(i) {
+    var it = bitems[i], pv = el.querySelector("[data-build-preview]"); if (!it || !pv) return;
+    pv.classList.toggle("is-paste", it.kind === "paste");
+    if (it.kind === "paste") { pv.innerHTML = '<form class="cls__paste" data-paste><label class="cls__k" for="intro-list">' + E(W.paste_h) + '</label><textarea id="intro-list" rows="7"></textarea><p class="intro__fine">' + E(W.paste_fine) + '</p><button class="btn btn--sm" type="submit">' + E(W.match) + "</button></form>"; return; }
+    if (it.kind === "spin") { pv.innerHTML = ""; return; }
+    var src = it.kind === "role" ? BD.builds.filter(function (b) { return b.id === it.id; })[0] : BD.lot.filter(function (l) { return l.id === it.id; })[0];
+    var proofs = src.proofs.slice(0, BD.equip);
+    pv.innerHTML = '<h3 class="cls__name">' + E(src.label) + '</h3><p class="cls__line">' + E(it.kind === "lot" ? src.line : src.headline) + '</p><ul class="cls__proofs">' + proofs.map(function (x) { var p = BD.proofs[x]; return '<li><img class="bcard__medal" src="assets/game/medals/' + p.medal + '-80.webp" data-tier="' + p.tier + '" alt="" width="44" height="44" /><span>' + E(p.short) + "</span></li>"; }).join("") + "</ul>" + (it.kind === "role" ? '<p class="cls__for">Written for ' + E(src.targets.join(", ")) + ".</p>" : "");
+    showArt(bTitle(it));
+  }
+  function showArt(id) {
+    if (!id || id === artNow) return; artNow = id;
+    if (S()) S().focus(id);
+    var box = el.querySelector(".intro__art"), im = document.createElement("img");
+    im.className = "is-next"; im.alt = ""; im.decoding = "async";
+    im.onload = function () { requestAnimationFrame(function () { im.classList.add("is-on"); }); setTimeout(function () { var all = box.querySelectorAll("img"); for (var k = 0; k < all.length - 1; k++) all[k].remove(); }, 1000); };
+    im.src = "assets/game/art/" + id + (mob ? "-m.webp" : "-1920.webp");
+    box.appendChild(im);
+  }
+  function pick(i, how) {
+    if (phase !== "build" || spinning) return;
+    var it = bitems[i]; if (!it) return;
+    if (it.kind === "paste") { bmark(i, true); var ta = el.querySelector("#intro-list"); if (ta) ta.focus(); return; }
+    if (it.kind === "spin") { spin(); return; }
+    brows[i].classList.add("is-picked");
+    built = window.JG_BUILD.make(it.kind, it.id, how);
+    if (pendingMatch && window.JG_BUILD.setMatch) window.JG_BUILD.setMatch(pendingMatch);
+    if (window.JG_FX) window.JG_FX("choice");
+    setTimeout(toName, wait(420));
+  }
+  function spin() {
+    spinning = true; if (window.JG_FX) window.JG_FX("choice");
+    var n = bitems.filter(function (it) { return it.kind === "role"; }).length, land = Math.floor(Math.random() * n), steps = n * 2 + land, k = 0, cur = 0;
+    (function step() {
+      cur = k % n; brows.forEach(function (r, j) { r.classList.toggle("is-on", j === cur); });
+      if (S()) S().tick();
+      if (k++ < steps) { setTimeout(step, RM ? 0 : 60 + Math.pow(k / steps, 3) * 260); return; }
+      spinning = false; preview(cur); setTimeout(function () { pick(cur, "spin"); }, wait(650));
+    })();
+  }
+  var pendingMatch = null;
+  el.addEventListener("submit", function (e) {
+    if (!e.target.hasAttribute("data-paste")) return; e.preventDefault();
+    var text = (el.querySelector("#intro-list") || {}).value || ""; if (!text.trim() || !window.JG_MATCH) return;
+    var m = window.JG_MATCH.read(text); if (!m) return;
+    pendingMatch = m;
+    T("listing_matched", { build: m.build || "", on: m.on.length, off: m.off.length, where: "intro" });
+    var pv = el.querySelector("[data-build-preview]");
+    if (!m.on.length || !m.build) { pv.querySelector(".intro__fine").textContent = W.none; return; }
+    var i = bitems.findIndex(function (it) { return it.kind === "role" && it.id === m.build; });
+    if (window.JG_FX) window.JG_FX("arrive");
+    bmark(i, true);
+    pv.insertAdjacentHTML("beforeend", '<p class="cls__k">' + E(W.on) + '</p><ul class="cls__chips">' + m.on.slice(0, 12).map(function (x) { return "<li>" + E(x.as || x.term) + "</li>"; }).join("") + "</ul>" + (m.off.length ? '<p class="cls__k">' + E(W.off) + '</p><ul class="cls__chips cls__chips--off">' + m.off.slice(0, 8).map(function (x) { return "<li>" + E(x.as || x.term) + "</li>"; }).join("") + "</ul>" : "") + '<button class="btn btn--primary" type="button" data-go-build>' + E(W.go) + "</button>");
+    var go = pv.querySelector("[data-go-build]"); if (go) { go.addEventListener("click", function () { pick(i, "listing"); }); go.focus(); }
+  });
+  function skipBuild() { if (phase !== "build") return; T("build_skipped", {}); toName(); }
+  if (BD) el.querySelector("[data-build-skip]").addEventListener("click", skipBuild);
+  rows.forEach(function (r) {
+    r.addEventListener("click", function () { choose(r.getAttribute("data-role"), "tap"); });
+    r.addEventListener("pointerenter", function () { if (!COARSE) rows.forEach(function (x) { x.classList.toggle("is-on", x === r); x.setAttribute("aria-selected", x === r ? "true" : "false"); }); });
+  });
 
-  /* ---------- the name, skippable ---------- */
-  var curRole = null, back = false;
-  function askName(role) {
-    phase = "name"; curRole = role;
-    var prior = store.get("jg_name") || "";
-    swap('<h2 class="intro__q" id="intro-n"><span class="mask"><span>' + esc(O.name.title) + ' <em>' + esc(O.name.title_em) + '</em></span></span></h2>' +
-      '<form class="intro__form" autocomplete="on"><input class="intro__input" type="text" name="name" maxlength="40" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="go" placeholder="' + esc(O.name.placeholder) + '" aria-label="Your name" value="' + esc(prior) + '" />' +
-      '<div class="intro__row"><button class="btn btn--gold" type="submit">' + esc(O.name.continue) + '</button><button class="btn btn--ghost" type="button" data-intro-noname>' + esc(O.name.skip) + '</button></div>' +
-      '<p class="intro__fine">' + esc(O.name.fine) + '</p></form>', function () {
-      el.setAttribute("aria-labelledby", "intro-n");
-      var form = sceneB.querySelector("form"), input = form.querySelector("input");
-      setTimeout(function () { input.focus({ preventScroll: true }); }, wait(420));
-      input.addEventListener("keydown", function (e) {
-        if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
-        if (e.key === "Backspace") sfx("key-back", { throttle: 30 }); else if (e.key.length === 1) sfx("key", { throttle: 30 });
-      });
-      form.addEventListener("submit", function (e) { e.preventDefault(); named(role, input.value); });
-      form.querySelector("[data-intro-noname]").addEventListener("click", function () { named(role, ""); });
-    });
-  }
-  function clean(v) { return String(v || "").replace(/[^\p{L}\p{M}' .-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 40); }
-  function named(role, raw) {
+  /* ---------- the player name ---------- */
+  function clean(s) { return String(s || "").replace(/[^\p{L}\p{M}' .-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 40); }
+  var back = false;
+  el.querySelector("[data-name-form]").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var raw = el.querySelector("#intro-name").value, name = clean(raw), before = clean(store.get("jg_name") || "");
+    if (!name) { finishName(""); return; }
+    back = name === before && store.get("jg_intro") === "1";
+    store.set("jg_name", name); named = true;
+    if (built && window.JG_BUILD) built = window.JG_BUILD.sign(name) || built;
+    if (window.JG_FX) window.JG_FX("send");
+    T("name_given", { role: role, name: name }, { name: name, role: role });
+    finishName(name);
+  });
+  el.querySelector("[data-name-skip]").addEventListener("click", function () { T("name_skipped", { role: role }); finishName(""); });
+  function finishName(name) {
     if (phase !== "name") return;
-    phase = "cut";
-    var name = clean(raw), before = clean(store.get("jg_name") || "");
-    back = !!name && name === before && store.get("jg_intro") === "1";
-    if (name) { store.set("jg_name", name); fx("send"); T("name_given", { role: role, name: name }, { name: name, role: role }); }
-    else T("name_skipped", { role: role });
-    card(role, name);
+    var first = name.split(" ")[0];
+    var line = first ? (back ? O.card.returning + " " + first + "." : O.card.named + " " + first + ".") : O.card.anonymous;
+    if (built && window.JG_BUILD) {
+      el.querySelector(".intro__card").hidden = true;
+      var box = el.querySelector("[data-built]"); box.hidden = false;
+      el.querySelector("[data-built-hi]").textContent = line;
+      var cw = el.querySelector("[data-built-card]"); cw.innerHTML = window.JG_BUILD.cardHTML(built); cw.classList.add("is-minting");
+      scene("card");
+      if (S()) setTimeout(function () { S().sting("trophy-gold"); }, wait(500));
+      if (window.JG_HAPTIC) setTimeout(function () { window.JG_HAPTIC("success"); }, wait(500));
+      return;
+    }
+    el.querySelector(".intro__card").textContent = line;
+    scene("card");
+    setTimeout(done, wait(1500));
   }
+  el.addEventListener("click", function (e) {
+    if (e.target.closest("[data-enter]")) { if (window.JG_FX) window.JG_FX("arrive"); done(); }
+    else if (e.target.closest("[data-save-card]") && window.JG_BUILD) window.JG_BUILD.save(built, "intro");
+  });
 
-  /* ---------- the title card, then the cut ---------- */
-  function card(role, name) {
-    var first = name ? name.split(" ")[0] : "";
-    swap('<p class="intro__card" id="intro-c"><span class="mask"><span>' + (first ? esc(back ? O.card.returning : O.card.named) + " <em>" + esc(first) + ".</em>" : esc(O.card.anonymous) + " <em>" + esc(O.card.anonymous_em) + "</em>") + '</span></span></p>' +
-      '<svg class="intro__rule intro__rule--card" viewBox="0 0 240 8" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5c40-3 80-3 118-1.5S200 6 238 3"/></svg>' +
-      '<p class="intro__cardline">' + esc(ROLES[role].line) + '</p>', function () {
-      el.setAttribute("aria-labelledby", "intro-c");
-      sfx("swoosh", { gain: 0.45, rate: 1.05 });
-      setTimeout(function () { leave(role, first); }, wait(950));
-    });
-  }
-
-  function markCut(k) {
-    document.querySelectorAll("[data-cut]").forEach(function (c) {
-      var on = c.getAttribute("data-cut") === k;
-      c.classList.toggle("is-on", on); if (c.tagName === "BUTTON") c.setAttribute("aria-pressed", on ? "true" : "false");
-    });
-  }
-  function done() {
+  /* ---------- the end: into the library ---------- */
+  var ended = false;
+  function done(skipped) {
+    if (ended) return; ended = true;
     store.set("jg_intro", "1");
-    root.classList.remove("intro-pending", "intro-mounted");
-    if (window.JG_LOCK) window.JG_LOCK(false);
-    removeEventListener("keydown", keys, true);
-    setTimeout(function () { document.dispatchEvent(new CustomEvent("jg:intro-done")); }, 0);
-  }
-  function leave(role, first) {
-    phase = "leaving";
-    T("intro_finished", { role: role, named: !!first });
-    if (window.JG_REEL && !DEEP) {
-      markCut(ROLES[role].cut);
-      window.JG_REEL.play(role, { name: first, from: "intro" });
-      setTimeout(function () { done(); el.remove(); }, wait(400));
-      return;
-    }
-    if (role === "partner" && !window.JG_REEL && !/obavia\.html$/.test(location.pathname)) {
-      try { sessionStorage.setItem("jg_greet", first || "1"); } catch (e) {}
-      el.classList.add("is-black"); fx("cut");
-      setTimeout(function () { done(); location.href = "/obavia.html"; }, wait(420));
-      return;
-    }
-    markCut(ROLES[role].cut);
-    var face = document.querySelector(".slate__face img"), slate = document.querySelector(".slate [data-rise]");
-    if (slate) { slate.classList.remove("is-in"); void slate.offsetWidth; }
-    done();
-    el.classList.add("is-out");
-    if (face && !RM) {
-      var m = medal.getBoundingClientRect(), t = face.getBoundingClientRect();
-      if (t.width && t.bottom > 0) {
-        medal.style.transition = "transform .95s var(--ease), border-radius .95s var(--ease), opacity .5s var(--ease) .3s";
-        medal.style.borderRadius = getComputedStyle(face.parentNode).borderRadius;
-        medal.style.transform = "translate(" + (t.left + t.width / 2 - (m.left + m.width / 2)) + "px," + (t.top + t.height / 2 - (m.top + m.height / 2)) + "px) scale(" + (t.width / m.width) + ")";
-        medal.classList.add("is-landing"); medal.style.opacity = "0";
-      }
-    }
-    if (!RM) { root.style.setProperty("--bars", "1"); setTimeout(function () { root.style.setProperty("--bars", "0"); }, 560); }
-    setTimeout(function () { if (slate) slate.classList.add("is-in"); fx("arrive"); }, wait(420));
+    if (!skipped) T("intro_finished", { role: role, named: named });
+    el.classList.add("is-leaving");
+    root.classList.remove("intro-on");
     setTimeout(function () {
       el.remove();
-      if (window.JG_TOAST) window.JG_TOAST(first ? O.after.welcome_named + first : O.after.welcome_anonymous);
-    }, wait(1250));
-    if (!DEEP) setTimeout(function () { route(role); }, wait(3400));
+      root.classList.remove("intro-pending");
+      if (window.JG_LOCK) window.JG_LOCK(false);
+      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "" } }));
+    }, wait(700));
   }
-  function route(role) {
-    var n = ROLES[role] && ROLES[role].next; if (!window.JG_NOTIFY || !n) return;
-    window.JG_NOTIFY({ app: O.after.next_app, title: n.title, body: n.body, ms: 7000,
-      go: function () { if (window.JG_STORY) window.JG_STORY(n.story); T("cta_click", { label: "intro_" + n.story }); } });
-  }
+  el.querySelector("[data-intro-skip]").addEventListener("click", function () { T("intro_skipped", { phase: phase }); done(true); });
 
-  /* ---------- skip: silent; the onboarding is back on the next visit ---------- */
-  function skip() {
-    if (phase === "leaving") return;
-    T("intro_skipped", { phase: phase });
-    phase = "leaving"; done();
-    el.classList.add("is-out", "is-fast");
-    setTimeout(function () { el.remove(); }, wait(420));
-  }
-  el.querySelector("[data-intro-skip]").addEventListener("click", skip);
+  /* ---------- keys ---------- */
+  addEventListener("keydown", function (e) {
+    if (ended || e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (phase === "title") {
+      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip]")) return; /* the focused button handles its own key */
+      if (k === "Enter" || k === " ") { e.preventDefault(); start(true, "key"); }
+      else if (k === "m" || k === "M") { e.preventDefault(); start(false, "key"); }
+      else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }
+    } else if (phase === "seat") {
+      var i = rows.findIndex(function (r) { return r.classList.contains("is-on"); });
+      if (KEYS[k]) { e.preventDefault(); choose(KEYS[k], "key"); }
+      else if (k === "ArrowDown" || k === "ArrowRight") { e.preventDefault(); mark(Math.min(rows.length - 1, i + 1)); }
+      else if (k === "ArrowUp" || k === "ArrowLeft") { e.preventDefault(); mark(Math.max(0, i - 1)); }
+      else if (k === "Enter" || k === " ") { e.preventDefault(); choose(rows[Math.max(0, i)].getAttribute("data-role"), "key"); }
+      else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }
+    } else if (phase === "build") {
+      if (e.target && e.target.closest && e.target.closest("textarea,input")) return;
+      var bi = brows.findIndex(function (r) { return r.classList.contains("is-on"); });
+      if (/^[1-9]$/.test(k) && brows[+k - 1]) { e.preventDefault(); bmark(+k - 1, true); pick(+k - 1, "key"); }
+      else if (k === "ArrowDown" || k === "ArrowRight") { e.preventDefault(); bmark(Math.min(brows.length - 1, bi + 1)); }
+      else if (k === "ArrowUp" || k === "ArrowLeft") { e.preventDefault(); bmark(Math.max(0, bi - 1)); }
+      else if (k === "Enter" || k === " ") { if (e.target && e.target.closest && e.target.closest("[data-go-build],[data-build-skip]")) return; e.preventDefault(); pick(Math.max(0, bi), "key"); }
+      else if (k === "Escape") { e.preventDefault(); skipBuild(); }
+    } else if (phase === "name") {
+      if (k === "Escape") { e.preventDefault(); T("name_skipped", { role: role }); finishName(""); }
+    } else if (phase === "card" && built) {
+      if (k === "Escape") { e.preventDefault(); done(); }
+    }
+  });
 
-  /* ---------- keys: any key begins, 1 2 3 choose, Escape skips, Tab stays inside ---------- */
-  function keys(e) {
-    if (!document.body.contains(el)) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === "Escape") { e.preventDefault(); if (phase === "name") return named(curRole, ""); return skip(); }
-    if (e.key === "Tab") {
-      var f = [].slice.call(el.querySelectorAll("button, input")).filter(function (n) { return n.offsetParent !== null; });
-      if (!f.length) return;
-      var a = f[0], z = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
-      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
-      else if (!el.contains(document.activeElement)) { e.preventDefault(); a.focus(); }
-      return;
-    }
-    if (phase === "question") {
-      if (KEYS[e.key]) { e.preventDefault(); choose(KEYS[e.key]); }
-      return;
-    }
-    if ((phase === "loading" || phase === "ready") && (e.key === "Enter" || e.key === " " || e.key.length === 1)) {
-      e.preventDefault(); unlocked = true;
-      if (phase === "loading") { wantGo = true; el.classList.add("is-waiting"); hint.textContent = O.loading.waiting; } else begin();
-    }
-  }
-  addEventListener("keydown", keys, true);
+  /* ---------- a gamepad starts it too ---------- */
+  addEventListener("gamepadconnected", function () {
+    var prev = {};
+    (function poll() {
+      if (ended) return;
+      var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
+      if (gp) {
+        var a = gp.buttons[0] && gp.buttons[0].pressed, dn = (gp.buttons[13] && gp.buttons[13].pressed) || gp.axes[1] > 0.5, up = (gp.buttons[12] && gp.buttons[12].pressed) || gp.axes[1] < -0.5;
+        if (a && !prev.a) { if (phase === "title") start(true, "pad"); else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); }
+        if (phase === "seat") { var i = rows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) mark(Math.min(rows.length - 1, i + 1)); if (up && !prev.up) mark(Math.max(0, i - 1)); }
+        if (phase === "build") { var j = brows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) bmark(Math.min(brows.length - 1, j + 1)); if (up && !prev.up) bmark(Math.max(0, j - 1)); }
+        prev = { a: a, dn: dn, up: up };
+      }
+      requestAnimationFrame(poll);
+    })();
+  });
 })();

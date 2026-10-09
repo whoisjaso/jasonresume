@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" data-glyph="crew">
+  <path d="M13.9 2.7 L22.9 10.7"/>
+  <path d="M34.9 2.7 L25.9 10.7"/>
+  <path d="M20.9 17.7 L20.9 12.7 A2 2 0 0 1 22.9 10.7 L25.9 10.7 A2 2 0 0 1 27.9 12.7 L27.9 17.7"/>
+  <path d="M10.4 17.7 L38.4 17.7 A3 3 0 0 1 41.4 20.7 L41.4 38.2 A3 3 0 0 1 38.4 41.2 L10.4 41.2 A3 3 0 0 1 7.4 38.2 L7.4 20.7 A3 3 0 0 1 10.4 17.7 Z"/>
+  <path d="M16.9 22.1 A3.3 3.3 0 0 1 16.9 28.7 A3.3 3.3 0 0 1 16.9 22.1 Z"/>
+  <path d="M10.9 36.7 C10.9 31.4 22.9 31.4 22.9 36.7"/>
+  <path d="M27.4 25.7 L35.9 25.7"/>
+  <path d="M27.4 31.7 L33.4 31.7"/>
+</svg>

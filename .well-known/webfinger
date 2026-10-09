@@ -10,6 +10,7 @@
     "https://github.com/whoisjaso",
     "https://github.com/whoisjaso/whoisjaso",
     "https://whoisjaso.github.io/whoisjaso/",
+    "https://www.linkedin.com/in/obawemimo",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
     "https://www.instagram.com/0bawemimo/"
   ],
@@ -22,7 +23,7 @@
     {
       "rel": "me",
       "type": "text/html",
-      "href": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/"
+      "href": "https://www.linkedin.com/in/obawemimo"
     },
     {
       "rel": "me",
@@ -33,6 +34,11 @@
       "rel": "me",
       "type": "text/html",
       "href": "https://www.instagram.com/0bawemimo/"
+    },
+    {
+      "rel": "related",
+      "type": "text/html",
+      "href": "https://thetriplejauto.com/"
     },
     {
       "rel": "related",
@@ -147,9 +153,9 @@
   ],
   "properties": {
     "http://schema.org/name": "Jason Obawemimo",
-    "http://schema.org/jobTitle": "Founder, Obavia; co-owner and operator, Triple J Auto Investment",
+    "http://schema.org/jobTitle": "AI Implementation, Workflow Automation and CRM Systems; owner and operations lead, Triple J Auto Investment; founder, Obavia",
     "http://schema.org/homeLocation": "Pearland, Texas, United States",
     "http://schema.org/url": "https://jasonobawemimo.com/",
-    "http://schema.org/worksFor": "Obavia (https://obavia.co)"
+    "http://schema.org/worksFor": "Triple J Auto Investment (https://thetriplejauto.com/); Obavia (https://obavia.co)"
   }
 }

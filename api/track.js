@@ -14,7 +14,7 @@ const ALLOWED = new Set([
   // the resume and proof
   "resume_open", "resume_print", "deck_slide", "deck_finished", "proof_open", "verify_opened", "verify_link", "chat_asked",
   // games and lessons
-  "mark_words", "handoff_pick", "leak_stage", "counts_done", "note_placed", "note_done", "card_copied",
+  "mark_words", "card_copied",
   // questions, forwards, extras
   "question_added", "questions_copied", "questions_mailed", "forward_copied", "share_opened", "rig_toggled", "cues_toggled",
   "trailer_opened", "trailer_shot", "trailer_finished", "water_touched", "copy_clicked",
@@ -24,8 +24,13 @@ const ALLOWED = new Set([
   "reel_started", "reel_shot", "reel_finished", "reel_exited",
   // the Today feed: a card opens into its story, the desk app
   "story_opened", "desk_step", "desk_finished",
+  // the library: titles, trophies, screens, the platinum
+  "trophy_unlocked", "trophies_opened", "screen_opened", "level_clear",
+  // Player 2: the build, the card, the listing match, the send
+  "build_shown", "build_chosen", "build_skipped", "build_edited", "build_opened", "build_viewed", "card_saved", "build_link_copied",
+  "listing_matched", "build_resume", "build_sent",
   // conversion
-  "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent", "apply_sent",
+  "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent",
   // older pages still in the wild
   "guide_line", "guide_skipped", "guide_finished", "guide_reopened",
   "chat_asked", "intake_step", "intake_sent", "laptop_played", "vsl_play", "vsl_complete"

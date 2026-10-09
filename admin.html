@@ -99,7 +99,7 @@
   "use strict";
   var view = document.getElementById("view"), stamp = document.getElementById("stamp");
   var TOKEN_KEY = "adm_token";
-  var SECTION = { slate: "The Slate", desk: "The desk game", "desk-reveal": "The reveal", film: "The film", record: "The record", listen: "Obavia", questions: "Questions", rig: "The rig", move: "Next move", credits: "Check me", post: "The portrait", "b-slate": "Obavia, top", films: "Obavia films", book: "Obavia, booking", handoff: "Handoff lesson", leaks: "Leak finder", counts: "What counts", pricing: "Obavia pricing", note: "Rewrite the Note", roles: "Hiring roles", apply: "Application" };
+  var SECTION = { slate: "The Slate", desk: "The desk game", "desk-reveal": "The reveal", film: "The film", record: "The record", listen: "Obavia", questions: "Questions", rig: "The rig", move: "Next move", credits: "Check me", post: "The portrait", "b-slate": "Obavia, top", films: "Obavia films", book: "Obavia, booking" };
   function token() { try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } }
   function setToken(t) { try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -140,7 +140,7 @@
 
   function person(p, i) {
     var tier = (p.tier || "Cold").toLowerCase();
-    var tags = '<span class="tag tag--' + tier + '">' + esc(p.tier) + "</span>" + '<span class="tag">' + esc(p.audience) + "</span>" + (p.visits > 1 ? '<span class="tag">' + plural(p.visits, "visit", "visits") + "</span>" : "") + (p.ref ? '<span class="tag tag--ref">' + esc(p.ref) + "</span>" : "");
+    var tags = '<span class="tag tag--' + tier + '">' + esc(p.tier) + "</span>" + '<span class="tag">' + esc(p.audience) + "</span>" + (p.build ? '<span class="tag">' + esc(p.build) + "</span>" : "") + (p.visits > 1 ? '<span class="tag">' + plural(p.visits, "visit", "visits") + "</span>" : "") + (p.ref ? '<span class="tag tag--ref">' + esc(p.ref) + "</span>" : "");
     return '<li class="p" style="animation-delay:' + Math.min(i, 12) * 45 + 'ms"><span class="ring is-' + tier + '" style="--v:' + Math.min(1, p.score / 100) + '"><b>' + esc(p.score) + "</b></span>" +
       '<div><p class="p__who">' + esc(p.who) + '</p><p class="p__story">' + esc((p.story || []).join(", then ") || "looked around") + '</p><p class="p__tags">' + tags + "</p></div>" +
       '<span class="p__when">' + esc(ago(p.last)) + "</span></li>";
@@ -167,7 +167,7 @@
   function hello(p, i) {
     var w = when(p.named || p.first);
     return '<li class="hello" style="animation-delay:' + Math.min(i, 12) * 45 + 'ms"><span class="hello__av" aria-hidden="true">' + esc((p.name || "?").charAt(0).toUpperCase()) + "</span>" +
-      '<div><p class="hello__name">' + esc(p.name) + '</p><p class="hello__meta">' + esc(p.audience) + (p.place ? ", " + esc(p.place) : "") + (p.visits > 1 ? ". " + plural(p.visits, "visit", "visits") : "") + ". " + esc(cap((p.story || []).join(", then ") || "looked around")) + '</p></div>' +
+      '<div><p class="hello__name">' + esc(p.name) + '</p><p class="hello__meta">' + esc(p.audience) + (p.build ? ", built for " + esc(p.build) : "") + (p.place ? ", " + esc(p.place) : "") + (p.visits > 1 ? ". " + plural(p.visits, "visit", "visits") : "") + ". " + esc(cap((p.story || []).join(", then ") || "looked around")) + '</p></div>' +
       '<p class="hello__date"><b>' + esc(w.d) + "</b>" + esc(w.h) + (p.last && p.last !== p.named ? "<br>last seen " + esc(ago(p.last)) : "") + "</p></li>";
   }
   function render(d) {
@@ -183,7 +183,7 @@
     html += '<section class="sec"><div class="sec__h"><h2>Where they came from</h2></div><div class="group">' + bars(d.sources, function (r) { return r.source; }, function (r) { return r.people; }) + "</div></section></div></div>";
     html += '<div class="split"><section class="sec"><div class="sec__h"><h2>Where attention went</h2><small>seconds on screen</small></div><div class="group">' + bars((d.attention || []).slice(0, 12), function (r) { return SECTION[r.section] || r.section; }, function (r) { return r.seconds; }, mins) + "</div></section>";
     html += '<div><section class="sec"><div class="sec__h"><h2>Questions they asked</h2></div><ul class="group">' + ((d.questions || []).length ? d.questions.map(function (q) { return '<li class="q">' + esc(q.q) + "<small>" + esc(ago(q.at)) + "</small></li>"; }).join("") : '<li class="empty">No questions yet.</li>') + "</ul></section>";
-    html += '<section class="sec"><div class="sec__h"><h2>Where dealers got stuck in the title packet</h2></div><div class="group">' + bars(d.leaks, function (r) { return r.stage; }, function (r) { return r.n; }) + "</div></section></div></div>";
+    html += "</div></div>";
     var dr = d.drops || { count: 0, names: {} }, names = Object.keys(dr.names || {});
     html += '<p class="foot">' + (dr.count ? "The relay turned away " + plural(dr.count, "event", "events") + (names.length ? " (" + esc(names.slice(0, 6).join(", ")) + ")" : "") + ". Add their names to the allowlist in api/track.js if they matter. " : "") + "Visitors with Do Not Track or Global Privacy Control on are never counted. Names come only from people who type one at the start of the intro or send a form.</p>";
     view.innerHTML = html;

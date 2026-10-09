@@ -34,18 +34,19 @@ the Dailies can show them). In PostHog, turn on "Discard client IP data"
 (Settings, Project) if you want city-level location without stored IPs; the
 relay forwards the visitor IP only so PostHog can resolve the city.
 
-## Partner and hiring desks (`/api/lead`, `/api/apply`)
+## Obavia early-access desk (`/api/lead`)
 
-Both desks work with no configuration: the page shows a mailto fallback when
-nothing is switched on. Each variable adds a layer.
+The desk works with no configuration: the page shows a mailto fallback when
+nothing is switched on. Each variable adds a layer. The hiring desk
+(`/api/apply`) is retired.
 
 | Variable | Where to get it | What it switches on |
 |---|---|---|
-| any model key above | see Live chat | The pre-call brief for partners and the screening read for applicants, drafted by the free-model chain and included in the email to you. |
+| any model key above | see Live chat | The pre-call brief for each dealer, drafted by the free-model chain and included in the email to you. |
 | `RESEND_API_KEY` | resend.com, API keys (free tier, no card) | The email to you. Without a verified sender it uses Resend's test sender, which can only reach the account owner's inbox. |
-| `RESEND_FROM` | a sender on a domain verified in Resend, e.g. `Jason Obawemimo <jason@obavia.co>` | Confirmation emails to the agency owner or applicant in your voice. Skipped until this exists, so nobody gets an email from a test address. |
+| `RESEND_FROM` | a sender on a domain verified in Resend, e.g. `Jason Obawemimo <jason@obavia.co>` | Confirmation emails to the dealer in your voice. Skipped until this exists, so nobody gets an email from a test address. |
 | `NOTIFY_TO` | optional, default `jobawems@gmail.com` | Where desk emails land. |
-| `POSTHOG_KEY` | see Tracking | Every note and application also becomes an identified person in PostHog (`lead_note`, `application`). |
+| `POSTHOG_KEY` | see Tracking | Every early-access note also becomes an identified person in PostHog (`lead_note`). |
 
 The calendar on `/obavia.html` is Calendly's inline embed of
 `https://calendly.com/jason-apohenia/30min` and needs nothing here. A booking

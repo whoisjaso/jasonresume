@@ -20,3 +20,9 @@ tools/verify/out/*
 tools/sfx/raw/
 .impeccable/review/
 tools/film/public/vid/
+tools/art/candidates/
+*.wav
+.impeccable/mocks/
+tools/film/public/library/
+__pycache__/
+*.pyc

@@ -1,0 +1,1035 @@
+{
+ "_about": "The builds: the same verified record read for eight kinds of role, plus six lot problems for dealers. One fact base for the build step on the title screen, the build screen and card, the tailored resumes (tools/verify/resume.mjs renders one PDF per build into assets/resume) and the listing match. Every proof is a fact already in llms.txt, written in Jason's first person; every headline and summary is in llms.txt under 'Eight Ways To Read The Record'. No em dashes, no percent signs, never a computed rate. A proof's medal is a trophy slug or a proof medal in assets/game/medals.",
+ "areas": {
+  "sell": "Sell",
+  "run": "Run",
+  "lead": "Lead",
+  "support": "Support",
+  "automate": "Automate",
+  "file": "File",
+  "build": "Build",
+  "learn": "Learn"
+ },
+ "proofs": {
+  "sales": {
+   "text": "Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",
+   "area": "sell",
+   "medal": "fifty-three",
+   "tier": "gold",
+   "keywords": [
+    "sales",
+    "closing",
+    "vehicle sales",
+    "automotive sales",
+    "revenue"
+   ],
+   "title": "triple-j",
+   "short": "I've personally closed 53 vehicle sales since June 2025"
+  },
+  "calls": {
+   "text": "I take sales calls and follow up with customers by phone and text.",
+   "area": "sell",
+   "medal": "on-the-line",
+   "tier": "silver",
+   "keywords": [
+    "phone sales",
+    "inbound calls",
+    "follow-up",
+    "lead follow-up",
+    "text follow-up",
+    "customer communication"
+   ],
+   "title": "triple-j",
+   "short": "I take sales calls and follow up by phone and text"
+  },
+  "negotiate": {
+   "text": "I negotiate deals and handle service issues after the sale.",
+   "area": "sell",
+   "medal": "handshake",
+   "tier": "silver",
+   "keywords": [
+    "negotiation",
+    "customer service",
+    "customer issues",
+    "after-sale support"
+   ],
+   "title": "triple-j",
+   "short": "I negotiate deals and handle service issues"
+  },
+  "ops": {
+   "text": "Since August 2024 I've managed a Houston dealership's operations across pricing, inventory, vendors, logistics, financing and title processing.",
+   "area": "run",
+   "medal": "keys-to-the-lot",
+   "tier": "silver",
+   "keywords": [
+    "operations management",
+    "inventory management",
+    "vendor management",
+    "logistics",
+    "pricing",
+    "financing",
+    "dealership operations"
+   ],
+   "title": "triple-j",
+   "short": "I manage pricing, inventory, vendors, logistics, financing and title"
+  },
+  "crew": {
+   "text": "I hire, train, schedule and manage the dealership's staff.",
+   "area": "lead",
+   "medal": "crew",
+   "tier": "silver",
+   "keywords": [
+    "hiring",
+    "training",
+    "scheduling",
+    "staff management",
+    "supervision",
+    "team leadership"
+   ],
+   "title": "triple-j",
+   "short": "I hire, train, schedule and manage the staff"
+  },
+  "payroll": {
+   "text": "I run the dealership's payroll.",
+   "area": "lead",
+   "medal": "payroll",
+   "tier": "silver",
+   "keywords": [
+    "payroll"
+   ],
+   "title": "triple-j",
+   "short": "I run payroll"
+  },
+  "help-desk": {
+   "text": "I support the dealership's staff on the CRM, phones and computers.",
+   "area": "support",
+   "medal": "help-desk",
+   "tier": "silver",
+   "keywords": [
+    "technical support",
+    "end-user support",
+    "desktop support",
+    "phone support",
+    "CRM support",
+    "help desk"
+   ],
+   "title": "triple-j",
+   "short": "I support staff on the CRM, phones and computers"
+  },
+  "access": {
+   "text": "I manage the dealership's user accounts and permissions.",
+   "area": "support",
+   "medal": "access",
+   "tier": "silver",
+   "keywords": [
+    "user accounts",
+    "permissions",
+    "access management",
+    "account administration"
+   ],
+   "title": "triple-j",
+   "short": "I manage user accounts and permissions"
+  },
+  "network": {
+   "text": "I set up the dealership's hardware and network.",
+   "area": "support",
+   "medal": "network",
+   "tier": "silver",
+   "keywords": [
+    "hardware setup",
+    "network setup",
+    "hardware",
+    "networking"
+   ],
+   "title": "triple-j",
+   "short": "I set up the hardware and network"
+  },
+  "build-not-buy": {
+   "text": "Rather than buying software, I build AI software for the dealership's bottlenecks.",
+   "area": "automate",
+   "medal": "built-not-bought",
+   "tier": "silver",
+   "keywords": [
+    "AI software",
+    "internal tools",
+    "process automation",
+    "AI implementation"
+   ],
+   "title": "triple-j",
+   "short": "I build AI software instead of buying it"
+  },
+  "title": {
+   "text": "I prepare and file title and registration paperwork, including the Form 130-U and webDEALER.",
+   "area": "file",
+   "medal": "filed",
+   "tier": "silver",
+   "keywords": [
+    "title and registration",
+    "Form 130-U",
+    "webDEALER",
+    "title processing",
+    "registration",
+    "TxDMV"
+   ],
+   "title": "triple-j",
+   "short": "I file title and registration: Form 130-U, webDEALER"
+  },
+  "jackets": {
+   "text": "I prepare deal jackets and contracts: bills of sale, buy here pay here contracts and disclosures.",
+   "area": "file",
+   "medal": "deal-jacket",
+   "tier": "silver",
+   "keywords": [
+    "deal jackets",
+    "contracts",
+    "bills of sale",
+    "buy here pay here",
+    "disclosures",
+    "documentation"
+   ],
+   "title": "triple-j",
+   "short": "I prepare deal jackets, contracts and disclosures"
+  },
+  "compliance": {
+   "text": "I keep the dealer license compliance and record-keeping in order.",
+   "area": "file",
+   "medal": "in-order",
+   "tier": "silver",
+   "keywords": [
+    "compliance",
+    "record-keeping",
+    "dealer license",
+    "records management"
+   ],
+   "title": "triple-j",
+   "short": "I keep license compliance and records in order"
+  },
+  "collections": {
+   "text": "I service buy here pay here accounts and collections.",
+   "area": "file",
+   "medal": "collections",
+   "tier": "silver",
+   "keywords": [
+    "collections",
+    "account servicing",
+    "buy here pay here",
+    "accounts receivable"
+   ],
+   "title": "triple-j",
+   "short": "I service buy here pay here accounts and collections"
+  },
+  "crm-model": {
+   "text": "I designed the lead-to-title data model, roles and validation for the dealership CRM I built.",
+   "area": "build",
+   "medal": "data-model",
+   "tier": "silver",
+   "keywords": [
+    "data modeling",
+    "CRM",
+    "database design",
+    "roles",
+    "validation",
+    "system design"
+   ],
+   "title": "lead-to-title",
+   "short": "I designed the CRM's lead-to-title data model"
+  },
+  "daily": {
+   "text": "Three staff use the CRM I built daily across inventory, deals and follow-up.",
+   "area": "build",
+   "medal": "daily-driver",
+   "tier": "gold",
+   "keywords": [
+    "CRM",
+    "internal tools",
+    "user adoption",
+    "production software"
+   ],
+   "title": "lead-to-title",
+   "short": "Three staff use the CRM I built every day"
+  },
+  "rls": {
+   "text": "I tested Supabase row-level security (RLS) policies to prevent unauthorized role access.",
+   "area": "build",
+   "medal": "locked-rows",
+   "tier": "silver",
+   "keywords": [
+    "row-level security (RLS)",
+    "Supabase",
+    "role-based access",
+    "access control",
+    "security",
+    "PostgreSQL"
+   ],
+   "title": "lead-to-title",
+   "short": "I tested Supabase RLS to block unauthorized role access"
+  },
+  "validation": {
+   "text": "I added validation that prevents invalid deal and inventory records from being written.",
+   "area": "build",
+   "medal": "clean-books",
+   "tier": "silver",
+   "keywords": [
+    "data validation",
+    "data integrity",
+    "data quality"
+   ],
+   "title": "lead-to-title",
+   "short": "My validation keeps invalid deal records out"
+  },
+  "migrations": {
+   "text": "I executed production schema migrations while preserving existing records and operational tables.",
+   "area": "build",
+   "medal": "nothing-lost",
+   "tier": "bronze",
+   "keywords": [
+    "database migrations",
+    "schema migrations",
+    "SQL",
+    "PostgreSQL",
+    "production support"
+   ],
+   "title": "lead-to-title",
+   "short": "I ran production migrations that preserved existing records"
+  },
+  "shipped": {
+   "text": "I shipped the CRM on Vercel with Edge Functions for voice and texting webhooks.",
+   "area": "build",
+   "medal": "shipped",
+   "tier": "silver",
+   "keywords": [
+    "Vercel",
+    "Edge Functions",
+    "webhooks",
+    "deployment",
+    "serverless"
+   ],
+   "title": "lead-to-title",
+   "short": "I shipped it on Vercel with Edge Functions"
+  },
+  "sale-desk": {
+   "text": "Its sale desk, Handle a Sale, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.",
+   "area": "file",
+   "medal": "every-form",
+   "tier": "silver",
+   "keywords": [
+    "document automation",
+    "forms",
+    "deal paperwork",
+    "sale desk"
+   ],
+   "title": "lead-to-title",
+   "short": "Scan the license once and every form fills itself"
+  },
+  "voice": {
+   "text": "I deployed inbound voice AI (Retell AI, Bland AI, Twilio) that books appointments into the CRM and live-transfers unresolved calls to staff.",
+   "area": "automate",
+   "medal": "hand-off",
+   "tier": "silver",
+   "keywords": [
+    "voice AI",
+    "conversational AI",
+    "Retell AI",
+    "Bland AI",
+    "Twilio",
+    "telephony",
+    "appointment setting",
+    "AI agents"
+   ],
+   "title": "the-inbound",
+   "short": "My voice AI books appointments into the CRM"
+  },
+  "voice-figures": {
+   "text": "Across August and September 2026 the voice AI averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).",
+   "area": "automate",
+   "medal": "booked",
+   "tier": "gold",
+   "keywords": [
+    "appointment setting",
+    "inbound calls",
+    "booked appointments"
+   ],
+   "title": "the-inbound",
+   "short": "Voice AI: 14 booked appointments a month, Aug to Sep 2026"
+  },
+  "prospect": {
+   "text": "I built a prospecting workflow in Python with the Claude API and n8n that researches Facebook Marketplace leads and writes findings to the CRM.",
+   "area": "automate",
+   "medal": "field-notes",
+   "tier": "silver",
+   "keywords": [
+    "workflow automation",
+    "n8n",
+    "Python",
+    "Claude API",
+    "LLM integration",
+    "lead research",
+    "API integrations",
+    "CRM integration"
+   ],
+   "title": "prospector",
+   "short": "My Claude API and n8n workflow researches leads"
+  },
+  "sop-replies": {
+   "text": "My prospecting workflow generates SOP-based reply text for automatic follow-up.",
+   "area": "automate",
+   "medal": "by-the-book",
+   "tier": "bronze",
+   "keywords": [
+    "automated follow-up",
+    "SOPs",
+    "AI-generated replies"
+   ],
+   "title": "prospector",
+   "short": "My workflow writes SOP-based follow-up replies"
+  },
+  "aa": {
+   "text": "Associate of Arts in Business, San Jacinto College, May 2026, GPA 3.63, Dean's Honor List.",
+   "area": "learn",
+   "medal": "deans-list",
+   "tier": "gold",
+   "keywords": [
+    "associate degree",
+    "business"
+   ],
+   "title": "neuroscience",
+   "short": "Associate of Arts in Business, GPA 3.63, Dean's Honor List"
+  },
+  "bs": {
+   "text": "Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028.",
+   "area": "learn",
+   "medal": "neuron",
+   "tier": "bronze",
+   "keywords": [
+    "bachelor's degree in progress",
+    "neuroscience"
+   ],
+   "title": "neuroscience",
+   "short": "BS in Neuroscience, UT Austin, expected 2028"
+  },
+  "google": {
+   "text": "Google AI Essentials, Google (Coursera), 2026.",
+   "area": "learn",
+   "medal": "essentials",
+   "tier": "bronze",
+   "keywords": [
+    "Google AI Essentials",
+    "AI certificate"
+   ],
+   "title": "neuroscience",
+   "short": "Google AI Essentials, 2026"
+  },
+  "anthropic": {
+   "text": "Nineteen completed Anthropic courses, including Building with the Claude API and Claude Code in Action.",
+   "area": "learn",
+   "medal": "nineteen",
+   "tier": "silver",
+   "keywords": [
+    "Anthropic courses",
+    "Claude API",
+    "Claude Code",
+    "Model Context Protocol"
+   ],
+   "title": "neuroscience",
+   "short": "Nineteen completed Anthropic courses"
+  }
+ },
+ "builds": [
+  {
+   "id": "ai",
+   "label": "AI and Automation",
+   "short": "AI",
+   "targets": [
+    "AI Implementation Specialist",
+    "AI Automation Specialist",
+    "Workflow Automation Specialist",
+    "Voice AI Specialist",
+    "AI Solutions Specialist"
+   ],
+   "headline": "Voice AI and Claude API workflows running in a live business.",
+   "summary": "I put AI to work where a business loses time. For a Houston used vehicle dealership I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff, and I built a Python, Claude API and n8n workflow that researches Facebook Marketplace leads, writes findings to the CRM and generates SOP-based reply text for follow-up. Rather than buying software, I build it for the bottleneck in front of me.",
+   "proofs": [
+    "voice",
+    "voice-figures",
+    "prospect",
+    "build-not-buy",
+    "sop-replies",
+    "shipped",
+    "crm-model",
+    "anthropic",
+    "google"
+   ],
+   "titles": [
+    "the-inbound",
+    "prospector",
+    "lead-to-title",
+    "triple-j",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Automation",
+    "AI development",
+    "Backend",
+    "Languages",
+    "Web and data",
+    "Operations"
+   ],
+   "keywords": [
+    "AI implementation",
+    "workflow automation",
+    "voice AI",
+    "conversational AI",
+    "LLM integration",
+    "Claude API",
+    "n8n",
+    "Python",
+    "Retell AI",
+    "Bland AI",
+    "Twilio",
+    "webhooks",
+    "REST APIs",
+    "API integrations",
+    "CRM integration",
+    "Claude Code",
+    "Google AI Essentials"
+   ]
+  },
+  {
+   "id": "software",
+   "label": "Software and CRM",
+   "short": "Software",
+   "targets": [
+    "Junior Full-Stack Developer",
+    "Software Engineer I",
+    "Web Developer",
+    "Internal Tools Developer",
+    "CRM Developer"
+   ],
+   "headline": "A TypeScript, Next.js and Supabase CRM in daily production use.",
+   "summary": "I build software people use every day. I designed and shipped a custom dealership CRM in TypeScript, React, Next.js, PostgreSQL and Supabase that three staff use daily across inventory, deals and follow-up. I designed its lead-to-title data model, roles and validation, tested its row-level security (RLS) policies to prevent unauthorized role access, and executed production schema migrations that preserved existing records.",
+   "proofs": [
+    "crm-model",
+    "daily",
+    "rls",
+    "migrations",
+    "validation",
+    "shipped",
+    "sale-desk",
+    "prospect",
+    "anthropic"
+   ],
+   "titles": [
+    "lead-to-title",
+    "prospector",
+    "the-inbound",
+    "triple-j",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Languages",
+    "Web and data",
+    "Backend",
+    "AI development",
+    "Automation",
+    "Operations"
+   ],
+   "keywords": [
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Next.js",
+    "PostgreSQL",
+    "SQL",
+    "Supabase",
+    "row-level security (RLS)",
+    "Vercel",
+    "Edge Functions",
+    "REST APIs",
+    "webhooks",
+    "data modeling",
+    "database migrations",
+    "Python",
+    "Claude Code",
+    "full-stack development"
+   ]
+  },
+  {
+   "id": "it",
+   "label": "IT and Systems Support",
+   "short": "IT",
+   "targets": [
+    "IT Support Specialist",
+    "IT Technician",
+    "Help Desk Technician",
+    "Technical Support Specialist",
+    "IT Coordinator"
+   ],
+   "headline": "Accounts, permissions, hardware, network and the CRM.",
+   "summary": "I keep a business's people and systems working. At a Houston used vehicle dealership I support the staff on the CRM, phones and computers, manage user accounts and permissions, and set up the hardware and network. I also built the CRM they work in, with row-level security (RLS) policies tested to prevent unauthorized role access and production schema migrations that preserved existing records.",
+   "proofs": [
+    "help-desk",
+    "access",
+    "network",
+    "rls",
+    "daily",
+    "migrations",
+    "shipped",
+    "build-not-buy",
+    "google"
+   ],
+   "titles": [
+    "lead-to-title",
+    "triple-j",
+    "the-inbound",
+    "prospector",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Backend",
+    "Web and data",
+    "Automation",
+    "Languages",
+    "AI development",
+    "Operations"
+   ],
+   "keywords": [
+    "technical support",
+    "end-user support",
+    "help desk",
+    "user accounts",
+    "permissions",
+    "access management",
+    "role-based access",
+    "hardware setup",
+    "network setup",
+    "CRM support",
+    "telephony",
+    "Twilio",
+    "SQL",
+    "PostgreSQL",
+    "Supabase",
+    "Google AI Essentials"
+   ]
+  },
+  {
+   "id": "ops",
+   "label": "Operations and Logistics",
+   "short": "Operations",
+   "targets": [
+    "Operations Coordinator",
+    "Operations Manager",
+    "Logistics Coordinator",
+    "Business Operations Associate",
+    "Founder's Associate"
+   ],
+   "headline": "Pricing, inventory, vendors, logistics, financing and title.",
+   "summary": "I keep a business moving from the first call to the finished paperwork. Since August 2024 I've managed operations for a Houston used vehicle dealership across pricing, inventory, vendors, logistics, financing and title processing, and I hire, schedule and manage its staff. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds, and I built the CRM the team works in every day.",
+   "proofs": [
+    "ops",
+    "crew",
+    "sales",
+    "daily",
+    "title",
+    "payroll",
+    "build-not-buy",
+    "voice"
+   ],
+   "titles": [
+    "triple-j",
+    "lead-to-title",
+    "the-inbound",
+    "prospector",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Operations",
+    "Automation",
+    "Web and data",
+    "Backend",
+    "AI development",
+    "Languages"
+   ],
+   "keywords": [
+    "operations management",
+    "inventory management",
+    "vendor management",
+    "logistics",
+    "pricing",
+    "financing",
+    "scheduling",
+    "staff management",
+    "payroll",
+    "title processing",
+    "sales pipelines",
+    "CRM",
+    "dealership operations"
+   ]
+  },
+  {
+   "id": "title",
+   "label": "Title and Back Office",
+   "short": "Back office",
+   "targets": [
+    "Title Clerk",
+    "Title and Registration Specialist",
+    "Deal Processor",
+    "Dealership Office Manager",
+    "Collections Specialist"
+   ],
+   "headline": "Texas title and deal paperwork, desk to file.",
+   "summary": "I get the paperwork right and on file. At a Houston used vehicle dealership I prepare and file title and registration paperwork, including the Form 130-U and webDEALER; prepare deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); keep the dealer license compliance and record-keeping in order; and service buy here pay here accounts and collections. I also built the sale desk that routes each deal to the right documents with nothing missing and nothing extra.",
+   "proofs": [
+    "title",
+    "jackets",
+    "compliance",
+    "collections",
+    "sale-desk",
+    "ops",
+    "validation",
+    "sales"
+   ],
+   "titles": [
+    "triple-j",
+    "lead-to-title",
+    "the-inbound",
+    "prospector",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Operations",
+    "Web and data",
+    "Backend",
+    "Automation",
+    "AI development",
+    "Languages"
+   ],
+   "keywords": [
+    "title and registration",
+    "Form 130-U",
+    "webDEALER",
+    "title processing",
+    "deal jackets",
+    "contracts",
+    "bills of sale",
+    "buy here pay here",
+    "disclosures",
+    "compliance",
+    "record-keeping",
+    "collections",
+    "account servicing",
+    "documentation"
+   ]
+  },
+  {
+   "id": "sales",
+   "label": "Sales and Phones",
+   "short": "Sales",
+   "targets": [
+    "Automotive Sales Consultant",
+    "BDC Representative",
+    "Internet Sales Consultant",
+    "Sales Development Representative",
+    "Customer Success Associate"
+   ],
+   "headline": "53 vehicle sales personally closed and $206,777 collected since June 2025.",
+   "summary": "I sell, and I build the tools a sales team works from. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds at a Houston used vehicle dealership. I take sales calls, follow up by phone and text, negotiate deals and handle service issues after the sale. Across August and September 2026 the inbound voice AI I deployed averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).",
+   "proofs": [
+    "sales",
+    "calls",
+    "negotiate",
+    "voice-figures",
+    "voice",
+    "prospect",
+    "collections",
+    "daily"
+   ],
+   "titles": [
+    "triple-j",
+    "the-inbound",
+    "prospector",
+    "lead-to-title",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Operations",
+    "Automation",
+    "AI development",
+    "Web and data",
+    "Backend",
+    "Languages"
+   ],
+   "keywords": [
+    "sales",
+    "closing",
+    "negotiation",
+    "phone sales",
+    "follow-up",
+    "lead follow-up",
+    "appointment setting",
+    "customer service",
+    "sales pipelines",
+    "CRM",
+    "buy here pay here",
+    "automotive sales"
+   ]
+  },
+  {
+   "id": "people",
+   "label": "People and Office",
+   "short": "People",
+   "targets": [
+    "HR Coordinator",
+    "People Operations Coordinator",
+    "Office Manager",
+    "Payroll Coordinator",
+    "Office Administrator"
+   ],
+   "headline": "Hiring, training, scheduling and payroll.",
+   "summary": "I keep a team staffed, trained and paid. At a Houston used vehicle dealership I hire, train, schedule and manage the staff and run payroll. I support them on the CRM, phones and computers, manage their user accounts and permissions, and keep the dealer license compliance and record-keeping in order.",
+   "proofs": [
+    "crew",
+    "payroll",
+    "help-desk",
+    "access",
+    "compliance",
+    "ops",
+    "daily",
+    "aa"
+   ],
+   "titles": [
+    "triple-j",
+    "lead-to-title",
+    "neuroscience",
+    "the-inbound",
+    "prospector",
+    "obavia"
+   ],
+   "skills": [
+    "Operations",
+    "Web and data",
+    "Automation",
+    "Backend",
+    "AI development",
+    "Languages"
+   ],
+   "keywords": [
+    "hiring",
+    "training",
+    "scheduling",
+    "staff management",
+    "supervision",
+    "payroll",
+    "record-keeping",
+    "compliance",
+    "user accounts",
+    "office management",
+    "associate degree in business"
+   ]
+  },
+  {
+   "id": "dealer-tech",
+   "label": "Dealer Technology",
+   "short": "Dealer tech",
+   "targets": [
+    "Implementation Specialist",
+    "Dealer Onboarding Specialist",
+    "CRM Administrator",
+    "Customer Success Manager",
+    "Solutions Consultant"
+   ],
+   "headline": "A dealer-side operator who built the CRM and sale desk a dealership runs on.",
+   "summary": "I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it.",
+   "proofs": [
+    "daily",
+    "sale-desk",
+    "crm-model",
+    "ops",
+    "help-desk",
+    "voice",
+    "title",
+    "sales"
+   ],
+   "titles": [
+    "lead-to-title",
+    "triple-j",
+    "the-inbound",
+    "prospector",
+    "obavia",
+    "neuroscience"
+   ],
+   "skills": [
+    "Operations",
+    "Web and data",
+    "Automation",
+    "Backend",
+    "AI development",
+    "Languages"
+   ],
+   "keywords": [
+    "dealership operations",
+    "CRM administration",
+    "implementation",
+    "dealer software",
+    "sale desk",
+    "user accounts",
+    "permissions",
+    "title and registration",
+    "voice AI",
+    "Supabase",
+    "customer success"
+   ]
+  }
+ ],
+ "lot": [
+  {
+   "id": "calls",
+   "label": "Calls I miss",
+   "build": "ai",
+   "line": "At Triple J, inbound voice AI answers, books appointments into the CRM and live-transfers what it can't resolve to staff.",
+   "proofs": [
+    "voice",
+    "voice-figures",
+    "calls"
+   ],
+   "cta": "call",
+   "titles": [
+    "the-inbound",
+    "triple-j",
+    "lead-to-title",
+    "prospector",
+    "obavia",
+    "neuroscience"
+   ]
+  },
+  {
+   "id": "paperwork",
+   "label": "Paperwork that comes back",
+   "build": "title",
+   "line": "At Triple J I file title and registration myself, and the sale desk I built routes each deal to the right documents with nothing missing and nothing extra.",
+   "proofs": [
+    "title",
+    "sale-desk",
+    "jackets"
+   ],
+   "cta": "obavia",
+   "obavia": "Obavia, the sale desk I'm building for Texas independent dealers, is in development. Early access is a conversation.",
+   "titles": [
+    "lead-to-title",
+    "triple-j",
+    "obavia",
+    "the-inbound",
+    "prospector",
+    "neuroscience"
+   ]
+  },
+  {
+   "id": "leads",
+   "label": "Leads that go cold",
+   "build": "ai",
+   "line": "At Triple J a Python and Claude API workflow researches Facebook Marketplace leads, writes findings to the CRM and generates SOP-based reply text, and I follow up by phone and text.",
+   "proofs": [
+    "prospect",
+    "sop-replies",
+    "calls"
+   ],
+   "cta": "call",
+   "titles": [
+    "prospector",
+    "the-inbound",
+    "triple-j",
+    "lead-to-title",
+    "obavia",
+    "neuroscience"
+   ]
+  },
+  {
+   "id": "notebook",
+   "label": "Deals in a notebook",
+   "build": "software",
+   "line": "Triple J runs on a CRM I built. Three staff use it daily across inventory, deals and follow-up, and every sale is saved on file.",
+   "proofs": [
+    "daily",
+    "crm-model",
+    "sale-desk"
+   ],
+   "cta": "call",
+   "titles": [
+    "lead-to-title",
+    "triple-j",
+    "the-inbound",
+    "prospector",
+    "obavia",
+    "neuroscience"
+   ]
+  },
+  {
+   "id": "tech",
+   "label": "Staff who need tech help",
+   "build": "it",
+   "line": "I support Triple J's staff on the CRM, phones and computers, manage their accounts and permissions, and set up the hardware and network.",
+   "proofs": [
+    "help-desk",
+    "access",
+    "network"
+   ],
+   "cta": "call",
+   "titles": [
+    "lead-to-title",
+    "triple-j",
+    "the-inbound",
+    "prospector",
+    "obavia",
+    "neuroscience"
+   ]
+  },
+  {
+   "id": "bhph",
+   "label": "Buy here pay here accounts",
+   "build": "title",
+   "line": "I prepare Triple J's buy here pay here contracts and disclosures, and I service the accounts and collections myself.",
+   "proofs": [
+    "jackets",
+    "collections",
+    "ops"
+   ],
+   "cta": "call",
+   "titles": [
+    "triple-j",
+    "lead-to-title",
+    "the-inbound",
+    "prospector",
+    "obavia",
+    "neuroscience"
+   ]
+  }
+ ],
+ "equip": 4,
+ "finishes": [
+  {
+   "id": "bronze",
+   "label": "Bronze",
+   "need": 0
+  },
+  {
+   "id": "silver",
+   "label": "Silver",
+   "need": 6
+  },
+  {
+   "id": "gold",
+   "label": "Gold",
+   "need": 12
+  },
+  {
+   "id": "platinum",
+   "label": "Platinum",
+   "need": "operator"
+  }
+ ]
+}

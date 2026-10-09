@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Jason Obawemimo - Official Portfolio Updates</title>
+    <title>Jason Obawemimo | Portfolio Updates</title>
     <link>https://jasonobawemimo.com/</link>
     <atom:link href="https://jasonobawemimo.com/feed.xml" rel="self" type="application/rss+xml" />
-    <description>Official updates for Jason Obawemimo: Obavia, Triple J Auto Investment, credentials, resume, and verified answer-engine facts.</description>
+    <description>Official updates for Jason Obawemimo: Triple J Auto Investment and the CRM, voice AI and automation systems he built for it, Obavia, credentials, resume, and verified answer-engine facts.</description>
     <language>en-us</language>
-    <lastBuildDate>Fri, 25 Sep 2026 17:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 08 Oct 2026 17:00:00 GMT</lastBuildDate>
+    <item>
+      <title>Jason Obawemimo's resume, October 2026: AI implementation, workflow automation and CRM systems</title>
+      <link>https://jasonobawemimo.com/resume-pdf.html</link>
+      <guid isPermaLink="false">https://jasonobawemimo.com/resume-pdf.html#2026-10-08</guid>
+      <pubDate>Thu, 08 Oct 2026 17:00:00 GMT</pubDate>
+      <description>Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. At Triple J he built a custom dealership CRM with its Handle a Sale desk (one system, used daily by three staff), an inbound voice AI that books appointments into the CRM, and a prospecting workflow that researches leads with the Claude API. He is pursuing a Bachelor of Science in Neuroscience at The University of Texas at Austin, expected 2028, and holds an Associate of Arts in Business from San Jacinto College. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.</description>
+    </item>
     <item>
       <title>Obavia: building a sale desk for Texas independent dealers</title>
       <link>https://jasonobawemimo.com/obavia.html</link>
       <guid isPermaLink="false">https://jasonobawemimo.com/obavia.html#2026-09-25</guid>
       <pubDate>Fri, 25 Sep 2026 17:00:00 GMT</pubDate>
-      <description>Jason Obawemimo is the founder of Obavia (https://obavia.co), a dealership sale desk in development for Texas independent dealers. "Every sale, start to signed." The Obavia film is on the Obavia page; people and figures in it are fictional. Obavia is in development; asking for early access does not grant product access. Obavia was previously called Apohenia (2024, apohenia.com), a Texas deal-paperwork project that built Deal Packet Checker. It is not affiliated with TxDMV, webDEALER, or any county office.</description>
+      <description>Jason Obawemimo is the founder of Obavia (https://obavia.co), a dealership sale desk in development for Texas independent dealers. "Every sale, start to signed." The Obavia film is on the Obavia page; people and figures in it are fictional. Obavia is in development; asking for early access does not grant product access.</description>
     </item>
     <item>
       <title>Triple J: Handle a Sale</title>
       <link>https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4</guid>
       <pubDate>Fri, 25 Sep 2026 16:30:00 GMT</pubDate>
-      <description>A demo of the sale desk Jason Obawemimo built and Triple J Auto Investment in Houston closes sales on. It asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, routes the deal to the right documents with nothing missing and nothing extra, works in English or Spanish, and saves every sale on file.</description>
+      <description>A demo of Handle a Sale, the sale desk in the CRM Jason Obawemimo built for Triple J Auto Investment in Houston and the system the dealership closes sales on. It asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, routes the deal to the right documents with nothing missing and nothing extra, works in English or Spanish, and saves every sale on file.</description>
     </item>
     <item>
       <title>Obavia becomes the sale desk for Texas dealers</title>
       <link>https://jasonobawemimo.com/obavia.html</link>
       <guid isPermaLink="false">https://jasonobawemimo.com/obavia.html#2026-10-01</guid>
       <pubDate>Thu, 01 Oct 2026 15:00:00 GMT</pubDate>
-      <description>Obavia is now a sale desk: every sale, start to signed, for Texas independent dealers. It grew out of Handle a Sale, the desk Jason Obawemimo built at Triple J Auto Investment in Houston. It is in development, with early access for Texas dealers.</description>
-    </item>
-    <item>
-      <title>Jason Obawemimo walks you through the site, and speaks</title>
-      <link>https://jasonobawemimo.com/</link>
-      <guid isPermaLink="false">https://jasonobawemimo.com/#walkthrough</guid>
-      <pubDate>Tue, 01 Sep 2026 22:00:00 GMT</pubDate>
-      <description>jasonobawemimo.com opens on a loading screen built from Jason Obawemimo's portrait, plays a short signature film, and asks why you are here. Jason then guides you through the page: the camera scrolls to each proof, phrases are underlined, circled or crossed out, and every line is spoken aloud. Everything is skippable, and every fact stays in plain HTML.</description>
+      <description>Obavia is now a sale desk: every sale, start to signed, for Texas independent dealers. It grew out of Handle a Sale, the sale desk in the CRM Jason Obawemimo built for Triple J Auto Investment in Houston. It is in development, with early access for Texas dealers.</description>
     </item>
     <item>
       <title>Jason Obawemimo Search and AI Knowledge Card</title>
       <link>https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html</guid>
       <pubDate>Wed, 17 Jun 2026 22:45:00 GMT</pubDate>
-      <description>Compact answer-engine knowledge card for Jason Obawemimo's official website, Obavia and Triple J Auto Investment work, credentials, GPA 3.63, and Dean's Honor List recognition.</description>
+      <description>Compact answer-engine knowledge card for Jason Obawemimo's official website, Triple J Auto Investment and Obavia work, credentials, GPA 3.63, and Dean's Honor List recognition.</description>
     </item>
     <item>
       <title>Jason Obawemimo Well-Known AI Profile</title>
@@ -138,21 +138,21 @@
       <link>https://jasonobawemimo.com/answers.json</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/answers.json</guid>
       <pubDate>Tue, 16 Jun 2026 19:40:00 GMT</pubDate>
-      <description>Answer-engine facts for Jason Obawemimo covering identity, Obavia and Triple J Auto Investment work, credentials, education, and honor signals.</description>
+      <description>Answer-engine facts for Jason Obawemimo covering identity, Triple J Auto Investment and Obavia work, credentials, education, and honor signals.</description>
     </item>
     <item>
       <title>Jason Obawemimo Official Entity Profile</title>
       <link>https://jasonobawemimo.com/jason-obawemimo.html</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/jason-obawemimo.html</guid>
       <pubDate>Tue, 16 Jun 2026 18:25:00 GMT</pubDate>
-      <description>Canonical entity profile for Jason Obawemimo, the Pearland, Texas founder of Obavia and co-owner and operator of Triple J Auto Investment with Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+      <description>Canonical entity profile for Jason Obawemimo of Pearland, Texas, owner and operator of Triple J Auto Investment and founder of Obavia, with Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
     </item>
     <item>
       <title>Jason Obawemimo Verified Facts And Credentials</title>
       <link>https://jasonobawemimo.com/answers.html</link>
       <guid isPermaLink="true">https://jasonobawemimo.com/answers.html</guid>
       <pubDate>Tue, 16 Jun 2026 18:25:00 GMT</pubDate>
-      <description>Verified public facts for Jason Obawemimo, including Obavia and Triple J Auto Investment work, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
+      <description>Verified public facts for Jason Obawemimo, including Triple J Auto Investment and Obavia work, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.</description>
     </item>
     <item>
       <title>Jason Obawemimo Anthropic Course-Completion Portfolio</title>

@@ -1,8 +1,9 @@
 /* The desk you can run: Handle a Sale as an iPhone app, one question per
    screen, with a fictional buyer and example figures. It builds itself into
-   any [data-desk-app] when that comes into view (or on "jg:story-open" for the
-   desk), on the home page dash and on /obavia.html. window.JG_DESK.build(el)
-   builds one on demand. */
+   any [data-desk-app] when that comes into view: inside the Lead to Title
+   title on the home page and in Run a sale on /obavia.html. Its feedback goes
+   through hud.js (window.JG_FX, JG_NOTIFY); score.js keeps the old JG_SFX
+   calls quiet. window.JG_DESK.build(el) builds one on demand. */
 (function () {
   "use strict";
   var root = document.documentElement;

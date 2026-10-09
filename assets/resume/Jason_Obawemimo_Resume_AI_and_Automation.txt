@@ -1,0 +1,40 @@
+Jason Obawemimo
+AI Implementation, Workflow Automation and CRM Systems
+Voice AI and Claude API workflows running in a live business.
+Written for: AI Implementation Specialist, AI Automation Specialist, Workflow Automation Specialist, Voice AI Specialist, AI Solutions Specialist
+Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+
+Summary
+I put AI to work where a business loses time. For a Houston used vehicle dealership I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff, and I built a Python, Claude API and n8n workflow that researches Facebook Marketplace leads, writes findings to the CRM and generates SOP-based reply text for follow-up. Rather than buying software, I build it for the bottleneck in front of me.
+
+Experience
+Owner and Operations Lead, Aug 2024 to Present
+Triple J Auto Investment and Rental Operations, Houston, Texas
+- Build AI software for the dealership's bottlenecks rather than buying software.
+Inbound voice AI (Retell AI, Bland AI, Twilio, CRM webhooks)
+  - Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.
+  - Across August and September 2026 the voice AI averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).
+Prospecting workflow (Python, Claude API, n8n, CRM webhooks)
+  - Built a prospecting workflow in Python with the Claude API and n8n that researches Facebook Marketplace leads and writes findings to the CRM.
+  - The workflow generates SOP-based reply text for automatic follow-up.
+Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
+  - Shipped the CRM on Vercel with Edge Functions for voice and texting webhooks.
+  - Designed the lead-to-title data model, roles and validation.
+
+Education
+The University of Texas at Austin, Austin, TX, Expected 2028
+Bachelor of Science in Neuroscience
+San Jacinto College, Houston, TX, May 2026
+Associate of Arts in Business, GPA 3.63, Dean's Honor List
+
+Certificates and Courses
+- Google AI Essentials, Google (Coursera), 2026
+- Anthropic: nineteen completed courses, including Building with the Claude API; Introduction to Model Context Protocol; Introduction to agent skills
+
+Skills
+Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
+AI development: Claude Code, Claude API, Codex
+Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
+Languages: TypeScript, JavaScript, Python, SQL
+Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
+Operations: Dealership operations, sales pipelines, inventory and vendor management

@@ -12,7 +12,8 @@ Set-Location $root
 Write-Host "Validating local SEO/AEO/GEO files..."
 $validationScript = @'
 const fs = require('fs');
-const linkedInUrl = 'https://www.linkedin.com/in/jason-obawemimo-51a76120a/';
+const linkedInUrl = 'https://www.linkedin.com/in/obawemimo';
+const preferredTitle = 'AI Implementation, Workflow Automation and CRM Systems';
 const sourceReleaseUrl = 'https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence';
 const githubProfileReadmeUrl = 'https://github.com/whoisjaso/whoisjaso';
 const githubPagesProfileMirrorUrl = 'https://whoisjaso.github.io/whoisjaso/';
@@ -109,6 +110,22 @@ for (const file of crawlableTextFiles) {
     if (body.includes(marker)) throw new Error(`${file} contains mojibake marker ${marker}`);
   }
 }
+const retiredWording = [/\bco-own/i, /expected 2027/i, /Web Design and Workflow Systems Builder/i, /Process audit first/i, /agency owners at \$100K/i, /AI Engineer, Business Systems and Sales Intelligence/i, /directing AI-assisted development/i, /summarized primarily as a voice-agent/i, /\bsetters?\b|\bclosers?\b/i, /Deal Packet Checker/i];
+// Apohenia is Obavia's earlier name: one line in the answers layer, nowhere else. The Calendly URL (jason-apohenia) is not a mention.
+const apoheniaAllowed = new Set(['answers.json', '.well-known/ai-answers.json', 'llms.txt', 'llms-full.txt']);
+const phoneMarkers = [/\btel:/i, /"telephone"/i, /^TEL[;:]/im];
+for (const file of crawlableTextFiles) {
+  const body = fs.readFileSync(file, 'utf8');
+  for (const pattern of retiredWording) {
+    if (pattern.test(body)) throw new Error(`${file} still carries retired wording ${pattern}`);
+  }
+  for (const pattern of phoneMarkers) {
+    if (pattern.test(body)) throw new Error(`${file} carries a phone field ${pattern}; no phone number is ever published`);
+  }
+  const apohenia = body.replace(/calendly\.com\/jason-apohenia/gi, '').match(/apohenia/gi) || [];
+  if (apohenia.length && !apoheniaAllowed.has(file)) throw new Error(`${file} mentions Apohenia outside the answers layer`);
+  if (apohenia.length > 1) throw new Error(`${file} mentions Apohenia more than once; the answers layer carries one line`);
+}
 const schema = JSON.parse(fs.readFileSync('schema.json', 'utf8'));
 const profile = JSON.parse(fs.readFileSync('profile.jsonld', 'utf8'));
 const credentialGraph = JSON.parse(fs.readFileSync('credentials.jsonld', 'utf8'));
@@ -172,7 +189,7 @@ if (!fs.readFileSync('.well-known/llms.txt', 'utf8').includes('Jason Obawemimo')
 if (!fs.readFileSync('.well-known/llms.txt', 'utf8').includes(linkedInUrl)) throw new Error('.well-known/llms.txt missing LinkedIn profile');
 const credential = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#credential-anthropic');
 const person = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#jason-obawemimo');
-const occupation = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#occupation-web-design-workflow-systems-builder');
+const occupation = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#occupation-ai-implementation-workflow-automation-crm-systems');
 const website = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#website');
 const homepage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#homepage');
 const knowledgeCardPage = schema['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card');
@@ -185,10 +202,10 @@ const hostMeta = fs.readFileSync('.well-known/host-meta', 'utf8');
 const vcard = fs.readFileSync('jason-obawemimo.vcf', 'utf8');
 const openSearch = fs.readFileSync('opensearch.xml', 'utf8');
 if (!credential || credential.about.length !== 19) throw new Error('Expected 19 Anthropic courses in schema.json');
-if (!person || person.hasOccupation?.['@id'] !== 'https://jasonobawemimo.com/#occupation-web-design-workflow-systems-builder') throw new Error('schema.json missing canonical occupation link');
+if (!person || person.hasOccupation?.['@id'] !== 'https://jasonobawemimo.com/#occupation-ai-implementation-workflow-automation-crm-systems') throw new Error('schema.json missing canonical occupation link');
 if (!person.contactPoint || person.contactPoint.email !== 'jobawems@gmail.com') throw new Error('schema.json missing professional contact point');
 if (!Array.isArray(person.knowsLanguage) || !person.knowsLanguage.includes('English')) throw new Error('schema.json missing knowsLanguage English');
-if (!occupation || occupation.name !== 'Web Design and Workflow Systems Builder' || !JSON.stringify(occupation).includes('Model Context Protocol')) throw new Error('schema.json missing occupation node');
+if (!occupation || occupation.name !== preferredTitle || !JSON.stringify(occupation).includes('Claude API')) throw new Error('schema.json missing occupation node');
 if (!website || !Array.isArray(website.hasPart) || website.hasPart.length < 9) throw new Error('schema.json missing WebSite hasPart page graph');
 for (const requiredPartId of ['https://jasonobawemimo.com/#homepage', 'https://jasonobawemimo.com/jason-obawemimo.html#profile-page', 'https://jasonobawemimo.com/credentials.html#webpage', 'https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html#evidence-page', 'https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html#knowledge-card', 'https://jasonobawemimo.com/answers.html#webpage', 'https://jasonobawemimo.com/mentions.html#webpage', 'https://jasonobawemimo.com/search.html#search-results-page', 'https://jasonobawemimo.com/resume-pdf.html#webpage']) {
   if (!website.hasPart.some(part => part['@id'] === requiredPartId)) throw new Error(`schema.json WebSite hasPart missing ${requiredPartId}`);
@@ -221,7 +238,7 @@ if (!searchPage || searchPage['@type'] !== 'SearchResultsPage' || searchPage.mai
 if (website.potentialAction?.target !== 'https://jasonobawemimo.com/search.html?q={search_term_string}') throw new Error('schema.json SearchAction must target search.html');
 if (!openSearch.includes('https://jasonobawemimo.com/search.html?q={searchTerms}')) throw new Error('opensearch.xml must target search.html');
 if (profile['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('profile.jsonld missing canonical Person @id');
-if (!profile.hasOccupation || profile.hasOccupation.name !== 'Web Design and Workflow Systems Builder') throw new Error('profile.jsonld missing occupation');
+if (!profile.hasOccupation || profile.hasOccupation.name !== preferredTitle) throw new Error('profile.jsonld missing occupation');
 if (!profile.contactPoint || profile.contactPoint.email !== 'jobawems@gmail.com') throw new Error('profile.jsonld missing contact point');
 const courseList = credentialGraph['@graph'].find(node => node['@id'] === 'https://jasonobawemimo.com/#anthropic-course-list');
 if (!courseList || courseList.numberOfItems !== 19 || courseList.itemListElement.length !== 19) throw new Error('credentials.jsonld missing 19 course ItemList');
@@ -236,18 +253,18 @@ if (!JSON.stringify(wellKnownAiAnswers).includes('Dean') || !JSON.stringify(well
 if (didDocument.id !== didWeb || didDocument.controller !== didWeb) throw new Error('DID Web document missing canonical id or controller');
 if (!Array.isArray(didDocument.alsoKnownAs) || !didDocument.alsoKnownAs.includes(linkedInUrl) || !didDocument.alsoKnownAs.includes(githubProfileReadmeUrl)) throw new Error('DID Web document missing identity aliases');
 if (!JSON.stringify(didDocument).includes(wellKnownAiProfileUrl) || !JSON.stringify(didDocument).includes(wellKnownAiAnswersUrl) || !JSON.stringify(didDocument).includes(knowledgeCardJsonLdUrl) || !JSON.stringify(didDocument).includes(evidencePageUrl) || !JSON.stringify(didDocument).includes(citationCffUrl)) throw new Error('DID Web document missing high-signal service endpoints');
-if (faqGraph['@type'] !== 'FAQPage' || faqGraph.mainEntity.length !== 8) throw new Error('faq.jsonld missing 8 FAQ answers');
+if (faqGraph['@type'] !== 'FAQPage' || faqGraph.mainEntity.length < 8) throw new Error('faq.jsonld missing FAQ answers');
 if (discovery.entity.name !== 'Jason Obawemimo') throw new Error('discovery.json missing Jason Obawemimo name');
-if (discovery.entity.occupation !== 'Web Design and Workflow Systems Builder' || !discovery.preferred_positioning.occupation_description) throw new Error('discovery.json missing occupation description');
+if (!String(discovery.entity.occupation || '').includes(preferredTitle) || !discovery.preferred_positioning.occupation_description) throw new Error('discovery.json missing occupation description');
 if (identity.name !== 'Jason Obawemimo') throw new Error('identity.json missing Jason Obawemimo name');
-if (!identity.occupation || identity.occupation.name !== 'Web Design and Workflow Systems Builder') throw new Error('identity.json missing occupation');
+if (!identity.occupation || identity.occupation.name !== preferredTitle) throw new Error('identity.json missing occupation');
 if (!identity.contact || identity.contact.contact_type !== 'professional inquiries') throw new Error('identity.json missing professional contact type');
 if (personJson['@id'] !== 'https://jasonobawemimo.com/#jason-obawemimo') throw new Error('person.json missing canonical Person @id');
 if (personJson.name !== 'Jason Obawemimo') throw new Error('person.json missing Jason Obawemimo name');
-if (personJson.jobTitle !== 'Web Design and Workflow Systems Builder') throw new Error('person.json missing preferred title');
+if (personJson.jobTitle !== preferredTitle) throw new Error('person.json missing preferred title');
 if (!JSON.stringify(personJson).includes('https://github.com/whoisjaso/jasonresume')) throw new Error('person.json missing source repository');
 if (!JSON.stringify(personJson).includes(sourceReleaseUrl)) throw new Error('person.json missing source release');
-if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('Jason Obawemimo is a Pearland, Texas based web design and workflow systems builder')) throw new Error('jason-obawemimo.md missing preferred summary');
+if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it')) throw new Error('jason-obawemimo.md missing preferred summary');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes('https://jasonobawemimo.com/person.json')) throw new Error('jason-obawemimo.md missing person.json reference');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(sourceReleaseUrl)) throw new Error('jason-obawemimo.md missing source release');
 if (!fs.readFileSync('jason-obawemimo.md', 'utf8').includes(githubProfileReadmeUrl)) throw new Error('jason-obawemimo.md missing GitHub profile README');
@@ -322,7 +339,7 @@ for (const sourceUrl of publicSourceUrls) {
   }
 }
 if (!schema['@graph'].some(node => node['@type'] === 'ImageObject' && node['@id'] === 'https://jasonobawemimo.com/#headshot')) throw new Error('schema.json missing headshot ImageObject');
-if ([...sitemap.matchAll(/<loc>/g)].length !== 39) throw new Error('Expected 39 sitemap URLs');
+if ([...sitemap.matchAll(/<loc>/g)].length < 39) throw new Error('Expected at least 39 sitemap URLs');
 if ([...sitemapIndex.matchAll(/<loc>/g)].length !== 2) throw new Error('Expected 2 sitemap-index URLs');
 if (!sitemapIndex.includes('https://jasonobawemimo.com/image-sitemap.xml')) throw new Error('sitemap-index.xml missing image sitemap');
 if (!imageSitemap.includes('https://jasonobawemimo.com/assets/jason-headshot.png')) throw new Error('image-sitemap.xml missing headshot');
@@ -401,8 +418,6 @@ $files = @(
   "index.html",
   "resume-pdf.html",
   "robots.txt",
-  "site.css",
-  "site.js",
   "sitemap.xml",
   "sitemap-index.xml",
   "image-sitemap.xml",

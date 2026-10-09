@@ -1,6 +1,6 @@
 /* The design system for the rebuilt pages. One world: lacquer, gold, ivory.
-   Every rebuilt page loads this first. Scene styles live in home.css and
-   briefing.css. Old secondary pages still use site.css. */
+   The proof pages load this first, then proof.css. The home page and
+   /obavia.html live in game.css. */
 
 :root {
   --lacquer: #0a0d0b;

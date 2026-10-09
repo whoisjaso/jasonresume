@@ -1,20 +1,21 @@
 {
-  "_note": "The single source for the Slate, the record on the home page, the presentation deck and resume-pdf.html. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
+  "_note": "The single source for the Slate, the record on the home page, the presentation deck and the resumes. tools/site/build_resume.py renders resume-pdf.html and resume/<build>.html from the resume block below and tools/site/builds.json. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
   "name": "Jason Obawemimo",
-  "line": "AI engineer and operator. Process audit first, then the system.",
+  "line": "I build the systems a business runs on, and I run the operations they serve.",
+  "summary": "I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve. At a Houston used vehicle dealership I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.",
   "email": "jobawems@gmail.com",
   "site": "jasonobawemimo.com",
   "location": "Pearland, Texas",
   "calendar": "https://calendly.com/jason-apohenia/30min",
-  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=sept26",
+  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=oct26r",
   "slate": [
     {
-      "k": "Obavia",
-      "v": "Founder, since September 2024. Building Obavia, the sale desk I built at Triple J, for Texas independent dealers."
+      "k": "Triple J",
+      "v": "Owner and Operations Lead since August 2024. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds."
     },
     {
-      "k": "Triple J",
-      "v": "Co-owner and operator since August 2024. I built its sale desk."
+      "k": "Systems",
+      "v": "I built Triple J's CRM (Handle a Sale is its sale desk), its inbound voice AI and its prospecting workflow."
     },
     {
       "k": "Based",
@@ -22,16 +23,73 @@
     },
     {
       "k": "Education",
-      "v": "Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List."
+      "v": "Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028. Associate of Arts in Business, San Jacinto College, May 2026, GPA 3.63, Dean's Honor List."
     }
   ],
   "record": [
+    {
+      "id": "triplej",
+      "role": "Owner and Operations Lead",
+      "org": "Triple J Auto Investment and Rental Operations, Houston",
+      "when": "August 2024 to now",
+      "text": "I own it and run its operations: pricing, inventory, vendors, logistics, financing and title processing. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds. The CRM, voice AI and automation it runs on are mine too, below.",
+      "proof": [
+        {
+          "label": "thetriplejauto.com",
+          "href": "https://thetriplejauto.com",
+          "ext": true
+        }
+      ],
+      "icon": {
+        "src": "assets/brand/triplej-logo.png",
+        "style": "logo"
+      }
+    },
+    {
+      "id": "crm",
+      "role": "Custom dealership CRM",
+      "org": "Handle a Sale, built for Triple J",
+      "when": "",
+      "text": "One system: the CRM I built for Triple J, with Handle a Sale as its sale desk. I designed the lead-to-title data model, roles and validation, tested its Supabase row-level security policies against unauthorized role access, and added validation that keeps invalid deal and inventory records from being written. I ran production schema migrations while preserving existing records and operational tables. Three staff use it daily across inventory, deals and follow-up. The sale desk asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, routes the deal to the right documents with nothing missing and nothing extra, works in English or Spanish, and the customer signs on their phone or in person. Every sale is saved on file. TypeScript, React, Next.js, PostgreSQL, Supabase and Vercel, with Edge Functions for the voice and texting webhooks.",
+      "proof": [
+        {
+          "label": "The film",
+          "href": "assets/film/triple-j-sale-desk.mp4",
+          "ext": true
+        }
+      ],
+      "icon": {
+        "sym": "i-file"
+      }
+    },
+    {
+      "id": "voice",
+      "role": "Inbound voice AI",
+      "org": "Retell AI, Bland AI, Twilio and CRM webhooks",
+      "when": "",
+      "text": "I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).",
+      "proof": [],
+      "icon": {
+        "sym": "i-ask"
+      }
+    },
+    {
+      "id": "prospecting",
+      "role": "Prospecting workflow",
+      "org": "Python, Claude API, n8n and CRM webhooks",
+      "when": "",
+      "text": "A Python workflow I built uses the Claude API to research Facebook Marketplace leads, writes its findings to the CRM, and generates SOP-based reply text for automatic follow-up. It's Triple J's live lead-research workflow.",
+      "proof": [],
+      "icon": {
+        "sym": "i-look"
+      }
+    },
     {
       "id": "obavia",
       "role": "Founder",
       "org": "Obavia",
       "when": "September 2024 to now. In development.",
-      "text": "Obavia: every sale, start to signed, for Texas independent dealers. Pick the car, take the buyer's details, work out the money and print the paperwork in the dealer's name, then the buyer signs at the desk. One question per screen. It grew out of Handle a Sale, the desk I built at Triple J, and it's being built on that floor.",
+      "text": "Obavia: every sale, start to signed, a dealership sale desk for Texas independent dealers. It grew out of Handle a Sale, the sale desk in the CRM I built for Triple J, and it's being built on that floor. It isn't live yet, and early access is a conversation.",
       "proof": [
         {
           "label": "The briefing",
@@ -49,50 +107,11 @@
       }
     },
     {
-      "id": "triplej",
-      "role": "Co-owner and operator",
-      "org": "Triple J Auto Investment, Houston",
-      "when": "August 2024 to now",
-      "text": "A used vehicle dealership with in-house financing, sell and trade valuations, and registration and title support. I run daily operations: customer intake, vehicle pricing, inventory, scheduling and vendor coordination, and I negotiate prices and financing. I built Handle a Sale, the desk it closes sales on, and software for a former rental operation, by writing the requirements and directing AI-assisted development.",
-      "proof": [
-        {
-          "label": "The film",
-          "href": "#film"
-        },
-        {
-          "label": "thetriplejauto.com",
-          "href": "https://thetriplejauto.com",
-          "ext": true
-        }
-      ],
-      "icon": {
-        "src": "assets/brand/triplej-logo.png",
-        "style": "logo"
-      }
-    },
-    {
-      "id": "build",
-      "role": "How I work",
-      "org": "Process audit first",
-      "when": "",
-      "text": "I find where work gets delayed, information gets lost, or people repeat tasks. Then I turn that into requirements and procedures, and build AI-assisted workflows for intake, qualification, follow-up and CRM handoffs, with a human checking the work.",
-      "proof": [
-        {
-          "label": "This site's source",
-          "href": "https://github.com/whoisjaso/jasonresume",
-          "ext": true
-        }
-      ],
-      "icon": {
-        "mono": "J"
-      }
-    },
-    {
       "id": "tools",
-      "role": "Tools",
+      "role": "Skills",
       "org": "What I build with",
       "when": "",
-      "text": "Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.",
+      "text": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs, row-level security and webhook services. n8n, API integrations, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex. Dealership operations, sales pipelines, inventory and vendor management.",
       "proof": [
         {
           "label": "GitHub whoisjaso",
@@ -106,7 +125,6 @@
           "postgresql",
           "vercel",
           "claude",
-          "modelcontextprotocol",
           "github"
         ]
       }
@@ -116,7 +134,7 @@
       "role": "Associate of Arts in Business",
       "org": "San Jacinto College",
       "when": "May 2026",
-      "text": "GPA 3.63, Dean's Honor List. Pursuing a bachelor's in neuroscience, expected 2027.",
+      "text": "GPA 3.63, Dean's Honor List. Pursuing a Bachelor of Science in Neuroscience at The University of Texas at Austin, expected 2028. I also completed Google AI Essentials (Google, Coursera) in 2026.",
       "proof": [
         {
           "label": "Degree PDF",
@@ -171,14 +189,14 @@
     "AI Fluency for Small Businesses"
   ],
   "focus": [
+    "AI implementation",
+    "Workflow automation",
+    "CRM systems",
+    "Inbound voice AI",
     "Dealership sale desk software",
     "Title and registration workflow",
-    "Workflow automation",
-    "AI-assisted operations",
-    "CRM and data handoffs",
-    "SOP and documentation systems",
-    "Sales strategy and negotiation",
-    "Model Context Protocol",
+    "Dealership operations",
+    "Sales pipelines",
     "Supabase and PostgreSQL",
     "Vercel deployments"
   ],
@@ -186,7 +204,7 @@
     {
       "k": "LinkedIn",
       "v": "Jason Obawemimo",
-      "href": "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+      "href": "https://www.linkedin.com/in/obawemimo",
       "kind": "linkedin",
       "icon": {
         "sym": "i-linkedin"
@@ -291,7 +309,7 @@
   "deck": [
     {
       "t": "Jason Obawemimo.",
-      "s": "AI engineer and business operator. My work starts with a process audit, then I build the system and run it."
+      "s": "AI implementation, workflow automation and CRM systems. I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve."
     },
     {
       "t": "The short version.",
@@ -299,7 +317,7 @@
     },
     {
       "t": "Triple J Auto Investment.",
-      "s": "I've co-owned and run it since August 2024: intake, pricing, inventory, scheduling, vendors, and the negotiation. Cars, trucks and SUVs, in-house financing, sell and trade valuations, registration and title support.",
+      "s": "I've owned and run it since August 2024: pricing, inventory, vendors, logistics, financing and title processing. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",
       "fine": "8774 Almeda Genoa Rd, Houston. Monday to Saturday, 9 to 7.",
       "proof": {
         "label": "thetriplejauto.com",
@@ -309,21 +327,25 @@
       "img": "assets/brand/triplej-og.jpg"
     },
     {
-      "t": "Handle a Sale.",
-      "s": "One plain question at a time. Scan the license once and every form fills itself. The registration math. English or Spanish. Signed on the phone or in person. Every sale on file.",
+      "t": "The CRM, and Handle a Sale.",
+      "s": "One system. The lead-to-title data model, roles and validation, tested row-level security, migrations that kept the records. Three staff use it daily. Its sale desk: one plain question at a time. Scan the license once and every form fills itself. The registration math. English or Spanish. Signed on the phone or in person. Every sale on file.",
       "proof": {
         "label": "Watch the scan",
-        "href": "#film",
-        "seek": 37.3
+        "href": "assets/film/triple-j-sale-desk.mp4#t=37.3",
+        "ext": true
       }
     },
     {
-      "t": "Process audit first.",
-      "s": "Find where work gets delayed, information gets lost, or people repeat tasks. Write the requirements. Then build the workflow, with a human checking it."
+      "t": "Voice AI on the phones.",
+      "s": "Inbound voice AI books appointments into the CRM and live-transfers unresolved calls to staff. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds)."
+    },
+    {
+      "t": "Prospecting, automated.",
+      "s": "A Python workflow uses the Claude API to research Facebook Marketplace leads, writes the findings to the CRM, and generates SOP-based reply text for automatic follow-up."
     },
     {
       "t": "Obavia.",
-      "s": "Obavia, the sale desk I built at Triple J, as a product for Texas independent dealers. Every sale, start to signed. In development, early access.",
+      "s": "Handle a Sale, grown into a sale desk for Texas independent dealers. Every sale, start to signed. I founded it in September 2024. In development, early access.",
       "proof": {
         "label": "The briefing",
         "href": "/obavia.html"
@@ -331,16 +353,8 @@
       "img": "assets/brand/obavia-icon.png"
     },
     {
-      "t": "Listen to the person.",
-      "s": "Inspect the buyer's exact words, then ask a question that uses them.",
-      "proof": {
-        "label": "Try it",
-        "href": "#listen"
-      }
-    },
-    {
       "t": "What I build with.",
-      "s": "Claude, Claude Code, OpenAI Codex, Model Context Protocol, Supabase, PostgreSQL and Vercel.",
+      "s": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs and webhooks. n8n, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex.",
       "weight": true,
       "proof": {
         "label": "This site's source",
@@ -350,7 +364,7 @@
     },
     {
       "t": "Education.",
-      "s": "Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List. Bachelor's in neuroscience expected 2027. Nineteen Anthropic courses completed.",
+      "s": "Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028. Associate of Arts in Business, San Jacinto College, May 2026. GPA 3.63, Dean's Honor List. Google AI Essentials, 2026. Nineteen Anthropic courses completed.",
       "proof": {
         "label": "Degree PDF",
         "href": "assets/Jason_Obawemimo_Associate_Degree.pdf"
@@ -362,7 +376,7 @@
     },
     {
       "t": "Check me.",
-      "s": "LinkedIn, GitHub, the dealership, the public record. Same name, same titles, same town on every one.",
+      "s": "LinkedIn, GitHub, the dealership, the public record. Same name on every one.",
       "verify": true
     },
     {
@@ -370,5 +384,203 @@
       "s": "If I'm a fit, email is fastest. If a time is easier, pick 30 minutes.",
       "move": true
     }
-  ]
+  ],
+  "resume": {
+    "_note": "Read by tools/site/build_resume.py. The proofs themselves live in builds.json. bullets holds the resume wording (no leading I) for proofs whose first-person line does not start with I or repeats what its system heading already says; it changes no fact, number or date. Skills groups with lead_for come first on those builds, before the build's own skills order. courses names two or three of the nineteen Anthropic courses per build.",
+    "v": "oct26r",
+    "title": "AI Implementation, Workflow Automation and CRM Systems",
+    "contact": [
+      {
+        "text": "Pearland, TX"
+      },
+      {
+        "text": "jobawems@gmail.com",
+        "href": "mailto:jobawems@gmail.com"
+      },
+      {
+        "text": "jasonobawemimo.com",
+        "href": "https://jasonobawemimo.com/"
+      },
+      {
+        "text": "linkedin.com/in/obawemimo",
+        "href": "https://www.linkedin.com/in/obawemimo"
+      }
+    ],
+    "job": {
+      "role": "Owner and Operations Lead",
+      "org": "Triple J Auto Investment and Rental Operations",
+      "place": "Houston, Texas",
+      "when": "Aug 2024 to Present"
+    },
+    "systems": {
+      "lead-to-title": {
+        "name": "Custom dealership CRM and Handle a Sale desk",
+        "stack": "TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions"
+      },
+      "the-inbound": {
+        "name": "Inbound voice AI",
+        "stack": "Retell AI, Bland AI, Twilio, CRM webhooks"
+      },
+      "prospector": {
+        "name": "Prospecting workflow",
+        "stack": "Python, Claude API, n8n, CRM webhooks"
+      }
+    },
+    "bullets": {
+      "sales": "Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.",
+      "ops": "Manage operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.",
+      "build-not-buy": "Build AI software for the dealership's bottlenecks rather than buying software.",
+      "crm-model": "Designed the lead-to-title data model, roles and validation.",
+      "daily": "Used daily by three staff across inventory, deals and follow-up.",
+      "sale-desk": "Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.",
+      "voice": "Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
+      "sop-replies": "The workflow generates SOP-based reply text for automatic follow-up."
+    },
+    "education": [
+      {
+        "school": "The University of Texas at Austin",
+        "place": "Austin, TX",
+        "degree": "Bachelor of Science in Neuroscience",
+        "when": "Expected 2028",
+        "proof": "bs"
+      },
+      {
+        "school": "San Jacinto College",
+        "place": "Houston, TX",
+        "degree": "Associate of Arts in Business",
+        "note": "GPA 3.63, Dean's Honor List",
+        "when": "May 2026",
+        "proof": "aa"
+      }
+    ],
+    "certificates": {
+      "google": "Google AI Essentials, Google (Coursera), 2026",
+      "anthropic": "Anthropic: nineteen completed courses, including"
+    },
+    "courses": {
+      "canonical": [
+        "Building with the Claude API",
+        "Claude Code in Action"
+      ],
+      "ai": [
+        "Building with the Claude API",
+        "Introduction to Model Context Protocol",
+        "Introduction to agent skills"
+      ],
+      "software": [
+        "Claude Code in Action",
+        "Building with the Claude API",
+        "Model Context Protocol: Advanced Topics"
+      ],
+      "it": [
+        "Claude with Amazon Bedrock",
+        "Claude with Google Cloud Vertex AI",
+        "AI Capabilities and Limitations"
+      ],
+      "ops": [
+        "AI Fluency for Small Businesses",
+        "AI Fluency: Framework and Foundations",
+        "AI Capabilities and Limitations"
+      ],
+      "title": [
+        "AI Fluency for Small Businesses",
+        "AI Capabilities and Limitations"
+      ],
+      "sales": [
+        "AI Fluency for Small Businesses",
+        "Claude 101"
+      ],
+      "people": [
+        "AI Fluency for Small Businesses",
+        "Teaching AI Fluency",
+        "AI Fluency: Framework and Foundations"
+      ],
+      "dealer-tech": [
+        "Building with the Claude API",
+        "AI Fluency for Small Businesses",
+        "Introduction to Claude Cowork"
+      ]
+    },
+    "skills": [
+      {
+        "group": "People",
+        "items": "Hiring, training, scheduling and managing staff; payroll",
+        "lead_for": [
+          "people",
+          "ops"
+        ]
+      },
+      {
+        "group": "IT support",
+        "items": "Staff support on the CRM, phones and computers; user accounts and permissions; hardware and network setup",
+        "lead_for": [
+          "it",
+          "people"
+        ]
+      },
+      {
+        "group": "Title and back office",
+        "items": "Title and registration (Form 130-U, webDEALER); deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); dealer license compliance and record-keeping; buy here pay here collections",
+        "lead_for": [
+          "title"
+        ]
+      },
+      {
+        "group": "Sales",
+        "items": "Vehicle sales, sales calls, phone and text follow-up, negotiation, after-sale service issues",
+        "lead_for": [
+          "sales"
+        ]
+      },
+      {
+        "group": "Languages",
+        "items": "TypeScript, JavaScript, Python, SQL"
+      },
+      {
+        "group": "Web and data",
+        "items": "React, Next.js, PostgreSQL, Supabase, Vercel"
+      },
+      {
+        "group": "Backend",
+        "items": "Edge Functions, REST APIs, row-level security (RLS), webhook services"
+      },
+      {
+        "group": "Automation",
+        "items": "n8n, API integrations, Retell AI, Bland AI, Twilio"
+      },
+      {
+        "group": "AI development",
+        "items": "Claude Code, Claude API, Codex"
+      },
+      {
+        "group": "Operations",
+        "items": "Dealership operations, sales pipelines, inventory and vendor management"
+      }
+    ],
+    "canonical": {
+      "proofs": [
+        "ops",
+        "sales",
+        "daily",
+        "crm-model",
+        "rls",
+        "validation",
+        "migrations",
+        "shipped",
+        "sale-desk",
+        "voice",
+        "voice-figures",
+        "prospect",
+        "sop-replies"
+      ],
+      "skills": [
+        "Languages",
+        "Web and data",
+        "Backend",
+        "Automation",
+        "AI development",
+        "Operations"
+      ]
+    }
+  }
 }

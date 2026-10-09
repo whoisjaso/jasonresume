@@ -60,7 +60,7 @@
         },
         {
           "key": "Link",
-          "value": "<https://jasonobawemimo.com/>; rel=\"canonical\", <https://jasonobawemimo.com/schema.json>; rel=\"describedby\"; type=\"application/ld+json\", <https://jasonobawemimo.com/.well-known/ai-profile.jsonld>; rel=\"alternate\"; type=\"application/ld+json\", <https://jasonobawemimo.com/llms.txt>; rel=\"alternate\"; type=\"text/plain\", <https://jasonobawemimo.com/sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\""
+          "value": "<https://jasonobawemimo.com/schema.json>; rel=\"describedby\"; type=\"application/ld+json\", <https://jasonobawemimo.com/.well-known/ai-profile.jsonld>; rel=\"alternate\"; type=\"application/ld+json\", <https://jasonobawemimo.com/llms.txt>; rel=\"alternate\"; type=\"text/plain\", <https://jasonobawemimo.com/sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\""
         }
       ]
     },
@@ -512,11 +512,20 @@
       ]
     },
     {
-      "source": "/assets/(.*)",
+      "source": "/assets/((?!.*\\.pdf).*)",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*\\.pdf)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },
@@ -556,7 +565,16 @@
       ]
     },
     {
-      "source": "/(HANDOFF|RESEARCH|OUTREACH|CONFIG|CLAUDE|PRODUCT|README)\\.md",
+      "source": "/scripts/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(HANDOFF|RESEARCH|OUTREACH|CONFIG|CLAUDE|PRODUCT|README|SPEC|DESIGN|PUBLISH_NOW)\\.md",
       "headers": [
         {
           "key": "X-Robots-Tag",
@@ -565,6 +583,15 @@
         {
           "key": "Content-Type",
           "value": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "<https://jasonobawemimo.com/>; rel=\"canonical\", <https://jasonobawemimo.com/schema.json>; rel=\"describedby\"; type=\"application/ld+json\", <https://jasonobawemimo.com/.well-known/ai-profile.jsonld>; rel=\"alternate\"; type=\"application/ld+json\", <https://jasonobawemimo.com/llms.txt>; rel=\"alternate\"; type=\"text/plain\", <https://jasonobawemimo.com/sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\""
         }
       ]
     }

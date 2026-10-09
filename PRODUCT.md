@@ -10,7 +10,7 @@ Hiring managers, founders, operators, and collaborators reviewing Jason Obawemim
 
 ## Product Purpose
 
-This project presents Jason's resume and personal profile at jasonobawemimo.com as a public portfolio site and downloadable PDF. Success means the visitor immediately understands Jason's strengths in AI systems, web operations, rental operations, and service-business tooling, then can download or share a professional resume.
+This project presents Jason's resume and personal profile at jasonobawemimo.com as a public portfolio site and downloadable PDF. Success means the visitor immediately understands Jason's strengths in AI implementation, workflow automation and CRM systems, as the owner and operator of Triple J Auto Investment who builds the CRM, voice AI and automation systems that run it, then can download or share a professional resume.
 
 ## Brand Personality
 

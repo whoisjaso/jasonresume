@@ -7,7 +7,7 @@
       "name": "Jason Obawemimo Credential and Honor Evidence Graph",
       "description": "Focused machine-readable evidence graph for Jason Obawemimo's official identity, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
       "url": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
-      "dateModified": "2026-09-25",
+      "dateModified": "2026-10-08",
       "inLanguage": "en-US",
       "about": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
@@ -41,7 +41,7 @@
       "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
       "name": "Jason Obawemimo Credentials and Dean's Honor List Evidence",
       "description": "Exact-name evidence page for Jason Obawemimo's Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
-      "dateModified": "2026-09-25",
+      "dateModified": "2026-10-08",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
       },
@@ -70,8 +70,8 @@
       "url": "https://jasonobawemimo.com/",
       "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
       "email": "mailto:jobawems@gmail.com",
-      "jobTitle": "Founder, Obavia",
-      "description": "Jason Obawemimo is the founder of Obavia, a sale desk he is building for Texas independent dealers, and the co-owner and operator of Triple J Auto Investment in Houston. He is an AI engineer and business operator: his work starts with a process audit, then he builds the systems underneath a business and runs them.",
+      "jobTitle": "AI Implementation, Workflow Automation and CRM Systems",
+      "description": "Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.",
       "homeLocation": {
         "@type": "Place",
         "name": "Pearland, Texas",
@@ -83,15 +83,28 @@
         }
       },
       "award": [
-        "Dean's Honor List - San Jacinto College",
-        "GPA 3.63 - Associate of Arts in Business"
+        "Dean's Honor List, San Jacinto College",
+        "GPA 3.63, Associate of Arts in Business"
       ],
-      "alumniOf": {
-        "@id": "https://jasonobawemimo.com/#san-jacinto-college"
-      },
+      "alumniOf": [
+        {
+          "@id": "https://jasonobawemimo.com/#san-jacinto-college"
+        }
+      ],
+      "affiliation": [
+        {
+          "@id": "https://jasonobawemimo.com/#ut-austin"
+        }
+      ],
       "hasCredential": [
         {
+          "@id": "https://jasonobawemimo.com/#credential-bs-neuroscience"
+        },
+        {
           "@id": "https://jasonobawemimo.com/#credential-associate-business"
+        },
+        {
+          "@id": "https://jasonobawemimo.com/#credential-google-ai-essentials"
         },
         {
           "@id": "https://jasonobawemimo.com/#credential-anthropic"
@@ -104,6 +117,7 @@
         "https://github.com/whoisjaso/whoisjaso",
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume",
+        "https://www.linkedin.com/in/obawemimo",
         "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
         "https://thetriplejauto.com/",
         "https://www.instagram.com/0bawemimo/"
@@ -125,19 +139,19 @@
         "https://whoisjaso.github.io/whoisjaso/",
         "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
       ],
-      "disambiguatingDescription": "Pearland, Texas founder of Obavia (spelled O-B-A-V-I-A), a sale desk he is building for Texas independent dealers, and co-owner and operator of Triple J Auto Investment in Houston. Obawemimo is his family name.",
+      "disambiguatingDescription": "Pearland, Texas owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia (spelled O-B-A-V-I-A), a dealership sale desk in development for Texas independent dealers. Obawemimo is his family name.",
       "worksFor": [
-        {
-          "@type": "Organization",
-          "@id": "https://jasonobawemimo.com/#obavia",
-          "name": "Obavia",
-          "url": "https://obavia.co"
-        },
         {
           "@type": "AutoDealer",
           "@id": "https://jasonobawemimo.com/#triple-j-auto",
           "name": "Triple J Auto Investment",
           "url": "https://thetriplejauto.com/"
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://jasonobawemimo.com/#obavia",
+          "name": "Obavia",
+          "url": "https://obavia.co"
         }
       ]
     },
@@ -148,9 +162,27 @@
       "url": "https://www.sanjac.edu/"
     },
     {
+      "@type": "CollegeOrUniversity",
+      "@id": "https://jasonobawemimo.com/#ut-austin",
+      "name": "The University of Texas at Austin",
+      "url": "https://www.utexas.edu/"
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "@id": "https://jasonobawemimo.com/#credential-bs-neuroscience",
+      "name": "Bachelor of Science in Neuroscience, expected 2028",
+      "credentialCategory": "degree",
+      "educationalLevel": "Bachelor's degree",
+      "creativeWorkStatus": "In progress",
+      "recognizedBy": {
+        "@id": "https://jasonobawemimo.com/#ut-austin"
+      },
+      "description": "Bachelor of Science in Neuroscience at The University of Texas at Austin, in progress, expected 2028. Not yet conferred."
+    },
+    {
       "@type": "EducationalOccupationalCredential",
       "@id": "https://jasonobawemimo.com/#credential-associate-business",
-      "name": "Associate of Arts - Business",
+      "name": "Associate of Arts in Business",
       "credentialCategory": "degree",
       "educationalLevel": "Associate degree",
       "recognizedBy": {
@@ -163,6 +195,19 @@
         "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf"
       ]
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "@id": "https://jasonobawemimo.com/#credential-google-ai-essentials",
+      "name": "Google AI Essentials",
+      "credentialCategory": "certificate",
+      "recognizedBy": {
+        "@type": "Organization",
+        "name": "Google",
+        "url": "https://www.google.com/"
+      },
+      "dateCreated": "2026",
+      "description": "Google AI Essentials, from Google through Coursera, 2026."
     },
     {
       "@type": "EducationalOccupationalCredential",
@@ -189,6 +234,8 @@
         "AI Fluency: Framework and Foundations",
         "Building with the Claude API",
         "Introduction to Model Context Protocol",
+        "AI Fluency for educators",
+        "AI Fluency for students",
         "Model Context Protocol: Advanced Topics",
         "Claude with Amazon Bedrock",
         "Claude with Google Cloud Vertex AI",

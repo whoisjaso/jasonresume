@@ -2,15 +2,17 @@ BEGIN:VCARD
 VERSION:4.0
 FN:Jason Obawemimo
 N:Obawemimo;Jason;;;
-TITLE:Founder\, Obavia
-ROLE:Founder of Obavia\; co-owner and operator of Triple J Auto Investment
-ORG:Obavia
+TITLE:AI Implementation\, Workflow Automation and CRM Systems
+ROLE:Owner and Operations Lead of Triple J Auto Investment\; founder of Obavia
+ORG:Triple J Auto Investment
 EMAIL:jobawems@gmail.com
 URL:https://jasonobawemimo.com/
+URL;TYPE=Triple-J-Auto-Investment:https://thetriplejauto.com/
 URL;TYPE=Obavia:https://obavia.co
 URL;TYPE=Booking:https://calendly.com/jason-apohenia/30min
 URL;TYPE=Instagram:https://www.instagram.com/0bawemimo/
-URL;TYPE=LinkedIn:https://www.linkedin.com/in/jason-obawemimo-51a76120a/
+URL;TYPE=LinkedIn:https://www.linkedin.com/in/obawemimo
+URL;TYPE=LinkedIn-Older-URL:https://www.linkedin.com/in/jason-obawemimo-51a76120a/
 URL;TYPE=GitHub:https://github.com/whoisjaso
 URL;TYPE=GitHub-Profile-README:https://github.com/whoisjaso/whoisjaso
 URL;TYPE=GitHub-Pages-Profile-Mirror:https://whoisjaso.github.io/whoisjaso/
@@ -29,7 +31,7 @@ URL;TYPE=DID-Web-Document:https://jasonobawemimo.com/.well-known/did.json
 URL;TYPE=Citation-Metadata:https://jasonobawemimo.com/CITATION.cff
 PHOTO;MEDIATYPE=image/png:https://jasonobawemimo.com/assets/jason-headshot.png
 ADR;TYPE=work:;;Pearland;TX;;United States
-NOTE:Jason Obawemimo is the founder of Obavia\, building Obavia, a sale desk for Texas independent dealers\, and the co-owner and operator of Triple J Auto Investment in Houston. He builds the systems underneath a business\, then runs them. Credentials include nineteen completed Anthropic courses\, Associate of Arts in Business\, GPA 3.63\, and Dean's Honor List recognition. Public mentions are linked at https://jasonobawemimo.com/mentions.html.
+NOTE:Jason Obawemimo owns and operates Triple J Auto Investment\, a Houston dealership\, and builds the CRM\, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206\,777 in sale proceeds. He is also the founder of Obavia\, a dealership sale desk in development for Texas independent dealers. Education: Bachelor of Science in Neuroscience\, The University of Texas at Austin\, expected 2028\; Associate of Arts in Business\, San Jacinto College\, GPA 3.63\, Dean's Honor List. Credentials include Google AI Essentials (2026) and nineteen completed Anthropic courses. Public mentions are linked at https://jasonobawemimo.com/mentions.html.
 UID:https://jasonobawemimo.com/#jason-obawemimo
 SOURCE:https://jasonobawemimo.com/jason-obawemimo.vcf
 END:VCARD

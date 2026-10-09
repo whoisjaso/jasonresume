@@ -1,4 +1,18 @@
-release/
 .git/
 .vercel/
 .env*.local
+
+# Internal docs and build tooling: nothing at runtime fetches or links them.
+# README.md, SEARCH_SUBMISSION_CHECKLIST.md and scripts/ stay deployed
+# (discovery.json links scripts/; vercel.json gives the .md files noindex).
+/SPEC.md
+/DESIGN.md
+/PUBLISH_NOW.md
+/HANDOFF.md
+/OUTREACH.md
+/RESEARCH.md
+/CONFIG.md
+/CLAUDE.md
+/PRODUCT.md
+/tools/
+/.impeccable/
