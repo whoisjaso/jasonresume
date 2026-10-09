@@ -1,0 +1,57 @@
+{
+ "id": "seat",
+ "text": "Then, who's playing. Hiring, running a dealership, or just looking.",
+ "duration": 5.125,
+ "words": [
+  {
+   "w": "Then,",
+   "s": 0.425,
+   "e": 0.625
+  },
+  {
+   "w": "who's",
+   "s": 0.662,
+   "e": 0.863
+  },
+  {
+   "w": "playing.",
+   "s": 0.863,
+   "e": 1.725
+  },
+  {
+   "w": "Hiring,",
+   "s": 1.887,
+   "e": 2.45
+  },
+  {
+   "w": "running",
+   "s": 2.525,
+   "e": 2.85
+  },
+  {
+   "w": "a",
+   "s": 2.85,
+   "e": 2.962
+  },
+  {
+   "w": "dealership,",
+   "s": 2.962,
+   "e": 3.625
+  },
+  {
+   "w": "or",
+   "s": 3.675,
+   "e": 3.8
+  },
+  {
+   "w": "just",
+   "s": 3.8,
+   "e": 4.05
+  },
+  {
+   "w": "looking.",
+   "s": 4.05,
+   "e": 4.85
+  }
+ ]
+}

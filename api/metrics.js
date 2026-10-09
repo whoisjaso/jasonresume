@@ -25,7 +25,7 @@ const PULL = `select event, distinct_id, timestamp,
 
 /* Points per moment. Terminal actions weigh most; nothing penalizes a skip. */
 const POINTS = {
-  page_view: 1, section_viewed: 0.5, role_chosen: 2, desk_step: 1, desk_finished: 8, film_play: 4, film_progress: 1, film_complete: 6,
+  page_view: 1, section_viewed: 0.5, role_chosen: 2, desk_step: 1, desk_finished: 8, tour_started: 2, tour_finished: 5, walkthrough_opened: 2, film_play: 4, film_progress: 1, film_complete: 6,
   film_chapter: 1, resume_open: 8, resume_print: 6, deck_slide: 0.5, deck_finished: 6, proof_open: 3, verify_opened: 6, verify_link: 6,
   chat_asked: 6, mark_words: 3, card_copied: 6, question_added: 5,
   questions_mailed: 15, questions_copied: 8, forward_copied: 10, share_opened: 10, trailer_finished: 3, cta_click: 2, outbound_click: 2,

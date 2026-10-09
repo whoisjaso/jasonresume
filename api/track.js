@@ -29,6 +29,8 @@ const ALLOWED = new Set([
   // Player 2: the build, the card, the listing match, the send
   "build_shown", "build_chosen", "build_skipped", "build_edited", "build_opened", "build_viewed", "card_saved", "build_link_copied",
   "listing_matched", "build_resume", "build_sent",
+  // the walkthrough: the guided tour and the narrated film
+  "intro_tour", "tour_started", "tour_step", "tour_finished", "tour_exit", "walkthrough_opened", "walkthrough_closed",
   // Stop Thinking Poor, the mentorship page at /stp
   "stp_video_play", "stp_video_complete", "stp_apply_started", "stp_apply_sent",
   // conversion

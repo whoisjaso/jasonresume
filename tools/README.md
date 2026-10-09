@@ -54,6 +54,13 @@ The trailer (reel.js) speaks one line per shot in Jason's cloned voice. Each lin
 - Triple J, Handle a Sale: in whoisjaso/thetriplejauto, `cd remotion && npx remotion render src/sale-desk.ts SaleDesk out/handle-a-sale.mp4 --scale 0.75` (the scale has to give whole-pixel sizes; 0.5 and 0.75 work), then transcode to 1280x720, 30 fps, faststart, AAC, and pull the poster at 30 seconds.
 - Obavia ads: retired, never current. The two vertical ads belonged to the agency product.
 
+## The loading screen, the walkthrough film and the tour
+
+- The loading screen's drawing: `python3 tools/art/boot.py` writes tools/site/boot.html (and tools/film/src/tour/boot.json); tools/site/boot.js is its engine. `python3 tools/site/assemble_home.py` places both in index.html and obavia.html.
+- The words: tools/voice/tour_lines.json (film shots and tour stops). `node tools/voice/timeline.mjs` turns them, plus any recorded narration in assets/voice/tour/ (<id>.mp3, <id>.json word timings, manifest.json), into tools/film/src/tour/timeline.json and tools/site/tour.json. Lines with no recording run caption-only on an estimated pace.
+- The film: `sh tools/film/render-tour.sh` (site served on 8765) captures the live site if needed (`CAPTURE=1` forces it; tools/film/capture-tour.mjs), renders the Tour and TourVertical compositions (tools/film/src/tour), writes assets/film/tour.mp4, tour-vertical.mp4, their .jpg posters and tour.vtt, and re-assembles the site. Run it again after the narration exists and the film carries the voice.
+- The tour in the site: tour.js (styles in game.css), data inlined as #tour-data.
+
 ## Rebuild the sound bank
 
 Download the fourteen Mixkit sources named in `tools/sfx/process.py` into `tools/sfx/raw/`, then `python3 tools/sfx/process.py`. Cut points are in the script. Gains are in `sounds.js`.

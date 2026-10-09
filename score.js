@@ -12,6 +12,7 @@
      .focus(id)              bring a title's layer in on the next bar ("bed" alone for none)
      .sting(name)            "open" | "trophy-bronze" | "trophy-silver" | "trophy-gold" | "trophy-platinum" | "level-clear" | "start"
      .tick()                 the soft focus-move tick, tuned to the piece
+     .voice(on)              hold the music down under a narrator's line (tour.js), and let it back up
    window.JG_SFX            the old effects API, kept so older modules stay quiet and unbroken
    Event: document "jg:score" { on } */
 (function () {
@@ -186,11 +187,20 @@
     document.addEventListener("DOMContentLoaded", function () { [].forEach.call(document.querySelectorAll("dialog"), function (d) { mo.observe(d, { attributes: true, attributeFilter: ["open"] }); }); });
   }
 
+  var VOICE_BED = 0.3, voicing = false;
   function duck(secs) {
     if (!playing) return;
+    var now = ctx.currentTime, g = music.gain, rest = voicing ? VOICE_BED : 1;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(Math.min(0.5, rest), now + 0.08); g.setValueAtTime(Math.min(0.5, rest), now + secs); g.linearRampToValueAtTime(rest, now + secs + 0.8);
+  }
+  /* a narrator is speaking: the music steps well back for the line, then returns */
+  function voice(v) {
+    voicing = !!v;
+    if (!ctx || !music) return;
     var now = ctx.currentTime, g = music.gain;
     g.cancelScheduledValues(now); g.setValueAtTime(g.value, now);
-    g.linearRampToValueAtTime(0.5, now + 0.08); g.setValueAtTime(0.5, now + secs); g.linearRampToValueAtTime(1, now + secs + 0.8);
+    g.linearRampToValueAtTime(voicing ? VOICE_BED : 1, now + (voicing ? 0.3 : 1.2));
   }
   function playBuf(key, gain, when) {
     var b = buffers[key]; if (!b) return false;
@@ -245,7 +255,8 @@
     toggle: function (where) { return set(!on, where); },
     focus: focus,
     sting: sting,
-    tick: tick
+    tick: tick,
+    voice: voice
   };
   /* the old effects API: everything that used to click or swoosh is silent now */
   window.JG_SFX = {
