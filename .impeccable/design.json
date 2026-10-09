@@ -1,719 +1,466 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-03T20:14:31+00:00",
+  "generatedAt": "2026-10-09T12:18:51+00:00",
   "title": "Design System: jasonobawemimo.com",
   "extensions": {
     "colorMeta": {
-      "needle": {
+      "bone": {
         "role": "primary",
-        "displayName": "Signal Needle Red",
-        "canonical": "#e8553b",
-        "oklch": "oklch(64.2% 0.187 32.3)",
+        "displayName": "Bone",
+        "canonical": "#ede7db",
+        "oklch": "oklch(92.9% 0.017 84.6)",
+        "purpose": "The action and focus colour: primary fill, the 2px focus outline, the focused tile's ring and ticks, a selected chip, a picked menu row, the active tab's underline, body text.",
         "tonalRamp": [
-          "#200000",
-          "#4d0100",
-          "#7f0a00",
-          "#b31d00",
-          "#ce5842",
-          "#e38a77",
-          "#f4b9ac",
-          "#ffe8e3"
+          "#0f0b04",
+          "#29241c",
+          "#464138",
+          "#666156",
+          "#878277",
+          "#aaa499",
+          "#cec8bd",
+          "#f4eee2"
         ]
       },
-      "needle-bright": {
+      "bone-2": {
         "role": "primary",
-        "displayName": "Lit Needle",
-        "canonical": "#f27258",
-        "oklch": "oklch(69.9% 0.163 33.0)",
-        "tonalRamp": [
-          "#200000",
-          "#4d0100",
-          "#7f0a00",
-          "#aa2f17",
-          "#ce5840",
-          "#e38a77",
-          "#f4b9ac",
-          "#ffe8e2"
-        ]
-      },
-      "needle-wash": {
-        "role": "neutral",
-        "displayName": "needle-wash",
-        "canonical": "rgba(232, 85, 59, 0.1)",
-        "note": "Needle at 0.1 alpha; pressed chip fill only."
-      },
-      "needle-painted": {
-        "role": "primary",
-        "displayName": "Painted Needle",
-        "canonical": "#e0442a",
-        "oklch": "oklch(60.9% 0.197 32.1)",
-        "tonalRamp": [
-          "#200000",
-          "#4d0100",
-          "#7f0900",
-          "#b51700",
-          "#ce5842",
-          "#e38a78",
-          "#f4b9ad",
-          "#ffe8e3"
-        ]
-      },
-      "lamp-green": {
-        "role": "secondary",
-        "displayName": "Open Lamp Green",
-        "canonical": "#3bd16f",
-        "oklch": "oklch(76.1% 0.186 150.4)",
-        "tonalRamp": [
-          "#001200",
-          "#003202",
-          "#005608",
-          "#007b19",
-          "#1e9b4d",
-          "#6db97f",
-          "#a9d7b1",
-          "#e2f4e5"
-        ]
-      },
-      "lamp-amber": {
-        "role": "secondary",
-        "displayName": "Amber Tell-Tale",
-        "canonical": "#f2a33a",
-        "oklch": "oklch(77.6% 0.148 69.4)",
-        "tonalRamp": [
-          "#1b0400",
-          "#441500",
-          "#712a00",
-          "#944c00",
-          "#b96e00",
-          "#d39850",
-          "#e8c297",
-          "#fcecdb"
-        ]
-      },
-      "brass": {
-        "role": "tertiary",
-        "displayName": "Badge Brass",
-        "canonical": "#c9a642",
-        "oklch": "oklch(73.8% 0.124 89.5)",
-        "tonalRamp": [
-          "#160800",
-          "#391f00",
-          "#5c3c00",
-          "#7d5c00",
-          "#a07e01",
-          "#c1a149",
-          "#dbc894",
-          "#f6eed9"
-        ]
-      },
-      "lacquer": {
-        "role": "neutral",
-        "displayName": "Dash Lacquer",
-        "canonical": "#131211",
-        "oklch": "oklch(18.3% 0.003 67.7)",
-        "tonalRamp": [
-          "#0c0b0a",
-          "#262524",
-          "#434240",
-          "#626160",
-          "#838281",
-          "#a6a5a3",
-          "#cac9c7",
-          "#f0eeed"
-        ]
-      },
-      "deep": {
-        "role": "neutral",
-        "displayName": "Deep",
-        "canonical": "#0b0a0a",
-        "oklch": "oklch(14.6% 0.002 17.4)",
-        "tonalRamp": [
-          "#0c0b0b",
-          "#262525",
-          "#434242",
-          "#626161",
-          "#838282",
-          "#a6a4a4",
-          "#cac9c9",
-          "#efeeee"
-        ]
-      },
-      "seam": {
-        "role": "neutral",
-        "displayName": "Seam Black",
-        "canonical": "#0a0909",
-        "oklch": "oklch(14.1% 0.002 17.4)",
-        "tonalRamp": [
-          "#0c0b0b",
-          "#262525",
-          "#434242",
-          "#626161",
-          "#838282",
-          "#a6a4a4",
-          "#cac9c9",
-          "#f0eeee"
-        ]
-      },
-      "panel": {
-        "role": "neutral",
-        "displayName": "Panel",
-        "canonical": "#1b1917",
-        "oklch": "oklch(21.5% 0.005 67.6)",
-        "tonalRamp": [
-          "#0d0b09",
-          "#272522",
-          "#44413f",
-          "#63615e",
-          "#84827f",
-          "#a7a4a2",
-          "#cbc8c6",
-          "#f1eeeb"
-        ]
-      },
-      "panel-raised": {
-        "role": "neutral",
-        "displayName": "Panel Raised",
-        "canonical": "#23201d",
-        "oklch": "oklch(24.6% 0.007 67.5)",
-        "tonalRamp": [
-          "#0d0b08",
-          "#272421",
-          "#45413e",
-          "#64605d",
-          "#85827e",
-          "#a8a4a0",
-          "#ccc8c4",
-          "#f2eee9"
-        ]
-      },
-      "hood": {
-        "role": "neutral",
-        "displayName": "Hood Leather",
-        "canonical": "#221f1b",
-        "oklch": "oklch(24.1% 0.009 75.2)",
-        "tonalRamp": [
-          "#0d0b07",
-          "#282520",
-          "#45413d",
-          "#64615c",
-          "#85827d",
-          "#a8a49f",
-          "#ccc8c3",
-          "#f2eee8"
-        ]
-      },
-      "leather": {
-        "role": "neutral",
-        "displayName": "Leather",
-        "canonical": "#1d1a17",
-        "oklch": "oklch(22.0% 0.007 67.4)",
-        "tonalRamp": [
-          "#0d0b08",
-          "#282421",
-          "#45413e",
-          "#64605d",
-          "#85827e",
-          "#a8a4a0",
-          "#ccc8c4",
-          "#f2eee9"
-        ]
-      },
-      "leather-low": {
-        "role": "neutral",
-        "displayName": "Leather Low",
-        "canonical": "#161412",
-        "oklch": "oklch(19.3% 0.005 67.5)",
-        "tonalRamp": [
-          "#0d0b09",
-          "#272522",
-          "#44413f",
-          "#63615e",
-          "#84827f",
-          "#a7a4a2",
-          "#cbc8c6",
-          "#f1eeeb"
-        ]
-      },
-      "edge": {
-        "role": "neutral",
-        "displayName": "Edge",
-        "canonical": "#2e2a26",
-        "oklch": "oklch(28.8% 0.009 67.4)",
-        "tonalRamp": [
-          "#0e0a07",
-          "#282420",
-          "#45413d",
-          "#65605c",
-          "#86817d",
-          "#a9a49f",
-          "#cdc8c3",
-          "#f3ede8"
-        ]
-      },
-      "edge-strong": {
-        "role": "neutral",
-        "displayName": "Edge Strong",
-        "canonical": "#3d3833",
-        "oklch": "oklch(34.4% 0.011 67.4)",
-        "tonalRamp": [
-          "#0e0a07",
-          "#29241f",
-          "#46413c",
-          "#66605b",
-          "#87817b",
-          "#aaa49e",
-          "#cec8c2",
-          "#f4ede7"
-        ]
-      },
-      "screen": {
-        "role": "neutral",
-        "displayName": "Screen Glass",
-        "canonical": "#0c0c0e",
-        "oklch": "oklch(15.5% 0.004 285.9)",
-        "tonalRamp": [
-          "#0b0b0d",
-          "#252527",
-          "#424244",
-          "#616164",
-          "#828285",
-          "#a5a5a8",
-          "#c9c9cc",
-          "#eeeef1"
-        ]
-      },
-      "key": {
-        "role": "neutral",
-        "displayName": "Key",
-        "canonical": "#1d1e21",
-        "oklch": "oklch(23.5% 0.006 271.2)",
-        "tonalRamp": [
-          "#0a0b0e",
-          "#242528",
-          "#414245",
-          "#606165",
-          "#818286",
-          "#a3a5a9",
-          "#c8c9cd",
-          "#edeef3"
-        ]
-      },
-      "key-raised": {
-        "role": "neutral",
-        "displayName": "Key Raised",
-        "canonical": "#27282c",
-        "oklch": "oklch(27.7% 0.007 274.7)",
-        "tonalRamp": [
-          "#0a0b0e",
-          "#242529",
-          "#414246",
-          "#606166",
-          "#818287",
-          "#a3a5aa",
-          "#c7c9ce",
-          "#edeef4"
-        ]
-      },
-      "ivory": {
-        "role": "neutral",
-        "displayName": "Ivory",
-        "canonical": "#efe8d8",
-        "oklch": "oklch(93.2% 0.023 87.2)",
-        "tonalRamp": [
-          "#0f0a02",
-          "#2a2418",
-          "#474134",
-          "#676153",
-          "#888273",
-          "#aba495",
-          "#cfc9b9",
-          "#f5eede"
-        ]
-      },
-      "ivory-soft": {
-        "role": "neutral",
-        "displayName": "Ivory Soft",
-        "canonical": "#cfc8b9",
-        "oklch": "oklch(83.4% 0.022 86.0)",
-        "tonalRamp": [
-          "#0f0a02",
-          "#2a2419",
-          "#474135",
-          "#676153",
-          "#888274",
-          "#aba496",
-          "#cfc8b9",
-          "#f5eede"
-        ]
-      },
-      "dim": {
-        "role": "neutral",
-        "displayName": "Dim",
-        "canonical": "#a39c8f",
-        "oklch": "oklch(69.5% 0.020 83.1)",
+        "displayName": "Bone Low",
+        "canonical": "#d9d2c4",
+        "oklch": "oklch(86.6% 0.020 84.6)",
+        "purpose": "Second-tier text that still reads over art: role lines, summaries in panels, menu sublines, the build card's line.",
         "tonalRamp": [
           "#0f0a03",
           "#2a241a",
           "#474136",
-          "#676054",
-          "#888175",
+          "#676154",
+          "#888275",
           "#aba497",
-          "#d0c8bb",
-          "#f5eee0"
+          "#cfc8ba",
+          "#f5eedf"
         ]
       },
-      "ink": {
-        "role": "neutral",
-        "displayName": "Dash Ink",
-        "canonical": "#161514",
-        "oklch": "oklch(19.6% 0.003 67.7)",
+      "bottle": {
+        "role": "secondary",
+        "displayName": "Bottle Green",
+        "canonical": "#1c3229",
+        "oklch": "oklch(29.5% 0.033 166.4)",
+        "purpose": "The held state: the focused menu row, an equipped proof row, a filled Player 2 ring, a completed desk step, matched-term plates. Never a call to action.",
         "tonalRamp": [
-          "#0c0b0a",
-          "#262524",
-          "#434240",
-          "#626160",
-          "#838281",
-          "#a6a5a3",
-          "#cac9c7",
-          "#f0eeed"
+          "#000f08",
+          "#142a21",
+          "#31483e",
+          "#50675d",
+          "#70897e",
+          "#92aca0",
+          "#b6d0c4",
+          "#dbf6ea"
         ]
       },
-      "stitch": {
-        "role": "neutral",
-        "displayName": "Cognac Stitch",
-        "canonical": "#a0622d",
-        "oklch": "oklch(55.5% 0.105 58.4)",
+      "bottle-2": {
+        "role": "secondary",
+        "displayName": "Bottle Deep",
+        "canonical": "#24402f",
+        "oklch": "oklch(34.4% 0.046 156.4)",
+        "purpose": "Scrollbar thumb, text selection, the edge of a completed step.",
         "tonalRamp": [
-          "#1d0200",
-          "#471000",
-          "#693000",
-          "#8c5018",
-          "#b1713d",
-          "#d69460",
-          "#edbf9c",
-          "#feeadc"
+          "#000f05",
+          "#102c1c",
+          "#2d4938",
+          "#4c6957",
+          "#6c8b77",
+          "#8fae99",
+          "#b2d3bd",
+          "#d7f8e2"
         ]
       },
-      "dial-shade": {
-        "role": "neutral",
-        "displayName": "Dial Shade",
-        "canonical": "#d9d1bf",
-        "oklch": "oklch(86.2% 0.026 86.9)",
+      "bronze": {
+        "role": "tertiary",
+        "displayName": "Bronze",
+        "canonical": "#9c6b43",
+        "oklch": "oklch(57.0% 0.084 59.2)",
+        "purpose": "Trophy tier. Medals, the build card's finish, finish swatches, the Player 2 ring's edge. Nowhere else.",
         "tonalRamp": [
-          "#100a01",
-          "#2a2416",
-          "#484132",
-          "#686151",
-          "#898271",
-          "#aca493",
-          "#d0c8b7",
-          "#f6eedb"
+          "#160700",
+          "#3b1c00",
+          "#623508",
+          "#84552d",
+          "#a8764e",
+          "#cd996f",
+          "#f3bd92",
+          "#ffeada"
         ]
       },
-      "chrome-hi": {
-        "role": "neutral",
-        "displayName": "Chrome High",
-        "canonical": "#eef0f2",
-        "oklch": "oklch(95.4% 0.003 247.9)",
+      "silver": {
+        "role": "tertiary",
+        "displayName": "Silver",
+        "canonical": "#b9bcbe",
+        "oklch": "oklch(79.3% 0.004 236.5)",
+        "purpose": "Trophy tier. Medals, the build card's finish, finish swatches, the Player 2 ring's edge. Nowhere else.",
+        "tonalRamp": [
+          "#090b0d",
+          "#232527",
+          "#404244",
+          "#5f6263",
+          "#808385",
+          "#a2a5a7",
+          "#c6cacc",
+          "#eceff1"
+        ]
+      },
+      "gold": {
+        "role": "tertiary",
+        "displayName": "Gold",
+        "canonical": "#c9a96a",
+        "oklch": "oklch(74.9% 0.090 83.5)",
+        "purpose": "Trophy tier. Medals, the build card's finish, finish swatches, and the trophy glyph in the system bar. Nowhere else.",
+        "tonalRamp": [
+          "#110a00",
+          "#322200",
+          "#563d00",
+          "#795c1a",
+          "#9c7d3f",
+          "#c0a061",
+          "#e5c585",
+          "#ffecc9"
+        ]
+      },
+      "platinum": {
+        "role": "tertiary",
+        "displayName": "Platinum",
+        "canonical": "#dcdde0",
+        "oklch": "oklch(89.8% 0.004 271.4)",
+        "purpose": "Trophy tier and the level clear's medal. Medals, the build card's finish, finish swatches. Nowhere else.",
         "tonalRamp": [
           "#0a0b0d",
           "#242527",
           "#414244",
-          "#606163",
-          "#818284",
-          "#a3a5a7",
-          "#c7c9cb",
-          "#edeff1"
+          "#606164",
+          "#818285",
+          "#a4a5a8",
+          "#c8c9cc",
+          "#edeef1"
         ]
       },
-      "chrome-mid": {
+      "ink": {
         "role": "neutral",
-        "displayName": "Chrome Mid",
-        "canonical": "#9a9ea3",
-        "oklch": "oklch(69.8% 0.009 253.9)",
+        "displayName": "Ink",
+        "canonical": "#0a0f0d",
+        "oklch": "oklch(16.2% 0.009 168.9)",
+        "purpose": "The ground of every page, the stage behind the art, the sticky tabs, the build card. Scrims over art are ink at rising alpha.",
         "tonalRamp": [
-          "#090b0f",
-          "#222529",
-          "#3f4247",
-          "#5e6266",
-          "#7f8387",
-          "#a1a5aa",
-          "#c5c9cf",
-          "#ebeff4"
+          "#080c0a",
+          "#212724",
+          "#3e4441",
+          "#5d6360",
+          "#7d8481",
+          "#a0a7a4",
+          "#c4cbc8",
+          "#e9f0ed"
         ]
       },
-      "chrome-lo": {
+      "lacquer": {
         "role": "neutral",
-        "displayName": "Chrome Low",
-        "canonical": "#44484d",
-        "oklch": "oklch(40.0% 0.010 253.9)",
+        "displayName": "Lacquer",
+        "canonical": "#111b17",
+        "oklch": "oklch(21.1% 0.017 168.1)",
+        "purpose": "The opaque panel surface: toasts, the level clear card, drawers, the phone action bar. Over art laid at 0.6 to 0.9 alpha, never blurred.",
         "tonalRamp": [
-          "#080b0f",
-          "#22252a",
-          "#3e4247",
-          "#5d6267",
-          "#7e8388",
-          "#a1a5ab",
-          "#c5cad0",
-          "#eaeff5"
+          "#050d0a",
+          "#1d2823",
+          "#3a4540",
+          "#59645f",
+          "#798680",
+          "#9ca9a3",
+          "#bfcdc7",
+          "#e5f2ec"
         ]
       },
-      "phone-paper": {
+      "lacquer-2": {
         "role": "neutral",
-        "displayName": "Phone Paper",
-        "canonical": "#f2f2f7",
-        "oklch": "oklch(96.3% 0.007 286.3)",
+        "displayName": "Lacquer Raised",
+        "canonical": "#16221d",
+        "oklch": "oklch(23.9% 0.019 167.1)",
+        "purpose": "Image wells behind tiles and app icons before the art arrives.",
         "tonalRamp": [
-          "#0b0b0e",
-          "#252528",
-          "#414145",
-          "#616165",
-          "#828286",
-          "#a4a4a9",
-          "#c8c8cd",
-          "#eeeef3"
+          "#040e09",
+          "#1c2823",
+          "#384540",
+          "#57655f",
+          "#788680",
+          "#9aa9a2",
+          "#becdc6",
+          "#e3f3ec"
         ]
       },
-      "phone-ink": {
+      "ash": {
         "role": "neutral",
-        "displayName": "Phone Ink",
-        "canonical": "#111111",
-        "oklch": "oklch(17.8% 0.000 89.9)",
+        "displayName": "Ash",
+        "canonical": "#9a9890",
+        "oklch": "oklch(67.9% 0.012 95.2)",
+        "purpose": "Tertiary text: labels, tier suffixes, stat keys, captions, inactive tabs, Skip. About 6.7:1 on ink.",
         "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
+          "#0d0b06",
+          "#27251f",
+          "#44423b",
+          "#63615a",
+          "#84827b",
+          "#a7a59d",
+          "#cbc9c1",
+          "#f1efe6"
         ]
       },
-      "phone-secondary": {
+      "ash-2": {
         "role": "neutral",
-        "displayName": "Phone Secondary",
-        "canonical": "#8a8a8e",
-        "oklch": "oklch(63.5% 0.006 286.2)",
+        "displayName": "Ash Low",
+        "canonical": "#7d7b74",
+        "oklch": "oklch(58.3% 0.011 93.7)",
+        "purpose": "Placeholders and the empty Player 2 ring. About 4.5:1 on ink; nothing goes dimmer.",
         "tonalRamp": [
-          "#0b0b0e",
-          "#252528",
-          "#424245",
-          "#616164",
-          "#828286",
-          "#a4a4a9",
-          "#c9c9cd",
-          "#eeeef2"
+          "#0d0b06",
+          "#27251f",
+          "#44423c",
+          "#63615a",
+          "#84827b",
+          "#a7a59e",
+          "#cbc9c1",
+          "#f1eee7"
         ]
       },
-      "phone-separator": {
+      "hair": {
         "role": "neutral",
-        "displayName": "Phone Separator",
-        "canonical": "#d8d8dc",
-        "oklch": "oklch(88.3% 0.005 286.3)",
+        "displayName": "Hairline",
+        "canonical": "rgba(237, 231, 219, 0.14)",
+        "oklch": "oklch(92.9% 0.017 84.6 / 0.14)",
+        "purpose": "Every divider and the outline of tiles and films. Bone at 0.14.",
         "tonalRamp": [
-          "#0b0b0d",
-          "#252528",
-          "#424245",
-          "#616164",
-          "#828285",
-          "#a4a4a8",
-          "#c9c9cd",
-          "#eeeef2"
+          "rgba(237, 231, 219, 0.06)",
+          "rgba(237, 231, 219, 0.08)",
+          "rgba(237, 231, 219, 0.14)",
+          "rgba(237, 231, 219, 0.24)",
+          "rgba(237, 231, 219, 0.45)",
+          "rgba(237, 231, 219, 0.55)",
+          "rgba(237, 231, 219, 0.7)",
+          "rgba(237, 231, 219, 1)"
         ]
       },
-      "phone-green": {
-        "role": "secondary",
-        "displayName": "Phone Green",
-        "canonical": "#34c759",
-        "oklch": "oklch(73.0% 0.194 147.4)",
+      "hair-2": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "rgba(237, 231, 219, 0.24)",
+        "oklch": "oklch(92.9% 0.017 84.6 / 0.24)",
+        "purpose": "The top edge of a raised panel, the outline of chips, status pills, the Player 2 slot, the stat divider. Bone at 0.24.",
         "tonalRamp": [
-          "#001200",
-          "#003100",
-          "#005500",
-          "#007b00",
-          "#2e9a47",
-          "#72b87b",
-          "#abd6af",
-          "#e3f4e4"
+          "rgba(237, 231, 219, 0.06)",
+          "rgba(237, 231, 219, 0.08)",
+          "rgba(237, 231, 219, 0.14)",
+          "rgba(237, 231, 219, 0.24)",
+          "rgba(237, 231, 219, 0.45)",
+          "rgba(237, 231, 219, 0.55)",
+          "rgba(237, 231, 219, 0.7)",
+          "rgba(237, 231, 219, 1)"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "The closing line and the intro question and cards."
+        "purpose": "The name on the title screen, two stacked lines of Cormorant 600 capitals tracked 0.12em."
+      },
+      "logotype": {
+        "displayName": "Logotype",
+        "purpose": "The focused title's name and screen names (Trophies, a player's build, the profile name). On phones tracking tightens to 0.06 to 0.08em."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "The name on the display and Obavia page section heads."
+        "purpose": "The title screen's questions, the build step's heading, the level clear's trophy name (54px, 0.14em), deck slides."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Story card titles and in-story heads."
+        "purpose": "Trophy group heads over a hairline; drawer heads at 38px."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "The two stats under a title and the profile's level, in lining tabular figures."
       },
       "lead": {
         "displayName": "Lead",
-        "purpose": "First paragraph of an open story."
+        "purpose": "The focused title's summary and the profile bio, up to 62ch. Bullets run 17px at 1.6 to 66ch."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Sublines, list text, page copy."
-      },
-      "item": {
-        "displayName": "Item",
-        "purpose": "App rows, keys and grouped-list titles."
+        "purpose": "The default for every sentence."
       },
       "button": {
         "displayName": "Button",
-        "purpose": "Every button and pill, sentence case."
+        "purpose": "Buttons, the system bar name (18px), menu row titles (19px), tile names (16px, 19px focused)."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Display rows, captions, tabs."
+        "purpose": "Small tracked capitals in ash that key a section, a control group or a value. Never a kicker above a headline."
       },
-      "readout": {
-        "displayName": "Readout",
-        "purpose": "Gauge readouts and any changing number."
-      },
-      "badge": {
-        "displayName": "Badge",
-        "purpose": "The italic JO on the badge only."
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Stat keys, fine print, figure captions, the control legend (in bone-2)."
       }
     },
     "shadows": [
       {
-        "name": "bezel-display",
-        "value": "0 0 0 1px #26262a, 0 0 0 6px #0a0909, 0 0 0 7.5px #3d3833, inset 0 0 36px rgba(0, 0, 0, 0.7)",
-        "purpose": "The multifunction display recessed in its bezel."
+        "name": "lacquer-panel",
+        "value": "inset 0 1px 0 rgba(237, 231, 219, 0.24), 0 0 0 1px rgba(0, 0, 0, 0.35), 0 18px 40px rgba(0, 0, 0, 0.45)",
+        "purpose": "The trophy rack, the build preview, Obavia's sent card: one bone hairline on top, a black outline, a long soft drop."
       },
       {
-        "name": "bezel-carplay",
-        "value": "0 0 0 1.5px #2a2a2e, 0 0 0 8px #0a0909, 0 0 0 9.5px #3d3833, 0 30px 60px rgba(0, 0, 0, 0.5)",
-        "purpose": "The CarPlay screen in the dash."
+        "name": "toast",
+        "value": "inset 0 1px 0 rgba(237, 231, 219, 0.24), 0 0 0 1px rgba(0, 0, 0, 0.4), 0 18px 40px rgba(0, 0, 0, 0.55)",
+        "purpose": "The lacquer-panel recipe at 0.4 and 0.55 for toasts."
       },
       {
-        "name": "bezel-film",
-        "value": "0 0 0 1px #3d3833, 0 0 0 6px #0a0909",
-        "purpose": "Films and video frames."
+        "name": "level-clear",
+        "value": "inset 0 1px 0 rgba(237, 231, 219, 0.24), 0 30px 80px rgba(0, 0, 0, 0.7)",
+        "purpose": "The one card that owns the whole screen."
       },
       {
-        "name": "hood",
-        "value": "inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -18px 30px rgba(0, 0, 0, 0.35), 0 30px 60px rgba(0, 0, 0, 0.45)",
-        "purpose": "The cluster hood and the at-a-glance strip."
+        "name": "tile-art",
+        "value": "inset 0 0 0 1px rgba(237, 231, 219, 0.14), 0 10px 24px rgba(0, 0, 0, 0.5)",
+        "purpose": "Every shelf tile."
       },
       {
-        "name": "hardware-drop",
-        "value": "0 24px 50px rgba(0, 0, 0, 0.4)",
-        "purpose": "Story cards and other hardware resting on the dash."
+        "name": "film-frame",
+        "value": "0 0 0 1px rgba(237, 231, 219, 0.14), 0 18px 40px rgba(0, 0, 0, 0.5)",
+        "purpose": "Films and the profile portrait."
       },
       {
-        "name": "phone-drop",
-        "value": "inset 0 0 0 1.5px #3a3e3a, inset 0 0 0 5px #0b0d0c, 0 40px 80px rgba(0, 0, 0, 0.55)",
-        "purpose": "The iPhone on its mount."
+        "name": "card-lift",
+        "value": "0 0 0 1px rgba(0, 0, 0, 0.55), 0 30px 60px rgba(0, 0, 0, 0.55)",
+        "purpose": "The build card."
       },
       {
-        "name": "gauge-drop",
-        "value": "drop-shadow(0 18px 24px rgba(0, 0, 0, 0.55))",
-        "purpose": "Dial SVGs (as a filter)."
+        "name": "medal-drop",
+        "value": "drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55))",
+        "purpose": "A filter on every medal raster."
       },
       {
-        "name": "lamp-glow-green",
-        "value": "drop-shadow(0 0 6px rgba(59, 209, 111, 0.55))",
-        "purpose": "A lit green lamp (as a filter)."
+        "name": "bar-edge",
+        "value": "inset 0 1px 0 rgba(237, 231, 219, 0.24)",
+        "purpose": "The phone action bar, Obavia's get bar, the send panel."
       },
       {
-        "name": "lamp-glow-amber",
-        "value": "drop-shadow(0 0 6px rgba(242, 163, 58, 0.45))",
-        "purpose": "The amber in-development lamp (as a filter)."
+        "name": "type-over-art-logo",
+        "value": "0 2px 30px rgba(0, 0, 0, 0.45)",
+        "purpose": "A text-shadow on logotypes set over key art."
       },
       {
-        "name": "stitch-line",
-        "value": "0 1px 0 #0a0909, 0 2px 0 rgba(160, 98, 45, 0.28)",
-        "purpose": "Under the compact top bar; mirrored over the tab bar."
+        "name": "type-over-art-summary",
+        "value": "0 1px 16px rgba(0, 0, 0, 0.5)",
+        "purpose": "A text-shadow on summaries set over key art."
       },
       {
-        "name": "stitched-seam",
-        "value": "1.5px dashed rgba(160, 98, 45, 0.5) inset 8px, radius parent minus 6px",
-        "purpose": "Border on a ::after pseudo-element for leather surfaces (not a box-shadow)."
+        "name": "focus-outline",
+        "value": "outline: 2px solid #ede7db; outline-offset: 4px",
+        "purpose": "The bone focus outline on every control. On Obavia it breathes between bone and bone at 0.6."
       }
     ],
     "motion": [
       {
         "name": "ease",
-        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Default ease out for fades, rises and color."
+        "value": "cubic-bezier(0.2, 0.7, 0.1, 1)",
+        "purpose": "The one ease for every transition and entrance in the library. Settles, never overshoots."
       },
       {
-        "name": "ease-io",
-        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
-        "purpose": "Letterbox bars, cuts through black, ink strokes."
+        "name": "duration-state",
+        "value": "0.3s",
+        "purpose": "Hovers and state changes on buttons, chips, rows."
       },
       {
-        "name": "spring",
-        "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
-        "purpose": "iOS-style overshoot for presses, island, banners, tabs (0.45s)."
-      },
-      {
-        "name": "spring-soft",
-        "value": "cubic-bezier(0.22, 1.2, 0.36, 1)",
-        "purpose": "A story card expanding to fill the screen (0.62s)."
-      },
-      {
-        "name": "ios-push",
-        "value": "cubic-bezier(0.32, 0.72, 0, 1) 0.45s",
-        "purpose": "Screens pushing inside the mounted phone."
+        "name": "duration-focus",
+        "value": "0.36s",
+        "purpose": "Focus moving along the shelf: tile size, ring, ticks."
       },
       {
         "name": "press",
-        "value": "scale(0.95) in 0.12s",
-        "purpose": "Every pressable control; keys and cards scale 0.92 to 0.985."
+        "value": "scale(0.97)",
+        "purpose": "Buttons and chips on :active."
       },
       {
-        "name": "needle-sweep",
-        "value": "1.2s cubic-bezier(.3, .7, .2, 1): -135deg to 135deg, back past the value, settle",
-        "purpose": "Ignition sweep of the needles."
+        "name": "rise",
+        "value": "translateY(14px) to none, opacity 0 to 1, 0.6s to 0.7s",
+        "purpose": "The title head, the trophy rack (0.1s later), screens, the sent card, lessons."
       },
       {
-        "name": "film-spring-needle",
-        "value": "damping 14, stiffness 70, mass 1",
-        "purpose": "Remotion needle settle in the films."
+        "name": "fade-phone",
+        "value": "opacity 0 to 1",
+        "purpose": "On phones, where a fixed action bar sits on screen, the title head, screens and the rack only fade: a transform would capture the bar."
       },
       {
-        "name": "film-spring-snappy",
-        "value": "damping 16, stiffness 140, mass 0.7",
-        "purpose": "Words landing one at a time in the films."
+        "name": "breathe",
+        "value": "opacity 1 to 0.82 to 1, 2.4s ease-in-out infinite",
+        "purpose": "The focused tile's ring and PRESS START. The only symmetrical ease-in-out in the library."
       },
       {
-        "name": "still",
-        "value": "1ms",
-        "purpose": "All durations under Still mode or prefers-reduced-motion."
+        "name": "dolly",
+        "value": "scale(1) to scale(1.02), 20s (30s on the title screen)",
+        "purpose": "Key art drifting in; plates cross-fade over 0.9s."
+      },
+      {
+        "name": "toast-in",
+        "value": "translateX(24px) to none, 0.6s",
+        "purpose": "Toasts sliding in from the right under the bar."
+      },
+      {
+        "name": "coin",
+        "value": "rotateY(-180deg) to 0 in perspective(300px), 0.9s (1.4s on the level clear)",
+        "purpose": "A medal turning a half turn into place as a sheen passes over it."
+      },
+      {
+        "name": "mint",
+        "value": "translateY(22px) scale(0.95) brightness(1.7) to rest, 1.3s (re-mint 0.6s)",
+        "purpose": "The build card arriving like a reward."
+      },
+      {
+        "name": "strike",
+        "value": "translateX(-10px) to none, 0.7s, delays 0.55s, 0.7s, 0.85s, 1s",
+        "purpose": "The build card's four proofs striking in one by one; a 1.6s glint crosses the frame."
+      },
+      {
+        "name": "grain",
+        "value": "1.2s steps(6) infinite, opacity 0.05",
+        "purpose": "Static film grain drifting over the stage."
+      },
+      {
+        "name": "desk-push",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1), 0.45s",
+        "purpose": "Desk demo screens pushing in from the right inside the phone. No overshoot."
+      },
+      {
+        "name": "desk-settle",
+        "value": "cubic-bezier(0.25, 0.8, 0.25, 1), 0.7s",
+        "purpose": "The scanned licence settling in the desk demo."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transitions 0.15s, loops stopped",
+        "purpose": "Loops, dolly, grain, mint, strike and glint removed; the card shows finished."
       }
     ],
     "breakpoints": [
       {
-        "name": "xs",
-        "value": "380px"
-      },
-      {
-        "name": "sm",
-        "value": "560px"
+        "name": "narrow",
+        "value": "430px",
+        "purpose": "max-width: the level pill, the email item and the trophy count leave the system bar."
       },
       {
         "name": "phone",
-        "value": "700px"
+        "value": "899px",
+        "purpose": "max-width: the composition reflows; tiles 76px (96px focused) and snap, the title actions become a fixed lacquer bar, the rack and legend hide, the bar is 60px."
       },
       {
-        "name": "tablet",
-        "value": "760px"
+        "name": "laptop",
+        "value": "900px",
+        "purpose": "min-width: the full console composition; the build step hides menu sublines so the list holds one screen."
       },
       {
-        "name": "tabbar",
-        "value": "900px"
-      },
-      {
-        "name": "wide",
-        "value": "980px"
+        "name": "short",
+        "value": "700px",
+        "purpose": "max-height: phones drop the title summary; laptops lift the build step and tighten its list."
       }
     ]
   },
@@ -722,160 +469,162 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The one needle-red action that leads a view.",
-      "html": "<button class=\"ds-btn-primary\" type=\"button\">Email me</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; min-height: 44px; padding: 11px 22px; border-radius: 999px; border: 1px solid var(--needle, #e8553b); background: var(--needle, #e8553b); color: var(--ink, #161514); font: 600 14px/1 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; cursor: pointer; transition: transform .45s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .45s cubic-bezier(0.34, 1.56, 0.64, 1); } .ds-btn-primary:hover { background: var(--needle-2, #f27258); border-color: var(--needle-2, #f27258); transform: translateY(-1px) scale(1.01); } .ds-btn-primary:focus-visible { outline: 2px solid var(--needle-2, #f27258); outline-offset: 3px; } .ds-btn-primary:active { transform: scale(0.95); transition-duration: .12s; }"
+      "description": "The one bone action in a group: Open, Start, Enter the library. A 3px plate, never a pill.",
+      "html": "<div class=\"ds-btn-primary-ground\"><button class=\"ds-btn-primary\" type=\"button\">Open</button><button class=\"ds-btn-primary ds-btn-primary--lg\" type=\"button\">Start</button></div>",
+      "css": ".ds-btn-primary-ground { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 28px; background: var(--ink, #0a0f0d); color: var(--bone, #ede7db); font: 400 16px/1.55 'Hanken Grotesk', system-ui, sans-serif; } .ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 0 22px; border-radius: 3px; font: 500 16px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing: 0.01em; white-space: nowrap; cursor: pointer; transition: background-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), color .3s cubic-bezier(0.2, 0.7, 0.1, 1), border-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), transform .3s cubic-bezier(0.2, 0.7, 0.1, 1); min-width: 148px; border: 1px solid var(--bone, #ede7db); background: var(--bone, #ede7db); color: var(--ink, #0a0f0d); } .ds-btn-primary:hover { background: #fff8ec; border-color: #fff8ec; } .ds-btn-primary:focus-visible { outline: 2px solid var(--bone, #ede7db); outline-offset: 4px; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary--lg { min-height: 54px; min-width: 200px; padding: 0 30px; font-size: 18px; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Every other action: a key-colored pill.",
-      "html": "<button class=\"ds-btn-secondary\" type=\"button\">Book 30 minutes</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; min-height: 44px; padding: 11px 22px; border-radius: 999px; border: 1px solid var(--edge-2, #3d3833); background: var(--key, #1d1e21); color: var(--ivory, #efe8d8); font: 600 14px/1 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; cursor: pointer; transition: transform .45s cubic-bezier(0.34, 1.56, 0.64, 1), border-color .45s cubic-bezier(0.34, 1.56, 0.64, 1); } .ds-btn-secondary:hover { border-color: var(--needle, #e8553b); transform: translateY(-1px) scale(1.01); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--needle-2, #f27258); outline-offset: 3px; } .ds-btn-secondary:active { transform: scale(0.95); transition-duration: .12s; }"
+      "description": "Every other action beside the primary: transparent with a bone outline at 0.7.",
+      "html": "<div class=\"ds-btn-secondary-ground\"><button class=\"ds-btn-secondary\" type=\"button\">Resume PDF</button><button class=\"ds-btn-secondary\" type=\"button\">Email me</button></div>",
+      "css": ".ds-btn-secondary-ground { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 28px; background: var(--ink, #0a0f0d); color: var(--bone, #ede7db); font: 400 16px/1.55 'Hanken Grotesk', system-ui, sans-serif; } .ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 0 22px; border-radius: 3px; font: 500 16px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing: 0.01em; white-space: nowrap; cursor: pointer; transition: background-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), color .3s cubic-bezier(0.2, 0.7, 0.1, 1), border-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), transform .3s cubic-bezier(0.2, 0.7, 0.1, 1); border: 1px solid rgba(237, 231, 219, 0.7); background: transparent; color: var(--bone, #ede7db); } .ds-btn-secondary:hover { background: rgba(237, 231, 219, 0.08); border-color: var(--bone, #ede7db); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--bone, #ede7db); outline-offset: 4px; } .ds-btn-secondary:active { transform: scale(0.97); }"
     },
     {
-      "name": "CarPlay Key",
-      "kind": "custom",
-      "refersTo": "key",
-      "description": "A large CarPlay action key; the start key is needle red.",
-      "html": "<div class=\"ds-keys\"><a class=\"ds-key ds-key--start\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" aria-hidden=\"true\"><path d=\"M7 3h7l4 4v14H7zM14 3v4h4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/></svg><span>Resume</span></a><a class=\"ds-key\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" aria-hidden=\"true\"><path d=\"M4.5 12.5 9.5 17.5 19.5 6.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/></svg><span>Check me</span></a></div>",
-      "css": ".ds-keys { display: grid; grid-template-columns: repeat(2, 140px); gap: 10px; padding: 10px; background: #0c0c0e; border-radius: 28px; } .ds-key { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 92px; padding: 14px; border-radius: 18px; background: var(--key, #1d1e21); color: var(--ivory, #efe8d8); font: 700 15px/1.1 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; text-decoration: none; transition: transform .45s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .2s; } .ds-key:hover { background: var(--key-2, #27282c); } .ds-key:active { transform: scale(0.95); transition-duration: .12s; } .ds-key:focus-visible { outline: 2px solid var(--needle-2, #f27258); outline-offset: 3px; } .ds-key--start { background: var(--needle, #e8553b); color: var(--ink, #161514); } .ds-key--start:hover { background: var(--needle-2, #f27258); }"
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "No outline, bone-2 text; Back at the top left of every open screen. Hover shows a strong hairline.",
+      "html": "<div class=\"ds-btn-ghost-ground\"><button class=\"ds-btn-ghost\" type=\"button\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\"><path d=\"M15 5l-7 7 7 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>Back</button></div>",
+      "css": ".ds-btn-ghost-ground { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 28px; background: var(--ink, #0a0f0d); color: var(--bone, #ede7db); font: 400 16px/1.55 'Hanken Grotesk', system-ui, sans-serif; } .ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 0 22px; border-radius: 3px; font: 500 16px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing: 0.01em; white-space: nowrap; cursor: pointer; transition: background-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), color .3s cubic-bezier(0.2, 0.7, 0.1, 1), border-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), transform .3s cubic-bezier(0.2, 0.7, 0.1, 1); border: 1px solid transparent; background: transparent; color: var(--bone-2, #d9d2c4); } .ds-btn-ghost svg { width: 18px; height: 18px; } .ds-btn-ghost:hover { border-color: var(--hair-2, rgba(237, 231, 219, 0.24)); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--bone, #ede7db); outline-offset: 4px; } .ds-btn-ghost:active { transform: scale(0.97); }"
     },
     {
-      "name": "Chip",
+      "name": "Choice Chip",
       "kind": "chip",
       "refersTo": "chip",
-      "description": "A sentence of choices; pressed state fills with the needle wash.",
-      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" type=\"button\" aria-pressed=\"true\">Sound</button><button class=\"ds-chip\" type=\"button\" aria-pressed=\"false\">Still</button></div>",
-      "css": ".ds-chips { display: flex; gap: 8px; } .ds-chip { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--edge, #2e2a26); background: transparent; color: var(--ivory, #efe8d8); font: 600 14px/1.2 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; cursor: pointer; transition: transform .45s cubic-bezier(0.34, 1.56, 0.64, 1), border-color .3s, color .3s, background-color .3s; } .ds-chip:hover { border-color: var(--needle, #e8553b); } .ds-chip[aria-pressed=\"true\"] { border-color: var(--needle, #e8553b); color: var(--needle-2, #f27258); background: rgba(232, 85, 59, 0.1); } .ds-chip:focus-visible { outline: 2px solid var(--needle-2, #f27258); outline-offset: 3px; } .ds-chip:active { transform: scale(0.95); transition-duration: .12s; }"
+      "description": "Radio pills for one role, one lot problem or one finish. Selected is a bone fill with ink text; a finish not yet earned is dashed.",
+      "html": "<div class=\"ds-chip-ground\"><div class=\"ds-chips\" role=\"radiogroup\" aria-label=\"Role\"><button class=\"ds-chip is-on\" type=\"button\" role=\"radio\" aria-checked=\"true\">AI and Automation</button><button class=\"ds-chip\" type=\"button\" role=\"radio\" aria-checked=\"false\">Software and CRM</button><button class=\"ds-chip\" type=\"button\" role=\"radio\" aria-checked=\"false\">IT and Systems Support</button></div><div class=\"ds-chips\" role=\"radiogroup\" aria-label=\"Finish\"><button class=\"ds-fin is-on\" type=\"button\"><i style=\"background: var(--bronze, #9c6b43)\"></i>Bronze</button><button class=\"ds-fin\" type=\"button\"><i style=\"background: var(--silver, #b9bcbe)\"></i>Silver</button><button class=\"ds-fin\" type=\"button\" aria-disabled=\"true\"><i style=\"background: var(--gold, #c9a96a)\"></i>Gold</button><button class=\"ds-fin\" type=\"button\" aria-disabled=\"true\"><i style=\"background: var(--platinum, #dcdde0)\"></i>Platinum</button></div></div>",
+      "css": ".ds-chip-ground { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 28px; background: var(--ink, #0a0f0d); color: var(--bone, #ede7db); font: 400 16px/1.55 'Hanken Grotesk', system-ui, sans-serif; flex-direction: column; align-items: flex-start; } .ds-chips { display: flex; flex-wrap: wrap; gap: 8px; } .ds-chip, .ds-fin { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 0 16px; border: 1px solid var(--hair-2, rgba(237, 231, 219, 0.24)); border-radius: 20px; background: rgba(17, 27, 23, 0.7); color: var(--bone, #ede7db); font: 500 14px/1 'Hanken Grotesk', system-ui, sans-serif; cursor: pointer; transition: background-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), color .3s cubic-bezier(0.2, 0.7, 0.1, 1), border-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), transform .3s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-chip:hover, .ds-fin:hover { border-color: var(--bone, #ede7db); } .ds-chip:focus-visible, .ds-fin:focus-visible { outline: 2px solid var(--bone, #ede7db); outline-offset: 4px; } .ds-chip:active, .ds-fin:active { transform: scale(0.97); } .ds-chip.is-on { background: var(--bone, #ede7db); color: var(--ink, #0a0f0d); border-color: var(--bone, #ede7db); } .ds-fin { padding: 0 15px 0 12px; background: none; } .ds-fin i { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(0, 0, 0, 0.35); } .ds-fin.is-on { border-color: var(--bone, #ede7db); background: rgba(237, 231, 219, 0.08); } .ds-fin[aria-disabled=\"true\"] { color: var(--ash, #9a9890); border-style: dashed; cursor: default; } .ds-fin[aria-disabled=\"true\"] i { opacity: 0.45; }"
     },
     {
-      "name": "Tell-tale Lamp",
-      "kind": "custom",
-      "refersTo": "lamp-green",
-      "description": "Status as a dash lamp: green open, amber in development, unlit otherwise.",
-      "html": "<ul class=\"ds-lamps\"><li><a class=\"ds-lamp ds-lamp--green\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\"><path d=\"M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span><b>Triple J</b> Open now</span></a></li><li><span class=\"ds-lamp ds-lamp--amber\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\"><path d=\"M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span><b>Obavia</b> In development</span></span></li><li><span class=\"ds-lamp\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\"><path d=\"M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span><b>9:41</b> Houston</span></span></li></ul>",
-      "css": ".ds-lamps { list-style: none; margin: 0; padding: 12px; display: flex; flex-wrap: wrap; gap: 6px 28px; background: #131211; } .ds-lamp { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 12px; color: var(--dim, #a39c8f); font: 500 13px/1.25 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; text-decoration: none; } .ds-lamp svg { color: #4b4641; transition: color .35s, filter .35s; } .ds-lamp b { color: var(--ivory, #efe8d8); font-weight: 700; margin-right: 4px; } .ds-lamp--green svg { color: #3bd16f; filter: drop-shadow(0 0 6px rgba(59, 209, 111, 0.55)); } .ds-lamp--amber svg { color: #f2a33a; filter: drop-shadow(0 0 6px rgba(242, 163, 58, 0.45)); } a.ds-lamp:hover { color: var(--link, #cfc8b9); } a.ds-lamp:focus-visible { outline: 2px solid var(--needle-2, #f27258); outline-offset: 3px; }"
-    },
-    {
-      "name": "Multifunction Display",
-      "kind": "card",
-      "refersTo": "display-screen",
-      "description": "The center screen of the cluster: status row, identity, facts.",
-      "html": "<div class=\"ds-mfd\"><div class=\"ds-mfd__bar\"><span>Saturday</span><span><b>9:41</b> Houston</span></div><div class=\"ds-mfd__name\">Jason Obawemimo</div><dl class=\"ds-mfd__rows\"><div><dt>Now</dt><dd>Co-owner, Triple J Auto Investment</dd></div><div><dt>Building</dt><dd>Obavia, in development</dd></div></dl></div>",
-      "css": ".ds-mfd { max-width: 380px; padding: 14px 18px 12px; border-radius: 22px; background: #0c0c0e; color: var(--ivory, #efe8d8); font-family: 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; box-shadow: 0 0 0 1px #26262a, 0 0 0 6px #0a0909, 0 0 0 7.5px #3d3833, inset 0 0 36px rgba(0, 0, 0, 0.7); margin: 10px; } .ds-mfd__bar { display: flex; justify-content: space-between; padding-bottom: 9px; border-bottom: 1px solid #1f1f22; font: 600 12px/1.2 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--dim, #a39c8f); font-variant-numeric: tabular-nums; } .ds-mfd__bar b { color: var(--ivory, #efe8d8); } .ds-mfd__name { padding: 12px 0 8px; font: 800 28px/1.02 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: -0.03em; } .ds-mfd__rows { margin: 0; } .ds-mfd__rows > div { display: grid; grid-template-columns: 5.4rem minmax(0, 1fr); gap: 10px; padding: 7px 0; border-top: 1px solid #1c1c1f; } .ds-mfd__rows dt { font: 600 12px/1.45 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--dim, #a39c8f); } .ds-mfd__rows dd { margin: 0; font: 500 13px/1.45 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; }"
-    },
-    {
-      "name": "Story Card",
-      "kind": "card",
-      "refersTo": "story-card",
-      "description": "Leather card with a stitched seam; opens to fill the screen.",
-      "html": "<article class=\"ds-tcard\"><div class=\"ds-tcard__media\"></div><div class=\"ds-tcard__foot\"><h3>The desk I built</h3><p>Run a sale on it, from the car to the signature.</p></div></article>",
-      "css": ".ds-tcard { position: relative; width: 340px; border-radius: 22px; overflow: hidden; background: linear-gradient(180deg, #1d1a17, #161412); color: var(--ivory, #efe8d8); box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4); cursor: pointer; transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1); } .ds-tcard::after { content: \"\"; position: absolute; inset: 8px; border: 1.5px dashed rgba(160, 98, 45, 0.5); border-radius: 16px; pointer-events: none; } .ds-tcard:active { transform: scale(0.985); } .ds-tcard__media { aspect-ratio: 16 / 9; background: #0b0a0a; } .ds-tcard__foot { padding: 18px 22px 24px; display: grid; gap: 6px; } .ds-tcard h3 { margin: 0; font: 800 26px/1.1 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: -0.025em; } .ds-tcard p { margin: 0; font: 500 14px/1.45 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--link, #cfc8b9); }"
-    },
-    {
-      "name": "Grouped List",
-      "kind": "custom",
-      "refersTo": "grouped-list",
-      "description": "iOS settings grouping for facts and proof links.",
-      "html": "<ul class=\"ds-group\"><li><span class=\"ds-icon\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\"><path d=\"M4.5 12.5 9.5 17.5 19.5 6.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></span><span><b>English or Spanish</b><span>Every question and every form.</span></span><i></i></li><li><span class=\"ds-icon\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\"><path d=\"M4.5 12.5 9.5 17.5 19.5 6.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></span><span><b>Every sale on file</b><span>Signed or waiting on ink, in one list.</span></span><i></i></li></ul>",
-      "css": ".ds-group { list-style: none; margin: 0; padding: 0; max-width: 420px; border-radius: 22px; background: #1b1917; border: 1px solid var(--edge, #2e2a26); overflow: hidden; font-family: 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--ivory, #efe8d8); } .ds-group li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--edge, #2e2a26); } .ds-group li:first-child { border-top: 0; } .ds-group li:active { background: #23201d; } .ds-group b { display: block; font: 600 15px/1.3 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; } .ds-group b + span { display: block; margin-top: 2px; font-size: 13.5px; line-height: 1.4; color: var(--link, #cfc8b9); } .ds-icon { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: #23201d; border: 1px solid var(--edge, #2e2a26); color: var(--needle-2, #f27258); } .ds-group i { width: 8px; height: 8px; border-top: 1.5px solid var(--dim, #a39c8f); border-right: 1.5px solid var(--dim, #a39c8f); transform: rotate(45deg); }"
-    },
-    {
-      "name": "Ask Input",
+      "name": "Underline Field",
       "kind": "input",
-      "refersTo": "input",
-      "description": "Pill input on lacquer; focus turns the border needle red.",
-      "html": "<form class=\"ds-ask\"><input type=\"text\" placeholder=\"What would you do in your first month?\" aria-label=\"Ask\" /><button type=\"button\">Ask</button></form>",
-      "css": ".ds-ask { display: flex; gap: 8px; max-width: 440px; padding: 12px; background: #1b1917; } .ds-ask input { flex: 1; min-width: 0; min-height: 44px; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--edge, #2e2a26); background: #131211; color: var(--ivory, #efe8d8); font: 400 15px 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; outline: none; transition: border-color .3s; } .ds-ask input::placeholder { color: var(--dim, #a39c8f); } .ds-ask input:focus { border-color: var(--needle, #e8553b); } .ds-ask button { min-height: 36px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--edge-2, #3d3833); background: var(--key, #1d1e21); color: var(--ivory, #efe8d8); font: 600 13px/1 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; cursor: pointer; } .ds-ask button:hover { border-color: var(--needle, #e8553b); } .ds-ask button:active { transform: scale(0.95); }"
+      "refersTo": "field-underline",
+      "description": "A bone underline and no box: the name on the title screen and the signature on the build screen. Focus thickens the line to 2px. Multiline text uses the boxed field.",
+      "html": "<div class=\"ds-field-ground\"><input class=\"ds-field\" type=\"text\" aria-label=\"Your name\" placeholder=\"First name is plenty\" /><textarea class=\"ds-field-box\" rows=\"3\" aria-label=\"Paste the listing\"></textarea></div>",
+      "css": ".ds-field-ground { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 28px; background: var(--ink, #0a0f0d); color: var(--bone, #ede7db); font: 400 16px/1.55 'Hanken Grotesk', system-ui, sans-serif; flex-direction: column; align-items: flex-start; gap: 22px; } .ds-field { width: min(360px, 100%); height: 50px; padding: 0 2px; background: transparent; border: 0; border-bottom: 1px solid var(--bone, #ede7db); border-radius: 0; color: var(--bone, #ede7db); caret-color: var(--bone, #ede7db); font: 500 22px/1 'Hanken Grotesk', system-ui, sans-serif; } .ds-field::placeholder { color: var(--ash-2, #7d7b74); } .ds-field:focus { outline: none; border-bottom-width: 2px; } .ds-field-box { width: min(420px, 100%); padding: 12px 14px; background: rgba(10, 15, 13, 0.7); border: 1px solid var(--hair-2, rgba(237, 231, 219, 0.24)); border-radius: 4px; color: var(--bone, #ede7db); font: 400 15px/1.5 'Hanken Grotesk', system-ui, sans-serif; resize: vertical; transition: border-color .3s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-field-box:focus { outline: none; border-color: var(--bone, #ede7db); }"
     },
     {
-      "name": "Tab Bar",
+      "name": "Tabs",
       "kind": "nav",
-      "refersTo": "tab-bar",
-      "description": "Phone tab bar under 900px; the active tab is lit needle.",
-      "html": "<nav class=\"ds-tabbar\"><a class=\"is-on\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Dash</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>The desk</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 3h7l4 4v14H7zM14 3v4h4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/></svg><span>Resume</span></a></nav>",
-      "css": ".ds-tabbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 320px; padding: 8px 6px 10px; background: #0e0d0c; box-shadow: 0 -1px 0 #050505, 0 -2px 0 rgba(160, 98, 45, 0.3); } .ds-tabbar a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; color: var(--dim, #a39c8f); text-decoration: none; font: 600 11px/1 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; transition: color .2s, transform .3s cubic-bezier(0.34, 1.56, 0.64, 1); } .ds-tabbar a.is-on { color: var(--needle-2, #f27258); } .ds-tabbar a:hover { color: var(--ivory, #efe8d8); } .ds-tabbar a:active { transform: scale(0.9); } .ds-tabbar a:focus-visible { outline: 2px solid var(--needle-2, #f27258); outline-offset: 2px; border-radius: 8px; }"
+      "refersTo": "tab",
+      "description": "Sections inside an open title, sticky on an ink band. Ash words; the active one is bone with a 2px bone underline. Q and E key caps bracket them.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Sections\"><span class=\"ds-key\">Q</span><a href=\"#\" class=\"is-on\" aria-current=\"true\">Overview</a><a href=\"#\">Film</a><a href=\"#\">Play the sale desk</a><a href=\"#\">Trophies</a><a href=\"#\">Loadout</a><span class=\"ds-key\">E</span></nav>",
+      "css": ".ds-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 14px 20px; background: var(--ink, #0a0f0d); } .ds-tabs a { position: relative; padding: 10px 14px; border-radius: 3px; color: var(--ash, #9a9890); font: 500 15px/1 'Hanken Grotesk', system-ui, sans-serif; text-decoration: none; white-space: nowrap; transition: color .3s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-tabs a:hover, .ds-tabs a.is-on { color: var(--bone, #ede7db); } .ds-tabs a:focus-visible { outline: 2px solid var(--bone, #ede7db); outline-offset: 4px; } .ds-tabs a.is-on::after { content: \"\"; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px; background: var(--bone, #ede7db); } .ds-key { display: inline-grid; place-items: center; min-width: 28px; height: 24px; margin: 0 6px; padding: 0 6px; border: 1px solid rgba(237, 231, 219, 0.55); border-radius: 4px; color: var(--bone, #ede7db); font: 500 12px/1 'Hanken Grotesk', system-ui, sans-serif; }"
+    },
+    {
+      "name": "Menu Row",
+      "kind": "custom",
+      "refersTo": "menu-row",
+      "description": "The title screen's menus: Who's playing, then the build step. The row under the cursor is bottle with a bone edge; the picked row flips to bone with ink text.",
+      "html": "<div class=\"ds-menu-ground\"><ol class=\"ds-menu\"><li><button class=\"ds-menu-row is-on\" type=\"button\"><span class=\"ds-menu-n\">1</span><span class=\"ds-menu-txt\"><b>I'm hiring</b><small>Interviewer or recruiter. The record first, then the systems.</small></span></button></li><li><button class=\"ds-menu-row\" type=\"button\"><span class=\"ds-menu-n\">2</span><span class=\"ds-menu-txt\"><b>I run a dealership</b><small>Dealer or partner. What answers my phones and runs my lot.</small></span></button></li><li><button class=\"ds-menu-row\" type=\"button\"><span class=\"ds-menu-n\">3</span><span class=\"ds-menu-txt\"><b>Just looking</b><small>No pitch. Play the library.</small></span></button></li></ol></div>",
+      "css": ".ds-menu-ground { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 28px; background: var(--ink, #0a0f0d); color: var(--bone, #ede7db); font: 400 16px/1.55 'Hanken Grotesk', system-ui, sans-serif; } .ds-menu { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; width: min(560px, 100%); } .ds-menu-row { display: flex; align-items: center; gap: 18px; width: 100%; padding: 16px 20px; text-align: left; background: rgba(17, 27, 23, 0.74); border: 1px solid var(--hair, rgba(237, 231, 219, 0.14)); border-radius: 4px; color: var(--bone, #ede7db); font-family: 'Hanken Grotesk', system-ui, sans-serif; cursor: pointer; transition: background-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), border-color .3s cubic-bezier(0.2, 0.7, 0.1, 1), transform .3s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-menu-row:hover, .ds-menu-row.is-on { background: var(--bottle, #1c3229); border-color: var(--bone, #ede7db); } .ds-menu-row:focus-visible { outline: 2px solid var(--bone, #ede7db); outline-offset: 4px; } .ds-menu-row:active, .ds-menu-row.is-picked { background: var(--bone, #ede7db); color: var(--ink, #0a0f0d); } .ds-menu-row:active small, .ds-menu-row.is-picked small { color: #2c3a33; } .ds-menu-n { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid currentColor; border-radius: 4px; font: 500 14px/1 'Hanken Grotesk', system-ui, sans-serif; opacity: 0.8; } .ds-menu-txt { display: grid; gap: 4px; } .ds-menu-txt b { font: 500 19px/1.2 'Hanken Grotesk', system-ui, sans-serif; } .ds-menu-txt small { font: 400 14px/1.35 'Hanken Grotesk', system-ui, sans-serif; color: var(--bone-2, #d9d2c4); }"
+    },
+    {
+      "name": "Shelf Tile",
+      "kind": "custom",
+      "refersTo": "shelf-tile",
+      "description": "The library row: square key art on a lacquer-raised well. The focused tile grows to 162px and wears a breathing 3px bone ring outset 8px plus two corner ticks. The gradient stands in for the art.",
+      "html": "<div class=\"ds-shelf\"><a class=\"ds-tile is-focus\" href=\"#\"><span class=\"ds-tile-frame\"><span class=\"ds-tile-img\"></span></span><span class=\"ds-tile-name\">Triple J Auto</span></a><a class=\"ds-tile\" href=\"#\"><span class=\"ds-tile-frame\"><span class=\"ds-tile-img\"></span></span><span class=\"ds-tile-name\">Lead to Title</span></a><a class=\"ds-tile\" href=\"#\"><span class=\"ds-tile-frame\"><span class=\"ds-tile-img\"></span></span><span class=\"ds-tile-name\">Prospector</span></a></div>",
+      "css": ".ds-shelf { display: flex; align-items: flex-start; gap: 30px; padding: 28px 28px 32px; background: var(--ink, #0a0f0d); } .ds-tile { display: grid; gap: 14px; padding: 8px; margin-top: 12px; color: var(--bone, #ede7db); text-decoration: none; outline: none; transition: margin .36s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-tile-frame { position: relative; display: block; width: 136px; height: 136px; border-radius: 6px; transition: width .36s cubic-bezier(0.2, 0.7, 0.1, 1), height .36s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-tile-img { display: block; width: 100%; height: 100%; border-radius: 6px; background: var(--lacquer-2, #16221d); background-image: radial-gradient(120% 90% at 60% 30%, #233a2f 0%, #14211c 55%, #0b110f 100%); box-shadow: inset 0 0 0 1px var(--hair, rgba(237, 231, 219, 0.14)), 0 10px 24px rgba(0, 0, 0, 0.5); transition: filter .3s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-tile-frame::after { content: \"\"; position: absolute; inset: -8px; border-radius: 11px; border: 3px solid var(--bone, #ede7db); opacity: 0; transform: scale(0.97); pointer-events: none; transition: opacity .36s cubic-bezier(0.2, 0.7, 0.1, 1), transform .36s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-tile-frame::before { content: \"\"; position: absolute; inset: -14px; opacity: 0; pointer-events: none; transition: opacity .36s cubic-bezier(0.2, 0.7, 0.1, 1); background: linear-gradient(var(--bone, #ede7db), var(--bone, #ede7db)) right top / 12px 2px no-repeat, linear-gradient(var(--bone, #ede7db), var(--bone, #ede7db)) right top / 2px 12px no-repeat, linear-gradient(var(--bone, #ede7db), var(--bone, #ede7db)) left bottom / 12px 2px no-repeat, linear-gradient(var(--bone, #ede7db), var(--bone, #ede7db)) left bottom / 2px 12px no-repeat; } .ds-tile-name { font: 400 16px/1.2 'Hanken Grotesk', system-ui, sans-serif; white-space: nowrap; transition: font-size .36s cubic-bezier(0.2, 0.7, 0.1, 1); } .ds-tile.is-focus, .ds-tile:hover, .ds-tile:focus-visible { margin-top: 0; } .ds-tile.is-focus .ds-tile-frame, .ds-tile:hover .ds-tile-frame, .ds-tile:focus-visible .ds-tile-frame { width: 162px; height: 162px; } .ds-tile.is-focus .ds-tile-frame::after, .ds-tile:hover .ds-tile-frame::after, .ds-tile:focus-visible .ds-tile-frame::after { opacity: 1; transform: none; animation: ds-breathe 2.4s ease-in-out infinite; } .ds-tile.is-focus .ds-tile-frame::before, .ds-tile:hover .ds-tile-frame::before, .ds-tile:focus-visible .ds-tile-frame::before { opacity: 1; } .ds-tile.is-focus .ds-tile-name, .ds-tile:hover .ds-tile-name, .ds-tile:focus-visible .ds-tile-name { font-size: 19px; font-weight: 500; } .ds-tile:hover .ds-tile-img { filter: brightness(1.06); } .ds-shelf:hover .ds-tile.is-focus:not(:hover) { margin-top: 12px; } .ds-shelf:hover .ds-tile.is-focus:not(:hover) .ds-tile-frame { width: 136px; height: 136px; } .ds-shelf:hover .ds-tile.is-focus:not(:hover) .ds-tile-frame::after, .ds-shelf:hover .ds-tile.is-focus:not(:hover) .ds-tile-frame::before { opacity: 0; animation: none; } .ds-shelf:hover .ds-tile.is-focus:not(:hover) .ds-tile-name { font-size: 16px; font-weight: 400; } @keyframes ds-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.82; } } @media (prefers-reduced-motion: reduce) { .ds-tile-frame::after { animation: none !important; } }"
+    },
+    {
+      "name": "Trophy Rack",
+      "kind": "card",
+      "refersTo": "trophy-rack",
+      "description": "Bottom right of the home screen: a 250px lacquer panel lit by one bone hairline, listing the focused title's trophies as minted medals. Metal appears only here, on medals.",
+      "html": "<div class=\"ds-rack-ground\"><aside class=\"ds-rack\" aria-label=\"Trophies in this title\"><p class=\"ds-rack-h\">Trophies in this title</p><ul><li><svg class=\"ds-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--gold, #c9a96a)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span><b>Fifty-Three</b><small>Gold</small></span></li><li><svg class=\"ds-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--gold, #c9a96a)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span><b>Proceeds</b><small>Gold</small></span></li><li><svg class=\"ds-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--silver, #b9bcbe)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span><b>Keys to the Lot</b><small>Silver</small></span></li><li><svg class=\"ds-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--bronze, #9c6b43)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span><b>Title Run</b><small>Bronze</small></span></li></ul></aside></div>",
+      "css": ".ds-rack-ground { padding: 28px; background: var(--ink, #0a0f0d); } .ds-rack { width: 250px; padding: 16px 18px; background: rgba(17, 27, 23, 0.9); border-radius: 6px; color: var(--bone, #ede7db); box-shadow: inset 0 1px 0 rgba(237, 231, 219, 0.24), 0 0 0 1px rgba(0, 0, 0, 0.35), 0 18px 40px rgba(0, 0, 0, 0.45); animation: ds-rise .7s .1s cubic-bezier(0.2, 0.7, 0.1, 1) both; } .ds-rack-h { margin: 0 0 16px; font: 400 16px/1.2 'Hanken Grotesk', system-ui, sans-serif; } .ds-rack ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; } .ds-rack li { display: flex; align-items: center; gap: 14px; } .ds-rack li span { display: grid; gap: 2px; } .ds-rack b { font: 400 15px/1.25 'Hanken Grotesk', system-ui, sans-serif; } .ds-rack small { font: 400 12px/1.2 'Hanken Grotesk', system-ui, sans-serif; color: var(--bone-2, #d9d2c4); } .ds-medal { flex: none; width: 40px; height: 40px; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)); } @keyframes ds-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } } @media (prefers-reduced-motion: reduce) { .ds-rack { animation: none; } }"
+    },
+    {
+      "name": "Build Card",
+      "kind": "card",
+      "refersTo": "build-card",
+      "description": "The signature component: a 4 by 5 card sized entirely in container units so it matches the 1080 by 1350 PNG. Ink shades over the art, a metal double frame in the chosen finish, Cormorant names, four proofs with medals, the level and signature at the foot. It mints in on arrival.",
+      "html": "<div class=\"ds-bcard-ground\"><figure class=\"ds-bcard\"><span class=\"ds-bcard-frame\"></span><div class=\"ds-bcard-top\"><p class=\"ds-bcard-name\">Jason Obawemimo</p><p class=\"ds-bcard-title\">AI Implementation, Workflow Automation, CRM Systems</p></div><div class=\"ds-bcard-mid\"><p class=\"ds-bcard-class\">AI and Automation</p><p class=\"ds-bcard-line\">Voice AI and Claude API workflows running in a live business.</p></div><ul class=\"ds-bcard-proofs\"><li><svg class=\"ds-bcard-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--silver, #b9bcbe)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span>My voice AI books appointments into the CRM</span></li><li><svg class=\"ds-bcard-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--gold, #c9a96a)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span>Voice AI: 14 booked appointments a month, Aug to Sep 2026</span></li><li><svg class=\"ds-bcard-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--silver, #b9bcbe)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span>My Claude API and n8n workflow researches leads</span></li><li><svg class=\"ds-bcard-medal\" viewBox=\"0 0 40 40\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle cx=\"20\" cy=\"20\" r=\"19\" fill=\"var(--silver, #b9bcbe)\"/><circle cx=\"20\" cy=\"20\" r=\"14\" fill=\"none\" stroke=\"rgba(10, 15, 13, 0.35)\" stroke-width=\"1.5\"/><path d=\"M20 11l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z\" fill=\"rgba(10, 15, 13, 0.4)\"/></svg><span>I build AI software instead of buying it</span></li></ul><div class=\"ds-bcard-foot\"><p class=\"ds-bcard-lvl\"><span>Level</span><b>53</b></p><p class=\"ds-bcard-sig\"><b>Player 2</b><span>Signed here</span></p></div></figure></div>",
+      "css": ".ds-bcard-ground { padding: 28px; background: var(--ink, #0a0f0d); } .ds-bcard { --fin: var(--bronze, #9c6b43); position: relative; width: 340px; margin: 0; aspect-ratio: 4 / 5; container-type: inline-size; overflow: hidden; isolation: isolate; border-radius: 6px; color: var(--bone, #ede7db); background: linear-gradient(90deg, rgba(10, 15, 13, 0.86) 0%, rgba(10, 15, 13, 0.5) 50%, rgba(10, 15, 13, 0.12) 85%), radial-gradient(120% 90% at 60% 30%, #233a2f 0%, #14211c 55%, #0b110f 100%); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 30px 60px rgba(0, 0, 0, 0.55); animation: ds-mint 1.3s cubic-bezier(0.2, 0.7, 0.1, 1) both; } .ds-bcard::after { content: \"\"; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(10, 15, 13, 0.55) 0%, rgba(10, 15, 13, 0) 16%, rgba(10, 15, 13, 0) 36.8%, rgba(10, 15, 13, 0.82) 48%, rgba(10, 15, 13, 0.97) 80%); } .ds-bcard-frame { position: absolute; z-index: 2; inset: 2.6cqw; border: 0.2cqw solid var(--fin); pointer-events: none; } .ds-bcard-frame::after { content: \"\"; position: absolute; inset: 0.8cqw; border: 1px solid var(--fin); opacity: 0.45; } .ds-bcard-top, .ds-bcard-mid, .ds-bcard-proofs, .ds-bcard-foot { position: absolute; z-index: 3; left: 7.4cqw; right: 7.4cqw; margin: 0; } .ds-bcard p { margin: 0; } .ds-bcard-top { top: 8.6cqw; } .ds-bcard-name { font: 600 4.1cqw/1 'Cormorant Garamond', 'Cormorant', Garamond, serif; letter-spacing: 0.146em; text-transform: uppercase; } .ds-bcard-title { margin-top: 1.5cqw !important; font: 400 2.05cqw/1.2 'Hanken Grotesk', system-ui, sans-serif; color: var(--ash, #9a9890); } .ds-bcard-mid { top: 30cqw; right: auto; width: 56cqw; } .ds-bcard-class { font: 500 6.2cqw/1.06 'Cormorant Garamond', 'Cormorant', Garamond, serif; letter-spacing: 0.07em; text-transform: uppercase; } .ds-bcard-line { margin-top: 2.2cqw !important; max-width: 52cqw; font: 400 2.75cqw/1.42 'Hanken Grotesk', system-ui, sans-serif; color: var(--bone-2, #d9d2c4); } .ds-bcard-proofs { top: 72cqw; list-style: none; padding: 0; display: grid; gap: 2.6cqw; } .ds-bcard-proofs li { display: flex; align-items: center; gap: 1.6cqw; min-height: 7cqw; font: 500 2.6cqw/1.3 'Hanken Grotesk', system-ui, sans-serif; animation: ds-strike .7s cubic-bezier(0.2, 0.7, 0.1, 1) both; } .ds-bcard-proofs li:nth-child(1) { animation-delay: .55s; } .ds-bcard-proofs li:nth-child(2) { animation-delay: .7s; } .ds-bcard-proofs li:nth-child(3) { animation-delay: .85s; } .ds-bcard-proofs li:nth-child(4) { animation-delay: 1s; } .ds-bcard-medal { flex: none; width: 7cqw; height: 7cqw; margin-left: -0.6cqw; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)); } .ds-bcard-foot { bottom: 7.2cqw; display: flex; justify-content: space-between; align-items: flex-end; gap: 4cqw; } .ds-bcard-lvl { display: grid; gap: 0.6cqw; } .ds-bcard-lvl span { font: 500 1.7cqw/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing: 0.26em; text-transform: uppercase; color: var(--ash, #9a9890); } .ds-bcard-lvl b { font: 600 6cqw/0.86 'Cormorant Garamond', 'Cormorant', Garamond, serif; } .ds-bcard-sig { display: grid; gap: 0.8cqw; text-align: right; } .ds-bcard-sig b { font: 600 2.6cqw/1.1 'Hanken Grotesk', system-ui, sans-serif; } .ds-bcard-sig span { font: 400 2cqw/1.1 'Hanken Grotesk', system-ui, sans-serif; color: var(--ash, #9a9890); } @keyframes ds-mint { from { opacity: 0; transform: translateY(22px) scale(0.95); filter: brightness(1.7) saturate(0.6); } 60% { filter: brightness(1.15); } to { opacity: 1; transform: none; filter: none; } } @keyframes ds-strike { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } } @media (prefers-reduced-motion: reduce) { .ds-bcard, .ds-bcard-proofs li { animation: none; } }"
     }
   ],
   "narrative": {
-    "northStar": "The Instrument Cluster",
-    "overview": "The site is the dashboard of the car Jason drives to work, at night, with the ignition on. Facts are gauges with ivory faces and one red needle. What is true right now is a tell-tale lamp. Every action lives on a CarPlay screen, and the sale desk he built is a real iPhone on a dash mount that a visitor can run. The world is physical and specific: black dash leather with cognac stitching, brushed-chrome bezels, screens recessed into black seams, a signal-red needle. It refuses the dark portfolio hero with a showreel and a list of case studies.\n\nDensity is that of a cockpit: compact, everything in reach, the first viewport holds the whole story (who, what is true, whether Triple J is open, what to press). Type is one grotesque, heavy and tight at the top, sentence case everywhere, numerals tabular as they would be on a cluster. Depth is real: hardware casts shadows, screens sit inside bezels, leather carries a stitched seam. Motion borrows two grammars at once, the needle's damped ignition sweep and iOS springs for presses, sheets and pushes.\n\nThe Obavia page (/obavia.html) is the same world shaped as an App Store product page: a chrome-bezeled icon, an at-a-glance strip under a stitched hood, films in bezels, grouped lists, and a get bar. The films (tools/film/src/dash) render from the same palette and springs.",
+    "northStar": "The After Hours Library",
+    "overview": "The site is a flagship game console's home screen after close, and Jason's career is the library on it. Each title (Triple J Auto, Lead to Title, The Inbound, Prospector, Neuroscience, and Obavia as a small side quest) owns one piece of full-bleed cinematic key art, and the interface around it is the console's quiet chrome: a system bar, a shelf of square tiles, the focused title's logotype, role, summary and two stats, a trophy rack, a control legend. The room is dark, the art is lit, and the chrome stays out of the art's way.\n\nThe UI is achromatic on purpose. Grounds are green-black ink and lacquer, type and edges are bone, held states are bottle green from the suit in the headshot, and every hue a visitor sees comes from the key art (sodium amber, wet asphalt, a bottle-green night) or from a trophy's minted metal. Density is one title at a time: the home screen is a fixed composition, not a scroll, and an opened title or screen becomes its own page laid over the dimmed art in a single left-aligned column. Motion is slow and sure: one ease, nothing bounces or shakes, and the focus ring breathes. The world refuses the scrolling resume, the neon gamer HUD, and the effects-heavy dash that preceded it (retired; nothing from it survives).\n\nThis file governs the library world: the home page (index.html, generated from tools/site/home.body.html, styled by game.css, build.css and desk.css) and /obavia.html (game.css, desk.css, obavia.css). Two other worlds ship on the same domain and are not governed here. The proof pages (credentials, answers, profile, knowledge card, mentions, honor, search) use tokens.css and proof.css: an older world with its own lacquer, a gold chromatic accent, ivory type, pill buttons and overshooting springs. The resume pages (resume-pdf.html and resume/*.html) use resume.css: a print-first US Letter sheet, near-black on white, title case with no tracking, static fonts. Neither should borrow from this file, and this file should not borrow from them.",
     "keyCharacteristics": [
-      "One accent: needle red. Green and amber appear only as lamps that mean something.",
-      "One face: Hanken Grotesk, with Cormorant Garamond only on the JO badge.",
-      "Hardware, not cards: dials, a multifunction display, a CarPlay screen, a phone on a mount.",
-      "Recessed screens with stacked bezel rings instead of borders.",
-      "Stitched seams on leather surfaces.",
-      "iOS behavior on every control: sentence case, springs, press scale, sheets with a grabber."
+      "Full-bleed graded key art behind everything; its dark left side is where the type lives.",
+      "Achromatic chrome: ink grounds, bone actions and focus, bottle green for what is held.",
+      "Metal only on trophies: bronze, silver, gold, platinum medals and the build card's frame.",
+      "Tracked Cormorant Garamond capitals name things; Hanken Grotesk does all the reading.",
+      "Matte, near-opaque lacquer panels lit by one bone hairline on the top edge. No glass.",
+      "Square tiles with a breathing bone focus ring and two corner ticks.",
+      "One ease, cubic-bezier(0.2, 0.7, 0.1, 1); motion that settles, never overshoots."
     ],
     "rules": [
       {
-        "name": "The One Needle Rule",
-        "body": "Needle red is the only accent, and one red element leads each view. If two things on screen are red, one of them is wrong.",
+        "name": "The Key Art Carries the Colour Rule",
+        "body": "The chrome has no chromatic accent. Hue comes from the graded key art behind it; when a control needs emphasis it gets bone, not a colour.",
         "section": "colors"
       },
       {
-        "name": "The Lamp Truth Rule",
-        "body": "Green and amber are tell-tales, so they carry state: green is open now, amber is in development, an unlit lamp is #4b4641. Never use either as decoration or as a second accent.",
+        "name": "The Metal Means a Trophy Rule",
+        "body": "Bronze, silver, gold and platinum appear only where a trophy or the build card's finish is being shown. A metal on a button, a link or a heading is a bug.",
         "section": "colors"
       },
       {
-        "name": "The Brass Badge Rule",
-        "body": "Brass lives on the JO badge. Every other \"gold\" in the stylesheets resolves to the needle on dash pages; do not reintroduce brass anywhere else.",
+        "name": "The Bottle Holds, Bone Acts Rule",
+        "body": "Bottle green marks what is held or chosen; bone marks what you can act on and where focus is. A row can be bottle with a bone edge; a button is never bottle.",
         "section": "colors"
       },
       {
-        "name": "The One Face Rule",
-        "body": "Hanken Grotesk everywhere. Cormorant Garamond appears only inside the JO badge. On dash pages the serif token is remapped to the sans, so any inherited serif heading renders as Hanken.",
+        "name": "The Logotype Rule",
+        "body": "The name of a thing (a title, a screen, the person) is Cormorant capitals at 600 tracked 0.12em; secondary heads in the same voice drop to 500. On phones tracking tightens to 0.06 to 0.08em so a long name holds one or two lines.",
         "section": "typography"
       },
       {
-        "name": "The Sentence Case Rule",
-        "body": "Buttons, keys, tabs, labels and chips speak sentence case with zero tracking, like an iPhone. Uppercase appears only where the hardware prints it: the label on a gauge face.",
+        "name": "The Grotesk Does the Talking Rule",
+        "body": "Every sentence, every control and every figure that is chrome (the clock, the trophy count, step and menu numbers) is Hanken Grotesk. The serif only names things and sets the figures that are the point.",
         "section": "typography"
       },
       {
-        "name": "The Tabular Rule",
-        "body": "Every number that can change (clock, gauges, odometer, money, counts) is set with tabular numerals.",
+        "name": "The Label Is a Key Rule",
+        "body": "Small tracked capitals label a section, a control group or a value. They never sit above a headline to introduce it.",
         "section": "typography"
       },
       {
-        "name": "The Bezel Rule",
-        "body": "A screen never takes a plain border. It sits in rings: a hairline, a black seam, an edge.",
+        "name": "The One Hairline Rule",
+        "body": "A raised panel is lit by one bone hairline on its top edge. No border all round, no glow, no coloured edge.",
         "section": "elevation"
       },
       {
-        "name": "The Opaque Rule",
-        "body": "Backdrops are opaque washes (rgba(8, 7, 7, 0.86)); no backdrop blur, no frosted glass, anywhere.",
+        "name": "The Scrim Not Glass Rule",
+        "body": "Over art, legibility comes from ink scrims on the art and from near-opaque lacquer. Never backdrop blur, never a frosted panel.",
         "section": "elevation"
       },
       {
-        "name": "The Material Gradient Rule",
-        "body": "Gradients are materials: chrome on bezels and the badge, a vertical shade on leather, a radial on gauge faces, a dome light on the page. They never touch text.",
-        "section": "elevation"
+        "name": "The Pill Is a Choice or a Status Rule",
+        "body": "Pills are only for things you pick and for status capsules. A button that does something is a 3px plate.",
+        "section": "shapes"
       }
     ],
     "dos": [
-      "**Do** let exactly one needle-red element lead each view; make every other action a Key or a secondary pill.",
-      "**Do** set every changing number in tabular numerals.",
-      "**Do** recess screens in bezel rings and give leather surfaces the stitched seam inset 7 to 8px.",
-      "**Do** follow the radius ladder: round for dials and lamps, 22 to 28px screens, 10 to 18px keys and tiles, pills for buttons.",
-      "**Do** write controls in sentence case with zero tracking.",
-      "**Do** use the shared easings: ease cubic-bezier(0.16, 1, 0.3, 1), spring cubic-bezier(0.34, 1.56, 0.64, 1), press scale 0.95 in 0.12s; collapse all motion to 1ms under Still or reduced motion.",
-      "**Do** fire sound, haptic and motion in the same frame for choices, arrivals, sends and unlocks; skips and cancels stay silent and still.",
-      "**Do** label fictional people and example figures on every demo surface."
+      "**Do** keep the chrome achromatic: ink grounds, bone for actions and focus, bottle green for held states.",
+      "**Do** name titles, screens and the person in Cormorant Garamond 600 capitals tracked 0.12em, and set everything else in Hanken Grotesk.",
+      "**Do** use the one ease, cubic-bezier(0.2, 0.7, 0.1, 1), for every transition and entrance; keep symmetrical ease-in-out for the 2.4s breathe loop only.",
+      "**Do** raise a panel with the lacquer recipe: near-opaque lacquer, one bone hairline on the top edge, a long soft black shadow.",
+      "**Do** compose key art with its mass to the right and calm shadow on the left for type, graded through the one recipe (tools/art/grade.py), with no people, readable text, signage, logos or neon.",
+      "**Do** size the build card in container units so the page and the 1080 by 1350 PNG are the same card.",
+      "**Do** let phone entrances fade only wherever a fixed bar sits on screen.",
+      "**Do** honour reduced motion: stop the loops, the dolly, the grain and the mint, and show every scene finished."
     ],
     "donts": [
-      "**Don't** add a second accent, and don't use lamp green or amber for anything but their state.",
-      "**Don't** use brass anywhere but the JO badge.",
-      "**Don't** set anything in Cormorant Garamond outside the badge, or in any third face.",
-      "**Don't** put gradients on text, blur behind a surface, or frost a sheet.",
-      "**Don't** use em dashes in any copy.",
-      "**Don't** lay three cards in a row, or use emoji as icons; icons are inline SVG line glyphs.",
-      "**Don't** give a screen a plain 1px border in place of its bezel.",
-      "**Don't** let the phone's light iOS colors leak onto the dash."
+      "**Don't** add a chromatic UI accent: no red, no blue links, no coloured buttons. The retired dash's red does not come back, not even inside the desk demo.",
+      "**Don't** put a metal on anything that is not a trophy or the build card's finish.",
+      "**Don't** use backdrop blur, frosted panels or a gradient on text.",
+      "**Don't** set a small tracked label above a headline as a kicker.",
+      "**Don't** round a button into a pill, or square off a choice chip.",
+      "**Don't** let anything bounce or overshoot, including the desk demo's iOS screens.",
+      "**Don't** use a font other than Cormorant Garamond and Hanken Grotesk.",
+      "**Don't** use em dashes, en dashes, emoji as icons, or three-card rows.",
+      "**Don't** let the proof pages' gold accent and springs, or the resume pages' print sheet, leak into the library."
     ]
   }
 }
