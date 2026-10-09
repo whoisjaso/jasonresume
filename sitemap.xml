@@ -332,4 +332,14 @@
       <video:live>no</video:live>
     </video:video>
   </url>
+  <url>
+    <loc>https://jasonobawemimo.com/stp</loc>
+    <lastmod>2026-10-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://jasonobawemimo.com/assets/stp/og-stp.jpg</image:loc>
+      <image:title>Stop Thinking Poor. No caption, just action.</image:title>
+    </image:image>
+  </url>
 </urlset>

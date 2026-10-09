@@ -29,6 +29,8 @@ const ALLOWED = new Set([
   // Player 2: the build, the card, the listing match, the send
   "build_shown", "build_chosen", "build_skipped", "build_edited", "build_opened", "build_viewed", "card_saved", "build_link_copied",
   "listing_matched", "build_resume", "build_sent",
+  // Stop Thinking Poor, the mentorship page at /stp
+  "stp_video_play", "stp_video_complete", "stp_apply_started", "stp_apply_sent",
   // conversion
   "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent",
   // older pages still in the wild

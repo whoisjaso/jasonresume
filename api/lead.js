@@ -1,4 +1,8 @@
-// Two kinds of note reach Jason here. kind "build": a visitor who built a
+// Three kinds of note reach Jason here. kind "stp": an application to Stop
+// Thinking Poor, the mentorship at /stp (who they are, which of the three
+// they want most, what they desire, what they believe about themselves, how
+// soon they are ready); a fixed summary, no model writes any of it, and the
+// page then sends them to book the call. kind "build": a visitor who built a
 // Player 2 card on the home page sends it (the reading or lot problem, the
 // proofs they equipped, the link that rebuilds it, the listing terms that
 // matched, their note); it is a fixed summary, no model writes any of it.
@@ -39,6 +43,25 @@ async function buildNote(req, res, b, ip) {
   return res.status(200).json({ ok: true, delivered: sent.sent });
 }
 
+const STP_PILLARS = { belief: "Belief alignment", identity: "Ego and identity", ai: "AI and income" };
+const STP_READY = { now: "ready now", month: "within the month", deciding: "still deciding" };
+
+async function stpNote(req, res, b, ip) {
+  const email = STR(b.email, 120).toLowerCase(), name = STR(b.name, 60);
+  const ig = STR(b.instagram, 40).replace(/^@+/, "").replace(/[^\w.]/g, "");
+  const desire = STR(b.desire, 600), belief = STR(b.belief, 600);
+  if (!name || !EMAIL_OK(email)) return res.status(400).json({ error: "name and a real email, please" });
+  const pillar = STP_PILLARS[b.pillar] ? b.pillar : "";
+  const ready = STP_READY[b.ready] ? b.ready : "";
+  if (!pillar || !ready || !desire || !belief) return res.status(400).json({ error: "answer every question, please" });
+  await capture("stp_application", "lead:" + email, { pillar, ready, has_instagram: !!ig, desire_len: desire.length, belief_len: belief.length, $ip: ip }, { name, email, role: "stp" });
+  const facts = `Who: ${name} (${email})\nInstagram: ${ig ? "@" + ig + " (https://www.instagram.com/" + ig + "/)" : "not given"}\nWants most: ${STP_PILLARS[pillar]}\nReady to act: ${STP_READY[ready]}\nWhat they desire: ${desire}\nWhat they believe about themselves: ${belief}`;
+  const subject = `Stop Thinking Poor application: ${name}`;
+  const html = `<div style="font:15px/1.55 -apple-system,Helvetica,Arial,sans-serif;color:#1a1a1a;max-width:640px"><pre style="white-space:pre-wrap;font:inherit">${esc(facts)}</pre><p style="color:#666;margin-top:18px">They were sent to book the call next. Reply to reach them: ${esc(email)}</p></div>`;
+  const sent = await sendMail({ to: NOTIFY_TO, subject, text: facts + `\n\nThey were sent to book the call next. Reply to this email to reach them: ${email}`, html, replyTo: email });
+  return res.status(200).json({ ok: true, delivered: sent.sent });
+}
+
 const BOUNDARY = `Obavia is a dealership sale desk in development for Texas independent dealers: every sale, start to signed, one question per screen. It handles cash, buy here pay here and bank financing, works out Texas sales tax, title, registration and the dealer's doc fee, fills the bill of sale and Form 130-U from the deal, gives rebuilt and salvage titles their own disclosures, and the buyer signs at the desk. It grew out of Handle a Sale, the CRM and sale desk Jason built for Triple J Auto Investment, the Houston dealership he owns and operates. It is not live: never say dealers use it, never claim customers, results, a percentage or any outcome. Text it to sign, Reach (Facebook Marketplace posting from the salesperson's own phone) and dealer websites are in development, not live. Pricing is not published; never quote a price. Early access is a conversation, not an account.`;
 
 const BRIEF_SYSTEM = `You prepare Jason Obawemimo for a thirty-minute call with a Texas dealer who asked about early access to Obavia. ${BOUNDARY} Write a pre-call brief for Jason only. Plain text, no markdown, no headings, no bullets, no emoji, no em dashes. Four short paragraphs at most: who they are and what they said, in their words where possible; the likely paperwork pain behind it (title packets coming back from the county, the 130-U seller line, the doc fee and tax math, buy here pay here paperwork, a process that lives in one person's head) stated as a guess and labeled as a guess; three questions Jason should ask first, reusing the dealer's own words; one thing to avoid promising. Never invent facts about the dealership. Under 180 words.`;
@@ -54,6 +77,7 @@ export default async function handler(req, res) {
   const b = readBody(req);
   if (STR(b.website, 10)) return res.status(200).json({ ok: true, delivered: true }); // honeypot filled: pretend
   if (b.kind === "build") return buildNote(req, res, b, ip);
+  if (b.kind === "stp") return stpNote(req, res, b, ip);
   const name = STR(b.name, 60), dealership = STR(b.dealership, 80), city = STR(b.city, 60), system = STR(b.system, 80), email = STR(b.email, 120).toLowerCase();
   const volume = VOLUME.has(b.volume) ? b.volume : "unsure", pay = PAY.has(b.pay) ? b.pay : "unsure";
   const note = STR(b.note, 900), booked = b.booked === true || b.booked === "yes";
