@@ -30,6 +30,7 @@ Stings (`start`, `open`, `select`, four trophies, `level-clear`) and three ticks
 | `sampler.py` | A deterministic offline SFZ renderer (polyphase pitch shifting, velocity crossfades, round robins, release triggers, sustain pedal). `sfizz_render` 1.2.3 was tried and rejected: it streams samples on a background thread and randomly rendered only the first fraction of a second of some notes. |
 | `audiolib.py` | Filters, EQ, convolution reverb, calibrated tape saturation, true-peak limiter, loudness (BS.1770), encoding, spectrograms. |
 | `render.py` | Renders, mixes, folds and balances the stems, renders stings and ticks, encodes Opus/AAC/MP3 into `assets/score/`, writes `score.json`. |
+| `gapless.py` | Encodes each loop with real audio on both sides of the seam and trims it with the formats' own metadata (Opus pre-skip and final granule, AAC edit list, LAME delay and padding), so the decoded loop has no codec tick at the wrap. |
 | `verify.py` | Decodes every file back, checks lengths, priming and padding, seams, loudness, true peak, clipping and sizes, and draws spectrograms. |
 
 ## Re-render
@@ -85,3 +86,7 @@ python3 verify.py        # report + spectrograms in $SCORE_WORK/out/score_spectr
 ## Credits
 
 Salamander Grand Piano by Alexander Holm, CC BY 3.0 (the credit line is required and is in `score.json`). VSCO 2 Community Edition and the Versilian Community Sample Library by Versilian Studios (Sam Gossner) and Ivy Audio (Simon Dalzell), CC0. Impulse responses Going Home and Ruby Room by Aleksey Vaneev (Voxengo), free for commercial use; the IR files themselves may not be redistributed, so they are never committed. The plate reverb is synthesized in `audiolib.py`.
+
+## What ships
+
+The site ships the Opus (.ogg) and AAC (.m4a) files only: every browser that can play the library plays one of the two, and score.js falls back to the .m4a. After a render, delete the .mp3 files and their entries in score.json before committing (`python3 -c "import json,glob,os; p='assets/score/score.json'; d=json.load(open(p)); f=lambda o: (o.pop('mp3',None), [f(v) for v in o.values()]) if isinstance(o,dict) else [f(v) for v in o] if isinstance(o,list) else None; f(d); json.dump(d,open(p,'w'),indent=1); [os.remove(x) for x in glob.glob('assets/score/*.mp3')]"`). One visitor downloads one format, about 7 MB for the whole score.

@@ -19,6 +19,7 @@ import soundfile as sf
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import audiolib as A
+import gapless
 import score as S
 from sampler import Instrument
 
@@ -75,8 +76,8 @@ PART = {
     'obavia': {'trem_lo': (0.25, -27.5, {}), 'trem_hi': (-0.25, -27.5, {}), 'voice': (0.0, -24.0, {'lpf': 4500}),
                'voice_glass': (0.0, -30.0, {})},
 }
-AIR_DB = {'bed': 1.5, 'lead-to-title': 1.5, 'prospector': 1.5}
-REVERBS = {'hall': (18.0, 180.0, 8500.0, 1.0), 'chamber': (6.0, 220.0, 9000.0, 0.9), 'plate': (10.0, 300.0, 10000.0, 0.8)}
+AIR_DB = {'bed': 3.0, 'lead-to-title': 2.0, 'prospector': 2.0}
+REVERBS = {'hall': (18.0, 180.0, 11000.0, 1.0), 'chamber': (6.0, 220.0, 11000.0, 0.9), 'plate': (10.0, 300.0, 11000.0, 0.8)}
 _INST = {}
 _IRS = {}
 
@@ -182,7 +183,7 @@ def render_stem(layer):
         report[name] = dict(info, lufs=round(A.lufs(x), 1))
     stem = dry + reverb_returns(sends, TOTAL)
     # a little air on every stem (the sampled strings and felt are dark)
-    stem = A.eq(stem, [('highshelf', 7000, AIR_DB.get(layer, 2.0), 0.7)])
+    stem = A.eq(stem, [('highshelf', 7000, AIR_DB.get(layer, 2.5), 0.7)])
     end_db = 20 * np.log10(np.abs(stem[-int(0.5 * SR):]).max() + 1e-12) - A.peak_db(stem)
     loop = fold(stem)
     return loop, report, end_db
@@ -213,7 +214,11 @@ def render_sting(name):
             cfg['hpf'] = 70
         if name.startswith('trophy'):
             cfg['send'] = dict(cfg.get('send', {}), plate=cfg.get('send', {}).get('plate', 0.0) + 0.12)
-        if cfg.get('hpf'):
+        if sfz == 'piano':                 # keep hammer and soundboard thumps out of the stings
+            x = A.hpf(x, 55 if name in ('start', 'level-clear') else 100, 4)
+        elif sfz == 'chimes':
+            x = A.hpf(x, 300, 4)
+        elif cfg.get('hpf'):
             x = A.hpf(x, cfg['hpf'], 2)
         x = A.eq(x, cfg.get('eq', []))
         dry += x
@@ -243,7 +248,7 @@ def render_ticks():
         total = int(0.6 * SR)
         a = inst('felt').render([(0.0, 0.05, q, 38 + 3 * k)], total)
         b = inst('vibes_short').render([(0.0, 0.05, q, 30)], total)
-        y = 0.7 * A.hpf(a, 600, 2) + 0.8 * A.hpf(b, 450, 2)
+        y = 0.5 * A.hpf(a, 700, 2) + 1.0 * A.hpf(b, 450, 2)
         t = np.arange(total) / SR
         env = np.exp(-t / 0.055)
         env[t > 0.16] *= 0.5 + 0.5 * np.cos(np.pi * np.clip((t[t > 0.16] - 0.16) / 0.06, 0, 1))
@@ -309,10 +314,13 @@ def main():
         report['tp_trim_db'] = round(20 * np.log10(trim), 2)
     manifest = {'bpm': S.BPM, 'beatsPerBar': S.BEATS_PER_BAR, 'loopSeconds': N / SR, 'master': 0.9,
                 'stems': {}, 'levels': dict(LEVELS), 'stings': {}, 'stingGain': {}, 'ticks': [], 'tickGain': TICK_GAIN}
+    report['gapless'] = {}
     for k in layers:
         w = os.path.join(WAV, '%s.wav' % k)
         sf.write(w, stems[k], SR, subtype='PCM_24')
-        manifest['stems'][k] = encode(w, os.path.join(ASSETS, k), 96)
+        q = sf.read(w, always_2d=True)[0]          # encode exactly what the 24-bit master holds
+        manifest['stems'][k], report['gapless'][k] = gapless.encode_loop(q, os.path.join(ASSETS, k), A.FFMPEG, SR,
+                                                                         96, 128, 160, tmpdir=WAV)
     # ---- stings and ticks
     for name in S.STINGS:
         w = os.path.join(WAV, 'sting_%s.wav' % name)

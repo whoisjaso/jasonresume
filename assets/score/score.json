@@ -1,123 +1,105 @@
 {
-  "bpm": 64.0,
-  "beatsPerBar": 4,
-  "loopSeconds": 60.0,
-  "master": 0.9,
-  "stems": {
-    "bed": {
-      "ogg": "bed.ogg",
-      "m4a": "bed.m4a",
-      "mp3": "bed.mp3"
-    },
-    "triple-j": {
-      "ogg": "triple-j.ogg",
-      "m4a": "triple-j.m4a",
-      "mp3": "triple-j.mp3"
-    },
-    "lead-to-title": {
-      "ogg": "lead-to-title.ogg",
-      "m4a": "lead-to-title.m4a",
-      "mp3": "lead-to-title.mp3"
-    },
-    "the-inbound": {
-      "ogg": "the-inbound.ogg",
-      "m4a": "the-inbound.m4a",
-      "mp3": "the-inbound.mp3"
-    },
-    "prospector": {
-      "ogg": "prospector.ogg",
-      "m4a": "prospector.m4a",
-      "mp3": "prospector.mp3"
-    },
-    "neuroscience": {
-      "ogg": "neuroscience.ogg",
-      "m4a": "neuroscience.m4a",
-      "mp3": "neuroscience.mp3"
-    },
-    "obavia": {
-      "ogg": "obavia.ogg",
-      "m4a": "obavia.m4a",
-      "mp3": "obavia.mp3"
-    }
+ "bpm": 64.0,
+ "beatsPerBar": 4,
+ "loopSeconds": 60.0,
+ "master": 0.9,
+ "stems": {
+  "bed": {
+   "ogg": "bed.ogg",
+   "m4a": "bed.m4a"
   },
-  "levels": {
-    "bed": 0.85,
-    "triple-j": 0.8,
-    "lead-to-title": 0.8,
-    "the-inbound": 0.8,
-    "prospector": 0.8,
-    "neuroscience": 0.8,
-    "obavia": 0.8
+  "triple-j": {
+   "ogg": "triple-j.ogg",
+   "m4a": "triple-j.m4a"
   },
-  "stings": {
-    "start": {
-      "ogg": "sting-start.ogg",
-      "m4a": "sting-start.m4a",
-      "mp3": "sting-start.mp3"
-    },
-    "open": {
-      "ogg": "sting-open.ogg",
-      "m4a": "sting-open.m4a",
-      "mp3": "sting-open.mp3"
-    },
-    "select": {
-      "ogg": "sting-select.ogg",
-      "m4a": "sting-select.m4a",
-      "mp3": "sting-select.mp3"
-    },
-    "trophy-bronze": {
-      "ogg": "sting-trophy-bronze.ogg",
-      "m4a": "sting-trophy-bronze.m4a",
-      "mp3": "sting-trophy-bronze.mp3"
-    },
-    "trophy-silver": {
-      "ogg": "sting-trophy-silver.ogg",
-      "m4a": "sting-trophy-silver.m4a",
-      "mp3": "sting-trophy-silver.mp3"
-    },
-    "trophy-gold": {
-      "ogg": "sting-trophy-gold.ogg",
-      "m4a": "sting-trophy-gold.m4a",
-      "mp3": "sting-trophy-gold.mp3"
-    },
-    "trophy-platinum": {
-      "ogg": "sting-trophy-platinum.ogg",
-      "m4a": "sting-trophy-platinum.m4a",
-      "mp3": "sting-trophy-platinum.mp3"
-    },
-    "level-clear": {
-      "ogg": "sting-level-clear.ogg",
-      "m4a": "sting-level-clear.m4a",
-      "mp3": "sting-level-clear.mp3"
-    }
+  "lead-to-title": {
+   "ogg": "lead-to-title.ogg",
+   "m4a": "lead-to-title.m4a"
   },
-  "stingGain": {
-    "start": 1.0,
-    "open": 1.0,
-    "select": 1.0,
-    "trophy-bronze": 1.0,
-    "trophy-silver": 1.0,
-    "trophy-gold": 1.0,
-    "trophy-platinum": 1.0,
-    "level-clear": 1.0
+  "the-inbound": {
+   "ogg": "the-inbound.ogg",
+   "m4a": "the-inbound.m4a"
   },
-  "ticks": [
-    {
-      "ogg": "tick-1.ogg",
-      "m4a": "tick-1.m4a",
-      "mp3": "tick-1.mp3"
-    },
-    {
-      "ogg": "tick-2.ogg",
-      "m4a": "tick-2.m4a",
-      "mp3": "tick-2.mp3"
-    },
-    {
-      "ogg": "tick-3.ogg",
-      "m4a": "tick-3.m4a",
-      "mp3": "tick-3.mp3"
-    }
-  ],
-  "tickGain": 0.5,
-  "credits": "Salamander Grand Piano by Alexander Holm, CC BY 3.0; strings, felt upright piano, vibraphone, marimba, hand chimes and suspended cymbal from VSCO 2 Community Edition and the Versilian Community Sample Library by Versilian Studios (Sam Gossner) and Ivy Audio (Simon Dalzell), CC0; Going Home and Ruby Room reverb impulse responses by Aleksey Vaneev of Voxengo, free for commercial use under the Voxengo impulse license."
+  "prospector": {
+   "ogg": "prospector.ogg",
+   "m4a": "prospector.m4a"
+  },
+  "neuroscience": {
+   "ogg": "neuroscience.ogg",
+   "m4a": "neuroscience.m4a"
+  },
+  "obavia": {
+   "ogg": "obavia.ogg",
+   "m4a": "obavia.m4a"
+  }
+ },
+ "levels": {
+  "bed": 0.85,
+  "triple-j": 0.8,
+  "lead-to-title": 0.8,
+  "the-inbound": 0.8,
+  "prospector": 0.8,
+  "neuroscience": 0.8,
+  "obavia": 0.8
+ },
+ "stings": {
+  "start": {
+   "ogg": "sting-start.ogg",
+   "m4a": "sting-start.m4a"
+  },
+  "open": {
+   "ogg": "sting-open.ogg",
+   "m4a": "sting-open.m4a"
+  },
+  "select": {
+   "ogg": "sting-select.ogg",
+   "m4a": "sting-select.m4a"
+  },
+  "trophy-bronze": {
+   "ogg": "sting-trophy-bronze.ogg",
+   "m4a": "sting-trophy-bronze.m4a"
+  },
+  "trophy-silver": {
+   "ogg": "sting-trophy-silver.ogg",
+   "m4a": "sting-trophy-silver.m4a"
+  },
+  "trophy-gold": {
+   "ogg": "sting-trophy-gold.ogg",
+   "m4a": "sting-trophy-gold.m4a"
+  },
+  "trophy-platinum": {
+   "ogg": "sting-trophy-platinum.ogg",
+   "m4a": "sting-trophy-platinum.m4a"
+  },
+  "level-clear": {
+   "ogg": "sting-level-clear.ogg",
+   "m4a": "sting-level-clear.m4a"
+  }
+ },
+ "stingGain": {
+  "start": 1.0,
+  "open": 1.0,
+  "select": 1.0,
+  "trophy-bronze": 1.0,
+  "trophy-silver": 1.0,
+  "trophy-gold": 1.0,
+  "trophy-platinum": 1.0,
+  "level-clear": 1.0
+ },
+ "ticks": [
+  {
+   "ogg": "tick-1.ogg",
+   "m4a": "tick-1.m4a"
+  },
+  {
+   "ogg": "tick-2.ogg",
+   "m4a": "tick-2.m4a"
+  },
+  {
+   "ogg": "tick-3.ogg",
+   "m4a": "tick-3.m4a"
+  }
+ ],
+ "tickGain": 0.5,
+ "credits": "Salamander Grand Piano by Alexander Holm, CC BY 3.0; strings, felt upright piano, vibraphone, marimba, hand chimes and suspended cymbal from VSCO 2 Community Edition and the Versilian Community Sample Library by Versilian Studios (Sam Gossner) and Ivy Audio (Simon Dalzell), CC0; Going Home and Ruby Room reverb impulse responses by Aleksey Vaneev of Voxengo, free for commercial use under the Voxengo impulse license."
 }
