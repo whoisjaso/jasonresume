@@ -3,7 +3,9 @@
 # key art plate, an 8-second seamless loop at 1920 x 1080, 30 fps, where one
 # light behaves over the graded still (src/library). game.js swaps them in when
 # a visitor rests on a title; assemble_home.py adds the <video> only for ids
-# whose .mp4 and .webm both exist.
+# whose .mp4 and .webm both exist. A title whose library.json entry names an
+# "art" stem (a regraded plate under a new filename, since /assets/ is cached
+# immutable for a year) reads <stem>-1920.webp and writes <stem>.mp4 and .webm.
 # Run from tools/film: sh render-library.sh [id ...]   (no ids renders all six)
 # Needs: Chromium (REMOTION_BROWSER), python3 with Pillow (or dwebp) to turn the
 # webp plates into PNG with libwebp, the decoder browsers use for the still, so
@@ -19,6 +21,11 @@ ids="$*"
 mkdir -p public/library out/library "$OUT"
 
 ff() { if [ -n "$FFMPEG" ]; then "$FFMPEG" "$@"; else npx remotion ffmpeg "$@"; fi; }
+
+# the file stem for a title id: library.json's "art" if it names one, else the id
+stem() {
+  python3 -c "import json,sys; t={x['id']:x for x in json.load(open(sys.argv[1]))['titles']}; print(t.get(sys.argv[2],{}).get('art') or sys.argv[2])" ../site/library.json "$1"
+}
 
 comp() {
   case $1 in
@@ -37,7 +44,7 @@ comp() {
 vcrf() { case $1 in prospector) echo 33 ;; *) echo 31 ;; esac; }
 
 plate() {
-  src=$ART/$1-1920.webp
+  src=$ART/$(stem "$1")-1920.webp
   dst=public/library/$1.png
   if python3 -c "import PIL" 2>/dev/null; then
     python3 -c "import sys; from PIL import Image; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2])" "$src" "$dst"
@@ -55,6 +62,7 @@ VF="scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_ch
 
 for id in $ids; do
   c=$(comp "$id")
+  s=$(stem "$id")
   if [ -n "$REUSE" ] && [ -f "out/library/$id/239.png" ]; then
     echo "re-encoding $id from kept frames"
   else
@@ -72,10 +80,10 @@ for id in $ids; do
   # quality (-b:v 0): a bitrate cap makes it refresh the golden frame and the
   # seam comes back.
   ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libx264 -preset slow -crf 27 -tune grain -g 240 \
-    -x264-params "zones=0,0,q=22/225,239,q=23" $COLOR -movflags +faststart -an "$OUT/$id.mp4"
+    -x264-params "zones=0,0,q=22/225,239,q=23" $COLOR -movflags +faststart -an "$OUT/$s.mp4"
   ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libvpx-vp9 -b:v 0 -crf "$(vcrf "$id")" -row-mt 1 \
-    -deadline good -cpu-used 2 -g 240 $COLOR -an "$OUT/$id.webm"
+    -deadline good -cpu-used 2 -g 240 $COLOR -an "$OUT/$s.webm"
   [ -n "$KEEP" ] || rm -rf "out/library/$id"
-  ls -l "$OUT/$id.mp4" "$OUT/$id.webm"
+  ls -l "$OUT/$s.mp4" "$OUT/$s.webm"
 done
 echo DONE

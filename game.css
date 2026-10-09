@@ -23,6 +23,11 @@
   --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
   --pad: clamp(16px, 4.7vw, 72px);
   --bar: 76px;
+  /* the library row: a tile and the focused tile; the row's bottom edge is where the focused title may start */
+  --tile: 136px;
+  --tile-f: 162px;
+  --shelf-b: calc(96px + 20px + 8px + var(--tile-f) + 14px + 23px + 8px);
+  --head-b: 112px;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -98,8 +103,11 @@ html:not(.lib-on) .sys { position: absolute; }
 .plate { position: absolute; inset: 0; opacity: 0; transition: opacity .9s var(--ease); }
 .plate.is-on { opacity: 1; }
 .plate__img, .plate__loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; }
-.plate.is-on .plate__img { animation: dolly 20s var(--ease) both; }
+/* the dolly moves the plate, so the still and its loop share one scale and the dissolve between them holds still */
+.plate.is-on { animation: dolly 20s var(--ease) both; }
 .plate__loop { opacity: 0; transition: opacity 1.2s var(--ease); }
+/* a phone shows the still's portrait crop but the loop's whole frame: --lx (assemble_home.py, from frames.json) puts the loop over the same part of the frame */
+@media (max-width: 760px) { .plate .plate__loop { object-position: var(--lx, 62%) 50%; } }
 .plate.is-live .plate__loop { opacity: 1; }
 @keyframes dolly { from { transform: scale(1.0); } to { transform: scale(1.02); } }
 .stage__shade { position: absolute; inset: 0; background: radial-gradient(42% 26% at 82% 0%, rgba(10, 15, 13, .62) 0%, rgba(10, 15, 13, 0) 100%), linear-gradient(90deg, rgba(10, 15, 13, 0.55) 0%, rgba(10, 15, 13, 0.18) 46%, rgba(10, 15, 13, 0) 70%), linear-gradient(180deg, rgba(10, 15, 13, 0.8) 0%, rgba(10, 15, 13, 0) 18%, rgba(10, 15, 13, 0) 52%, rgba(10, 15, 13, 0.62) 100%); transition: background .6s var(--ease); }
@@ -115,18 +123,22 @@ html:not(.lib-on) .sys { position: absolute; }
 .lib-on .shelf__row { list-style: none; margin: 0; padding: 20px var(--pad) 28px calc(var(--pad) - 8px); display: flex; align-items: flex-start; gap: 30px; overflow-x: auto; scrollbar-width: none; scroll-padding-left: var(--pad); }
 .lib-on .shelf__row::-webkit-scrollbar { display: none; }
 .lib-on .shelf__row > li { flex: none; }
-.tile { --s: 136px; display: grid; gap: 14px; width: calc(var(--s) + 20px); text-decoration: none; color: var(--bone); padding: 8px; margin-top: 12px; border-radius: 10px; outline: none; transition: transform .6s var(--ease), margin .36s var(--ease); }
+.tile { --s: var(--tile); display: grid; gap: 14px; width: calc(var(--s) + 20px); text-decoration: none; color: var(--bone); padding: 8px; margin-top: 12px; border-radius: 10px; outline: none; transition: transform .6s var(--ease), margin .36s var(--ease); }
 .tile__frame { position: relative; display: block; width: var(--s); height: var(--s); border-radius: 6px; transition: width .36s var(--ease), height .36s var(--ease); }
 .tile__img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; background: var(--lacquer-2); box-shadow: inset 0 0 0 1px var(--hair), 0 10px 24px rgba(0, 0, 0, .5); }
 .tile__frame::after { content: ""; position: absolute; inset: -8px; border-radius: 11px; border: 3px solid var(--bone); opacity: 0; transform: scale(0.97); transition: opacity .36s var(--ease), transform .36s var(--ease); pointer-events: none; }
 .tile__name { font: 400 16px/1.2 var(--sans); white-space: nowrap; transition: font-size .36s var(--ease); }
-.tile__tag { display: block; margin-top: -10px; font: 400 13px/1.2 var(--sans); color: var(--ash); }
+.tile__tag { display: block; margin-top: -10px; font: 400 13px/1.2 var(--sans); color: var(--ash); white-space: nowrap; }
+/* the labels sit across the plate's band of lamp heads at every height, so they carry their own ink: a halo
+   on the names, and the claims tag set as a hairline tag on an opaque lacquer fill */
+.tile__name, .tile__tag { text-shadow: 0 0 2px var(--ink), 0 0 10px var(--ink), 0 0 18px rgba(10, 15, 13, .8); }
+.tile__tag { justify-self: start; margin-top: -12px; padding: 2px 8px; background: var(--lacquer); border: 1px solid var(--hair-2); border-radius: 3px; text-shadow: none; box-shadow: 0 0 14px 4px rgba(10, 15, 13, .55); }
 .tile.is-focus { margin-top: 0; }
-.tile.is-focus .tile__frame { width: 162px; height: 162px; }
+.tile.is-focus .tile__frame { width: var(--tile-f); height: var(--tile-f); }
 .tile.is-focus .tile__frame::after { opacity: 1; transform: none; animation: breathe 2.4s ease-in-out infinite; }
 .tile.is-focus .tile__name { font-size: 19px; font-weight: 500; }
-.tile[data-size="sm"] { --s: 120px; }
-.tile[data-size="sm"].is-focus .tile__frame { width: 140px; height: 140px; }
+.tile[data-size="sm"] { --s: calc(var(--tile) * 0.882); }
+.tile[data-size="sm"].is-focus .tile__frame { width: calc(var(--tile-f) * 0.864); height: calc(var(--tile-f) * 0.864); }
 .tile:focus-visible .tile__frame::after { opacity: 1; transform: none; }
 .tile:hover .tile__img { filter: brightness(1.06); }
 @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.82; } }
@@ -219,7 +231,10 @@ html:not(.lib-on) .legend, .title-open .legend, .screen-open .legend { display: 
    SCREENS: trophies, profile, proofs
    ========================================================================= */
 .lib-on .screen { display: none; }
-.lib-on .screen.is-open { display: block; position: fixed; inset: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain; padding: 120px var(--pad) 100px; animation: rise .6s var(--ease) both; }
+.lib-on .screen.is-open { display: block; position: fixed; inset: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain; padding: 120px var(--pad) 100px; animation: rise .6s var(--ease) backwards; }
+/* a solid band of ink under the fixed chrome (Back, and the bar's Resume, Email and Score): what scrolls goes under it, not through it.
+   The rise above fills backwards only: a transform left on the screen would carry Back and the band away with the scroll. */
+.lib-on .screen.is-open::before { content: ""; position: fixed; z-index: 4; top: 0; left: 0; right: 0; height: var(--bar); background: var(--ink); }
 .screen__back { position: fixed; z-index: 5; top: 20px; left: calc(var(--pad) - 6px); display: none; }
 .lib-on .screen.is-open .screen__back { display: inline-flex; }
 .screen__head { max-width: 900px; margin-bottom: 30px; }
@@ -440,7 +455,7 @@ html.intro-pending body > :not(#intro):not(script):not(dialog):not(.toasts) { vi
    ========================================================================= */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .15s !important; }
-  .plate.is-on .plate__img, .intro__art img { animation: none; }
+  .plate.is-on, .intro__art img { animation: none; }
   .stage__grain { animation: none; }
 }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .5s; animation-timing-function: var(--ease); }
@@ -482,7 +497,8 @@ html.intro-pending body > :not(#intro):not(script):not(dialog):not(.toasts) { vi
 /* status toasts stack their title over the line; the title screen keeps Skip legible over bright art */
 .toast--status { flex-direction: column; align-items: flex-start; gap: 0; }
 .toast--status .toast__s { margin-top: 4px; }
-.intro:not(.is-started) .intro__shade { background: linear-gradient(180deg, rgba(10, 15, 13, .8) 0%, rgba(10, 15, 13, .55) 8%, rgba(10, 15, 13, 0) 22%), linear-gradient(90deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .45) 42%, rgba(10, 15, 13, .05) 75%), linear-gradient(0deg, rgba(10, 15, 13, .75) 0%, rgba(10, 15, 13, 0) 45%); }
+/* the name runs to about 0.65 of the width, across the car row: the side shade holds through it, then lets the lot read */
+.intro:not(.is-started) .intro__shade { background: linear-gradient(180deg, rgba(10, 15, 13, .8) 0%, rgba(10, 15, 13, .55) 8%, rgba(10, 15, 13, 0) 22%), linear-gradient(90deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .64) 50%, rgba(10, 15, 13, .5) 64%, rgba(10, 15, 13, .05) 84%), linear-gradient(0deg, rgba(10, 15, 13, .75) 0%, rgba(10, 15, 13, 0) 45%); }
 @media (max-width: 899px) { .intro:not(.is-started) .intro__shade { background: linear-gradient(180deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .7) 7%, rgba(10, 15, 13, 0) 22%), linear-gradient(0deg, rgba(10, 15, 13, .94) 0%, rgba(10, 15, 13, .7) 40%, rgba(10, 15, 13, .1) 75%); } }
 
 /* finish review: the focused tile carries two corner ticks outside its ring */
@@ -502,4 +518,42 @@ html.intro-pending body > :not(#intro):not(script):not(dialog):not(.toasts) { vi
 }
 @media (max-width: 430px) {
   .sys__tro b { display: none; }
+}
+
+/* ---------- the focused title never rides up under the library row ----------
+   It hangs from the foot of the screen, but its top is held below the row's bottom
+   edge: the head is a column from there down and the logotype's auto margin takes
+   the slack. Four numbers share one row on a wide screen; a short screen scales the
+   tiles, the logotype and the numerals with its height. */
+@media (min-width: 900px) {
+  .lib-on article.title:not(.is-open) .title__head { top: calc(var(--shelf-b) + 14px); bottom: var(--head-b); display: flex; flex-direction: column; align-items: flex-start; }
+  .lib-on article.title:not(.is-open) .title__logo { margin-top: auto; }
+}
+@media (min-width: 900px) {
+  .lib-on article.title:not(.is-open) .title__stats:has(> .stat:nth-child(4)) { flex-wrap: nowrap; }
+  .lib-on article.title:not(.is-open) .title__stats:has(> .stat:nth-child(4)) .stat { padding-right: clamp(14px, 1.6vw, 22px); margin-right: clamp(14px, 1.6vw, 22px); }
+  .lib-on article.title:not(.is-open) .title__stats:has(> .stat:nth-child(4)) .stat:last-child { padding-right: 0; margin-right: 0; }
+  .lib-on article.title:not(.is-open) .title__stats:has(> .stat:nth-child(4)) .stat dd { font-size: clamp(30px, min(2.7vw, 5.2vh), 48px); }
+}
+/* a laptop narrower than the head's full measure: the head takes the room the trophies leave it */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .lib-on article.title:not(.is-open) .title__head { width: min(780px, 64vw, calc(100vw - 2 * var(--pad) - 274px)); }
+  .lib-on article.title:not(.is-open) .stat dt { font-size: 13px; }
+}
+@media (min-width: 900px) and (max-height: 860px) {
+  :root { --tile: clamp(100px, 15.4vh, 136px); --tile-f: calc(var(--tile) * 1.19); --head-b: clamp(84px, 12vh, 112px); }
+  .lib-on article.title:not(.is-open) .title__logo { font-size: clamp(38px, min(4.6vw, 6.6vh), 76px); }
+  .lib-on article.title:not(.is-open) :is(.title__role, .title__sum) { margin-top: 10px; }
+  .lib-on article.title:not(.is-open) .title__sum { font-size: 16px; }
+  .lib-on article.title:not(.is-open) .title__stats { margin-top: 16px; }
+  .lib-on article.title:not(.is-open) .stat dd { font-size: clamp(32px, min(3.6vw, 5.2vh), 56px); }
+  .lib-on article.title:not(.is-open) .title__acts { margin-top: 22px; }
+}
+/* a laptop with its browser chrome (a viewport about 650 tall): the title takes the room the control legend held; the controls stay a ? away, in the help sheet */
+@media (min-width: 900px) and (max-height: 700px) {
+  :root { --tile: clamp(84px, 15.4vh, 136px); --head-b: 40px; }
+  .lib-on .legend { display: none; }
+}
+@media (min-width: 900px) and (max-height: 620px) {
+  .lib-on article.title:not(.is-open) .title__role { display: none; }
 }

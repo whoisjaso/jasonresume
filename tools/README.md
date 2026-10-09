@@ -32,7 +32,7 @@ node tools/verify/briefing.mjs   # obavia.html: title screen, title head, tabs a
 node tools/verify/overflow.mjs   # names the element when a page scrolls sideways
 python3 tools/site/build_resume.py  # the ten resume pages and match.js's data, refuses unverified numbers
 node tools/verify/resume.mjs     # ten PDFs and .txt copies (assets/ and assets/resume/), gated: one page, tagged, no Type 3, reading order, numbers in llms.txt
-node tools/verify/match.test.mjs # the listing match on four listings
+node tools/verify/match.test.mjs # the listing match on realistic listings and lookalike phrases
 ```
 
 Screenshots land in `tools/verify/out/`.

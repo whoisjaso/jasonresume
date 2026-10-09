@@ -4,8 +4,11 @@
 // name and the card), Player 2 (the build screen, its edits, the card saved
 // as a 1080 by 1350 PNG, a shared build link, a ?for= link), the funnel
 // (availability only beside a hiring visitor's actions, a ?for= reading as
-// sent, a dealer's quiet hiring line, a referral for someone just looking,
-// and never on the card), the first frame's actions, moving focus, opening every title, trophies and the
+// sent, a dealer's quiet hiring question and the lot's next step on its card,
+// nothing on a lurker's card and a referral in their Player 2, and never on
+// the card), the listing pasted on a phone, the focused title clear of the
+// library row on short laptops, the band under the fixed chrome in Player 2,
+// the first frame's actions, moving focus, opening every title, trophies and the
 // Platinum, the desk demo run to Filed, the screens, the deck and Check me;
 // the doors (return visits, skip, deep links, legacy links, the dealer cut);
 // privacy; the score staying silent until Start; the no-JS document; and the
@@ -90,10 +93,13 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   // The build: what you're hiring for
   await p.waitForSelector('[data-scene="build"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name} no build step after the seat`));
   await p.waitForTimeout(900); await shot('00c-build');
-  const rowsN = await p.$$eval('[data-build-menu] .menu__row', r => r.length);
+  const rowsN = await p.$$eval('[data-build-menu] .menu__row[data-n]', r => r.length);
   if (rowsN < 8) errs.push(`${name} build step shows ${rowsN} roles`);
+  // the listing comes first for someone hiring, and the extra row carries no number (keys 1 to 9 are the readings)
+  const menu = await p.evaluate(() => { const r = [...document.querySelectorAll('[data-build-menu] .menu__row')]; return { first: r[0]?.dataset.id, on: document.querySelector('[data-build-menu] .menu__row.is-on')?.dataset.id, badges: r.map(x => x.querySelector('.menu__n')?.textContent.trim()).filter(Boolean) }; });
+  if (menu.first !== 'paste' || menu.on === 'paste' || menu.badges.some(n => !/^[1-9]$/.test(n))) errs.push(`${name} build menu: paste first, unnumbered, a reading highlighted ${JSON.stringify(menu)}`);
   await textRules(p, `${name} build step`); await overflow(p, `${name} build step`);
-  await p.click('[data-build-menu] [data-i="3"]');
+  await p.click('[data-build-menu] [data-id="ops"]');
   await p.waitForSelector('[data-scene="name"].is-on', { timeout: 4000 }); await p.waitForTimeout(500);
   if (!/Sign your build/i.test(await p.textContent('[data-name-h]'))) errs.push(`${name} name step should ask to sign the build`);
   await p.fill('#intro-name', 'Test Visitor'); await shot('00d-name'); await p.keyboard.press('Enter');
@@ -302,8 +308,9 @@ if (!only || only === 'mobile') {
   else notes.push('?for=it: role highlighted, library and Resume read for IT');
   // nothing built yet: Player 2 is the reading as I sent it, then Make it yours
   await r3.keyboard.press('j'); await r3.waitForSelector('#build.is-open', { timeout: 4000 }).catch(() => {}); await r3.waitForTimeout(800);
-  const sent = await r3.evaluate(() => ({ lede: document.querySelector('#build .build__lede')?.textContent || '', hl: document.querySelector('#build .build__hl')?.textContent || '', resume: document.querySelector('#build [data-build-resume]')?.getAttribute('href') || '', line: !!document.querySelector('#build [data-open-line]'), make: !!document.querySelector('#build [data-make-yours]'), chips: document.querySelectorAll('#build [data-pick]').length }));
-  if (!/reading I sent you/.test(sent.lede) || !/IT and Systems Support/.test(sent.lede) || !sent.hl || !/IT_and_Systems_Support/.test(sent.resume) || !sent.line || !sent.make || sent.chips) errs.push(`?for=it Player 2 did not show the reading as sent ${JSON.stringify(sent)}`);
+  const sent = await r3.evaluate(() => ({ lede: document.querySelector('#build .build__lede')?.textContent || '', sum: document.querySelector('#build .build__panel .build__head')?.textContent || '', hl: (document.querySelector('#build .build__panel')?.innerText || '').split(document.querySelector('#build .bcard__line')?.textContent || '\u0000').length - 1, resume: document.querySelector('#build [data-build-resume]')?.getAttribute('href') || '', line: !!document.querySelector('#build [data-open-line]'), make: !!document.querySelector('#build [data-make-yours]'), chips: document.querySelectorAll('#build [data-pick]').length }));
+  // the card carries the headline; the panel goes straight to the summary
+  if (!/reading I sent you/.test(sent.lede) || !/IT and Systems Support/.test(sent.lede) || !sent.sum || sent.hl || !/IT_and_Systems_Support/.test(sent.resume) || !sent.line || !sent.make || sent.chips) errs.push(`?for=it Player 2 did not show the reading as sent ${JSON.stringify(sent)}`);
   await textRules(r3, '?for=it Player 2'); await overflow(r3, '?for=it Player 2');
   await r3.click('#build [data-make-yours]'); await r3.waitForTimeout(700);
   const made = await r3.evaluate(() => ({ b: window.JG_BUILD.get(), chips: document.querySelectorAll('#build [data-pick]').length }));
@@ -320,18 +327,23 @@ if (!only || only === 'mobile') {
   const d5 = await c5.newPage(); d5.on('pageerror', e => errs.push(`dealer funnel pageerror: ${e.message}`));
   await d5.goto(URL0); await d5.waitForSelector('#intro'); await d5.click('[data-start="off"]'); await d5.waitForSelector('[data-scene="seat"].is-on');
   await d5.click('[data-role="partner"]'); await d5.waitForSelector('[data-scene="build"].is-on'); await d5.waitForTimeout(500);
-  await d5.click('[data-build-menu] [data-i="1"]'); await d5.waitForSelector('[data-scene="name"].is-on'); await d5.fill('#intro-name', 'Pat'); await d5.keyboard.press('Enter');
+  await d5.click('[data-build-menu] [data-id="paperwork"]'); await d5.waitForSelector('[data-scene="name"].is-on'); await d5.fill('#intro-name', 'Pat'); await d5.keyboard.press('Enter');
   await d5.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await d5.waitForTimeout(600);
-  const dc = await d5.evaluate(() => ({ more: !document.querySelector('#intro [data-built-more]').hidden, resume: !!document.querySelector('#intro [data-build-resume]') }));
-  if (dc.more || dc.resume) errs.push(`dealer card carries a hiring pitch ${JSON.stringify(dc)}`);
+  // the dealer's card scene: the lot's own next step beside Enter, and no hiring pitch
+  const dc = await d5.evaluate(() => ({ more: !document.querySelector('#intro [data-built-more]').hidden, resume: !!document.querySelector('#intro [data-build-resume]'), cta: document.querySelector('#intro [data-built-acts] [data-build-obavia], #intro [data-built-acts] [data-book]')?.textContent || '', open: /open to/i.test(document.getElementById('intro').innerText) }));
+  if (dc.more || dc.resume || dc.open) errs.push(`dealer card carries a hiring pitch ${JSON.stringify(dc)}`);
+  if (!/Obavia early access/.test(dc.cta)) errs.push(`dealer card has no next step for the lot ${JSON.stringify(dc)}`);
   await d5.click('[data-enter]'); await d5.waitForSelector('#intro', { state: 'detached', timeout: 6000 }); await d5.waitForTimeout(700);
   await d5.click('[data-p2]'); await d5.waitForSelector('#build.is-open .bcard'); await d5.waitForTimeout(700);
-  const dl5 = await d5.evaluate(() => ({ cta: !!document.querySelector('#build [data-build-obavia], #build [data-book]'), hire: document.querySelector('#build [data-hire-line]')?.textContent || '', to: document.querySelector('#build [data-hire]')?.getAttribute('data-hire') || '', line: !!document.querySelector('#build [data-open-line]:not([data-hire-line])') }));
-  if (!dl5.cta || !/^Hiring for your lot\? I'm open to full-time, part-time and contract work\./.test(dl5.hire) || dl5.to !== 'title' || dl5.line) errs.push(`dealer Player 2 funnel ${JSON.stringify(dl5)}`);
+  const dl5 = await d5.evaluate(() => ({ cta: !!document.querySelector('#build [data-build-obavia], #build [data-book]'), hire: document.querySelector('#build [data-hire-line]')?.textContent || '', to: document.querySelector('#build [data-hire]')?.getAttribute('data-hire') || '', line: !!document.querySelector('#build [data-open-line]:not([data-hire-line])'), open: /open to/i.test(document.getElementById('build').innerText) }));
+  // one quiet question; the availability waits for the switch
+  if (!dl5.cta || !/^Hiring for your lot\? Read me for Title and Back Office$/.test(dl5.hire.trim()) || dl5.to !== 'title' || dl5.line || dl5.open) errs.push(`dealer Player 2 funnel ${JSON.stringify(dl5)}`);
   await textRules(d5, 'dealer Player 2'); await overflow(d5, 'dealer Player 2');
   await d5.click('#build [data-hire]'); await d5.waitForTimeout(800);
-  const dh = await d5.evaluate(() => ({ b: window.JG_BUILD.get(), line: !!document.querySelector('#build [data-open-line]'), resume: document.querySelector('#build [data-build-resume]')?.getAttribute('href') || '', card: document.querySelector('#build .bcard')?.textContent || '' }));
-  if (dh.b.kind !== 'role' || dh.b.id !== 'title' || dh.b.n !== 'Pat' || !dh.line || !/Title_and_Back_Office/.test(dh.resume) || /open to/i.test(dh.card)) errs.push(`dealer hiring link did not switch the build ${JSON.stringify({ ...dh, card: undefined })}`);
+  const dh = await d5.evaluate(() => ({ b: window.JG_BUILD.get(), line: !!document.querySelector('#build [data-open-line]'), opens: (document.getElementById('build').innerText.match(/open to full-time/gi) || []).length, resume: document.querySelector('#build [data-build-resume]')?.getAttribute('href') || '', card: document.querySelector('#build .bcard')?.textContent || '', cardTop: Math.round(document.querySelector('#build [data-cardwrap]').getBoundingClientRect().top), toast: [...document.querySelectorAll('.toast')].map(t => t.textContent).join(' ') }));
+  // the line shows once, after the switch, and a phone sees the repainted card
+  if (dh.b.kind !== 'role' || dh.b.id !== 'title' || dh.b.n !== 'Pat' || !dh.line || dh.opens !== 1 || !/Title_and_Back_Office/.test(dh.resume) || /open to/i.test(dh.card)) errs.push(`dealer hiring link did not switch the build ${JSON.stringify({ ...dh, card: undefined })}`);
+  if (dh.cardTop < 0 || dh.cardTop > 844 / 2 || !/Read for Title and Back Office/.test(dh.toast)) errs.push(`dealer hiring switch: the repainted card is off screen ${JSON.stringify({ cardTop: dh.cardTop, toast: dh.toast })}`);
   else notes.push('dealer: lot answer and its call to action, then the hiring line switches to Title and Back Office');
   await c5.close();
 
@@ -341,21 +353,53 @@ if (!only || only === 'mobile') {
   const l6 = await c6.newPage(); l6.on('pageerror', e => errs.push(`lurker funnel pageerror: ${e.message}`));
   await l6.goto(URL0); await l6.waitForSelector('#intro'); await l6.click('[data-start="off"]'); await l6.waitForSelector('[data-scene="seat"].is-on');
   await l6.click('[data-role="lurker"]'); await l6.waitForSelector('[data-scene="build"].is-on'); await l6.waitForTimeout(500);
-  await l6.click('[data-build-menu] [data-i="5"]'); await l6.waitForSelector('[data-scene="name"].is-on'); await l6.fill('#intro-name', 'Lou'); await l6.keyboard.press('Enter');
+  await l6.click('[data-build-menu] [data-id="sales"]'); await l6.waitForSelector('[data-scene="name"].is-on'); await l6.fill('#intro-name', 'Lou'); await l6.keyboard.press('Enter');
   await l6.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await l6.waitForTimeout(600);
-  const lc = await l6.evaluate(() => ({ text: document.getElementById('intro').innerText, ref: !!document.querySelector('#intro [data-referral]'), resume: !!document.querySelector('#intro [data-build-resume]') }));
-  if (!lc.ref || lc.resume || /open to/i.test(lc.text)) errs.push(`lurker card funnel ${JSON.stringify({ ref: lc.ref, resume: lc.resume })}`);
-  await l6.click('#intro [data-referral]'); await l6.waitForTimeout(500);
-  const clip = await l6.evaluate(() => navigator.clipboard.readText().catch(() => ''));
-  if (!/#build\/v1\/[a-z-]+\/.+\/Lou$/.test(clip)) errs.push(`referral copied "${clip}"`);
+  // the seat promised no pitch: the card scene is the card, Enter and Save, nothing else
+  const lc = await l6.evaluate(() => ({ text: document.getElementById('intro').innerText, ref: !!document.querySelector('#intro [data-referral]'), resume: !!document.querySelector('#intro [data-build-resume]'), more: !document.querySelector('#intro [data-built-more]').hidden, acts: document.querySelectorAll('#intro [data-built-acts] a, #intro [data-built-acts] button').length }));
+  if (lc.ref || lc.resume || lc.more || lc.acts !== 2 || /open to|hiring/i.test(lc.text)) errs.push(`lurker card funnel ${JSON.stringify({ ...lc, text: undefined })}`);
   await l6.click('[data-enter]'); await l6.waitForSelector('#intro', { state: 'detached', timeout: 6000 }); await l6.waitForTimeout(700);
   await l6.click('[data-p2]'); await l6.waitForSelector('#build.is-open .bcard'); await l6.waitForTimeout(700);
-  const lp = await l6.evaluate(() => ({ text: document.getElementById('build').innerText, ref: !!document.querySelector('#build [data-referral-line]'), hire: !!document.querySelector('#build [data-hire-line]') }));
-  if (!lp.ref || lp.hire || /open to/i.test(lp.text)) errs.push(`lurker Player 2 funnel ${JSON.stringify({ ref: lp.ref, hire: lp.hire, open: /open to/i.test(lp.text) })}`);
+  // Player 2: one referral that is also the one way to copy the link; no resume button, no availability
+  const lp = await l6.evaluate(() => ({ text: document.getElementById('build').innerText, ref: !!document.querySelector('#build [data-referral-line]'), hire: !!document.querySelector('#build [data-hire-line]'), copy: !!document.querySelector('#build [data-copy-link]'), resume: !!document.querySelector('#build .build__acts [data-build-resume]') }));
+  if (!lp.ref || lp.hire || lp.copy || lp.resume || /open to/i.test(lp.text)) errs.push(`lurker Player 2 funnel ${JSON.stringify({ ...lp, text: undefined, open: /open to/i.test(lp.text) })}`);
+  await l6.click('#build [data-referral]'); await l6.waitForTimeout(500);
+  const clip = await l6.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+  if (!/#build\/v1\/[a-z-]+\/.+\/Lou$/.test(clip)) errs.push(`referral copied "${clip}"`);
   await l6.evaluate(() => dispatchEvent(new Event('pagehide'))); await l6.waitForTimeout(900);
   if (!ev6.some(e => e.event === 'build_link_copied' && e.props && e.props.where === 'referral')) errs.push('the referral was not tracked as build_link_copied where referral');
   else notes.push('just looking: no availability, the referral copies the build link');
   await c6.close();
+
+  // A listing pasted on a phone: the match and Build it stay on screen
+  const c7 = await ctxFor(390, 844, true); await c7.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const m7 = await c7.newPage(); m7.on('pageerror', e => errs.push(`phone paste pageerror: ${e.message}`));
+  const BDC = fs.readFileSync(path.join(TOOLS, 'verify', 'match.test.mjs'), 'utf8').match(/bdc: `([\s\S]*?)`/)[1];
+  await m7.goto(URL0); await m7.waitForSelector('#intro'); await m7.click('[data-start="off"]'); await m7.waitForSelector('[data-scene="seat"].is-on');
+  await m7.click('[data-role="interviewer"]'); await m7.waitForSelector('[data-scene="build"].is-on'); await m7.waitForTimeout(500);
+  await m7.click('[data-build-menu] [data-id="paste"]'); await m7.waitForTimeout(400);
+  await m7.fill('#intro-list', BDC); await m7.click('[data-paste] button[type="submit"]'); await m7.waitForTimeout(900);
+  const go7 = await m7.evaluate(() => { const g = document.querySelector('[data-go-build]'); const r = g ? g.getBoundingClientRect() : { width: 0, height: 0, top: -1, bottom: -1 }; return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(r.bottom), chips: document.querySelectorAll('[data-build-preview] .cls__chips li').length, h3: document.querySelector('[data-build-preview] .cls__name')?.textContent || '' }; });
+  if (!go7.w || !go7.h || go7.top < 0 || go7.bottom > 844 || !go7.chips) errs.push(`phone paste: the match result is not on screen ${JSON.stringify(go7)}`);
+  else notes.push(`phone paste: ${go7.chips} terms matched, Build it on screen for ${go7.h3}`);
+  await m7.screenshot({ path: path.join(OUT, 'lib-phone-paste.png') });
+  await m7.click('[data-go-build]'); await m7.waitForSelector('[data-scene="name"].is-on', { timeout: 4000 }).catch(() => errs.push('phone paste: Build it did not build'));
+  await c7.close();
+
+  // A ?for= reading on a phone, nothing built: the Player 2 slot names it
+  const c8 = await ctxFor(390, 844, true); await c8.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const f8 = await c8.newPage(); await f8.goto(URL0 + '?for=title'); await f8.waitForSelector('#intro'); await f8.click('[data-intro-skip]'); await f8.waitForTimeout(1200);
+  const s8 = await f8.evaluate(() => { const t = document.querySelector('[data-p2] [data-p2-label]'); const r = t ? t.getBoundingClientRect() : { width: 0, right: 0 }; return { w: Math.round(r.width), right: Math.round(r.right), text: t ? t.textContent : '' }; });
+  if (!s8.w || s8.right > 390 || !/Read for Back office/.test(s8.text)) errs.push(`phone ?for=title: the Player 2 slot does not name the reading ${JSON.stringify(s8)}`);
+  else notes.push('phone ?for=title: the Player 2 slot reads "Read for Back office"');
+  await overflow(f8, 'phone ?for= slot');
+  // the same reading opened by someone just looking: the reading and its resume, never the availability line
+  await f8.evaluate(() => { try { localStorage.setItem('jg_role', 'lurker'); } catch (e) {} });
+  await f8.click('[data-p2]'); await f8.waitForSelector('#build.is-open', { timeout: 4000 }).catch(() => {}); await f8.waitForTimeout(700);
+  const l8 = await f8.evaluate(() => ({ sent: /reading I sent you/.test(document.getElementById('build').innerText), open: /open to/i.test(document.getElementById('build').innerText) }));
+  if (!l8.sent || l8.open) errs.push(`?for= opened by someone just looking ${JSON.stringify(l8)}`);
+  else notes.push('?for= opened by someone just looking: the reading as sent, no availability line');
+  await c8.close();
 
   // phone landscape: no overflow, the actions on screen
   const c4 = await ctxFor(844, 390, true); await c4.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
@@ -363,6 +407,40 @@ if (!only || only === 'mobile') {
   const l = await c4.newPage(); await l.goto(URL0); await l.waitForSelector('#intro'); await l.click('[data-intro-skip]'); await l.waitForTimeout(1200);
   await l.screenshot({ path: path.join(OUT, 'lib-landscape.png') }); await overflow(l, 'phone landscape');
   await c4.close();
+}
+
+// Laptops: the focused title stays clear of the library row and above the legend, for every title
+if (!only || only === 'desktop') {
+  for (const [w, h] of [[1366, 768], [1536, 864], [1280, 720], [1366, 650]]) {
+    const ctx = await ctxFor(w, h, false); await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+    await ctx.addInitScript(() => { try { localStorage.setItem('jg_role', 'partner'); } catch (e) {} });
+    const p = await ctx.newPage(); await p.goto(URL0); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(1000);
+    const bad = [];
+    for (const id of LIB.titles.map(t => t.id)) {
+      await p.evaluate(i => window.JG_GAME.focus(i), id); await p.waitForTimeout(800);
+      const m = await p.evaluate(() => {
+        const row = Math.max(...[...document.querySelectorAll('.tile')].map(t => t.getBoundingClientRect().bottom));
+        const logo = document.querySelector('article.title.is-focus .title__logo').getBoundingClientRect();
+        const acts = document.querySelector('article.title.is-focus .title__acts').getBoundingClientRect();
+        const lg = document.querySelector('.legend').getBoundingClientRect();
+        return { gap: Math.round(logo.top - row), foot: Math.round((lg.height ? lg.top : innerHeight) - acts.bottom) };
+      });
+      if (m.gap < 0 || m.foot < 0) bad.push(`${id} ${JSON.stringify(m)}`);
+    }
+    if (bad.length) errs.push(`${w}x${h}: a focused title runs under the library row or the legend: ${bad.join('; ')}`);
+    else notes.push(`${w}x${h}: every focused title clear of the library row and the legend`);
+    if (w === 1366 && h === 768) { await p.evaluate(() => window.JG_GAME.focus('the-inbound')); await p.waitForTimeout(900); await p.screenshot({ path: path.join(OUT, 'lib-laptop-inbound.png') }); }
+    // Player 2 scrolled: Back stays put, and the panel goes under a solid band, not through the bar
+    if (w === 1366 && h === 768) {
+      await p.evaluate(() => window.JG_BUILD.make('lot', 'calls', 'test')); await p.keyboard.press('j'); await p.waitForSelector('#build.is-open .bcard'); await p.waitForTimeout(900);
+      await p.evaluate(() => { document.getElementById('build').scrollTop = 600; }); await p.waitForTimeout(400);
+      const band = await p.evaluate(() => { const s = document.getElementById('build'); const bf = getComputedStyle(s, '::before'); const bk = s.querySelector('.screen__back').getBoundingClientRect(); return { back: Math.round(bk.top), bg: bf.backgroundColor, pos: bf.position, h: parseFloat(bf.height) }; });
+      if (band.back < 0 || band.back > 30 || band.pos !== 'fixed' || band.bg !== 'rgb(10, 15, 13)' || band.h < 60) errs.push(`Player 2 scrolled: Back or the band moved ${JSON.stringify(band)}`);
+      else notes.push('Player 2 scrolled: Back stays, the panel goes under a solid band');
+      await p.screenshot({ path: path.join(OUT, 'lib-p2-scrolled.png') });
+    }
+    await ctx.close();
+  }
 }
 
 // No JavaScript: the whole record is a readable document

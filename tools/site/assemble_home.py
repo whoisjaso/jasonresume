@@ -32,7 +32,6 @@ onboarding.pop("_about", None)
 builds = json.loads((SITE / "builds.json").read_text())
 builds.pop("_about", None)
 builds_json = json.dumps(builds, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 head = (SITE / "home.head.html").read_text()
 body = (SITE / "home.body.html").read_text()
 ART = "assets/game/art/"
@@ -41,10 +40,31 @@ try:
     placeholders = json.loads((ROOT / ART / "placeholders.json").read_text())
 except Exception:
     pass
+# where each plate's phone crop sits (tools/art/grade.py): the loop's position on a phone
+frames = {}
+try:
+    frames = json.loads((ROOT / ART / "frames.json").read_text())
+except Exception:
+    pass
 
 
 def has(p):
     return (ROOT / p).exists()
+
+
+# Each title's key art files are named by its "art" stem when library.json gives
+# one, else by its id. /assets/ is served immutable for a year, so a regraded
+# plate ships under a new stem rather than over the old files. intro.js and
+# build.js read the same map from the onboarding data (arts), and the title
+# screen's default art (onboarding.json "art", named by title id) resolves here.
+STEM = {t["id"]: t.get("art") or t["id"] for t in lib["titles"]}
+onboarding["arts"] = {k: v for k, v in STEM.items() if v != k}
+_m = re.match(r"^assets/game/art/([a-z0-9-]+)$", onboarding.get("art", ""))
+if _m and _m.group(1) in STEM:
+    onboarding["art"] = ART + STEM[_m.group(1)]
+if onboarding.get("art"):
+    assert has(onboarding["art"] + "-1920.webp") and has(onboarding["art"] + "-m.webp"), "title screen art missing: " + onboarding["art"]
+onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
 # The title screen plays for every arrival from outside the site, on whichever
@@ -57,7 +77,7 @@ HEAD_SCRIPT = (
     'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>'
 )
 
-first = lib["titles"][0]["id"]
+first = STEM[lib["titles"][0]["id"]]
 head += (
     '<link rel="preconnect" href="https://fonts.googleapis.com" />\n'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n'
@@ -108,21 +128,29 @@ def plates():
     out = []
     for i, t in enumerate(lib["titles"]):
         tid = t["id"]
-        if not has(ART + tid + "-1920.webp"):
+        st = STEM[tid]
+        if not has(ART + st + "-1920.webp"):
             out.append('<div class="plate" data-plate="%s"></div>' % tid)
             continue
-        ph = placeholders.get(tid)
-        style = ' style="background:url(%s) center/cover"' % ph if ph else ""
+        ph = placeholders.get(st)
+        css = []
+        if ph:
+            css.append("background:url(%s) center/cover" % ph)
+        # on a phone the still is the portrait crop and the loop the whole frame:
+        # --lx puts the loop over the same part of the frame (game.css, max-width 760px)
+        if isinstance(frames.get(st), dict) and frames[st].get("loop_x") is not None:
+            css.append("--lx:%s%%" % frames[st]["loop_x"])
+        style = ' style="%s"' % ";".join(css) if css else ""
         eager = i == 0
         img = (
             '<picture><source media="(max-width: 760px)" srcset="%(a)s%(id)s-m.webp" />'
             '<img class="plate__img" src="%(a)s%(id)s-1920.webp" srcset="%(a)s%(id)s-1280.webp 1280w, %(a)s%(id)s-1920.webp 1920w" sizes="100vw" alt="" decoding="async"%(load)s /></picture>'
-            % {"a": ART, "id": tid, "load": ' fetchpriority="high"' if eager else ' loading="lazy"'}
+            % {"a": ART, "id": st, "load": ' fetchpriority="high"' if eager else ' loading="lazy"'}
         )
         vid = ""
-        if has("assets/game/loops/%s.mp4" % tid):
-            webm = ' data-webm="assets/game/loops/%s.webm"' % tid if has("assets/game/loops/%s.webm" % tid) else ""
-            vid = '<video class="plate__loop" muted playsinline loop preload="none" data-mp4="assets/game/loops/%s.mp4"%s></video>' % (tid, webm)
+        if has("assets/game/loops/%s.mp4" % st):
+            webm = ' data-webm="assets/game/loops/%s.webm"' % st if has("assets/game/loops/%s.webm" % st) else ""
+            vid = '<video class="plate__loop" muted playsinline loop preload="none" data-mp4="assets/game/loops/%s.mp4"%s></video>' % (st, webm)
         out.append('<div class="plate%s" data-plate="%s"%s>%s%s</div>' % (" is-on" if eager else "", tid, style, img, vid))
     return "".join(out)
 
@@ -132,9 +160,9 @@ def tiles():
     for i, t in enumerate(lib["titles"]):
         tid = t["id"]
         size = "sm" if not t.get("career") else "md"
-        src = ART + tid + "-tile-256.webp"
+        src = ART + STEM[tid] + "-tile-256.webp"
         img = ('<img class="tile__img" src="%s" srcset="%s 256w, %s 512w" sizes="(max-width: 899px) 96px, 162px" alt="" width="256" height="256" decoding="async" />'
-               % (src, src, ART + tid + "-tile-512.webp")) if has(src) else '<span class="tile__img"></span>'
+               % (src, src, ART + STEM[tid] + "-tile-512.webp")) if has(src) else '<span class="tile__img"></span>'
         tag = '<span class="tile__tag">%s</span>' % E(t["tag"]) if t.get("tag") else ""
         out.append(
             '<li><a class="tile%s" href="#title/%s" data-title="%s" data-size="%s" aria-label="%s"%s><span class="tile__frame">%s</span><span class="tile__name">%s</span>%s</a></li>'
