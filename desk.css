@@ -3,10 +3,10 @@
    [data-desk-app]. Shared by the home page (inside the Lead to Title title)
    and /obavia.html. Inside the phone the app keeps its own light iOS look;
    its accent is the library's bottle green. */
-.iphone { --d-accent: #2f5a45; --spring: cubic-bezier(0.34, 1.56, 0.64, 1); --spring-soft: cubic-bezier(0.22, 1.2, 0.36, 1); --ease: cubic-bezier(0.2, 0.7, 0.1, 1); --sans: "Hanken Grotesk", system-ui, sans-serif; }
+.iphone { --d-accent: #2f5a45; --spring: cubic-bezier(0.32, 0.72, 0, 1); --spring-soft: cubic-bezier(0.25, 0.8, 0.25, 1); --ease: cubic-bezier(0.2, 0.7, 0.1, 1); --sans: "Hanken Grotesk", system-ui, sans-serif; }
 .iphone { position: relative; width: 300px; height: 620px; border-radius: 50px; padding: 11px; background: #1c1f1d; box-shadow: inset 0 0 0 1.5px #3a3e3a, inset 0 0 0 5px #0b0d0c, 0 40px 80px rgba(0, 0, 0, .55); flex: none; }
 .iphone__screen { position: relative; width: 100%; height: 100%; border-radius: 40px; overflow: hidden; background: #f2f2f7; color: #111; font-family: var(--sans); -webkit-font-smoothing: antialiased; }
-.iphone__island { position: absolute; top: 9px; left: 50%; width: 92px; height: 27px; margin-left: -46px; border-radius: 20px; background: #000; z-index: 9; transition: width .45s var(--spring), margin .45s var(--spring), height .45s var(--spring); display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font: 600 11px/1 var(--sans); overflow: hidden; }
+.iphone__island { position: absolute; top: 9px; left: 50%; width: 92px; height: 27px; margin-left: -46px; border-radius: 20px; background: #000; z-index: 9; transition: width .45s var(--spring), margin-left .45s var(--spring), height .45s var(--spring); display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font: 600 11px/1 var(--sans); overflow: hidden; }
 .iphone__island.is-wide { width: 200px; margin-left: -100px; height: 34px; }
 .iphone__island span { opacity: 0; transition: opacity .2s; white-space: nowrap; }
 .iphone__island.is-wide span { opacity: 1; transition-delay: .2s; }
