@@ -1,7 +1,7 @@
 {
  "id": "title",
- "text": "Every arrival opens on a title screen: his name, over a used car lot at night.",
- "duration": 6.625,
+ "text": "Every arrival opens on a title screen: the name, over a used car lot at night.",
+ "duration": 6.575,
  "words": [
   {
    "w": "Every",
@@ -39,49 +39,49 @@
    "e": 3.175
   },
   {
-   "w": "his",
+   "w": "the",
    "s": 3.312,
-   "e": 3.525
+   "e": 3.45
   },
   {
    "w": "name,",
-   "s": 3.525,
-   "e": 4.1
+   "s": 3.45,
+   "e": 4.05
   },
   {
    "w": "over",
-   "s": 4.2,
-   "e": 4.45
+   "s": 4.15,
+   "e": 4.4
   },
   {
    "w": "a",
-   "s": 4.45,
-   "e": 4.562
+   "s": 4.4,
+   "e": 4.513
   },
   {
    "w": "used",
-   "s": 4.562,
-   "e": 4.938
+   "s": 4.513,
+   "e": 4.888
   },
   {
    "w": "car",
-   "s": 4.938,
-   "e": 5.275
+   "s": 4.888,
+   "e": 5.225
   },
   {
    "w": "lot",
-   "s": 5.275,
-   "e": 5.487
+   "s": 5.225,
+   "e": 5.438
   },
   {
    "w": "at",
-   "s": 5.487,
-   "e": 5.625
+   "s": 5.438,
+   "e": 5.575
   },
   {
    "w": "night.",
-   "s": 5.625,
-   "e": 6.35
+   "s": 5.575,
+   "e": 6.3
   }
  ]
 }

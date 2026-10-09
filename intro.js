@@ -142,7 +142,7 @@
       var tall = matchMedia("(max-width: 759px) and (orientation: portrait)").matches && WALK.vsrc;
       film = document.createElement("dialog");
       film.className = "sheet film-sheet"; film.setAttribute("aria-label", t.watch || "Watch the walkthrough");
-      film.innerHTML = '<div class="film-sheet__frame"><video controls playsinline preload="metadata" poster="' + E(tall ? WALK.vposter : WALK.poster) + '" src="' + E(tall ? WALK.vsrc : WALK.src) + '">' + (WALK.vtt ? '<track kind="captions" srclang="en" label="English" src="' + E(WALK.vtt) + '" />' : "") + "</video></div>" +
+      film.innerHTML = '<div class="film-sheet__frame"><video controls playsinline preload="metadata" poster="' + E(tall ? WALK.vposter : WALK.poster) + '"><source src="' + E(tall ? WALK.vsrc : WALK.src) + '" type="video/mp4" />' + ((tall ? WALK.vwebm : WALK.webm) ? '<source src="' + E(tall ? WALK.vwebm : WALK.webm) + '" type="video/webm" />' : "") + (WALK.vtt ? '<track kind="captions" srclang="en" label="English" src="' + E(WALK.vtt) + '" />' : "") + "</video></div>" +
         '<div class="film-sheet__bar"><p class="film-sheet__note">' + E(WALK.note || "") + '</p><div class="film-sheet__acts">' + (WALK.page ? '<a class="btn btn--sm btn--ghost" href="' + E(WALK.page) + '">' + E(WALK.page_label || "The film page") + "</a>" : "") + '<button class="x" type="button" data-close aria-label="Close the walkthrough"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-x"/></svg></button></div></div>';
       body.appendChild(film);
       film.addEventListener("click", function (e) { if (e.target === film || e.target.closest("[data-close]")) film.close(); });

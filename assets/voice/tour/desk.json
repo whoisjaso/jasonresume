@@ -1,7 +1,7 @@
 {
  "id": "desk",
- "text": "In Lead to Title, run the sale desk he built: scan the license once, and every form fills itself. Fictional buyer, example figures.",
- "duration": 10.35,
+ "text": "In Lead to Title, run the sale desk from Triple J: scan the license once, and every form fills itself. Fictional buyer, example figures.",
+ "duration": 11.025,
  "words": [
   {
    "w": "In",
@@ -21,102 +21,107 @@
   {
    "w": "Title,",
    "s": 0.938,
-   "e": 1.5
+   "e": 1.525
   },
   {
    "w": "run",
-   "s": 1.613,
-   "e": 1.9
+   "s": 1.637,
+   "e": 1.925
   },
   {
    "w": "the",
-   "s": 1.9,
-   "e": 2.05
+   "s": 1.925,
+   "e": 2.075
   },
   {
    "w": "sale",
-   "s": 2.05,
-   "e": 2.4
+   "s": 2.075,
+   "e": 2.413
   },
   {
    "w": "desk",
-   "s": 2.4,
-   "e": 2.663
+   "s": 2.413,
+   "e": 2.75
   },
   {
-   "w": "he",
-   "s": 2.663,
-   "e": 2.788
+   "w": "from",
+   "s": 2.75,
+   "e": 2.962
   },
   {
-   "w": "built:",
-   "s": 2.788,
-   "e": 3.475
+   "w": "Triple",
+   "s": 2.962,
+   "e": 3.337
+  },
+  {
+   "w": "J:",
+   "s": 3.337,
+   "e": 4.05
   },
   {
    "w": "scan",
-   "s": 3.625,
-   "e": 4.075
+   "s": 4.225,
+   "e": 4.675
   },
   {
    "w": "the",
-   "s": 4.075,
-   "e": 4.2
+   "s": 4.675,
+   "e": 4.8
   },
   {
    "w": "license",
-   "s": 4.2,
-   "e": 4.737
+   "s": 4.8,
+   "e": 5.362
   },
   {
    "w": "once,",
-   "s": 4.737,
-   "e": 5.075
+   "s": 5.362,
+   "e": 5.7
   },
   {
    "w": "and",
-   "s": 5.125,
-   "e": 5.287
+   "s": 5.75,
+   "e": 5.912
   },
   {
    "w": "every",
-   "s": 5.287,
-   "e": 5.65
+   "s": 5.912,
+   "e": 6.275
   },
   {
    "w": "form",
-   "s": 5.65,
-   "e": 6.1
+   "s": 6.275,
+   "e": 6.725
   },
   {
    "w": "fills",
-   "s": 6.1,
-   "e": 6.45
+   "s": 6.725,
+   "e": 7.075
   },
   {
    "w": "itself.",
-   "s": 6.45,
-   "e": 7.35
+   "s": 7.075,
+   "e": 8.025
   },
   {
    "w": "Fictional",
-   "s": 7.5,
-   "e": 8.037
+   "s": 8.175,
+   "e": 8.713
   },
   {
    "w": "buyer,",
-   "s": 8.037,
-   "e": 8.525
+   "s": 8.713,
+   "e": 9.2
   },
   {
    "w": "example",
-   "s": 8.6,
-   "e": 9.162
+   "s": 9.275,
+   "e": 9.838
   },
   {
    "w": "figures.",
-   "s": 9.162,
-   "e": 10.075
+   "s": 9.838,
+   "e": 10.75
   }
  ]
 }

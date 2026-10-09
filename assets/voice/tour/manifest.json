@@ -1,14 +1,14 @@
 {
  "lines": {
   "open": {
-   "hash": "8b36f5564cfc",
-   "duration": 9.3,
+   "hash": "746bb7fbf469",
+   "duration": 7.45,
    "file": "open.mp3",
    "timings": "open.json"
   },
   "title": {
-   "hash": "d9b57e589bf3",
-   "duration": 6.625,
+   "hash": "ac7397344063",
+   "duration": 6.575,
    "file": "title.mp3",
    "timings": "title.json"
   },
@@ -31,8 +31,8 @@
    "timings": "card.json"
   },
   "library": {
-   "hash": "03c34cd9c3a5",
-   "duration": 9.75,
+   "hash": "e439bbe572eb",
+   "duration": 9.025,
    "file": "library.mp3",
    "timings": "library.json"
   },
@@ -49,8 +49,8 @@
    "timings": "opened.json"
   },
   "desk": {
-   "hash": "39942089f295",
-   "duration": 10.35,
+   "hash": "d9c1e37e0447",
+   "duration": 11.025,
    "file": "desk.mp3",
    "timings": "desk.json"
   },
@@ -61,8 +61,8 @@
    "timings": "trophies.json"
   },
   "profile": {
-   "hash": "fa4f364fa623",
-   "duration": 7.275,
+   "hash": "e747cb909e33",
+   "duration": 7.7,
    "file": "profile.mp3",
    "timings": "profile.json"
   },
@@ -91,14 +91,14 @@
    "timings": "t-welcome.json"
   },
   "t-head": {
-   "hash": "9ff3ec26cc1a",
-   "duration": 16.9,
+   "hash": "8385088abb86",
+   "duration": 15.7,
    "file": "t-head.mp3",
    "timings": "t-head.json"
   },
   "t-build": {
-   "hash": "e24812460ae6",
-   "duration": 11.225,
+   "hash": "6591c05212c6",
+   "duration": 11.55,
    "file": "t-build.mp3",
    "timings": "t-build.json"
   },

@@ -47,11 +47,14 @@ render() {
   # the web copy: a slow x264 pass sized for streaming (the master stays in out/tour)
   ff -v error -y -i "out/tour/$name.mp4" -c:v libx264 -preset slow -crf 27 -tune film -pix_fmt yuv420p \
     -colorspace bt709 -color_primaries bt709 -color_trc bt709 -c:a aac -b:a 128k -movflags +faststart "$OUT/$name.mp4"
+  # and a WebM (VP9 and Opus), the fallback for browsers without H.264
+  ff -v error -y -i "out/tour/$name.mp4" -c:v libvpx-vp9 -b:v 0 -crf 38 -row-mt 1 -deadline good -cpu-used 4 -pix_fmt yuv420p \
+    -colorspace bt709 -color_primaries bt709 -color_trc bt709 -c:a libopus -b:a 96k "$OUT/$name.webm"
   # the poster: the title screen settled in its frame
   f=$(node -e "const t=require('./src/tour/timeline.json');const s=t.shots.find(x=>x.shot==='title');console.log(s.from+Math.round(s.frames*0.8))")
   npx remotion still src/index.ts "$comp" "out/tour/$name.png" --frame "$f" --browser-executable="$B" --log=error
   python3 -c "import sys; from PIL import Image; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2], quality=84, optimize=True, progressive=True)" "out/tour/$name.png" "$OUT/$name.jpg"
-  ls -l "$OUT/$name.mp4" "$OUT/$name.jpg"
+  ls -l "$OUT/$name.mp4" "$OUT/$name.webm" "$OUT/$name.jpg"
 }
 [ -z "$ONLY" ] || [ "$ONLY" = Tour ] && render Tour tour
 [ -z "$ONLY" ] || [ "$ONLY" = TourVertical ] && render TourVertical tour-vertical

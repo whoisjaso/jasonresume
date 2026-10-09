@@ -78,6 +78,10 @@ if has(FILM + ".mp4"):
     walk = {"src": FILM + ".mp4", "poster": FILM + ".jpg", "note": TOUR.get("label", ""), "page": "/walkthrough.html", "page_label": "The film page"}
     if has(FILM + "-vertical.mp4"):
         walk.update({"vsrc": FILM + "-vertical.mp4", "vposter": FILM + "-vertical.jpg"})
+    if has(FILM + ".webm"):
+        walk["webm"] = FILM + ".webm"
+    if has(FILM + "-vertical.webm"):
+        walk["vwebm"] = FILM + "-vertical.webm"
     if has(FILM + ".vtt"):
         walk["vtt"] = FILM + ".vtt"
     onboarding["walk"] = walk
@@ -424,11 +428,11 @@ if onboarding.get("walk"):
         '<body class="lib walk">\n<main class="walk__main">\n'
         '<a class="btn btn--ghost walk__back" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>The library</a>\n'
         '<h1 class="walk__h">The walkthrough</h1>\n<p class="walk__sub">%s</p>\n'
-        '<figure class="walk__film"><video controls playsinline preload="metadata" poster="%s" src="%s">%s</video></figure>\n%s'
+        '<figure class="walk__film"><video controls playsinline preload="metadata" poster="%s"><source src="%s" type="video/mp4" />%s%s</video></figure>\n%s'
         '<h2 class="walk__k">What the narrator says</h2>\n<ol class="walk__lines">%s</ol>\n'
         '<p class="walk__fine">Every frame is the live site, captured as it is. Every fact in it is in <a href="/llms.txt">llms.txt</a>.</p>\n'
         "</main>\n</body>\n</html>\n"
-        % (E(W["poster"]), E(W["src"]), V, E(W.get("note", "")), E(W["poster"]), E(W["src"]), track, vert, transcript)
+        % (E(W["poster"]), E(W["src"]), V, E(W.get("note", "")), E(W["poster"]), E(W["src"]), ('<source src="%s" type="video/webm" />' % E(W["webm"])) if W.get("webm") else "", track, vert, transcript)
     )
     (ROOT / "walkthrough.html").write_text(page)
     print("walkthrough.html written")
