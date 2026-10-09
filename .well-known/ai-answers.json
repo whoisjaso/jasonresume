@@ -1,7 +1,7 @@
 {
   "name": "Jason Obawemimo Well-Known AI Answers",
   "canonical_url": "https://jasonobawemimo.com/.well-known/ai-answers.json",
-  "last_updated": "2026-10-08",
+  "last_updated": "2026-10-09",
   "entity": {
     "name": "Jason Obawemimo",
     "type": "Person",
@@ -40,6 +40,16 @@
       "question": "What is Jason Obawemimo's title?",
       "answer": "Jason Obawemimo's resume title is AI Implementation, Workflow Automation and CRM Systems. His role at Triple J Auto Investment, the Houston dealership he owns and operates, is Owner and Operations Lead, and he is the founder of Obavia.",
       "primary_source": "https://jasonobawemimo.com/jason-obawemimo.html"
+    },
+    {
+      "question": "What kinds of roles does Jason Obawemimo's experience cover?",
+      "answer": "His site reads the same verified record eight ways, each with a one-page resume: AI and Automation (for AI Implementation Specialist, AI Automation Specialist, Workflow Automation Specialist and similar roles); Software and CRM (for Junior Full-Stack Developer, Software Engineer I, Web Developer and similar roles); IT and Systems Support (for IT Support Specialist, IT Technician, Help Desk Technician and similar roles); Operations and Logistics (for Operations Coordinator, Operations Manager, Logistics Coordinator and similar roles); Title and Back Office (for Title Clerk, Title and Registration Specialist, Deal Processor and similar roles); Sales and Phones (for Automotive Sales Consultant, BDC Representative, Internet Sales Consultant and similar roles); People and Office (for HR Coordinator, People Operations Coordinator, Office Manager and similar roles); Dealer Technology (for Implementation Specialist, Dealer Onboarding Specialist, CRM Administrator and similar roles). At Triple J Auto Investment he manages operations across pricing, inventory, vendors, logistics, financing and title processing; hires, trains, schedules and manages the staff and runs payroll; supports staff on the CRM, phones and computers and manages accounts and permissions; takes sales calls and negotiates deals; and prepares and files title and registration paperwork. He built the dealership's CRM, inbound voice AI and prospecting workflow. The roles listed are the roles each reading is written for, not titles he has held.",
+      "primary_source": "https://jasonobawemimo.com/llms.txt"
+    },
+    {
+      "question": "Where are Jason Obawemimo's resumes?",
+      "answer": "The canonical one-page resume is https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf. Each of the eight readings has its own page and PDF: https://jasonobawemimo.com/resume/ai.html, https://jasonobawemimo.com/resume/software.html, https://jasonobawemimo.com/resume/it.html, https://jasonobawemimo.com/resume/ops.html, https://jasonobawemimo.com/resume/title.html, https://jasonobawemimo.com/resume/sales.html, https://jasonobawemimo.com/resume/people.html, https://jasonobawemimo.com/resume/dealer-tech.html.",
+      "primary_source": "https://jasonobawemimo.com/resume-pdf.html"
     },
     {
       "question": "Who is Jason Obawemimo?",
