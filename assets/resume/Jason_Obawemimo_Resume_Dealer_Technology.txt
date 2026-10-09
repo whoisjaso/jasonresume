@@ -1,0 +1,40 @@
+Jason Obawemimo
+AI Implementation, Workflow Automation and CRM Systems
+A dealer-side operator who built the CRM and sale desk a dealership runs on.
+Written for: Implementation Specialist, Dealer Onboarding Specialist, CRM Administrator, Customer Success Manager, Solutions Consultant
+Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+
+Summary
+I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it.
+
+Experience
+Owner and Operations Lead, Aug 2024 to Present
+Triple J Auto Investment and Rental Operations, Houston, Texas
+- Manage operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.
+- Support the dealership's staff on the CRM, phones and computers.
+- Prepare and file title and registration paperwork, including the Form 130-U and webDEALER.
+- Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.
+Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
+  - Used daily by three staff across inventory, deals and follow-up.
+  - Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.
+  - Designed the lead-to-title data model, roles and validation.
+Inbound voice AI (Retell AI, Bland AI, Twilio, CRM webhooks)
+  - Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.
+
+Education
+The University of Texas at Austin, Austin, TX, Expected 2028
+Bachelor of Science in Neuroscience
+San Jacinto College, Houston, TX, May 2026
+Associate of Arts in Business, GPA 3.63, Dean's Honor List
+
+Certificates and Courses
+- Google AI Essentials, Google (Coursera), 2026
+- Anthropic: nineteen completed courses, including Building with the Claude API; AI Fluency for Small Businesses; Introduction to Claude Cowork
+
+Skills
+Operations: Dealership operations, sales pipelines, inventory and vendor management
+Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
+Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
+Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
+AI development: Claude Code, Claude API, Codex
+Languages: TypeScript, JavaScript, Python, SQL

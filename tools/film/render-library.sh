@@ -48,9 +48,10 @@ plate() {
   fi
 }
 
-# BT.709, limited range, tagged, so browsers decode the loop to the still's colours
+# BT.709, limited range, tagged, so browsers decode the loop to the still's colours;
+# accurate rounding, or swscale darkens every channel by about a level
 COLOR="-colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv"
-VF="scale=out_color_matrix=bt709:out_range=tv,format=yuv420p"
+VF="scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_chroma_int,format=yuv420p"
 
 for id in $ids; do
   c=$(comp "$id")

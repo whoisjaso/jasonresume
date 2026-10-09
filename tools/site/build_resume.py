@@ -307,10 +307,10 @@ PHONE = re.compile(r"(?:\+?1[\s.-]?)?\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b")
 
 def check(path, doc):
     text = visible_text(doc)
-    for ch, name in (("—", "an em dash"), ("–", "an en dash"), ("%", "a percent sign")):
+    for ch, name in (("\u2014", "an em dash"), ("\u2013", "an en dash"), ("%", "a percent sign")):
         if ch in text:
             fail("%s has %s" % (path, name))
-    if "—" in doc or "–" in doc:
+    if "\u2014" in doc or "\u2013" in doc:
         fail("%s has a dash in its source" % path)
     if PHONE.search(text):
         fail("%s has something shaped like a phone number" % path)

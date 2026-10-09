@@ -219,3 +219,4 @@ html:not(.lib-on) .sys__p2 { display: none; }
   .sys__nav [data-contact="email"] { display: none; }
 }
 .build__acts--top { margin-top: 22px; padding-top: 0; border-top: 0; }
+.cls__for + .cls__k, .cls__chips + .cls__k, .cls__proofs + .cls__k { margin-top: 20px; }

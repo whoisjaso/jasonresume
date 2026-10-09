@@ -1,0 +1,40 @@
+Jason Obawemimo
+AI Implementation, Workflow Automation and CRM Systems
+Texas title and deal paperwork, desk to file.
+Written for: Title Clerk, Title and Registration Specialist, Deal Processor, Dealership Office Manager, Collections Specialist
+Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+
+Summary
+I get the paperwork right and on file. At a Houston used vehicle dealership I prepare and file title and registration paperwork, including the Form 130-U and webDEALER; prepare deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); keep the dealer license compliance and record-keeping in order; and service buy here pay here accounts and collections. I also built the sale desk that routes each deal to the right documents with nothing missing and nothing extra.
+
+Experience
+Owner and Operations Lead, Aug 2024 to Present
+Triple J Auto Investment and Rental Operations, Houston, Texas
+- Prepare and file title and registration paperwork, including the Form 130-U and webDEALER.
+- Prepare deal jackets and contracts: bills of sale, buy here pay here contracts and disclosures.
+- Keep the dealer license compliance and record-keeping in order.
+- Service buy here pay here accounts and collections.
+- Manage operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.
+- Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.
+Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
+  - Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.
+  - Added validation that prevents invalid deal and inventory records from being written.
+
+Education
+The University of Texas at Austin, Austin, TX, Expected 2028
+Bachelor of Science in Neuroscience
+San Jacinto College, Houston, TX, May 2026
+Associate of Arts in Business, GPA 3.63, Dean's Honor List
+
+Certificates and Courses
+- Google AI Essentials, Google (Coursera), 2026
+- Anthropic: nineteen completed courses, including AI Fluency for Small Businesses; AI Capabilities and Limitations
+
+Skills
+Title and back office: Title and registration (Form 130-U, webDEALER); deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); dealer license compliance and record-keeping; buy here pay here collections
+Operations: Dealership operations, sales pipelines, inventory and vendor management
+Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
+Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
+Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
+AI development: Claude Code, Claude API, Codex
+Languages: TypeScript, JavaScript, Python, SQL

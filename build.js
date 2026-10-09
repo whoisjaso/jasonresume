@@ -89,8 +89,11 @@
     var b = { v: 1, kind: lot ? "lot" : "role", id: id, p: m[2].split("+").slice(0, D.equip), a: m[3], f: m[4], n: n, t: Date.now() };
     return valid(b) ? b : null;
   }
-  function resumePdf(b) { return b && b.kind === "role" ? "assets/resume/Jason_Obawemimo_Resume_" + BY[b.id].label.replace(/[^A-Za-z0-9]+/g, "_") + ".pdf" : (LIB.pdf || ""); }
-  function resumePage(b, terms) { return "resume/" + b.id + ".html" + (terms && terms.length ? "#t=" + encodeURIComponent(terms.join(",")) : ""); }
+  /* /assets is cached for a year: the version moves when the resumes are rendered again */
+  var RV = (String(LIB.pdf || "").match(/[?&]v=([^&#]+)/) || [])[1] || "";
+  function resumePdf(b) { return b && b.kind === "role" ? "assets/resume/Jason_Obawemimo_Resume_" + BY[b.id].label.replace(/[^A-Za-z0-9]+/g, "_") + ".pdf" + (RV ? "?v=" + RV : "") : (LIB.pdf || ""); }
+  /* the tailored print: each on-record term, with the listing's own spelling when it differs */
+  function resumePage(b, on) { return "resume/" + b.id + ".html" + (on && on.length ? "#t=" + on.map(function (x) { return encodeURIComponent(x.term) + (x.as && x.as !== x.term ? ":" + encodeURIComponent(x.as) : ""); }).join(",") : ""); }
 
   /* ---------- the card ---------- */
   function medalSrc(slug, size) { return "assets/game/medals/" + slug + "-" + size + ".webp"; }
@@ -278,7 +281,7 @@
   }
   function acts(b, view) {
     var a = [];
-    if (b.kind === "role") a.push('<a class="btn btn--primary" href="' + E(matched && !view ? resumePage(b, matched.on.map(function (x) { return x.term; })) : resumePdf(b)) + '"' + (matched && !view ? ' target="_blank" rel="noopener"' : ' download="Jason Obawemimo - Resume, ' + E(BY[b.id].label) + '.pdf"') + ' data-build-resume><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-doc"/></svg>Resume for this role</a>');
+    if (b.kind === "role") a.push('<a class="btn btn--primary" href="' + E(matched && !view ? resumePage(b, matched.on) : resumePdf(b)) + '"' + (matched && !view ? ' target="_blank" rel="noopener"' : ' download="Jason Obawemimo - Resume, ' + E(BY[b.id].label) + '.pdf"') + ' data-build-resume><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-doc"/></svg>Resume for this role</a>');
     if (view) {
       a.push('<a class="btn" href="mailto:' + E(LIB.email || "jobawems@gmail.com") + "?subject=" + encodeURIComponent(b.kind === "role" ? "Your site, and a role in " + BY[b.id].label : "Your site, and my lot: " + LOT[b.id].label) + "&body=" + encodeURIComponent("The build: " + link(b) + "\n\n") + '" data-contact="email" data-where="build"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-mail"/></svg>Email me about it</a>');
       a.push('<button class="btn btn--ghost" type="button" data-make-own>Make your own</button>');

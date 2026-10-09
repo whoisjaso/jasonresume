@@ -1,13 +1,13 @@
 {
   "_note": "The single source for the Slate, the record on the home page, the presentation deck and the resumes. tools/site/build_resume.py renders resume-pdf.html and resume/<build>.html from the resume block below and tools/site/builds.json. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
   "name": "Jason Obawemimo",
-  "line": "AI implementation, workflow automation and CRM systems. I own a Houston dealership and ship the systems that run it.",
+  "line": "I build the systems a business runs on, and I run the operations they serve.",
   "summary": "I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve. At a Houston used vehicle dealership I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.",
   "email": "jobawems@gmail.com",
   "site": "jasonobawemimo.com",
   "location": "Pearland, Texas",
   "calendar": "https://calendly.com/jason-apohenia/30min",
-  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=oct26",
+  "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=oct26r",
   "slate": [
     {
       "k": "Triple J",
@@ -428,7 +428,7 @@
     },
     "bullets": {
       "sales": "Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.",
-      "ops": "Manage dealership operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.",
+      "ops": "Manage operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.",
       "build-not-buy": "Build AI software for the dealership's bottlenecks rather than buying software.",
       "crm-model": "Designed the lead-to-title data model, roles and validation.",
       "daily": "Used daily by three staff across inventory, deals and follow-up.",
@@ -460,8 +460,7 @@
     "courses": {
       "canonical": [
         "Building with the Claude API",
-        "Claude Code in Action",
-        "Introduction to Model Context Protocol"
+        "Claude Code in Action"
       ],
       "ai": [
         "Building with the Claude API",
@@ -562,7 +561,6 @@
       "proofs": [
         "ops",
         "sales",
-        "crew",
         "daily",
         "crm-model",
         "rls",

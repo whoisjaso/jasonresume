@@ -32,5 +32,6 @@ A static site (index.html, tokens.css, game.css, desk.css, intro.js, score.js, h
 - Interactive: the desk app in desk-app.js (fictional buyer, example figures), deck.js (resume deck, #present/N), verify.js (Check me). /join redirects to /obavia.html; there is no hiring page.
 - Desks and chat: api/guide.js (ask box), api/lead.js (Obavia early access), api/_lib. Config in CONFIG.md.
 - Analytics: track.js to api/track.js (allowlist there) to PostHog; api/metrics.js and admin.html are the Dailies board.
-- Copy and facts: tools/site/library.json, tools/site/builds.json, tools/site/record.json, tools/site/home.body.html, resume-pdf.html, api/guide.js, llms.txt, llms-full.txt, answers.json, faq.jsonld. Change a fact in all of them.
+- Resumes: `python3 tools/site/build_resume.py` writes resume-pdf.html, resume/<id>.html for the eight readings and match.js's data (from builds.json, record.json and lexicon.json); `node tools/verify/resume.mjs` renders and gates the nine PDFs (one page, tagged, no Type 3 fonts, reading order, every number in llms.txt). Never hand-edit resume-pdf.html or resume/. The listing match is match.js (tools/verify/match.test.mjs).
+- Copy and facts: tools/site/library.json, tools/site/builds.json, tools/site/record.json, tools/site/home.body.html, api/guide.js, llms.txt, llms-full.txt, answers.json, faq.jsonld. Change a fact in all of them, then assemble and build the resumes.
 - Outreach: OUTREACH.md. Research: RESEARCH.md.

@@ -1,0 +1,41 @@
+Jason Obawemimo
+AI Implementation, Workflow Automation and CRM Systems
+Pricing, inventory, vendors, logistics, financing and title.
+Written for: Operations Coordinator, Operations Manager, Logistics Coordinator, Business Operations Associate, Founder's Associate
+Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+
+Summary
+I keep a business moving from the first call to the finished paperwork. Since August 2024 I've managed operations for a Houston used vehicle dealership across pricing, inventory, vendors, logistics, financing and title processing, and I hire, schedule and manage its staff. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds, and I built the CRM the team works in every day.
+
+Experience
+Owner and Operations Lead, Aug 2024 to Present
+Triple J Auto Investment and Rental Operations, Houston, Texas
+- Manage operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.
+- Hire, train, schedule and manage the dealership's staff.
+- Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.
+- Prepare and file title and registration paperwork, including the Form 130-U and webDEALER.
+- Run the dealership's payroll.
+- Build AI software for the dealership's bottlenecks rather than buying software.
+Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
+  - Used daily by three staff across inventory, deals and follow-up.
+Inbound voice AI (Retell AI, Bland AI, Twilio, CRM webhooks)
+  - Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.
+
+Education
+The University of Texas at Austin, Austin, TX, Expected 2028
+Bachelor of Science in Neuroscience
+San Jacinto College, Houston, TX, May 2026
+Associate of Arts in Business, GPA 3.63, Dean's Honor List
+
+Certificates and Courses
+- Google AI Essentials, Google (Coursera), 2026
+- Anthropic: nineteen completed courses, including AI Fluency for Small Businesses; AI Fluency: Framework and Foundations; AI Capabilities and Limitations
+
+Skills
+People: Hiring, training, scheduling and managing staff; payroll
+Operations: Dealership operations, sales pipelines, inventory and vendor management
+Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
+Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
+Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
+AI development: Claude Code, Claude API, Codex
+Languages: TypeScript, JavaScript, Python, SQL

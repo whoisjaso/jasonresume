@@ -4,13 +4,14 @@ Everything that produced the site's media and proved it works, moved out of the 
 
 | Folder | What it makes | Needs |
 |---|---|---|
-| `site/` | `assemble_home.py` builds index.html from `home.body.html`, the old head, schema.json and faq.jsonld. | Python 3. |
+| `site/` | `assemble_home.py` builds index.html from `home.body.html`, the old head, schema.json and faq.jsonld. `build_resume.py` writes the nine resume pages (resume-pdf.html and resume/<build>.html) from `builds.json`, `record.json` and `resume.template.html`, and copies `lexicon.json` into match.js. | Python 3. |
 | `film/` | The Remotion project: the signature film (`Signature`, `SignaturePortrait`). `Screen` and `Vsl` are retired compositions kept for reference. | Node 20+, `npm install` inside `tools/film`, Chromium (Remotion downloads one, or set `PW_CHROMIUM`). |
 | `voice/` | Trailer lines in Jason's cloned voice (Chatterbox). The guide lines and the visitor replies are retired. | Python 3.11, `pip install chatterbox-tts soundfile imageio-ffmpeg`; your reference recording at `tools/voice/ref.wav` (gitignored, never commit it). |
 | `vsl/` | Retired, never current: the partner (agency) film pipeline. Its scripts read `tools/vsl/lines.json`, which is gone; kept for reference only. | The two above. |
 | `score/` | The adaptive score in `assets/score/`: the notes as data (`score.py`), a theory check, the SFZ sampler, render, encode and verify. See `tools/score/README.md`. | Python 3.11 with numpy, scipy, soundfile, pyloudnorm, matplotlib, mido, numba; an ffmpeg with libopus and libmp3lame; the sample libraries in a work folder outside the repo (the README lists the downloads). |
 | `sfx/` | Rebuilds `assets/sfx` from the raw Mixkit recordings. | `pip install soundfile numpy imageio-ffmpeg`; raw files in `tools/sfx/raw/` (see `assets/sfx/CREDITS.md`). |
-| `verify/` | Playwright harnesses that play the home page, the Obavia page, overflow, and the resume PDF against a local server. | `npm install playwright` at the repo root, a local server on port 8765. |
+| `verify/` | Playwright harnesses that play the home page, the Obavia page, overflow, and the resume PDFs against a local server; `match.test.mjs` checks the listing match. | `npm install playwright` at the repo root, a local server on port 8765, poppler-utils for the resume gates. |
+| `fonts/` | `cut_static.py` cuts the static resume fonts in assets/fonts (Hanken Grotesk 400 and 600, Cormorant Garamond 600) from the variable OFL sources; a variable font prints as Type 3. The woff2 files beside it are Google Fonts copies for offline harness runs. | `pip install fonttools brotli`. |
 
 ## Run the site locally
 
@@ -29,7 +30,9 @@ python3 -m http.server 8765 &
 node tools/verify/screening.mjs  # home page end to end, desktop and mobile
 node tools/verify/briefing.mjs   # obavia.html: title screen, title head, tabs and Q/E, film, desk to Filed, lessons, early access and its fallbacks, get bar, no-JS
 node tools/verify/overflow.mjs   # names the element when a page scrolls sideways
-node tools/verify/resume.mjs     # regenerates assets/Jason_Obawemimo_Resume_2026.pdf, one page
+python3 tools/site/build_resume.py  # the nine resume pages and match.js's data, refuses unverified numbers
+node tools/verify/resume.mjs     # nine PDFs and .txt copies (assets/ and assets/resume/), gated: one page, tagged, no Type 3, reading order, numbers in llms.txt
+node tools/verify/match.test.mjs # the listing match on four listings
 ```
 
 Screenshots land in `tools/verify/out/`.

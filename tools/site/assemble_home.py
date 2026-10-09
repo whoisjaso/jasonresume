@@ -279,7 +279,7 @@ def verify():
 def readings():
     out = []
     for b in builds["builds"]:
-        slug = "Jason_Obawemimo_Resume_" + re.sub(r"[^A-Za-z0-9]+", "_", b["label"]) + ".pdf"
+        slug = "Jason_Obawemimo_Resume_" + re.sub(r"[^A-Za-z0-9]+", "_", b["label"]) + ".pdf" + (("?v=" + rec["pdf"].split("?v=")[1]) if "?v=" in rec["pdf"] else "")
         out.append('<li><a class="row" href="resume/%s.html"><span class="row__txt"><b>%s</b> <span>%s Written for %s.</span></span><i class="row__chev" aria-hidden="true"></i></a> <a class="readings__pdf" href="assets/resume/%s" download>PDF</a></li>'
                    % (E(b["id"]), E(b["label"]), E(b["headline"]), E(", ".join(b["targets"])), E(slug)))
     return "".join(out)

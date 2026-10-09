@@ -74,7 +74,7 @@
       t.proofs.forEach(function (p) { matched[p] = true; });
       var proven = t.proofs.some(function (p) { return onPage[p]; });
       var label = w.as && M.spells(t.term, w.as) ? w.as : t.term;
-      var key = label.toLowerCase();
+      var key = t.term.toLowerCase();
       if (proven && !seen[key]) {
         seen[key] = true;
         relevant.push(label);

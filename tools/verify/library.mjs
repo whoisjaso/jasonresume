@@ -124,8 +124,8 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   if (first.dialogs || first.locked) errs.push(`${name} something open or locked on arrival`);
   const p2 = await p.evaluate(() => ({ slot: document.querySelector('[data-p2]')?.textContent || '', resume: document.querySelector('.sys [data-resume]')?.getAttribute('href') || '' }));
   if (!/Operations/.test(p2.slot)) errs.push(`${name} Player 2 slot does not show the build: ${p2.slot}`);
-  if (!/Resume_Operations_and_Logistics\.pdf$/.test(p2.resume)) errs.push(`${name} Resume does not serve the build's PDF: ${p2.resume}`);
-  else if (!fs.existsSync(path.join(ROOT, p2.resume))) errs.push(`${name} the build's PDF is missing: ${p2.resume}`);
+  if (!/Resume_Operations_and_Logistics\.pdf(\?v=\w+)?$/.test(p2.resume)) errs.push(`${name} Resume does not serve the build's PDF: ${p2.resume}`);
+  else if (!fs.existsSync(path.join(ROOT, p2.resume.split('?')[0]))) errs.push(`${name} the build's PDF is missing: ${p2.resume}`);
   notes.push(`${name} title screen to library in ${Date.now() - t0} ms`);
   await shot('01-library'); await textRules(p, `${name} library`); await overflow(p, `${name} library`);
 
