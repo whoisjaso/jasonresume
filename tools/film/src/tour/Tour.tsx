@@ -219,7 +219,8 @@ const DeskShot: React.FC<{ shot: Shot; tall: boolean }> = ({ shot, tall }) => {
   const dur = shot.frames + T.overlap;
   const seg = (dur - 20) / DESK.length;
   const ph = tall ? 1240 : 900, pw = ph * 600 / 1242;
-  const arrive = spring({ frame: f - 4, fps, config: T.spring.settle });
+  /* the phone is bright: it rises in after the cut's dissolve, never during it (a pop in QA) */
+  const arrive = spring({ frame: f - T.overlap - 4, fps, config: { damping: 200, stiffness: 70, mass: 1 } });
   const float = Math.sin(f / 40) * 6;
   const z = 1 + 0.05 * T.ease.cam(Math.min(1, f / dur));
   const cx = tall ? 540 : 1280, cy = tall ? 330 + ph / 2 : 560;

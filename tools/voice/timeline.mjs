@@ -51,14 +51,18 @@ const byId = Object.fromEntries(doc.lines.map(l => [l.id, { id: l.id, text: l.te
 const voicedAll = doc.lines.every(l => byId[l.id].voiced);
 
 // the film: each shot holds its line plus air on both sides, at 30 fps
-const FPS = 30, LEAD = 0.35, TAIL = 0.5;
+// Tight: a recording's own lead-in silence is trimmed (speech starts LEAD after
+// the cut) and TAIL of air follows its last word; the cut's dissolve is the breath
+const FPS = 30, LEAD = 0.16, TAIL = 0.08;
 const MIN = { boot: 5.6, end: 4.6 };
 let at = 0;
 const shots = doc.film.map(s => {
   const L = byId[s.line];
-  const secs = Math.max(MIN[s.shot] || 3.2, LEAD + L.duration + TAIL);
+  const w0 = L.words.length ? L.words[0].s : 0, w1 = L.words.length ? L.words[L.words.length - 1].e : L.duration;
+  const lead = s.shot === 'boot' ? 0.45 : LEAD; /* the drawing needs a moment before anyone speaks */
+  const secs = Math.max(MIN[s.shot] || 3.2, lead + (w1 - w0) + TAIL);
   const frames = Math.round(secs * FPS);
-  const shot = { shot: s.shot, line: s.line, text: L.text, from: at, frames, speechFrom: at + Math.round(LEAD * FPS), voiced: L.voiced, audio: L.voiced ? L.audio : null, words: L.words };
+  const shot = { shot: s.shot, line: s.line, text: L.text, from: at, frames, speechFrom: Math.max(0, at + Math.round((lead - w0) * FPS)), voiced: L.voiced, audio: L.voiced ? L.audio : null, words: L.words };
   at += frames;
   return shot;
 });
