@@ -58,14 +58,14 @@ export const LibraryTripleJ: React.FC = () => {
    and a few motes of dust drift through its beam.
    ===================================================================== */
 const MOTES = [
-  { x: 985, y: 300, r: 2.2, ax: 12, ay: 20, fx: 1, fy: 1, ph: 0.05, o: 0.55, tw: 2 },
-  { x: 1062, y: 335, r: 1.8, ax: 16, ay: 16, fx: 1, fy: 2, ph: 0.31, o: 0.45, tw: 3 },
-  { x: 1118, y: 292, r: 2.0, ax: 10, ay: 24, fx: 2, fy: 1, ph: 0.62, o: 0.5, tw: 1 },
-  { x: 948, y: 392, r: 2.4, ax: 14, ay: 18, fx: 1, fy: 1, ph: 0.84, o: 0.4, tw: 2 },
-  { x: 1030, y: 425, r: 1.7, ax: 18, ay: 14, fx: 1, fy: 2, ph: 0.47, o: 0.5, tw: 3 },
-  { x: 1104, y: 402, r: 2.1, ax: 12, ay: 22, fx: 2, fy: 1, ph: 0.18, o: 0.45, tw: 1 },
-  { x: 1002, y: 472, r: 1.9, ax: 15, ay: 16, fx: 1, fy: 1, ph: 0.73, o: 0.35, tw: 2 },
-  { x: 1150, y: 462, r: 1.8, ax: 11, ay: 18, fx: 1, fy: 2, ph: 0.92, o: 0.35, tw: 3 },
+  { x: 985, y: 300, r: 3.0, ax: 12, ay: 20, fx: 1, fy: 1, ph: 0.05, o: 0.9, tw: 2 },
+  { x: 1062, y: 335, r: 2.6, ax: 16, ay: 16, fx: 1, fy: 2, ph: 0.31, o: 0.8, tw: 3 },
+  { x: 1118, y: 292, r: 2.8, ax: 10, ay: 24, fx: 2, fy: 1, ph: 0.62, o: 0.85, tw: 1 },
+  { x: 948, y: 392, r: 3.2, ax: 14, ay: 18, fx: 1, fy: 1, ph: 0.84, o: 0.75, tw: 2 },
+  { x: 1030, y: 425, r: 2.5, ax: 18, ay: 14, fx: 1, fy: 2, ph: 0.47, o: 0.85, tw: 3 },
+  { x: 1104, y: 402, r: 2.9, ax: 12, ay: 22, fx: 2, fy: 1, ph: 0.18, o: 0.8, tw: 1 },
+  { x: 1002, y: 472, r: 2.7, ax: 15, ay: 16, fx: 1, fy: 1, ph: 0.73, o: 0.7, tw: 2 },
+  { x: 1150, y: 462, r: 2.6, ax: 11, ay: 18, fx: 1, fy: 2, ph: 0.92, o: 0.7, tw: 3 },
 ];
 export const LibraryLeadToTitle: React.FC = () => {
   const frame = useCurrentFrame();
@@ -90,7 +90,7 @@ export const LibraryLeadToTitle: React.FC = () => {
           <polygon points="922,246 1166,246 1246,540 846,540" fill="url(#cone-fall)" filter="url(#cone-blur)" />
         </mask>
       </defs>
-      <Relight id="pool" tint={lib.light.brass} gain={0.15 * breath} gamma={1.15}>
+      <Relight id="pool" tint={lib.light.brass} gain={0.3 * breath} gamma={1.05}>
         <Soft cx={1060} cy={600} rx={400} ry={300} />
         <Soft cx={1042} cy={238} rx={150} ry={34} o={0.8} />
         <Soft cx={1045} cy={390} rx={170} ry={180} o={0.5} />
@@ -114,19 +114,19 @@ export const LibraryLeadToTitle: React.FC = () => {
    window slides down the switchboard's wooden stile and across the desk.
    ===================================================================== */
 const STILE = [
-  { x: 1104, y: 230, d: 230, rx: 9, ry: 34, start: 0, dur: 96, o: 0.9 },
-  { x: 1131, y: 300, d: 190, rx: 11, ry: 40, start: 34, dur: 84, o: 0.7 },
-  { x: 1117, y: 420, d: 210, rx: 8, ry: 30, start: 70, dur: 100, o: 1 },
-  { x: 1145, y: 250, d: 260, rx: 10, ry: 44, start: 112, dur: 92, o: 0.8 },
-  { x: 1098, y: 480, d: 180, rx: 9, ry: 32, start: 150, dur: 86, o: 0.75 },
-  { x: 1126, y: 350, d: 240, rx: 12, ry: 38, start: 188, dur: 104, o: 0.9 },
-  { x: 1110, y: 560, d: 140, rx: 8, ry: 28, start: 220, dur: 80, o: 0.6 },
+  { x: 1112, y: 240, d: 220, rx: 16, ry: 56, start: 0, dur: 100, o: 0.9 },
+  { x: 1136, y: 310, d: 180, rx: 18, ry: 62, start: 36, dur: 88, o: 0.75 },
+  { x: 1120, y: 420, d: 200, rx: 15, ry: 50, start: 72, dur: 104, o: 1 },
+  { x: 1140, y: 260, d: 240, rx: 17, ry: 70, start: 112, dur: 96, o: 0.85 },
+  { x: 1106, y: 470, d: 170, rx: 15, ry: 52, start: 150, dur: 90, o: 0.8 },
+  { x: 1128, y: 350, d: 220, rx: 18, ry: 60, start: 188, dur: 108, o: 0.9 },
+  { x: 1116, y: 540, d: 130, rx: 14, ry: 46, start: 222, dur: 84, o: 0.7 },
 ];
 const DESK = [
-  { x: 960, y: 772, d: 90, rx: 26, ry: 12, start: 20, dur: 110, o: 0.7 },
-  { x: 1080, y: 792, d: 110, rx: 30, ry: 13, start: 90, dur: 120, o: 0.8 },
-  { x: 1205, y: 772, d: 80, rx: 24, ry: 11, start: 160, dur: 110, o: 0.6 },
-  { x: 1012, y: 822, d: 70, rx: 22, ry: 10, start: 205, dur: 100, o: 0.55 },
+  { x: 960, y: 772, d: 90, rx: 34, ry: 15, start: 20, dur: 110, o: 0.75 },
+  { x: 1080, y: 792, d: 110, rx: 38, ry: 16, start: 90, dur: 120, o: 0.85 },
+  { x: 1205, y: 772, d: 80, rx: 30, ry: 14, start: 160, dur: 110, o: 0.65 },
+  { x: 1012, y: 822, d: 70, rx: 28, ry: 13, start: 205, dur: 100, o: 0.6 },
 ];
 export const LibraryTheInbound: React.FC = () => {
   const frame = useCurrentFrame();
@@ -138,11 +138,11 @@ export const LibraryTheInbound: React.FC = () => {
   };
   return (
     <LoopStage id="the-inbound">
-      <Relight id="lamp" tint={lib.light.amber} gain={0.5 * breath} gamma={1.2}>
+      <Relight id="lamp" tint={lib.light.amber} gain={0.6 * breath} gamma={1.2}>
         <Soft cx={1450} cy={266} rx={30} ry={28} />
-        <Soft cx={1452} cy={300} rx={230} ry={170} o={0.36} />
+        <Soft cx={1452} cy={300} rx={230} ry={170} o={0.42} />
       </Relight>
-      <Relight id="rain" tint={lib.light.rain} gain={0.62} gamma={1}>
+      <Relight id="rain" tint={lib.light.rain} gain={1.3} gamma={1} sheen={0.045}>
         {STILE.map((s, i) => drop(s, i, "s"))}
         {DESK.map((s, i) => drop(s, i, "d"))}
       </Relight>
@@ -176,7 +176,7 @@ export const LibraryProspector: React.FC = () => {
           <feGaussianBlur stdDeviation="0.6" />
         </filter>
       </defs>
-      <Relight id="beam" tint={lib.light.paper} gain={0.34 * env} gamma={1.05}>
+      <Relight id="beam" tint={lib.light.paper} gain={0.4 * env} gamma={1.05}>
         <Soft cx={bx} cy={by} rx={320} ry={220} rot={-28} />
       </Relight>
       <line
@@ -185,10 +185,10 @@ export const LibraryProspector: React.FC = () => {
         x2={THREAD.x2}
         y2={THREAD.y2}
         stroke="url(#glint)"
-        strokeWidth={2}
+        strokeWidth={2.4}
         strokeLinecap="round"
         filter="url(#glint-soft)"
-        opacity={0.7 * glint}
+        opacity={0.9 * glint}
         style={{ mixBlendMode: "screen" }}
       />
     </LoopStage>
@@ -201,7 +201,7 @@ export const LibraryProspector: React.FC = () => {
    ===================================================================== */
 export const LibraryNeuroscience: React.FC = () => {
   const frame = useCurrentFrame();
-  const { p, env } = pass(frame, 24, 216);
+  const { p, env } = pass(frame, 24, 216, lib.ease.sweep, 1.5);
   const x = 1230 + (1720 - 1230) * p;
   return (
     <LoopStage id="neuroscience">
@@ -218,9 +218,9 @@ export const LibraryNeuroscience: React.FC = () => {
           <ellipse cx="1530" cy="668" rx="86" ry="54" fill="url(#ns-plateau)" />
         </mask>
       </defs>
-      <Relight id="window" tint={lib.light.dusk} gain={0.6 * env} gamma={1.5}>
+      <Relight id="window" tint={lib.light.dusk} gain={1.0 * env} gamma={1.3}>
         <g mask="url(#brain)">
-          <Band x={x} y={577} width={170} height={520} rot={16} />
+          <Band x={x} y={577} width={200} height={520} rot={16} />
         </g>
       </Relight>
     </LoopStage>
@@ -246,7 +246,7 @@ export const LibraryObavia: React.FC = () => {
         <filter id="stir" filterUnits="userSpaceOnUse" x="1180" y="230" width="460" height="260" colorInterpolationFilters="sRGB">
           <feTurbulence type="fractalNoise" baseFrequency="0.011 0.028" numOctaves="2" seed="11" result="folds" />
           <feOffset in="folds" dx={30 * Math.sin(ang)} dy={10 * (1 - Math.cos(ang))} result="drift" />
-          <feDisplacementMap in="SourceGraphic" in2="drift" scale={11 * gust} xChannelSelector="R" yChannelSelector="G" />
+          <feDisplacementMap in="SourceGraphic" in2="drift" scale={26 * gust} xChannelSelector="R" yChannelSelector="G" />
         </filter>
         <radialGradient id="hem-plateau">
           <stop offset="0" stopColor="#fff" stopOpacity="1" />
@@ -257,7 +257,7 @@ export const LibraryObavia: React.FC = () => {
           <ellipse cx="1400" cy="352" rx="150" ry="58" fill="url(#hem-plateau)" />
         </mask>
       </defs>
-      <Relight id="dawn" tint={lib.light.dawn} gain={0.14 * light} gamma={1}>
+      <Relight id="dawn" tint={lib.light.dawn} gain={0.2 * light} gamma={1}>
         <g filter="url(#ob-soften)">
           <rect x="1092" y="-40" width="566" height="240" fill="#fff" />
           <rect x="1760" y="-40" width="200" height="250" fill="#fff" />

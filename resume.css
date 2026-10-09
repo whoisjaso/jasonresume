@@ -1,0 +1,368 @@
+/*
+  The resume pages: resume-pdf.html and resume/<build>.html, all written by tools/site/build_resume.py.
+  Print is what matters, because tools/verify/resume.mjs prints these pages to the PDFs a recruiter's
+  software reads. So: one column on US Letter, the DOM order is the reading order, nothing positioned or
+  floated, static fonts (a variable font prints as Type 3), near-black text on white, headings in title
+  case with no text-transform and no letter-spacing, the contact line in the body. On screen it is the
+  same sheet, set on a quiet desk.
+*/
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/assets/fonts/HankenGrotesk-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/assets/fonts/HankenGrotesk-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/assets/fonts/CormorantGaramond-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --paper: #ffffff;
+  --desk: #f2f0eb;
+  --ink: #17191a;
+  --ink-soft: #343837;
+  --muted: #5b5f5c;
+  --accent: #1e5947;
+  --rule: #d6d9d3;
+  --sans: "Hanken Grotesk", Arial, Helvetica, sans-serif;
+  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  color-scheme: light;
+}
+
+@page {
+  size: Letter;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 10pt;
+  line-height: 1.42;
+  font-synthesis: none;
+  font-variant-ligatures: none;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, p, ul {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+strong,
+.k,
+.role {
+  font-weight: 600;
+}
+
+/* The bar: screen only. Back to the site, the files, Print, and the other readings. */
+
+.bar {
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 18px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 20px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.bar a,
+.bar button {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.bar a:hover,
+.bar button:hover,
+.bar a:focus-visible,
+.bar button:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bar button {
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bar__get {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.bar__reads {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.bar__reads span {
+  color: var(--muted);
+}
+
+.bar__reads a[aria-current="page"] {
+  color: var(--ink);
+}
+
+.note {
+  max-width: 8.5in;
+  margin: 12px auto 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* The sheet. */
+
+.page {
+  max-width: 8.5in;
+  margin: 14px auto 56px;
+  padding: 0.6in 0.68in 0.56in;
+  background: var(--paper);
+  box-shadow: 0 1px 0 rgba(23, 25, 26, 0.05), 0 22px 48px -28px rgba(23, 25, 26, 0.28);
+}
+
+.head {
+  padding-bottom: 9pt;
+  border-bottom: 0.75pt solid var(--accent);
+}
+
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 29pt;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.title {
+  margin-top: 5pt;
+  font-size: 11pt;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.headline {
+  margin-top: 2pt;
+  font-size: 10pt;
+  color: var(--ink-soft);
+}
+
+.for {
+  margin-top: 2pt;
+  font-size: 8.8pt;
+  color: var(--muted);
+}
+
+.contact {
+  margin-top: 6pt;
+  font-size: 9pt;
+  color: var(--ink-soft);
+}
+
+.contact .sep {
+  color: var(--muted);
+}
+
+section {
+  margin-top: 11pt;
+}
+
+h2 {
+  margin-bottom: 4pt;
+  padding-bottom: 2pt;
+  border-bottom: 0.5pt solid var(--rule);
+  font-family: var(--sans);
+  font-size: 10.5pt;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--accent);
+}
+
+.summary {
+  color: var(--ink-soft);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  column-gap: 14pt;
+}
+
+.when {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.org {
+  color: var(--ink-soft);
+}
+
+.duties,
+.plain {
+  margin-top: 3pt;
+  padding-left: 13pt;
+  list-style: disc;
+}
+
+.duties li,
+.plain li {
+  position: static;
+  margin-top: 2pt;
+  color: var(--ink-soft);
+}
+
+.duties li::marker,
+.plain li::marker {
+  color: var(--accent);
+}
+
+.duties .sys {
+  margin-top: 5pt;
+  list-style: none;
+  color: var(--ink);
+}
+
+.duties .sys > ul {
+  margin-top: 0;
+  padding-left: 13pt;
+  list-style: circle;
+}
+
+.entry + .entry {
+  margin-top: 4pt;
+}
+
+.entry p + p {
+  color: var(--ink-soft);
+}
+
+.skills p + p {
+  margin-top: 1.5pt;
+}
+
+.skills p {
+  color: var(--ink-soft);
+}
+
+.skills .k {
+  color: var(--ink);
+}
+
+.skills .relevant .k {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .bar {
+    padding: 14px 16px 0;
+  }
+
+  .note {
+    padding: 0 16px;
+  }
+
+  .page {
+    margin: 12px 0 0;
+    padding: 28px 16px 40px;
+    box-shadow: none;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+}
+
+@media print {
+  :root {
+    --ink-soft: #222524;
+    --muted: #3f4241;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .bar,
+  .note {
+    display: none !important;
+  }
+
+  .page {
+    max-width: none;
+    width: 8.5in;
+    margin: 0;
+    padding: 0.5in 0.6in 0.42in;
+    box-shadow: none;
+  }
+
+  .title,
+  h2,
+  .skills .relevant .k {
+    color: var(--ink);
+  }
+
+  .duties li::marker,
+  .plain li::marker {
+    color: var(--ink);
+  }
+
+  .job,
+  .entry {
+    break-inside: avoid;
+  }
+}

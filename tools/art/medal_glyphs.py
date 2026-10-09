@@ -1,4 +1,4 @@
-"""The 18 trophy glyphs, authored as geometry and written as SVG.
+"""The 18 trophy glyphs and the 16 proof medal glyphs, authored as geometry and written as SVG.
 
 Every glyph sits on a 48 unit grid and is one weight of line: stroke 3, round
 caps and round joins, no fills. Where two lines cross and one should pass
@@ -7,7 +7,9 @@ clear gap shows on both sides of the over line, the way an engraver would cut
 it. The files in assets/game/medals/glyphs are the source medals.py reads;
 run this to rewrite them after changing a shape here.
 
-    python3 tools/art/medal_glyphs.py
+    python3 tools/art/medal_glyphs.py                 # all 34
+    python3 tools/art/medal_glyphs.py --proofs        # the 16 proof medals
+    python3 tools/art/medal_glyphs.py crew,payroll    # named glyphs
 """
 import math
 import os
@@ -544,6 +546,305 @@ def g_operator():
     serif = poly((jx - 6, 9), (jx + 6, 9))
     return [O, J, serif]
 
+# ---------- the proof medals: the visitor's build card ----------
+
+def inside(q, ring):
+    """Even-odd test of a point against a closed polygon given as points."""
+    x, y = q
+    hit = False
+    j = len(ring) - 1
+    for i in range(len(ring)):
+        (xi, yi), (xj, yj) = ring[i], ring[j]
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            hit = not hit
+        j = i
+    return hit
+
+
+def runs(path, blocked):
+    """Split a path into the runs where blocked(point) is false, the way cut() does."""
+    out, run = [], []
+    for piece in path:
+        k = max(40, int(length(piece) / 0.05))
+        flags = [blocked(piece.at(i / k)) for i in range(k + 1)]
+        i = 0
+        while i <= k:
+            if flags[i]:
+                if run:
+                    out.append(run)
+                    run = []
+                i += 1
+                continue
+            j = i
+            while j + 1 <= k and not flags[j + 1]:
+                j += 1
+            if j > i:
+                run.append(piece.sub(i / k, j / k))
+            if j < k:
+                out.append(run)
+                run = []
+            i = j + 1
+    if run:
+        out.append(run)
+    if len(out) > 1 and math.dist(out[-1][-1].p1, out[0][0].p0) < 1e-6:
+        out[0] = out.pop() + out[0]
+    return [r for r in out if r and sum(length(p) for p in r) > 2.0]
+
+
+def behind(paths, shape, clear=STROKE + GAP):
+    """Hide what a closed shape in front covers: the under lines stop clear of its edge, as cut() does."""
+    edge = sample(shape, 0.2)
+    ex = [p[0] for p in edge]
+    ey = [p[1] for p in edge]
+
+    def blocked(q):
+        if inside(q, edge):
+            return True
+        return min(math.hypot(q[0] - a, q[1] - b) for a, b in zip(ex, ey)) < clear
+
+    paths = paths if paths and isinstance(paths[0], list) else [paths]
+    out = []
+    for p in paths:
+        out.extend(runs(p, blocked))
+    return out
+
+
+def handset():
+    """The handset hand-off uses, upright in its own frame: earpiece at the top, the grip bowed left."""
+    return [Line((7.5, -16), (-1, -16)),
+            Cubic((-1, -16), (-9.5, -16), (-9.5, 16), (-1, 16)),
+            Line((-1, 16), (7.5, 16)),
+            Line((7.5, 16), (7.5, 10)),
+            Line((7.5, 10), (3.5, 10)),
+            Cubic((3.5, 10), (-1.8, 7), (-1.8, -7), (3.5, -10)),
+            Line((3.5, -10), (7.5, -10)),
+            Line((7.5, -10), (7.5, -16))]
+
+
+def spark(c, r, pinch=0.16):
+    """A four point spark: four concave edges meeting at points up, right, down and left."""
+    x, y = c
+    pts = [(x, y - r), (x + r, y), (x, y + r), (x - r, y)]
+    ctl = [(x + r * pinch, y - r * pinch), (x + r * pinch, y + r * pinch), (x - r * pinch, y + r * pinch), (x - r * pinch, y - r * pinch)]
+    return [Quad(pts[i], ctl[i], pts[(i + 1) % 4]) for i in range(4)]
+
+
+def mirror(path, axis=24):
+    """Mirror a path left to right about x = axis, keeping its direction of travel reversed so it chains."""
+    out = []
+    for p in reversed(path):
+        if isinstance(p, Line):
+            out.append(Line((2 * axis - p.p1[0], p.p1[1]), (2 * axis - p.p0[0], p.p0[1])))
+        elif isinstance(p, Cubic):
+            m = lambda q: (2 * axis - q[0], q[1])
+            out.append(Cubic(m(p.p1), m(p.c2), m(p.c1), m(p.p0)))
+        else:
+            out.append(Arc((2 * axis - p.c[0], p.c[1]), p.r, 180 - p.a1, 180 - p.a0))
+    return out
+
+
+def g_crew():
+    """A staff badge on a lanyard."""
+    straps = [poly((13.5, 3.5), (22.5, 11.5)), poly((34.5, 3.5), (25.5, 11.5))]
+    clip = [Line((20.5, 18.5), (20.5, 13.5)), Arc((22.5, 13.5), 2, 180, 270), Line((22.5, 11.5), (25.5, 11.5)),
+            Arc((25.5, 13.5), 2, 270, 360), Line((27.5, 13.5), (27.5, 18.5))]
+    card = rrect(7, 18.5, 41, 42, 3)
+    head = circle((16.5, 26.2), 3.3)
+    shoulders = [Cubic((10.5, 37.5), (10.5, 32.2), (22.5, 32.2), (22.5, 37.5))]
+    lines = [poly((27, 26.5), (35.5, 26.5)), poly((27, 32.5), (33, 32.5))]
+    return straps + [clip, card, head, shoulders] + lines
+
+
+def g_payroll():
+    """A pay cheque with a seal."""
+    cheque = rrect(4, 12, 44, 36, 3)
+    seal = circle((13, 24), 4.6)
+    core = circle((13, 24), 1.0)
+    payee = poly((21, 18.5), (38.5, 18.5))
+    sign = [Cubic((21, 29.5), (23.5, 24.5), (26, 33), (29.5, 28.5)), Cubic((29.5, 28.5), (32.5, 24.5), (34.5, 31.5), (38.5, 27.5))]
+    return [cheque, seal, core, payee, sign]
+
+def g_help_desk():
+    """A headset."""
+    band = [Arc((24, 21.5), 14.5, 180, 360)]
+    cups = [rrect(5, 21.5, 14, 34.5, 3.5), rrect(34, 21.5, 43, 34.5, 3.5)]
+    boom = [Cubic((9.5, 34.5), (9.5, 40), (13.5, 42), (19.75, 42))]
+    mic = stadium((23, 42), 6.5, 3.5)
+    return [band] + cups + [boom, mic]
+
+
+def g_access():
+    """A keyhole on a shield."""
+    right = [Cubic((24, 5.5), (28.5, 8.5), (34, 10), (39, 10)), Line((39, 10), (39, 22)), Cubic((39, 22), (39, 32.5), (32, 39.5), (24, 43))]
+    shield = right + mirror(right)
+    c, r = (24, 20.5), 3.6
+    bow = Arc(c, r, 118, 422)
+    hole = [bow, Line(bow.p1, (26.8, 30.5)), Line((26.8, 30.5), (21.2, 30.5)), Line((21.2, 30.5), bow.p0)]
+    return [shield, hole]
+
+
+def g_network():
+    """A router with its signal."""
+    box = rrect(5, 28, 43, 39, 3)
+    masts = [poly((10.5, 28), (10.5, 16.5)), poly((37.5, 28), (37.5, 16.5))]
+    lamps = [circle((11.5, 33.5), 0.6), circle((16.5, 33.5), 0.6)]
+    vent = poly((29, 33.5), (37, 33.5))
+    waves = [[Arc((24, 24), 6, 225, 315)], [Arc((24, 24), 12, 225, 315)]]
+    point = circle((24, 23.2), 0.6)
+    return [box] + masts + lamps + [vent] + waves + [point]
+
+
+def g_built_not_bought():
+    """A claw hammer and a spark."""
+    f = Xf(rot=45, about=(0, 0), move=(29, 19))
+    # the head: a square face on the right, the claw tapering to a split on the left
+    head = [Line((-2.5, -3.5), (8, -3.5)), Arc((8, -5.5), 2, 90, 0), Line((10, -5.5), (10, -9)), Arc((8, -9), 2, 0, -90),
+            Line((8, -11), (-2.5, -11)), Cubic((-2.5, -11), (-6.5, -11), (-9.5, -9.5), (-12, -6)),
+            Cubic((-12, -6), (-8.5, -6.5), (-5.5, -5), (-2.5, -3.5))]
+    grip = poly((0, -3.5), (0, 21))
+    return [xf(head, f), xf(grip, f), spark((12.5, 14.5), 7), spark((36, 36), 3.6)]
+
+def g_on_the_line():
+    """A handset and a speech bubble."""
+    phone = xf(handset(), Xf(rot=-45, about=(0, 0), s=0.85, move=(16.5, 31.5)))
+    bubble = [Line((31, 21.5), (39.5, 21.5)), Arc((39.5, 18), 3.5, 90, 0), Line((43, 18), (43, 9.5)), Arc((39.5, 9.5), 3.5, 0, -90),
+              Line((39.5, 6), (26.5, 6)), Arc((26.5, 9.5), 3.5, 270, 180), Line((23, 9.5), (23, 18)), Arc((26.5, 18), 3.5, 180, 90),
+              Line((26.5, 21.5), (24.5, 26.5)), Line((24.5, 26.5), (31, 21.5))]
+    lines = [poly((28, 11.5), (38, 11.5)), poly((28, 16.5), (34, 16.5))]
+    return [phone, bubble] + lines
+
+
+def g_handshake():
+    """Two hands clasped between two cuffs."""
+    cuffs = [rrect(3, 18, 9, 32, 1.5), rrect(39, 18, 45, 32, 1.5)]
+    # the right hand reaches in from its cuff: its knuckles run under the thumb, its heel under the fingertips
+    back = [poly((39, 20), (30, 18.5)), poly((39, 30), (31.5, 31.5))]
+    # the left hand: its thumb laid across the right hand, its fingers curled down over it, sharing their sides
+    thumb = [Cubic((9, 20), (12.5, 16.5), (17, 15.5), (21, 15.5)), Line((21, 15.5), (27.5, 15.5)), Arc((27.5, 18), 2.5, 270, 450),
+             Line((27.5, 20.5), (21.5, 20.5))]
+    root, theta, w = (14.2, 26.2), 58, 5.2
+    e = (math.cos(math.radians(theta)), math.sin(math.radians(theta)))
+    q = (e[1], -e[0])  # along the knuckles, up and to the right
+    fingers = []
+    for i, L in enumerate((8.0, 9.5, 8.5)):
+        c = (root[0] + q[0] * w * i, root[1] + q[1] * w * i)
+        a0 = (c[0] - q[0] * w / 2, c[1] - q[1] * w / 2)
+        b0 = (c[0] + q[0] * w / 2, c[1] + q[1] * w / 2)
+        tip = (c[0] + e[0] * L, c[1] + e[1] * L)
+        fingers.append([Line(b0, (b0[0] + e[0] * L, b0[1] + e[1] * L)), Arc(tip, w / 2, theta - 90, theta + 90),
+                        Line((a0[0] + e[0] * L, a0[1] + e[1] * L), a0)])
+    first = (root[0] - q[0] * w / 2, root[1] - q[1] * w / 2)
+    heel = [Cubic((9, 30), (10.5, 30), (11.3, first[1] + 1.5), first)]
+    return [xf(q, Xf(s=0.94)) for q in cuffs + back + [thumb, heel] + fingers]
+
+def g_filed():
+    """A sheet with a notary seal, its lower corner folded up."""
+    sheet = [Line((26, 43), (9.5, 43)), Arc((9.5, 40.5), 2.5, 90, 180), Line((7, 40.5), (7, 7.5)), Arc((9.5, 7.5), 2.5, 180, 270),
+             Line((9.5, 5), (35.5, 5)), Arc((35.5, 7.5), 2.5, 270, 360), Line((38, 7.5), (38, 31)), Line((38, 31), (26, 43))]
+    flap = poly((38, 31), (28, 33), (26, 43))
+    seal_c = (22.5, 17.5)
+    k = 14
+    rosette = [Arc(seal_c, 6.6, 0, 1)]
+    pts = []
+    for i in range(k * 12 + 1):
+        a = 2 * math.pi * i / (k * 12)
+        rr = 6.4 + 0.75 * math.cos(k * a)
+        pts.append((seal_c[0] + rr * math.cos(a), seal_c[1] + rr * math.sin(a)))
+    rosette = poly(*pts)
+    core = circle(seal_c, 2.2)
+    lines = [poly((12, 31.5), (22, 31.5)), poly((12, 37), (19, 37))]
+    return [sheet, flap, rosette, core] + lines
+
+def g_deal_jacket():
+    """A file folder with a pen nib on it."""
+    folder = [Line((5, 38.5), (5, 12.5)), Arc((7.5, 12.5), 2.5, 180, 270), Line((7.5, 10), (15.5, 10)), Line((15.5, 10), (18.5, 13.5)),
+              Line((18.5, 13.5), (40.5, 13.5)), Arc((40.5, 16), 2.5, 270, 360), Line((43, 16), (43, 38.5)), Arc((40.5, 38.5), 2.5, 0, 90),
+              Line((40.5, 41), (7.5, 41)), Arc((7.5, 38.5), 2.5, 90, 180)]
+    cover = poly((5, 19.5), (43, 19.5))
+    f = Xf(rot=45, about=(0, 0), s=1.15, move=(34, 32))
+    nib = xf([Cubic((0, 10), (2.5, 6.5), (5.5, 3), (5.5, -1)), Line((5.5, -1), (4, -8)), Line((4, -8), (-4, -8)), Line((-4, -8), (-5.5, -1)),
+              Cubic((-5.5, -1), (-5.5, 3), (-2.5, 6.5), (0, 10))], f)
+    hole = xf(circle((0, -1.5), 1.3), f)
+    slit = xf(poly((0, 1.5), (0, 5)), f)
+    return behind([folder, cover], nib) + [nib, hole, slit]
+
+
+def g_in_order():
+    """A card file: two tabbed cards standing in a tray, a check on its face."""
+    tray = rrect(6, 26, 42, 43, 3)
+    back = [Line((9.5, 18), (9.5, 9.5)), Line((9.5, 9.5), (28.5, 9.5)), Line((28.5, 9.5), (28.5, 6)), Line((28.5, 6), (38.5, 6)),
+            Line((38.5, 6), (38.5, 18))]
+    front = [Line((9.5, 26), (9.5, 18)), Line((9.5, 18), (13, 18)), Line((13, 18), (13, 14.5)), Line((13, 14.5), (23, 14.5)),
+             Line((23, 14.5), (23, 18)), Line((23, 18), (38.5, 18)), Line((38.5, 18), (38.5, 26))]
+    check = poly((18.5, 35), (22, 38.5), (29, 31.5))
+    return [tray, back, front, check]
+
+
+def g_collections():
+    """A calendar leaf and a coin."""
+    cc, cr = (33.5, 33.5), 9.0
+    keep = cr + STROKE + GAP
+    leaf = rrect(5, 9, 33, 37, 3)
+    head = poly((5, 16.5), (33, 16.5))
+    rings = [poly((12, 5), (12, 12.5)), poly((26, 5), (26, 12.5))]
+    out = keepout(leaf, cc, keep) + keepout(head, cc, keep)
+    coin = circle(cc, cr)
+    face = circle(cc, 4.5)
+    return out + rings + [coin, face]
+
+
+def g_data_model():
+    """Three tables joined by their keys."""
+    a = rrect(5, 5, 21, 15, 2.5)
+    b = rrect(27, 19, 43, 29, 2.5)
+    c = rrect(5, 33, 21, 43, 2.5)
+    j1 = poly((21, 10), (35, 10), (35, 19))
+    j2 = poly((35, 29), (35, 38), (21, 38))
+    return [xf(q, Xf(s=0.94)) for q in (a, b, c, j1, j2)]
+
+
+def g_shipped():
+    """An arrow leaving the top of an open triangle."""
+    base = poly((19.5, 23), (8, 41.5), (40, 41.5), (28.5, 23))
+    shaft = poly((24, 36), (24, 5.5))
+    head = poly((17.5, 12), (24, 5.5), (30.5, 12))
+    return [base, shaft, head]
+
+
+def g_every_form():
+    """A licence card in the scanner's corners, the forms it fills stacked behind."""
+    back = rrect(21, 4.5, 42, 27, 2)
+    front = rrect(16.5, 9, 37.5, 31.5, 2)
+    rows = [poly((21, 14.5), (33, 14.5)), poly((21, 19.5), (29, 19.5))]
+    card = rrect(7.5, 24.5, 30.5, 40.5, 2.5)
+    forms = behind(behind(back, front) + [front] + rows, card)
+    photo = rrect(11.5, 28.5, 17.5, 34.5, 1.5)
+    lines = [poly((21.5, 30), (26.5, 30)), poly((21.5, 34.5), (23, 34.5))]
+    corners = [poly((3, 26.5), (3, 20.5), (9, 20.5)), poly((3, 38.5), (3, 44.5), (9, 44.5)), poly((35, 38.5), (35, 44.5), (29, 44.5))]
+    return [xf(q, Xf(s=0.88)) for q in forms + [card, photo] + lines + corners]
+
+def g_neuron():
+    """A neuron: the cell body, its forked dendrites, the axon and its terminals."""
+    c, r = (18, 19), 5.2
+
+    def rim(a):
+        t = math.radians(a)
+        return (c[0] + r * math.cos(t), c[1] + r * math.sin(t))
+
+    def fork(a, l1, l2, spread):
+        p = rim(a)
+        t = math.radians(a)
+        q = (p[0] + l1 * math.cos(t), p[1] + l1 * math.sin(t))
+        arms = [poly(q, (q[0] + l2 * math.cos(t + s * math.radians(spread)), q[1] + l2 * math.sin(t + s * math.radians(spread))))
+                for s in (-1, 1)]
+        return [poly(p, q)] + arms
+
+    dendrites = fork(270, 6, 5, 30) + fork(195, 4.5, 4.5, 32) + fork(140, 4.5, 4.0, 32) + fork(330, 4.0, 4.0, 32)
+    axon = [Cubic(rim(50), (24, 28), (28, 31), (33.5, 34.5))]
+    ends = [(42, 35), (35, 43), (40.5, 41)]
+    terminals = [poly((33.5, 34.5), e) for e in ends] + [circle(e, 0.7) for e in ends]
+    return [circle(c, r), circle(c, 1.0)] + dendrites + [axon] + terminals
+
 GLYPHS = {
     "fifty-three": g_fifty_three, "proceeds": g_proceeds, "keys-to-the-lot": g_keys_to_the_lot,
     "title-run": g_title_run, "daily-driver": g_daily_driver, "locked-rows": g_locked_rows,
@@ -552,6 +853,15 @@ GLYPHS = {
     "by-the-book": g_by_the_book, "deans-list": g_deans_list, "associate": g_associate,
     "nineteen": g_nineteen, "essentials": g_essentials, "operator": g_operator,
 }
+
+# the proof medals for the visitor's build card: not trophies, struck on their own (medals.py --proofs)
+PROOFS = {
+    "crew": g_crew, "payroll": g_payroll, "help-desk": g_help_desk, "access": g_access, "network": g_network,
+    "built-not-bought": g_built_not_bought, "on-the-line": g_on_the_line, "handshake": g_handshake, "filed": g_filed,
+    "deal-jacket": g_deal_jacket, "in-order": g_in_order, "collections": g_collections, "data-model": g_data_model,
+    "shipped": g_shipped, "every-form": g_every_form, "neuron": g_neuron,
+}
+GLYPHS.update(PROOFS)
 
 
 def to_svg(slug, paths):
@@ -576,12 +886,24 @@ OFFSETS = {
     "fifty-three": (0.9, 1.8), "keys-to-the-lot": (-1.8, 0), "title-run": (0, -1.2), "daily-driver": (0, 2.4),
     "hand-off": (1.6, -3.6), "deans-list": (-1.5, 0.5), "associate": (0, 2.0), "field-notes": (0.5, 0),
     "operator": (-0.2, 0.5), "locked-rows": (0, -1.6), "proceeds": (0, -1.0),
+    # the proof medals
+    "crew": (0.4, -0.8), "help-desk": (0.5, -1.2), "network": (0, -2.4), "built-not-bought": (-1.0, 2.4),
+    "on-the-line": (-0.5, 0.6), "handshake": (0, -1.0), "filed": (1.5, 0), "deal-jacket": (-0.4, -1.4),
+    "in-order": (0, -0.7), "shipped": (0, -2.0), "every-form": (1.6, -0.9), "neuron": (1.0, 0.6), "data-model": (0.6, 0),
 }
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    only = set(sys.argv[1:])
+    only = set()
+    for arg in sys.argv[1:]:
+        if arg == "--proofs":
+            only |= set(PROOFS)
+        else:
+            only |= {s for s in arg.split(",") if s}
+    unknown = sorted(only - set(GLYPHS))
+    if unknown:
+        sys.exit("medal_glyphs.py: no glyph named %s" % ", ".join(unknown))
     for slug, fn in GLYPHS.items():
         if only and slug not in only:
             continue

@@ -1,7 +1,8 @@
 {
-  "_note": "The single source for the Slate, the record on the home page and the presentation deck. resume-pdf.html carries the same facts and is edited by hand. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py.",
+  "_note": "The single source for the Slate, the record on the home page, the presentation deck and the resumes. tools/site/build_resume.py renders resume-pdf.html and resume/<build>.html from the resume block below and tools/site/builds.json. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
   "name": "Jason Obawemimo",
   "line": "AI implementation, workflow automation and CRM systems. I own a Houston dealership and ship the systems that run it.",
+  "summary": "I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve. At a Houston used vehicle dealership I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.",
   "email": "jobawems@gmail.com",
   "site": "jasonobawemimo.com",
   "location": "Pearland, Texas",
@@ -308,7 +309,7 @@
   "deck": [
     {
       "t": "Jason Obawemimo.",
-      "s": "AI implementation, workflow automation and CRM systems. I own and operate a Houston dealership and ship the CRM, voice AI and automation systems that run it."
+      "s": "AI implementation, workflow automation and CRM systems. I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve."
     },
     {
       "t": "The short version.",
@@ -383,5 +384,205 @@
       "s": "If I'm a fit, email is fastest. If a time is easier, pick 30 minutes.",
       "move": true
     }
-  ]
+  ],
+  "resume": {
+    "_note": "Read by tools/site/build_resume.py. The proofs themselves live in builds.json. bullets holds the resume wording (no leading I) for proofs whose first-person line does not start with I or repeats what its system heading already says; it changes no fact, number or date. Skills groups with lead_for come first on those builds, before the build's own skills order. courses names two or three of the nineteen Anthropic courses per build.",
+    "v": "oct26r",
+    "title": "AI Implementation, Workflow Automation and CRM Systems",
+    "contact": [
+      {
+        "text": "Pearland, TX"
+      },
+      {
+        "text": "jobawems@gmail.com",
+        "href": "mailto:jobawems@gmail.com"
+      },
+      {
+        "text": "jasonobawemimo.com",
+        "href": "https://jasonobawemimo.com/"
+      },
+      {
+        "text": "linkedin.com/in/obawemimo",
+        "href": "https://www.linkedin.com/in/obawemimo"
+      }
+    ],
+    "job": {
+      "role": "Owner and Operations Lead",
+      "org": "Triple J Auto Investment and Rental Operations",
+      "place": "Houston, Texas",
+      "when": "Aug 2024 to Present"
+    },
+    "systems": {
+      "lead-to-title": {
+        "name": "Custom dealership CRM and Handle a Sale desk",
+        "stack": "TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions"
+      },
+      "the-inbound": {
+        "name": "Inbound voice AI",
+        "stack": "Retell AI, Bland AI, Twilio, CRM webhooks"
+      },
+      "prospector": {
+        "name": "Prospecting workflow",
+        "stack": "Python, Claude API, n8n, CRM webhooks"
+      }
+    },
+    "bullets": {
+      "sales": "Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.",
+      "ops": "Manage dealership operations across pricing, inventory, vendors, logistics, financing and title processing since August 2024.",
+      "build-not-buy": "Build AI software for the dealership's bottlenecks rather than buying software.",
+      "crm-model": "Designed the lead-to-title data model, roles and validation.",
+      "daily": "Used daily by three staff across inventory, deals and follow-up.",
+      "sale-desk": "Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.",
+      "voice": "Deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff.",
+      "sop-replies": "The workflow generates SOP-based reply text for automatic follow-up."
+    },
+    "education": [
+      {
+        "school": "The University of Texas at Austin",
+        "place": "Austin, TX",
+        "degree": "Bachelor of Science in Neuroscience",
+        "when": "Expected 2028",
+        "proof": "bs"
+      },
+      {
+        "school": "San Jacinto College",
+        "place": "Houston, TX",
+        "degree": "Associate of Arts in Business",
+        "note": "GPA 3.63, Dean's Honor List",
+        "when": "May 2026",
+        "proof": "aa"
+      }
+    ],
+    "certificates": {
+      "google": "Google AI Essentials, Google (Coursera), 2026",
+      "anthropic": "Anthropic: nineteen completed courses, including"
+    },
+    "courses": {
+      "canonical": [
+        "Building with the Claude API",
+        "Claude Code in Action",
+        "Introduction to Model Context Protocol"
+      ],
+      "ai": [
+        "Building with the Claude API",
+        "Introduction to Model Context Protocol",
+        "Introduction to agent skills"
+      ],
+      "software": [
+        "Claude Code in Action",
+        "Building with the Claude API",
+        "Model Context Protocol: Advanced Topics"
+      ],
+      "it": [
+        "Claude with Amazon Bedrock",
+        "Claude with Google Cloud Vertex AI",
+        "AI Capabilities and Limitations"
+      ],
+      "ops": [
+        "AI Fluency for Small Businesses",
+        "AI Fluency: Framework and Foundations",
+        "AI Capabilities and Limitations"
+      ],
+      "title": [
+        "AI Fluency for Small Businesses",
+        "AI Capabilities and Limitations"
+      ],
+      "sales": [
+        "AI Fluency for Small Businesses",
+        "Claude 101"
+      ],
+      "people": [
+        "AI Fluency for Small Businesses",
+        "Teaching AI Fluency",
+        "AI Fluency: Framework and Foundations"
+      ],
+      "dealer-tech": [
+        "Building with the Claude API",
+        "AI Fluency for Small Businesses",
+        "Introduction to Claude Cowork"
+      ]
+    },
+    "skills": [
+      {
+        "group": "People",
+        "items": "Hiring, training, scheduling and managing staff; payroll",
+        "lead_for": [
+          "people",
+          "ops"
+        ]
+      },
+      {
+        "group": "IT support",
+        "items": "Staff support on the CRM, phones and computers; user accounts and permissions; hardware and network setup",
+        "lead_for": [
+          "it",
+          "people"
+        ]
+      },
+      {
+        "group": "Title and back office",
+        "items": "Title and registration (Form 130-U, webDEALER); deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); dealer license compliance and record-keeping; buy here pay here collections",
+        "lead_for": [
+          "title"
+        ]
+      },
+      {
+        "group": "Sales",
+        "items": "Vehicle sales, sales calls, phone and text follow-up, negotiation, after-sale service issues",
+        "lead_for": [
+          "sales"
+        ]
+      },
+      {
+        "group": "Languages",
+        "items": "TypeScript, JavaScript, Python, SQL"
+      },
+      {
+        "group": "Web and data",
+        "items": "React, Next.js, PostgreSQL, Supabase, Vercel"
+      },
+      {
+        "group": "Backend",
+        "items": "Edge Functions, REST APIs, row-level security (RLS), webhook services"
+      },
+      {
+        "group": "Automation",
+        "items": "n8n, API integrations, Retell AI, Bland AI, Twilio"
+      },
+      {
+        "group": "AI development",
+        "items": "Claude Code, Claude API, Codex"
+      },
+      {
+        "group": "Operations",
+        "items": "Dealership operations, sales pipelines, inventory and vendor management"
+      }
+    ],
+    "canonical": {
+      "proofs": [
+        "ops",
+        "sales",
+        "crew",
+        "daily",
+        "crm-model",
+        "rls",
+        "validation",
+        "migrations",
+        "shipped",
+        "sale-desk",
+        "voice",
+        "voice-figures",
+        "prospect",
+        "sop-replies"
+      ],
+      "skills": [
+        "Languages",
+        "Web and data",
+        "Backend",
+        "Automation",
+        "AI development",
+        "Operations"
+      ]
+    }
+  }
 }

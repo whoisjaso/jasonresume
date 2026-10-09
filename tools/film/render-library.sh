@@ -8,7 +8,8 @@
 # Needs: Chromium (REMOTION_BROWSER), python3 with Pillow (or dwebp) to turn the
 # webp plates into PNG with libwebp, the decoder browsers use for the still, so
 # the dissolve from still to loop holds its colour. FFMPEG overrides the encoder
-# (default: the ffmpeg Remotion bundles). KEEP=1 keeps the PNG frames.
+# (default: the ffmpeg Remotion bundles). KEEP=1 keeps the PNG frames; REUSE=1
+# re-encodes from frames kept by an earlier KEEP=1 run instead of rendering.
 set -e
 B=${REMOTION_BROWSER:-/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell}
 ART=../../assets/game/art
@@ -49,15 +50,24 @@ VF="scale=out_color_matrix=bt709:out_range=tv,format=yuv420p"
 
 for id in $ids; do
   c=$(comp "$id")
-  plate "$id"
-  rm -rf "out/library/$id"
-  npx remotion render src/index.ts "$c" "out/library/$id" --sequence --image-format=png \
-    --image-sequence-pattern='[frame].[ext]' --browser-executable="$B" --log=error
+  if [ -n "$REUSE" ] && [ -f "out/library/$id/239.png" ]; then
+    echo "re-encoding $id from kept frames"
+  else
+    plate "$id"
+    rm -rf "out/library/$id"
+    npx remotion render src/index.ts "$c" "out/library/$id" --sequence --image-format=png \
+      --image-sequence-pattern='[frame].[ext]' --browser-executable="$B" --log=error
+  fi
   seq="out/library/$id/%03d.png"
-  # one GOP for the whole loop: the browser seeks to frame 0 on every loop
-  ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libx264 -preset slow -crf 27 -g 240 \
-    $COLOR -movflags +faststart -an "$OUT/$id.mp4"
-  ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libvpx-vp9 -b:v 0 -crf 40 -row-mt 1 \
+  # One GOP for the whole loop: the browser seeks to frame 0 on every pass. x264
+  # cannot reference frame 0 from frame 239, so its keyframe would pop back to
+  # full detail at the seam; the zones lift the keyframe and the last half second
+  # so both sides of the seam sit close to the source. VP9 keeps frame 0 as its
+  # golden frame and closes the loop on its own; constrained quality caps the
+  # busiest plate near the mp4's size.
+  ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libx264 -preset slow -crf 27 -tune grain -g 240 \
+    -x264-params "zones=0,0,q=22/225,239,q=23" $COLOR -movflags +faststart -an "$OUT/$id.mp4"
+  ff -v error -y -framerate 30 -i "$seq" -vf "$VF" -c:v libvpx-vp9 -crf 30 -b:v 1400k -row-mt 1 \
     -deadline good -cpu-used 2 -g 240 $COLOR -an "$OUT/$id.webm"
   [ -n "$KEEP" ] || rm -rf "out/library/$id"
   ls -l "$OUT/$id.mp4" "$OUT/$id.webm"

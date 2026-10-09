@@ -2,20 +2,32 @@
 """The trophy medallions for the After Hours Library.
 
 One generated nickel-silver medal (tools/art/candidates/medal-base.png) is cut
-from its black ground, warped to a true circle, engraved with each trophy's
+from its black ground, warped to a true circle, engraved with each medal's
 glyph as a recessed V cut lit from the upper left, and struck in its tier's
 metal. Writes, into assets/game/medals:
 
-    <slug>-160.webp, <slug>-80.webp      the 18 trophies, transparent, square
+    <slug>-160.webp, <slug>-80.webp      the 18 trophies and the 16 proof medals, transparent, square
     <tier>-blank-160.webp                 bronze, silver, gold, platinum with an empty field
     sheen.webp                            160x160 diagonal specular streak swept over a medal on unlock
 
-and a contact sheet at tools/art/candidates/medals-contact.png (all 18 at 80
-and 40 pixels on ink, plus the blanks). Every shipped raster gets its prompt
-through the impeccable skill's embed-prompt.mjs (WebP takes a .json sidecar).
+and contact sheets in tools/art/candidates: medals-contact.png (the 18
+trophies at 80 and 40 pixels on ink, plus the blanks) and
+medals-contact-proofs.png (all 34 at 80 and 40 pixels on ink). Every shipped
+raster gets its prompt through the impeccable skill's embed-prompt.mjs (WebP
+takes a .json sidecar).
 
-    python3 tools/art/medals.py                 # everything
-    python3 tools/art/medals.py --no-provenance # a test run you will delete
+The proof medals are the visitor's build card, not trophies. Strike them, or
+any named medals, without touching the rest:
+
+    python3 tools/art/medals.py                          # everything
+    python3 tools/art/medals.py --proofs                 # the 16 proof medals only
+    python3 tools/art/medals.py --only crew,payroll      # named medals only
+    python3 tools/art/medals.py --trophies               # the 18 trophies only
+    python3 tools/art/medals.py --no-provenance          # a test run you will delete
+
+A partial run writes only the named medals and their sidecars (plus the proofs
+contact sheet when it strikes a proof medal); the blanks, the sheen and the
+trophy contact sheet come only from a full run.
 
 The glyphs are the SVGs in assets/game/medals/glyphs (tools/art/medal_glyphs.py
 writes them); this script reads them back, so an edited SVG is what ships.
@@ -42,6 +54,7 @@ BASE_PROMPT = os.path.join(HERE, "candidates", "medal-base.prompt.txt")
 OUT = os.path.join(ROOT, "assets", "game", "medals")
 GLYPHS = os.path.join(OUT, "glyphs")
 SHEET = os.path.join(HERE, "candidates", "medals-contact.png")
+PROOF_SHEET = os.path.join(HERE, "candidates", "medals-contact-proofs.png")
 
 TROPHIES = [
     ("fifty-three", "gold"), ("proceeds", "gold"), ("keys-to-the-lot", "silver"), ("title-run", "bronze"),
@@ -49,6 +62,14 @@ TROPHIES = [
     ("booked", "gold"), ("matched", "gold"), ("hand-off", "silver"), ("field-notes", "silver"),
     ("by-the-book", "bronze"), ("deans-list", "gold"), ("associate", "silver"), ("nineteen", "silver"),
     ("essentials", "bronze"), ("operator", "platinum"),
+]
+
+# the proof medals for the visitor's build card (glyphs in medal_glyphs.PROOFS)
+PROOFS = [
+    ("crew", "silver"), ("payroll", "silver"), ("help-desk", "silver"), ("access", "silver"), ("network", "silver"),
+    ("built-not-bought", "silver"), ("on-the-line", "silver"), ("handshake", "silver"), ("filed", "silver"),
+    ("deal-jacket", "silver"), ("in-order", "silver"), ("collections", "silver"), ("data-model", "silver"),
+    ("shipped", "silver"), ("every-form", "silver"), ("neuron", "bronze"),
 ]
 
 S = 960            # working square, pixels
@@ -465,6 +486,57 @@ def contact_sheet(made, blanks):
     return SHEET
 
 
+def proofs_sheet():
+    """All 34 medals as they stand on disk, trophies then proofs, at 80 and 40 pixels on ink."""
+    pad, gut = 28, 20
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
+        head = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 15)
+    except OSError:
+        font = head = ImageFont.load_default()
+    cols, c80, c40, row = 6, 120, 64, 104
+    groups = [("trophies", TROPHIES), ("proofs", PROOFS)]
+    W = pad * 2 + cols * c80 + gut + cols * c40
+    H = pad * 2 + sum(30 + math.ceil(len(g) / cols) * row for _, g in groups)
+    sheet = Image.new("RGB", (W, H), INK)
+    d = ImageDraw.Draw(sheet)
+    x80, x40 = pad, pad + cols * c80 + gut
+    y = pad
+    for name, group in groups:
+        d.text((x80, y), "%s, 80 px" % name, fill=BONE, font=head)
+        d.text((x40, y), "40 px", fill=BONE, font=head)
+        y += 30
+        for i, (slug, tier) in enumerate(group):
+            r, c = divmod(i, cols)
+            yy = y + r * row
+            im80 = Image.open(os.path.join(OUT, slug + "-80.webp")).convert("RGBA")
+            sheet.paste(im80, (x80 + c * c80 + (c80 - 80) // 2, yy), im80)
+            d.text((x80 + c * c80 + 4, yy + 84), slug, fill=(170, 165, 155), font=font)
+            im40 = im80.resize((40, 40), Image.LANCZOS)
+            sheet.paste(im40, (x40 + c * c40 + 12, yy + 20), im40)
+        y += math.ceil(len(group) / cols) * row
+    sheet.save(PROOF_SHEET)
+    return PROOF_SHEET
+
+
+def pick(args):
+    """The medals a run strikes, in order: everything, a group, or named slugs (commas or spaces)."""
+    every = TROPHIES + PROOFS
+    if not (args.only or args.proofs or args.trophies):
+        return every, True
+    want = set()
+    if args.proofs:
+        want |= {s for s, _ in PROOFS}
+    if args.trophies:
+        want |= {s for s, _ in TROPHIES}
+    for item in args.only or []:
+        want |= {s for s in item.split(",") if s}
+    unknown = sorted(want - {s for s, _ in every})
+    if unknown:
+        sys.exit("medals.py: no medal named %s" % ", ".join(unknown))
+    return [(s, t) for s, t in every if s in want], False
+
+
 def embed(path, prompt, script):
     subprocess.run(["node", script, path, "--prompt", prompt], check=True, stdout=subprocess.DEVNULL)
 
@@ -484,8 +556,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-provenance", action="store_true")
     ap.add_argument("--embed-script")
-    ap.add_argument("--only", nargs="*", help="slugs to make (default all)")
+    ap.add_argument("--only", nargs="*", help="slugs to strike, comma or space separated (default all)")
+    ap.add_argument("--proofs", action="store_true", help="strike the 16 proof medals")
+    ap.add_argument("--trophies", action="store_true", help="strike the 18 trophies")
     args = ap.parse_args()
+    made, full = pick(args)
 
     os.makedirs(OUT, exist_ok=True)
     prompt = open(BASE_PROMPT).read().strip()
@@ -495,7 +570,6 @@ def main():
     print("medal edge r=%.1f, field r=%d (of %d working px)" % (edge, field_r, S))
 
     report = []
-    made = [(s, t) for s, t in TROPHIES if not args.only or s in args.only]
     for slug, tier in made:
         vb, width, lines = read_glyph(slug)
         dist, gx, gy, hw = distance_field(lines, vb, width)
@@ -510,7 +584,7 @@ def main():
                 embed(path, prompt + "\n\nrecoloured and engraved in code with the %s glyph" % slug, script)
 
     blanks = ["bronze", "silver", "gold", "platinum"]
-    if not args.only:
+    if full:
         for tier in blanks:
             rgba = strike(y, alpha, rr, field_r, tier)
             path = os.path.join(OUT, "%s-blank-160.webp" % tier)
@@ -524,7 +598,9 @@ def main():
         if script:
             embed(path, "Drawn in code by tools/art/medals.py, no generation: a soft diagonal specular streak, "
                         "warm white on transparent, 160x160, swept across a medal by CSS on unlock.", script)
-        print("contact sheet:", contact_sheet(made, blanks))
+        print("contact sheet:", contact_sheet(TROPHIES, blanks))
+    if full or any(slug in dict(PROOFS) for slug, _ in made):
+        print("proofs contact sheet:", proofs_sheet())
     for name, b, q in report:
         print("  %-28s %6.1f KB  q%d" % (name, b / 1024, q))
 
