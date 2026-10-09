@@ -491,6 +491,7 @@ html.intro-pending body > :not(#intro):not(script):not(dialog) { visibility: hid
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 899px) {
   .tile__frame::before { inset: -11px; }
+  .tile.is-focus { gap: 16px; }
   .lib-on .shelf__row { padding-top: 12px; }
   /* a transform left on these would capture the fixed action bar; on a phone they only fade */
   .lib-on .title__head, .lib-on .screen.is-open, .lib-on .hud-trophies { animation-name: fade; }
