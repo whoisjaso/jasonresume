@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Nine resumes from one record.
+"""Ten resumes from one record.
 
-Reads tools/site/builds.json (the proofs and the eight builds), tools/site/record.json (the
+Reads tools/site/builds.json (the proofs and the nine builds), tools/site/record.json (the
 summary and the resume block) and tools/site/resume.template.html, and writes:
 
   resume-pdf.html            the canonical resume (its URL, head metadata and JSON-LD kept)
@@ -84,8 +84,8 @@ def experience(proof_ids):
             fail("unknown proof " + pid)
             continue
         p = PROOFS[pid]
-        if p["area"] == LEARN:
-            continue
+        if p["area"] == LEARN or p.get("skill"):
+            continue  # education and certificates have their own sections; a skill prints in Skills
         t = p["title"]
         if t == JOB_TITLE:
             job_level.append(pid)
@@ -152,7 +152,9 @@ def skills(build_id, order):
         if n not in groups:
             fail("unknown skills group " + n)
             continue
-        out.append('      <p data-group="%s"><span class="k">%s:</span> %s</p>' % (E(n), E(n), E(groups[n]["items"])))
+        g = groups[n]
+        proof = ' data-proof="%s"' % E(" ".join(g["proofs"])) if g.get("proofs") else ""
+        out.append('      <p data-group="%s"%s><span class="k">%s:</span> %s</p>' % (E(n), proof, E(n), E(g["items"])))
     out.append("    </section>")
     return out
 
@@ -169,6 +171,8 @@ def head_block(build):
         else:
             parts.append("<span>%s</span>" % E(c["text"]))
     out.append('      <p class="contact">%s</p>' % ' <span class="sep">|</span> '.join(parts))
+    if R.get("availability"):
+        out.append('      <p class="avail">%s</p>' % E(R["availability"]))
     out.append("    </div>")
     return out
 
@@ -331,6 +335,23 @@ def check_record():
         for n in numbers(f["answer"]):
             if n not in LLMS_NUMBERS:
                 fail("lexicon fact answer prints %s, not in llms.txt" % n)
+    if R.get("availability") and R["availability"].lower().rstrip(".") not in flat.lower():
+        fail("record.json resume availability is not in llms.txt")
+    groups = {g["group"]: g for g in R["skills"]}
+    for g in R["skills"]:
+        for p in g.get("proofs", []):
+            if p not in PROOFS:
+                fail("skills group %s names unknown proof %s" % (g["group"], p))
+    for b in BUILDS + [{"id": "canonical", "proofs": R["canonical"]["proofs"], "skills": R["canonical"]["skills"]}]:
+        printed = set()
+        for n in b["skills"]:
+            printed.update(groups.get(n, {}).get("proofs", []))
+        for g in R["skills"]:
+            if b["id"] in g.get("lead_for", []):
+                printed.update(g.get("proofs", []))
+        for pid in b["proofs"]:
+            if PROOFS.get(pid, {}).get("skill") and pid not in printed:
+                fail("build %s equips skill %s but no skills group on its resume prints it" % (b["id"], pid))
     ids = set(PROOFS)
     for key, t in lexicon["terms"].items():
         for p in t.get("proofs", []):

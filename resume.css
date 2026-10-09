@@ -214,6 +214,12 @@ h1 {
   color: var(--muted);
 }
 
+.avail {
+  margin-top: 1.5pt;
+  font-size: 9pt;
+  color: var(--ink-soft);
+}
+
 section {
   margin-top: 9pt;
 }

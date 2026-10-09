@@ -1,11 +1,12 @@
 Jason Obawemimo
 AI Implementation, Workflow Automation and CRM Systems
 53 vehicle sales personally closed and $206,777 collected since June 2025.
-Written for: Automotive Sales Consultant, BDC Representative, Internet Sales Consultant, Sales Development Representative, Customer Success Associate
+Written for: Automotive Sales Consultant, Bilingual Sales Consultant, BDC Representative, Internet Sales Consultant, Sales Development Representative, Customer Success Associate
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
-I sell, and I build the tools a sales team works from. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds at a Houston used vehicle dealership. I take sales calls, follow up by phone and text, negotiate deals and handle service issues after the sale. Across August and September 2026 the inbound voice AI I deployed averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).
+I sell, and I build the tools a sales team works from. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds at a Houston used vehicle dealership. I take sales calls, follow up by phone and text, negotiate deals and handle service issues after the sale, and I speak Spanish professionally and proficiently. Across August and September 2026 the inbound voice AI I deployed averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).
 
 Experience
 Owner and Operations Lead, Aug 2024 to Present
@@ -34,9 +35,8 @@ Certificates and Courses
 
 Skills
 Sales: Vehicle sales, sales calls, phone and text follow-up, negotiation, after-sale service issues
+Spoken languages: Spanish, spoken professionally and proficiently
 Operations: Dealership operations, sales pipelines, inventory and vendor management
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
 AI development: Claude Code, Claude API, Codex
-Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
-Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
-Languages: TypeScript, JavaScript, Python, SQL
+Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration

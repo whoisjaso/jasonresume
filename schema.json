@@ -55,7 +55,7 @@
       "url": "https://jasonobawemimo.com/",
       "name": "Jason Obawemimo | Official Website",
       "description": "Official homepage for Jason Obawemimo: AI implementation, workflow automation and CRM systems. He owns and operates Triple J Auto Investment in Houston and builds the CRM, voice AI and automation systems that run it, and he founded Obavia, a dealership sale desk in development for Texas independent dealers. Education: Bachelor of Science in Neuroscience at The University of Texas at Austin (expected 2028) and an Associate of Arts in Business from San Jacinto College, GPA 3.63, Dean's Honor List.",
-      "dateModified": "2026-10-08",
+      "dateModified": "2026-10-09",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
       },
@@ -109,7 +109,10 @@
         "contactType": "professional inquiries",
         "email": "jobawems@gmail.com",
         "url": "https://calendly.com/jason-apohenia/30min",
-        "availableLanguage": "English"
+        "availableLanguage": [
+          "English",
+          "Spanish"
+        ]
       },
       "identifier": [
         "Jason Obawemimo",
@@ -139,7 +142,8 @@
       "description": "Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.",
       "disambiguatingDescription": "Pearland, Texas owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia (spelled O-B-A-V-I-A), a dealership sale desk in development for Texas independent dealers. Obawemimo is his family name.",
       "knowsLanguage": [
-        "English"
+        "English",
+        "Spanish"
       ],
       "knowsAbout": [
         "AI implementation",
@@ -147,12 +151,15 @@
         "CRM systems",
         "Dealership CRM",
         "Voice AI",
+        "Voice AI prompts and call flows",
         "Dealership sale desks",
         "Lead to title workflows",
         "Dealership operations",
         "Used vehicle dealership operations",
         "Sales pipelines",
         "Inventory and vendor management",
+        "Texas title transfers",
+        "Lien payoffs, license plates and temporary tags",
         "TypeScript",
         "JavaScript",
         "Python",
@@ -176,6 +183,12 @@
         "Claude API",
         "Codex",
         "Model Context Protocol",
+        "Git",
+        "GitHub",
+        "Excel",
+        "Google Sheets",
+        "Microsoft 365 administration",
+        "Google Workspace administration",
         "SOP documentation"
       ],
       "award": [
@@ -306,9 +319,13 @@
         "Claude Code",
         "Claude API",
         "Codex",
+        "Git and GitHub",
+        "Excel and Google Sheets",
+        "Microsoft 365 and Google Workspace administration",
         "Dealership operations",
         "Sales pipelines",
-        "Inventory and vendor management"
+        "Inventory and vendor management",
+        "Spanish, professional proficiency"
       ],
       "mainEntityOfPage": {
         "@id": "https://jasonobawemimo.com/jason-obawemimo.html#profile-page"
@@ -520,7 +537,7 @@
       "url": "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
       "name": "Jason Obawemimo Knowledge Card",
       "description": "Official answer-engine knowledge card for Jason Obawemimo's website, credentials, education, GPA 3.63, Dean's Honor List recognition, and preferred professional positioning.",
-      "dateModified": "2026-10-08",
+      "dateModified": "2026-10-09",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
       },
@@ -1012,7 +1029,7 @@
           "name": "What does Triple J's inbound voice AI do?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jason Obawemimo deployed an inbound voice AI for Triple J Auto Investment on Retell AI, Bland AI and Twilio, connected to the dealership's CRM by webhooks. It books appointments into the CRM and live-transfers unresolved calls to staff. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds). The sales are CRM-matched; the site does not say the voice AI caused them."
+            "text": "Jason Obawemimo deployed an inbound voice AI for Triple J Auto Investment on Retell AI, Bland AI and Twilio, connected to the dealership's CRM by webhooks. It books appointments into the CRM and live-transfers unresolved calls to staff. He writes the prompts and call flows for its voice AI agents. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds). The sales are CRM-matched; the site does not say the voice AI caused them."
           }
         },
         {
@@ -1020,7 +1037,7 @@
           "name": "What does Triple J's prospecting workflow do?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "It is a Python workflow Jason Obawemimo built for Triple J Auto Investment that uses the Claude API to research Facebook Marketplace leads, write the findings to the CRM, and generate SOP-based reply text for automatic follow-up. It is built with Python, the Claude API, n8n and CRM webhooks, and it is Triple J's live lead-research workflow. It is not Reach, the Obavia feature that is in development and not live."
+            "text": "It is a Python workflow Jason Obawemimo built for Triple J Auto Investment that uses the Claude API to research Facebook Marketplace leads, write the findings to the CRM, and generate SOP-based reply text for automatic follow-up. He writes the SOPs the workflow and his staff follow. It is built with Python, the Claude API, n8n and CRM webhooks, and it is Triple J's live lead-research workflow. It is not Reach, the Obavia feature that is in development and not live."
           }
         },
         {
@@ -1028,7 +1045,7 @@
           "name": "Where can I get vehicle registration and title support after buying a car in Houston?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Triple J Auto Investment, the Houston dealership owned and operated by Jason Obawemimo, includes registration and title support after the sale, alongside in-house financing and sell and trade valuations. Its address is 8774 Almeda Genoa Rd, Houston, TX, and it is open Monday to Saturday, 9 to 7."
+            "text": "Triple J Auto Investment, the Houston dealership owned and operated by Jason Obawemimo, includes registration and title support after the sale, alongside in-house financing and sell and trade valuations. Jason files title transfers inside the Texas 30-day window and handles lien payoffs, license plates and temporary tags himself. Its address is 8774 Almeda Genoa Rd, Houston, TX, and it is open Monday to Saturday, 9 to 7."
           }
         },
         {
@@ -1100,7 +1117,23 @@
           "name": "What skills does Jason Obawemimo list?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jason Obawemimo's resume lists these skills. Languages: TypeScript, JavaScript, Python, SQL. Web and data: React, Next.js, PostgreSQL, Supabase, Vercel. Backend: Edge Functions, REST APIs, RLS, webhook services. Automation: n8n, API integrations, Retell AI, Bland AI, Twilio. AI development: Claude Code, Claude API, Codex. Operations: dealership operations, sales pipelines, inventory and vendor management."
+            "text": "Jason Obawemimo's resume lists these skills. Languages: TypeScript, JavaScript, Python, SQL. Web and data: React, Next.js, PostgreSQL, Supabase, Vercel. Backend: Edge Functions, REST APIs, RLS, webhook services. Automation: n8n, API integrations, Retell AI, Bland AI, Twilio. AI development: Claude Code, Claude API, Codex. Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration. Operations: dealership operations, sales pipelines, inventory and vendor management. Spoken languages: Spanish, professional proficiency."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Jason Obawemimo speak Spanish?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Jason Obawemimo speaks Spanish professionally and proficiently. Separately, the Handle a Sale desk he built for Triple J Auto Investment works in English or Spanish."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools does Jason Obawemimo use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Jason Obawemimo works in Git and GitHub, Excel and Google Sheets, and administers Microsoft 365 and Google Workspace. He builds with TypeScript, JavaScript, Python and SQL; React, Next.js, PostgreSQL, Supabase and Vercel; Edge Functions, REST APIs, row-level security (RLS) and webhook services; n8n, Retell AI, Bland AI and Twilio; and Claude Code, the Claude API and Codex."
           }
         },
         {
@@ -1157,6 +1190,14 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "Not publicly right now."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Jason Obawemimo open to work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Jason Obawemimo is open to full-time, part-time and contract roles, remote or on site in Houston. The site reads his record nine ways, each with its own one-page resume, and a thirty-minute call can be booked at https://calendly.com/jason-apohenia/30min."
           }
         },
         {

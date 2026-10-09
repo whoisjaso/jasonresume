@@ -17,7 +17,7 @@ const VOLUME_TEXT = { under10: "under 10 sales a month", "10to30": "10 to 30 sal
 const PAY = new Set(["cash", "bhph", "bank", "mix", "unsure"]);
 const PAY_TEXT = { cash: "mostly cash deals", bhph: "mostly buy here pay here", bank: "mostly bank financing", mix: "a mix of cash, buy here pay here and bank", unsure: "financing mix not given" };
 
-const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology" };
+const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology", data: "Data and Databases" };
 const LOTS = { calls: "Calls I miss", paperwork: "Paperwork that comes back", leads: "Leads that go cold", notebook: "Deals in a notebook", tech: "Staff who need tech help", bhph: "Buy here pay here accounts" };
 const SEATS = { interviewer: "hiring", partner: "runs a dealership", lurker: "just looking" };
 const list = (a, n) => (Array.isArray(a) ? a : []).slice(0, n).map((x) => STR(x, 48)).filter(Boolean);

@@ -3,6 +3,7 @@ AI Implementation, Workflow Automation and CRM Systems
 A TypeScript, Next.js and Supabase CRM in daily production use.
 Written for: Junior Full-Stack Developer, Software Engineer I, Web Developer, Internal Tools Developer, CRM Developer
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
 I build software people use every day. I designed and shipped a custom dealership CRM in TypeScript, React, Next.js, PostgreSQL and Supabase that three staff use daily across inventory, deals and follow-up. I designed its lead-to-title data model, roles and validation, tested its row-level security (RLS) policies to prevent unauthorized role access, and executed production schema migrations that preserved existing records.
@@ -35,6 +36,8 @@ Skills
 Languages: TypeScript, JavaScript, Python, SQL
 Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
 Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
+Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration
 AI development: Claude Code, Claude API, Codex
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
 Operations: Dealership operations, sales pipelines, inventory and vendor management
+Spoken languages: Spanish, spoken professionally and proficiently

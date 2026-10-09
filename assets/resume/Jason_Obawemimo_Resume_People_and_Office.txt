@@ -1,17 +1,20 @@
 Jason Obawemimo
 AI Implementation, Workflow Automation and CRM Systems
-Hiring, training, scheduling and payroll.
-Written for: HR Coordinator, People Operations Coordinator, Office Manager, Payroll Coordinator, Office Administrator
+Hiring, training, scheduling, payroll and SOPs.
+Written for: HR Coordinator, People Operations Coordinator, Office Manager, Payroll Coordinator, Office Administrator, Bilingual Office Administrator
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
-I keep a team staffed, trained and paid. At a Houston used vehicle dealership I hire, train, schedule and manage the staff and run payroll. I support them on the CRM, phones and computers, manage their user accounts and permissions, and keep the dealer license compliance and record-keeping in order.
+I keep a team staffed, trained and paid. At a Houston used vehicle dealership I hire, train, schedule and manage the staff, run payroll and write the SOPs they follow. I support them on the CRM, phones and computers, manage their user accounts and permissions, and keep the dealer license compliance and record-keeping in order. I administer Microsoft 365 and Google Workspace, work in Excel and Google Sheets, and speak Spanish professionally and proficiently.
 
 Experience
 Owner and Operations Lead, Aug 2024 to Present
 Triple J Auto Investment and Rental Operations, Houston, Texas
 - Hire, train, schedule and manage the dealership's staff.
 - Run the dealership's payroll.
+- Administer Microsoft 365 and Google Workspace.
+- Write the SOPs the staff and the prospecting workflow follow.
 - Support the dealership's staff on the CRM, phones and computers.
 - Manage the dealership's user accounts and permissions.
 - Keep the dealer license compliance and record-keeping in order.
@@ -32,6 +35,8 @@ Certificates and Courses
 Skills
 People: Hiring, training, scheduling and managing staff; payroll
 IT support: Staff support on the CRM, phones and computers; user accounts and permissions; hardware and network setup
+Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration
+Spoken languages: Spanish, spoken professionally and proficiently
 Operations: Dealership operations, sales pipelines, inventory and vendor management
 Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio

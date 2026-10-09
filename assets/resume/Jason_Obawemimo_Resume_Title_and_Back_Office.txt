@@ -1,16 +1,19 @@
 Jason Obawemimo
 AI Implementation, Workflow Automation and CRM Systems
-Texas title and deal paperwork, desk to file.
-Written for: Title Clerk, Title and Registration Specialist, Deal Processor, Dealership Office Manager, Collections Specialist
+Texas title transfers inside the 30-day window, desk to file.
+Written for: Title Clerk, Bilingual Title Clerk, Title and Registration Specialist, Deal Processor, Dealership Office Manager, Collections Specialist
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
-I get the paperwork right and on file. At a Houston used vehicle dealership I prepare and file title and registration paperwork, including the Form 130-U and webDEALER; prepare deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); keep the dealer license compliance and record-keeping in order; and service buy here pay here accounts and collections. I also built the sale desk that routes each deal to the right documents with nothing missing and nothing extra.
+I get the paperwork right and on file. At a Houston used vehicle dealership I prepare and file title and registration paperwork, including the Form 130-U and webDEALER, and file title transfers inside the Texas 30-day window; handle lien payoffs, license plates and temporary tags; prepare deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); keep the dealer license compliance and record-keeping in order; and service buy here pay here accounts and collections. I speak Spanish professionally and proficiently, and I built the sale desk that routes each deal to the right documents with nothing missing and nothing extra.
 
 Experience
 Owner and Operations Lead, Aug 2024 to Present
 Triple J Auto Investment and Rental Operations, Houston, Texas
 - Prepare and file title and registration paperwork, including the Form 130-U and webDEALER.
+- File title transfers inside the Texas 30-day window.
+- Handle lien payoffs, license plates and temporary tags.
 - Prepare deal jackets and contracts: bills of sale, buy here pay here contracts and disclosures.
 - Keep the dealer license compliance and record-keeping in order.
 - Service buy here pay here accounts and collections.
@@ -18,7 +21,6 @@ Triple J Auto Investment and Rental Operations, Houston, Texas
 - Personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025.
 Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
   - Handle a Sale, the CRM's sale desk, scans the buyer's license once so every form fills itself and routes each deal to the right documents with nothing missing and nothing extra.
-  - Added validation that prevents invalid deal and inventory records from being written.
 
 Education
 The University of Texas at Austin, Austin, TX, Expected 2028
@@ -32,9 +34,9 @@ Certificates and Courses
 
 Skills
 Title and back office: Title and registration (Form 130-U, webDEALER); deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); dealer license compliance and record-keeping; buy here pay here collections
+Spoken languages: Spanish, spoken professionally and proficiently
 Operations: Dealership operations, sales pipelines, inventory and vendor management
+Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration
 Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
-Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
 AI development: Claude Code, Claude API, Codex
-Languages: TypeScript, JavaScript, Python, SQL

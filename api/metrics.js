@@ -34,7 +34,7 @@ const POINTS = {
   listing_matched: 15, build_resume: 10, build_viewed: 6, build_sent: 40
 };
 const TERMINAL = new Set(["call_booked", "lead_sent", "questions_mailed", "build_sent"]);
-const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology",
+const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology", data: "Data and Databases",
   calls: "lot: calls", paperwork: "lot: paperwork", leads: "lot: leads", notebook: "lot: deals in a notebook", tech: "lot: tech help", bhph: "lot: buy here pay here" };
 const STORY = {
   desk_finished: "ran the desk", film_complete: "watched the whole film", film_play: "played the film", resume_open: "opened the resume",

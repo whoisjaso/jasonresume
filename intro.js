@@ -7,8 +7,13 @@
    for, the problem on their lot, or a class (build.js keeps it); then an
    optional player name that signs it; then the card and the library. Every
    skip is silent. A ?for=<build> link (from an application) highlights that
-   role first. Its words live in
-   tools/site/onboarding.json, inlined as #onboarding-data.
+   role first. Someone hiring can paste the listing (the unnumbered row at the
+   top) and build the role it matches. On the card, the funnel: someone hiring
+   who built a role gets Resume for this role and one fine line saying what
+   I'm open to; a dealer gets the lot's own next step (a call, or Obavia early
+   access) and no availability; someone just looking gets nothing but the
+   card (the seat promised no pitch; Player 2 carries a referral). Its words
+   live in tools/site/onboarding.json, inlined as #onboarding-data.
    The head script sets html.intro-pending so the page never flashes first.
    While it is up, html has .intro-on. When it ends, document gets
    "jg:intro-done" { role, named }. */
@@ -48,7 +53,8 @@
 
   /* ---------- the title screen, mounted before anything else loads ---------- */
   var t = O.title, mob = innerWidth < 760;
-  var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/triple-j";
+  /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
+  var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");
   var el = document.createElement("div");
   el.id = "intro"; el.className = "intro";
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "intro-title");
@@ -91,7 +97,7 @@
     "</section>" +
     '<section class="intro__scene intro__scene--card" data-scene="card" hidden aria-live="polite">' +
       '<p class="intro__card"></p>' +
-      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts"><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + "</button></div></div></div>" +
+      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts" data-built-acts><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + '</button></div><p class="intro__fine intro__open" data-built-more hidden></p></div></div>' +
     "</section>";
   body.appendChild(el);
   root.classList.add("intro-on");
@@ -159,16 +165,20 @@
     var w = W[seatId] || W.interviewer;
     el.querySelector("[data-build-h]").textContent = w.title;
     el.querySelector("[data-build-sub]").textContent = w.sub;
-    bitems = seatId === "partner" ? BD.lot.map(function (l) { return { kind: "lot", id: l.id, h: l.label, p: "" }; })
-      : BD.builds.map(function (b) { return { kind: "role", id: b.id, h: b.label, p: b.targets.slice(0, 3).join(", ") }; });
-    if (seatId === "lurker") bitems.push({ kind: "spin", id: "spin", h: w.surprise, p: w.surprise_p });
-    if (seatId === "interviewer" && window.JG_MATCH) bitems.push({ kind: "paste", id: "paste", h: W.paste, p: W.paste_p });
+    bitems = seatId === "partner" ? BD.lot.map(function (l, i) { return { kind: "lot", id: l.id, h: l.label, p: "", n: String(i + 1) }; })
+      : BD.builds.map(function (b, i) { return { kind: "role", id: b.id, h: b.label, p: b.targets.slice(0, 3).join(", "), n: String(i + 1) }; });
+    /* the extra row carries an icon, not a number: keys 1 to 9 are the readings */
+    if (seatId === "lurker") bitems.push({ kind: "spin", id: "spin", h: w.surprise, p: w.surprise_p, icon: "g-move" });
+    /* someone hiring meets the listing first: it is the most tailored way in */
+    if (seatId === "interviewer" && window.JG_MATCH) bitems.unshift({ kind: "paste", id: "paste", h: W.paste, p: W.paste_p, icon: "g-doc" });
     armed = false;
-    var start = 0; if (FOR) bitems.forEach(function (it, i) { if (it.kind === "role" && it.id === FOR) start = i; });
+    var start = Math.max(0, bitems.findIndex(function (it) { return it.n; }));
+    if (FOR) bitems.forEach(function (it, i) { if (it.kind === "role" && it.id === FOR) start = i; });
     var menu = el.querySelector("[data-build-menu]");
     menu.setAttribute("aria-label", w.title);
     menu.innerHTML = bitems.map(function (it, i) {
-      return '<li><button class="menu__row' + (i === start ? " is-on" : "") + (it.kind === "spin" || it.kind === "paste" ? " menu__row--alt" : "") + '" type="button" role="option" aria-selected="' + (i === start) + '" data-i="' + i + '"><span class="menu__n" aria-hidden="true">' + (i + 1) + '</span><span class="menu__txt"><b>' + E(it.h) + "</b>" + (it.p ? "<small>" + E(it.p) + "</small>" : "") + "</span></button></li>";
+      var badge = it.icon ? '<span class="menu__n menu__n--icon" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#' + it.icon + '"/></svg></span>' : '<span class="menu__n" aria-hidden="true">' + it.n + "</span>";
+      return '<li><button class="menu__row' + (i === start ? " is-on" : "") + (it.icon ? " menu__row--alt" : "") + '" type="button" role="option" aria-selected="' + (i === start) + '" data-i="' + i + '" data-id="' + it.id + '"' + (it.n ? ' data-n="' + it.n + '"' : "") + ">" + badge + '<span class="menu__txt"><b>' + E(it.h) + "</b>" + (it.p ? "<small>" + E(it.p) + "</small>" : "") + "</span></button></li>";
     }).join("");
     brows = [].slice.call(menu.querySelectorAll(".menu__row"));
     brows.forEach(function (r) {
@@ -187,7 +197,7 @@
   var artNow = "";
   function preview(i) {
     var it = bitems[i], pv = el.querySelector("[data-build-preview]"); if (!it || !pv) return;
-    pv.classList.toggle("is-paste", it.kind === "paste");
+    pv.classList.toggle("is-paste", it.kind === "paste"); pv.classList.remove("is-matched");
     if (it.kind === "paste") { pv.innerHTML = '<form class="cls__paste" data-paste><label class="cls__k" for="intro-list">' + E(W.paste_h) + '</label><textarea id="intro-list" rows="7"></textarea><p class="intro__fine">' + E(W.paste_fine) + '</p><button class="btn btn--sm" type="submit">' + E(W.match) + "</button></form>"; return; }
     if (it.kind === "spin") { pv.innerHTML = ""; return; }
     var src = it.kind === "role" ? BD.builds.filter(function (b) { return b.id === it.id; })[0] : BD.lot.filter(function (l) { return l.id === it.id; })[0];
@@ -201,7 +211,7 @@
     var box = el.querySelector(".intro__art"), im = document.createElement("img");
     im.className = "is-next"; im.alt = ""; im.decoding = "async";
     im.onload = function () { requestAnimationFrame(function () { im.classList.add("is-on"); }); setTimeout(function () { var all = box.querySelectorAll("img"); for (var k = 0; k < all.length - 1; k++) all[k].remove(); }, 1000); };
-    im.src = "assets/game/art/" + id + (mob ? "-m.webp" : "-1920.webp");
+    im.src = "assets/game/art/" + ((O.arts && O.arts[id]) || id) + (mob ? "-m.webp" : "-1920.webp");
     box.appendChild(im);
   }
   function pick(i, how) {
@@ -217,9 +227,10 @@
   }
   function spin() {
     spinning = true; if (window.JG_FX) window.JG_FX("choice");
-    var n = bitems.filter(function (it) { return it.kind === "role"; }).length, land = Math.floor(Math.random() * n), steps = n * 2 + land, k = 0, cur = 0;
+    var idx = bitems.map(function (it, i) { return it.kind === "role" ? i : -1; }).filter(function (i) { return i >= 0; });
+    var n = idx.length, land = Math.floor(Math.random() * n), steps = n * 2 + land, k = 0, cur = 0;
     (function step() {
-      cur = k % n; brows.forEach(function (r, j) { r.classList.toggle("is-on", j === cur); });
+      cur = idx[k % n]; brows.forEach(function (r, j) { r.classList.toggle("is-on", j === cur); });
       if (S()) S().tick();
       if (k++ < steps) { setTimeout(step, RM ? 0 : 60 + Math.pow(k / steps, 3) * 260); return; }
       spinning = false; preview(cur); setTimeout(function () { pick(cur, "spin"); }, wait(650));
@@ -238,7 +249,16 @@
     if (window.JG_FX) window.JG_FX("arrive");
     bmark(i, true);
     pv.insertAdjacentHTML("beforeend", '<p class="cls__k">' + E(W.on) + '</p><ul class="cls__chips">' + m.on.slice(0, 12).map(function (x) { return "<li>" + E(x.as || x.term) + "</li>"; }).join("") + "</ul>" + (m.off.length ? '<p class="cls__k">' + E(W.off) + '</p><ul class="cls__chips cls__chips--off">' + m.off.slice(0, 8).map(function (x) { return "<li>" + E(x.as || x.term) + "</li>"; }).join("") + "</ul>" : "") + '<button class="btn btn--primary" type="button" data-go-build>' + E(W.go) + "</button>");
-    var go = pv.querySelector("[data-go-build]"); if (go) { go.addEventListener("click", function () { pick(i, "listing"); }); go.focus(); }
+    /* a phone hides the preview under the menu; the match result stays on screen, above it */
+    pv.classList.add("is-matched");
+    var go = pv.querySelector("[data-go-build]");
+    if (go) {
+      go.addEventListener("click", function () { pick(i, "listing"); });
+      go.focus({ preventScroll: true });
+      /* again once a phone's keyboard has folded away and the screen has its height back */
+      var center = function () { go.scrollIntoView({ block: "center", behavior: RM ? "auto" : "smooth" }); };
+      center(); if (COARSE) setTimeout(center, 350);
+    }
   });
   function skipBuild() { if (phase !== "build") return; T("build_skipped", {}); toName(); }
   if (BD) el.querySelector("[data-build-skip]").addEventListener("click", skipBuild);
@@ -271,6 +291,7 @@
       var box = el.querySelector("[data-built]"); box.hidden = false;
       el.querySelector("[data-built-hi]").textContent = line;
       var cw = el.querySelector("[data-built-card]"); cw.innerHTML = window.JG_BUILD.cardHTML(built); cw.classList.add("is-minting");
+      funnel();
       scene("card");
       if (S()) setTimeout(function () { S().sting("trophy-gold"); }, wait(500));
       if (window.JG_HAPTIC) setTimeout(function () { window.JG_HAPTIC("success"); }, wait(500));
@@ -280,9 +301,21 @@
     scene("card");
     setTimeout(done, wait(1500));
   }
+  /* the funnel on the card: never on the card itself, only beside it. Someone
+     just looking gets nothing here: the seat they picked promised no pitch */
+  function funnel() {
+    var F = O.funnel || {}, more = el.querySelector("[data-built-more]"), B = window.JG_BUILD;
+    if (!more || !built || role === "lurker") return;
+    var next = built.kind === "role" ? (B.resume ? B.resume(built, "btn") : "") : (B.lotCta ? B.lotCta(built, "btn", "intro") : "");
+    if (next) { el.querySelector("[data-enter]").insertAdjacentHTML("afterend", next); el.querySelector("[data-built]").classList.add("has-cta"); }
+    /* the availability line is for someone hiring on a role reading; a dealer's next step is the lot's */
+    if (built.kind === "role" && next && F.open) { more.textContent = F.open; more.hidden = false; }
+  }
   el.addEventListener("click", function (e) {
     if (e.target.closest("[data-enter]")) { if (window.JG_FX) window.JG_FX("arrive"); done(); }
     else if (e.target.closest("[data-save-card]") && window.JG_BUILD) window.JG_BUILD.save(built, "intro");
+    else if (e.target.closest("[data-build-resume]")) { if (window.JG_FX) window.JG_FX("send"); T("build_resume", { build: built ? built.id : "", matched: !!pendingMatch, viewing: false, where: "intro" }); }
+    else if (e.target.closest("[data-build-obavia]")) { if (built && window.JG_BUILD) store.set("jg_lot", window.JG_BUILD.label(built)); if (window.JG_FX) window.JG_FX("send"); T("cta_click", { cta: "obavia_early", where: "intro", lot: built ? built.id : "" }); }
   });
 
   /* ---------- the end: into the library ---------- */
@@ -321,7 +354,8 @@
     } else if (phase === "build") {
       if (e.target && e.target.closest && e.target.closest("textarea,input")) return;
       var bi = brows.findIndex(function (r) { return r.classList.contains("is-on"); });
-      if (/^[1-9]$/.test(k) && brows[+k - 1]) { e.preventDefault(); bmark(+k - 1, true); pick(+k - 1, "key"); }
+      var ni = /^[1-9]$/.test(k) ? bitems.findIndex(function (it) { return it.n === k; }) : -1;
+      if (ni >= 0) { e.preventDefault(); bmark(ni, true); pick(ni, "key"); }
       else if (k === "ArrowDown" || k === "ArrowRight") { e.preventDefault(); bmark(Math.min(brows.length - 1, bi + 1)); }
       else if (k === "ArrowUp" || k === "ArrowLeft") { e.preventDefault(); bmark(Math.max(0, bi - 1)); }
       else if (k === "Enter" || k === " ") { if (e.target && e.target.closest && e.target.closest("[data-go-build],[data-build-skip]")) return; e.preventDefault(); pick(Math.max(0, bi), "key"); }

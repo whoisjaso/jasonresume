@@ -1,0 +1,51 @@
+{
+  "_about": "Where each graded plate's portrait crop sits in its 16:9 frame, written by tools/art/grade.py (the five plates graded before it wrote this file were measured from their shipped crops). loop_x is the object-position, in percent, that puts the 16:9 living loop over the same part of the frame as the portrait still on a phone (390 by 844, the still at 62 percent); tools/site/assemble_home.py writes it on each plate as --lx.",
+  "lead-to-title": {
+    "focus_x": 0.68,
+    "portrait_x": [
+      0.4693,
+      0.4219
+    ],
+    "loop_x": 77.0
+  },
+  "neuroscience": {
+    "focus_x": 0.76,
+    "portrait_x": [
+      0.549,
+      0.4219
+    ],
+    "loop_x": 87.7
+  },
+  "obavia": {
+    "focus_x": 0.65,
+    "portrait_x": [
+      0.4391,
+      0.4219
+    ],
+    "loop_x": 72.9
+  },
+  "prospector": {
+    "focus_x": 0.62,
+    "portrait_x": [
+      0.4089,
+      0.4219
+    ],
+    "loop_x": 68.8
+  },
+  "the-inbound": {
+    "focus_x": 0.645,
+    "portrait_x": [
+      0.4339,
+      0.4219
+    ],
+    "loop_x": 72.2
+  },
+  "triple-j-w": {
+    "focus_x": 0.8,
+    "portrait_x": [
+      0.5781,
+      0.4219
+    ],
+    "loop_x": 91.7
+  }
+}

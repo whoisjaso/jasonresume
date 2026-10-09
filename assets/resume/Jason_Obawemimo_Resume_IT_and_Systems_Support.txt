@@ -1,18 +1,20 @@
 Jason Obawemimo
 AI Implementation, Workflow Automation and CRM Systems
-Accounts, permissions, hardware, network and the CRM.
+Microsoft 365, Google Workspace, accounts, hardware, network and the CRM.
 Written for: IT Support Specialist, IT Technician, Help Desk Technician, Technical Support Specialist, IT Coordinator
 Pearland, TX | jobawems@gmail.com | jasonobawemimo.com | linkedin.com/in/obawemimo
+Open to full-time, part-time and contract roles, remote or on site in Houston.
 
 Summary
-I keep a business's people and systems working. At a Houston used vehicle dealership I support the staff on the CRM, phones and computers, manage user accounts and permissions, and set up the hardware and network. I also built the CRM they work in, with row-level security (RLS) policies tested to prevent unauthorized role access and production schema migrations that preserved existing records.
+I keep a business's people and systems working. At a Houston used vehicle dealership I support the staff on the CRM, phones and computers, manage user accounts and permissions, and set up the hardware and network. I administer Microsoft 365 and Google Workspace, and I built the CRM the staff work in, with row-level security (RLS) policies tested to prevent unauthorized role access and production schema migrations that preserved existing records.
 
 Experience
 Owner and Operations Lead, Aug 2024 to Present
 Triple J Auto Investment and Rental Operations, Houston, Texas
 - Support the dealership's staff on the CRM, phones and computers.
-- Manage the dealership's user accounts and permissions.
+- Administer Microsoft 365 and Google Workspace.
 - Set up the dealership's hardware and network.
+- Manage the dealership's user accounts and permissions.
 - Build AI software for the dealership's bottlenecks rather than buying software.
 Custom dealership CRM and Handle a Sale desk (TypeScript, React, Next.js, PostgreSQL, Supabase, Vercel, Edge Functions)
   - Tested Supabase row-level security (RLS) policies to prevent unauthorized role access.
@@ -32,9 +34,11 @@ Certificates and Courses
 
 Skills
 IT support: Staff support on the CRM, phones and computers; user accounts and permissions; hardware and network setup
+Tools: Git and GitHub; Excel and Google Sheets; Microsoft 365 and Google Workspace administration
 Backend: Edge Functions, REST APIs, row-level security (RLS), webhook services
 Web and data: React, Next.js, PostgreSQL, Supabase, Vercel
 Automation: n8n, API integrations, Retell AI, Bland AI, Twilio
 Languages: TypeScript, JavaScript, Python, SQL
 AI development: Claude Code, Claude API, Codex
 Operations: Dealership operations, sales pipelines, inventory and vendor management
+Spoken languages: Spanish, spoken professionally and proficiently

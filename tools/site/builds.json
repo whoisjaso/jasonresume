@@ -1,5 +1,5 @@
 {
- "_about": "The builds: the same verified record read for eight kinds of role, plus six lot problems for dealers. One fact base for the build step on the title screen, the build screen and card, the tailored resumes (tools/verify/resume.mjs renders one PDF per build into assets/resume) and the listing match. Every proof is a fact already in llms.txt, written in Jason's first person; every headline and summary is in llms.txt under 'Eight Ways To Read The Record'. No em dashes, no percent signs, never a computed rate. A proof's medal is a trophy slug or a proof medal in assets/game/medals.",
+ "_about": "The builds: the same verified record read for nine kinds of role, plus six lot problems for dealers. One fact base for the build step on the title screen, the build screen and card, the tailored resumes (tools/verify/resume.mjs renders one PDF per build into assets/resume) and the listing match. Every proof is a fact already in llms.txt, written in Jason's first person; every headline and summary is in llms.txt under 'Nine Ways To Read The Record'. A proof marked skill: true is a skill, not a duty: the resumes print it in Skills (a skills group in record.json names it), never as a bullet. No em dashes, no percent signs, never a computed rate. A proof's medal is a trophy slug or a proof medal in assets/game/medals.",
  "areas": {
   "sell": "Sell",
   "run": "Run",
@@ -29,7 +29,7 @@
   "calls": {
    "text": "I take sales calls and follow up with customers by phone and text.",
    "area": "sell",
-   "medal": "on-the-line",
+   "medal": "help-desk",
    "tier": "silver",
    "keywords": [
     "phone sales",
@@ -383,6 +383,119 @@
    "title": "prospector",
    "short": "My workflow writes SOP-based follow-up replies"
   },
+  "prompts": {
+   "text": "I write the prompts and call flows for Triple J's voice AI agents (Retell AI, Bland AI).",
+   "area": "automate",
+   "medal": "by-the-book",
+   "tier": "bronze",
+   "keywords": [
+    "prompt writing",
+    "call flows",
+    "voice AI",
+    "Retell AI",
+    "Bland AI"
+   ],
+   "title": "the-inbound",
+   "short": "I write my voice AI's prompts and call flows"
+  },
+  "sops": {
+   "text": "I write the SOPs Triple J's staff and its prospecting workflow follow.",
+   "area": "run",
+   "medal": "by-the-book",
+   "tier": "bronze",
+   "keywords": [
+    "SOPs",
+    "standard operating procedures",
+    "process documentation"
+   ],
+   "title": "triple-j",
+   "short": "I write the SOPs my staff and prospecting workflow follow"
+  },
+  "title-window": {
+   "text": "I file title transfers inside the Texas 30-day window.",
+   "area": "file",
+   "medal": "title-run",
+   "tier": "bronze",
+   "keywords": [
+    "title transfers",
+    "30-day title deadline",
+    "title processing",
+    "TxDMV"
+   ],
+   "title": "triple-j",
+   "short": "I file title transfers inside the Texas 30-day window"
+  },
+  "liens-tags": {
+   "text": "I handle lien payoffs, license plates and temporary tags myself.",
+   "area": "file",
+   "medal": "in-order",
+   "tier": "silver",
+   "keywords": [
+    "lien payoffs",
+    "lien releases",
+    "license plates",
+    "temporary tags"
+   ],
+   "title": "triple-j",
+   "short": "I handle lien payoffs, plates and temporary tags myself"
+  },
+  "spanish": {
+   "text": "I speak Spanish professionally and proficiently.",
+   "area": "sell",
+   "medal": "on-the-line",
+   "tier": "silver",
+   "keywords": [
+    "Spanish",
+    "bilingual English and Spanish",
+    "Spanish-speaking"
+   ],
+   "title": "triple-j",
+   "short": "I speak Spanish professionally and proficiently",
+   "skill": true
+  },
+  "workspace": {
+   "text": "I administer Microsoft 365 and Google Workspace.",
+   "area": "support",
+   "medal": "access",
+   "tier": "silver",
+   "keywords": [
+    "Microsoft 365",
+    "Office 365",
+    "Google Workspace",
+    "G Suite",
+    "account administration"
+   ],
+   "title": "triple-j",
+   "short": "I administer Microsoft 365 and Google Workspace"
+  },
+  "sheets": {
+   "text": "I work in Excel and Google Sheets.",
+   "area": "run",
+   "medal": "data-model",
+   "tier": "silver",
+   "keywords": [
+    "Excel",
+    "Google Sheets",
+    "spreadsheets"
+   ],
+   "title": "triple-j",
+   "short": "I work in Excel and Google Sheets",
+   "skill": true
+  },
+  "git": {
+   "text": "I work in Git and GitHub.",
+   "area": "build",
+   "medal": "shipped",
+   "tier": "silver",
+   "keywords": [
+    "Git",
+    "GitHub",
+    "version control"
+   ],
+   "title": "triple-j",
+   "short": "I work in Git and GitHub",
+   "skill": true
+  },
   "aa": {
    "text": "Associate of Arts in Business, San Jacinto College, May 2026, GPA 3.63, Dean's Honor List.",
    "area": "learn",
@@ -447,15 +560,16 @@
     "AI Solutions Specialist"
    ],
    "headline": "Voice AI and Claude API workflows running in a live business.",
-   "summary": "I put AI to work where a business loses time. For a Houston used vehicle dealership I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff, and I built a Python, Claude API and n8n workflow that researches Facebook Marketplace leads, writes findings to the CRM and generates SOP-based reply text for follow-up. Rather than buying software, I build it for the bottleneck in front of me.",
+   "summary": "I put AI to work where a business loses time. For a Houston used vehicle dealership I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff, writing its prompts and call flows myself, and I built a Python, Claude API and n8n workflow that researches Facebook Marketplace leads, writes findings to the CRM and generates SOP-based reply text for follow-up. Rather than buying software, I build it for the bottleneck in front of me.",
    "proofs": [
     "voice",
+    "prompts",
     "voice-figures",
     "prospect",
     "build-not-buy",
+    "sops",
     "sop-replies",
     "shipped",
-    "crm-model",
     "anthropic",
     "google"
    ],
@@ -472,14 +586,17 @@
     "AI development",
     "Backend",
     "Languages",
+    "Tools",
     "Web and data",
-    "Operations"
+    "Spoken languages"
    ],
    "keywords": [
     "AI implementation",
     "workflow automation",
     "voice AI",
     "conversational AI",
+    "prompt writing",
+    "call flows",
     "LLM integration",
     "Claude API",
     "n8n",
@@ -491,6 +608,7 @@
     "REST APIs",
     "API integrations",
     "CRM integration",
+    "SOPs",
     "Claude Code",
     "Google AI Essentials"
    ]
@@ -515,6 +633,7 @@
     "migrations",
     "validation",
     "shipped",
+    "git",
     "sale-desk",
     "prospect",
     "anthropic"
@@ -531,9 +650,11 @@
     "Languages",
     "Web and data",
     "Backend",
+    "Tools",
     "AI development",
     "Automation",
-    "Operations"
+    "Operations",
+    "Spoken languages"
    ],
    "keywords": [
     "TypeScript",
@@ -550,6 +671,8 @@
     "webhooks",
     "data modeling",
     "database migrations",
+    "Git",
+    "GitHub",
     "Python",
     "Claude Code",
     "full-stack development"
@@ -566,13 +689,14 @@
     "Technical Support Specialist",
     "IT Coordinator"
    ],
-   "headline": "Accounts, permissions, hardware, network and the CRM.",
-   "summary": "I keep a business's people and systems working. At a Houston used vehicle dealership I support the staff on the CRM, phones and computers, manage user accounts and permissions, and set up the hardware and network. I also built the CRM they work in, with row-level security (RLS) policies tested to prevent unauthorized role access and production schema migrations that preserved existing records.",
+   "headline": "Microsoft 365, Google Workspace, accounts, hardware, network and the CRM.",
+   "summary": "I keep a business's people and systems working. At a Houston used vehicle dealership I support the staff on the CRM, phones and computers, manage user accounts and permissions, and set up the hardware and network. I administer Microsoft 365 and Google Workspace, and I built the CRM the staff work in, with row-level security (RLS) policies tested to prevent unauthorized role access and production schema migrations that preserved existing records.",
    "proofs": [
     "help-desk",
-    "access",
+    "workspace",
     "network",
     "rls",
+    "access",
     "daily",
     "migrations",
     "shipped",
@@ -588,17 +712,21 @@
     "obavia"
    ],
    "skills": [
+    "Tools",
     "Backend",
     "Web and data",
     "Automation",
     "Languages",
     "AI development",
-    "Operations"
+    "Operations",
+    "Spoken languages"
    ],
    "keywords": [
     "technical support",
     "end-user support",
     "help desk",
+    "Microsoft 365",
+    "Google Workspace",
     "user accounts",
     "permissions",
     "access management",
@@ -626,12 +754,14 @@
     "Founder's Associate"
    ],
    "headline": "Pricing, inventory, vendors, logistics, financing and title.",
-   "summary": "I keep a business moving from the first call to the finished paperwork. Since August 2024 I've managed operations for a Houston used vehicle dealership across pricing, inventory, vendors, logistics, financing and title processing, and I hire, schedule and manage its staff. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds, and I built the CRM the team works in every day.",
+   "summary": "I keep a business moving from the first call to the finished paperwork. Since August 2024 I've managed operations for a Houston used vehicle dealership across pricing, inventory, vendors, logistics, financing and title processing, and I hire, schedule and manage its staff and write the SOPs they follow. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds, and I built the CRM the team works in every day.",
    "proofs": [
     "ops",
     "crew",
+    "sops",
     "sales",
     "daily",
+    "sheets",
     "title",
     "payroll",
     "build-not-buy",
@@ -647,11 +777,13 @@
    ],
    "skills": [
     "Operations",
+    "Tools",
     "Automation",
     "Web and data",
     "Backend",
     "AI development",
-    "Languages"
+    "Languages",
+    "Spoken languages"
    ],
    "keywords": [
     "operations management",
@@ -662,10 +794,14 @@
     "financing",
     "scheduling",
     "staff management",
+    "SOPs",
+    "process documentation",
     "payroll",
     "title processing",
     "sales pipelines",
     "CRM",
+    "Excel",
+    "Google Sheets",
     "dealership operations"
    ]
   },
@@ -675,21 +811,24 @@
    "short": "Back office",
    "targets": [
     "Title Clerk",
+    "Bilingual Title Clerk",
     "Title and Registration Specialist",
     "Deal Processor",
     "Dealership Office Manager",
     "Collections Specialist"
    ],
-   "headline": "Texas title and deal paperwork, desk to file.",
-   "summary": "I get the paperwork right and on file. At a Houston used vehicle dealership I prepare and file title and registration paperwork, including the Form 130-U and webDEALER; prepare deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); keep the dealer license compliance and record-keeping in order; and service buy here pay here accounts and collections. I also built the sale desk that routes each deal to the right documents with nothing missing and nothing extra.",
+   "headline": "Texas title transfers inside the 30-day window, desk to file.",
+   "summary": "I get the paperwork right and on file. At a Houston used vehicle dealership I prepare and file title and registration paperwork, including the Form 130-U and webDEALER, and file title transfers inside the Texas 30-day window; handle lien payoffs, license plates and temporary tags; prepare deal jackets and contracts (bills of sale, buy here pay here contracts and disclosures); keep the dealer license compliance and record-keeping in order; and service buy here pay here accounts and collections. I speak Spanish professionally and proficiently, and I built the sale desk that routes each deal to the right documents with nothing missing and nothing extra.",
    "proofs": [
     "title",
+    "title-window",
+    "liens-tags",
     "jackets",
+    "spanish",
     "compliance",
     "collections",
     "sale-desk",
     "ops",
-    "validation",
     "sales"
    ],
    "titles": [
@@ -701,18 +840,23 @@
     "obavia"
    ],
    "skills": [
+    "Spoken languages",
     "Operations",
+    "Tools",
     "Web and data",
-    "Backend",
     "Automation",
-    "AI development",
-    "Languages"
+    "AI development"
    ],
    "keywords": [
     "title and registration",
+    "title transfers",
+    "30-day title deadline",
     "Form 130-U",
     "webDEALER",
     "title processing",
+    "lien payoffs",
+    "license plates",
+    "temporary tags",
     "deal jackets",
     "contracts",
     "bills of sale",
@@ -722,7 +866,9 @@
     "record-keeping",
     "collections",
     "account servicing",
-    "documentation"
+    "documentation",
+    "Spanish",
+    "bilingual"
    ]
   },
   {
@@ -731,18 +877,20 @@
    "short": "Sales",
    "targets": [
     "Automotive Sales Consultant",
+    "Bilingual Sales Consultant",
     "BDC Representative",
     "Internet Sales Consultant",
     "Sales Development Representative",
     "Customer Success Associate"
    ],
    "headline": "53 vehicle sales personally closed and $206,777 collected since June 2025.",
-   "summary": "I sell, and I build the tools a sales team works from. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds at a Houston used vehicle dealership. I take sales calls, follow up by phone and text, negotiate deals and handle service issues after the sale. Across August and September 2026 the inbound voice AI I deployed averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).",
+   "summary": "I sell, and I build the tools a sales team works from. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds at a Houston used vehicle dealership. I take sales calls, follow up by phone and text, negotiate deals and handle service issues after the sale, and I speak Spanish professionally and proficiently. Across August and September 2026 the inbound voice AI I deployed averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).",
    "proofs": [
     "sales",
     "calls",
-    "negotiate",
+    "spanish",
     "voice-figures",
+    "negotiate",
     "voice",
     "prospect",
     "collections",
@@ -757,12 +905,11 @@
     "obavia"
    ],
    "skills": [
+    "Spoken languages",
     "Operations",
     "Automation",
     "AI development",
-    "Web and data",
-    "Backend",
-    "Languages"
+    "Tools"
    ],
    "keywords": [
     "sales",
@@ -773,6 +920,8 @@
     "lead follow-up",
     "appointment setting",
     "customer service",
+    "Spanish",
+    "bilingual",
     "sales pipelines",
     "CRM",
     "buy here pay here",
@@ -788,13 +937,18 @@
     "People Operations Coordinator",
     "Office Manager",
     "Payroll Coordinator",
-    "Office Administrator"
+    "Office Administrator",
+    "Bilingual Office Administrator"
    ],
-   "headline": "Hiring, training, scheduling and payroll.",
-   "summary": "I keep a team staffed, trained and paid. At a Houston used vehicle dealership I hire, train, schedule and manage the staff and run payroll. I support them on the CRM, phones and computers, manage their user accounts and permissions, and keep the dealer license compliance and record-keeping in order.",
+   "headline": "Hiring, training, scheduling, payroll and SOPs.",
+   "summary": "I keep a team staffed, trained and paid. At a Houston used vehicle dealership I hire, train, schedule and manage the staff, run payroll and write the SOPs they follow. I support them on the CRM, phones and computers, manage their user accounts and permissions, and keep the dealer license compliance and record-keeping in order. I administer Microsoft 365 and Google Workspace, work in Excel and Google Sheets, and speak Spanish professionally and proficiently.",
    "proofs": [
     "crew",
     "payroll",
+    "spanish",
+    "workspace",
+    "sheets",
+    "sops",
     "help-desk",
     "access",
     "compliance",
@@ -811,6 +965,8 @@
     "obavia"
    ],
    "skills": [
+    "Tools",
+    "Spoken languages",
     "Operations",
     "Web and data",
     "Automation",
@@ -825,6 +981,12 @@
     "staff management",
     "supervision",
     "payroll",
+    "SOPs",
+    "Microsoft 365",
+    "Google Workspace",
+    "Excel",
+    "Google Sheets",
+    "Spanish",
     "record-keeping",
     "compliance",
     "user accounts",
@@ -838,18 +1000,20 @@
    "short": "Dealer tech",
    "targets": [
     "Implementation Specialist",
+    "Bilingual Implementation Specialist",
     "Dealer Onboarding Specialist",
     "CRM Administrator",
     "Customer Success Manager",
     "Solutions Consultant"
    ],
    "headline": "A dealer-side operator who built the CRM and sale desk a dealership runs on.",
-   "summary": "I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it.",
+   "summary": "I know a dealership from the desk and from the database. Since August 2024 I've run a Houston used vehicle dealership's operations and back office, and I built the CRM and Handle a Sale desk that three staff use daily: one plain question at a time, in English or Spanish, the buyer's license scanned once so every form fills itself, and each deal routed to the right documents. I also deployed the inbound voice AI that books appointments into it, and I speak Spanish professionally and proficiently.",
    "proofs": [
     "daily",
     "sale-desk",
     "crm-model",
     "ops",
+    "spanish",
     "help-desk",
     "voice",
     "title",
@@ -865,7 +1029,9 @@
    ],
    "skills": [
     "Operations",
+    "Spoken languages",
     "Web and data",
+    "Tools",
     "Automation",
     "Backend",
     "AI development",
@@ -882,7 +1048,70 @@
     "title and registration",
     "voice AI",
     "Supabase",
+    "Spanish",
+    "bilingual",
     "customer success"
+   ]
+  },
+  {
+   "id": "data",
+   "label": "Data and Databases",
+   "short": "Data",
+   "targets": [
+    "Data Coordinator",
+    "Data Operations Specialist",
+    "Database Specialist",
+    "Junior Database Administrator",
+    "SQL Developer"
+   ],
+   "headline": "The data model, validation and migrations behind a live CRM.",
+   "summary": "I keep a business's data structured, clean and intact. For a Houston used vehicle dealership I designed the lead-to-title data model and roles of the CRM three staff use daily, added validation that prevents invalid deal and inventory records from being written, tested its row-level security (RLS) policies to prevent unauthorized role access, and executed production schema migrations that preserved existing records. I work in SQL, PostgreSQL, Python, Excel and Google Sheets.",
+   "proofs": [
+    "crm-model",
+    "validation",
+    "migrations",
+    "rls",
+    "sheets",
+    "daily",
+    "prospect",
+    "git",
+    "anthropic"
+   ],
+   "titles": [
+    "lead-to-title",
+    "prospector",
+    "triple-j",
+    "the-inbound",
+    "neuroscience",
+    "obavia"
+   ],
+   "skills": [
+    "Web and data",
+    "Languages",
+    "Tools",
+    "Backend",
+    "Automation",
+    "AI development",
+    "Operations",
+    "Spoken languages"
+   ],
+   "keywords": [
+    "SQL",
+    "PostgreSQL",
+    "Supabase",
+    "data modeling",
+    "database design",
+    "data validation",
+    "data integrity",
+    "database migrations",
+    "row-level security (RLS)",
+    "Python",
+    "Excel",
+    "Google Sheets",
+    "spreadsheets",
+    "data pipelines",
+    "Git",
+    "CRM"
    ]
   }
  ],
@@ -890,12 +1119,14 @@
   {
    "id": "calls",
    "label": "Calls I miss",
-   "build": "ai",
-   "line": "At Triple J, inbound voice AI answers, books appointments into the CRM and live-transfers what it can't resolve to staff.",
+   "build": "sales",
+   "line": "At Triple J, inbound voice AI answers, books appointments into the CRM and live-transfers what it can't resolve to staff. I write its prompts and call flows.",
    "proofs": [
     "voice",
     "voice-figures",
-    "calls"
+    "prompts",
+    "calls",
+    "spanish"
    ],
    "cta": "call",
    "titles": [
@@ -911,9 +1142,11 @@
    "id": "paperwork",
    "label": "Paperwork that comes back",
    "build": "title",
-   "line": "At Triple J I file title and registration myself, and the sale desk I built routes each deal to the right documents with nothing missing and nothing extra.",
+   "line": "At Triple J I file title transfers inside the Texas 30-day window, and my sale desk routes each deal to the right documents.",
    "proofs": [
     "title",
+    "title-window",
+    "liens-tags",
     "sale-desk",
     "jackets"
    ],
@@ -931,12 +1164,13 @@
   {
    "id": "leads",
    "label": "Leads that go cold",
-   "build": "ai",
-   "line": "At Triple J a Python and Claude API workflow researches Facebook Marketplace leads, writes findings to the CRM and generates SOP-based reply text, and I follow up by phone and text.",
+   "build": "sales",
+   "line": "At Triple J my Claude API workflow researches Facebook Marketplace leads and generates SOP-based reply text, and I follow up by phone and text.",
    "proofs": [
     "prospect",
     "sop-replies",
-    "calls"
+    "calls",
+    "spanish"
    ],
    "cta": "call",
    "titles": [
@@ -975,8 +1209,10 @@
    "line": "I support Triple J's staff on the CRM, phones and computers, manage their accounts and permissions, and set up the hardware and network.",
    "proofs": [
     "help-desk",
-    "access",
-    "network"
+    "workspace",
+    "network",
+    "daily",
+    "access"
    ],
    "cta": "call",
    "titles": [
@@ -996,6 +1232,7 @@
    "proofs": [
     "jackets",
     "collections",
+    "spanish",
     "ops"
    ],
    "cta": "call",

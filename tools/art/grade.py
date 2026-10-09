@@ -21,10 +21,16 @@ Every plate goes through the same steps, so the set reads as one world:
    and a 24px blurred placeholder in placeholders.json under <id>.
 6. Measure the text zone (x 0 to 0.42, y 0.38 to 0.92) on the decoded
    16:9 files and report the max relative luminance and bone's contrast on it.
+7. Record where the portrait crop sits in frames.json under <id>, with
+   loop_x: the object-position that puts the 16:9 living loop over the same
+   part of the lot as the portrait still on a phone (assemble_home.py writes
+   it on the plate as --lx), so the still-to-loop dissolve holds its place.
 
 The portrait and tile crops come from the graded frame without the left
-shade: their type sits elsewhere. Run with --cube <path> to write the look as
-a .cube LUT for ffmpeg (lut3d) or a grading app.
+shade: their type sits elsewhere. --tile-zoom crops the tile tighter than full
+height (a fraction of the frame height, centred on --tile-x and --tile-y), for
+a plate whose subject is small in a wide frame. Run with --cube <path> to
+write the look as a .cube LUT for ffmpeg (lut3d) or a grading app.
 """
 
 import argparse
@@ -69,6 +75,11 @@ MIN_CONTRAST = 4.5
 MARGIN_CONTRAST = 4.6  # what the pre-encode frame has to hit, so encoding cannot push it under
 
 WORK_MIN, WORK_MAX = 1920, 2560
+
+# Phones: the still is the portrait crop at object-position STILL_POS, the
+# living loop is the whole 16:9 frame; loop_x is measured at PHONE_ASPECT.
+STILL_POS = 0.62       # game.css: .plate__img object-position on phones (--fx unset)
+PHONE_ASPECT = 390 / 844
 GRAIN_CLIP = 2.5       # sigma; bounded so a lone grain cannot spike the text zone
 
 
@@ -328,6 +339,28 @@ def crop_window(W, H, aspect, focus_x):
     return max(0, min(W - ww, x0)), ww
 
 
+def square_window(W, H, zoom, cx, cy):
+    """Square of side zoom*H centred on (cx, cy) as fractions, kept inside the frame."""
+    side = min(W, H, int(round(zoom * H)))
+    x0 = int(round(cx * W - side / 2))
+    y0 = int(round(cy * H - side / 2))
+    return max(0, min(W - side, x0)), max(0, min(H - side, y0)), side
+
+
+def loop_x(W, H, x0, ww, aspect=PHONE_ASPECT, still=STILL_POS):
+    """Object-position (percent) for the 16:9 loop that shows the same frame
+    columns as the portrait still [x0, x0 + ww] does at `still`, on a screen of
+    `aspect` (width over height) where both cover the full height."""
+    vw = aspect * H                          # visible width, in frame pixels
+    if vw >= ww:                             # the still is fitted by width: it shows the whole crop
+        left = x0 + (ww - vw) / 2
+    else:
+        left = x0 + still * (ww - vw)
+    if vw >= W:
+        return 50.0
+    return round(100 * min(1.0, max(0.0, left / (W - vw))), 1)
+
+
 def webp_bytes(img8, q):
     buf = io.BytesIO()
     Image.fromarray(img8).save(buf, "WEBP", quality=int(q), method=6)
@@ -424,6 +457,10 @@ def main():
     ap.add_argument("--webp-kb", type=float, default=220, help="size cap for the 1920 WebP, KB (default 220)")
     ap.add_argument("--grain", type=float, default=0.03, help="grain swing at mid grey, fraction of full scale (default 0.03)")
     ap.add_argument("--seed", type=int, default=1979, help="base grain seed (default 1979)")
+    ap.add_argument("--tile-zoom", type=float, default=1.0,
+                    help="tile side as a fraction of the frame height (default 1.0: full height)")
+    ap.add_argument("--tile-x", type=float, help="tile centre, 0 to 1 across (default: focus_x)")
+    ap.add_argument("--tile-y", type=float, default=0.5, help="tile centre, 0 to 1 down (default 0.5)")
     ap.add_argument("--cube", help="also write the look as a .cube LUT here")
     ap.add_argument("--embed-script", help="path to embed-prompt.mjs (default: $EMBED_PROMPT or ~/.claude/skills)")
     a = ap.parse_args()
@@ -441,6 +478,9 @@ def main():
         ap.error("id is required")
     if not 0 <= a.focus_x <= 1:
         ap.error("focus_x must be between 0 and 1")
+    if not 0.2 <= a.tile_zoom <= 1:
+        ap.error("--tile-zoom must be between 0.2 and 1")
+    tile_x = a.focus_x if a.tile_x is None else a.tile_x
 
     prompt = a.prompt
     if a.prompt_file:
@@ -534,8 +574,8 @@ def main():
     x0, ww = crop_window(W, H, 828 / 1104, a.focus_x)
     mob = to8(add_grain(resize(base[:, x0:x0 + ww], 828, 1104), grain_field(1104, 828, sid + 2), a.grain))
     files[f"{a.id}-m.webp"] = webp_bytes(mob, webp_q)
-    tx0, tw = crop_window(W, H, 1.0, a.focus_x)
-    tile = base[:, tx0:tx0 + tw]
+    tx0, ty0, tw = square_window(W, H, a.tile_zoom, tile_x, a.tile_y)
+    tile = base[ty0:ty0 + tw, tx0:tx0 + tw]
     for side in (512, 256):
         t8 = to8(add_grain(resize(tile, side, side), grain_field(side, side, sid + side), a.grain))
         files[f"{a.id}-tile-{side}.webp"] = webp_bytes(t8, max(webp_q, 78))
@@ -565,6 +605,18 @@ def main():
     data[a.id] = uri
     pj.write_text(json.dumps(dict(sorted(data.items())), indent=2) + "\n")
 
+    # Where the portrait crop sits, and the loop position that matches it on a phone.
+    lx = loop_x(W, H, x0, ww)
+    fj = out / "frames.json"
+    frames = json.loads(fj.read_text()) if fj.exists() else {}
+    frames["_about"] = ("Where each graded plate's portrait crop sits in its 16:9 frame, written by "
+                        "tools/art/grade.py. loop_x is the object-position, in percent, that puts the "
+                        "16:9 living loop over the same part of the frame as the portrait still on a "
+                        "phone (390 by 844, the still at 62 percent); tools/site/assemble_home.py writes "
+                        "it on each plate as --lx.")
+    frames[a.id] = {"focus_x": a.focus_x, "portrait_x": [round(x0 / W, 4), round(ww / W, 4)], "loop_x": lx}
+    fj.write_text(json.dumps(dict(sorted(frames.items())), indent=2) + "\n")
+
     if embed:
         for p in written:
             subprocess.run(["node", embed, str(p), "--prompt", prompt], check=True,
@@ -575,7 +627,8 @@ def main():
         "source": f"{src.shape[1]}x{src.shape[0]}",
         "working": f"{W}x{H}",
         "focus_x": a.focus_x,
-        "crop_windows": {"portrait": [x0, 0, ww, H], "tile": [tx0, 0, tw, H]},
+        "crop_windows": {"portrait": [x0, 0, ww, H], "tile": [tx0, ty0, tw, tw]},
+        "loop_x_phone": lx,
         "shade_strength": round(s, 3),
         "limiter_ceiling_lum": round(float(ceiling), 4),
         "limiter_touched_pct": round(touched * 100, 3),
