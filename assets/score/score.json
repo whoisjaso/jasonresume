@@ -2,7 +2,7 @@
  "bpm": 64.0,
  "beatsPerBar": 4,
  "loopSeconds": 60.0,
- "master": 0.9,
+ "master": 0.72,
  "stems": {
   "bed": {
    "ogg": "bed.ogg",
