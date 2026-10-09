@@ -1,0 +1,250 @@
+/* The Obavia page: the library's side quest, opened as its own page.
+   Built on game.css (tokens, buttons, the system bar, title type, tabs, .sec__h,
+   .points, .steps, .demo, toasts) and desk.css (the desk demo). This file holds
+   only what this page adds: the key art behind the page, the title head, the
+   at-a-glance strip, the sticky tabs, film frames, the lessons menu, the
+   early-access form, the calendar and the phone get bar.
+   No chromatic UI accent: the key art carries all the colour. */
+
+.ob { --col: 780px; --tabs: 54px; }
+.ob [tabindex="-1"]:focus { outline: none; }
+.ob :focus-visible { animation: ob-ring 2.4s ease-in-out infinite; }
+@keyframes ob-ring { 0%, 100% { outline-color: var(--bone); } 50% { outline-color: rgba(237, 231, 219, 0.6); } }
+
+/* ---------- the system bar: transparent over the key art, ink once you scroll ---------- */
+.ob .ob-sys { padding: 0 var(--pad); transition: background-color .4s var(--ease), box-shadow .4s var(--ease); }
+html.js body.ob .ob-sys { position: fixed; }
+.ob-sys.is-solid { background: var(--ink); box-shadow: inset 0 -1px 0 var(--hair); }
+.ob .ob-sys__back { gap: 10px; }
+.ob .ob-sys__back svg { width: 20px; height: 20px; opacity: 1; }
+html:not(.js) .ob .sys__score, html:not(.js) .ob .ob-play, html:not(.js) .ob .tabs .key { display: none; }
+
+/* ---------- the key art behind the whole page ---------- */
+.ob-stage { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--ink); pointer-events: none; }
+.ob-stage__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; animation: dolly 20s var(--ease) both; }
+.ob-main { position: relative; z-index: 1; }
+
+/* ---------- the first viewport: the title's head ---------- */
+.ob-hero { position: relative; display: flex; align-items: flex-end; min-height: 100vh; min-height: 100svh; }
+.ob-hero__shade { position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(10, 15, 13, 0.86) 0%, rgba(10, 15, 13, 0.62) 30%, rgba(10, 15, 13, 0.16) 58%, rgba(10, 15, 13, 0) 76%),
+    linear-gradient(180deg, rgba(10, 15, 13, 0.55) 0%, rgba(10, 15, 13, 0) 16%, rgba(10, 15, 13, 0) 56%, rgba(10, 15, 13, 0.88) 100%); }
+.ob-hero__head { position: relative; z-index: 1; width: min(820px, 62vw); margin: 0 0 0 var(--pad); padding: calc(var(--bar) + 40px) 0 clamp(60px, 10vh, 112px); animation: rise .8s var(--ease) both; }
+.ob .ob-logo { font-size: clamp(64px, 8vw, 128px); line-height: .92; letter-spacing: 0.16em; margin-right: -0.16em; }
+.ob .ob-hero__head .title__tag { margin-top: 20px; }
+.ob-hero__line { margin: 22px 0 0; font: 400 clamp(22px, 1.9vw, 30px)/1.25 var(--sans); letter-spacing: 0.005em; color: var(--bone); text-shadow: 0 1px 16px rgba(0, 0, 0, .5); }
+.ob .ob-hero__sum { margin-top: 12px; max-width: 46ch; color: var(--bone-2); }
+.ob-hero__acts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 34px; }
+
+/* ---------- the title page: the key art stays, dimmed, behind it ---------- */
+.ob-page { position: relative; background: rgba(10, 15, 13, 0.88); }
+.ob-col { position: relative; max-width: calc(var(--col) + var(--pad) * 2); padding: 0 var(--pad); }
+.ob-col--wide { max-width: calc(1080px + var(--pad) * 2); }
+
+/* at a glance */
+.ob-glance { display: flex; flex-wrap: wrap; margin: 0; padding: 40px 0 34px; }
+.ob-glance > div { display: grid; align-content: start; gap: 6px; padding: 0 26px 0 0; margin: 0 26px 14px 0; border-right: 1px solid var(--hair-2); }
+.ob-glance > div:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+.ob-glance dt { font: 500 12px/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.ob-glance dd { margin: 4px 0 0; font: 500 26px/1.05 var(--serif); letter-spacing: 0.02em; color: var(--bone); }
+.ob-glance dd.ob-glance__sub { margin: 0; font: 400 14px/1.35 var(--sans); letter-spacing: 0; color: var(--ash); }
+
+/* the section tabs, sticky under the bar */
+html body.ob .tabs { position: sticky; top: var(--bar); z-index: 20; display: flex; align-items: center; gap: 4px; height: var(--tabs); margin: 0; padding: 0 var(--pad); background: var(--ink); box-shadow: 0 1px 0 var(--hair); }
+html:not(.js) body.ob .tabs { top: 0; }
+.ob .tabs::-webkit-scrollbar { display: none; }
+.ob .tabs a { flex: none; display: flex; align-items: center; height: 100%; padding: 0 14px; }
+.ob .tabs a.is-on::after { bottom: 8px; }
+.ob .tabs .key { flex: none; }
+.ob .tabs .key--q { margin: 0 8px 0 0; }
+.ob .tabs .key--e { margin: 0 0 0 8px; }
+
+/* sections */
+.ob-sec { padding: 64px 0; border-top: 1px solid var(--hair); scroll-margin-top: calc(var(--bar) + var(--tabs)); }
+html:not(.js) .ob-sec { scroll-margin-top: var(--tabs); }
+.ob-col > .ob-sec:first-child { border-top: 0; padding-top: 56px; }
+.ob .ob-sec .sec__h { margin-bottom: 28px; }
+.ob-lead { margin: 0 0 30px; max-width: 58ch; font: 400 18px/1.55 var(--sans); color: var(--bone-2); }
+.ob-h3 { margin: 44px 0 20px; font: 500 17px/1.4 var(--sans); color: var(--bone); }
+.ob .ob-points li { color: var(--bone-2); }
+.ob .ob-points li b { font-weight: 600; color: var(--bone); }
+.ob .ob-points--soon li::before { border-color: var(--ash); border-style: dashed; }
+.ob .fine { margin: 0; }
+
+/* ---------- films: hairline frames ---------- */
+.ob-film, .ob-shot, .ob-lesson { margin: 0; }
+.ob-frame { position: relative; }
+.ob-film video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--lacquer); border-radius: 6px; box-shadow: 0 0 0 1px var(--hair-2), 0 18px 40px rgba(0, 0, 0, .5); }
+.ob-film figcaption, .ob-lesson figcaption { margin-top: 12px; font: 400 14px/1.5 var(--sans); color: var(--ash); }
+.ob-film figcaption b, .ob-lesson figcaption b { margin-right: 6px; font-weight: 500; color: var(--bone); }
+.ob-play { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(237, 231, 219, 0.72); border-radius: 50%; background: rgba(10, 15, 13, 0.74); color: var(--bone); cursor: pointer; transition: background-color .3s var(--ease), color .3s var(--ease), transform .3s var(--ease), opacity .3s var(--ease); }
+.ob-play svg { width: 28px; height: 28px; margin-left: 3px; }
+.ob-play:hover { background: var(--bone); color: var(--ink); }
+.ob-play:active { transform: scale(.95); }
+[data-film-box].is-playing .ob-play { opacity: 0; pointer-events: none; }
+
+/* the screens: one large, two beside it */
+.ob-shots { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px 22px; margin-top: 44px; }
+.ob-shot { display: flex; flex-direction: column; min-width: 0; }
+.ob-shot:first-child { grid-row: span 2; }
+.ob-shot video { width: 100%; aspect-ratio: 10 / 11; object-fit: cover; background: var(--lacquer); border-radius: 6px; box-shadow: 0 0 0 1px var(--hair); }
+.ob-shot:first-child video { flex: 1 1 0; min-height: 0; aspect-ratio: auto; }
+.ob-shot figcaption { margin-top: 10px; font: 400 14px/1.4 var(--sans); color: var(--bone-2); }
+
+/* ---------- the desk demo ---------- */
+.ob .ob-demo { grid-template-columns: 300px minmax(0, 1fr); gap: 48px; }
+.ob .ob-demo__note { margin: 0 0 4px; max-width: 40ch; font-size: 16px; line-height: 1.55; }
+.ob .ob-demo .steps { margin-top: 22px; }
+.ob-fic { margin-top: 18px !important; }
+html:not(.js) .ob .iphone { width: auto; height: auto; padding: 0; border-radius: 0; background: none; box-shadow: none; }
+/* a screen that has slid away hides once it is gone, so no sliver of it shows past the rounded glass */
+.ob .app-screen { transition: transform .45s cubic-bezier(.32, .72, 0, 1), visibility 0s; }
+.ob .app-screen.is-past { visibility: hidden; transition: transform .45s cubic-bezier(.32, .72, 0, 1), visibility 0s .45s; }
+
+/* ---------- lessons: a menu and one player (rows without JS) ---------- */
+.ob-lessons__menu { display: none; list-style: none; margin: 0; padding: 0; gap: 10px; align-content: start; }
+.ob-lessons__reel { display: grid; gap: 28px; }
+.ob-lesson { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; align-items: end; }
+.ob-lesson figcaption { margin: 0; }
+.ob-lesson video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; background: var(--lacquer); border-radius: 6px; box-shadow: 0 0 0 1px var(--hair-2), 0 18px 40px rgba(0, 0, 0, .45); }
+.ob-lesson .ob-play { width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+.ob-lesson .ob-play svg { width: 24px; height: 24px; }
+.ob-lessons.has-menu { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; align-items: start; }
+.ob-lessons.has-menu .ob-lessons__menu { display: grid; }
+.ob-lessons.has-menu .ob-lesson { display: none; }
+.ob-lessons.has-menu .ob-lesson.is-on { display: block; animation: rise .5s var(--ease) both; }
+.ob-lessons.has-menu .ob-lesson figcaption { display: none; }
+.ob-pick { display: flex; align-items: center; gap: 18px; width: 100%; padding: 16px 20px; text-align: left; background: rgba(17, 27, 23, 0.8); border: 1px solid var(--hair); border-radius: 4px; color: var(--bone); cursor: pointer; transition: background-color .3s var(--ease), border-color .3s var(--ease), transform .3s var(--ease); }
+.ob-pick:hover { border-color: var(--hair-2); }
+.ob-pick:active { transform: scale(.99); }
+.ob-pick.is-on { background: var(--bottle); border-color: var(--bone); }
+.ob-pick__n { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid currentColor; border-radius: 4px; font: 500 14px/1 var(--sans); opacity: .85; }
+.ob-pick__t { display: grid; gap: 4px; }
+.ob-pick__t b { font: 500 18px/1.25 var(--sans); }
+.ob-pick__t small { font: 400 14px/1.4 var(--sans); color: var(--bone-2); }
+
+/* ---------- where it comes from ---------- */
+.ob-origin__row { display: flex; align-items: flex-start; gap: 22px; }
+.ob-origin__img { flex: none; width: 72px; height: 72px; border-radius: 50%; object-fit: cover; background: var(--bottle); box-shadow: 0 0 0 1px var(--hair-2), 0 6px 14px rgba(0, 0, 0, .45); }
+.ob-origin__row p { margin: 0; max-width: 60ch; font: 400 18px/1.6 var(--sans); color: var(--bone); }
+
+/* ---------- early access: bone underlines, a bone submit ---------- */
+.ob-form { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 36px; }
+.ob .field { display: grid; gap: 8px; min-width: 0; }
+.ob .field.full { grid-column: 1 / -1; }
+.ob .field label { font: 400 14px/1.3 var(--sans); color: var(--bone-2); }
+.ob .field input, .ob .field select, .ob .field textarea { width: 100%; min-width: 0; margin: 0; padding: 10px 0; font: 400 17px/1.4 var(--sans); color: var(--bone); background: transparent; border: 0; border-bottom: 1px solid rgba(237, 231, 219, 0.5); border-radius: 0; outline: none; -webkit-appearance: none; appearance: none; transition: border-color .3s var(--ease), box-shadow .3s var(--ease); }
+.ob .field input:hover, .ob .field select:hover, .ob .field textarea:hover { border-bottom-color: rgba(237, 231, 219, 0.75); }
+.ob .field input:focus, .ob .field select:focus, .ob .field textarea:focus { border-bottom-color: var(--bone); box-shadow: 0 1px 0 var(--bone); }
+.ob .field select { padding-right: 28px; cursor: pointer; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5l4 4 4-4' fill='none' stroke='%23ede7db' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 4px center / 12px 12px; }
+.ob .field select option { background: var(--lacquer); color: var(--bone); }
+.ob .field textarea { min-height: 112px; resize: vertical; line-height: 1.55; }
+.ob .field input::placeholder, .ob .field textarea::placeholder { color: var(--ash); opacity: 1; }
+.ob .form__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 8px; }
+.ob .form__status { min-height: 1.4em; font-size: 15px; color: var(--bone-2); }
+.ob .form__status.is-bad { color: var(--bone); font-weight: 500; }
+.ob .form__status a { color: var(--bone); }
+.ob .form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.ob .form.is-sent .field, .ob .form.is-sent .form__actions .btn { opacity: .35; pointer-events: none; }
+.ob .sent { display: none; max-width: 62ch; margin-top: 36px; padding: 26px 28px; background: var(--lacquer); border-radius: 6px; box-shadow: inset 0 1px 0 var(--hair-2), 0 0 0 1px rgba(0, 0, 0, .4), 0 18px 40px rgba(0, 0, 0, .45); }
+.ob .sent.is-in { display: block; animation: rise .7s var(--ease) both; }
+.ob .sent h3 { margin: 0; font: 500 32px/1.1 var(--serif); letter-spacing: 0.02em; }
+.ob .sent h3 em { font-style: normal; color: var(--bone-2); }
+.ob .sent p { margin: 12px 0 0; color: var(--bone-2); }
+.ob .sent a { color: var(--bone); }
+
+/* ---------- the calendar ---------- */
+.ob-cal { position: relative; min-height: 720px; overflow: hidden; background: var(--lacquer); border-radius: 6px; box-shadow: 0 0 0 1px var(--hair); }
+.ob-cal::before { content: "Loading the calendar"; position: absolute; left: 0; right: 0; top: 46%; text-align: center; font: 400 15px/1.4 var(--sans); color: var(--ash); }
+.ob-cal .calendly-inline-widget { position: relative; min-width: 0; height: 720px; }
+.ob-cal__fallback { margin: 14px 0 0; font-size: 14.5px; color: var(--ash); }
+.ob-cal__fallback a { color: var(--bone); }
+
+/* ---------- credits ---------- */
+.ob .credits { display: block; max-width: 70ch; padding: 40px 0 96px; border-top: 1px solid var(--hair); font-size: 14px; color: var(--ash); }
+.ob .credits p { margin: 0 0 12px; }
+.ob .credits__links { gap: 22px; margin-top: 18px; }
+.ob .credits__links a { color: var(--bone-2); }
+
+/* ---------- the get bar: phones only ---------- */
+.getbar { display: none; }
+
+/* ---------- toasts: under the bar and the tabs; a status toast stacks its title over its line ---------- */
+.ob .toasts { top: calc(var(--bar) + var(--tabs) + 14px); }
+.ob .toast--status { flex-direction: column; align-items: flex-start; gap: 0; }
+.ob .toast--status .toast__s { margin-top: 4px; }
+
+/* ---------- the unlock: a wash of light ---------- */
+.flash { position: fixed; inset: 0; z-index: 60; pointer-events: none; background: rgba(237, 231, 219, 0.07); opacity: 0; }
+.flash.is-on { animation: ob-flash 1s var(--ease) both; }
+@keyframes ob-flash { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+
+/* =========================================================================
+   PHONES
+   ========================================================================= */
+@media (max-width: 899px) {
+  .ob .ob-sys { padding: 0 10px 0 8px; }
+  .ob .ob-sys__back { width: auto; height: 40px; padding: 8px; justify-content: flex-start; font-size: 15px; }
+  .ob-stage__img { object-position: 58% 50%; }
+  /* the Obavia plate is bright at the top: the title screen keeps Skip legible over the sky */
+  .ob .intro:not(.is-started) .intro__shade { background: linear-gradient(180deg, rgba(10, 15, 13, 0.86) 0%, rgba(10, 15, 13, 0.8) 7%, rgba(10, 15, 13, 0) 22%), linear-gradient(0deg, rgba(10, 15, 13, 0.94) 0%, rgba(10, 15, 13, 0.7) 40%, rgba(10, 15, 13, 0.1) 75%); }
+  .ob-hero__shade { background: linear-gradient(180deg, rgba(10, 15, 13, 0.5) 0%, rgba(10, 15, 13, 0.06) 20%, rgba(10, 15, 13, 0.28) 38%, rgba(10, 15, 13, 0.8) 54%, rgba(10, 15, 13, 0.88) 100%); }
+  .ob-hero__head { width: auto; margin: 0 16px; padding: calc(var(--bar) + 24px) 0 36px; }
+  .ob .ob-logo { font-size: clamp(50px, 15vw, 68px); letter-spacing: 0.12em; margin-right: -0.12em; }
+  .ob .ob-hero__head .title__tag { margin-top: 14px; }
+  .ob-hero__line { margin-top: 16px; font-size: 21px; }
+  .ob .ob-hero__sum { font-size: 16px; }
+  .ob-hero__acts { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 24px; }
+  .ob .ob-hero__acts .btn { min-width: 0; min-height: 50px; font-size: 16px; }
+  .ob-col { padding: 0 16px; }
+  .ob-glance { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; padding: 28px 0 26px; }
+  .ob-glance > div { margin: 0; padding: 12px 0 0; border-right: 0; border-top: 1px solid var(--hair); }
+  .ob-glance > div:last-child { padding-top: 12px; }
+  .ob-glance dd { font-size: 23px; }
+  html body.ob .tabs { padding: 0 6px; overflow-x: auto; scrollbar-width: none; }
+  .ob { --tabs: 48px; }
+  .ob .tabs a { padding: 0 12px; font-size: 14px; }
+  .ob .tabs a.is-on::after { left: 12px; right: 12px; bottom: 6px; }
+  .ob-sec { padding: 46px 0; }
+  .ob-col > .ob-sec:first-child { padding-top: 40px; }
+  .ob-lead { font-size: 16px; margin-bottom: 24px; }
+  .ob-h3 { margin-top: 36px; }
+  .ob-play { width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+  .ob-shots { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 70%; gap: 14px; margin: 32px -16px 0; padding: 0 16px 6px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ob-shots::-webkit-scrollbar { display: none; }
+  .ob-shot { scroll-snap-align: start; }
+  .ob-shot:first-child { grid-row: auto; }
+  .ob-shot:first-child video { flex: none; aspect-ratio: 10 / 11; }
+  .ob .ob-demo { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .ob .ob-demo .iphone { justify-self: center; }
+  .ob .ob-demo__note { max-width: none; }
+  .ob-lessons.has-menu { display: block; }
+  .ob-lessons.has-menu .ob-lessons__menu { display: none; }
+  .ob-lessons__reel { grid-auto-flow: column; grid-auto-columns: 62%; gap: 14px; margin: 0 -16px; padding: 0 16px 6px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ob-lessons__reel::-webkit-scrollbar { display: none; }
+  .ob-lesson, .ob-lessons.has-menu .ob-lesson { display: block; scroll-snap-align: start; animation: none; }
+  .ob-lessons.has-menu .ob-lesson figcaption, .ob-lesson figcaption { display: block; margin-top: 10px; }
+  .ob-origin__row { gap: 16px; }
+  .ob-origin__img { width: 56px; height: 56px; }
+  .ob-origin__row p { font-size: 16px; }
+  .ob-form { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .ob .form__actions .btn { flex: 1 1 100%; }
+  .ob .sent { padding: 22px 20px; }
+  .ob .sent h3 { font-size: 27px; }
+  .ob-cal { min-height: 640px; }
+  .ob-cal .calendly-inline-widget { height: 640px; }
+  .ob .credits { padding-bottom: 140px; }
+  .getbar { position: fixed; z-index: 25; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--lacquer); box-shadow: inset 0 1px 0 var(--hair-2), 0 -12px 30px rgba(0, 0, 0, .4); transition: transform .5s var(--ease), opacity .4s var(--ease); }
+  .getbar.is-away { transform: translateY(110%); opacity: 0; pointer-events: none; }
+  .getbar__tile { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; background: var(--lacquer-2); box-shadow: 0 0 0 1px var(--hair); }
+  .getbar__txt { min-width: 0; }
+  .getbar__txt b { display: block; font: 500 15px/1.2 var(--sans); }
+  .getbar__txt span { display: block; font: 400 13px/1.3 var(--sans); color: var(--ash); }
+  .getbar .btn { min-width: 0; min-height: 44px; padding: 0 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-stage__img, .ob-hero__head { animation: none; }
+  .ob :focus-visible { animation: none; }
+}
