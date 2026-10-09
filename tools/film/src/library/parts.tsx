@@ -80,15 +80,18 @@ export const Band: React.FC<{ x: number; y: number; width: number; height: numbe
 /* light that behaves: the plate relit by a practical. The mask (children, white
    is lit) is gated off the type zone; the plate is scaled by the tint and gain,
    and gamma above 1 favours what already shines (wet ground, glass, brass).
+   Sheen is a small flat term for light landing where the plate is near black.
    Screen keeps highlights from clipping, so the grade holds. */
-export const Relight: React.FC<{ id: string; tint: Tint; gain: number; gamma?: number; children: React.ReactNode }> = ({ id, tint, gain, gamma = 1, children }) => (
+export const Relight: React.FC<{ id: string; tint: Tint; gain: number; gamma?: number; sheen?: number; children: React.ReactNode }> = ({
+  id, tint, gain, gamma = 1, sheen = 0, children,
+}) => (
   <>
     <defs>
       <filter id={`lit-${id}`} filterUnits="userSpaceOnUse" x="0" y="0" width={W} height={H} colorInterpolationFilters="sRGB">
         <feComponentTransfer>
-          <feFuncR type="gamma" amplitude={gain * tint[0]} exponent={gamma} offset="0" />
-          <feFuncG type="gamma" amplitude={gain * tint[1]} exponent={gamma} offset="0" />
-          <feFuncB type="gamma" amplitude={gain * tint[2]} exponent={gamma} offset="0" />
+          <feFuncR type="gamma" amplitude={gain * tint[0]} exponent={gamma} offset={sheen * tint[0]} />
+          <feFuncG type="gamma" amplitude={gain * tint[1]} exponent={gamma} offset={sheen * tint[1]} />
+          <feFuncB type="gamma" amplitude={gain * tint[2]} exponent={gamma} offset={sheen * tint[2]} />
         </feComponentTransfer>
       </filter>
       <mask id={`m-${id}`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>

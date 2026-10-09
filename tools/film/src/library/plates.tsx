@@ -23,7 +23,7 @@ const TJ_STREAKS = [
 ];
 export const LibraryTripleJ: React.FC = () => {
   const frame = useCurrentFrame();
-  const { p, env } = pass(frame, 18, 222);
+  const { p, env } = pass(frame, 18, 222, lib.ease.sweep, 1);
   const x = 880 + (2010 - 880) * p;
   return (
     <LoopStage id="triple-j">
@@ -37,12 +37,12 @@ export const LibraryTripleJ: React.FC = () => {
           <rect x="0" y="0" width={LOOP.w} height={LOOP.h} fill="url(#tj-low)" />
         </mask>
       </defs>
-      <Relight id="beam" tint={lib.light.headlamp} gain={0.52 * env} gamma={1.2}>
+      <Relight id="beam" tint={lib.light.headlamp} gain={0.85 * env} gamma={1.05}>
         <g mask="url(#tj-floor)">
           <Soft cx={x} cy={640} rx={200} ry={320} rot={-12} />
         </g>
       </Relight>
-      <Relight id="wet" tint={lib.light.headlamp} gain={0.9 * env} gamma={1.9}>
+      <Relight id="wet" tint={lib.light.headlamp} gain={1.6 * env} gamma={1.45} sheen={0.03 * env}>
         <g mask="url(#tj-floor)">
           {TJ_STREAKS.map((s, i) => (
             <Soft key={i} cx={x + s.dx} cy={s.y} rx={s.w} ry={s.h} o={s.o} />

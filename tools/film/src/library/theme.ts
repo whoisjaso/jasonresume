@@ -62,10 +62,10 @@ export const swell = (frame: number, cycles = 1, offset = 0) =>
 export const orbit = (frame: number, cycles: number, phase: number) => Math.sin(TAU * (cycles * (frame / LOOP.frames) + phase));
 
 /* a light that crosses once: eased progress through [a, b] and an envelope dark at both ends */
-export const pass = (frame: number, a: number, b: number, ease = lib.ease.sweep) => {
+export const pass = (frame: number, a: number, b: number, ease = lib.ease.sweep, shape = 2) => {
   const p = interpolate(frame, [a, b], [0, 1], { easing: ease, ...clamp });
   const raw = interpolate(frame, [a, b], [0, 1], { easing: lib.ease.drift, ...clamp });
-  const env = Math.pow(Math.sin(Math.PI * raw), 2);
+  const env = Math.pow(Math.sin(Math.PI * raw), shape);
   return { p, env };
 };
 
