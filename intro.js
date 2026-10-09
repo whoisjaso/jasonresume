@@ -14,6 +14,11 @@
    access) and no availability; someone just looking gets nothing but the
    card (the seat promised no pitch; Player 2 carries a referral). Its words
    live in tools/site/onboarding.json, inlined as #onboarding-data.
+   The loading screen (#boot, tools/site/boot.js) draws the lot while the art,
+   the fonts and the scripts arrive; the title screen fades in as it dissolves
+   (window.JG_BOOT.ready). Two ways to be shown around sit under Start: Watch
+   the walkthrough (the narrated film, in a dialog; window.JG_FILM) and, on the
+   home page, Take the tour (tour.js, through the live library).
    The head script sets html.intro-pending so the page never flashes first.
    While it is up, html has .intro-on. When it ends, document gets
    "jg:intro-done" { role, named }. */
@@ -53,6 +58,8 @@
 
   /* ---------- the title screen, mounted before anything else loads ---------- */
   var t = O.title, mob = innerWidth < 760;
+  /* the walkthrough film (assemble_home.py adds O.walk once assets/film/tour.mp4 exists) and the live tour (home page only) */
+  var WALK = O.walk || null, TOUR = !!document.querySelector('script[src^="tour.js"]');
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");
   var el = document.createElement("div");
@@ -71,6 +78,10 @@
         '<button class="btn btn--ghost" type="button" data-start="off">' + E(t.muted) + "</button>" +
       "</div>" +
       '<p class="intro__fine">' + E(t.note) + "</p>" +
+      (TOUR || WALK ? '<div class="intro__more">' +
+        (TOUR ? '<button class="intro__textbtn" type="button" data-intro-tour><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-move"/></svg>' + E(t.tour || "Take the tour") + "</button>" : "") +
+        (WALK ? '<button class="intro__textbtn" type="button" data-watch><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.watch || "Watch the walkthrough") + "</button>" : "") +
+      "</div>" : "") +
     "</section>" +
     '<section class="intro__scene intro__scene--seat" data-scene="seat" hidden>' +
       '<h2 class="intro__h">' + E(O.question.title) + "</h2>" +
@@ -103,7 +114,9 @@
   root.classList.add("intro-on");
   if (window.JG_LOCK) window.JG_LOCK(true);
   T("intro_shown", {});
-  requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-shown"); }); });
+  /* the title screen fades in as the loading screen dissolves into it */
+  var bootP = (window.JG_BOOT && window.JG_BOOT.ready) || Promise.resolve();
+  bootP.then(function () { requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-shown"); }); }); });
 
   var phase = "title", role = store.get("jg_role") || O.roles[0].id, named = false;
   function scene(name) {
@@ -117,7 +130,31 @@
     if (f) setTimeout(function () { f.focus({ preventScroll: true }); }, wait(260));
   }
   var startBtn = el.querySelector('[data-start="on"]');
-  setTimeout(function () { startBtn.focus({ preventScroll: true }); }, 60);
+  bootP.then(function () { setTimeout(function () { if (!filmOpen()) startBtn.focus({ preventScroll: true }); }, 60); });
+
+  /* ---------- the walkthrough: the narrated film in a dialog. A press opens it, so
+     its sound (once it is voiced) only ever follows a press; closing is silent ---------- */
+  var film = null;
+  function filmOpen() { return !!(film && film.open); }
+  function openFilm(where) {
+    if (!WALK) return;
+    if (!film) {
+      var tall = matchMedia("(max-width: 759px) and (orientation: portrait)").matches && WALK.vsrc;
+      film = document.createElement("dialog");
+      film.className = "sheet film-sheet"; film.setAttribute("aria-label", t.watch || "Watch the walkthrough");
+      film.innerHTML = '<div class="film-sheet__frame"><video controls playsinline preload="metadata" poster="' + E(tall ? WALK.vposter : WALK.poster) + '" src="' + E(tall ? WALK.vsrc : WALK.src) + '">' + (WALK.vtt ? '<track kind="captions" srclang="en" label="English" src="' + E(WALK.vtt) + '" />' : "") + "</video></div>" +
+        '<div class="film-sheet__bar"><p class="film-sheet__note">' + E(WALK.note || "") + '</p><div class="film-sheet__acts">' + (WALK.page ? '<a class="btn btn--sm btn--ghost" href="' + E(WALK.page) + '">' + E(WALK.page_label || "The film page") + "</a>" : "") + '<button class="x" type="button" data-close aria-label="Close the walkthrough"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-x"/></svg></button></div></div>';
+      body.appendChild(film);
+      film.addEventListener("click", function (e) { if (e.target === film || e.target.closest("[data-close]")) film.close(); });
+      film.addEventListener("close", function () { var v = film.querySelector("video"); if (v) v.pause(); T("walkthrough_closed", { at: v ? Math.round(v.currentTime) : 0 }); if (!ended && phase === "title") startBtn.focus({ preventScroll: true }); });
+    }
+    if (typeof film.showModal === "function") film.showModal(); else film.setAttribute("open", "");
+    if (window.JG_FX) window.JG_FX("arrive"); else hap("tap");
+    T("walkthrough_opened", { where: where || "" });
+    var v = film.querySelector("video"), pr = v && v.play(); if (pr && pr.catch) pr.catch(function () {});
+  }
+  window.JG_FILM = { open: openFilm };
+  if (window.JG_BOOT && window.JG_BOOT.film) openFilm("boot");
 
   /* ---------- start: with the score, or muted ---------- */
   function start(sound, how) {
@@ -131,8 +168,22 @@
   el.addEventListener("click", function (e) {
     var b = e.target.closest("[data-start]");
     if (b) { start(b.getAttribute("data-start") === "on", "button"); return; }
+    if (e.target.closest("[data-watch]")) { openFilm("title"); return; }
+    if (e.target.closest("[data-intro-tour]")) { takeTour(); return; }
     if (phase === "title" && !e.target.closest("button,a,input")) start(true, "tap");
   });
+
+  /* the tour: a press, so it starts the score the way Start does, then goes
+     straight to the library and the tour runs there (tour.js) */
+  function takeTour() {
+    if (phase !== "title") return;
+    if (S()) { S().set(true, "tour"); setTimeout(function () { S().sting("start"); }, 120); }
+    hap("tap");
+    T("intro_started", { sound: true, how: "tour" });
+    el.classList.add("is-started");
+    document.addEventListener("jg:intro-done", function go() { document.removeEventListener("jg:intro-done", go); setTimeout(function () { if (window.JG_TOUR) window.JG_TOUR.start("title"); }, 200); });
+    phase = "tour"; setTimeout(function () { done(true, "tour"); }, wait(320));
+  }
 
   /* ---------- who's playing ---------- */
   var rows = [].slice.call(el.querySelectorAll(".menu__row"));
@@ -320,10 +371,11 @@
 
   /* ---------- the end: into the library ---------- */
   var ended = false;
-  function done(skipped) {
+  function done(skipped, why) {
     if (ended) return; ended = true;
     store.set("jg_intro", "1");
     if (!skipped) T("intro_finished", { role: role, named: named });
+    else if (why === "tour") T("intro_tour", { role: role });
     el.classList.add("is-leaving");
     root.classList.remove("intro-on");
     setTimeout(function () {
@@ -338,9 +390,10 @@
   /* ---------- keys ---------- */
   addEventListener("keydown", function (e) {
     if (ended || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (filmOpen()) return; /* the film's dialog has the keys (Escape closes it, silently) */
     var k = e.key;
     if (phase === "title") {
-      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip]")) return; /* the focused button handles its own key */
+      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip],[data-watch],[data-intro-tour]")) return; /* the focused button handles its own key */
       if (k === "Enter" || k === " ") { e.preventDefault(); start(true, "key"); }
       else if (k === "m" || k === "M") { e.preventDefault(); start(false, "key"); }
       else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }

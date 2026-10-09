@@ -1,0 +1,97 @@
+{
+ "id": "library",
+ "text": "Then the library: the dealership he runs, the CRM, the voice AI, prospecting, neuroscience, and Obavia, in development.",
+ "duration": 9.75,
+ "words": [
+  {
+   "w": "Then",
+   "s": 0.425,
+   "e": 0.625
+  },
+  {
+   "w": "the",
+   "s": 0.625,
+   "e": 0.75
+  },
+  {
+   "w": "library:",
+   "s": 0.75,
+   "e": 1.7
+  },
+  {
+   "w": "the",
+   "s": 1.825,
+   "e": 1.95
+  },
+  {
+   "w": "dealership",
+   "s": 1.95,
+   "e": 2.5
+  },
+  {
+   "w": "he",
+   "s": 2.5,
+   "e": 2.663
+  },
+  {
+   "w": "runs,",
+   "s": 2.663,
+   "e": 3.15
+  },
+  {
+   "w": "the",
+   "s": 3.2,
+   "e": 3.35
+  },
+  {
+   "w": "CRM,",
+   "s": 3.35,
+   "e": 4.15
+  },
+  {
+   "w": "the",
+   "s": 4.225,
+   "e": 4.35
+  },
+  {
+   "w": "voice",
+   "s": 4.35,
+   "e": 4.75
+  },
+  {
+   "w": "AI,",
+   "s": 4.75,
+   "e": 5.425
+  },
+  {
+   "w": "prospecting,",
+   "s": 5.537,
+   "e": 6.35
+  },
+  {
+   "w": "neuroscience,",
+   "s": 6.412,
+   "e": 7.2
+  },
+  {
+   "w": "and",
+   "s": 7.237,
+   "e": 7.362
+  },
+  {
+   "w": "Obavia,",
+   "s": 7.362,
+   "e": 8.275
+  },
+  {
+   "w": "in",
+   "s": 8.375,
+   "e": 8.5
+  },
+  {
+   "w": "development.",
+   "s": 8.5,
+   "e": 9.475
+  }
+ ]
+}

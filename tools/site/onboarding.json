@@ -10,7 +10,9 @@
     "start": "Start",
     "muted": "Start muted",
     "note": "The score is part of the game. Press M or the Score button to turn it off any time.",
-    "skip": "Skip"
+    "skip": "Skip",
+    "tour": "Take the tour",
+    "watch": "Watch the walkthrough"
   },
   "question": {
     "title": "Who's playing?",

@@ -26,3 +26,6 @@ tools/art/candidates/
 tools/film/public/library/
 __pycache__/
 *.pyc
+
+# walkthrough film: captured stills and staged audio are local render inputs
+tools/film/public/tour/

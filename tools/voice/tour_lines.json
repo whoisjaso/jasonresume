@@ -1,0 +1,218 @@
+{
+  "_about": "The walkthrough's words: one narrator line per shot of the film (tools/film/src/tour) and per step of the guided tour in the site (tour.js). The narrator describes the site and never speaks as Jason. Every fact is already in llms.txt (most lines are its own sentences about the site, trimmed). No em or en dashes, no percent signs, no numbers that are not in llms.txt. tools/voice/narrate_free.py (Kokoro, free and local; tools/voice/eleven.mjs is the optional ElevenLabs path) reads this file and writes assets/voice/tour/<id>.mp3, <id>.json (word timings) and manifest.json; tools/site/assemble_home.py inlines the lines (and the timings, once they exist) into the home page as #tour-data. Change a line and run sh tools/voice/narrate.sh to re-voice and re-render.",
+  "voice": {
+    "label": "Narration: a stock Kokoro voice (open source), not Jason.",
+    "caption_only": "Captions only. The narration has not been recorded yet."
+  },
+  "lines": [
+    {
+      "id": "open",
+      "text": "Jason Obawemimo's site is built like a game console's home screen after hours. His career is the library on it."
+    },
+    {
+      "id": "title",
+      "text": "Every arrival opens on a title screen: his name, over a used car lot at night."
+    },
+    {
+      "id": "seat",
+      "text": "Then, who's playing. Hiring, running a dealership, or just looking."
+    },
+    {
+      "id": "build",
+      "text": "Then a build: pick the role you're hiring for, or the problem on your lot."
+    },
+    {
+      "id": "card",
+      "text": "Sign it and keep it: the card, its link, and a one-page resume for that role."
+    },
+    {
+      "id": "library",
+      "text": "Then the library: the dealership he runs, the CRM, the voice AI, prospecting, neuroscience, and Obavia, in development."
+    },
+    {
+      "id": "focus",
+      "text": "Moving focus crossfades the key art, and brings in that title's layer of the score."
+    },
+    {
+      "id": "opened",
+      "text": "Open a title and it gets its own page: overview, films, trophies, loadout."
+    },
+    {
+      "id": "desk",
+      "text": "In Lead to Title, run the sale desk he built: scan the license once, and every form fills itself. Fictional buyer, example figures."
+    },
+    {
+      "id": "trophies",
+      "text": "Each of the 18 trophies is a verified fact. Open every career title for the platinum."
+    },
+    {
+      "id": "profile",
+      "text": "Level 53: one level for each car he has personally sold since June 2025."
+    },
+    {
+      "id": "player2",
+      "text": "Player 2 tunes your build: four proofs, a backdrop, and a finish the library unlocks."
+    },
+    {
+      "id": "resume",
+      "text": "The resume opens as a deck, and Check me opens every proof link."
+    },
+    {
+      "id": "end",
+      "text": "Every fact stays in plain HTML. Press start."
+    },
+    {
+      "id": "t-welcome",
+      "text": "This is the library. The tour moves you through it one stop at a time. Go back, skip ahead, or leave whenever you like."
+    },
+    {
+      "id": "t-head",
+      "text": "Triple J Auto is the dealership he owns and operates. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds."
+    },
+    {
+      "id": "t-build",
+      "text": "Player 2 builds him for the role you're hiring for, or the problem on your lot. You keep the card, and for a role, a one-page resume written for that job."
+    },
+    {
+      "id": "t-end",
+      "text": "Resume and Email sit in the top bar on every screen. That's the tour."
+    }
+  ],
+  "film": [
+    {
+      "shot": "boot",
+      "line": "open"
+    },
+    {
+      "shot": "title",
+      "line": "title"
+    },
+    {
+      "shot": "seat",
+      "line": "seat"
+    },
+    {
+      "shot": "build",
+      "line": "build"
+    },
+    {
+      "shot": "card",
+      "line": "card"
+    },
+    {
+      "shot": "library",
+      "line": "library"
+    },
+    {
+      "shot": "focus",
+      "line": "focus"
+    },
+    {
+      "shot": "opened",
+      "line": "opened"
+    },
+    {
+      "shot": "desk",
+      "line": "desk"
+    },
+    {
+      "shot": "trophies",
+      "line": "trophies"
+    },
+    {
+      "shot": "profile",
+      "line": "profile"
+    },
+    {
+      "shot": "player2",
+      "line": "player2"
+    },
+    {
+      "shot": "resume",
+      "line": "resume"
+    },
+    {
+      "shot": "end",
+      "line": "end"
+    }
+  ],
+  "tour": [
+    {
+      "step": "welcome",
+      "line": "t-welcome",
+      "do": "library",
+      "focus": "triple-j",
+      "target": ".shelf"
+    },
+    {
+      "step": "head",
+      "line": "t-head",
+      "do": "library",
+      "focus": "triple-j",
+      "target": "head"
+    },
+    {
+      "step": "library",
+      "line": "library",
+      "do": "library",
+      "focus": "triple-j",
+      "target": ".shelf__row"
+    },
+    {
+      "step": "focus",
+      "line": "focus",
+      "do": "library",
+      "focus": "the-inbound",
+      "target": "head"
+    },
+    {
+      "step": "opened",
+      "line": "opened",
+      "do": "title",
+      "title": "lead-to-title",
+      "target": ".title.is-open .title__head"
+    },
+    {
+      "step": "desk",
+      "line": "desk",
+      "do": "title",
+      "title": "lead-to-title",
+      "section": "demo",
+      "target": ".title.is-open .demo"
+    },
+    {
+      "step": "trophies",
+      "line": "trophies",
+      "do": "screen",
+      "screen": "trophies",
+      "target": ".trophies .screen__head"
+    },
+    {
+      "step": "build",
+      "line": "t-build",
+      "do": "screen",
+      "screen": "build",
+      "target": "#build .screen__head"
+    },
+    {
+      "step": "profile",
+      "line": "profile",
+      "do": "screen",
+      "screen": "profile",
+      "target": ".profile__lvl"
+    },
+    {
+      "step": "resume",
+      "line": "resume",
+      "do": "deck",
+      "target": "#deck .deck__stage"
+    },
+    {
+      "step": "end",
+      "line": "t-end",
+      "do": "library",
+      "focus": "triple-j",
+      "target": ".sys__nav"
+    }
+  ]
+}

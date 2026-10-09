@@ -8,6 +8,7 @@ import { LINES, LEAD_IN, TAIL } from "./vsl-data";
 import { RecordReel, ObaviaFilm, LotFilm, CutTile, OgHome, DeskFilm } from "./dash/films";
 import { LibraryTripleJ, LibraryLeadToTitle, LibraryTheInbound, LibraryProspector, LibraryNeuroscience, LibraryObavia } from "./library/plates";
 import { LOOP } from "./library/theme";
+import { Tour, TOUR_FRAMES } from "./tour/Tour";
 
 export const Root: React.FC = () => (
   <>
@@ -30,5 +31,8 @@ export const Root: React.FC = () => (
     <Composition id="LibraryProspector" component={LibraryProspector} durationInFrames={LOOP.frames} fps={LOOP.fps} width={LOOP.w} height={LOOP.h} />
     <Composition id="LibraryNeuroscience" component={LibraryNeuroscience} durationInFrames={LOOP.frames} fps={LOOP.fps} width={LOOP.w} height={LOOP.h} />
     <Composition id="LibraryObavia" component={LibraryObavia} durationInFrames={LOOP.frames} fps={LOOP.fps} width={LOOP.w} height={LOOP.h} />
+    {/* the walkthrough: the live site, narrated (render-tour.sh); wide and a recomposed tall cut */}
+    <Composition id="Tour" component={Tour} durationInFrames={TOUR_FRAMES} fps={30} width={1920} height={1080} defaultProps={{ tall: false }} />
+    <Composition id="TourVertical" component={Tour} durationInFrames={TOUR_FRAMES} fps={30} width={1080} height={1920} defaultProps={{ tall: true }} />
   </>
 );

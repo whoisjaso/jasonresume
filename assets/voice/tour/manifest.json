@@ -1,0 +1,123 @@
+{
+ "lines": {
+  "open": {
+   "hash": "8b36f5564cfc",
+   "duration": 9.3,
+   "file": "open.mp3",
+   "timings": "open.json"
+  },
+  "title": {
+   "hash": "d9b57e589bf3",
+   "duration": 6.625,
+   "file": "title.mp3",
+   "timings": "title.json"
+  },
+  "seat": {
+   "hash": "159d7f1b0260",
+   "duration": 5.125,
+   "file": "seat.mp3",
+   "timings": "seat.json"
+  },
+  "build": {
+   "hash": "f3a77b02f53a",
+   "duration": 5.25,
+   "file": "build.mp3",
+   "timings": "build.json"
+  },
+  "card": {
+   "hash": "b0992b0a082f",
+   "duration": 5.725,
+   "file": "card.mp3",
+   "timings": "card.json"
+  },
+  "library": {
+   "hash": "03c34cd9c3a5",
+   "duration": 9.75,
+   "file": "library.mp3",
+   "timings": "library.json"
+  },
+  "focus": {
+   "hash": "2c6613919d8a",
+   "duration": 6.275,
+   "file": "focus.mp3",
+   "timings": "focus.json"
+  },
+  "opened": {
+   "hash": "ee39e25209fa",
+   "duration": 6.05,
+   "file": "opened.mp3",
+   "timings": "opened.json"
+  },
+  "desk": {
+   "hash": "39942089f295",
+   "duration": 10.35,
+   "file": "desk.mp3",
+   "timings": "desk.json"
+  },
+  "trophies": {
+   "hash": "bb50d04660ec",
+   "duration": 7.225,
+   "file": "trophies.mp3",
+   "timings": "trophies.json"
+  },
+  "profile": {
+   "hash": "fa4f364fa623",
+   "duration": 7.275,
+   "file": "profile.mp3",
+   "timings": "profile.json"
+  },
+  "player2": {
+   "hash": "031dbb1e5e04",
+   "duration": 6.75,
+   "file": "player2.mp3",
+   "timings": "player2.json"
+  },
+  "resume": {
+   "hash": "0165ef1ff55c",
+   "duration": 5.25,
+   "file": "resume.mp3",
+   "timings": "resume.json"
+  },
+  "end": {
+   "hash": "ea4f1f65d86f",
+   "duration": 4.575,
+   "file": "end.mp3",
+   "timings": "end.json"
+  },
+  "t-welcome": {
+   "hash": "44fc134ca95a",
+   "duration": 8.5,
+   "file": "t-welcome.mp3",
+   "timings": "t-welcome.json"
+  },
+  "t-head": {
+   "hash": "9ff3ec26cc1a",
+   "duration": 16.9,
+   "file": "t-head.mp3",
+   "timings": "t-head.json"
+  },
+  "t-build": {
+   "hash": "e24812460ae6",
+   "duration": 11.225,
+   "file": "t-build.mp3",
+   "timings": "t-build.json"
+  },
+  "t-end": {
+   "hash": "a6e00951300d",
+   "duration": 5.525,
+   "file": "t-end.mp3",
+   "timings": "t-end.json"
+  }
+ },
+ "voice": {
+  "id": "am_michael",
+  "name": "am_michael",
+  "model": "hexgrad/Kokoro-82M",
+  "format": "mp3_44100_128",
+  "settings": {
+   "speed": 0.95
+  },
+  "source": "Kokoro-82M, an open-weight model (Apache-2.0), a stock voice (not a clone)"
+ },
+ "updated": "2026-10-09"
+}

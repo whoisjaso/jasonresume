@@ -11,7 +11,12 @@
 // the first frame's actions, moving focus, opening every title, trophies and the
 // Platinum, the desk demo run to Filed, the screens, the deck and Check me;
 // the doors (return visits, skip, deep links, legacy links, the dealer cut);
-// privacy; the score staying silent until Start; the no-JS document; and the
+// privacy; the score staying silent until Start; the no-JS document; the
+// loading screen (drawn while the art, the fonts and the scripts arrive, gone
+// soon after, never for crawlers or the site's own links); the guided tour
+// (every stop, its line, the vignette on its subject, Back, keys, a clean
+// silent exit) on both sizes; the walkthrough film (its dialog on the title
+// screen and its page) when it has been rendered; and the
 // text rules (no dashes, no percent signs, no phone number, every number in
 // llms.txt) over visible text, labels and attributes. Screenshots land in
 // tools/verify/out/lib-*.png.
@@ -81,9 +86,16 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   const t0 = Date.now();
   await p.goto(URL0, { waitUntil: 'domcontentloaded' });
 
+  // The loading screen first: a line drawing of the lot, measured on real loading, then the title screen
+  const boot = await p.evaluate(() => { const b = document.getElementById('boot'); return { on: !!b && getComputedStyle(b).display !== 'none', strokes: b ? b.querySelectorAll('.boot__lines path').length : 0 }; });
+  if (!boot.on || boot.strokes < 40) errs.push(`${name} no loading screen on arrival ${JSON.stringify(boot)}`);
+  await p.waitForTimeout(250); await shot('00-boot');
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => errs.push(`${name} the loading screen never left`));
+  notes.push(`${name} loading screen gone ${Date.now() - t0} ms after navigation`);
   // The title screen: Press start, who's playing, the name
   await p.waitForSelector('#intro', { timeout: 4000 }).catch(() => errs.push(`${name} title screen did not appear`));
   await p.waitForTimeout(1200); await shot('00a-title');
+  if (!(await p.$('#intro [data-intro-tour]'))) errs.push(`${name} the title screen offers no tour`);
   if (scoreFetches.length) errs.push(`${name} the score loaded before Start`);
   await p.click('[data-start="on"]');
   await p.waitForSelector('[data-scene="seat"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name} no seat menu after Start`));
@@ -441,6 +453,84 @@ if (!only || only === 'desktop') {
     }
     await ctx.close();
   }
+}
+
+// The guided tour: from the title screen, every stop on both sizes, then a clean, silent exit
+{
+  const TOURD = JSON.parse(fs.readFileSync(path.join(TOOLS, 'site', 'tour.json'), 'utf8'));
+  for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 390, 844, true]]) {
+    if (only && only !== name) continue;
+    const ctx = await ctxFor(w, h, mobile);
+    await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+    const p = await ctx.newPage();
+    const voice = []; p.on('request', r => { if (/assets\/voice\//.test(r.url())) voice.push(r.url()); });
+    p.on('pageerror', e => errs.push(`tour ${name} pageerror: ${e.message}`));
+    p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`tour ${name} console: ${m.text().slice(0, 160)}`); });
+    await p.goto(URL0); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
+    await p.click('[data-intro-tour]');
+    await p.waitForSelector('.tour:not([hidden])', { timeout: 6000 }).catch(() => errs.push(`tour ${name}: Take the tour did not start it`));
+    const n = TOURD.steps.length;
+    for (let i = 0; i < n; i++) {
+      await p.waitForTimeout(1300);
+      const st = await p.evaluate(() => { const v = document.querySelector('.tour__veil path'); const c = document.querySelector('.tour__cap').getBoundingClientRect(); return { line: document.querySelector('.tour__line').textContent.replace(/\s+/g, ' ').trim(), hole: (v.getAttribute('d') || '').split('Z').length > 2, cap: c.left >= 0 && c.right <= innerWidth + 1 && c.bottom <= innerHeight + 1 && c.top >= 0, deck: !!document.querySelector('#deck[open]') }; });
+      const want = TOURD.lines[TOURD.steps[i].line].text;
+      if (st.line !== want) errs.push(`tour ${name} stop ${i + 1} says "${st.line.slice(0, 50)}"`);
+      if (!st.hole || !st.cap) errs.push(`tour ${name} stop ${i + 1}: vignette ${st.hole}, caption on screen ${st.cap}`);
+      if (TOURD.steps[i].do === 'deck' && !st.deck) errs.push(`tour ${name}: the resume stop did not present the deck`);
+      if (i === 4 || i === 9) { await textRules(p, `tour ${name} stop ${i + 1}`); }
+      await overflow(p, `tour ${name} stop ${i + 1}`);
+      if ([1, 5, 9].includes(i)) await p.screenshot({ path: path.join(OUT, `lib-${name}-tour-${i + 1}.png`) });
+      if (i < n - 1) { if (mobile) await p.click('[data-tour-next]'); else await p.keyboard.press('ArrowRight'); }
+    }
+    await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(700);
+    const back = await p.evaluate(() => document.querySelector('.tour__line').textContent.replace(/\s+/g, ' ').trim());
+    if (back !== TOURD.lines[TOURD.steps[n - 2].line].text) errs.push(`tour ${name}: Back did not return a stop`);
+    await p.keyboard.press('Escape'); await p.waitForTimeout(1200);
+    const end = await p.evaluate(() => ({ on: window.JG_TOUR.on(), shown: !!document.querySelector('.tour:not([hidden])'), open: !!document.querySelector('article.title.is-open, .screen.is-open, dialog[open]'), locked: document.documentElement.classList.contains('is-locked'), inert: document.querySelectorAll('[inert]').length }));
+    if (end.on || end.shown || end.open || end.locked || end.inert) errs.push(`tour ${name}: exit left ${JSON.stringify(end)}`);
+    else notes.push(`tour ${name}: ${n} stops, Back, Escape leaves the library as it was`);
+    if (!TOURD.voiced && voice.length) errs.push(`tour ${name}: fetched narration that does not exist`);
+    // the help sheet starts it too
+    await p.keyboard.press('?'); await p.waitForTimeout(500);
+    if (!(await p.$('#help[open] [data-tour-start]'))) errs.push(`tour ${name}: the help sheet has no Take the tour`);
+    else { await p.click('#help [data-tour-start]'); await p.waitForTimeout(900); if (!(await p.evaluate(() => window.JG_TOUR.on()))) errs.push(`tour ${name}: help sheet did not start it`); await p.keyboard.press('Escape'); }
+    await ctx.close();
+  }
+}
+
+// The walkthrough film: offered on the title screen in a dialog (closing is silent), and on its own page
+if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'tour.mp4')) && (!only || only === 'desktop')) {
+  const ctx = await ctxFor(1440, 900, false);
+  await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`film pageerror: ${e.message}`));
+  await p.goto(URL0); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
+  await p.click('#intro [data-watch]');
+  await p.waitForSelector('dialog.film-sheet[open] video', { timeout: 4000 }).catch(() => errs.push('film: Watch the walkthrough opened nothing'));
+  await p.waitForTimeout(1500);
+  const fv = await p.evaluate(() => { const v = document.querySelector('dialog.film-sheet video'); return { d: v.duration, t: v.currentTime, src: v.currentSrc }; });
+  if (!(fv.d >= 60 && fv.d <= 95)) errs.push(`film: duration ${fv.d}`);
+  if (!(fv.t > 0)) errs.push('film: did not play after the press');
+  await p.screenshot({ path: path.join(OUT, 'lib-film-dialog.png') });
+  await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+  const after = await p.evaluate(() => ({ open: !!document.querySelector('dialog.film-sheet[open]'), title: !!document.querySelector('#intro [data-scene="title"].is-on') }));
+  if (after.open || !after.title) errs.push(`film: closing left ${JSON.stringify(after)}`);
+  await p.goto(URL0 + 'walkthrough.html'); await p.waitForTimeout(1200);
+  const pg = await p.evaluate(() => ({ v: !!document.querySelector('.walk__film video'), lines: document.querySelectorAll('.walk__lines li').length }));
+  if (!pg.v || pg.lines < 10) errs.push(`film page: ${JSON.stringify(pg)}`);
+  await textRules(p, 'film page'); await overflow(p, 'film page');
+  await p.screenshot({ path: path.join(OUT, 'lib-film-page.png') });
+  const m = await ctx.newPage(); await m.setViewportSize({ width: 390, height: 844 }); await m.goto(URL0 + 'walkthrough.html'); await m.waitForTimeout(800); await overflow(m, 'film page mobile');
+  notes.push(`film: ${Math.round(fv.d)} s, plays from Watch the walkthrough, closes silently, page reads`);
+  await ctx.close();
+}
+
+// The loading screen is only for arrivals: crawlers and the site's own links skip it
+{
+  const ctx = await ctxFor(1280, 800, false, { userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1)' });
+  const p = await ctx.newPage(); await p.goto(URL0, { waitUntil: 'domcontentloaded' });
+  const vis = await p.evaluate(() => { const b = document.getElementById('boot'); return !!b && getComputedStyle(b).display !== 'none'; });
+  if (vis) errs.push('a crawler saw the loading screen'); else notes.push('crawlers: no loading screen');
+  await ctx.close();
 }
 
 // No JavaScript: the whole record is a readable document
