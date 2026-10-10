@@ -233,7 +233,7 @@ export function plan(W, S0, target, opts = {}) {
           if (r2.dead || r2.timeout) risk += 60;
         }
       }
-      const child = { S: r.S, parent: n, mac, inputs: r.inputs, g: n.g + r.inputs.length + risk };
+      const child = { S: r.S, parent: n, mac: risk ? { ...mac, risk } : mac, inputs: r.inputs, g: n.g + r.inputs.length + risk };
       if (r.hit) return unwind(child, expanded);
       if (r.S.finished && target.kind !== 'goal') continue; // finishing early would end the level
       const k = key(r.S); if (seen.has(k)) continue; seen.add(k);
@@ -252,16 +252,17 @@ function unwind(n, expanded) {
   return { macros: chain.map(c => ({ mac: c.mac, inputs: c.inputs, S: c.S })), inputs: chain.flatMap(c => c.inputs), S: n.S, expanded };
 }
 
-// how forgiving each jump on a route is: play the route with the jump pressed
-// up to three frames early or late and held up to three frames shorter or
-// longer; a jump that only works one way is a pixel-perfect jump
+// how forgiving each jump on a route is: play it with the jump pressed up to
+// three frames early or late and held up to three frames shorter or longer;
+// a timing counts if it doesn't fall (and, for the last jump, still gets the
+// medal or the door). A jump that only works one way is a pixel-perfect jump.
 export function tolerance(W, S0, route, isTarget = () => false) {
   const out = [];
   let S = clone(S0);
   for (let i = 0; i < route.length; i++) {
     const seg = route[i];
     if (seg.mac.kind === 'jump') {
-      let ok = 0, tot = 0;
+      let ok = 0, tot = 0, hit = 0;
       const want = seg.S;
       for (const dt of [-3, -2, -1, 0, 1, 2, 3]) for (const dh of [-3, 0, 3]) {
         tot++;
@@ -276,9 +277,11 @@ export function tolerance(W, S0, route, isTarget = () => false) {
         if (T.dead) continue;
         const last = i === route.length - 1;
         const r = playMacro(W, T, mac, last ? isTarget : () => false);
-        if (last ? (!r.dead && isTarget(r.S)) : (!r.dead && !r.timeout && Math.abs(r.S.y - want.y) < 3 && Math.abs(r.S.x - want.x) < W.TS * 3)) ok++;
+        // a near miss that lands safely is fine (you just go again); a fall is not
+        if (!r.dead && !r.timeout) ok++;
+        if (last && !r.dead && isTarget(r.S)) hit++;
       }
-      out.push({ at: Math.round(S.x / W.TS * 10) / 10, ok, of: tot });
+      out.push({ at: Math.round(S.x / W.TS * 10) / 10, ok, of: tot, last: i === route.length - 1, hit });
     }
     S = clone(seg.S);
   }

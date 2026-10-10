@@ -121,7 +121,7 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
       if (tg.kind === 'medal' && s.medals[tg.i].got) { done = true; break; }
       const S0 = initState(W, s);
       const t0 = Date.now();
-      const r = plan(W, S0, tg, { touch: touchRun, walkOnly });
+      const r = plan(W, S0, tg, { touch: touchRun, walkOnly, robust: true });
       res.planned.push({ target: tg.slug || 'goal', ms: Date.now() - t0, expanded: r.expanded, ok: !r.fail });
       if (r.fail) { log(`  ${level}: no plan to ${tg.slug || 'the goal'} (closest ${JSON.stringify(r.closest)})`); break; }
       res.tol.push(...tolerance(W, S0, r.macros, tg.kind === 'medal' ? (S => S.got[tg.i]) : (S => S.finished)).map(t => ({ ...t, to: tg.slug || 'goal' })));
@@ -132,12 +132,13 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
           const lx = seg.S.x + 9, ly = seg.S.y + 44;
           // where the jump lands has to be on screen when you take off: ahead, or above you;
           // dropping down to the floor below is fine
-          const floor = ly >= 12 * D.TS - 1 && seg.S.on && seg.S.on.k === 'solid';
+          const floor = !!(seg.S.on && seg.S.on.k === 'solid');
           if (lx < c.x || lx > c.x + c.w || ly < c.y || (ly > c.y + c.h && !floor)) res.blind.push({ at: Math.round(lx / D.TS * 10) / 10, to: tg.slug || 'goal', view: [Math.round(c.x / D.TS), Math.round((c.x + c.w) / D.TS), Math.round(c.y / D.TS), Math.round((c.y + c.h) / D.TS)] });
         }
         await playInputs(seg.inputs);
         const a = (await state()).pl, e = seg.S;
-        if (Math.abs(a.x - e.x) > 0.5 || Math.abs(a.y - e.y) > 0.5) { diverged = true; res.replans++; log(`  ${level}: the game and the copy parted at x ${a.x.toFixed(1)} (copy ${e.x.toFixed(1)}), y ${a.y.toFixed(1)} (copy ${e.y.toFixed(1)}); planning again`); break; }
+        // (once the door is reached the game lets you settle; the copy stops there)
+        if (!e.finished && (Math.abs(a.x - e.x) > 0.5 || Math.abs(a.y - e.y) > 0.5)) { diverged = true; res.replans++; log(`  ${level}: the game and the copy parted at x ${a.x.toFixed(1)} (copy ${e.x.toFixed(1)}), y ${a.y.toFixed(1)} (copy ${e.y.toFixed(1)}); planning again`); break; }
       }
       if (!diverged) done = true;
     }

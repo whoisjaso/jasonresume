@@ -27,13 +27,22 @@ The `api/` functions need Vercel: `npx vercel dev` at the repo root runs them wi
 
 ```
 python3 -m http.server 8765 &
-node tools/verify/screening.mjs  # home page end to end, desktop and mobile
+node tools/verify/library.mjs    # home page end to end, desktop and mobile, and a quick bot run of every level
 node tools/verify/briefing.mjs   # obavia.html: title screen, title head, tabs and Q/E, film, desk to Filed, lessons, early access and its fallbacks, get bar, no-JS
 node tools/verify/overflow.mjs   # names the element when a page scrolls sideways
 python3 tools/site/build_resume.py  # the ten resume pages and match.js's data, refuses unverified numbers
 node tools/verify/resume.mjs     # ten PDFs and .txt copies (assets/ and assets/resume/), gated: one page, tagged, no Type 3, reading order, numbers in llms.txt
 node tools/verify/match.test.mjs # the listing match on realistic listings and lookalike phrases
+node tools/verify/run-bot.mjs    # After Hours: The Run played by a bot, every level, desktop keys and phone touches
 ```
+
+## The run, played by a bot
+
+`node tools/verify/run-bot.mjs [desktop|mobile] [level ...] [--quick] [--walk]` plays After Hours: The Run through real input: keys on desktop (1440 by 900: arrows, Shift to run, Space to jump) and touches on a phone held sideways (844 by 390: a thumb on the stick that lifts when it stops, jumps tapped on the drawn button and low on the right half). Each level opens at `?run=<level>&debug=run`; the `debug=run` flag turns on `window.JG_RUN_DEBUG`, a read-only view of the player and the level's geometry (off without the flag). The page's clock is paused and moved one 16 ms frame at a time, so a run is exact and repeatable.
+
+`tools/verify/run-sim.mjs` is a frame-exact copy of the player physics in game-run.js and a planner over it: a search over runs, jumps (how long the button is held, where you steer in the air) and waits, to each medal in turn and then the goal. It plans the careful way: a jump that falls when pressed three frames early or late, or held a little shorter or longer, costs extra, so it takes the safe route where there is one. The bot checks the game against the copy after every move and plans again from where the game really is if they part. If game-run.js changes how the player moves, change `step()` in run-sim.mjs to match.
+
+Desktop has to finish every level with every medal; the phone has to finish every level. Per level it prints whether it finished, the medals found, the level time, respawns, how forgiving each jump was (of 21 timings around the planned one, how many don't fall), and any jump whose landing was off screen at take-off. `--walk` plans the goal without Shift (the tutorial never mentions running, so every main path has to work at a walk). `humanTrial()` in run-sim.mjs plays the same plans with every press and release up to k frames early or late, replanning after each miss and respawning at the last lamp, to estimate falls per run for a careful but imprecise player. `--quick` plays every level to the goal by touch and the first by keys, no medals; `tools/verify/library.mjs` runs it at the end. Screenshots land in `tools/verify/out/bot-*.png`, the summary in `tools/verify/out/run-bot.txt`.
 
 Screenshots land in `tools/verify/out/`.
 
