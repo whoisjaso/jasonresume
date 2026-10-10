@@ -34,9 +34,13 @@ builds.pop("_about", None)
 # The run (game-run.js): the levels, the cast and the lines, compact. The voices'
 # words and timings stay in assets/voice/run; my own lines are text only.
 run = json.loads((SITE / "run.json").read_text())
-for k in ("_about", "out", "lines_note"):
-    run.pop(k, None) if k != "out" else None
 run.pop("_about", None)
+# My own lines are voiced from my recording (tools/voice/run_jason_lines.json, rendered
+# to assets/voice/run/jason-<id>.mp3 and .json); the text there must match run.json.
+_jl = json.loads((ROOT / "tools/voice/run_jason_lines.json").read_text())
+_jt = {l["id"]: l["text"] for l in _jl["lines"]}
+for l in run.get("me", []):
+    assert _jt.get("jason-" + l["id"]) == l["text"], "run_jason_lines.json is out of step with run.json: " + l["id"]
 for l in run.get("lines", []):
     l.pop("voice", None)
 run_json = json.dumps(run, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
@@ -246,6 +250,8 @@ def title_article(i, t):
         ov += '<p class="proof">' + "".join(
             '<a class="btn btn--sm" href="%s"%s>%s</a>' % (E(a["href"]), (' data-contact="%s" data-where="obavia"' % a["contact"]) if a.get("contact") else (' data-cta="%s"' % a["cta"] if a.get("cta") else ""), E(a["label"]))
             for a in t["actions"]) + "</p>"
+    # the title's level in the run (game-run.js), from its own page
+    ov += '<p class="proof"><button class="btn btn--sm" type="button" data-play="%s" data-where="title"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg>Play the level</button></p>' % tid
     sec("overview", "Overview", ov)
     if t.get("film"):
         f = t["film"]

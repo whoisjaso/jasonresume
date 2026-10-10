@@ -246,7 +246,7 @@
   function playPress(level, how) {
     if (matchMedia("(pointer: coarse)").matches && !document.fullscreenElement) {
       var d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen;
-      if (rq) try { var p = rq.call(d, { navigationUI: "hide" }); if (p && p.then) p.then(function () { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); }).catch(function () {}); } catch (e) {}
+      if (rq) try { window.JG_RUN_FS = true; var p = rq.call(d, { navigationUI: "hide" }); if (p && p.then) p.then(function () { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); }).catch(function () {}); } catch (e) {}
     }
     if (window.JG_FX) window.JG_FX("choice");
     play(level, how);

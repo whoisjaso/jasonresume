@@ -154,7 +154,7 @@
 
   /* ---------- voices: fictional characters, stock voices, captions always ---------- */
   var talkQ = [], talking = null, capEl = $("[data-run-cap]", el), whoEl = $("[data-run-who]", el), saidEl = $("[data-run-said]", el);
-  var timings = {};
+  var timings = {}, meVoice = {};
   function speaker(id) { var c = D.cast[id]; return c ? c.name : ""; }
   function queueLine(id) { if (LINES[id]) { talkQ.push(id); if (!talking) nextLine(); } }
   function nextLine() {
@@ -166,15 +166,31 @@
     capEl.classList.toggle("is-me", L.who === "me");
     capEl.hidden = false; requestAnimationFrame(function () { capEl.classList.add("is-on"); });
     say(speaker(L.who) + ": " + L.text);
-    if (L.who !== "me" && soundOn()) {
-      var a = new Audio(); a.preload = "auto"; a.src = (D.out || "assets/voice/run") + "/" + id + ".mp3";
+    var base = D.out || "assets/voice/run", file = L.who === "me" ? "jason-" + id : id;
+    if (L.who === "me" && soundOn() && meVoice[id] == null) {
+      /* my lines play in my own voice once they've been rendered; until then they're captions */
+      meVoice[id] = 0;
+      fetch(base + "/" + file + ".json").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (!j) return; meVoice[id] = 1; timings[id] = j.words;
+        if (talking && talking.id === id && talking.t < 1.2) voice(base + "/" + file + ".mp3", id);
+      }).catch(function () {});
+    }
+    if ((L.who !== "me" || meVoice[id] === 1) && soundOn()) voice(base + "/" + file + ".mp3", id, L.who !== "me" ? base + "/" + id + ".json" : null);
+    else $$("i", saidEl).forEach(function (w) { w.classList.add("is-said"); });
+  }
+  function voice(src, id, tj) {
+    if (!talking) return;
+    $$("i", saidEl).forEach(function (w) { w.classList.remove("is-said"); });
+    {
+      var a = new Audio(); a.preload = "auto"; a.src = src;
       a.volume = 0.95;
       var p = a.play(); if (p && p.catch) p.catch(function () {});
       a.addEventListener("loadedmetadata", function () { if (talking && talking.audio === a && a.duration) talking.dur = a.duration + 0.6; });
       talking.audio = a; talking.voiced = true;
       if (SC() && SC().voice) SC().voice(true);
-      if (!timings[id]) fetch((D.out || "assets/voice/run") + "/" + id + ".json").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) timings[id] = j.words; }).catch(function () {});
-    } else $$("i", saidEl).forEach(function (w) { w.classList.add("is-said"); });
+      talking.t = 0;
+      if (!timings[id] && tj) fetch(tj).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) timings[id] = j.words; }).catch(function () {});
+    }
   }
   function stopLine(quiet) {
     if (talking && talking.audio) { try { talking.audio.pause(); } catch (e) {} }
@@ -202,7 +218,7 @@
 
   function buildWorld(L) {
     var w = {
-      L: L, w: L.w * TS, top: (L.top || 0) * TS, bot: (L.bot || 14) * TS, theme: L.theme,
+      L: L, w: L.w * TS, top: (L.top || 0) * TS, bot: (L.bot || 14.8) * TS, theme: L.theme,
       solids: [], ones: [], movers: [], pads: [], lamps: [], sparks: [], medals: [], fakes: [], trigs: [], ghosts: [], doors: [], npcs: [], talks: [], water: [], cars: [],
       groups: {}, goal: null, t: 0, said: {}, mid: null
     };
@@ -362,8 +378,10 @@
     dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1.25 : 2);
     cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
     var upright = el.classList.contains("is-upright");
-    var rows = upright ? 10.5 : 13;
-    scale = Math.max(ch / (rows * TS), cw / (26 * TS));
+    /* a phone on its side sees a little closer, so you stay big under a thumb */
+    var touchy = el.classList.contains("is-touch");
+    var rows = upright ? 10.5 : touchy ? 11.5 : 13, cols = touchy ? 22 : 26;
+    scale = Math.max(ch / (rows * TS), cw / (cols * TS));
   }
   addEventListener("resize", function () { if (OPEN) { orient(); resize(); } });
 
@@ -431,7 +449,8 @@
     }
     /* gravity: lighter while held, heavier when let go, a hang at the top */
     var g;
-    if (PL.vy < 0) g = IN.jump ? (PL.vy > -90 ? P.gUp * P.apex : P.gUp) : P.gCut;
+    if (PL.boost > 0) PL.boost -= dt;
+    if (PL.vy < 0) g = (IN.jump || PL.boost > 0) ? (PL.vy > -90 ? P.gUp * P.apex : P.gUp) : P.gCut;
     else g = (IN.jump && PL.vy < 90) ? P.gFall * 0.6 : P.gFall;
     PL.vy = Math.min(PL.vy + g * dt, P.maxFall);
     /* x */
@@ -476,8 +495,9 @@
     }
     /* synapses: land and they fire */
     if (PL.vy > 0) W.pads.forEach(function (p) {
-      if (PL.x + P.w > p.x + 4 && PL.x < p.x + p.w - 4 && prevB <= p.y + 10 && PL.y + P.h >= p.y) {
-        PL.y = p.y - P.h; PL.vy = -P.pad * (IN.jump ? 1.06 : 1); PL.sx = 0.7; PL.sy = 1.35; p.k = 1; on = null;
+      var feet = PL.y + P.h, over = PL.x + P.w > p.x + 4 && PL.x < p.x + p.w - 4;
+      if (over && ((prevB <= p.y + 10 && feet >= p.y) || (wasGround && prevB >= p.y && prevB <= p.y + 16))) {
+        PL.y = p.y - P.h; PL.vy = -P.pad * (IN.jump ? 1.06 : 1); PL.boost = 0.6; PL.sx = 0.7; PL.sy = 1.35; p.k = 1; on = null;
         burst(p.x + p.w / 2, p.y, 14, "bone"); SFX.pad(); hap("tap"); shake = Math.max(shake, still() ? 0 : 2);
       }
     });
@@ -584,7 +604,7 @@
     } else { im.remove(); sock.classList.add("is-got"); }
   }
   function showNug() {
-    var slug = nugQ.shift(); if (!slug) { nugEl.classList.remove("is-on"); setTimeout(function () { if (nugT <= 0) nugEl.hidden = true; }, 400); return; }
+    var slug = nugQ.shift(); el.classList.toggle("has-nug", !!slug); if (!slug) { nugEl.classList.remove("is-on"); setTimeout(function () { if (nugT <= 0) nugEl.hidden = true; }, 400); return; }
     var tr = LIB.trophies[slug];
     nugEl.className = "run__nug run__nug--" + tr.tier;
     nugEl.innerHTML = '<span class="run__nugm"><img src="assets/game/medals/' + slug + '-160.webp" alt="" width="58" height="58" /><img class="run__sheen" src="assets/game/medals/sheen.webp" alt="" /></span><span><b>' + E(tr.name) + "<small>" + E(tier(tr.tier)) + " trophy</small></b><span>" + E(tr.desc) + "</span></span>";
@@ -727,12 +747,12 @@
 
   /* the middle distance per title */
   function mid(vw, vh) {
-    var th = W.theme, base = W.bot - TS * 2, x0 = CAM.x * 0.35 - 200, x1 = x0 + vw + 400;
+    var th = W.theme, base = W.bot - TS * 3.4, x0 = CAM.x * 0.35 - 200, x1 = x0 + vw + 400;
     ctx.lineWidth = 1.2;
     W.mid.forEach(function (o) {
       if (o.x < x0 - 300 || o.x > x1) return;
       var x = o.x, h;
-      ctx.strokeStyle = BONE + "0.13)"; ctx.fillStyle = "rgba(13,20,17,0.72)";
+      ctx.strokeStyle = BONE + "0.075)"; ctx.fillStyle = "rgba(13,20,17,0.5)";
       if (th === "lot") {
         if (o.r < 0.35) { /* a palm */ h = 170 + o.r2 * 90; ctx.beginPath(); ctx.moveTo(x, base); ctx.quadraticCurveTo(x - 8, base - h * 0.5, x + 4, base - h); ctx.stroke(); for (var k = 0; k < 6; k++) { var a = -Math.PI / 2 + (k - 2.5) * 0.55; ctx.beginPath(); ctx.moveTo(x + 4, base - h); ctx.quadraticCurveTo(x + 4 + Math.cos(a) * 26, base - h + Math.sin(a) * 18 - 6, x + 4 + Math.cos(a) * 46, base - h + Math.sin(a) * 18 + 16); ctx.stroke(); } }
         else if (o.r < 0.62) { /* a lamp */ h = 200 + o.r2 * 60; ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, base - h); ctx.moveTo(x - 16, base - h); ctx.lineTo(x + 16, base - h); ctx.stroke(); glow(x, base - h + 4, 46, 0.35); }
@@ -747,7 +767,7 @@
       } else if (th === "line") {
         h = 230 + o.r * 40; ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, base - h); ctx.moveTo(x - 20, base - h + 12); ctx.lineTo(x + 20, base - h + 12); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x - 20, base - h + 12); ctx.quadraticCurveTo(x - 140, base - h + 50, x - 260, base - h + 12); ctx.moveTo(x + 20, base - h + 12); ctx.quadraticCurveTo(x + 120, base - h + 44, x + 240, base - h + 12); ctx.stroke();
-        if (o.r2 < 0.5) { var bh = 80 + o.r3 * 120; ctx.fillRect(x + 40, base - bh, 70, bh); ctx.strokeRect(x + 40, base - bh, 70, bh); for (var wy = base - bh + 14; wy < base - 10; wy += 22) for (var wx = x + 50; wx < x + 104; wx += 18) { if ((wx * 7 + wy) % 5 < 2) { ctx.fillStyle = "rgba(240,206,150,0.18)"; ctx.fillRect(wx, wy, 8, 10); ctx.fillStyle = "rgba(13,20,17,0.72)"; } } }
+        if (o.r2 < 0.5) { var bh = 80 + o.r3 * 120; ctx.fillRect(x + 40, base - bh, 70, bh); ctx.strokeRect(x + 40, base - bh, 70, bh); for (var wy = base - bh + 14; wy < base - 10; wy += 22) for (var wx = x + 50; wx < x + 104; wx += 18) { if ((wx * 7 + wy) % 5 < 2) { ctx.fillStyle = "rgba(240,206,150,0.14)"; ctx.fillRect(wx, wy, 8, 10); ctx.fillStyle = "rgba(13,20,17,0.5)"; } } }
       } else if (th === "field") {
         ctx.beginPath(); for (var k2 = 0; k2 < 4; k2++) { var yy = base - 40 - k2 * 34 - o.r * 30; ctx.moveTo(x - 160, yy + 30); ctx.bezierCurveTo(x - 60, yy - 30 - o.r2 * 30, x + 60, yy - 30, x + 180, yy + 30); } ctx.stroke();
         if (o.r3 < 0.4) { var py = base - 150 - o.r2 * 50; ctx.beginPath(); ctx.moveTo(x, py + 18); ctx.bezierCurveTo(x - 10, py + 6, x - 10, py - 8, x, py - 8); ctx.bezierCurveTo(x + 10, py - 8, x + 10, py + 6, x, py + 18); ctx.stroke(); glow(x, py, 26, 0.3); }
@@ -792,14 +812,6 @@
     /* solids */
     W.solids.forEach(function (s) { if (!s.car && vis(s.x, s.w)) drawSolid(s, t); });
     W.cars.forEach(function (c) { if (vis(c.x, c.s.w * TS)) drawCar(c, t); });
-    W.fakes.forEach(function (f) { if (vis(f.x, f.w)) { ctx.globalAlpha = 1 - f.rev * 0.82; drawSolid({ x: f.x, y: f.y, w: f.w, h: f.h, look: f.look, fake: 1 }, t); ctx.globalAlpha = 1; if (W.hintFake === f && !f.rev) shimmer(f, t); } });
-    W.doors.forEach(function (d) { if (vis(d.x, d.w)) drawDoor(d, t); });
-    W.trigs.forEach(function (tr) { if (vis(tr.x, tr.w)) drawTrig(tr, t); });
-    W.ones.forEach(function (o) { if (vis(o.x, o.w)) drawOne(o, t); });
-    W.ghosts.forEach(function (g) { if (vis(g.x, g.w)) drawGhost(g, t); });
-    W.movers.forEach(function (m) { if (vis(Math.min(m.x0, m.x0 + m.dx), m.w + Math.abs(m.dx), 60)) drawMover(m, t); });
-    W.pads.forEach(function (p) { if (vis(p.x, p.w)) drawPad(p, t); });
-    if (W.caption && W.caption.a > 0) { ctx.globalAlpha = W.caption.a; ctx.fillStyle = "#ede7db"; ctx.font = "500 13px 'Hanken Grotesk', system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(W.caption.text, W.caption.x + 120, W.caption.y); ctx.textAlign = "left"; ctx.globalAlpha = 1; }
     /* sparks */
     W.sparks.forEach(function (s) {
       if (s.got || !vis(s.x, 0)) return;
@@ -820,6 +832,14 @@
       else { ctx.fillStyle = TIERC[m.tier]; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); }
       ctx.restore(); ctx.globalAlpha = 1;
     });
+    W.fakes.forEach(function (f) { if (vis(f.x, f.w)) { ctx.globalAlpha = 1 - f.rev * 0.82; drawSolid({ x: f.x, y: f.y, w: f.w, h: f.h, look: f.look, fake: 1 }, t); ctx.globalAlpha = 1; if (W.hintFake === f && !f.rev) shimmer(f, t); } });
+    W.doors.forEach(function (d) { if (vis(d.x, d.w)) drawDoor(d, t); });
+    W.trigs.forEach(function (tr) { if (vis(tr.x, tr.w)) drawTrig(tr, t); });
+    W.ones.forEach(function (o) { if (vis(o.x, o.w)) drawOne(o, t); });
+    W.ghosts.forEach(function (g) { if (vis(g.x, g.w)) drawGhost(g, t); });
+    W.movers.forEach(function (m) { if (vis(Math.min(m.x0, m.x0 + m.dx), m.w + Math.abs(m.dx), 60)) drawMover(m, t); });
+    W.pads.forEach(function (p) { if (vis(p.x, p.w)) drawPad(p, t); });
+    if (W.caption && W.caption.a > 0) { ctx.globalAlpha = W.caption.a; ctx.fillStyle = "#ede7db"; ctx.font = "500 13px 'Hanken Grotesk', system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(W.caption.text, W.caption.x + 120, W.caption.y); ctx.textAlign = "left"; ctx.globalAlpha = 1; }
     /* the people in it */
     W.npcs.forEach(function (n) { if (vis(n.x, 0)) drawNpc(n, t); });
     /* other players' ghosts, faint and lamplit */
@@ -1125,7 +1145,7 @@
   function drawPlayer(t) {
     var p = PL, x = p.x + P.w / 2, y = p.y + P.h;
     p.sx = lerp(p.sx, 1, 0.18); p.sy = lerp(p.sy, 1, 0.18);
-    if (Math.abs(p.vx) > 10 && p.ground) p.run += Math.abs(p.vx) * 0.00075 * 16.6 * 0.06 * 10;
+    if (Math.abs(p.vx) > 10 && p.ground) p.run += Math.abs(p.vx) / 15 / 60; /* a stride that matches the ground speed */
     p.blink -= 1 / 60; if (p.blink < 0) p.blink = 2.5 + Math.random() * 2.5;
     /* a shadow pooled under the feet */
     if (p.ground) { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.beginPath(); ctx.ellipse(x, y + 1, 11, 2.6, 0, 0, 7); ctx.fill(); }
@@ -1163,7 +1183,7 @@
       var moving = Math.abs(b[0] - a[0]) > 1;
       glow(x, y - 26, 34, 0.18);
       ctx.save(); ctx.translate(x, y + 1);
-      figure(ctx, ghostLook(g.c), { face: b[2] || 1, run: tt * 2.2, moving: moving, air: Math.abs(b[1] - a[1]) > 3 ? (b[1] < a[1] ? -1 : 1) : 0, ghost: 1, alpha: g.mine ? 0.22 : 0.16, t: W.t });
+      figure(ctx, ghostLook(g.c), { face: b[2] || 1, run: levelT / 1000 * 15, moving: moving, air: Math.abs(b[1] - a[1]) > 3 ? (b[1] < a[1] ? -1 : 1) : 0, ghost: 1, alpha: g.mine ? 0.22 : 0.16, t: W.t });
       ctx.restore();
     });
   }
@@ -1195,7 +1215,7 @@
   function tickUi(dt) {
     tutorial(dt);
     if (nugT > 0) { nugT -= dt; if (nugT <= 0) showNug(); }
-    if (SAVE.opts.timer) timerEl.textContent = fmt(levelT) + (runTotal.on ? "  ·  " + fmt(runTotal.ms + levelT) : "");
+    if (SAVE.opts.timer) timerEl.textContent = fmt(levelT) + (runTotal.on && runTotal.splits.length ? "  ·  run " + fmt(runTotal.ms + levelT) : "");
   }
   function levelCard() {
     var t = TITLES[LV.id] || { logo: LV.id, kind: "" };
@@ -1215,7 +1235,7 @@
     W.check = null;
     var vw = cw / scale; CAM.x = clamp(PL.x - vw * 0.3, 0, Math.max(0, W.w - vw)); CAM.y = W.bot - ch / scale; CAM.look = 0;
     PARTS = []; levelT = 0; started = false; finished = false; stats = { sparks: 0, total: W.sparks.length }; REC = { t: 0, s: [] }; GHOSTS = [];
-    talkQ = []; stopLine(); hint = { step: 0, t: 0, shown: null }; setHint(null); nugQ = []; nugT = 0; nugEl.hidden = true; platinumNow = false;
+    talkQ = []; stopLine(); setHint(null); hint = { step: 0, t: 0, shown: null }; nugQ = []; nugT = 0; nugEl.hidden = true; el.classList.remove("has-nug"); platinumNow = false;
     hudName.textContent = (TITLES[L.id] || {}).logo || L.id;
     paintSocks();
     timerEl.hidden = !SAVE.opts.timer;
@@ -1228,6 +1248,7 @@
     try { if (!/^#play\//.test(location.hash) || location.hash !== "#play/" + L.id) history.replaceState(history.state, "", location.pathname + location.search + "#play/" + L.id); } catch (e) {}
     T("game_started", { level: L.id, how: how || "", seat: store.get("jg_role") || "" });
     clip.start();
+    if (panel.hidden && OPEN) { RUNNING = true; last = performance.now(); acc = 0; }
   }
 
   function finish() {
@@ -1260,14 +1281,14 @@
   function openPanel(name, html, back) {
     panelName = name; panelBack = back || null;
     sheet.innerHTML = html; sheet.className = "run__sheet run__sheet--" + name;
-    panel.hidden = false; RUNNING = false; IN.keys = {}; IN.touchX = 0; IN.touchJump = false; syncKeys();
+    panel.hidden = false; RUNNING = false; el.classList.add("has-panel"); IN.keys = {}; IN.touchX = 0; IN.touchJump = false; syncKeys();
     if (talking && talking.audio) try { talking.audio.pause(); } catch (e) {}
     menuRows = $$(".menu__row:not([disabled]), [data-run-focus]", sheet);
     menuOn = 0; if (menuRows[0]) setTimeout(function () { var r = menuRows[0]; r.focus({ preventScroll: true }); mark(0, true); }, 30);
     requestAnimationFrame(function () { panel.classList.add("is-on"); });
   }
   function closePanel() {
-    panel.classList.remove("is-on"); panel.hidden = true; panelName = ""; sheet.innerHTML = "";
+    panel.classList.remove("is-on"); panel.hidden = true; panelName = ""; sheet.innerHTML = ""; el.classList.remove("has-panel");
     if (OPEN && !finished) { RUNNING = true; last = performance.now(); acc = 0; if (talking && talking.audio && soundOn()) { var p = talking.audio.play(); if (p && p.catch) p.catch(function () {}); } }
     cv.focus && el.focus({ preventScroll: true });
   }
@@ -1284,7 +1305,8 @@
   function row(act, label, sub, extra) { return '<li><button class="menu__row" type="button" data-act="' + act + '"' + (extra || "") + '><span class="menu__txt"><b>' + E(label) + "</b>" + (sub ? "<small>" + sub + "</small>" : "") + "</span></button></li>"; }
 
   function pause(how) {
-    if (!OPEN || !panel.hidden || finished) return;
+    if (!OPEN || finished || panelName === "pause") return;
+    if (how === "hidden" && !panel.hidden) return;
     var hasBoard = COMM.on;
     openPanel("pause",
       '<h2 class="run__h" id="run-h">Paused</h2>' +
@@ -1408,7 +1430,7 @@
     if (a === "quit" || a === "library") { close(a); return; }
     if (a === "next") { if (window.JG_FX) window.JG_FX("choice"); var n = sheet.dataset.next; closePanel(); load(n, "next"); return; }
     if (a === "again") { if (window.JG_FX) window.JG_FX("choice"); closePanel(); runTotal.on = false; load(LV.id, "again"); return; }
-    if (a === "title") { var id = LV.id; close("title"); setTimeout(function () { if (window.JG_GAME) window.JG_GAME.open(id, "run"); }, 80); return; }
+    if (a === "title") { var id = LV.id; close("title"); if (window.JG_GAME) window.JG_GAME.open(id, "run"); return; }
     if (a === "early") { if (window.JG_FX) window.JG_FX("send"); T("cta_click", { cta: "obavia_early", where: "run" }); return; }
     if (a === "share") { share(); return; }
     if (a === "clip") { clip.save(); return; }
@@ -1499,10 +1521,11 @@
   function loadGhosts(id) {
     var mine = jget("jg_run_ghost_" + id, null);
     if (mine && mine.s) GHOSTS.push({ s: mine.s, c: mine.c, mine: 1 });
-    if (PRIVATE || !SAVE.opts.ghosts) return;
-    api("level=" + encodeURIComponent(id) + "&ghosts=1").then(function (j) {
+    if (PRIVATE) return;
+    api("level=" + encodeURIComponent(id) + (SAVE.opts.ghosts ? "&ghosts=1" : "")).then(function (j) {
       if (!j || !j.on) { COMM.on = false; crew(null); return; }
       COMM.on = true; crew(j.crew);
+      if (!COMM.hello) { COMM.hello = 1; fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hello: 1, pid: pid }), keepalive: true }).catch(function () {}); }
       if (LV && LV.id === id) (j.ghosts || []).slice(0, 3).forEach(function (g) { if (g && g.s && g.pid !== pid) GHOSTS.push({ s: g.s, c: g.c }); });
     });
   }
@@ -1591,11 +1614,11 @@
     OPEN = false; RUNNING = false; cancelAnimationFrame(raf);
     stopLine(); clip.stop();
     if (!finished) T("game_quit", { level: LV ? LV.id : "", how: how || "", ms: Math.round(levelT) });
-    panel.hidden = true; panel.classList.remove("is-on");
+    panel.hidden = true; panel.classList.remove("is-on"); el.classList.remove("has-panel"); panelName = "";
     el.classList.remove("is-on"); root.classList.remove("run-on");
     setTimeout(function () { if (!OPEN) el.hidden = true; }, 360);
     if (window.JG_LOCK) window.JG_LOCK(false);
-    if (fsMine && document.fullscreenElement && document.exitFullscreen) { document.exitFullscreen().catch(function () {}); } fsMine = false;
+    if ((fsMine || window.JG_RUN_FS) && document.fullscreenElement && document.exitFullscreen) { document.exitFullscreen().catch(function () {}); } fsMine = false; window.JG_RUN_FS = false;
     if (/^#play/.test(location.hash)) { try { history.pushState({}, "", location.pathname + location.search); } catch (e) {} }
     if (SC() && window.JG_GAME && window.JG_GAME.focusId) SC().focus(window.JG_GAME.focusId());
     document.dispatchEvent(new CustomEvent("jg:run-closed", { detail: { how: how || "" } }));
@@ -1608,6 +1631,7 @@
       state: function () { return { open: OPEN, running: RUNNING, level: LV && LV.id, x: PL && PL.x, y: PL && PL.y, vx: PL && PL.vx, ground: PL && PL.ground, started: started, finished: finished, panel: panelName, medals: W ? W.medals.map(function (m) { return { slug: m.slug, got: !!SAVE.medals[m.slug] }; }) : [], ms: levelT, cam: { x: CAM.x, y: CAM.y }, scale: scale }; },
       warpTo: function (slug) { var m = W && W.medals.filter(function (x) { return x.slug === slug; })[0]; if (!m) return false; PL.x = m.x - P.w / 2; PL.y = m.y - P.h / 2; PL.vx = 0; PL.vy = 0; return true; },
       warpGoal: function () { if (!W || !W.goal) return false; PL.x = W.goal.x + W.goal.w / 2 - P.w / 2; PL.y = W.goal.y - P.h - 2; PL.vy = 0; return true; },
+      support: function (dx, dy) { if (!PL) return false; var x = PL.x + P.w / 2 + dx, y = PL.y + P.h + dy; var hit = function (b) { return x >= b.x && x <= b.x + b.w && y >= b.y - 2 && y <= b.y + (b.h || 14); }; return solidList().some(hit) || oneList().some(hit) || W.pads.some(hit); },
       warp: function (tx, ty) { PL.x = tx * TS; PL.y = ty * TS - P.h; PL.vx = 0; PL.vy = 0; }
     }
   };

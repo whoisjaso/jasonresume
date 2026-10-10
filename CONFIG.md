@@ -53,6 +53,33 @@ The calendar on `/obavia.html` is Calendly's inline embed of
 made in the embed fires the page's unlock moment and flips the note form to
 "booked".
 
+## The run's community (`/api/run`)
+
+After Hours: The Run (the platformer on the home page) plays the same with no
+configuration: your own best time, your own ghost and every medal live in your
+browser. With a store, three quiet things switch on: faint ghosts of other
+players' recent best runs on the same level, a board per level and one for the
+whole run (fastest time and medals, shown with a display name or "Player" and
+the character's colours), and a line saying how many players have walked the
+lot tonight, counted from real starts and hidden below two. Visitors with Do
+Not Track or Global Privacy Control send nothing and fetch nothing; the pause
+menu says so in one line.
+
+| Variable | Where to get it | Notes |
+|---|---|---|
+| `KV_REST_API_URL` | Vercel, Storage, create an Upstash for Redis (KV) database and connect it to this project; Vercel adds it | Or `UPSTASH_REDIS_REST_URL` from console.upstash.com, a free Redis database, REST API section |
+| `KV_REST_API_TOKEN` | added with the URL above | Or `UPSTASH_REDIS_REST_TOKEN`. The read-write token, not the read-only one |
+
+Keys it writes: `run:b:<level>` (a sorted set of best times, top 200 kept),
+`run:p:<level>` (display name, medals and character per player), `run:g:<level>`
+(the 20 most recent best-run ghosts, ten position samples a second, capped at
+1,200), `run:crew:<date>` (a HyperLogLog of tonight's players, expires after
+three days) and `run:rl:<ip>` (a one-minute write counter, a dozen writes a
+minute). Times outside a level's plausible bounds, oversized bodies (48 KB) and
+ghosts whose samples disagree with their time are refused. The only free text
+is the display name: letters, digits and spaces, sixteen at most, through a
+blocklist, else "Player". It never touches the Supabase databases.
+
 ## Admin page (`/admin.html`)
 
 | Variable | Where to get it |

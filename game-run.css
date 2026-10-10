@@ -34,14 +34,14 @@
 .run__btn svg { width: 20px; height: 20px; }
 
 /* ---------- the level's name, arriving with the level ---------- */
-.run__card { position: absolute; z-index: 2; left: max(24px, env(safe-area-inset-left)); bottom: 18%; max-width: min(620px, 80vw); pointer-events: none; opacity: 0; }
+.run__card { position: absolute; z-index: 2; left: max(24px, env(safe-area-inset-left)); top: 22%; max-width: min(620px, 80vw); pointer-events: none; opacity: 0; }
 .run__card.is-on { animation: run-card 3.4s var(--ease) both; }
 @keyframes run-card { 0% { opacity: 0; transform: translateY(14px); } 14% { opacity: 1; transform: none; } 72% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
 .run__logo { margin: 0; font: 600 clamp(36px, 6vw, 76px)/1 var(--serif); letter-spacing: .12em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 2px 30px rgba(0, 0, 0, .55); }
 .run__line { margin: 12px 0 0; font: 400 16px/1.45 var(--sans); color: var(--bone-2); text-shadow: 0 1px 16px rgba(0, 0, 0, .6); }
 
 /* ---------- one hint at a time ---------- */
-.run__hint { position: absolute; z-index: 3; left: 50%; bottom: max(26px, calc(env(safe-area-inset-bottom) + 18px)); display: inline-flex; align-items: center; gap: 9px; margin: 0; padding: 11px 18px; max-width: min(560px, calc(100vw - 32px)); background: rgba(17, 27, 23, .9); border-radius: 4px; box-shadow: inset 0 1px 0 var(--hair-2), 0 14px 30px rgba(0, 0, 0, .45); font: 500 15px/1.35 var(--sans); color: var(--bone); transform: translate(-50%, 10px); opacity: 0; transition: opacity .4s var(--ease), transform .4s var(--ease); pointer-events: none; }
+.run__hint { position: absolute; z-index: 3; left: 50%; top: max(50px, calc(env(safe-area-inset-top) + 40px)); display: inline-flex; align-items: center; gap: 9px; margin: 0; padding: 11px 18px; max-width: min(560px, calc(100vw - 32px)); background: rgba(17, 27, 23, .9); border-radius: 4px; box-shadow: inset 0 1px 0 var(--hair-2), 0 14px 30px rgba(0, 0, 0, .45); font: 500 15px/1.35 var(--sans); color: var(--bone); transform: translate(-50%, 10px); opacity: 0; transition: opacity .4s var(--ease), transform .4s var(--ease); pointer-events: none; }
 .run__hint.is-on { opacity: 1; transform: translate(-50%, 0); }
 .run__hint .key { margin-right: -3px; }
 .run__hint .key--w { min-width: 56px; }
@@ -53,8 +53,8 @@
 .run__glyph--medal { border-color: var(--gold); box-shadow: inset 0 0 0 4px rgba(201, 169, 106, .35); }
 
 /* ---------- the nugget: a medal's fact, while you keep running ---------- */
-.run__nug { position: absolute; z-index: 4; top: max(70px, calc(env(safe-area-inset-top) + 58px)); left: 50%; display: flex; align-items: center; gap: 14px; width: min(440px, calc(100vw - 32px)); padding: 13px 18px 13px 13px; background: var(--lacquer); border-radius: 6px; box-shadow: inset 0 1px 0 var(--hair-2), 0 0 0 1px rgba(0, 0, 0, .4), 0 18px 40px rgba(0, 0, 0, .55); transform: translate(-50%, -14px); opacity: 0; transition: opacity .45s var(--ease), transform .45s var(--ease); pointer-events: none; }
-.run__nug.is-on { opacity: 1; transform: translate(-50%, 0); }
+.run__nug { position: absolute; z-index: 4; top: max(80px, calc(env(safe-area-inset-top) + 68px)); left: max(18px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 14px; width: min(440px, calc(100vw - 32px)); padding: 13px 18px 13px 13px; background: var(--lacquer); border-radius: 6px; box-shadow: inset 0 1px 0 var(--hair-2), 0 0 0 1px rgba(0, 0, 0, .4), 0 18px 40px rgba(0, 0, 0, .55); transform: translateY(-10px); opacity: 0; transition: opacity .45s var(--ease), transform .45s var(--ease); pointer-events: none; }
+.run__nug.is-on { opacity: 1; transform: none; }
 .run__nug[hidden] { display: none; }
 .run__nugm { position: relative; flex: none; width: 58px; height: 58px; border-radius: 50%; overflow: hidden; }
 .run__nugm img:first-child { width: 58px; height: 58px; }
@@ -66,7 +66,7 @@
 .run__nug b + span { display: block; margin-top: 4px; font: 400 14px/1.4 var(--sans); color: var(--bone-2); }
 
 /* ---------- captions: who's talking, word by word ---------- */
-.run__cap { position: absolute; z-index: 3; left: 50%; bottom: max(84px, calc(env(safe-area-inset-bottom) + 76px)); display: grid; gap: 5px; width: min(620px, calc(100vw - 340px)); min-width: min(420px, calc(100vw - 32px)); padding: 12px 18px 13px; text-align: left; background: rgba(10, 15, 13, .82); border: 0; border-radius: 4px; box-shadow: inset 0 1px 0 var(--hair), 0 12px 30px rgba(0, 0, 0, .4); color: var(--bone); cursor: pointer; transform: translate(-50%, 8px); opacity: 0; transition: opacity .35s var(--ease), transform .35s var(--ease); }
+.run__cap { position: absolute; z-index: 3; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); display: grid; gap: 5px; width: min(620px, calc(100vw - 340px)); min-width: min(420px, calc(100vw - 32px)); padding: 12px 18px 13px; text-align: left; background: rgba(10, 15, 13, .82); border: 0; border-radius: 4px; box-shadow: inset 0 1px 0 var(--hair), 0 12px 30px rgba(0, 0, 0, .4); color: var(--bone); cursor: pointer; transform: translate(-50%, 8px); opacity: 0; transition: opacity .35s var(--ease), transform .35s var(--ease); }
 .run__cap.is-on { opacity: 1; transform: translate(-50%, 0); }
 .run__cap[hidden] { display: none; }
 .run__who { font: 500 11px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ash); }
@@ -93,8 +93,6 @@
 .run.is-upright .run__stick { opacity: .55; transform: translate(28px, calc(100vh - 34vh / 2 - 60px)); }
 .run.is-upright .run__jump { bottom: calc(34vh / 2 - 42px); }
 .run.is-upright .run__cap { bottom: calc(34% + 14px); width: calc(100vw - 32px); min-width: 0; }
-.run.is-upright .run__hint { bottom: calc(34% + 14px); }
-.run.is-upright .run__card { bottom: calc(34% + 40px); }
 .run__turn { position: absolute; z-index: 5; left: 16px; right: 16px; top: max(76px, calc(env(safe-area-inset-top) + 64px)); display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--lacquer); border-radius: 6px; box-shadow: inset 0 1px 0 var(--hair-2), 0 18px 40px rgba(0, 0, 0, .5); }
 .run__turn[hidden] { display: none; }
 .run__turn p { flex: 1; margin: 0; font: 500 15px/1.35 var(--sans); }
@@ -177,10 +175,9 @@
   .run__cap { width: calc(100vw - 260px); min-width: 0; padding: 10px 14px; }
   .run__said { font-size: 15px; }
   .run__cap.is-me .run__said { font-size: 18px; }
-  .run__card { bottom: auto; top: 30%; }
   .run__logo { font-size: clamp(30px, 7vw, 48px); }
   .run__line { font-size: 14px; }
-  .run__nug { top: 62px; padding: 10px 14px 10px 10px; }
+  .run__nug { top: 72px; padding: 10px 14px 10px 10px; width: min(380px, calc(100vw - 32px)); }
   .run__nugm, .run__nugm img:first-child { width: 46px; height: 46px; }
   .run__nug b + span { font-size: 13px; }
   .run__panel { align-items: flex-start; padding-left: max(20px, env(safe-area-inset-left)); }
@@ -202,3 +199,14 @@
   .run__card.is-on { animation-duration: 3.4s; }
   .run__glyph--drag::after, .run__glyph--tap, .run__phone { animation: none; }
 }
+
+/* a panel open: the captions and hints step back */
+.run.has-panel .run__cap, .run.has-panel .run__hint, .run.has-panel .run__nug, .run.has-panel .run__card { opacity: 0 !important; }
+.run.is-upright .run__timer { left: max(18px, env(safe-area-inset-left)); top: 76px; transform: none; }
+.run.is-upright .run__nug { top: 100px; }
+@media (max-height: 500px) {
+  .run__logo { font-size: 34px; }
+  .run__card { top: 26%; }
+}
+/* one thing at a time up top: a medal's fact outranks a hint */
+.run.has-nug .run__hint { opacity: 0 !important; }

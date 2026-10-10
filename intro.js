@@ -19,6 +19,10 @@
    (window.JG_BOOT.ready). Two ways to be shown around sit under Start: Watch
    the walkthrough (the narrated film, in a dialog; window.JG_FILM) and, on the
    home page, Take the tour (tour.js, through the live library).
+   The run (game-run.js): someone just looking meets Play after the seat, one
+   press into the first level ("jg:intro-done" carries play: true and game.js
+   loads the game); a class is the quieter second choice. Someone hiring or
+   running a lot keeps their first step and sees the run as one line on the card.
    The head script sets html.intro-pending so the page never flashes first.
    While it is up, html has .intro-on. When it ends, document gets
    "jg:intro-done" { role, named }. */
@@ -50,7 +54,10 @@
     if (BD && BD.builds.some(function (b) { return b.id === m[1]; })) { FOR = m[1]; store.set("jg_for", m[1]); }
     try { var u = new URL(location.href); u.searchParams.delete("for"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
   })();
-  if (/^#build\/v1\//.test(location.hash)) BD = null; /* a shared build opens after the title screen; no need to build one first */
+  if (/^#build\/v1\//.test(location.hash)) BD = null;
+  /* the run (game-run.js): someone just looking meets Play first; the others see it on their card */
+  var PLAY = (O.play && document.getElementById("run-data")) ? O.play : null;
+  if (location.hash && location.hash !== "#") PLAY = null; /* a deep link is where they're going; it opens after the title screen */ /* a shared build opens after the title screen; no need to build one first */
 
   if (/[?&]intro=1/.test(location.search)) { try { var u = new URL(location.href); u.searchParams.delete("intro"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {} }
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
@@ -97,6 +104,12 @@
         '<p class="intro__fine">' + E(COARSE ? W.fine_touch : W.fine_pointer) + ' <button class="intro__textbtn" type="button" data-build-skip>' + E(W.skip) + "</button></p>" +
       '</div><aside class="cls__preview" data-build-preview aria-live="polite"></aside></div>' +
     "</section>" : "") +
+    (PLAY ? '<section class="intro__scene intro__scene--play" data-scene="play" hidden>' +
+      '<h2 class="intro__h">' + E(PLAY.title) + "</h2>" +
+      '<p class="intro__sub">' + E(PLAY.sub) + "</p>" +
+      '<div class="intro__acts"><button class="btn btn--primary btn--lg" type="button" data-play-go><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(PLAY.go) + '</button>' + (BD ? '<button class="btn btn--ghost" type="button" data-play-alt>' + E(PLAY.alt) + "</button>" : "") + "</div>" +
+      '<p class="intro__fine">' + E(COARSE ? PLAY.fine_touch : PLAY.fine_pointer) + "</p>" +
+    "</section>" : "") +
     '<section class="intro__scene intro__scene--name" data-scene="name" hidden>' +
       '<h2 class="intro__h" data-name-h>' + E(O.name.title) + "</h2>" +
       '<form class="intro__form" data-name-form autocomplete="off">' +
@@ -108,7 +121,7 @@
     "</section>" +
     '<section class="intro__scene intro__scene--card" data-scene="card" hidden aria-live="polite">' +
       '<p class="intro__card"></p>' +
-      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts" data-built-acts><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + '</button></div><p class="intro__fine intro__open" data-built-more hidden></p></div></div>' +
+      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts" data-built-acts><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + '</button></div><p class="intro__fine intro__open" data-built-more hidden></p>' + (PLAY ? '<p class="intro__fine intro__runline"><button class="intro__textbtn" type="button" data-play-go><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg>' + E(PLAY.card) + "</button> " + E(PLAY.card_p) + "</p>" : "") + '</div></div>' +
     "</section>";
   body.appendChild(el);
   root.classList.add("intro-on");
@@ -126,7 +139,7 @@
       if (on) { s.hidden = false; requestAnimationFrame(function () { requestAnimationFrame(function () { s.classList.add("is-on"); }); }); }
       else { s.classList.remove("is-on"); s.hidden = true; }
     });
-    var f = name === "seat" ? el.querySelector(".menu__row.is-on") : name === "build" ? el.querySelector("[data-build-menu] .menu__row.is-on") : name === "name" ? el.querySelector("#intro-name") : name === "card" ? el.querySelector("[data-built]:not([hidden]) [data-enter]") : null;
+    var f = name === "play" ? el.querySelector("[data-scene=\"play\"] [data-play-go]") : name === "seat" ? el.querySelector(".menu__row.is-on") : name === "build" ? el.querySelector("[data-build-menu] .menu__row.is-on") : name === "name" ? el.querySelector("#intro-name") : name === "card" ? el.querySelector("[data-built]:not([hidden]) [data-enter]") : null;
     if (f) setTimeout(function () { f.focus({ preventScroll: true }); }, wait(260));
   }
   var startBtn = el.querySelector('[data-start="on"]');
@@ -199,7 +212,7 @@
     T("role_chosen", { role: id, where: "intro" }, { role: id });
     var r = rows.filter(function (x) { return x.getAttribute("data-role") === id; })[0];
     if (r) r.classList.add("is-picked");
-    setTimeout(function () { if (BD && window.JG_BUILD) { buildScene(id); scene("build"); } else toName(); }, wait(420));
+    setTimeout(function () { if (id === "lurker" && PLAY) scene("play"); else if (BD && window.JG_BUILD) { buildScene(id); scene("build"); } else toName(); }, wait(420));
   }
   function toName() {
     var h = el.querySelector("[data-name-h]"), fi = el.querySelector("[data-name-fine]");
@@ -369,6 +382,22 @@
     else if (e.target.closest("[data-build-obavia]")) { if (built && window.JG_BUILD) store.set("jg_lot", window.JG_BUILD.label(built)); if (window.JG_FX) window.JG_FX("send"); T("cta_click", { cta: "obavia_early", where: "intro", lot: built ? built.id : "" }); }
   });
 
+  /* ---------- play: one press into the run (game.js loads it once the title screen is gone) ---------- */
+  var playAfter = false;
+  function playNow(how) {
+    if (ended) return;
+    playAfter = true;
+    if (window.JG_FX) window.JG_FX("choice");
+    /* a phone goes fullscreen from the press itself */
+    if (COARSE && !document.fullscreenElement) { var d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen; if (rq) try { window.JG_RUN_FS = true; var pr = rq.call(d, { navigationUI: "hide" }); if (pr && pr.then) pr.then(function () { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); }).catch(function () {}); } catch (x) {} }
+    T("intro_play", { role: role, how: how || "" });
+    done(false, "play");
+  }
+  el.addEventListener("click", function (e) {
+    if (e.target.closest("[data-play-go]")) { playNow(phase === "card" ? "card" : "button"); return; }
+    if (e.target.closest("[data-play-alt]") && phase === "play") { if (BD && window.JG_BUILD) { buildScene(role); scene("build"); } else toName(); }
+  });
+
   /* ---------- the end: into the library ---------- */
   var ended = false;
   function done(skipped, why) {
@@ -382,8 +411,8 @@
       el.remove();
       root.classList.remove("intro-pending");
       if (window.JG_LOCK) window.JG_LOCK(false);
-      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "" } }));
-    }, wait(700));
+      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "", play: playAfter } }));
+    }, wait(playAfter ? 380 : 700));
   }
   el.querySelector("[data-intro-skip]").addEventListener("click", function () { T("intro_skipped", { phase: phase }); done(true); });
 
@@ -413,6 +442,9 @@
       else if (k === "ArrowUp" || k === "ArrowLeft") { e.preventDefault(); bmark(Math.max(0, bi - 1)); }
       else if (k === "Enter" || k === " ") { if (e.target && e.target.closest && e.target.closest("[data-go-build],[data-build-skip]")) return; e.preventDefault(); pick(Math.max(0, bi), "key"); }
       else if (k === "Escape") { e.preventDefault(); skipBuild(); }
+    } else if (phase === "play") {
+      if (k === "Enter" || k === " ") { if (e.target && e.target.closest && e.target.closest("[data-play-alt],[data-intro-skip]")) return; e.preventDefault(); playNow("key"); }
+      else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }
     } else if (phase === "name") {
       if (k === "Escape") { e.preventDefault(); T("name_skipped", { role: role }); finishName(""); }
     } else if (phase === "card" && built) {
@@ -428,7 +460,7 @@
       var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
       if (gp) {
         var a = gp.buttons[0] && gp.buttons[0].pressed, dn = (gp.buttons[13] && gp.buttons[13].pressed) || gp.axes[1] > 0.5, up = (gp.buttons[12] && gp.buttons[12].pressed) || gp.axes[1] < -0.5;
-        if (a && !prev.a) { if (phase === "title") start(true, "pad"); else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); }
+        if (a && !prev.a) { if (phase === "title") start(true, "pad"); else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); else if (phase === "play") playNow("pad"); }
         if (phase === "seat") { var i = rows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) mark(Math.min(rows.length - 1, i + 1)); if (up && !prev.up) mark(Math.max(0, i - 1)); }
         if (phase === "build") { var j = brows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) bmark(Math.min(brows.length - 1, j + 1)); if (up && !prev.up) bmark(Math.max(0, j - 1)); }
         prev = { a: a, dn: dn, up: up };
