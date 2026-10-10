@@ -1,1219 +1,723 @@
 {
- "fps": 30,
- "frames": 2654,
- "seconds": 88.47,
+ "fps": 32,
+ "beat": 30,
+ "frames": 2370,
+ "seconds": 74.06,
  "voiced": true,
  "shots": [
   {
-   "shot": "boot",
-   "line": "open",
-   "text": "This site is built like a game console's home screen after hours. The library on it is a career.",
+   "shot": "open",
+   "card": null,
+   "line": "f-open",
+   "text": "After hours. A used car lot, at night.",
    "from": 0,
-   "frames": 219,
-   "speechFrom": 1,
+   "frames": 210,
+   "speakAt": 90,
+   "speechFrom": 78,
    "voiced": true,
-   "audio": "assets/voice/tour/open.mp3",
+   "audio": "assets/voice/tour/f-open.mp3",
    "words": [
     {
-     "w": "This",
-     "s": 0.4,
-     "e": 0.613
-    },
-    {
-     "w": "site",
-     "s": 0.613,
-     "e": 0.925
-    },
-    {
-     "w": "is",
-     "s": 0.925,
-     "e": 1.087
-    },
-    {
-     "w": "built",
-     "s": 1.087,
-     "e": 1.363
-    },
-    {
-     "w": "like",
-     "s": 1.363,
-     "e": 1.512
-    },
-    {
-     "w": "a",
-     "s": 1.512,
-     "e": 1.613
-    },
-    {
-     "w": "game",
-     "s": 1.613,
-     "e": 2.025
-    },
-    {
-     "w": "console's",
-     "s": 2.025,
-     "e": 2.663
-    },
-    {
-     "w": "home",
-     "s": 2.663,
-     "e": 3.013
-    },
-    {
-     "w": "screen",
-     "s": 3.013,
-     "e": 3.475
-    },
-    {
-     "w": "after",
-     "s": 3.475,
-     "e": 3.837
+     "w": "After",
+     "s": 0.35,
+     "e": 0.688
     },
     {
      "w": "hours.",
-     "s": 3.837,
-     "e": 4.7
+     "s": 0.688,
+     "e": 1.325
     },
     {
-     "w": "The",
-     "s": 4.862,
-     "e": 5.013
+     "w": "A",
+     "s": 1.425,
+     "e": 1.525
     },
     {
-     "w": "library",
-     "s": 5.013,
-     "e": 5.675
+     "w": "used",
+     "s": 1.525,
+     "e": 1.85
     },
     {
-     "w": "on",
-     "s": 5.675,
-     "e": 5.875
+     "w": "car",
+     "s": 1.85,
+     "e": 2.125
     },
     {
-     "w": "it",
-     "s": 5.875,
-     "e": 6.025
+     "w": "lot,",
+     "s": 2.125,
+     "e": 2.35
     },
     {
-     "w": "is",
-     "s": 6.025,
-     "e": 6.138
+     "w": "at",
+     "s": 2.388,
+     "e": 2.475
     },
     {
-     "w": "a",
-     "s": 6.138,
-     "e": 6.237
-    },
-    {
-     "w": "career.",
-     "s": 6.237,
-     "e": 7.175
+     "w": "night.",
+     "s": 2.475,
+     "e": 3.1
     }
    ]
   },
   {
-   "shot": "title",
-   "line": "title",
-   "text": "Every arrival opens on a title screen: the name, over a used car lot at night.",
-   "from": 219,
-   "frames": 184,
-   "speechFrom": 212,
+   "shot": "name",
+   "card": "Jason Obawemimo",
+   "line": null,
+   "text": "",
+   "from": 210,
+   "frames": 90,
+   "speakAt": null,
+   "speechFrom": null,
+   "voiced": false,
+   "audio": null,
+   "words": []
+  },
+  {
+   "shot": "career",
+   "card": null,
+   "line": "f-career",
+   "text": "This is a career, laid out like a game library.",
+   "from": 300,
+   "frames": 150,
+   "speakAt": 306,
+   "speechFrom": 295,
    "voiced": true,
-   "audio": "assets/voice/tour/title.mp3",
+   "audio": "assets/voice/tour/f-career.mp3",
    "words": [
     {
-     "w": "Every",
-     "s": 0.4,
-     "e": 0.7
+     "w": "This",
+     "s": 0.35,
+     "e": 0.55
     },
     {
-     "w": "arrival",
-     "s": 0.7,
-     "e": 1.238
-    },
-    {
-     "w": "opens",
-     "s": 1.238,
-     "e": 1.637
-    },
-    {
-     "w": "on",
-     "s": 1.637,
-     "e": 1.762
+     "w": "is",
+     "s": 0.55,
+     "e": 0.662
     },
     {
      "w": "a",
-     "s": 1.762,
-     "e": 1.837
+     "s": 0.662,
+     "e": 0.75
     },
     {
-     "w": "title",
-     "s": 1.837,
-     "e": 2.263
+     "w": "career,",
+     "s": 0.75,
+     "e": 1.475
     },
     {
-     "w": "screen:",
-     "s": 2.263,
-     "e": 3.175
+     "w": "laid",
+     "s": 1.613,
+     "e": 1.863
     },
     {
-     "w": "the",
-     "s": 3.312,
-     "e": 3.45
+     "w": "out",
+     "s": 1.863,
+     "e": 2.038
     },
     {
-     "w": "name,",
-     "s": 3.45,
-     "e": 4.05
-    },
-    {
-     "w": "over",
-     "s": 4.15,
-     "e": 4.4
+     "w": "like",
+     "s": 2.038,
+     "e": 2.188
     },
     {
      "w": "a",
-     "s": 4.4,
-     "e": 4.513
+     "s": 2.188,
+     "e": 2.288
     },
     {
-     "w": "used",
-     "s": 4.513,
-     "e": 4.888
+     "w": "game",
+     "s": 2.288,
+     "e": 2.625
     },
     {
-     "w": "car",
-     "s": 4.888,
-     "e": 5.225
-    },
-    {
-     "w": "lot",
-     "s": 5.225,
-     "e": 5.438
-    },
-    {
-     "w": "at",
-     "s": 5.438,
-     "e": 5.575
-    },
-    {
-     "w": "night.",
-     "s": 5.575,
-     "e": 6.3
+     "w": "library.",
+     "s": 2.625,
+     "e": 3.55
     }
    ]
   },
   {
    "shot": "seat",
-   "line": "seat",
-   "text": "Then, who's playing. Hiring, running a dealership, or just looking.",
-   "from": 403,
-   "frames": 140,
-   "speechFrom": 395,
+   "card": "Who's playing?",
+   "line": "f-seat",
+   "text": "Who's playing? Hiring, running a dealership, or just looking.",
+   "from": 450,
+   "frames": 180,
+   "speakAt": 492,
+   "speechFrom": 481,
    "voiced": true,
-   "audio": "assets/voice/tour/seat.mp3",
+   "audio": "assets/voice/tour/f-seat.mp3",
    "words": [
     {
-     "w": "Then,",
-     "s": 0.425,
-     "e": 0.625
+     "w": "Who's",
+     "s": 0.325,
+     "e": 0.512
     },
     {
-     "w": "who's",
-     "s": 0.662,
-     "e": 0.863
-    },
-    {
-     "w": "playing.",
-     "s": 0.863,
-     "e": 1.725
+     "w": "playing?",
+     "s": 0.512,
+     "e": 1.2
     },
     {
      "w": "Hiring,",
-     "s": 1.887,
-     "e": 2.45
+     "s": 1.337,
+     "e": 1.875
     },
     {
      "w": "running",
-     "s": 2.525,
-     "e": 2.85
+     "s": 1.925,
+     "e": 2.188
     },
     {
      "w": "a",
-     "s": 2.85,
-     "e": 2.962
+     "s": 2.188,
+     "e": 2.288
     },
     {
      "w": "dealership,",
-     "s": 2.962,
-     "e": 3.625
+     "s": 2.288,
+     "e": 2.9
     },
     {
      "w": "or",
-     "s": 3.675,
-     "e": 3.8
+     "s": 2.938,
+     "e": 3.025
     },
     {
      "w": "just",
-     "s": 3.8,
-     "e": 4.05
+     "s": 3.025,
+     "e": 3.275
     },
     {
      "w": "looking.",
-     "s": 4.05,
-     "e": 4.85
+     "s": 3.275,
+     "e": 4
     }
    ]
   },
   {
    "shot": "build",
-   "line": "build",
-   "text": "Then a build: pick the role you're hiring for, or the problem on your lot.",
-   "from": 543,
-   "frames": 144,
-   "speechFrom": 536,
+   "card": null,
+   "line": "f-build",
+   "text": "Pick the role you're hiring for. You keep the card, and a one-page resume written for that job.",
+   "from": 630,
+   "frames": 240,
+   "speakAt": 652,
+   "speechFrom": 642,
    "voiced": true,
-   "audio": "assets/voice/tour/build.mp3",
+   "audio": "assets/voice/tour/f-build.mp3",
    "words": [
     {
-     "w": "Then",
-     "s": 0.4,
+     "w": "Pick",
+     "s": 0.325,
      "e": 0.525
     },
     {
-     "w": "a",
+     "w": "the",
      "s": 0.525,
-     "e": 0.637
-    },
-    {
-     "w": "build:",
-     "s": 0.637,
-     "e": 1.3
-    },
-    {
-     "w": "pick",
-     "s": 1.425,
-     "e": 1.625
-    },
-    {
-     "w": "the",
-     "s": 1.625,
-     "e": 1.762
-    },
-    {
-     "w": "role",
-     "s": 1.762,
-     "e": 2.075
-    },
-    {
-     "w": "you're",
-     "s": 2.075,
-     "e": 2.263
-    },
-    {
-     "w": "hiring",
-     "s": 2.263,
-     "e": 2.812
-    },
-    {
-     "w": "for,",
-     "s": 2.812,
-     "e": 3.1
-    },
-    {
-     "w": "or",
-     "s": 3.175,
-     "e": 3.325
-    },
-    {
-     "w": "the",
-     "s": 3.325,
-     "e": 3.462
-    },
-    {
-     "w": "problem",
-     "s": 3.462,
-     "e": 3.987
-    },
-    {
-     "w": "on",
-     "s": 3.987,
-     "e": 4.112
-    },
-    {
-     "w": "your",
-     "s": 4.112,
-     "e": 4.275
-    },
-    {
-     "w": "lot.",
-     "s": 4.275,
-     "e": 4.975
-    }
-   ]
-  },
-  {
-   "shot": "card",
-   "line": "card",
-   "text": "Sign it and keep it: the card, its link, and a one-page resume for that role.",
-   "from": 687,
-   "frames": 157,
-   "speechFrom": 678,
-   "voiced": true,
-   "audio": "assets/voice/tour/card.mp3",
-   "words": [
-    {
-     "w": "Sign",
-     "s": 0.45,
      "e": 0.662
     },
     {
-     "w": "it",
+     "w": "role",
      "s": 0.662,
-     "e": 0.738
+     "e": 1
     },
     {
-     "w": "and",
-     "s": 0.738,
-     "e": 0.863
+     "w": "you're",
+     "s": 1,
+     "e": 1.15
+    },
+    {
+     "w": "hiring",
+     "s": 1.15,
+     "e": 1.637
+    },
+    {
+     "w": "for.",
+     "s": 1.637,
+     "e": 2.15
+    },
+    {
+     "w": "You",
+     "s": 2.275,
+     "e": 2.4
     },
     {
      "w": "keep",
-     "s": 0.863,
-     "e": 1.175
-    },
-    {
-     "w": "it:",
-     "s": 1.175,
-     "e": 1.575
+     "s": 2.4,
+     "e": 2.638
     },
     {
      "w": "the",
-     "s": 1.675,
-     "e": 1.812
+     "s": 2.638,
+     "e": 2.763
     },
     {
      "w": "card,",
-     "s": 1.812,
-     "e": 2.25
-    },
-    {
-     "w": "its",
-     "s": 2.288,
-     "e": 2.487
-    },
-    {
-     "w": "link,",
-     "s": 2.487,
-     "e": 2.9
+     "s": 2.763,
+     "e": 3.3
     },
     {
      "w": "and",
-     "s": 2.95,
-     "e": 3.062
+     "s": 3.375,
+     "e": 3.487
     },
     {
      "w": "a",
-     "s": 3.062,
-     "e": 3.163
+     "s": 3.487,
+     "e": 3.587
     },
     {
      "w": "one-page",
-     "s": 3.163,
-     "e": 3.85
-    },
-    {
-     "w": "resume",
-     "s": 3.85,
+     "s": 3.587,
      "e": 4.3
     },
     {
-     "w": "for",
+     "w": "resume",
      "s": 4.3,
-     "e": 4.425
+     "e": 4.737
+    },
+    {
+     "w": "written",
+     "s": 4.737,
+     "e": 5.025
+    },
+    {
+     "w": "for",
+     "s": 5.025,
+     "e": 5.15
     },
     {
      "w": "that",
-     "s": 4.425,
-     "e": 4.7
+     "s": 5.15,
+     "e": 5.412
     },
     {
-     "w": "role.",
-     "s": 4.7,
-     "e": 5.45
+     "w": "job.",
+     "s": 5.412,
+     "e": 6.15
     }
    ]
   },
   {
    "shot": "library",
-   "line": "library",
-   "text": "Then the library: the dealership, the CRM, the voice AI, prospecting, neuroscience, and Obavia, in development.",
-   "from": 844,
-   "frames": 257,
-   "speechFrom": 836,
-   "voiced": true,
-   "audio": "assets/voice/tour/library.mp3",
-   "words": [
-    {
-     "w": "Then",
-     "s": 0.425,
-     "e": 0.6
-    },
-    {
-     "w": "the",
-     "s": 0.6,
-     "e": 0.725
-    },
-    {
-     "w": "library:",
-     "s": 0.725,
-     "e": 1.675
-    },
-    {
-     "w": "the",
-     "s": 1.8,
-     "e": 1.938
-    },
-    {
-     "w": "dealership,",
-     "s": 1.938,
-     "e": 2.575
-    },
-    {
-     "w": "the",
-     "s": 2.625,
-     "e": 2.775
-    },
-    {
-     "w": "CRM,",
-     "s": 2.775,
-     "e": 3.55
-    },
-    {
-     "w": "the",
-     "s": 3.625,
-     "e": 3.75
-    },
-    {
-     "w": "voice",
-     "s": 3.75,
-     "e": 4.125
-    },
-    {
-     "w": "AI,",
-     "s": 4.125,
-     "e": 4.8
-    },
-    {
-     "w": "prospecting,",
-     "s": 4.912,
-     "e": 5.75
-    },
-    {
-     "w": "neuroscience,",
-     "s": 5.812,
-     "e": 6.55
-    },
-    {
-     "w": "and",
-     "s": 6.588,
-     "e": 6.713
-    },
-    {
-     "w": "Obavia,",
-     "s": 6.713,
-     "e": 7.55
-    },
-    {
-     "w": "in",
-     "s": 7.65,
-     "e": 7.775
-    },
-    {
-     "w": "development.",
-     "s": 7.775,
-     "e": 8.75
-    }
-   ]
+   "card": "The library",
+   "line": null,
+   "text": "",
+   "from": 870,
+   "frames": 90,
+   "speakAt": null,
+   "speechFrom": null,
+   "voiced": false,
+   "audio": null,
+   "words": []
   },
   {
-   "shot": "focus",
-   "line": "focus",
-   "text": "Moving focus crossfades the key art, and brings in that title's layer of the score.",
-   "from": 1101,
-   "frames": 174,
-   "speechFrom": 1093,
+   "shot": "titles",
+   "card": null,
+   "line": "f-titles",
+   "text": "Six titles. Triple J Auto, Lead to Title, The Inbound, Prospector, Neuroscience, and Obavia, in development.",
+   "from": 960,
+   "frames": 285,
+   "speakAt": 970,
+   "speechFrom": 957,
    "voiced": true,
-   "audio": "assets/voice/tour/focus.mp3",
+   "audio": "assets/voice/tour/f-titles.mp3",
    "words": [
     {
-     "w": "Moving",
-     "s": 0.425,
-     "e": 0.762
-    },
-    {
-     "w": "focus",
-     "s": 0.762,
-     "e": 1.288
-    },
-    {
-     "w": "crossfades",
-     "s": 1.288,
-     "e": 2.025
-    },
-    {
-     "w": "the",
-     "s": 2.025,
-     "e": 2.163
-    },
-    {
-     "w": "key",
-     "s": 2.163,
-     "e": 2.438
-    },
-    {
-     "w": "art,",
-     "s": 2.438,
-     "e": 3.075
-    },
-    {
-     "w": "and",
-     "s": 3.175,
-     "e": 3.312
-    },
-    {
-     "w": "brings",
-     "s": 3.312,
-     "e": 3.688
-    },
-    {
-     "w": "in",
-     "s": 3.688,
-     "e": 3.85
-    },
-    {
-     "w": "that",
-     "s": 3.85,
-     "e": 4.112
-    },
-    {
-     "w": "title's",
-     "s": 4.112,
-     "e": 4.562
-    },
-    {
-     "w": "layer",
-     "s": 4.562,
-     "e": 4.963
-    },
-    {
-     "w": "of",
-     "s": 4.963,
-     "e": 5.037
-    },
-    {
-     "w": "the",
-     "s": 5.037,
-     "e": 5.138
-    },
-    {
-     "w": "score.",
-     "s": 5.138,
-     "e": 6
-    }
-   ]
-  },
-  {
-   "shot": "opened",
-   "line": "opened",
-   "text": "Open a title and it gets its own page: overview, films, trophies, loadout.",
-   "from": 1275,
-   "frames": 168,
-   "speechFrom": 1268,
-   "voiced": true,
-   "audio": "assets/voice/tour/opened.mp3",
-   "words": [
-    {
-     "w": "Open",
+     "w": "Six",
      "s": 0.4,
-     "e": 0.675
+     "e": 0.65
     },
     {
-     "w": "a",
-     "s": 0.675,
-     "e": 0.787
-    },
-    {
-     "w": "title",
-     "s": 0.787,
-     "e": 1.225
-    },
-    {
-     "w": "and",
-     "s": 1.225,
-     "e": 1.337
-    },
-    {
-     "w": "it",
-     "s": 1.337,
+     "w": "titles.",
+     "s": 0.65,
      "e": 1.425
     },
     {
-     "w": "gets",
-     "s": 1.425,
-     "e": 1.637
+     "w": "Triple",
+     "s": 1.562,
+     "e": 1.938
     },
     {
-     "w": "its",
-     "s": 1.637,
-     "e": 1.837
+     "w": "J",
+     "s": 1.938,
+     "e": 2.237
     },
     {
-     "w": "own",
-     "s": 1.837,
-     "e": 2.163
+     "w": "Auto,",
+     "s": 2.237,
+     "e": 2.65
     },
     {
-     "w": "page:",
-     "s": 2.163,
+     "w": "Lead",
+     "s": 2.725,
      "e": 2.975
     },
     {
-     "w": "overview,",
-     "s": 3.163,
-     "e": 3.725
+     "w": "to",
+     "s": 2.975,
+     "e": 3.112
     },
     {
-     "w": "films,",
-     "s": 3.8,
-     "e": 4.3
+     "w": "Title,",
+     "s": 3.112,
+     "e": 3.525
     },
     {
-     "w": "trophies,",
-     "s": 4.362,
-     "e": 4.95
+     "w": "The",
+     "s": 3.562,
+     "e": 3.712
     },
     {
-     "w": "loadout.",
-     "s": 5,
-     "e": 5.775
+     "w": "Inbound,",
+     "s": 3.712,
+     "e": 4.375
+    },
+    {
+     "w": "Prospector,",
+     "s": 4.425,
+     "e": 5.175
+    },
+    {
+     "w": "Neuroscience,",
+     "s": 5.263,
+     "e": 6
+    },
+    {
+     "w": "and",
+     "s": 6.037,
+     "e": 6.15
+    },
+    {
+     "w": "Obavia,",
+     "s": 6.15,
+     "e": 6.975
+    },
+    {
+     "w": "in",
+     "s": 7.075,
+     "e": 7.2
+    },
+    {
+     "w": "development.",
+     "s": 7.2,
+     "e": 8.125
     }
    ]
   },
   {
    "shot": "desk",
-   "line": "desk",
-   "text": "In Lead to Title, run the sale desk from Triple J: scan the license once, and every form fills itself. Fictional buyer, example figures.",
-   "from": 1443,
-   "frames": 317,
-   "speechFrom": 1435,
+   "card": null,
+   "line": "f-desk",
+   "text": "In Lead to Title, run the sale desk. Scan the license once, and every form fills itself. Fictional buyer, example figures.",
+   "from": 1245,
+   "frames": 330,
+   "speakAt": 1267,
+   "speechFrom": 1255,
    "voiced": true,
-   "audio": "assets/voice/tour/desk.mp3",
+   "audio": "assets/voice/tour/f-desk.mp3",
    "words": [
     {
      "w": "In",
-     "s": 0.425,
-     "e": 0.525
+     "s": 0.375,
+     "e": 0.475
     },
     {
      "w": "Lead",
-     "s": 0.525,
-     "e": 0.8
+     "s": 0.475,
+     "e": 0.75
     },
     {
      "w": "to",
-     "s": 0.8,
-     "e": 0.938
+     "s": 0.75,
+     "e": 0.887
     },
     {
      "w": "Title,",
-     "s": 0.938,
-     "e": 1.525
+     "s": 0.887,
+     "e": 1.45
     },
     {
      "w": "run",
-     "s": 1.637,
-     "e": 1.925
+     "s": 1.562,
+     "e": 1.875
     },
     {
      "w": "the",
-     "s": 1.925,
-     "e": 2.075
+     "s": 1.875,
+     "e": 2.013
     },
     {
      "w": "sale",
-     "s": 2.075,
-     "e": 2.413
+     "s": 2.013,
+     "e": 2.325
     },
     {
-     "w": "desk",
-     "s": 2.413,
-     "e": 2.75
+     "w": "desk.",
+     "s": 2.325,
+     "e": 3
     },
     {
-     "w": "from",
-     "s": 2.75,
-     "e": 2.962
-    },
-    {
-     "w": "Triple",
-     "s": 2.962,
-     "e": 3.337
-    },
-    {
-     "w": "J:",
-     "s": 3.337,
-     "e": 4.05
-    },
-    {
-     "w": "scan",
-     "s": 4.225,
-     "e": 4.675
+     "w": "Scan",
+     "s": 3.15,
+     "e": 3.55
     },
     {
      "w": "the",
-     "s": 4.675,
-     "e": 4.8
+     "s": 3.55,
+     "e": 3.65
     },
     {
      "w": "license",
-     "s": 4.8,
-     "e": 5.362
+     "s": 3.65,
+     "e": 4.138
     },
     {
      "w": "once,",
-     "s": 5.362,
-     "e": 5.7
+     "s": 4.138,
+     "e": 4.475
     },
     {
      "w": "and",
-     "s": 5.75,
-     "e": 5.912
+     "s": 4.513,
+     "e": 4.638
     },
     {
      "w": "every",
-     "s": 5.912,
-     "e": 6.275
+     "s": 4.638,
+     "e": 4.975
     },
     {
      "w": "form",
-     "s": 6.275,
-     "e": 6.725
+     "s": 4.975,
+     "e": 5.388
     },
     {
      "w": "fills",
-     "s": 6.725,
-     "e": 7.075
+     "s": 5.388,
+     "e": 5.725
     },
     {
      "w": "itself.",
-     "s": 7.075,
-     "e": 8.025
+     "s": 5.725,
+     "e": 6.45
     },
     {
      "w": "Fictional",
-     "s": 8.175,
-     "e": 8.713
+     "s": 6.575,
+     "e": 7.037
     },
     {
      "w": "buyer,",
-     "s": 8.713,
-     "e": 9.2
+     "s": 7.037,
+     "e": 7.45
     },
     {
      "w": "example",
-     "s": 9.275,
-     "e": 9.838
+     "s": 7.5,
+     "e": 8.062
     },
     {
      "w": "figures.",
-     "s": 9.838,
-     "e": 10.75
+     "s": 8.062,
+     "e": 8.875
     }
    ]
   },
   {
    "shot": "trophies",
-   "line": "trophies",
-   "text": "Each of the 18 trophies is a verified fact. Open every career title for the platinum.",
-   "from": 1760,
-   "frames": 204,
-   "speechFrom": 1753,
+   "card": null,
+   "line": "f-trophies",
+   "text": "18 trophies. Each one is a verified fact.",
+   "from": 1575,
+   "frames": 165,
+   "speakAt": 1604,
+   "speechFrom": 1593,
    "voiced": true,
-   "audio": "assets/voice/tour/trophies.mp3",
+   "audio": "assets/voice/tour/f-trophies.mp3",
    "words": [
-    {
-     "w": "Each",
-     "s": 0.4,
-     "e": 0.637
-    },
-    {
-     "w": "of",
-     "s": 0.637,
-     "e": 0.713
-    },
-    {
-     "w": "the",
-     "s": 0.713,
-     "e": 0.863
-    },
     {
      "w": "18",
-     "s": 0.863,
-     "e": 1.4
+     "s": 0.35,
+     "e": 0.825
     },
     {
-     "w": "trophies",
-     "s": 1.4,
-     "e": 2.138
+     "w": "trophies.",
+     "s": 0.825,
+     "e": 1.6
     },
     {
-     "w": "is",
-     "s": 2.138,
-     "e": 2.275
-    },
-    {
-     "w": "a",
-     "s": 2.275,
-     "e": 2.388
-    },
-    {
-     "w": "verified",
-     "s": 2.388,
-     "e": 3.112
-    },
-    {
-     "w": "fact.",
-     "s": 3.112,
-     "e": 3.9
-    },
-    {
-     "w": "Open",
-     "s": 4.062,
-     "e": 4.525
-    },
-    {
-     "w": "every",
-     "s": 4.525,
-     "e": 4.888
-    },
-    {
-     "w": "career",
-     "s": 4.888,
-     "e": 5.388
-    },
-    {
-     "w": "title",
-     "s": 5.388,
-     "e": 5.8
-    },
-    {
-     "w": "for",
-     "s": 5.8,
-     "e": 5.912
-    },
-    {
-     "w": "the",
-     "s": 5.912,
-     "e": 6
-    },
-    {
-     "w": "platinum.",
-     "s": 6,
-     "e": 6.95
-    }
-   ]
-  },
-  {
-   "shot": "profile",
-   "line": "profile",
-   "text": "Level 53: one level for each vehicle sale closed personally since June 2025.",
-   "from": 1964,
-   "frames": 217,
-   "speechFrom": 1957,
-   "voiced": true,
-   "audio": "assets/voice/tour/profile.mp3",
-   "words": [
-    {
-     "w": "Level",
-     "s": 0.4,
-     "e": 0.713
-    },
-    {
-     "w": "53:",
-     "s": 0.713,
-     "e": 1.825
+     "w": "Each",
+     "s": 1.738,
+     "e": 2
     },
     {
      "w": "one",
-     "s": 2.025,
-     "e": 2.3
+     "s": 2,
+     "e": 2.225
     },
     {
-     "w": "level",
-     "s": 2.3,
-     "e": 2.625
+     "w": "is",
+     "s": 2.225,
+     "e": 2.337
     },
     {
-     "w": "for",
-     "s": 2.625,
-     "e": 2.8
+     "w": "a",
+     "s": 2.337,
+     "e": 2.425
     },
     {
-     "w": "each",
-     "s": 2.8,
-     "e": 3.138
+     "w": "verified",
+     "s": 2.425,
+     "e": 3.013
     },
     {
-     "w": "vehicle",
-     "s": 3.138,
-     "e": 3.55
-    },
-    {
-     "w": "sale",
-     "s": 3.55,
-     "e": 3.938
-    },
-    {
-     "w": "closed",
-     "s": 3.938,
-     "e": 4.438
-    },
-    {
-     "w": "personally",
-     "s": 4.438,
-     "e": 5.188
-    },
-    {
-     "w": "since",
-     "s": 5.188,
-     "e": 5.525
-    },
-    {
-     "w": "June",
-     "s": 5.525,
-     "e": 5.938
-    },
-    {
-     "w": "2025.",
-     "s": 5.938,
-     "e": 7.4
+     "w": "fact.",
+     "s": 3.013,
+     "e": 3.7
     }
    ]
   },
   {
-   "shot": "player2",
-   "line": "player2",
-   "text": "Player 2 tunes your build: four proofs, a backdrop, and a finish the library unlocks.",
-   "from": 2181,
-   "frames": 190,
-   "speechFrom": 2175,
+   "shot": "level",
+   "card": null,
+   "line": "f-level",
+   "text": "Level 53. One level for each car sold personally since June 2025.",
+   "from": 1740,
+   "frames": 240,
+   "speakAt": 1753,
+   "speechFrom": 1742,
    "voiced": true,
-   "audio": "assets/voice/tour/player2.mp3",
+   "audio": "assets/voice/tour/f-level.mp3",
    "words": [
     {
-     "w": "Player",
-     "s": 0.375,
-     "e": 0.713
+     "w": "Level",
+     "s": 0.35,
+     "e": 0.637
     },
     {
-     "w": "2",
-     "s": 0.713,
-     "e": 0.938
+     "w": "53.",
+     "s": 0.637,
+     "e": 1.675
     },
     {
-     "w": "tunes",
-     "s": 0.938,
-     "e": 1.3
-    },
-    {
-     "w": "your",
-     "s": 1.3,
-     "e": 1.45
-    },
-    {
-     "w": "build:",
-     "s": 1.45,
+     "w": "One",
+     "s": 1.863,
      "e": 2.125
     },
     {
-     "w": "four",
-     "s": 2.275,
-     "e": 2.587
+     "w": "level",
+     "s": 2.125,
+     "e": 2.45
     },
     {
-     "w": "proofs,",
-     "s": 2.587,
-     "e": 3.075
+     "w": "for",
+     "s": 2.45,
+     "e": 2.612
     },
     {
-     "w": "a",
-     "s": 3.125,
-     "e": 3.237
+     "w": "each",
+     "s": 2.612,
+     "e": 2.862
     },
     {
-     "w": "backdrop,",
-     "s": 3.237,
-     "e": 3.975
+     "w": "car",
+     "s": 2.862,
+     "e": 3.212
     },
     {
-     "w": "and",
-     "s": 4.025,
-     "e": 4.138
+     "w": "sold",
+     "s": 3.212,
+     "e": 3.587
     },
     {
-     "w": "a",
-     "s": 4.138,
-     "e": 4.25
+     "w": "personally",
+     "s": 3.587,
+     "e": 4.338
     },
     {
-     "w": "finish",
-     "s": 4.25,
-     "e": 4.7
+     "w": "since",
+     "s": 4.338,
+     "e": 4.588
     },
     {
-     "w": "the",
-     "s": 4.7,
-     "e": 4.838
+     "w": "June",
+     "s": 4.588,
+     "e": 4.963
     },
     {
-     "w": "library",
-     "s": 4.838,
-     "e": 5.475
-    },
-    {
-     "w": "unlocks.",
-     "s": 5.475,
-     "e": 6.475
+     "w": "2025.",
+     "s": 4.963,
+     "e": 6.3
     }
    ]
   },
   {
    "shot": "resume",
-   "line": "resume",
-   "text": "The resume opens as a deck, and Check me opens every proof link.",
-   "from": 2371,
-   "frames": 145,
-   "speechFrom": 2365,
+   "card": null,
+   "line": "f-resume",
+   "text": "Check me opens every proof link.",
+   "from": 1980,
+   "frames": 120,
+   "speakAt": 2002,
+   "speechFrom": 1991,
    "voiced": true,
-   "audio": "assets/voice/tour/resume.mp3",
+   "audio": "assets/voice/tour/f-resume.mp3",
    "words": [
     {
-     "w": "The",
-     "s": 0.375,
-     "e": 0.475
-    },
-    {
-     "w": "resume",
-     "s": 0.475,
-     "e": 1.038
-    },
-    {
-     "w": "opens",
-     "s": 1.038,
-     "e": 1.5
-    },
-    {
-     "w": "as",
-     "s": 1.5,
-     "e": 1.625
-    },
-    {
-     "w": "a",
-     "s": 1.625,
-     "e": 1.738
-    },
-    {
-     "w": "deck,",
-     "s": 1.738,
-     "e": 2.375
-    },
-    {
-     "w": "and",
-     "s": 2.5,
-     "e": 2.638
-    },
-    {
      "w": "Check",
-     "s": 2.638,
-     "e": 2.9
+     "s": 0.35,
+     "e": 0.562
     },
     {
      "w": "me",
-     "s": 2.9,
-     "e": 3.087
+     "s": 0.562,
+     "e": 0.713
     },
     {
      "w": "opens",
-     "s": 3.087,
-     "e": 3.562
+     "s": 0.713,
+     "e": 1.2
     },
     {
      "w": "every",
-     "s": 3.562,
-     "e": 3.913
+     "s": 1.2,
+     "e": 1.562
     },
     {
      "w": "proof",
-     "s": 3.913,
-     "e": 4.275
+     "s": 1.562,
+     "e": 1.875
     },
     {
      "w": "link.",
-     "s": 4.275,
-     "e": 4.975
+     "s": 1.875,
+     "e": 2.45
     }
    ]
   },
   {
    "shot": "end",
-   "line": "end",
-   "text": "Every fact stays in plain HTML. Press start.",
-   "from": 2516,
-   "frames": 138,
-   "speechFrom": 2509,
+   "card": "Press start",
+   "line": "f-start",
+   "text": "Press start.",
+   "from": 2100,
+   "frames": 270,
+   "speakAt": 2247,
+   "speechFrom": 2237,
    "voiced": true,
-   "audio": "assets/voice/tour/end.mp3",
+   "audio": "assets/voice/tour/f-start.mp3",
    "words": [
     {
-     "w": "Every",
-     "s": 0.4,
-     "e": 0.688
-    },
-    {
-     "w": "fact",
-     "s": 0.688,
-     "e": 1.025
-    },
-    {
-     "w": "stays",
-     "s": 1.025,
-     "e": 1.413
-    },
-    {
-     "w": "in",
-     "s": 1.413,
-     "e": 1.55
-    },
-    {
-     "w": "plain",
-     "s": 1.55,
-     "e": 1.938
-    },
-    {
-     "w": "HTML.",
-     "s": 1.938,
-     "e": 3.025
-    },
-    {
      "w": "Press",
-     "s": 3.188,
-     "e": 3.538
+     "s": 0.325,
+     "e": 0.6
     },
     {
      "w": "start.",
-     "s": 3.538,
-     "e": 4.3
+     "s": 0.6,
+     "e": 1.25
     }
    ]
   }

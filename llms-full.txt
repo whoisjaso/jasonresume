@@ -251,7 +251,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 
 ## The walkthrough
 
-- A narrated walkthrough of this site: a film of about a minute and a half, at https://jasonobawemimo.com/walkthrough.html (wide and vertical cuts, with captions), and a guided tour inside the home page ("Take the tour" on the title screen, or https://jasonobawemimo.com/?tour=1).
+- A narrated walkthrough of this site: After Hours, a film of about a minute and a quarter, at https://jasonobawemimo.com/walkthrough.html (wide and vertical cuts, with captions), and a guided tour inside the home page ("Take the tour" on the title screen, or https://jasonobawemimo.com/?tour=1).
 - The narration is a stock voice from Kokoro, an open-source text-to-speech model. It is not Jason's voice and not a clone of anyone.
 
 ## Stop Thinking Poor

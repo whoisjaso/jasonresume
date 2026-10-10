@@ -611,45 +611,49 @@ dialog.film-sheet { width: min(1280px, calc(100vw - 2 * var(--pad))); margin: au
 }
 
 /* =========================================================================
-   THE GUIDED TOUR (tour.js): the live site, one stop at a time. A soft ink
-   vignette around what is being shown, the line as a caption that lights word
-   by word (with the narrator's timing when a recording exists, an estimate when
-   not), and Back, Next and Exit. Above the library and its screens.
+   THE GUIDED TOUR (tour.js): the live site, one stop at a time, as if you were
+   taken there. Letterbox bars slide in at the top and bottom, everything but
+   the stop's subject falls to near black, the camera glides to each subject
+   with the light travelling alongside, and the line plays one caption line at a
+   time in the lower bar, lighting word by word. No panels: the bars carry the
+   few controls (Exit, Back, Next) and the narration's label.
    ========================================================================= */
-.tour { position: fixed; inset: 0; z-index: 240; pointer-events: none; }
-.tour__veil { position: fixed; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.tour__veil path { fill: rgba(10, 15, 13, .66); }
-.tour__spot { position: fixed; left: 50%; top: 50%; width: 0; height: 0; border-radius: 14px; transition: left .7s var(--ease), top .7s var(--ease), width .7s var(--ease), height .7s var(--ease), opacity .5s var(--ease); }
-.tour__spot::after { content: ""; position: absolute; inset: -8px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(237, 231, 219, .24); opacity: .9; animation: breathe 2.4s ease-in-out infinite; }
-.tour.is-wide .tour__spot::after { opacity: 0; }
-.tour__cap { position: fixed; left: 50%; bottom: clamp(18px, 4vh, 40px); width: min(760px, calc(100vw - 2 * var(--pad))); transform: translateX(-50%); pointer-events: auto; padding: 18px 20px 14px; background: var(--lacquer); border-radius: 6px; box-shadow: inset 0 1px 0 rgba(237, 231, 219, .24), 0 0 0 1px rgba(0, 0, 0, .35), 0 18px 40px rgba(0, 0, 0, .45); transition: bottom .6s var(--ease), top .6s var(--ease), opacity .4s var(--ease); }
-.tour.is-top .tour__cap { bottom: auto; top: clamp(70px, 10vh, 96px); }
-.tour__line { margin: 0; min-height: 2.9em; font: 500 clamp(19px, 1.7vw, 24px)/1.42 var(--sans); color: var(--bone); letter-spacing: .005em; }
-.tour__line .w { display: inline-block; opacity: .26; transform: translateY(6px); transition: opacity .32s var(--ease), transform .45s var(--ease); }
-.tour__line .w.is-said { opacity: 1; transform: none; }
-.tour__line .w.is-now { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .28em; text-decoration-color: rgba(237, 231, 219, .55); }
-.tour__row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-.tour__n { margin-right: auto; display: flex; align-items: center; gap: 5px; }
-.tour__tick { width: 14px; height: 2px; border-radius: 1px; background: var(--hair-2); transition: background-color .4s var(--ease); }
-.tour__tick.is-on { background: var(--bone); }
-@media (max-width: 430px) { .tour__tick { width: 8px; } }
-.tour__mode { display: block; margin-top: 10px; color: var(--ash-2); font-size: 12px; letter-spacing: .02em; }
-.tour__time { position: absolute; left: 20px; right: 20px; top: 0; height: 1px; background: var(--hair); overflow: hidden; }
+.tour { position: fixed; inset: 0; z-index: 240; pointer-events: none; --bar: #050807; }
+.tour__veil { position: fixed; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; transition: opacity .9s var(--ease); }
+.tour__veil path { fill: rgba(5, 8, 7, .93); }
+.tour.is-on .tour__veil { opacity: 1; }
+.tour__bar, .tour__cap { position: fixed; left: 0; right: 0; background: var(--bar); transition: transform .9s var(--ease); }
+.tour__bar { top: 0; height: clamp(40px, 7vh, 64px); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--pad); transform: translateY(-100%); }
+.tour__cap { bottom: 0; pointer-events: auto; padding: 18px var(--pad) max(12px, env(safe-area-inset-bottom)); transform: translateY(100%); }
+.tour.is-on .tour__bar, .tour.is-on .tour__cap { transform: none; }
+.tour__mode { color: var(--ash-2); font-size: 12px; letter-spacing: .02em; }
+.tour__n { color: var(--ash); font-size: 12px; letter-spacing: .14em; font-variant-numeric: tabular-nums; }
+.tour__line { margin: 0 auto; max-width: 1100px; min-height: 1.4em; text-align: center; font: 500 clamp(18px, 1.6vw, 24px)/1.4 var(--sans); color: var(--bone); letter-spacing: .005em; }
+.tour__line .w { display: inline-block; opacity: .26; transform: translateY(6px); filter: blur(2px); transition: opacity .32s var(--ease), transform .45s var(--ease), filter .45s var(--ease); }
+.tour__line .w.is-said { opacity: 1; transform: none; filter: none; }
+.tour__line .w.is-off { display: none; }
+.tour__line.is-in { animation: tour-line .5s var(--ease); }
+@keyframes tour-line { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.tour__row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
+.tour__row [data-tour-exit] { margin-right: auto; }
+.tour__row [data-tour-next] { margin-left: 0; }
+.tour__time { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--hair); overflow: hidden; }
 .tour__time i { position: absolute; inset: 0; background: var(--bone-2); transform: scaleX(0); transform-origin: left center; }
-.tour .btn { min-height: 40px; }
+.tour .btn { min-height: 40px; color: var(--ash); }
+.tour .btn:hover, .tour .btn:focus-visible { color: var(--bone); }
 html.tour-on .legend { opacity: 0; }
+/* while you are being shown around, nothing else speaks up */
+html.tour-on .toasts { visibility: hidden; }
 @media (max-width: 759px) {
-  .tour__cap { padding: 14px 14px 12px; width: calc(100vw - 24px); bottom: max(12px, env(safe-area-inset-bottom)); }
-  .tour.is-top .tour__cap { top: 64px; }
-  .tour__line { font-size: 17px; min-height: 0; }
-  .tour .btn { padding: 0 14px; }
-  .tour__row { flex-wrap: wrap; }
-  .tour__n { flex: 1 0 100%; margin: 0 0 4px; }
-  .tour [data-tour-exit] { margin-right: auto; padding-left: 0; }
+  .tour__cap { padding-top: 14px; }
+  .tour__line { font-size: 17px; }
+  .tour .btn { padding: 0 12px; }
+  .tour__mode { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tour__spot::after { animation: none; }
-  .tour__line .w { transform: none; }
+  .tour__veil, .tour__bar, .tour__cap { transition: none; }
+  .tour__line .w { transform: none; filter: none; transition: none; }
+  .tour__line.is-in { animation: none; }
 }
 
 /* /walkthrough.html: the film on its own page, with what the narrator says */

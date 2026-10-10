@@ -58,7 +58,7 @@
 
   /* ---------- the title screen, mounted before anything else loads ---------- */
   var t = O.title, mob = innerWidth < 760;
-  /* the walkthrough film (assemble_home.py adds O.walk once assets/film/tour.mp4 exists) and the live tour (home page only) */
+  /* the walkthrough film (assemble_home.py adds O.walk once assets/film/after-hours.mp4 exists) and the live tour (home page only) */
   var WALK = O.walk || null, TOUR = !!document.querySelector('script[src^="tour.js"]');
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");

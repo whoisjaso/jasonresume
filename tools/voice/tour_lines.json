@@ -1,37 +1,13 @@
 {
-  "_about": "The walkthrough's words: one narrator line per shot of the film (tools/film/src/tour) and per step of the guided tour in the site (tour.js). The narrator describes the site and never speaks as Jason. Every fact is already in llms.txt (most lines are its own sentences about the site, trimmed). No em or en dashes, no percent signs, no numbers that are not in llms.txt. tools/voice/narrate_free.py (Kokoro, free and local; tools/voice/eleven.mjs is the optional ElevenLabs path) reads this file and writes assets/voice/tour/<id>.mp3, <id>.json (word timings) and manifest.json; tools/site/assemble_home.py inlines the lines (and the timings, once they exist) into the home page as #tour-data. Change a line and run sh tools/voice/narrate.sh to re-voice and re-render.",
+  "_about": "The walkthrough's words: the film's narrator lines (ids starting f-, tools/film/src/tour, the After Hours film) and one line per step of the guided tour in the site (tour.js). The film array is its beats: a line, an act card, or both, with the silence before (pre) and after (post) in seconds. The narrator describes the site and never speaks as Jason. Every fact is already in llms.txt (most lines are its own sentences about the site, trimmed). No em or en dashes, no percent signs, no numbers that are not in llms.txt. tools/voice/narrate_free.py (Kokoro, free and local; tools/voice/eleven.mjs is the optional ElevenLabs path) reads this file and writes assets/voice/tour/<id>.mp3, <id>.json (word timings) and manifest.json; tools/site/assemble_home.py inlines the lines (and the timings, once they exist) into the home page as #tour-data. Change a line and run sh tools/voice/narrate.sh to re-voice and re-render.",
   "voice": {
     "label": "Narration: a stock Kokoro voice (open source), not Jason.",
     "caption_only": "Captions only. The narration has not been recorded yet."
   },
   "lines": [
     {
-      "id": "open",
-      "text": "This site is built like a game console's home screen after hours. The library on it is a career."
-    },
-    {
-      "id": "title",
-      "text": "Every arrival opens on a title screen: the name, over a used car lot at night."
-    },
-    {
-      "id": "seat",
-      "text": "Then, who's playing. Hiring, running a dealership, or just looking."
-    },
-    {
-      "id": "build",
-      "text": "Then a build: pick the role you're hiring for, or the problem on your lot."
-    },
-    {
-      "id": "card",
-      "text": "Sign it and keep it: the card, its link, and a one-page resume for that role."
-    },
-    {
       "id": "library",
       "text": "Then the library: the dealership, the CRM, the voice AI, prospecting, neuroscience, and Obavia, in development."
-    },
-    {
-      "id": "focus",
-      "text": "Moving focus crossfades the key art, and brings in that title's layer of the score."
     },
     {
       "id": "opened",
@@ -50,20 +26,8 @@
       "text": "Level 53: one level for each vehicle sale closed personally since June 2025."
     },
     {
-      "id": "player2",
-      "text": "Player 2 tunes your build: four proofs, a backdrop, and a finish the library unlocks."
-    },
-    {
       "id": "resume",
       "text": "The resume opens as a deck, and Check me opens every proof link."
-    },
-    {
-      "id": "end",
-      "text": "Every fact stays in plain HTML. Press start."
-    },
-    {
-      "id": "t-welcome",
-      "text": "This is the library. The tour moves you through it one stop at a time. Go back, skip ahead, or leave whenever you like."
     },
     {
       "id": "t-head",
@@ -76,74 +40,133 @@
     {
       "id": "t-end",
       "text": "Resume and Email sit in the top bar on every screen. That's the tour."
+    },
+    {
+      "id": "f-open",
+      "text": "After hours. A used car lot, at night.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-career",
+      "text": "This is a career, laid out like a game library.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-seat",
+      "text": "Who's playing? Hiring, running a dealership, or just looking.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-build",
+      "text": "Pick the role you're hiring for. You keep the card, and a one-page resume written for that job.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-titles",
+      "text": "Six titles. Triple J Auto, Lead to Title, The Inbound, Prospector, Neuroscience, and Obavia, in development.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-desk",
+      "text": "In Lead to Title, run the sale desk. Scan the license once, and every form fills itself. Fictional buyer, example figures.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-trophies",
+      "text": "18 trophies. Each one is a verified fact.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-level",
+      "text": "Level 53. One level for each car sold personally since June 2025.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-resume",
+      "text": "Check me opens every proof link.",
+      "speed": 1.06
+    },
+    {
+      "id": "f-start",
+      "text": "Press start.",
+      "speed": 1.06
     }
   ],
   "film": [
     {
-      "shot": "boot",
-      "line": "open"
+      "shot": "open",
+      "line": "f-open",
+      "pre": 2.8,
+      "post": 0.7
     },
     {
-      "shot": "title",
-      "line": "title"
+      "shot": "name",
+      "card": "Jason Obawemimo",
+      "hold": 2.8
+    },
+    {
+      "shot": "career",
+      "line": "f-career",
+      "pre": 0.2,
+      "post": 0.9
     },
     {
       "shot": "seat",
-      "line": "seat"
+      "card": "Who's playing?",
+      "line": "f-seat",
+      "pre": 1.3,
+      "post": 0.6
     },
     {
       "shot": "build",
-      "line": "build"
-    },
-    {
-      "shot": "card",
-      "line": "card"
+      "line": "f-build",
+      "pre": 0.7,
+      "post": 0.8
     },
     {
       "shot": "library",
-      "line": "library"
+      "card": "The library",
+      "hold": 2.6
     },
     {
-      "shot": "focus",
-      "line": "focus"
-    },
-    {
-      "shot": "opened",
-      "line": "opened"
+      "shot": "titles",
+      "line": "f-titles",
+      "pre": 0.3,
+      "post": 0.8
     },
     {
       "shot": "desk",
-      "line": "desk"
+      "line": "f-desk",
+      "pre": 0.7,
+      "post": 0.7
     },
     {
       "shot": "trophies",
-      "line": "trophies"
+      "line": "f-trophies",
+      "pre": 0.9,
+      "post": 0.8
     },
     {
-      "shot": "profile",
-      "line": "profile"
-    },
-    {
-      "shot": "player2",
-      "line": "player2"
+      "shot": "level",
+      "line": "f-level",
+      "pre": 0.4,
+      "post": 0.8
     },
     {
       "shot": "resume",
-      "line": "resume"
+      "line": "f-resume",
+      "pre": 0.7,
+      "post": 0.7
     },
     {
       "shot": "end",
-      "line": "end"
+      "card": "Press start",
+      "line": "f-start",
+      "pre": 4.6,
+      "post": 2.8
     }
   ],
   "tour": [
-    {
-      "step": "welcome",
-      "line": "t-welcome",
-      "do": "library",
-      "focus": "triple-j",
-      "target": ".shelf"
-    },
     {
       "step": "head",
       "line": "t-head",
@@ -157,13 +180,6 @@
       "do": "library",
       "focus": "triple-j",
       "target": ".shelf__row"
-    },
-    {
-      "step": "focus",
-      "line": "focus",
-      "do": "library",
-      "focus": "the-inbound",
-      "target": "head"
     },
     {
       "step": "opened",

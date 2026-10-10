@@ -499,7 +499,7 @@ if (!only || only === 'desktop') {
 }
 
 // The walkthrough film: offered on the title screen in a dialog (closing is silent), and on its own page
-if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'tour.mp4')) && (!only || only === 'desktop')) {
+if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'after-hours.mp4')) && (!only || only === 'desktop')) {
   const ctx = await ctxFor(1440, 900, false);
   await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`film pageerror: ${e.message}`));
@@ -516,7 +516,7 @@ if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'tour.mp4')) && (!only || on
   if (after.open || !after.title) errs.push(`film: closing left ${JSON.stringify(after)}`);
   await p.goto(URL0 + 'walkthrough.html'); await p.waitForTimeout(1200);
   const pg = await p.evaluate(() => ({ v: !!document.querySelector('.walk__film video'), lines: document.querySelectorAll('.walk__lines li').length }));
-  if (!pg.v || pg.lines < 10) errs.push(`film page: ${JSON.stringify(pg)}`);
+  if (!pg.v || pg.lines < 8) errs.push(`film page: ${JSON.stringify(pg)}`);
   await textRules(p, 'film page'); await overflow(p, 'film page');
   await p.screenshot({ path: path.join(OUT, 'lib-film-page.png') });
   const m = await ctx.newPage(); await m.setViewportSize({ width: 390, height: 844 }); await m.goto(URL0 + 'walkthrough.html'); await m.waitForTimeout(800); await overflow(m, 'film page mobile');

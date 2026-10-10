@@ -1,0 +1,87 @@
+{
+ "id": "f-titles",
+ "text": "Six titles. Triple J Auto, Lead to Title, The Inbound, Prospector, Neuroscience, and Obavia, in development.",
+ "duration": 8.375,
+ "words": [
+  {
+   "w": "Six",
+   "s": 0.4,
+   "e": 0.65
+  },
+  {
+   "w": "titles.",
+   "s": 0.65,
+   "e": 1.425
+  },
+  {
+   "w": "Triple",
+   "s": 1.562,
+   "e": 1.938
+  },
+  {
+   "w": "J",
+   "s": 1.938,
+   "e": 2.237
+  },
+  {
+   "w": "Auto,",
+   "s": 2.237,
+   "e": 2.65
+  },
+  {
+   "w": "Lead",
+   "s": 2.725,
+   "e": 2.975
+  },
+  {
+   "w": "to",
+   "s": 2.975,
+   "e": 3.112
+  },
+  {
+   "w": "Title,",
+   "s": 3.112,
+   "e": 3.525
+  },
+  {
+   "w": "The",
+   "s": 3.562,
+   "e": 3.712
+  },
+  {
+   "w": "Inbound,",
+   "s": 3.712,
+   "e": 4.375
+  },
+  {
+   "w": "Prospector,",
+   "s": 4.425,
+   "e": 5.175
+  },
+  {
+   "w": "Neuroscience,",
+   "s": 5.263,
+   "e": 6.0
+  },
+  {
+   "w": "and",
+   "s": 6.037,
+   "e": 6.15
+  },
+  {
+   "w": "Obavia,",
+   "s": 6.15,
+   "e": 6.975
+  },
+  {
+   "w": "in",
+   "s": 7.075,
+   "e": 7.2
+  },
+  {
+   "w": "development.",
+   "s": 7.2,
+   "e": 8.125
+  }
+ ]
+}

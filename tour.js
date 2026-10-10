@@ -1,10 +1,12 @@
-/* The guided tour: the live library, one stop at a time.
+/* The guided tour: the live library, one stop at a time, as if you were being
+   taken there. While it runs, letterbox bars slide in at the top and bottom and
+   everything but the stop's subject falls to near black.
 
    Started from the title screen (Take the tour), from the help sheet, or with
    ?tour=1. Each stop does something real in the page (focuses a title, opens
-   one and scrolls to its desk, opens a screen, presents the resume), lays a
-   soft ink vignette around what it is showing, and plays its line as a caption
-   that lights word by word. The words and their timing come from
+   one and glides to its desk, opens a screen, presents the resume); the camera
+   moves to it in one eased glide while the light travels with it, and its line
+   plays one caption line at a time in the lower bar, lighting word by word. The words and their timing come from
    tools/voice/tour_lines.json through tools/site/tour.json, inlined as
    #tour-data. When tools/voice/narrate_free.py has recorded a line and the score is
    on, the narrator's audio plays with it, the score steps back under the voice
@@ -35,29 +37,27 @@
   function E(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var HOLD = 1.6; /* seconds after a line before the next stop */
 
-  var on = false, i = 0, ui = null, veil, spot, cap, line, timeBar, ticks, nextBtn, backBtn, mode;
+  var on = false, i = 0, ui = null, veil, cap, line, timeBar, ticks, nextBtn, backBtn, mode, pageOf = [], page = -1;
   var audio = null, t0 = 0, raf = 0, settleT = 0, advanced = false, startFocus = null, target = null, words = [], cur = null;
 
   function build() {
     ui = document.createElement("div");
     ui.className = "tour"; ui.setAttribute("role", "region"); ui.setAttribute("aria-label", "Guided tour");
     ui.innerHTML =
-      '<svg class="tour__veil" aria-hidden="true" focusable="false"><defs><filter id="tour-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="26"/></filter></defs><path fill-rule="evenodd" filter="url(#tour-soft)"/></svg>' +
-      '<div class="tour__spot" aria-hidden="true"></div>' +
+      '<svg class="tour__veil" aria-hidden="true" focusable="false"><defs><filter id="tour-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="30"/></filter></defs><path fill-rule="evenodd" filter="url(#tour-soft)"/></svg>' +
+      '<div class="tour__bar" aria-hidden="true"><small class="tour__mode">' + E(D.label || "") + '</small><span class="tour__n" data-tour-n></span></div>' +
       '<div class="tour__cap">' +
         '<span class="tour__time" aria-hidden="true"><i></i></span>' +
         '<p class="tour__line" aria-live="polite"></p>' +
-        '<div class="tour__row"><span class="tour__n" data-tour-n></span>' +
+        '<div class="tour__row">' +
           '<button class="btn btn--ghost btn--sm" type="button" data-tour-exit>Exit</button>' +
-          '<button class="btn btn--sm" type="button" data-tour-back><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-left"/></svg>Back</button>' +
-          '<button class="btn btn--primary btn--sm" type="button" data-tour-next>Next<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-right"/></svg></button>' +
+          '<button class="btn btn--ghost btn--sm" type="button" data-tour-back><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-left"/></svg>Back</button>' +
+          '<button class="btn btn--ghost btn--sm" type="button" data-tour-next>Next<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-right"/></svg></button>' +
         "</div>" +
-        '<small class="tour__mode">' + E(D.label || "") + "</small>" +
       "</div>";
-    veil = $(".tour__veil path", ui); spot = $(".tour__spot", ui); cap = $(".tour__cap", ui); line = $(".tour__line", ui);
+    veil = $(".tour__veil path", ui); cap = $(".tour__cap", ui); line = $(".tour__line", ui);
     timeBar = $(".tour__time i", ui); ticks = $("[data-tour-n]", ui);
     nextBtn = $("[data-tour-next]", ui); backBtn = $("[data-tour-back]", ui); mode = $(".tour__mode", ui);
-    ticks.innerHTML = D.steps.map(function () { return '<b class="tour__tick"></b>'; }).join("");
     ui.addEventListener("click", function (e) {
       if (e.target.closest("[data-tour-next]")) next("tap");
       else if (e.target.closest("[data-tour-back]")) back("tap");
@@ -83,7 +83,7 @@
       if (!a || !a.classList.contains("is-open")) g.open(s.title, "tour");
       a = document.getElementById("title-" + s.title);
       var sec = s.section && document.getElementById(s.title + "-" + s.section);
-      setTimeout(function () { if (a) a.scrollTo({ top: sec ? Math.max(0, sec.offsetTop - 110) : 0, behavior: RM.matches ? "auto" : "smooth" }); }, 120);
+      setTimeout(function () { if (a) glideTo(a, sec ? Math.max(0, sec.offsetTop - 110) : 0); }, 120);
     }
     else if (s.do === "screen") { closeDeck(); g.screen(s.screen, "tour"); }
     else if (s.do === "deck") {
@@ -101,33 +101,66 @@
     if (el && el.getBoundingClientRect().height > innerHeight * 0.75) el = $("[data-desk-app]", el) || el;
     return el;
   }
-  var hole = null, holeFrom = null, holeTo = null, holeT = 0, holeRaf = 0;
+  /* the camera: one eased glide (the site's ease, cubic-bezier(0.2, 0.7, 0.1, 1), near enough) */
+  var GLIDE = 950;
+  function ease(k) { return 1 - Math.pow(1 - k, 3.2); }
+  var glideRaf = 0;
+  function glideTo(el, top) {
+    cancelAnimationFrame(glideRaf);
+    var from = el.scrollTop, max = el.scrollHeight - el.clientHeight; top = Math.max(0, Math.min(max, top));
+    if (RM.matches || Math.abs(top - from) < 2) { el.scrollTop = top; return; }
+    var t0g = performance.now();
+    (function step(now) { var k = Math.min(1, (now - t0g) / GLIDE); el.scrollTop = from + (top - from) * ease(k); if (k < 1 && on) glideRaf = requestAnimationFrame(step); })(performance.now());
+  }
+  function scroller(el) {
+    for (var n = el && el.parentElement; n && n !== body; n = n.parentElement) {
+      var o = getComputedStyle(n).overflowY;
+      if ((o === "auto" || o === "scroll") && n.scrollHeight > n.clientHeight + 2) return n;
+    }
+    return document.scrollingElement || root;
+  }
+  /* the space between the bars, where the subject is shown */
+  function frame() {
+    var bar = ui && $(".tour__bar", ui), top = bar ? bar.getBoundingClientRect().height : 0;
+    var low = cap ? cap.getBoundingClientRect().height : 0;
+    return { top: top, bottom: innerHeight - low };
+  }
+  function bring(el) {
+    var r = el.getBoundingClientRect(), f = frame(), mid = (f.top + f.bottom) / 2;
+    if (r.top >= f.top + 12 && r.bottom <= f.bottom - 12) return 0;
+    var sc = scroller(el), d = r.height > f.bottom - f.top - 24 ? r.top - f.top - 16 : r.top + r.height / 2 - mid;
+    glideTo(sc, sc.scrollTop + d);
+    return RM.matches ? 0 : GLIDE;
+  }
+  /* the light: a soft hole in the dark veil that travels with the camera to each subject */
+  var hole = null, aimFrom = null, aimT = 0, aimRaf = 0, aiming = false;
   function rr(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); return "M" + (x + r) + " " + y + "H" + (x + w - r) + "Q" + (x + w) + " " + y + " " + (x + w) + " " + (y + r) + "V" + (y + h - r) + "Q" + (x + w) + " " + (y + h) + " " + (x + w - r) + " " + (y + h) + "H" + (x + r) + "Q" + x + " " + (y + h) + " " + x + " " + (y + h - r) + "V" + (y + r) + "Q" + x + " " + y + " " + (x + r) + " " + y + "Z"; }
   function drawHole(h) {
     var W = innerWidth, H = innerHeight, m = 200;
-    veil.setAttribute("d", "M" + -m + " " + -m + "H" + (W + m) + "V" + (H + m) + "H" + -m + "Z" + (h && h[2] > 0 ? rr(h[0], h[1], h[2], h[3], 14) : ""));
+    veil.setAttribute("d", "M" + -m + " " + -m + "H" + (W + m) + "V" + (H + m) + "H" + -m + "Z" + (h && h[2] > 0 ? rr(h[0], h[1], h[2], h[3], 18) : ""));
   }
-  function moveHole(to) {
-    holeFrom = hole || to; holeTo = to; holeT = performance.now(); cancelAnimationFrame(holeRaf);
+  function holeFor() {
+    var el = target, vw = innerWidth, f = frame();
+    var r = el && el.getBoundingClientRect();
+    if (!r || !r.width || !r.height) return [vw * 0.06, f.top + 20, vw * 0.88, Math.max(40, f.bottom - f.top - 40)];
+    var pad = vw < 760 ? 10 : 20;
+    var L = Math.max(6, r.left - pad), Tp = Math.max(f.top + 6, r.top - pad), R = Math.min(vw - 6, r.right + pad), B = Math.min(f.bottom - 6, r.bottom + pad);
+    return [L, Tp, Math.max(0, R - L), Math.max(0, B - Tp)];
+  }
+  /* a new subject: the light travels there over the same glide as the camera, aimed at where the subject is on every frame */
+  function aim() {
+    aimFrom = hole || holeFor(); aimT = performance.now(); aiming = true; cancelAnimationFrame(aimRaf);
     (function step(now) {
-      var k = RM.matches ? 1 : Math.min(1, (now - holeT) / 700), e = 1 - Math.pow(1 - k, 3);
-      hole = holeFrom.map(function (v, j) { return v + (holeTo[j] - v) * e; });
+      if (!on) { aiming = false; return; }
+      var k = RM.matches ? 1 : Math.min(1, (now - aimT) / GLIDE), e = ease(k), to = holeFor();
+      hole = aimFrom.map(function (v, j) { return v + (to[j] - v) * e; });
       drawHole(hole);
-      if (k < 1) holeRaf = requestAnimationFrame(step);
+      if (k < 1) aimRaf = requestAnimationFrame(step); else aiming = false;
     })(performance.now());
   }
   function place() {
-    if (!on) return;
-    var el = target, vw = innerWidth, vh = innerHeight;
-    var r = el && el.getBoundingClientRect();
-    if (!r || !r.width || !r.height) { ui.classList.add("is-wide"); moveHole([vw * 0.05, vh * 0.08, vw * 0.9, vh * 0.7]); ui.classList.toggle("is-top", false); return; }
-    ui.classList.remove("is-wide");
-    var pad = vw < 760 ? 8 : 16;
-    var L = Math.max(6, r.left - pad), Tp = Math.max(6, r.top - pad), R = Math.min(vw - 6, r.right + pad), B = Math.min(vh - 6, r.bottom + pad);
-    spot.style.left = L + "px"; spot.style.top = Tp + "px"; spot.style.width = Math.max(0, R - L) + "px"; spot.style.height = Math.max(0, B - Tp) + "px";
-    moveHole([L, Tp, Math.max(0, R - L), Math.max(0, B - Tp)]);
-    /* the caption sits wherever the subject is not */
-    ui.classList.toggle("is-top", (Tp + B) / 2 > vh * 0.52);
+    if (!on || aiming) return;
+    hole = holeFor(); drawHole(hole);
   }
   var placeQ = 0;
   function queuePlace() { if (placeQ) return; placeQ = requestAnimationFrame(function () { placeQ = 0; place(); }); }
@@ -143,6 +176,7 @@
     var parts = cur.text.split(/\s+/).filter(Boolean);
     line.innerHTML = parts.map(function (w) { return '<span class="w">' + E(w) + "</span> "; }).join("");
     words = [].slice.call(line.querySelectorAll(".w"));
+    paginate(parts); page = -1;
     advanced = false; t0 = performance.now();
     var voiced = cur.voiced && cur.audio && S() && S().isOn();
     mode.textContent = voiced ? (D.narration || "") : (D.voiced ? "" : (D.label || ""));
@@ -156,10 +190,31 @@
     if (RM.matches) words.forEach(function (w) { w.classList.add("is-said"); });
     tick();
   }
+  /* one caption line at a time: the words are packed by phrase into lines that fit the bar */
+  function paginate(parts) {
+    var fs = parseFloat(getComputedStyle(line).fontSize) || 20;
+    var max = Math.max(18, Math.floor((line.clientWidth || innerWidth * 0.8) / (fs * 0.56)));
+    var phrases = [], cur = [];
+    parts.forEach(function (w, k) { cur.push(k); if (/[.,:;?!]$/.test(w)) { phrases.push(cur); cur = []; } });
+    if (cur.length) phrases.push(cur);
+    function len(ks) { return ks.reduce(function (a, k, j) { return a + parts[k].length + (j ? 1 : 0); }, 0); }
+    var lines = [], ln = [];
+    phrases.forEach(function (ph) {
+      if (ln.length && len(ln.concat(ph)) > max) { lines.push(ln); ln = []; }
+      if (len(ph) > max) ph.forEach(function (k) { if (ln.length && len(ln.concat([k])) > max) { lines.push(ln); ln = []; } ln.push(k); });
+      else ln = ln.concat(ph);
+      if (/[.?!]$/.test(parts[ln[ln.length - 1]]) && len(ln) > max * 0.45) { lines.push(ln); ln = []; }
+    });
+    if (ln.length) lines.push(ln);
+    pageOf = []; lines.forEach(function (l, n) { l.forEach(function (k) { pageOf[k] = n; }); });
+  }
   function clock() { return audio && !audio.paused ? audio.currentTime : (performance.now() - t0) / 1000; }
   function tick() {
     if (!on) return;
     var t = clock(), W = cur.words || [];
+    var pg = 0;
+    for (var q = 0; q < words.length; q++) { var wq = W[q] || [cur.duration, cur.duration]; if (t >= wq[0] - 0.12) pg = pageOf[q] || 0; }
+    if (pg !== page) { page = pg; for (var z = 0; z < words.length; z++) words[z].classList.toggle("is-off", pageOf[z] !== pg); line.classList.remove("is-in"); void line.offsetWidth; line.classList.add("is-in"); }
     for (var k = 0; k < words.length; k++) {
       var w = W[k] || [cur.duration, cur.duration];
       words[k].classList.toggle("is-said", RM.matches || t >= w[0]);
@@ -180,8 +235,7 @@
     var s = D.steps[i];
     clearTimeout(settleT);
     act(s);
-    [].forEach.call(ticks.children, function (b, k) { b.classList.toggle("is-on", k <= i); });
-    ticks.setAttribute("aria-label", "Stop " + (i + 1) + " of " + D.steps.length);
+    ticks.textContent = (i + 1) + " / " + D.steps.length;
     backBtn.disabled = i === 0;
     nextBtn.firstChild.nodeValue = i === D.steps.length - 1 ? "Finish" : "Next";
     target = null;
@@ -189,11 +243,8 @@
     /* let the page's own transition land, bring the subject into view, then light it */
     settleT = setTimeout(function () {
       target = resolve(s.target);
-      if (target) {
-        var r = target.getBoundingClientRect();
-        if (r.top < 60 || r.bottom > innerHeight - 40) { target.scrollIntoView({ block: "center", behavior: RM.matches ? "auto" : "smooth" }); settleT = setTimeout(place, RM.matches ? 30 : 480); }
-      }
-      place();
+      if (target) bring(target);
+      aim();
     }, RM.matches ? 60 : 640);
     document.dispatchEvent(new CustomEvent("jg:tour", { detail: { on: true, step: s.step } }));
     T("tour_step", { step: s.step, n: i + 1, how: how || "" });
@@ -217,17 +268,18 @@
     var f = $(".tile.is-focus"); startFocus = f ? f.getAttribute("data-title") : null;
     if (!ui) build();
     if (ui.parentNode !== body) body.appendChild(ui);
-    on = true; root.classList.add("tour-on"); ui.hidden = false;
+    on = true; root.classList.add("tour-on"); ui.hidden = false; hole = null;
+    ui.classList.remove("is-on"); void ui.offsetWidth; ui.classList.add("is-on");
     if (window.JG_FX) window.JG_FX("arrive");
     T("tour_started", { where: where || "", voiced: !!D.voiced });
     go(0, where);
     setTimeout(function () { nextBtn.focus({ preventScroll: true }); }, 80);
   }
   function teardown() {
-    on = false; cancelAnimationFrame(raf); clearTimeout(settleT); stopVoice();
+    on = false; cancelAnimationFrame(raf); cancelAnimationFrame(aimRaf); cancelAnimationFrame(glideRaf); clearTimeout(settleT); stopVoice();
     home();
     if (startFocus && G()) G().focus(startFocus);
-    if (ui) { ui.hidden = true; if (ui.parentNode !== body) body.appendChild(ui); }
+    if (ui) { ui.hidden = true; ui.classList.remove("is-on"); if (ui.parentNode !== body) body.appendChild(ui); }
     root.classList.remove("tour-on");
     var t = startFocus && $('.tile[data-title="' + startFocus + '"]'); if (t) t.focus({ preventScroll: true });
     document.dispatchEvent(new CustomEvent("jg:tour", { detail: { on: false, step: "" } }));

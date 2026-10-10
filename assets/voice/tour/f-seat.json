@@ -1,0 +1,52 @@
+{
+ "id": "f-seat",
+ "text": "Who's playing? Hiring, running a dealership, or just looking.",
+ "duration": 4.25,
+ "words": [
+  {
+   "w": "Who's",
+   "s": 0.325,
+   "e": 0.512
+  },
+  {
+   "w": "playing?",
+   "s": 0.512,
+   "e": 1.2
+  },
+  {
+   "w": "Hiring,",
+   "s": 1.337,
+   "e": 1.875
+  },
+  {
+   "w": "running",
+   "s": 1.925,
+   "e": 2.188
+  },
+  {
+   "w": "a",
+   "s": 2.188,
+   "e": 2.288
+  },
+  {
+   "w": "dealership,",
+   "s": 2.288,
+   "e": 2.9
+  },
+  {
+   "w": "or",
+   "s": 2.938,
+   "e": 3.025
+  },
+  {
+   "w": "just",
+   "s": 3.025,
+   "e": 3.275
+  },
+  {
+   "w": "looking.",
+   "s": 3.275,
+   "e": 4.0
+  }
+ ]
+}

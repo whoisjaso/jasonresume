@@ -1,0 +1,17 @@
+{
+ "id": "f-start",
+ "text": "Press start.",
+ "duration": 1.525,
+ "words": [
+  {
+   "w": "Press",
+   "s": 0.325,
+   "e": 0.6
+  },
+  {
+   "w": "start.",
+   "s": 0.6,
+   "e": 1.25
+  }
+ ]
+}

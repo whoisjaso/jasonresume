@@ -73,7 +73,7 @@ try:
     TOUR = json.loads((SITE / "tour.json").read_text())
 except Exception:
     pass
-FILM = "assets/film/tour"
+FILM = "assets/film/after-hours"  # a new film ships under a new name (/assets is cached for a year)
 if has(FILM + ".mp4"):
     walk = {"src": FILM + ".mp4", "poster": FILM + ".jpg", "note": TOUR.get("label", ""), "page": "/walkthrough.html", "page_label": "The film page"}
     if has(FILM + "-vertical.mp4"):
@@ -410,14 +410,14 @@ if onboarding.get("walk"):
     W = onboarding["walk"]
     tl = json.loads((SITE.parent / "voice/tour_lines.json").read_text())
     L = {l["id"]: l["text"] for l in tl["lines"]}
-    transcript = "".join("<li>%s</li>" % E(L[s_["line"]]) for s_ in tl["film"])
+    transcript = "".join("<li>%s</li>" % E(L[s_["line"]]) for s_ in tl["film"] if s_.get("line"))
     track = '<track kind="captions" srclang="en" label="English" src="%s" />' % E(W["vtt"]) if W.get("vtt") else ""
     vert = ('<p class="walk__alt"><a href="%s">The vertical cut</a>, for a phone.</p>' % E(W["vsrc"])) if W.get("vsrc") else ""
     page = (
         "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\" />\n"
         '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />\n'
         "<title>The walkthrough | Jason Obawemimo</title>\n"
-        '<meta name="description" content="A narrated walkthrough of jasonobawemimo.com: the title screen, the build, the library, the sale desk, the trophies, Player 2 and the resume." />\n'
+        '<meta name="description" content="After Hours, a narrated walkthrough of jasonobawemimo.com: the lot at night, who is playing, the build, the six titles, the sale desk, a trophy, Level 53 and the resume." />\n'
         '<link rel="canonical" href="https://jasonobawemimo.com/walkthrough.html" />\n'
         '<meta name="theme-color" content="#0a0d0b" />\n<link rel="icon" href="/favicon.ico" />\n'
         '<meta property="og:type" content="video.other" />\n<meta property="og:title" content="The walkthrough | Jason Obawemimo" />\n'
@@ -430,7 +430,7 @@ if onboarding.get("walk"):
         '<h1 class="walk__h">The walkthrough</h1>\n<p class="walk__sub">%s</p>\n'
         '<figure class="walk__film"><video controls playsinline preload="metadata" poster="%s"><source src="%s" type="video/mp4" />%s%s</video></figure>\n%s'
         '<h2 class="walk__k">What the narrator says</h2>\n<ol class="walk__lines">%s</ol>\n'
-        '<p class="walk__fine">Every frame is the live site, captured as it is. Every fact in it is in <a href="/llms.txt">llms.txt</a>.</p>\n'
+        '<p class="walk__fine">Made from the site\'s own key art, score, card, sale desk, medal and resume. Every fact in it is in <a href="/llms.txt">llms.txt</a>.</p>\n'
         "</main>\n</body>\n</html>\n"
         % (E(W["poster"]), E(W["src"]), V, E(W.get("note", "")), E(W["poster"]), E(W["src"]), ('<source src="%s" type="video/webm" />' % E(W["webm"])) if W.get("webm") else "", track, vert, transcript)
     )
