@@ -1,0 +1,42 @@
+{
+ "id": "jason-me-ltt-1",
+ "text": "Scan it once. Every form fills itself.",
+ "duration": 3.48,
+ "words": [
+  {
+   "w": "Scan",
+   "s": 0.0,
+   "e": 0.4
+  },
+  {
+   "w": "it",
+   "s": 0.4,
+   "e": 0.56
+  },
+  {
+   "w": "once.",
+   "s": 0.56,
+   "e": 0.96
+  },
+  {
+   "w": "Every",
+   "s": 1.4,
+   "e": 1.82
+  },
+  {
+   "w": "form",
+   "s": 1.82,
+   "e": 2.3
+  },
+  {
+   "w": "fills",
+   "s": 2.3,
+   "e": 2.66
+  },
+  {
+   "w": "itself.",
+   "s": 2.66,
+   "e": 3.16
+  }
+ ]
+}

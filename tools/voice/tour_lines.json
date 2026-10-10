@@ -18,10 +18,6 @@
       "text": "In Lead to Title, run the sale desk from Triple J: scan the license once, and every form fills itself. Fictional buyer, example figures."
     },
     {
-      "id": "trophies",
-      "text": "Each of the 18 trophies is a verified fact. Open every career title for the platinum."
-    },
-    {
       "id": "profile",
       "text": "Level 53: one level for each vehicle sale closed personally since June 2025."
     },
@@ -90,6 +86,10 @@
       "id": "f-start",
       "text": "Press start.",
       "speed": 1.06
+    },
+    {
+      "id": "trophies-run",
+      "text": "Each of the 18 trophies is a verified fact. Find its medal in the run to earn it."
     }
   ],
   "film": [
@@ -198,7 +198,7 @@
     },
     {
       "step": "trophies",
-      "line": "trophies",
+      "line": "trophies-run",
       "do": "screen",
       "screen": "trophies",
       "target": ".trophies .screen__head"

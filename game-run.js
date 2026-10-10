@@ -5,6 +5,7 @@
    The Inbound, Prospector and Obavia (in development, no medals). Each medal is
    a trophy from library.json; picking one up unlocks that same trophy through
    window.JG_GAME.unlock, so the library, the profile and the platinum agree.
+   The run is the only place trophies are earned; every medal earns the platinum.
    Lazy: game.js loads this file and game-run.css only when someone presses Play.
 
    Feel: fixed 120 Hz step, coyote time, jump buffering, variable jump height,
@@ -220,7 +221,7 @@
     var w = {
       L: L, w: L.w * TS, top: (L.top || 0) * TS, bot: (L.bot || 14.8) * TS, theme: L.theme,
       solids: [], ones: [], movers: [], pads: [], lamps: [], sparks: [], medals: [], fakes: [], trigs: [], ghosts: [], doors: [], npcs: [], talks: [], water: [], cars: [],
-      groups: {}, goal: null, t: 0, said: {}, mid: null
+      groups: {}, goal: null, t: 0, steps: 0, deaths: 0, said: {}, mid: null
     };
     (L.g || []).forEach(function (g) { w.solids.push({ x: g[0] * TS, y: g[2] * TS, w: (g[1] - g[0]) * TS, h: w.bot - g[2] * TS + TS * 6, look: "ground" }); });
     (L.b || []).forEach(function (b) { w.solids.push({ x: b[0] * TS, y: b[1] * TS, w: b[2] * TS, h: b[3] * TS, look: b[4] || "block" }); });
@@ -421,7 +422,7 @@
   }
 
   function step(dt) {
-    W.t += dt;
+    W.t += dt; W.steps++;
     if (started && !finished) levelT += dt * 1000;
     /* movers */
     W.movers.forEach(function (m) {
@@ -561,7 +562,7 @@
 
   function die() {
     if (PL.dead > 0) return;
-    PL.dead = 0.55; fade(1);
+    PL.dead = 0.55; W.deaths++; fade(1);
   }
   function respawn() {
     var c = W.check || { x: LV.spawn[0] * TS, y: LV.spawn[1] * TS };
@@ -587,9 +588,11 @@
     T("game_medal", { trophy: m.slug, tier: tr.tier, level: LV.id, where: m.where });
     nugQ.push(m.slug); if (nugT <= 0) showNug();
     paintSocks();
-    if (!SAVE.platinum && ALL_MEDALS.every(function (s) { return SAVE.medals[s]; })) { SAVE.platinum = 1; save(); platinumNow = true; if (window.JG_GAME && window.JG_GAME.unlock) window.JG_GAME.unlock(LIB.platinum, "run"); T("game_platinum", { level: LV.id }); }
+    /* every medal (or its trophy, earned before the run gave them out) earns the platinum, once */
+    if (!SAVE.platinum && store.get("jg_platinum") !== "1" && ALL_MEDALS.every(function (s) { return SAVE.medals[s] || libSeen(s); })) { SAVE.platinum = 1; save(); platinumNow = true; if (window.JG_GAME && window.JG_GAME.unlock) window.JG_GAME.unlock(LIB.platinum, "run"); T("game_platinum", { level: LV.id }); }
   }
   var platinumNow = false;
+  function libSeen(s) { try { return JSON.parse(store.get("jg_trophies") || "[]").indexOf(s) >= 0; } catch (e) { return false; } }
   function toScreen(x, y) { return { x: (x - CAM.x) * scale, y: (y - CAM.y) * scale }; }
   function fly(m) {
     var s = toScreen(m.x, m.y), sock = $('[data-sock="' + m.slug + '"]', el), r = el.getBoundingClientRect(), cr = cv.getBoundingClientRect();
@@ -1622,6 +1625,52 @@
     if (/^#play/.test(location.hash)) { try { history.pushState({}, "", location.pathname + location.search); } catch (e) {} }
     if (SC() && window.JG_GAME && window.JG_GAME.focusId) SC().focus(window.JG_GAME.focusId());
     document.dispatchEvent(new CustomEvent("jg:run-closed", { detail: { how: how || "" } }));
+  }
+
+
+  /* ?debug=run: a read-only view of the level and the player for tools/verify/run-bot.mjs.
+     Without the flag it doesn't exist; with it, it only reads. */
+  if (/[?&]debug=run(&|$)/.test(location.search)) {
+    var dOn = function (o) {
+      if (!o) return null; if (o === "solid") return { k: "solid" };
+      var i = W.movers.indexOf(o); if (i >= 0) return { k: "mover", i: i };
+      i = W.ghosts.indexOf(o); if (i >= 0) return { k: "ghost", i: i };
+      i = W.ones.indexOf(o); return { k: "one", i: i };
+    };
+    var box = function (b) { return { x: b.x, y: b.y, w: b.w, h: b.h }; };
+    window.JG_RUN_DEBUG = {
+      P: Object.assign({}, P), STEP: STEP, TS: TS, still: still(),
+      state: function () {
+        if (!W || !PL) return null;
+        return {
+          level: LV.id, open: OPEN, running: RUNNING, panel: panelName, finished: finished, started: started,
+          steps: W.steps, t: W.t, acc: acc, hitstop: hitstop, levelT: levelT, deaths: W.deaths,
+          pl: { x: PL.x, y: PL.y, vx: PL.vx, vy: PL.vy, ground: PL.ground, on: dOn(PL.on), face: PL.face, coyote: PL.coyote, buf: PL.buf, boost: PL.boost || 0, drop: PL.drop || 0, fallV: PL.fallV, dead: PL.dead },
+          input: { x: IN.x, run: IN.run, jump: IN.jump, jumpPress: IN.jumpPress, down: IN.down },
+          groups: Object.assign({}, W.groups),
+          ghosts: W.ghosts.map(function (g) { return { on: g.on, a: g.a }; }),
+          doors: W.doors.map(function (d) { return d.open; }),
+          medals: W.medals.map(function (m) { return { slug: m.slug, got: !!SAVE.medals[m.slug], now: m.now }; }),
+          check: W.check ? { x: W.check.x, y: W.check.y } : null
+        };
+      },
+      level: function () {
+        if (!W) return null;
+        return {
+          id: LV.id, w: W.w, top: W.top, bot: W.bot, spawn: LV.spawn.slice(),
+          solids: W.solids.map(function (s) { var b = box(s); b.look = s.look; return b; }),
+          ones: W.ones.map(function (o) { return { x: o.x, y: o.y, w: o.w, look: o.look }; }),
+          movers: W.movers.map(function (m) { return { x0: m.x0, y0: m.y0, w: m.w, dx: m.dx, dy: m.dy, per: m.per, ph: m.ph }; }),
+          pads: W.pads.map(function (p) { return { x: p.x, y: p.y, w: p.w }; }),
+          ghosts: W.ghosts.map(function (g) { return { x: g.x, y: g.y, w: g.w, g: g.g }; }),
+          doors: W.doors.map(function (d) { return { x: d.x, y: d.y, w: d.w, h: d.h, g: d.g }; }),
+          trigs: W.trigs.map(function (t) { return { x: t.x, y: t.y, w: t.w, h: t.h, g: t.g }; }),
+          lamps: W.lamps.map(function (l) { return { x: l.x, y: l.y }; }),
+          medals: W.medals.map(function (m) { return { slug: m.slug, x: m.x, y: m.y, where: m.where, tier: m.tier }; }),
+          goal: W.goal ? { x: W.goal.x, y: W.goal.y, w: W.goal.w, h: W.goal.h } : null
+        };
+      }
+    };
   }
 
   window.JG_RUN = {

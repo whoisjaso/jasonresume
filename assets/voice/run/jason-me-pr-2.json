@@ -1,0 +1,42 @@
+{
+ "id": "jason-me-pr-2",
+ "text": "Follow-up replies come from SOPs I wrote.",
+ "duration": 3.48,
+ "words": [
+  {
+   "w": "Follow-up",
+   "s": 0.0,
+   "e": 0.52
+  },
+  {
+   "w": "replies",
+   "s": 0.52,
+   "e": 0.94
+  },
+  {
+   "w": "come",
+   "s": 0.94,
+   "e": 1.7
+  },
+  {
+   "w": "from",
+   "s": 1.7,
+   "e": 1.98
+  },
+  {
+   "w": "SOPs",
+   "s": 1.98,
+   "e": 2.82
+  },
+  {
+   "w": "I",
+   "s": 2.82,
+   "e": 3.04
+  },
+  {
+   "w": "wrote.",
+   "s": 3.04,
+   "e": 3.24
+  }
+ ]
+}

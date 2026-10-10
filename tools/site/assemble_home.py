@@ -161,13 +161,22 @@ def medal(slug, size):
     return '<img class="medal medal--%s" src="%s" alt="" width="%d" height="%d" loading="lazy" decoding="async" />' % (TR[slug]["tier"], src, size, size)
 
 
+# every trophy is earned by finding its medal in the run: which level holds it
+MEDAL_LEVEL = {m[0]: l["id"] for l in run["levels"] for m in l.get("md", [])}
+assert set(MEDAL_LEVEL) == set(TR) - {lib["platinum"]}, "every trophy but the platinum needs a medal in run.json, and only those"
+
+
 def trophy_li(slug, size=64):
     t = TR[slug]
     desc = E(t["desc"])
     if t.get("href"):
         desc += ' <a href="%s" data-proof="%s">See the proof</a>' % (E(t["href"]), E(t["name"]))
-    return '<li class="trophy" data-trophy="%s" data-tier="%s">%s<div><b>%s<small>%s</small></b><p>%s</p></div></li>' % (
-        slug, t["tier"], medal(slug, size), E(t["name"]), TIER[t["tier"]], desc)
+    # not yet earned: the fact is all there, and a quiet way into the level that holds it
+    lvl = MEDAL_LEVEL.get(slug, "")
+    find = '<a class="trophy__find" href="#play%s" data-play="%s" data-where="trophy">%s</a>' % (
+        "/" + lvl if lvl else "", lvl, "Find it in the run" if lvl else "Find every medal in the run")
+    return '<li class="trophy" data-trophy="%s" data-tier="%s">%s<div><b>%s<small>%s</small></b><p>%s</p>%s</div></li>' % (
+        slug, t["tier"], medal(slug, size), E(t["name"]), TIER[t["tier"]], desc, find)
 
 
 def plates():

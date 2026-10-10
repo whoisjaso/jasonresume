@@ -1,0 +1,77 @@
+{
+ "id": "jason-me-ob-1",
+ "text": "Obavia is a sale desk I'm building for Texas independent dealers. It's in development.",
+ "duration": 7.24,
+ "words": [
+  {
+   "w": "Obavia",
+   "s": 0.0,
+   "e": 1.26
+  },
+  {
+   "w": "is",
+   "s": 1.26,
+   "e": 2.46
+  },
+  {
+   "w": "a",
+   "s": 2.46,
+   "e": 2.6
+  },
+  {
+   "w": "sale",
+   "s": 2.6,
+   "e": 2.9
+  },
+  {
+   "w": "desk",
+   "s": 2.9,
+   "e": 3.22
+  },
+  {
+   "w": "I'm",
+   "s": 3.22,
+   "e": 3.52
+  },
+  {
+   "w": "building",
+   "s": 3.52,
+   "e": 3.72
+  },
+  {
+   "w": "for",
+   "s": 3.72,
+   "e": 4.06
+  },
+  {
+   "w": "Texas",
+   "s": 4.06,
+   "e": 4.48
+  },
+  {
+   "w": "independent",
+   "s": 4.48,
+   "e": 5.08
+  },
+  {
+   "w": "dealers.",
+   "s": 5.08,
+   "e": 5.64
+  },
+  {
+   "w": "It's",
+   "s": 6.04,
+   "e": 6.3
+  },
+  {
+   "w": "in",
+   "s": 6.3,
+   "e": 6.48
+  },
+  {
+   "w": "development.",
+   "s": 6.48,
+   "e": 6.9
+  }
+ ]
+}

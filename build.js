@@ -61,11 +61,11 @@
   var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   function when(t) { var d = new Date(t || Date.now()); return MONTHS[d.getMonth()] + " " + d.getFullYear(); }
 
-  /* ---------- finishes: playing the library earns the card a better metal ---------- */
+  /* ---------- finishes: trophies earned in the run give the card a better metal ---------- */
   function seenCount() { var n = 0; try { JSON.parse(store.get("jg_trophies") || "[]").forEach(function (s) { if (LIB.trophies && LIB.trophies[s]) n++; }); } catch (e) {} return n; }
   function unlocked(f) { var fin = D.finishes.filter(function (x) { return x.id === f; })[0]; if (!fin) return false; if (fin.need === "operator") return store.get("jg_platinum") === "1"; return seenCount() >= fin.need; }
   function bestFinish() { var best = "bronze"; D.finishes.forEach(function (f) { if (unlocked(f.id)) best = f.id; }); return best; }
-  var NEED = { silver: "Open titles until you've seen six trophies", gold: "See twelve trophies", platinum: "Earn the platinum: open every career title" };
+  var NEED = { silver: "Earn six trophies in the run", gold: "Earn twelve trophies in the run", platinum: "Earn the platinum: every medal in the run" };
 
   /* ---------- the build itself ---------- */
   function valid(b) {

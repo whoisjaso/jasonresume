@@ -1,0 +1,72 @@
+{
+ "id": "jason-me-pr-1",
+ "text": "My workflow researches Facebook Marketplace leads and writes the findings to the CRM.",
+ "duration": 6.68,
+ "words": [
+  {
+   "w": "My",
+   "s": 0.0,
+   "e": 0.22
+  },
+  {
+   "w": "workflow",
+   "s": 0.22,
+   "e": 0.8
+  },
+  {
+   "w": "researches",
+   "s": 0.8,
+   "e": 1.76
+  },
+  {
+   "w": "Facebook",
+   "s": 1.76,
+   "e": 2.48
+  },
+  {
+   "w": "Marketplace",
+   "s": 2.48,
+   "e": 3.18
+  },
+  {
+   "w": "leads",
+   "s": 3.18,
+   "e": 3.72
+  },
+  {
+   "w": "and",
+   "s": 3.72,
+   "e": 4.32
+  },
+  {
+   "w": "writes",
+   "s": 4.32,
+   "e": 4.62
+  },
+  {
+   "w": "the",
+   "s": 4.62,
+   "e": 4.86
+  },
+  {
+   "w": "findings",
+   "s": 4.86,
+   "e": 5.3
+  },
+  {
+   "w": "to",
+   "s": 5.3,
+   "e": 5.62
+  },
+  {
+   "w": "the",
+   "s": 5.62,
+   "e": 5.74
+  },
+  {
+   "w": "CRM.",
+   "s": 5.74,
+   "e": 6.68
+  }
+ ]
+}

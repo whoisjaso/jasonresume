@@ -1,0 +1,47 @@
+{
+ "id": "jason-me-in-1",
+ "text": "My voice AI books appointments into the CRM.",
+ "duration": 3.6,
+ "words": [
+  {
+   "w": "My",
+   "s": 0.0,
+   "e": 0.22
+  },
+  {
+   "w": "voice",
+   "s": 0.22,
+   "e": 0.6
+  },
+  {
+   "w": "AI",
+   "s": 0.86,
+   "e": 1.08
+  },
+  {
+   "w": "books",
+   "s": 1.08,
+   "e": 1.36
+  },
+  {
+   "w": "appointments",
+   "s": 1.36,
+   "e": 1.86
+  },
+  {
+   "w": "into",
+   "s": 1.86,
+   "e": 2.46
+  },
+  {
+   "w": "the",
+   "s": 2.46,
+   "e": 2.8
+  },
+  {
+   "w": "CRM.",
+   "s": 2.8,
+   "e": 3.6
+  }
+ ]
+}

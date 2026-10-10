@@ -1,0 +1,47 @@
+{
+ "id": "jason-me-neuro-1",
+ "text": "I'm studying neuroscience at UT Austin, expected 2028.",
+ "duration": 5.12,
+ "words": [
+  {
+   "w": "I'm",
+   "s": 0.0,
+   "e": 0.22
+  },
+  {
+   "w": "studying",
+   "s": 0.22,
+   "e": 0.62
+  },
+  {
+   "w": "neuroscience",
+   "s": 0.62,
+   "e": 1.26
+  },
+  {
+   "w": "at",
+   "s": 1.26,
+   "e": 1.86
+  },
+  {
+   "w": "UT",
+   "s": 1.86,
+   "e": 2.32
+  },
+  {
+   "w": "Austin,",
+   "s": 2.32,
+   "e": 2.88
+  },
+  {
+   "w": "expected",
+   "s": 3.36,
+   "e": 3.74
+  },
+  {
+   "w": "2028.",
+   "s": 3.74,
+   "e": 5.12
+  }
+ ]
+}
