@@ -3,7 +3,7 @@
   "v": 1,
   "tile": 32,
   "out": "assets/voice/run",
-  "voices_note": "Jason's lines: his own voice, synthesized from his recording with his permission. Other voices: stock Kokoro voices (open source). Other characters are fictional.",
+  "voices_note": "Jason's lines: captions, and where voiced, his own voice, synthesized from his recording with his permission. Other voices: stock Kokoro voices (open source). Other characters are fictional.",
   "cast": {
     "prof": {
       "name": "The professor",
