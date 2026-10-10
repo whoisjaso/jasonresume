@@ -4,9 +4,11 @@
    the key art to that title's plate, and (with the score on) brings the
    title's layer of the score in on the next bar. Rest on a title and its key
    art comes alive. Open makes the title its own page: Overview, Film, Demo,
-   Trophies, Loadout. Every trophy is a verified fact; opening a career title
-   for the first time awards its trophies, and opening all of them earns the
-   Platinum. Nothing is hidden: every fact is also plain HTML in the page.
+   Trophies, Loadout. Every trophy is a verified fact, earned by finding its
+   medal in the run (game-run.js); every medal earns the Platinum. Nothing is
+   hidden: a trophy not yet earned still shows its name, tier and fact, with a
+   way into the level that holds it, and every fact is plain HTML in the page.
+   Trophies earned under the old rule (opening a title) stay earned.
 
    window.JG_GAME.route(hash, how)   "#title/id" | "#trophies" | "#profile" | ""
    window.JG_GAME.seat(role, where)  interviewer | partner | lurker: reorders the library
@@ -132,7 +134,7 @@
     hap("tap"); if (S()) S().sting("open");
     T("story_opened", { story: id, how: how || "" });
     document.dispatchEvent(new CustomEvent("jg:title", { detail: { id: id, open: true } }));
-    if (!opened[id]) { opened[id] = 1; store.set("jg_opened", JSON.stringify(Object.keys(opened))); award(id); }
+    if (!opened[id]) { opened[id] = 1; store.set("jg_opened", JSON.stringify(Object.keys(opened))); }
     paintProgress();
   }
   function closeTitle(quiet) {
@@ -192,26 +194,13 @@
   }
   addEventListener("popstate", function () { route(location.hash, "back"); });
 
-  /* ---------- trophies: awards, toasts, the Platinum ---------- */
-  var queue = [], showing = false, tbox = $("[data-toasts]");
-  function award(id) {
-    var list = (TITLES[id].trophies || []).filter(function (s) { return !seen[s]; });
-    if (!list.length) return;
-    list.forEach(function (s) { seen[s] = 1; T("trophy_unlocked", { trophy: s, tier: LIB.trophies[s].tier, title: id }); });
-    store.set("jg_trophies", JSON.stringify(Object.keys(seen)));
-    document.dispatchEvent(new CustomEvent("jg:trophy", { detail: { title: id, list: list } }));
-    var top = list.slice().sort(function (a, b) { return rank(LIB.trophies[b].tier) - rank(LIB.trophies[a].tier); })[0];
-    queue.push({ slug: top, more: list.length - 1 });
-    pump();
-    paintSeen(); paintHud(focusId);
-    if (!platinum && careers.every(function (c) { return opened[c]; })) {
-      platinum = true; store.set("jg_platinum", "1"); seen[LIB.platinum] = 1; store.set("jg_trophies", JSON.stringify(Object.keys(seen)));
-      setTimeout(levelClear, 2600); paintSeen();
-    }
-  }
-  /* one trophy at a time, earned in the run: the same store, the same count, the same platinum */
+  /* ---------- trophies: earned in the run, one medal at a time ---------- */
+  var medalTrophies = Object.keys(LIB.trophies).filter(function (s) { return s !== LIB.platinum; });
+  /* one trophy at a time, earned in the run: the same store, the same count; the
+     platinum only once every medal's trophy is earned (game-run.js celebrates it) */
   function unlock(slug, how) {
     if (!LIB.trophies[slug] || seen[slug]) return false;
+    if (slug === LIB.platinum && !allMedals()) return false;
     seen[slug] = 1; store.set("jg_trophies", JSON.stringify(Object.keys(seen)));
     T("trophy_unlocked", { trophy: slug, tier: LIB.trophies[slug].tier, title: "", how: how || "run" });
     document.dispatchEvent(new CustomEvent("jg:trophy", { detail: { title: "", list: [slug], how: how || "run" } }));
@@ -219,6 +208,7 @@
     paintSeen(); paintHud(focusId);
     return true;
   }
+  function allMedals() { return medalTrophies.every(function (s) { return seen[s]; }); }
   /* a level of the run cleared: its title wears a small lit mark in the library */
   function paintCleared() {
     var c = {}; try { c = (JSON.parse(store.get("jg_run") || "{}").cleared) || {}; } catch (e) {}
@@ -256,19 +246,6 @@
     e.preventDefault(); playPress(b.getAttribute("data-play") || "", b.getAttribute("data-where") || "button");
   });
   document.addEventListener("jg:run-closed", function () { paintCleared(); if (tiles[focusId]) tiles[focusId].focus({ preventScroll: true }); });
-  function rank(t) { return { bronze: 1, silver: 2, gold: 3, platinum: 4 }[t] || 0; }
-  function pump() {
-    if (showing || !queue.length || !tbox) return;
-    showing = true;
-    var q = queue.shift(), tr = LIB.trophies[q.slug];
-    var el = document.createElement("div"); el.className = "toast toast--trophy toast--" + tr.tier;
-    el.innerHTML = '<span class="toast__medal">' + medal(q.slug, 52) + '<img class="toast__sheen" src="assets/game/medals/sheen.webp" alt="" /></span><span class="toast__txt"><p class="toast__t">' + E(tr.name) + "<small>" + tierWord(tr.tier) + ' trophy</small></p><p class="toast__s">' + E(tr.desc) + (q.more > 0 ? " And " + q.more + " more in this title." : "") + "</p></span>";
-    tbox.appendChild(el);
-    if (live) live.textContent = tierWord(tr.tier) + " trophy. " + tr.name + ". " + tr.desc;
-    requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add("is-on"); }); });
-    hap("success"); if (S()) S().sting("trophy-" + tr.tier);
-    setTimeout(function () { el.classList.remove("is-on"); setTimeout(function () { el.remove(); showing = false; setTimeout(pump, 2400 - 600); }, 600); }, 4200);
-  }
   function paintSeen() {
     var n = Object.keys(seen).filter(function (s) { return LIB.trophies[s]; }).length;
     $$("[data-trophy-seen]").forEach(function (e) { e.textContent = n; });
@@ -277,16 +254,6 @@
   function paintProgress() {
     var n = careers.filter(function (c) { return opened[c]; }).length;
     $$("[data-library-count]").forEach(function (e) { e.textContent = n + " of " + careers.length; });
-  }
-  function levelClear() {
-    if (!clear) return;
-    var tr = LIB.trophies[LIB.platinum];
-    clear.innerHTML = '<div class="clear__card" role="dialog" aria-modal="true" aria-labelledby="clear-h"><span class="clear__medal">' + medal(LIB.platinum, 160) + '<img class="toast__sheen" src="assets/game/medals/sheen.webp" alt="" /></span><p class="clear__k">Platinum trophy</p><h2 class="clear__h" id="clear-h" tabindex="-1">' + E(tr.name) + '</h2><p class="clear__s">' + E(tr.desc) + '</p><img class="clear__portrait" src="assets/game/portrait/jason-engraved-1024.png" alt="Engraved portrait of Jason Obawemimo" width="220" height="220" loading="lazy" /><div class="clear__acts"><a class="btn btn--primary" href="' + E(LIB.pdf) + '" data-resume="pdf" data-where="platinum" download="Jason Obawemimo - Resume.pdf"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-doc"/></svg>Resume PDF</a><a class="btn" href="mailto:' + E(LIB.email) + '?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="platinum">Email me</a><button class="btn btn--ghost" type="button" data-clear-close>Back to the library</button></div></div>';
-    clear.hidden = false; root.classList.add("clear-on");
-    requestAnimationFrame(function () { requestAnimationFrame(function () { clear.classList.add("is-on"); }); });
-    var h = $("#clear-h", clear); if (h) h.focus({ preventScroll: true });
-    hap("success"); if (S()) S().sting("level-clear");
-    T("level_clear", { trophy: LIB.platinum });
   }
   function closeClear() { clear.classList.remove("is-on"); root.classList.remove("clear-on"); setTimeout(function () { clear.hidden = true; clear.innerHTML = ""; }, 500); if (tiles[focusId]) tiles[focusId].focus({ preventScroll: true }); }
   if (clear) clear.addEventListener("click", function (e) { if (e.target.closest("[data-clear-close]") || e.target === clear) closeClear(); });

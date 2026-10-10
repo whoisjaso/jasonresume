@@ -50,7 +50,7 @@ def say_number(tok):
     return tok
 
 # How the written line is said: each written word becomes one or more spoken words.
-SAY = {"CRM": "C R M", "UT": "U T", "SOPs": "S O Ps", "AI": "A I", "Obavia": "Oh-bah-vee-uh"}
+SAY = {"CRM": "C R M", "UT": "U T", "SOPs": "S.O.P.s", "Obavia": "Oh-bah-vee-uh"}
 def spoken_words(text):
     out = []  # (spoken word, index of the written word it belongs to)
     for i, w in enumerate(text.split()):
