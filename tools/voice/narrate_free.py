@@ -17,6 +17,7 @@
 #                                 from Kokoro's own predicted word durations
 #   assets/voice/tour/manifest.json  every voiced line, its hash, the voice and model
 # A line whose text, voice and speed are unchanged since the last run is skipped.
+# A line in the json may carry its own "speed" (KOKORO_SPEED is the default).
 #
 # The voice is a stock Kokoro voice, never a clone of anyone. Default am_michael,
 # an American male narrator; --voice or KOKORO_VOICE overrides it.
@@ -71,12 +72,13 @@ def main():
     pipe = KPipeline(lang_code="a", repo_id=MODEL)
     voiced = kept = 0
     for l in lines:
-        h = hashlib.sha1(json.dumps([l["text"], "kokoro", VOICE, SPEED, SAY]).encode()).hexdigest()[:12]
+        sp = float(l.get("speed", SPEED))  # a line may set its own pace (the film's lines run a touch quicker)
+        h = hashlib.sha1(json.dumps([l["text"], "kokoro", VOICE, sp, SAY]).encode()).hexdigest()[:12]
         mp3, js = OUT / f"{l['id']}.mp3", OUT / f"{l['id']}.json"
         if not force and man["lines"].get(l["id"], {}).get("hash") == h and mp3.exists() and js.exists():
             kept += 1; continue
         audio, words, t0 = [], [], 0.0
-        for r in pipe(spoken(l["text"]), voice=VOICE, speed=SPEED):
+        for r in pipe(spoken(l["text"]), voice=VOICE, speed=sp):
             a = r.audio.numpy(); audio.append(a)
             for tok in r.tokens or []:
                 if tok.start_ts is None or not re.search(r"\w", tok.text):

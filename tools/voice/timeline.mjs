@@ -50,23 +50,27 @@ function timing(line) {
 const byId = Object.fromEntries(doc.lines.map(l => [l.id, { id: l.id, text: l.text, ...timing(l) }]));
 const voicedAll = doc.lines.every(l => byId[l.id].voiced);
 
-// the film: each shot holds its line plus air on both sides, at 30 fps
-// Tight: a recording's own lead-in silence is trimmed (speech starts LEAD after
-// the cut) and TAIL of air follows its last word; the cut's dissolve is the breath
-const FPS = 30, LEAD = 0.16, TAIL = 0.08;
-const MIN = { boot: 5.6, end: 4.6 };
+// the film (After Hours): a beat is a line, an act card, or both. Each holds its
+// silence before (pre) and after (post) the words, because the holds are part
+// of it; a recording's own lead-in silence is trimmed so speech starts exactly
+// pre seconds in. The film runs at 32 fps so the score's 64 BPM is a whole 30
+// frames a beat (120 a bar): every beat is rounded up to an eighth (15 frames),
+// so every cut, card and line starts on the score's grid.
+const FPS = 32, BEAT = 30, GRID = 15;
 let at = 0;
 const shots = doc.film.map(s => {
-  const L = byId[s.line];
-  const w0 = L.words.length ? L.words[0].s : 0, w1 = L.words.length ? L.words[L.words.length - 1].e : L.duration;
-  const lead = s.shot === 'boot' ? 0.45 : LEAD; /* the drawing needs a moment before anyone speaks */
-  const secs = Math.max(MIN[s.shot] || 3.2, lead + (w1 - w0) + TAIL);
-  const frames = Math.round(secs * FPS);
-  const shot = { shot: s.shot, line: s.line, text: L.text, from: at, frames, speechFrom: Math.max(0, at + Math.round((lead - w0) * FPS)), voiced: L.voiced, audio: L.voiced ? L.audio : null, words: L.words };
+  const L = s.line ? byId[s.line] : null;
+  const w0 = L && L.words.length ? L.words[0].s : 0, w1 = L && L.words.length ? L.words[L.words.length - 1].e : (L ? L.duration : 0);
+  const pre = s.pre || 0, post = s.post || 0;
+  const secs = L ? pre + (w1 - w0) + post : (s.hold || 3);
+  const frames = Math.ceil((secs * FPS) / GRID) * GRID;
+  const shot = { shot: s.shot, card: s.card || null, line: s.line || null, text: L ? L.text : '', from: at, frames,
+    speakAt: L ? at + Math.round(pre * FPS) : null, speechFrom: L ? at + Math.round((pre - w0) * FPS) : null,
+    voiced: L ? L.voiced : false, audio: L && L.voiced ? L.audio : null, words: L ? L.words : [] };
   at += frames;
   return shot;
 });
-const film = { fps: FPS, frames: at, seconds: +(at / FPS).toFixed(2), voiced: doc.film.every(s => byId[s.line].voiced), shots };
+const film = { fps: FPS, beat: BEAT, frames: at, seconds: +(at / FPS).toFixed(2), voiced: doc.film.every(s => !s.line || byId[s.line].voiced), shots };
 fs.mkdirSync(path.join(ROOT, 'tools', 'film', 'src', 'tour'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'tools', 'film', 'src', 'tour', 'timeline.json'), JSON.stringify(film, null, 1) + '\n');
 

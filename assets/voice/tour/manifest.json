@@ -1,46 +1,10 @@
 {
  "lines": {
-  "open": {
-   "hash": "746bb7fbf469",
-   "duration": 7.45,
-   "file": "open.mp3",
-   "timings": "open.json"
-  },
-  "title": {
-   "hash": "ac7397344063",
-   "duration": 6.575,
-   "file": "title.mp3",
-   "timings": "title.json"
-  },
-  "seat": {
-   "hash": "159d7f1b0260",
-   "duration": 5.125,
-   "file": "seat.mp3",
-   "timings": "seat.json"
-  },
-  "build": {
-   "hash": "f3a77b02f53a",
-   "duration": 5.25,
-   "file": "build.mp3",
-   "timings": "build.json"
-  },
-  "card": {
-   "hash": "b0992b0a082f",
-   "duration": 5.725,
-   "file": "card.mp3",
-   "timings": "card.json"
-  },
   "library": {
    "hash": "e439bbe572eb",
    "duration": 9.025,
    "file": "library.mp3",
    "timings": "library.json"
-  },
-  "focus": {
-   "hash": "2c6613919d8a",
-   "duration": 6.275,
-   "file": "focus.mp3",
-   "timings": "focus.json"
   },
   "opened": {
    "hash": "ee39e25209fa",
@@ -66,29 +30,11 @@
    "file": "profile.mp3",
    "timings": "profile.json"
   },
-  "player2": {
-   "hash": "031dbb1e5e04",
-   "duration": 6.75,
-   "file": "player2.mp3",
-   "timings": "player2.json"
-  },
   "resume": {
    "hash": "0165ef1ff55c",
    "duration": 5.25,
    "file": "resume.mp3",
    "timings": "resume.json"
-  },
-  "end": {
-   "hash": "ea4f1f65d86f",
-   "duration": 4.575,
-   "file": "end.mp3",
-   "timings": "end.json"
-  },
-  "t-welcome": {
-   "hash": "44fc134ca95a",
-   "duration": 8.5,
-   "file": "t-welcome.mp3",
-   "timings": "t-welcome.json"
   },
   "t-head": {
    "hash": "8385088abb86",
@@ -107,6 +53,66 @@
    "duration": 5.525,
    "file": "t-end.mp3",
    "timings": "t-end.json"
+  },
+  "f-open": {
+   "hash": "e8fb6b23c53d",
+   "duration": 3.375,
+   "file": "f-open.mp3",
+   "timings": "f-open.json"
+  },
+  "f-career": {
+   "hash": "eb5b6b64c018",
+   "duration": 3.825,
+   "file": "f-career.mp3",
+   "timings": "f-career.json"
+  },
+  "f-seat": {
+   "hash": "32d2362a4c7b",
+   "duration": 4.25,
+   "file": "f-seat.mp3",
+   "timings": "f-seat.json"
+  },
+  "f-build": {
+   "hash": "4cf3eb56da05",
+   "duration": 6.425,
+   "file": "f-build.mp3",
+   "timings": "f-build.json"
+  },
+  "f-titles": {
+   "hash": "50361b587e3f",
+   "duration": 8.375,
+   "file": "f-titles.mp3",
+   "timings": "f-titles.json"
+  },
+  "f-desk": {
+   "hash": "502ec2da1f3c",
+   "duration": 9.125,
+   "file": "f-desk.mp3",
+   "timings": "f-desk.json"
+  },
+  "f-trophies": {
+   "hash": "9dba94aa573c",
+   "duration": 3.975,
+   "file": "f-trophies.mp3",
+   "timings": "f-trophies.json"
+  },
+  "f-level": {
+   "hash": "e82350cf575b",
+   "duration": 6.575,
+   "file": "f-level.mp3",
+   "timings": "f-level.json"
+  },
+  "f-resume": {
+   "hash": "aef29f2685c3",
+   "duration": 2.725,
+   "file": "f-resume.mp3",
+   "timings": "f-resume.json"
+  },
+  "f-start": {
+   "hash": "47806dba637c",
+   "duration": 1.525,
+   "file": "f-start.mp3",
+   "timings": "f-start.json"
   }
  },
  "voice": {
@@ -119,5 +125,5 @@
   },
   "source": "Kokoro-82M, an open-weight model (Apache-2.0), a stock voice (not a clone)"
  },
- "updated": "2026-10-09"
+ "updated": "2026-10-10"
 }
