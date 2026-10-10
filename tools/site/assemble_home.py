@@ -31,6 +31,15 @@ onboarding = json.loads((SITE / "onboarding.json").read_text())
 onboarding.pop("_about", None)
 builds = json.loads((SITE / "builds.json").read_text())
 builds.pop("_about", None)
+# The run (game-run.js): the levels, the cast and the lines, compact. The voices'
+# words and timings stay in assets/voice/run; my own lines are text only.
+run = json.loads((SITE / "run.json").read_text())
+for k in ("_about", "out", "lines_note"):
+    run.pop(k, None) if k != "out" else None
+run.pop("_about", None)
+for l in run.get("lines", []):
+    l.pop("voice", None)
+run_json = json.dumps(run, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 builds_json = json.dumps(builds, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 head = (SITE / "home.head.html").read_text()
 body = (SITE / "home.body.html").read_text()
@@ -90,11 +99,12 @@ onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":
 
 # The title screen plays for every arrival from outside the site, on whichever
 # page the visitor lands (home or /obavia.html); clicks between the site's own
-# pages skip it, crawlers skip it, ?intro=1 forces it. Shared by both pages.
+# pages skip it, crawlers skip it, ?intro=1 forces it, and a ?run=<level> link
+# (a friend's shared run) goes straight into the game. Shared by both pages.
 HEAD_SCRIPT = (
     '<script>(function(){var d=document.documentElement;d.classList.add("js");'
     'try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).host===location.host}catch(e){}'
-    'if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}'
+    'if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&!/[?&]run=/.test(location.search)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}'
     'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>'
 )
 
@@ -366,6 +376,7 @@ body = (
                  + '\n<script type="application/json" id="library-data">' + lib_json + "</script>"
                  + '\n<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>"
                  + '\n<script type="application/json" id="builds-data">' + builds_json + "</script>"
+                 + '\n<script type="application/json" id="run-data">' + run_json + "</script>"
                  + ('\n<script type="application/json" id="tour-data">' + json.dumps(TOUR, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + "</script>" if TOUR else ""))
     .replace("%%BOOT%%", BOOT.strip())
     .replace("%%HELP_WATCH%%", '<a class="btn btn--sm btn--ghost" href="/walkthrough.html">%s</a>' % E(onboarding["title"].get("watch", "Watch the walkthrough")) if onboarding.get("walk") else "")

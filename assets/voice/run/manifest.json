@@ -1,0 +1,113 @@
+{
+ "lines": {
+  "neuro-prof-1": {
+   "hash": "e2983f7e8957",
+   "duration": 4.575,
+   "file": "neuro-prof-1.mp3",
+   "timings": "neuro-prof-1.json",
+   "voice": "am_eric"
+  },
+  "neuro-prof-2": {
+   "hash": "0f4fb91e937a",
+   "duration": 4.15,
+   "file": "neuro-prof-2.mp3",
+   "timings": "neuro-prof-2.json",
+   "voice": "am_eric"
+  },
+  "tj-porter-1": {
+   "hash": "104d3b7f2e67",
+   "duration": 4.45,
+   "file": "tj-porter-1.mp3",
+   "timings": "tj-porter-1.json",
+   "voice": "am_onyx"
+  },
+  "tj-porter-2": {
+   "hash": "8aca999a408c",
+   "duration": 4.05,
+   "file": "tj-porter-2.mp3",
+   "timings": "tj-porter-2.json",
+   "voice": "am_onyx"
+  },
+  "ltt-buyer-1": {
+   "hash": "7d2f52052fe0",
+   "duration": 4.125,
+   "file": "ltt-buyer-1.mp3",
+   "timings": "ltt-buyer-1.json",
+   "voice": "af_bella"
+  },
+  "ltt-buyer-2": {
+   "hash": "eb8f811f0456",
+   "duration": 3.225,
+   "file": "ltt-buyer-2.mp3",
+   "timings": "ltt-buyer-2.json",
+   "voice": "af_bella"
+  },
+  "in-caller-1": {
+   "hash": "16e2a777dbd2",
+   "duration": 5.775,
+   "file": "in-caller-1.mp3",
+   "timings": "in-caller-1.json",
+   "voice": "af_nicole"
+  },
+  "in-agent-1": {
+   "hash": "3ee115204a4f",
+   "duration": 3.1,
+   "file": "in-agent-1.mp3",
+   "timings": "in-agent-1.json",
+   "voice": "af_heart"
+  },
+  "in-caller-2": {
+   "hash": "f305026b4bf3",
+   "duration": 5.425,
+   "file": "in-caller-2.mp3",
+   "timings": "in-caller-2.json",
+   "voice": "af_nicole"
+  },
+  "in-agent-2": {
+   "hash": "1ad10caba71f",
+   "duration": 3.1,
+   "file": "in-agent-2.mp3",
+   "timings": "in-agent-2.json",
+   "voice": "af_heart"
+  },
+  "pr-seller-1": {
+   "hash": "517886ebda1b",
+   "duration": 3.775,
+   "file": "pr-seller-1.mp3",
+   "timings": "pr-seller-1.json",
+   "voice": "am_liam"
+  },
+  "pr-seller-2": {
+   "hash": "59bf2a5ac9a2",
+   "duration": 2.675,
+   "file": "pr-seller-2.mp3",
+   "timings": "pr-seller-2.json",
+   "voice": "am_liam"
+  },
+  "ob-dealer-1": {
+   "hash": "dc51e946590a",
+   "duration": 3.45,
+   "file": "ob-dealer-1.mp3",
+   "timings": "ob-dealer-1.json",
+   "voice": "am_fenrir"
+  },
+  "ob-dealer-2": {
+   "hash": "adcf600e29f7",
+   "duration": 2.175,
+   "file": "ob-dealer-2.mp3",
+   "timings": "ob-dealer-2.json",
+   "voice": "am_fenrir"
+  }
+ },
+ "voice": {
+  "id": "am_michael",
+  "name": "am_michael",
+  "model": "hexgrad/Kokoro-82M",
+  "format": "mp3_44100_128",
+  "settings": {
+   "speed": 0.95
+  },
+  "source": "Kokoro-82M, an open-weight model (Apache-2.0), a stock voice (not a clone)"
+ },
+ "updated": "2026-10-10"
+}
