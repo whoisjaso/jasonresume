@@ -1,5 +1,5 @@
 {
-  "_about": "The title screen every visitor sees on every arrival from outside the site, on the home page and /obavia.html: key art behind Jason's name, Press start (with the score) or Start muted, Who's playing (three seats), then on the home page a build (the visitor picks the role they're hiring for, the problem on their lot, or a class, and builds Jason for it from verified facts), an optional player name that signs the card, the card, then the library. intro.js reads this; tools/site/assemble_home.py inlines it into both pages as #onboarding-data. Every line must be true and in llms.txt. No em dashes. The funnel block places Jason's availability only where a visitor is already deciding: an interviewer's card and a role build, and a reading sent with a ?for= link. A dealer's card gets the lot's own next step (a call or Obavia early access); in Player 2 a dealer gets one quiet question (Hiring for your lot? Read me for the reading it points to) that switches the build to a role, and the availability line shows once, after the switch. Someone just looking never sees it: their card scene has no pitch at all (the seat promises none), and Player 2 offers a referral (send your build to someone hiring) as the way to copy the link. intro.js and build.js read it. The card itself never carries it.",
+  "_about": "The title screen every visitor sees on every arrival from outside the site, on the home page and /obavia.html: key art behind Jason's name, Press start (with the score) or Start muted, Who's playing (three seats), then on the home page a build (the visitor picks the role they're hiring for, the problem on their lot, or a class, and builds Jason for it from verified facts), an optional player name that signs the card, the card, then the library. intro.js reads this; tools/site/assemble_home.py inlines it into both pages as #onboarding-data. Every line must be true and in llms.txt. No em dashes. The funnel block places Jason's availability only where a visitor is already deciding: an interviewer's card and a role build, and a reading sent with a ?for= link. A dealer's card gets the lot's own next step (a call or Obavia early access); in Player 2 a dealer gets one quiet question (Hiring for your lot? Read me for the reading it points to) that switches the build to a role, and the availability line shows once, after the switch. Someone just looking never sees it: their card scene has no pitch at all (the seat promises none), and Player 2 offers a referral (send your build to someone hiring) as the way to copy the link. intro.js and build.js read it. The card itself never carries it. The play block: on the home page someone just looking meets Play first, one press into the run's first level, with a class as the quieter choice; someone hiring or running a lot keeps their own first step and sees the run as one quiet line on their card scene.",
   "art": "assets/game/art/triple-j",
   "title": {
     "first": "Jason",
@@ -91,5 +91,15 @@
     "referral_link": "Send them your build.",
     "sent": "The reading I sent you:",
     "make": "Make it yours"
+  },
+  "play": {
+    "title": "Play the run",
+    "sub": "Six short levels through my record. Every medal you find is a verified fact.",
+    "go": "Play",
+    "alt": "Pick a class instead",
+    "fine_pointer": "Arrows or WASD to move, Space to jump.",
+    "fine_touch": "Best held sideways. The controls appear when you play.",
+    "card": "Or play the run",
+    "card_p": "Six short levels. Every medal is a fact from my record."
   }
 }

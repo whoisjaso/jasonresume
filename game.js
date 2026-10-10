@@ -11,6 +11,9 @@
    window.JG_GAME.route(hash, how)   "#title/id" | "#trophies" | "#profile" | ""
    window.JG_GAME.seat(role, where)  interviewer | partner | lurker: reorders the library
    window.JG_GAME.focus(id)
+   window.JG_GAME.unlock(slug, how)  one trophy, earned in the run (game-run.js)
+   window.JG_GAME.play(levelId, how) the run: loads game-run.js and its CSS on first press
+   Routes also take #play and #play/<level>, key G, [data-play] buttons and ?run=<level>.
    Events: document "jg:title" {id, open} */
 (function () {
   "use strict";
@@ -181,9 +184,11 @@
     if (m && arts[m[1]]) { open(m[1], how || "link"); return; }
     if (h === "#trophies" || h === "#profile") { openScreen(h.slice(1), how || "link"); return; }
     if (/^#build(\/.*)?$/.test(h) && screens.build) { if (window.JG_BUILD) window.JG_BUILD.load(h); openScreen("build", how || "link"); return; }
+    var pl = h.match(/^#play(?:\/([a-z0-9-]+))?$/);
+    if (pl) { play(pl[1] || "", how || "link"); return; }
     var t = h.match(/^#title-([a-z0-9-]+)$/);
     if (t && arts[t[1]]) { open(t[1], how || "link"); return; }
-    if (!h || h === "#" || h === "#library") { if (openId) closeTitle(true); if (screen) closeScreen(true); }
+    if (!h || h === "#" || h === "#library") { if (window.JG_RUN && window.JG_RUN.isOpen()) window.JG_RUN.close("back"); if (openId) closeTitle(true); if (screen) closeScreen(true); }
   }
   addEventListener("popstate", function () { route(location.hash, "back"); });
 
@@ -204,6 +209,53 @@
       setTimeout(levelClear, 2600); paintSeen();
     }
   }
+  /* one trophy at a time, earned in the run: the same store, the same count, the same platinum */
+  function unlock(slug, how) {
+    if (!LIB.trophies[slug] || seen[slug]) return false;
+    seen[slug] = 1; store.set("jg_trophies", JSON.stringify(Object.keys(seen)));
+    T("trophy_unlocked", { trophy: slug, tier: LIB.trophies[slug].tier, title: "", how: how || "run" });
+    document.dispatchEvent(new CustomEvent("jg:trophy", { detail: { title: "", list: [slug], how: how || "run" } }));
+    if (slug === LIB.platinum) { platinum = true; store.set("jg_platinum", "1"); }
+    paintSeen(); paintHud(focusId);
+    return true;
+  }
+  /* a level of the run cleared: its title wears a small lit mark in the library */
+  function paintCleared() {
+    var c = {}; try { c = (JSON.parse(store.get("jg_run") || "{}").cleared) || {}; } catch (e) {}
+    Object.keys(tiles).forEach(function (k) { tiles[k].classList.toggle("is-cleared", !!c[k]); });
+  }
+
+  /* ---------- the run: lazy, loaded on the first press of Play ---------- */
+  var runP = null;
+  function loadRun() {
+    if (window.JG_RUN) return Promise.resolve();
+    if (!runP) runP = new Promise(function (res, rej) {
+      var n = 2, ok = function () { if (--n === 0) res(); };
+      var l = document.createElement("link"); l.rel = "stylesheet"; l.href = "game-run.css?v=r1"; l.onload = ok; l.onerror = ok; document.head.appendChild(l);
+      var s = document.createElement("script"); s.src = "game-run.js?v=r1"; s.onload = ok; s.onerror = function () { runP = null; rej(); }; document.body.appendChild(s);
+    });
+    return runP;
+  }
+  function play(level, how) {
+    if (openId) closeTitle(true);
+    if (screen) closeScreen(true);
+    if (clear && !clear.hidden) closeClear();
+    loadRun().then(function () { if (window.JG_RUN) window.JG_RUN.open(level || "", how || ""); }, function () {});
+  }
+  /* the press itself asks for fullscreen on a phone (it has to come from the gesture) */
+  function playPress(level, how) {
+    if (matchMedia("(pointer: coarse)").matches && !document.fullscreenElement) {
+      var d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen;
+      if (rq) try { window.JG_RUN_FS = true; var p = rq.call(d, { navigationUI: "hide" }); if (p && p.then) p.then(function () { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); }).catch(function () {}); } catch (e) {}
+    }
+    if (window.JG_FX) window.JG_FX("choice");
+    play(level, how);
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-play]"); if (!b) return;
+    e.preventDefault(); playPress(b.getAttribute("data-play") || "", b.getAttribute("data-where") || "button");
+  });
+  document.addEventListener("jg:run-closed", function () { paintCleared(); if (tiles[focusId]) tiles[focusId].focus({ preventScroll: true }); });
   function rank(t) { return { bronze: 1, silver: 2, gold: 3, platinum: 4 }[t] || 0; }
   function pump() {
     if (showing || !queue.length || !tbox) return;
@@ -326,7 +378,7 @@
   function move(d, how) { var i = Math.max(0, Math.min(order.length - 1, ix() + d)); if (order[i] !== focusId) { focus(order[i], how || "key"); var t = tiles[order[i]]; if (t && document.activeElement && document.activeElement.classList.contains("tile")) t.focus({ preventScroll: true }); } }
   addEventListener("keydown", function (e) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (root.classList.contains("intro-on") || document.querySelector("dialog[open]")) return;
+    if (root.classList.contains("intro-on") || root.classList.contains("run-on") || document.querySelector("dialog[open]")) return;
     var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     var k = e.key;
     if (k === "Escape" || (k === "Backspace" && (openId || screen))) { if (back()) e.preventDefault(); return; }
@@ -350,6 +402,7 @@
     else if (k === "t" || k === "T") { e.preventDefault(); openScreen("trophies", "key"); }
     else if (k === "p" || k === "P") { e.preventDefault(); openScreen("profile", "key"); }
     else if ((k === "j" || k === "J") && screens.build) { e.preventDefault(); openScreen("build", "key"); }
+    else if (k === "g" || k === "G") { e.preventDefault(); playPress("", "key"); }
   });
 
   /* ---------- input: gamepad, polled only while one is connected ---------- */
@@ -360,7 +413,7 @@
   function poll(ts) {
     if (!pads) return;
     var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
-    if (gp && !root.classList.contains("intro-on") && !document.querySelector("dialog[open]")) {
+    if (gp && !root.classList.contains("intro-on") && !root.classList.contains("run-on") && !document.querySelector("dialog[open]")) {
       var x = gp.axes[0] || 0, d = (pressed(gp, 15) || x > 0.35) ? 1 : (pressed(gp, 14) || x < -0.35) ? -1 : 0;
       if (d && !openId && !screen) {
         if (rep.d !== d) { rep.d = d; rep.at = ts + 380; move(d, "pad"); }
@@ -380,14 +433,22 @@
   /* ---------- start ---------- */
   var role = store.get("jg_role");
   if (role && LIB.seats[role]) seat(role, "init"); else focus(focusId, "init");
-  paintSeen(); paintProgress();
+  paintSeen(); paintProgress(); paintCleared();
   document.addEventListener("jg:intro-done", function (e) {
     var r = (e.detail && e.detail.role) || store.get("jg_role");
     if (r && LIB.seats[r]) seat(r, "init");
     root.classList.add("lib-in");
+    if (e.detail && e.detail.play) play("", "intro");
   });
+  /* ?run=<level>: a friend's link drops straight into that level (the head script skips the title screen) */
+  (function () {
+    var m = location.search.match(/[?&]run=([a-z0-9-]*)/); if (!m) return;
+    try { var u = new URL(location.href); u.searchParams.delete("run"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+    var go = function () { play(m[1] || "", "link"); };
+    if (document.readyState === "complete") setTimeout(go, 60); else addEventListener("load", function () { setTimeout(go, 60); });
+  })();
   if (!root.classList.contains("intro-pending")) root.classList.add("lib-in");
   RM.addEventListener && RM.addEventListener("change", function () { if (RM.matches) Object.keys(plates).forEach(function (k) { sleep(plates[k]); }); });
 
-  window.JG_GAME = { route: route, seat: seat, arrange: arrange, screen: openScreen, focus: function (id) { focus(id, "api"); }, open: open, back: back };
+  window.JG_GAME = { route: route, seat: seat, arrange: arrange, screen: openScreen, focus: function (id) { focus(id, "api"); }, open: open, back: back, unlock: unlock, play: play, cleared: function () { paintCleared(); }, focusId: function () { return focusId; } };
 })();

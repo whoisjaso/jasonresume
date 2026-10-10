@@ -1,0 +1,67 @@
+{
+ "id": "neuro-prof-1",
+ "text": "Library's open late tonight. Mind the stacks, and look behind the shelves.",
+ "duration": 4.575,
+ "words": [
+  {
+   "w": "Library's",
+   "s": 0.275,
+   "e": 0.85
+  },
+  {
+   "w": "open",
+   "s": 0.85,
+   "e": 1.175
+  },
+  {
+   "w": "late",
+   "s": 1.175,
+   "e": 1.4
+  },
+  {
+   "w": "tonight.",
+   "s": 1.4,
+   "e": 1.9
+  },
+  {
+   "w": "Mind",
+   "s": 1.975,
+   "e": 2.212
+  },
+  {
+   "w": "the",
+   "s": 2.212,
+   "e": 2.3
+  },
+  {
+   "w": "stacks,",
+   "s": 2.3,
+   "e": 2.7
+  },
+  {
+   "w": "and",
+   "s": 2.737,
+   "e": 2.837
+  },
+  {
+   "w": "look",
+   "s": 2.837,
+   "e": 3.025
+  },
+  {
+   "w": "behind",
+   "s": 3.025,
+   "e": 3.362
+  },
+  {
+   "w": "the",
+   "s": 3.362,
+   "e": 3.462
+  },
+  {
+   "w": "shelves.",
+   "s": 3.462,
+   "e": 4.3
+  }
+ ]
+}

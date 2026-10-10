@@ -17,7 +17,10 @@
 #                                 from Kokoro's own predicted word durations
 #   assets/voice/tour/manifest.json  every voiced line, its hash, the voice and model
 # A line whose text, voice and speed are unchanged since the last run is skipped.
-# A line in the json may carry its own "speed" (KOKORO_SPEED is the default).
+# A line in the json may carry its own "speed" (KOKORO_SPEED is the default) and
+# its own stock "voice" (for a cast of characters, e.g. the run's speakers); the
+# file may name its own output folder as "out" (relative to the repo root).
+# Lines without either hash exactly as before.
 #
 # The voice is a stock Kokoro voice, never a clone of anyone. Default am_michael,
 # an American male narrator; --voice or KOKORO_VOICE overrides it.
@@ -61,7 +64,10 @@ def ffmpeg():
 def main():
     import numpy as np, soundfile as sf
     from kokoro import KPipeline
+    global OUT
     doc = json.loads(lines_file.read_text())
+    if doc.get("out"):
+        OUT = ROOT / doc["out"]
     lines = [l for l in doc["lines"] if not only or l["id"] in only]
     OUT.mkdir(parents=True, exist_ok=True)
     man_path = OUT / "manifest.json"
@@ -73,12 +79,13 @@ def main():
     voiced = kept = 0
     for l in lines:
         sp = float(l.get("speed", SPEED))  # a line may set its own pace (the film's lines run a touch quicker)
-        h = hashlib.sha1(json.dumps([l["text"], "kokoro", VOICE, sp, SAY]).encode()).hexdigest()[:12]
+        vo = l.get("voice") or VOICE  # a line may name its own stock voice (a cast of characters)
+        h = hashlib.sha1(json.dumps([l["text"], "kokoro", vo, sp, SAY]).encode()).hexdigest()[:12]
         mp3, js = OUT / f"{l['id']}.mp3", OUT / f"{l['id']}.json"
         if not force and man["lines"].get(l["id"], {}).get("hash") == h and mp3.exists() and js.exists():
             kept += 1; continue
         audio, words, t0 = [], [], 0.0
-        for r in pipe(spoken(l["text"]), voice=VOICE, speed=sp):
+        for r in pipe(spoken(l["text"]), voice=vo, speed=sp):
             a = r.audio.numpy(); audio.append(a)
             for tok in r.tokens or []:
                 if tok.start_ts is None or not re.search(r"\w", tok.text):
@@ -97,6 +104,8 @@ def main():
         duration = round(len(pcm) / SR, 3)
         js.write_text(json.dumps({"id": l["id"], "text": l["text"], "duration": duration, "words": words}, indent=1, ensure_ascii=False) + "\n")
         man["lines"][l["id"]] = {"hash": h, "duration": duration, "file": f"{l['id']}.mp3", "timings": f"{l['id']}.json"}
+        if l.get("voice"):
+            man["lines"][l["id"]]["voice"] = vo
         voiced += 1
         print(f"kokoro: {l['id']}  {duration:.2f} s  {len(words)} words" + ("" if len(written) == len(words) else "  (word count differs from the text)"))
     ids = {l["id"] for l in doc["lines"]}

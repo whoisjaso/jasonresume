@@ -137,6 +137,13 @@ html:not(.lib-on) .sys { position: absolute; }
 .tile.is-focus .tile__frame { width: var(--tile-f); height: var(--tile-f); }
 .tile.is-focus .tile__frame::after { opacity: 1; transform: none; animation: breathe 2.4s ease-in-out infinite; }
 .tile.is-focus .tile__name { font-size: 19px; font-weight: 500; }
+/* a level of the run cleared: a small lit diamond beside the name */
+.tile.is-cleared .tile__name::after { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 0 2px 9px; background: var(--bone); transform: rotate(45deg); box-shadow: 0 0 8px rgba(246, 222, 170, .7); }
+/* the run's door in the bar, and its line on the card scene */
+.sys__play svg { width: 21px; height: 21px; opacity: 1; }
+.intro__scene--play .intro__acts { flex-wrap: wrap; }
+.intro__runline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.intro__runline .intro__textbtn svg { width: 18px; height: 18px; }
 .tile[data-size="sm"] { --s: calc(var(--tile) * 0.882); }
 .tile[data-size="sm"].is-focus .tile__frame { width: calc(var(--tile-f) * 0.864); height: calc(var(--tile-f) * 0.864); }
 .tile:focus-visible .tile__frame::after { opacity: 1; transform: none; }

@@ -21,6 +21,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <a class="sys__tro" href="#trophies" data-route="trophies" aria-label="Trophies, %%TROPHY_COUNT%%"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-medal"/></svg><b data-trophy-count>%%TROPHY_COUNT%%</b></a>
   <a class="sys__p2" href="#build" data-route="build" data-p2 aria-label="Player 2: build me for your role"><span class="p2__ring" data-p2-ring><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-plus"/></svg></span><span class="p2__txt"><small data-p2-k>Player 2</small><b data-p2-label>Press J to join</b></span></a>
   <nav class="sys__nav" aria-label="Quick actions">
+    <button class="sys__btn sys__play" type="button" data-play data-where="bar" aria-label="Play the run"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg><span>Play</span></button>
     <a class="sys__btn" href="%%PDF%%" data-resume="pdf" data-where="bar" download="Jason Obawemimo - Resume.pdf"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-doc"/></svg><span>Resume</span></a>
     <a class="sys__btn" href="mailto:%%EMAIL%%?subject=Your%20site%2C%20and%20a%20role" data-contact="email" data-where="bar"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-mail"/></svg><span>Email</span></a>
     <button class="sys__btn sys__score" type="button" data-toggle="sound" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-wave"/></svg><span data-score-label>Score off</span></button>
@@ -122,12 +123,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <div><dt>T</dt><dd>Trophies</dd></div>
       <div><dt>P</dt><dd>Profile</dd></div>
       <div><dt>J</dt><dd>Player 2: build me for your role, or your lot</dd></div>
+      <div><dt>G</dt><dd>Play the run: six levels through my record</dd></div>
       <div><dt>M</dt><dd>Score on or off</dd></div>
       <div><dt>R</dt><dd>Present the resume</dd></div>
       <div><dt>V</dt><dd>Check me</dd></div>
     </dl>
     <p class="fine">A gamepad works too: the left stick or the d-pad moves, the bottom face button opens, the right face button goes back.</p>
-    <p class="help__tour"><button class="btn btn--sm" type="button" data-tour-start data-where="help"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-move"/></svg>Take the tour</button> %%HELP_WATCH%%</p>
+    <p class="fine">In the run: arrows or WASD move, Space jumps (hold it to go higher), Shift runs, Esc pauses. On a phone, drag on the left and tap on the right.</p>
+    <p class="help__tour"><button class="btn btn--sm btn--primary" type="button" data-play data-where="help"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg>Play the run</button> <button class="btn btn--sm" type="button" data-tour-start data-where="help"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-move"/></svg>Take the tour</button> %%HELP_WATCH%%</p>
   </div>
 </dialog>
 

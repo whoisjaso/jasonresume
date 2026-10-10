@@ -18,7 +18,10 @@
 // silent exit) on both sizes; the walkthrough film (its dialog on the title
 // screen and its page) when it has been rendered; and the
 // text rules (no dashes, no percent signs, no phone number, every number in
-// llms.txt) over visible text, labels and attributes. Screenshots land in
+// llms.txt) over visible text, labels and attributes; and After Hours: The
+// Run (the curated Play door, #play, the canvas, keys and touch, a medal that
+// unlocks its trophy, pause, a cleared level, the phone controls, ?run= links,
+// a mocked community store). Screenshots land in
 // tools/verify/out/lib-*.png.
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'url';
@@ -46,14 +49,17 @@ async function ctxFor(w, h, mobile, extra = {}) {
   }
   await ctx.route(/calendly\.com/, r => r.abort());
   await ctx.route('**/api/guide', r => r.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unconfigured"}' }));
+  // the run's community store is optional: unless a check mocks one, it answers as if none is configured
+  await ctx.route('**/api/run**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":false}' }));
   return ctx;
 }
 async function textRules(p, label) {
   const t = await p.evaluate(() => {
     const attrs = [...document.querySelectorAll('[aria-label],[title],[alt],[placeholder]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('alt'), e.getAttribute('placeholder')].filter(Boolean).join(' ')).join(' ');
-    const data = ['library-data', 'onboarding-data', 'record-data'].map(id => (document.getElementById(id) || {}).textContent || '').join(' ');
+    const data = ['library-data', 'onboarding-data', 'record-data', 'run-data'].map(id => (document.getElementById(id) || {}).textContent || '').join(' ');
     // the desk demo runs a fictional buyer with example figures; its numbers are labelled as such, so they sit outside the facts check
-    const facts = [...document.body.querySelectorAll('[data-desk-app], .steps')].reduce((t, el) => t.replace(el.innerText, ''), document.body.innerText);
+    // so does the run's live play state (a timer, best times, the boards, tonight's count): game numbers, not claims
+    const facts = [...document.body.querySelectorAll('[data-desk-app], .steps, [data-run-live]')].reduce((t, el) => t.replace(el.innerText, ''), document.body.innerText);
     return { text: document.body.innerText, facts, attrs, data: data.replace(/calendly\.com\/jason-apohenia/g, ''), head: document.head.innerHTML };
   });
   const all = t.text + ' ' + t.attrs + ' ' + t.data;
@@ -273,6 +279,7 @@ if (!only || only === 'mobile') {
   await p.goto(URL0); await p.waitForTimeout(1000);
   if (!(await p.$('#intro'))) errs.push('title screen did not show to a return visitor');
   await p.click('[data-start="off"]'); await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
+  await p.waitForSelector('[data-scene="play"].is-on'); await p.waitForTimeout(400); await p.click('[data-play-alt]');
   await p.waitForSelector('[data-scene="build"].is-on'); await p.waitForTimeout(400); await p.keyboard.press('Escape');
   await p.waitForSelector('[data-scene="name"].is-on'); await p.waitForTimeout(400);
   const pre = await p.inputValue('#intro-name'); if (pre !== 'Pat') errs.push(`return visit name not prefilled: "${pre}"`);
@@ -364,7 +371,8 @@ if (!only || only === 'mobile') {
   const ev6 = []; await c6.route('**/api/track', r => { try { ev6.push(...JSON.parse(r.request().postData() || '{}').events); } catch {} r.fulfill({ status: 204, body: '' }); });
   const l6 = await c6.newPage(); l6.on('pageerror', e => errs.push(`lurker funnel pageerror: ${e.message}`));
   await l6.goto(URL0); await l6.waitForSelector('#intro'); await l6.click('[data-start="off"]'); await l6.waitForSelector('[data-scene="seat"].is-on');
-  await l6.click('[data-role="lurker"]'); await l6.waitForSelector('[data-scene="build"].is-on'); await l6.waitForTimeout(500);
+  await l6.click('[data-role="lurker"]'); await l6.waitForSelector('[data-scene="play"].is-on'); await l6.waitForTimeout(400); await l6.click('[data-play-alt]');
+  await l6.waitForSelector('[data-scene="build"].is-on'); await l6.waitForTimeout(500);
   await l6.click('[data-build-menu] [data-id="sales"]'); await l6.waitForSelector('[data-scene="name"].is-on'); await l6.fill('#intro-name', 'Lou'); await l6.keyboard.press('Enter');
   await l6.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await l6.waitForTimeout(600);
   // the seat promised no pitch: the card scene is the card, Enter and Save, nothing else
@@ -546,15 +554,169 @@ if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'after-hours.mp4')) && (!onl
   await ctx.close();
 }
 
-// Privacy: with Global Privacy Control or Do Not Track on, nothing reaches /api/track
+
+// After Hours: The Run. The curated door for someone just looking, #play, the
+// canvas drawing, keys that move and jump, a medal that unlocks its trophy, the
+// pause menu, a level cleared, the phone controls sideways and the turn card
+// upright, ?run= links, a mocked community store, and the text rules over it all.
+{
+  const pixels = p => p.evaluate(() => {
+    const c = document.querySelector('.run__cv'); if (!c || !c.width) return { w: 0, var: 0 };
+    const t = document.createElement('canvas'); t.width = 64; t.height = 36; const g = t.getContext('2d'); g.drawImage(c, 0, 0, 64, 36);
+    const d = g.getImageData(0, 0, 64, 36).data; let s = 0, s2 = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) { const l = (d[i] + d[i + 1] + d[i + 2]) / 3; s += l; s2 += l * l; n++; }
+    const m = s / n; return { w: c.width, mean: Math.round(m), var: Math.round(s2 / n - m * m) };
+  });
+  const st = p => p.evaluate(() => window.JG_RUN.debug.state());
+  for (const [name, w, h, mobile] of [['run desktop', 1440, 900, false], ['run phone', 844, 390, true]]) {
+    if (only && only !== (mobile ? 'mobile' : 'desktop')) continue;
+    const ctx = await ctxFor(w, h, mobile);
+    const ev = []; await ctx.route('**/api/track', r => { try { ev.push(...JSON.parse(r.request().postData() || '{}').events.map(e => e.event)); } catch {} r.fulfill({ status: 204, body: '' }); });
+    const p = await ctx.newPage();
+    p.on('pageerror', e => errs.push(`${name} pageerror: ${e.message}`));
+    p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`${name} console: ${m.text().slice(0, 160)}`); });
+    // the curated door: just looking meets Play, one press into level 1
+    await p.goto(URL0); await p.waitForSelector('[data-start="off"]'); await p.click('[data-start="off"]');
+    await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
+    await p.waitForSelector('[data-scene="play"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name}: just looking did not meet Play`));
+    await p.waitForTimeout(500); await textRules(p, `${name} play scene`); await overflow(p, `${name} play scene`);
+    await p.screenshot({ path: path.join(OUT, `run-${mobile ? 'phone' : 'desktop'}-door.png`) });
+    const t0 = Date.now();
+    await p.click('[data-scene="play"] [data-play-go]');
+    const opened = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen() && window.JG_RUN.debug.state().level, null, { timeout: 6000 }).then(() => true, () => false);
+    if (!opened) { errs.push(`${name}: Play did not open the run`); await ctx.close(); continue; }
+    const lv = (await st(p)).level;
+    if (lv !== 'neuroscience') errs.push(`${name}: Play should start level 1 (neuroscience), started ${lv}`);
+    notes.push(`${name}: Play to the first level in ${Date.now() - t0} ms`);
+    await p.waitForTimeout(1200);
+    const px = await pixels(p);
+    if (!px.w || px.var < 40) errs.push(`${name}: the canvas looks blank ${JSON.stringify(px)}`);
+    if (!/^#play\//.test(await p.evaluate(() => location.hash))) errs.push(`${name}: the address does not carry #play/<level>`);
+    const s0 = await st(p);
+    if (mobile) {
+      const vis = await p.evaluate(() => { const v = sel => { const e = document.querySelector(sel); if (!e) return false; const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 30 && r.height > 30 && cs.display !== 'none' && +cs.opacity > 0.3 && r.right <= innerWidth && r.bottom <= innerHeight; }; return { stick: v('.run__stick'), jump: v('.run__jump'), turn: !document.querySelector('[data-run-turn]').hidden }; });
+      if (!vis.stick || !vis.jump || vis.turn) errs.push(`${name}: sideways should show the stick and the jump button, no turn card ${JSON.stringify(vis)}`);
+      else notes.push(`${name}: sideways, the stick and the jump button are on screen`);
+      const cdp = await ctx.newCDPSession(p);
+      const tp = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+      // the jump button, a real touch
+      await tp('touchStart', [{ x: w * 0.85, y: h * 0.75, id: 2 }]); await p.waitForTimeout(150);
+      const sj = await st(p); await tp('touchEnd', []); await p.waitForTimeout(700);
+      if (!(sj.y < s0.y - 10)) errs.push(`${name}: touching the right side did not jump ${s0.y} to ${sj.y}`);
+      // the stick, dragged right where the thumb lands
+      const sx0 = (await st(p)).x;
+      await tp('touchStart', [{ x: 120, y: h - 90, id: 1 }]);
+      for (let i = 1; i <= 6; i++) { await tp('touchMove', [{ x: 120 + i * 10, y: h - 90, id: 1 }]); await p.waitForTimeout(20); }
+      await p.waitForTimeout(700); await tp('touchEnd', []);
+      const sx1 = (await st(p)).x;
+      if (!(sx1 > sx0 + 40)) errs.push(`${name}: dragging the stick did not move the player ${sx0} to ${sx1}`); else notes.push(`${name}: the stick moves, the right side jumps`);
+    } else {
+      await p.keyboard.down('ArrowRight'); await p.waitForTimeout(600); await p.keyboard.up('ArrowRight');
+      const s1 = await st(p);
+      await p.keyboard.down('Space'); await p.waitForTimeout(180);
+      const s2 = await st(p);
+      await p.keyboard.up('Space'); await p.waitForTimeout(700);
+      if (!(s1.x > s0.x + 60)) errs.push(`${name}: the right arrow did not move the player ${s0.x} to ${s1.x}`);
+      if (!(s2.y < s1.y - 20)) errs.push(`${name}: Space did not jump ${s1.y} to ${s2.y}`);
+      if (s1.x > s0.x + 60 && s2.y < s1.y - 20) notes.push(`${name}: arrows move, Space jumps`);
+    }
+    await p.screenshot({ path: path.join(OUT, `run-${mobile ? 'phone' : 'desktop'}-playing.png`) });
+    // a medal: picked up, flown to the HUD, the trophy unlocked in the library's own store
+    await p.evaluate(() => window.JG_RUN.debug.warpTo('essentials')); await p.waitForTimeout(500);
+    const md = await p.evaluate(() => ({ seen: JSON.parse(localStorage.getItem('jg_trophies') || '[]').includes('essentials'), li: !!document.querySelector('#trophies [data-trophy="essentials"].is-seen'), nug: !document.querySelector('[data-run-nug]').hidden && /Google AI Essentials/.test(document.querySelector('[data-run-nug]').textContent) }));
+    if (!md.seen || !md.li || !md.nug) errs.push(`${name}: the medal did not unlock its trophy or show its fact ${JSON.stringify(md)}`); else notes.push(`${name}: a medal unlocks its trophy (essentials) and shows its fact`);
+    await p.waitForTimeout(500); await p.screenshot({ path: path.join(OUT, `run-${mobile ? 'phone' : 'desktop'}-medal.png`) });
+    await textRules(p, `${name} playing`); await overflow(p, `${name} playing`);
+    // the pause menu, and back
+    if (mobile) await p.click('[data-run-pause]'); else await p.keyboard.press('Escape');
+    await p.waitForTimeout(500);
+    const pm = await p.evaluate(() => ({ open: !document.querySelector('[data-run-panel]').hidden, rows: [...document.querySelectorAll('[data-run-sheet] .menu__row')].map(r => r.textContent.trim()), fine: document.querySelector('[data-run-sheet]').textContent }));
+    if (!pm.open || !pm.rows.some(r => /Continue/.test(r)) || !pm.rows.some(r => /Skip to the resume/.test(r)) || !pm.rows.some(r => /Quit to the library/.test(r)) || !/characters are fictional/i.test(pm.fine)) errs.push(`${name}: pause menu ${JSON.stringify({ ...pm, fine: undefined })}`);
+    await textRules(p, `${name} pause`); await overflow(p, `${name} pause`);
+    await p.screenshot({ path: path.join(OUT, `run-${mobile ? 'phone' : 'desktop'}-pause.png`) });
+    await p.click('[data-act="resume"]'); await p.waitForTimeout(300);
+    if (await p.evaluate(() => !document.querySelector('[data-run-panel]').hidden || !window.JG_RUN.debug.state().running)) errs.push(`${name}: Continue did not resume`); else notes.push(`${name}: the pause menu opens and Continue resumes`);
+    // the level cleared: the complete screen
+    await p.evaluate(() => window.JG_RUN.debug.warpGoal()); await p.waitForTimeout(2600);
+    const cp = await p.evaluate(() => ({ panel: window.JG_RUN.debug.state().panel, next: !!document.querySelector('[data-act="next"]'), title: !!document.querySelector('[data-act="title"]') }));
+    if (cp.panel !== 'complete' || !cp.next || !cp.title) errs.push(`${name}: no level-complete screen ${JSON.stringify(cp)}`); else notes.push(`${name}: level cleared, Next level and Open the title offered`);
+    await textRules(p, `${name} complete`); await overflow(p, `${name} complete`);
+    await p.screenshot({ path: path.join(OUT, `run-${mobile ? 'phone' : 'desktop'}-complete.png`) });
+    // Open the title: the run closes, the title page opens, its tile wears the cleared mark
+    await p.click('[data-act="title"]');
+    await p.waitForFunction(() => !!document.querySelector('#title-neuroscience.is-open'), null, { timeout: 4000 }).catch(() => {}); await p.waitForTimeout(300);
+    const lib = await p.evaluate(() => ({ run: document.documentElement.classList.contains('run-on'), open: !!document.querySelector('#title-neuroscience.is-open'), cleared: !!document.querySelector('.tile[data-title="neuroscience"].is-cleared') }));
+    if (lib.run || !lib.open || !lib.cleared) errs.push(`${name}: Open the title ${JSON.stringify(lib)}`); else notes.push(`${name}: Open the title lands on its page, its tile marked cleared`);
+    await p.evaluate(() => dispatchEvent(new Event('pagehide'))); await p.waitForTimeout(700);
+    for (const e of ['intro_play', 'game_started', 'game_medal', 'game_level_finished']) if (!ev.includes(e)) errs.push(`${name}: never sent ${e}`);
+    await ctx.close();
+  }
+
+  if (!only || only === 'mobile') {
+    // upright: the game plays at once, the turn card suggests sideways, the controls sit under it
+    const ctx = await ctxFor(390, 844, true); await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+    const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`run upright pageerror: ${e.message}`));
+    await p.goto(URL0 + '?run=triple-j');
+    const ok = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 8000 }).then(() => true, () => false);
+    if (!ok) errs.push('?run=triple-j did not drop into the run');
+    await p.waitForTimeout(1200);
+    const up = await p.evaluate(() => ({ intro: !!document.getElementById('intro'), level: window.JG_RUN.debug.state().level, turn: !document.querySelector('[data-run-turn]').hidden, upright: document.getElementById('run').classList.contains('is-upright'), jump: document.querySelector('.run__jump').getBoundingClientRect().bottom <= innerHeight }));
+    if (up.intro || up.level !== 'triple-j') errs.push(`?run= should skip the title screen and open its level ${JSON.stringify(up)}`); else notes.push('?run=triple-j: straight into Triple J Auto, no title screen');
+    if (!up.turn || !up.upright || !up.jump) errs.push(`upright phone: turn card and controls ${JSON.stringify(up)}`); else notes.push('upright phone: the turn card shows, play continues upright with the controls underneath');
+    await p.screenshot({ path: path.join(OUT, 'run-upright.png') });
+    await textRules(p, 'run upright'); await overflow(p, 'run upright');
+    await ctx.close();
+  }
+
+  if (!only || only === 'desktop') {
+    // a community store answering: the crew line, the board, ghosts drawn, a run posted; #play/<level> after the title screen
+    const ctx = await ctxFor(1440, 900, false); await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+    let posted = 0;
+    await ctx.route('**/api/run**', r => {
+      if (r.request().method() === 'POST') { posted++; return r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":true,"best":true,"rank":1}' }); }
+      const s = Array.from({ length: 60 }, (_, i) => [64 + i * 12, 340, 1]);
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ on: true, crew: 7, board: [{ pid: 'abcd', name: 'Night Shift', ms: 41000, medals: 3, c: { me: 1 } }, { pid: 'efgh', name: 'Player', ms: 52000, medals: 1, c: { me: 0, skin: 3, hair: 2, outfit: 3, glasses: 0 } }], ghosts: [{ pid: 'abcd', c: { me: 1 }, s }] }) });
+    });
+    const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`run community pageerror: ${e.message}`));
+    await p.goto(URL0 + '?from=test#play/the-inbound'); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]');
+    const ok = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 8000 }).then(() => true, () => false);
+    if (!ok || (await st(p)).level !== 'the-inbound') errs.push('#play/the-inbound did not open that level after the title screen'); else notes.push('#play/the-inbound: the title screen first, then that level');
+    await p.waitForTimeout(800); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(500); await p.keyboard.up('ArrowRight'); await p.waitForTimeout(400);
+    const crew = await p.evaluate(() => { const c = document.querySelector('[data-run-crew]'); return c && !c.hidden ? c.textContent : ''; });
+    if (!/7 players have walked the lot tonight/.test(crew)) errs.push(`community: the crew line did not show "${crew}"`);
+    await p.screenshot({ path: path.join(OUT, 'run-community-ghost.png') });
+    await p.evaluate(() => window.JG_RUN.debug.warpGoal()); await p.waitForTimeout(2800);
+    const bd = await p.evaluate(() => ({ rows: document.querySelectorAll('[data-run-board] .run__rank li').length, text: (document.querySelector('[data-run-board]') || {}).textContent || '' }));
+    if (bd.rows !== 2 || !/Night Shift/.test(bd.text) || !posted) errs.push(`community: board ${JSON.stringify(bd)} posted ${posted}`); else notes.push('community: crew line, board and a posted run with a store; nothing with none');
+    await textRules(p, 'run community'); await overflow(p, 'run community');
+    await p.screenshot({ path: path.join(OUT, 'run-community.png') });
+    await ctx.close();
+    // G from the library, and Quit back to it
+    const c2 = await ctxFor(1440, 900, false); await c2.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+    const q = await c2.newPage(); q.on('pageerror', e => errs.push(`run G pageerror: ${e.message}`));
+    await q.goto(URL0); await q.waitForSelector('#intro'); await q.click('[data-intro-skip]'); await q.waitForTimeout(1000);
+    await q.keyboard.press('g');
+    const g = await q.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 6000 }).then(() => true, () => false);
+    if (!g) errs.push('G did not open the run'); else notes.push('G opens the run from the library');
+    await q.waitForTimeout(600); await q.keyboard.press('Escape'); await q.waitForTimeout(400); await q.click('[data-act="quit"]'); await q.waitForTimeout(700);
+    if (await q.evaluate(() => document.documentElement.classList.contains('run-on') || document.documentElement.classList.contains('is-locked'))) errs.push('Quit to the library left the run on or the page locked'); else notes.push('Quit to the library: closed, unlocked');
+    await c2.close();
+  }
+}
+
+// Privacy: with Global Privacy Control or Do Not Track on, nothing reaches /api/track or /api/run
 for (const flag of ['globalPrivacyControl', 'doNotTrack']) {
   if (only && only !== 'desktop') break;
   const ctx = await ctxFor(1280, 800, false);
   await ctx.addInitScript(f => Object.defineProperty(Navigator.prototype, f, { get: () => f === 'doNotTrack' ? '1' : true }), flag);
   let sent = 0; await ctx.route('**/api/track', r => { sent++; r.fulfill({ status: 204, body: '' }); });
+  await ctx.route('**/api/run**', r => { sent++; r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":true,"board":[],"ghosts":[],"crew":3}' }); });
   const p = await ctx.newPage();
   await p.goto(URL0, { waitUntil: 'domcontentloaded' }); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(900);
   await p.evaluate(() => window.JG_GAME && window.JG_GAME.open('triple-j', 'test')); await p.waitForTimeout(400);
+  // the run too: no ghosts fetched, no runs sent
+  await p.evaluate(() => window.JG_GAME.play('obavia', 'test')); await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 6000 }).catch(() => {});
+  await p.waitForTimeout(600); await p.evaluate(() => window.JG_RUN && window.JG_RUN.debug.warpGoal()); await p.waitForTimeout(1600);
   await p.evaluate(() => dispatchEvent(new Event('pagehide'))); await p.waitForTimeout(800);
   if (sent) errs.push(`${flag}: ${sent} request(s) reached /api/track`); else notes.push(`${flag} on: nothing sent`);
   await ctx.close();

@@ -118,7 +118,7 @@
   addEventListener("keydown", function (e) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-    if (root.classList.contains("intro-on")) return;
+    if (root.classList.contains("intro-on") || root.classList.contains("run-on")) return;
     if (document.querySelector("dialog[open]")) return;
     var k = e.key;
     if (k === "r" || k === "R") { e.preventDefault(); window.JG_OPEN("deck", "key"); }

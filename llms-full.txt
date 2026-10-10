@@ -249,6 +249,12 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - Book a thirty-minute call with Jason, Central time: https://calendly.com/jason-apohenia/30min.
 - Jason's Instagram is https://www.instagram.com/0bawemimo/ (the handle is his surname with a zero in place of the first letter).
 
+## The run
+
+- After Hours: The Run is a short side-scrolling game on the home page (Play, the G key, or https://jasonobawemimo.com/#play). Six levels follow Jason's record: Neuroscience, Triple J Auto, Lead to Title, The Inbound, Prospector, and Obavia (in development, with no trophies).
+- Each medal found in a level unlocks one of the site's verified trophies and shows its fact. Finding all of them earns the platinum. It plays with a keyboard, a gamepad, or touch controls on a phone.
+- Jason's lines in it are captions; where they are voiced, it is his own voice, synthesized from his recording with his permission. The other characters are fictional and use stock Kokoro voices (open source).
+
 ## The walkthrough
 
 - A narrated walkthrough of this site: After Hours, a film of about a minute and a quarter, at https://jasonobawemimo.com/walkthrough.html (wide and vertical cuts, with captions), and a guided tour inside the home page ("Take the tour" on the title screen, or https://jasonobawemimo.com/?tour=1).

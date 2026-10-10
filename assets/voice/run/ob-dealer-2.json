@@ -1,0 +1,32 @@
+{
+ "id": "ob-dealer-2",
+ "text": "Then let's have the conversation.",
+ "duration": 2.175,
+ "words": [
+  {
+   "w": "Then",
+   "s": 0.175,
+   "e": 0.3
+  },
+  {
+   "w": "let's",
+   "s": 0.3,
+   "e": 0.5
+  },
+  {
+   "w": "have",
+   "s": 0.5,
+   "e": 0.662
+  },
+  {
+   "w": "the",
+   "s": 0.662,
+   "e": 0.75
+  },
+  {
+   "w": "conversation.",
+   "s": 0.75,
+   "e": 1.9
+  }
+ ]
+}

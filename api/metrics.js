@@ -31,7 +31,8 @@ const POINTS = {
   questions_mailed: 15, questions_copied: 8, forward_copied: 10, share_opened: 10, trailer_finished: 3, cta_click: 2, outbound_click: 2,
   contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6,
   story_opened: 2, trophy_unlocked: 0.5, level_clear: 8, build_chosen: 5, build_edited: 0.5, card_saved: 12, build_link_copied: 12,
-  listing_matched: 15, build_resume: 10, build_viewed: 6, build_sent: 40
+  listing_matched: 15, build_resume: 10, build_viewed: 6, build_sent: 40,
+  intro_play: 2, game_started: 3, game_level_finished: 4, game_medal: 1, game_platinum: 15, game_quit: 0, game_secret: 1, game_character: 1, game_shared: 12, game_clip: 12
 };
 const TERMINAL = new Set(["call_booked", "lead_sent", "questions_mailed", "build_sent"]);
 const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology", data: "Data and Databases",
@@ -43,7 +44,8 @@ const STORY = {
   questions_mailed: "emailed their questions", forward_copied: "copied the forward blurb", share_opened: "shared the site", contact_click: "clicked email",
   book_click: "clicked the calendar", call_booked: "booked a call", lead_sent: "sent a note", name_given: "said hello", reel_finished: "watched their cut",
   build_chosen: "built a card", card_saved: "saved their card", build_link_copied: "copied their build link", listing_matched: "matched a job listing",
-  build_resume: "took the resume for their role", build_viewed: "opened a shared build", build_sent: "sent me their build", level_clear: "earned the platinum"
+  build_resume: "took the resume for their role", build_viewed: "opened a shared build", build_sent: "sent me their build", level_clear: "earned the platinum",
+  game_level_finished: "cleared a level of the run", game_platinum: "found every medal in the run", game_shared: "shared their run", game_clip: "saved a clip of the run"
 };
 
 async function hogql(host, id, key, query) {
