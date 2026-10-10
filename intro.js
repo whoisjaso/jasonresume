@@ -68,7 +68,12 @@
   /* the walkthrough film (assemble_home.py adds O.walk once assets/film/after-hours.mp4 exists) and the live tour (home page only) */
   var WALK = O.walk || null, TOUR = !!document.querySelector('script[src^="tour.js"]');
   /* the run is the front door wherever it lives (the home page carries #run-data): Play is the first and largest thing on the title screen, over real play */
-  var TPLAY = !!(PLAY && t.play && document.getElementById("run-data"));
+  /* someone sent with a purpose keeps the guided door (Start, who's playing, the build): a ?for=<role>
+     link from an application, a legacy ?cut=, or ?door=library (the link to give a recruiter who should
+     meet the record first). Everyone else meets the start screen. */
+  var DOOR = /[?&](door=library|cut=)/.test(location.search) || !!FOR;
+  if (/[?&]door=library/.test(location.search)) { try { var u2 = new URL(location.href); u2.searchParams.delete("door"); history.replaceState(null, "", u2.pathname + u2.search + u2.hash); } catch (e) {} }
+  var TPLAY = !!(PLAY && t.play && !DOOR && document.getElementById("run-data"));
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");
   var el = document.createElement("div");
@@ -86,13 +91,6 @@
         '<p class="intro__line">' + E(t.line) + "</p>" +
         '<div class="intro__start"><button class="btn btn--primary btn--lg intro__play" type="button" data-title-play><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(t.play) + "</button></div>" +
         '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
-        /* the other ways in, small along the bottom edge, the way a console lists its options */
-        '<div class="intro__foot">' +
-          '<button class="intro__textbtn" type="button" data-start="on">' + E(t.library) + "</button>" +
-          '<button class="intro__textbtn" type="button" data-start="off">' + E(t.muted_library || "Library, muted") + "</button>" +
-          (TOUR ? '<button class="intro__textbtn" type="button" data-intro-tour>' + E(t.tour || "Take the tour") + "</button>" : "") +
-          (WALK ? '<button class="intro__textbtn" type="button" data-watch>' + E(t.watch || "Watch the walkthrough") + "</button>" : "") +
-        "</div>" +
       "</section>"
     :
       '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +

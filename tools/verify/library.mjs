@@ -91,7 +91,7 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`${name} console: ${m.text().slice(0, 160)}`); });
   const shot = async label => p.screenshot({ path: path.join(OUT, `lib-${name}-${label}.png`) });
   const t0 = Date.now();
-  await p.goto(URL0, { waitUntil: 'domcontentloaded' });
+  await p.goto(URL0 + '?door=library', { waitUntil: 'domcontentloaded' });
 
   // The loading screen first: a line drawing of the lot, measured on real loading, then the title screen
   const boot = await p.evaluate(() => { const b = document.getElementById('boot'); return { on: !!b && getComputedStyle(b).display !== 'none', strokes: b ? b.querySelectorAll('.boot__lines path').length : 0 }; });
@@ -328,7 +328,7 @@ if (!only || only === 'mobile') {
   await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`doors pageerror: ${e.message}`));
   const score = []; p.on('request', r => { if (/assets\/score\//.test(r.url())) score.push(r.url()); });
-  await p.goto(URL0); await p.waitForSelector('#intro');
+  await p.goto(URL0 + '?door=library'); await p.waitForSelector('#intro');
   await p.click('[data-start="off"]'); await p.waitForSelector('[data-scene="seat"].is-on');
   await p.click('[data-role="partner"]'); await p.waitForSelector('[data-scene="build"].is-on'); await p.waitForTimeout(500);
   if (!/slowing your lot/i.test(await p.textContent('[data-build-h]'))) errs.push('dealer seat did not ask about the lot');
@@ -340,7 +340,7 @@ if (!only || only === 'mobile') {
   else notes.push('start muted: no audio fetched');
   const f = await p.evaluate(() => document.querySelector('.tile.is-focus')?.dataset.title);
   if (f !== 'the-inbound') errs.push(`dealer seat should focus The Inbound, focused ${f}`); else notes.push('dealer seat: library reordered, The Inbound focused');
-  await p.goto(URL0); await p.waitForTimeout(1000);
+  await p.goto(URL0 + '?door=library'); await p.waitForTimeout(1000);
   if (!(await p.$('#intro'))) errs.push('title screen did not show to a return visitor');
   await p.click('[data-start="off"]'); await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
   await p.waitForSelector('[data-scene="play"].is-on'); await p.waitForTimeout(400); await p.click('[data-play-alt]');
@@ -408,7 +408,7 @@ if (!only || only === 'mobile') {
   // The dealer: the lot answer and its call to action, then one quiet line for a dealer who is hiring
   const c5 = await ctxFor(390, 844, true); await c5.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
   const d5 = await c5.newPage(); d5.on('pageerror', e => errs.push(`dealer funnel pageerror: ${e.message}`));
-  await d5.goto(URL0); await d5.waitForSelector('#intro'); await d5.click('[data-start="off"]'); await d5.waitForSelector('[data-scene="seat"].is-on');
+  await d5.goto(URL0 + '?door=library'); await d5.waitForSelector('#intro'); await d5.click('[data-start="off"]'); await d5.waitForSelector('[data-scene="seat"].is-on');
   await d5.click('[data-role="partner"]'); await d5.waitForSelector('[data-scene="build"].is-on'); await d5.waitForTimeout(500);
   await d5.click('[data-build-menu] [data-id="paperwork"]'); await d5.waitForSelector('[data-scene="name"].is-on'); await d5.fill('#intro-name', 'Pat'); await d5.keyboard.press('Enter');
   await d5.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await d5.waitForTimeout(600);
@@ -434,7 +434,7 @@ if (!only || only === 'mobile') {
   const c6 = await ctxFor(390, 844, true); await c6.grantPermissions(['clipboard-read', 'clipboard-write']);
   const ev6 = []; await c6.route('**/api/track', r => { try { ev6.push(...JSON.parse(r.request().postData() || '{}').events); } catch {} r.fulfill({ status: 204, body: '' }); });
   const l6 = await c6.newPage(); l6.on('pageerror', e => errs.push(`lurker funnel pageerror: ${e.message}`));
-  await l6.goto(URL0); await l6.waitForSelector('#intro'); await l6.click('[data-start="off"]'); await l6.waitForSelector('[data-scene="seat"].is-on');
+  await l6.goto(URL0 + '?door=library'); await l6.waitForSelector('#intro'); await l6.click('[data-start="off"]'); await l6.waitForSelector('[data-scene="seat"].is-on');
   await l6.click('[data-role="lurker"]'); await l6.waitForSelector('[data-scene="play"].is-on'); await l6.waitForTimeout(400); await l6.click('[data-play-alt]');
   await l6.waitForSelector('[data-scene="build"].is-on'); await l6.waitForTimeout(500);
   await l6.click('[data-build-menu] [data-id="sales"]'); await l6.waitForSelector('[data-scene="name"].is-on'); await l6.fill('#intro-name', 'Lou'); await l6.keyboard.press('Enter');
@@ -459,7 +459,7 @@ if (!only || only === 'mobile') {
   const c7 = await ctxFor(390, 844, true); await c7.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
   const m7 = await c7.newPage(); m7.on('pageerror', e => errs.push(`phone paste pageerror: ${e.message}`));
   const BDC = fs.readFileSync(path.join(TOOLS, 'verify', 'match.test.mjs'), 'utf8').match(/bdc: `([\s\S]*?)`/)[1];
-  await m7.goto(URL0); await m7.waitForSelector('#intro'); await m7.click('[data-start="off"]'); await m7.waitForSelector('[data-scene="seat"].is-on');
+  await m7.goto(URL0 + '?door=library'); await m7.waitForSelector('#intro'); await m7.click('[data-start="off"]'); await m7.waitForSelector('[data-scene="seat"].is-on');
   await m7.click('[data-role="interviewer"]'); await m7.waitForSelector('[data-scene="build"].is-on'); await m7.waitForTimeout(500);
   await m7.click('[data-build-menu] [data-id="paste"]'); await m7.waitForTimeout(400);
   await m7.fill('#intro-list', BDC); await m7.click('[data-paste] button[type="submit"]'); await m7.waitForTimeout(900);
@@ -538,7 +538,7 @@ if (!only || only === 'desktop') {
     const voice = []; p.on('request', r => { if (/assets\/voice\//.test(r.url())) voice.push(r.url()); });
     p.on('pageerror', e => errs.push(`tour ${name} pageerror: ${e.message}`));
     p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`tour ${name} console: ${m.text().slice(0, 160)}`); });
-    await p.goto(URL0); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
+    await p.goto(URL0 + '?door=library'); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
     await p.click('[data-intro-tour]');
     await p.waitForSelector('.tour:not([hidden])', { timeout: 6000 }).catch(() => errs.push(`tour ${name}: Take the tour did not start it`));
     const n = TOURD.steps.length;
@@ -575,7 +575,7 @@ if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'after-hours.mp4')) && (!onl
   const ctx = await ctxFor(1440, 900, false);
   await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`film pageerror: ${e.message}`));
-  await p.goto(URL0); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
+  await p.goto(URL0 + '?door=library'); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
   await p.click('#intro [data-watch]');
   await p.waitForSelector('dialog.film-sheet[open] video', { timeout: 4000 }).catch(() => errs.push('film: Watch the walkthrough opened nothing'));
   await p.waitForTimeout(1500);
@@ -604,6 +604,23 @@ if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'after-hours.mp4')) && (!onl
   if (vis) errs.push('a crawler saw the loading screen'); else notes.push('crawlers: no loading screen');
   await ctx.close();
 }
+
+// The start screen: a plain visit meets one thing to press, Play, over real play, and nothing else
+for (const [vw, vh, mob] of [[1440, 900, false], [844, 390, true], [390, 844, true]]) {
+  const ctx = await ctxFor(vw, vh, mob);
+  await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":false}' }));
+  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`start ${vw}: ${e.message}`));
+  await p.goto(URL0); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 12000 }).catch(() => errs.push(`start ${vw}: the loading screen never left`));
+  const st = await p.evaluate(() => { const sc = document.querySelector('#intro [data-scene="title"]'); return { play: !!document.querySelector('#intro.intro--play [data-title-play]'), buttons: sc ? sc.querySelectorAll('button, a').length : -1, foot: !!document.querySelector('.intro__foot, .boot__foot'), skip: !!document.querySelector('#intro [data-intro-skip]') }; });
+  if (!st.play) errs.push(`start ${vw}: no Play on the start screen`);
+  if (st.buttons !== 1) errs.push(`start ${vw}: the start screen has ${st.buttons} things to press, not one`);
+  if (st.foot) errs.push(`start ${vw}: links along the bottom are back`);
+  if (!st.skip) errs.push(`start ${vw}: no Skip`);
+  await p.click('[data-title-play]');
+  await p.waitForSelector('.run canvas, canvas.run__cv, .run', { timeout: 8000 }).catch(() => errs.push(`start ${vw}: Play did not open the run`));
+  await ctx.close();
+}
+notes.push('start screen: one Play, nothing else, and Play opens the run');
 
 // No JavaScript: the whole record is a readable document
 {
@@ -640,7 +657,7 @@ if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'after-hours.mp4')) && (!onl
     p.on('pageerror', e => errs.push(`${name} pageerror: ${e.message}`));
     p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`${name} console: ${m.text().slice(0, 160)}`); });
     // the curated door: just looking meets Play, one press into level 1
-    await p.goto(URL0); await p.waitForSelector('[data-start="off"]'); await p.click('[data-start="off"]');
+    await p.goto(URL0 + '?door=library'); await p.waitForSelector('[data-start="off"]'); await p.click('[data-start="off"]');
     await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
     await p.waitForSelector('[data-scene="play"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name}: just looking did not meet Play`));
     await p.waitForTimeout(500); await textRules(p, `${name} play scene`); await overflow(p, `${name} play scene`);

@@ -383,10 +383,7 @@ html.intro-pending body > :not(#intro):not(#boot):not(script):not(dialog):not(.t
 .intro--play .intro__press { margin-top: 22px; }
 .intro.intro--play:not(.is-started) .intro__shade { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(10, 15, 13, .72) 0%, rgba(10, 15, 13, .5) 55%, rgba(10, 15, 13, .2) 80%), linear-gradient(0deg, rgba(10, 15, 13, .7) 0%, rgba(10, 15, 13, 0) 30%), linear-gradient(180deg, rgba(10, 15, 13, .7) 0%, rgba(10, 15, 13, 0) 20%); }
 .intro--play .intro__attract { object-position: 50% 55%; }
-.intro--play .intro__foot { position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 26px; padding: 0 var(--pad); }
-.intro--play .intro__foot .intro__textbtn { min-height: 36px; font-size: 13px; letter-spacing: .04em; color: var(--ash); }
-.intro--play .intro__foot .intro__textbtn:hover, .intro--play .intro__foot .intro__textbtn:focus-visible { color: var(--bone); }
-@media (max-height: 480px) and (orientation: landscape) { .intro--play .intro__foot { bottom: 6px; gap: 0 18px; } .intro--play .intro__press { margin-top: 10px; } }
+@media (max-height: 480px) and (orientation: landscape) { .intro--play .intro__press { margin-top: 10px; } }
 @media (max-width: 759px) { .intro--play .intro__scene--title { bottom: 0; } .intro--play .intro__start .intro__play { width: min(320px, 100%); } }
 .intro__start .intro__play svg { width: 20px; height: 20px; }
 @media (max-height: 480px) and (orientation: landscape) {
