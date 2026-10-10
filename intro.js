@@ -67,29 +67,48 @@
   var t = O.title, mob = innerWidth < 760;
   /* the walkthrough film (assemble_home.py adds O.walk once assets/film/after-hours.mp4 exists) and the live tour (home page only) */
   var WALK = O.walk || null, TOUR = !!document.querySelector('script[src^="tour.js"]');
+  /* the run is the front door wherever it lives (the home page carries #run-data): Play is the first and largest thing on the title screen, over real play */
+  var TPLAY = !!(PLAY && t.play && document.getElementById("run-data"));
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");
   var el = document.createElement("div");
-  el.id = "intro"; el.className = "intro";
+  el.id = "intro"; el.className = "intro" + (TPLAY ? " intro--play" : "");
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "intro-title");
   el.innerHTML =
-    '<div class="intro__art" aria-hidden="true"><img src="' + art + (mob ? "-m.webp" : "-1920.webp") + '" alt="" decoding="async" fetchpriority="high" /></div>' +
+    '<div class="intro__art" aria-hidden="true"><img src="' + art + (mob ? "-m.webp" : "-1920.webp") + '" alt="" decoding="async" fetchpriority="high" />' +
+      (TPLAY && t.attract && !RM ? '<video class="intro__attract" muted loop playsinline preload="none" poster="' + t.attract + '.jpg"><source src="' + t.attract + '.webm" type="video/webm" /><source src="' + t.attract + '.mp4" type="video/mp4" /></video>' : "") + "</div>" +
     '<div class="intro__shade" aria-hidden="true"></div>' +
     '<button class="intro__skip" type="button" data-intro-skip>' + E(t.skip) + "</button>" +
-    '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
-      '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
-      '<p class="intro__line">' + E(t.line) + "</p>" +
-      '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
-      '<div class="intro__start">' +
-        '<button class="btn btn--primary btn--lg" type="button" data-start="on"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.start) + "</button>" +
-        '<button class="btn btn--ghost" type="button" data-start="off">' + E(t.muted) + "</button>" +
-      "</div>" +
-      '<p class="intro__fine">' + E(t.note) + "</p>" +
-      (TOUR || WALK ? '<div class="intro__more">' +
-        (TOUR ? '<button class="intro__textbtn" type="button" data-intro-tour><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-move"/></svg>' + E(t.tour || "Take the tour") + "</button>" : "") +
-        (WALK ? '<button class="intro__textbtn" type="button" data-watch><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.watch || "Watch the walkthrough") + "</button>" : "") +
-      "</div>" : "") +
-    "</section>" +
+    (TPLAY ?
+      /* a start screen: one thing to press, in the middle, over real play; the library is the quiet way past it, top right */
+      '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
+        '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
+        '<p class="intro__line">' + E(t.line) + "</p>" +
+        '<div class="intro__start"><button class="btn btn--primary btn--lg intro__play" type="button" data-title-play><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(t.play) + "</button></div>" +
+        '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
+        /* the other ways in, small along the bottom edge, the way a console lists its options */
+        '<div class="intro__foot">' +
+          '<button class="intro__textbtn" type="button" data-start="on">' + E(t.library) + "</button>" +
+          '<button class="intro__textbtn" type="button" data-start="off">' + E(t.muted_library || "Library, muted") + "</button>" +
+          (TOUR ? '<button class="intro__textbtn" type="button" data-intro-tour>' + E(t.tour || "Take the tour") + "</button>" : "") +
+          (WALK ? '<button class="intro__textbtn" type="button" data-watch>' + E(t.watch || "Watch the walkthrough") + "</button>" : "") +
+        "</div>" +
+      "</section>"
+    :
+      '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
+        '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
+        '<p class="intro__line">' + E(t.line) + "</p>" +
+        '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
+        '<div class="intro__start">' +
+          '<button class="btn btn--primary btn--lg" type="button" data-start="on"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.start) + "</button>" +
+          '<button class="btn btn--ghost" type="button" data-start="off">' + E(t.muted) + "</button>" +
+        "</div>" +
+        '<p class="intro__fine">' + E(t.note) + "</p>" +
+        (TOUR || WALK ? '<div class="intro__more">' +
+          (TOUR ? '<button class="intro__textbtn" type="button" data-intro-tour><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-move"/></svg>' + E(t.tour || "Take the tour") + "</button>" : "") +
+          (WALK ? '<button class="intro__textbtn" type="button" data-watch><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.watch || "Watch the walkthrough") + "</button>" : "") +
+        "</div>" : "") +
+      "</section>") +
     '<section class="intro__scene intro__scene--seat" data-scene="seat" hidden>' +
       '<h2 class="intro__h">' + E(O.question.title) + "</h2>" +
       '<ol class="menu" role="listbox" aria-label="' + E(O.question.title) + '">' + O.roles.map(function (r, i) {
@@ -142,7 +161,16 @@
     var f = name === "play" ? el.querySelector("[data-scene=\"play\"] [data-play-go]") : name === "seat" ? el.querySelector(".menu__row.is-on") : name === "build" ? el.querySelector("[data-build-menu] .menu__row.is-on") : name === "name" ? el.querySelector("#intro-name") : name === "card" ? el.querySelector("[data-built]:not([hidden]) [data-enter]") : null;
     if (f) setTimeout(function () { f.focus({ preventScroll: true }); }, wait(260));
   }
-  var startBtn = el.querySelector('[data-start="on"]');
+  var startBtn = el.querySelector("[data-title-play]") || el.querySelector('[data-start="on"]');
+  /* real play behind the title, once the page has loaded (never before: it is the first thing that would compete with the plate) */
+  var attract = el.querySelector(".intro__attract");
+  if (attract) bootP.then(function () {
+    setTimeout(function () {
+      attract.preload = "auto";
+      attract.addEventListener("playing", function () { attract.classList.add("is-on"); }, { once: true });
+      var pr = attract.play(); if (pr && pr.catch) pr.catch(function () {});
+    }, 900);
+  });
   bootP.then(function () { setTimeout(function () { if (!filmOpen()) startBtn.focus({ preventScroll: true }); }, 60); });
 
   /* ---------- the walkthrough: the narrated film in a dialog. A press opens it, so
@@ -183,8 +211,18 @@
     if (b) { start(b.getAttribute("data-start") === "on", "button"); return; }
     if (e.target.closest("[data-watch]")) { openFilm("title"); return; }
     if (e.target.closest("[data-intro-tour]")) { takeTour(); return; }
-    if (phase === "title" && !e.target.closest("button,a,input")) start(true, "tap");
+    if (e.target.closest("[data-title-play]")) { playFromTitle("button"); return; }
+    if (phase === "title" && !e.target.closest("button,a,input")) { if (TPLAY) playFromTitle("tap"); else start(true, "tap"); }
   });
+
+  /* Play from the title screen: the score starts with the press, then straight into level 1 */
+  function playFromTitle(how) {
+    if (phase !== "title") return;
+    if (S()) { S().set(true, "intro"); setTimeout(function () { S().sting("start"); }, 120); }
+    T("intro_started", { sound: true, how: "play" });
+    if (attract) attract.pause();
+    playNow(how);
+  }
 
   /* the tour: a press, so it starts the score the way Start does, then goes
      straight to the library and the tour runs there (tour.js) */
@@ -460,7 +498,7 @@
       var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
       if (gp) {
         var a = gp.buttons[0] && gp.buttons[0].pressed, dn = (gp.buttons[13] && gp.buttons[13].pressed) || gp.axes[1] > 0.5, up = (gp.buttons[12] && gp.buttons[12].pressed) || gp.axes[1] < -0.5;
-        if (a && !prev.a) { if (phase === "title") start(true, "pad"); else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); else if (phase === "play") playNow("pad"); }
+        if (a && !prev.a) { if (phase === "title") { if (TPLAY) playFromTitle("pad"); else start(true, "pad"); } else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); else if (phase === "play") playNow("pad"); }
         if (phase === "seat") { var i = rows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) mark(Math.min(rows.length - 1, i + 1)); if (up && !prev.up) mark(Math.max(0, i - 1)); }
         if (phase === "build") { var j = brows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) bmark(Math.min(brows.length - 1, j + 1)); if (up && !prev.up) bmark(Math.max(0, j - 1)); }
         prev = { a: a, dn: dn, up: up };

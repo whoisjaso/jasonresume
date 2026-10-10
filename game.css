@@ -370,6 +370,32 @@ html.intro-pending body > :not(#intro):not(#boot):not(script):not(dialog):not(.t
 .intro.is-leaving { opacity: 0; transition-duration: .7s; }
 .intro__art { position: absolute; inset: 0; }
 .intro__art img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; animation: dolly 30s var(--ease) both; }
+/* real play from the run behind the title: it arrives over the plate once the page has settled */
+.intro__attract { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; opacity: 0; transform: scale(1.04); transition: opacity 1.6s var(--ease), transform 6s var(--ease); }
+.intro__attract.is-on { opacity: .62; transform: none; }
+.intro.is-started .intro__attract { opacity: 0; transition-duration: .5s; }
+.intro__start .intro__play { min-width: clamp(240px, 20vw, 300px); min-height: clamp(60px, 7vh, 68px); font-size: clamp(18px, 1.4vw, 20px); }
+/* the start screen (the home page, where the run lives): everything in the middle, one thing to press */
+.intro--play .intro__scene--title { inset: 0; margin: 0 auto; max-width: none; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 var(--pad); }
+.intro--play .intro__logo { justify-items: center; }
+.intro--play .intro__line { margin-top: 18px; }
+.intro--play .intro__start { justify-content: center; margin-top: clamp(32px, 6vh, 56px); }
+.intro--play .intro__press { margin-top: 22px; }
+.intro.intro--play:not(.is-started) .intro__shade { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(10, 15, 13, .72) 0%, rgba(10, 15, 13, .5) 55%, rgba(10, 15, 13, .2) 80%), linear-gradient(0deg, rgba(10, 15, 13, .7) 0%, rgba(10, 15, 13, 0) 30%), linear-gradient(180deg, rgba(10, 15, 13, .7) 0%, rgba(10, 15, 13, 0) 20%); }
+.intro--play .intro__attract { object-position: 50% 55%; }
+.intro--play .intro__foot { position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 26px; padding: 0 var(--pad); }
+.intro--play .intro__foot .intro__textbtn { min-height: 36px; font-size: 13px; letter-spacing: .04em; color: var(--ash); }
+.intro--play .intro__foot .intro__textbtn:hover, .intro--play .intro__foot .intro__textbtn:focus-visible { color: var(--bone); }
+@media (max-height: 480px) and (orientation: landscape) { .intro--play .intro__foot { bottom: 6px; gap: 0 18px; } .intro--play .intro__press { margin-top: 10px; } }
+@media (max-width: 759px) { .intro--play .intro__scene--title { bottom: 0; } .intro--play .intro__start .intro__play { width: min(320px, 100%); } }
+.intro__start .intro__play svg { width: 20px; height: 20px; }
+@media (max-height: 480px) and (orientation: landscape) {
+  .intro__scene--title .intro__logo { font-size: clamp(30px, 9vh, 46px); }
+  .intro__scene--title .intro__line { margin-top: 6px; }
+  .intro__scene--title .intro__start { margin-top: 10px; }
+  .intro__start .intro__play { min-height: 52px; }
+}
+@media (max-width: 759px) { .intro__attract { object-position: 30% 60%; } .intro__attract.is-on { opacity: .5; } }
 .intro__shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .45) 42%, rgba(10, 15, 13, .05) 75%), linear-gradient(0deg, rgba(10, 15, 13, .75) 0%, rgba(10, 15, 13, 0) 45%); transition: background .8s var(--ease); }
 .intro.is-started .intro__shade { background: rgba(10, 15, 13, 0.8); }
 .intro__skip { position: absolute; z-index: 3; top: 22px; right: var(--pad); padding: 10px 14px; background: none; border: 0; color: var(--ash); font: 400 15px/1 var(--sans); cursor: pointer; }
