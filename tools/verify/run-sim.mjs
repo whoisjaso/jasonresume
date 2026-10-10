@@ -56,9 +56,14 @@ function step(W, S, dt, inp0) {
   const { P, L, TS } = W;
   const inp = W.touch ? { x: stickX(inp0.x), run: Math.abs(stickX(inp0.x)) > 0.86, jump: inp0.jump } : inp0;
   S.t += dt; S.steps++;
-  const mv = L.movers.map(m => { const a = moverAt(m, S.t - dt), b = moverAt(m, S.t); return { x: b.x, y: b.y, px: a.x, py: a.y, w: m.w, mover: 1 }; });
+  const nm = L.movers.length, MX = W._mx || (W._mx = new Float64Array(nm * 4));
+  for (let i = 0; i < nm; i++) {
+    const m = L.movers[i];
+    const fa = 0.5 - 0.5 * Math.cos(2 * Math.PI * ((S.t - dt) / m.per + m.ph)), fb = 0.5 - 0.5 * Math.cos(2 * Math.PI * (S.t / m.per + m.ph));
+    MX[i * 4] = m.x0 + m.dx * fb; MX[i * 4 + 1] = m.y0 + m.dy * fb; MX[i * 4 + 2] = m.x0 + m.dx * fa; MX[i * 4 + 3] = m.y0 + m.dy * fa;
+  }
   // carried by a mover
-  if (S.ground && S.on && S.on.k === 'mover') { const m = mv[S.on.i]; S.x += m.x - m.px; S.y += m.y - m.py; }
+  if (S.ground && S.on && S.on.k === 'mover') { const i = S.on.i; S.x += MX[i * 4] - MX[i * 4 + 2]; S.y += MX[i * 4 + 1] - MX[i * 4 + 3]; }
   // run
   const max = inp.run ? P.run : P.walk, tgt = inp.x * max;
   let a;
@@ -78,63 +83,68 @@ function step(W, S, dt, inp0) {
   S.vy = Math.min(S.vy + g * dt, P.maxFall);
   // x
   S.x += S.vx * dt;
-  const sol = L.solids.slice();
-  L.doors.forEach((d, i) => { if (S.doors[i] < 0.8) sol.push({ x: d.x, y: d.y, w: d.w, h: d.h * (1 - S.doors[i]) }); });
-  for (const s of sol) {
-    if (overlap({ x: S.x, y: S.y, w: P.w, h: P.h }, s)) {
-      if (S.vx > 0 || (S.x + P.w / 2) < s.x + s.w / 2) S.x = s.x - P.w; else S.x = s.x + s.w;
+  let sol = L.solids;
+  if (L.doors.length) { sol = L.solids.slice(); L.doors.forEach((d, i) => { if (S.doors[i] < 0.8) sol.push({ x: d.x, y: d.y, w: d.w, h: d.h * (1 - S.doors[i]) }); }); }
+  const pw = P.w, ph = P.h;
+  for (let i = 0; i < sol.length; i++) {
+    const s = sol[i];
+    if (S.x < s.x + s.w && S.x + pw > s.x && S.y < s.y + s.h && S.y + ph > s.y) {
+      if (S.vx > 0 || (S.x + pw / 2) < s.x + s.w / 2) S.x = s.x - pw; else S.x = s.x + s.w;
       S.vx = 0;
     }
   }
-  S.x = Math.min(Math.max(S.x, 0), L.w - P.w);
+  S.x = Math.min(Math.max(S.x, 0), L.w - pw);
   // y
-  const prevB = S.y + P.h, wasGround = S.ground;
+  const prevB = S.y + ph, wasGround = S.ground;
   S.y += S.vy * dt;
   S.ground = false; let on = null;
-  for (const s of sol) {
-    if (overlap({ x: S.x, y: S.y, w: P.w, h: P.h }, s)) {
-      if (S.vy >= 0 && prevB <= s.y + 12) { S.y = s.y - P.h; on = { k: 'solid' }; }
+  for (let i = 0; i < sol.length; i++) {
+    const s = sol[i];
+    if (S.x < s.x + s.w && S.x + pw > s.x && S.y < s.y + s.h && S.y + ph > s.y) {
+      if (S.vy >= 0 && prevB <= s.y + 12) { S.y = s.y - ph; on = SOLID; }
       else if (S.vy < 0) { S.y = s.y + s.h; S.vy = 30; }
-      else { S.y = s.y - P.h; on = { k: 'solid' }; }
+      else { S.y = s.y - ph; on = SOLID; }
     }
   }
   if (S.drop > 0) S.drop -= dt;
   if (S.vy >= 0 && !(S.drop > 0)) {
-    const ones = [];
-    L.ones.forEach((o, i) => ones.push({ o, ref: { k: 'one', i } }));
-    L.ghosts.forEach((gh, i) => { if (S.ghosts[i].on && S.ghosts[i].a > 0.3) ones.push({ o: gh, ref: { k: 'ghost', i } }); });
-    mv.forEach((m, i) => ones.push({ o: m, ref: { k: 'mover', i } }));
-    for (const { o, ref } of ones) {
-      const top = o.y, ptop = o.mover ? o.py : o.y;
-      if (S.x + P.w > o.x + 2 && S.x < o.x + o.w - 2 && prevB <= ptop + 4 + Math.max(0, o.y - (o.py || o.y)) && S.y + P.h >= top) { S.y = top - P.h; on = ref; }
-    }
+    // the same order as game-run.js: one-ways, built ghosts, movers
+    const land = (ox, oy, ow, ptop, ref) => {
+      if (S.x + pw > ox + 2 && S.x < ox + ow - 2 && prevB <= ptop + 4 + Math.max(0, oy - ptop) && S.y + ph >= oy) { S.y = oy - ph; on = ref; }
+    };
+    for (let i = 0; i < L.ones.length; i++) { const o = L.ones[i]; land(o.x, o.y, o.w, o.y, refs(W, 'one', i)); }
+    for (let i = 0; i < L.ghosts.length; i++) { if (S.ghosts[i].on && S.ghosts[i].a > 0.3) { const o = L.ghosts[i]; land(o.x, o.y, o.w, o.y, refs(W, 'ghost', i)); } }
+    for (let i = 0; i < nm; i++) { const py = MX[i * 4 + 3]; land(MX[i * 4], MX[i * 4 + 1], L.movers[i].w, py, refs(W, 'mover', i)); }
   }
   if (S.vy > 0) for (const p of L.pads) {
-    const feet = S.y + P.h, over = S.x + P.w > p.x + 4 && S.x < p.x + p.w - 4;
+    const feet = S.y + ph, over = S.x + pw > p.x + 4 && S.x < p.x + p.w - 4;
     if (over && ((prevB <= p.y + 10 && feet >= p.y) || (wasGround && prevB >= p.y && prevB <= p.y + 16))) {
-      S.y = p.y - P.h; S.vy = -P.pad * (inp.jump ? 1.06 : 1); S.boost = 0.6; on = null; S.pads = (S.pads || 0) + 1;
+      S.y = p.y - ph; S.vy = -P.pad * (inp.jump ? 1.06 : 1); S.boost = 0.6; on = null; S.pads = (S.pads || 0) + 1;
     }
   }
   if (on) { S.vy = 0; S.ground = true; S.on = on; }
   if (S.vy > 0) S.fallV = S.vy; else if (S.ground) S.fallV = 0;
   // the world
-  const cx = S.x + P.w / 2, cy = S.y + P.h / 2, box = { x: S.x, y: S.y, w: P.w, h: P.h };
-  L.trigs.forEach(t => {
+  const cx = S.x + pw / 2, cy = S.y + ph / 2, box = { x: S.x, y: S.y, w: pw, h: ph };
+  for (const t of L.trigs) {
     if (!S.groups[t.g] && overlap(box, t)) { S.groups[t.g] = 1; L.ghosts.forEach((gh, i) => { if (gh.g === t.g) S.ghosts[i].on = true; }); }
-  });
-  L.ghosts.forEach((gh, i) => {
-    const st = S.ghosts[i];
+  }
+  for (let i = 0; i < L.ghosts.length; i++) {
+    const gh = L.ghosts[i], st = S.ghosts[i];
     if (!st.on && gh.g === '~' && Math.abs(cx - (gh.x + gh.w / 2)) < TS * 6.5 && cy > gh.y - TS * 7) st.on = true;
     if (st.on) st.a = Math.min(1, st.a + dt * 2.4);
-  });
-  L.doors.forEach((d, i) => { if (S.groups[d.g]) S.doors[i] = Math.min(1, S.doors[i] + dt * 1.6); });
-  L.medals.forEach((m, i) => {
-    if (S.got[i]) return;
+  }
+  for (let i = 0; i < L.doors.length; i++) if (S.groups[L.doors[i].g]) S.doors[i] = Math.min(1, S.doors[i] + dt * 1.6);
+  for (let i = 0; i < L.medals.length; i++) {
+    if (S.got[i]) continue;
+    const m = L.medals[i];
     if (Math.abs(cx - m.x) < 26 && Math.abs(cy - m.y) < 32) { S.got[i] = true; S.picked.push(m.slug); if (!W.still) S.hitstop = 0.09; }
-  });
+  }
   if (L.goal && overlap(box, { x: L.goal.x + TS * 0.4, y: L.goal.y - L.goal.h, w: L.goal.w - TS * 0.8, h: L.goal.h })) S.finished = true;
   if (S.y > L.bot + TS * 2) S.dead = true;
 }
+const SOLID = { k: 'solid' };
+function refs(W, k, i) { const R = W._refs || (W._refs = {}); const key = k + i; return R[key] || (R[key] = { k, i }); }
 
 // ---------- the planner ----------
 // Macro actions from a standing (or just-landed) state. Each is a list of frame

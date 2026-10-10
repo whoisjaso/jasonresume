@@ -19,7 +19,8 @@
 // still land: three frames early to three late, held three frames shorter to
 // three longer), and any jump whose landing was off screen at take-off.
 // --walk plans the way to the goal without Shift (a first-timer who walks).
-// --quick plays the desktop goal routes only (what library.mjs runs).
+// --quick plays every level to the goal by touch on a phone and the first by
+// keys on desktop, no medals (what library.mjs runs).
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -129,7 +130,10 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
         if (seg.mac.kind === 'jump') {
           const c = await cam();
           const lx = seg.S.x + 9, ly = seg.S.y + 44;
-          if (lx < c.x || lx > c.x + c.w || ly < c.y || ly > c.y + c.h) res.blind.push({ at: Math.round(lx / D.TS * 10) / 10, to: tg.slug || 'goal', view: [Math.round(c.x / D.TS), Math.round((c.x + c.w) / D.TS), Math.round(c.y / D.TS), Math.round((c.y + c.h) / D.TS)] });
+          // where the jump lands has to be on screen when you take off: ahead, or above you;
+          // dropping down to the floor below is fine
+          const floor = ly >= 12 * D.TS - 1 && seg.S.on && seg.S.on.k === 'solid';
+          if (lx < c.x || lx > c.x + c.w || ly < c.y || (ly > c.y + c.h && !floor)) res.blind.push({ at: Math.round(lx / D.TS * 10) / 10, to: tg.slug || 'goal', view: [Math.round(c.x / D.TS), Math.round((c.x + c.w) / D.TS), Math.round(c.y / D.TS), Math.round((c.y + c.h) / D.TS)] });
         }
         await playInputs(seg.inputs);
         const a = (await state()).pl, e = seg.S;
@@ -162,21 +166,40 @@ export function summary(r) {
     (r.errors.length ? `\n    page errors: ${r.errors.join(' | ')}` : '');
 }
 
+// the quick version (library.mjs runs it): every level to the goal by touch on a phone,
+// and the first level by keys on desktop
+export async function quickRun(b, log = () => {}) {
+  const errs = [], lines = [];
+  const jobs = RUN.levels.map(l => [true, l.id]).concat([[false, RUN.levels[0].id]]);
+  for (const [mobile, level] of jobs) {
+    const r = await playLevel(b, level, { mobile, medals: false, log });
+    const line = summary(r); lines.push(line);
+    if (!r.finished) errs.push(`run bot: ${mobile ? 'phone' : 'desktop'} ${level} not finished`);
+    if (r.errors.length) errs.push(`run bot: ${level} page errors ${r.errors.join(' | ')}`);
+  }
+  return { errs, lines };
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const b = await chromium.launch({ executablePath: exe });
   const errs = [], lines = [];
-  const modes = quick ? [false] : which === 'desktop' ? [false] : which === 'mobile' ? [true] : [false, true];
-  for (const mobile of modes) for (const level of LEVELS) {
-    const t0 = Date.now();
-    const r = await playLevel(b, level, { mobile, medals: !quick && !walk, walkOnly: walk, log: s => console.log(s) });
-    const line = summary(r) + `  [${((Date.now() - t0) / 1000).toFixed(0)} s]`;
-    console.log(line); lines.push(line);
-    if (!r.finished) errs.push(`${mobile ? 'phone' : 'desktop'} ${level}: not finished`);
-    if (!mobile && !quick && !walk && r.medals.length < r.of) errs.push(`desktop ${level}: ${r.medals.length} of ${r.of} medals`);
-    if (r.errors.length) errs.push(`${level}: page errors`);
+  if (quick) {
+    const q = await quickRun(b, s => console.log(s));
+    q.lines.forEach(l => console.log(l)); errs.push(...q.errs); lines.push(...q.lines);
+  } else {
+    const modes = which === 'desktop' ? [false] : which === 'mobile' ? [true] : [false, true];
+    for (const mobile of modes) for (const level of LEVELS) {
+      const t0 = Date.now();
+      const r = await playLevel(b, level, { mobile, medals: !walk, walkOnly: walk, log: s => console.log(s) });
+      const line = summary(r) + `  [${((Date.now() - t0) / 1000).toFixed(0)} s]`;
+      console.log(line); lines.push(line);
+      if (!r.finished) errs.push(`${mobile ? 'phone' : 'desktop'} ${level}: not finished`);
+      if (!mobile && !walk && r.medals.length < r.of) errs.push(`desktop ${level}: ${r.medals.length} of ${r.of} medals`);
+      if (r.errors.length) errs.push(`${level}: page errors`);
+    }
   }
   await b.close();
-  fs.writeFileSync(path.join(OUT, 'run-bot.txt'), lines.join('\n') + '\n');
+  fs.writeFileSync(path.join(OUT, quick ? 'run-bot-quick.txt' : 'run-bot.txt'), lines.join('\n') + '\n');
   console.log(errs.length ? 'ISSUES:\n' + errs.join('\n') : 'every level finished' + (quick || walk ? '' : ', every medal collected on desktop'));
   process.exit(errs.length ? 1 : 0);
 }

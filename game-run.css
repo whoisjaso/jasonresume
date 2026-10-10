@@ -75,6 +75,8 @@
 .run__said i.is-said { color: var(--bone); }
 .run__cap.is-me .run__who { color: var(--bone-2); }
 .run__cap.is-me .run__said { font: 500 italic 21px/1.3 var(--serif); letter-spacing: .01em; }
+/* on a touch screen the caption sits where thumbs land: let every touch through to the stick and the jump (lines still move on by themselves) */
+.run.is-touch .run__cap { pointer-events: none; cursor: default; }
 
 /* ---------- touch: a stick where the thumb lands, a jump button on the right ---------- */
 .run__touch { display: none; position: absolute; inset: 0; z-index: 2; pointer-events: none; }

@@ -8,8 +8,9 @@
 // nothing on a lurker's card and a referral in their Player 2, and never on
 // the card), the listing pasted on a phone, the focused title clear of the
 // library row on short laptops, the band under the fixed chrome in Player 2,
-// the first frame's actions, moving focus, opening every title, trophies and the
-// Platinum, the desk demo run to Filed, the screens, the deck and Check me;
+// the first frame's actions, moving focus, opening every title (which earns
+// nothing), trophies earned only in the run with every fact readable before,
+// Player 2's finishes and the Platinum, the desk demo run to Filed, the screens, the deck and Check me;
 // the doors (return visits, skip, deep links, legacy links, the dealer cut);
 // privacy; the score staying silent until Start; the no-JS document; the
 // loading screen (drawn while the art, the fonts and the scripts arrive, gone
@@ -21,7 +22,7 @@
 // llms.txt) over visible text, labels and attributes; and After Hours: The
 // Run (the curated Play door, #play, the canvas, keys and touch, a medal that
 // unlocks its trophy, pause, a cleared level, the phone controls, ?run= links,
-// a mocked community store). Screenshots land in
+// a mocked community store, and a bot playing every level to its goal). Screenshots land in
 // tools/verify/out/lib-*.png.
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'url';
@@ -168,12 +169,18 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   if (moved.tile !== 'lead-to-title' || moved.plate !== 'lead-to-title' || !/Lead to Title/i.test(moved.logo || '')) errs.push(`${name} focus did not move ${JSON.stringify(moved)}`);
   await shot('02-focus-crm');
 
-  // Opening a title: its own page, a trophy, the sections, the desk demo
+  // Opening a title: its own page, the sections, the desk demo. Trophies are earned in the run,
+  // never by opening a title; every one still reads in full here, with a way into its level.
   if (mobile) await p.click('article.title.is-focus [data-open-title]'); else await p.keyboard.press('Enter');
   await p.waitForSelector('article.title.is-open', { timeout: 4000 }).catch(() => {}); await p.waitForTimeout(600);
-  const opened = await p.evaluate(() => ({ open: !!document.querySelector('article.title.is-open'), hash: location.hash, toast: !!document.querySelector('.toast--trophy') }));
+  const opened = await p.evaluate(() => ({ open: !!document.querySelector('article.title.is-open'), hash: location.hash, toast: !!document.querySelector('.toast--trophy'), earned: JSON.parse(localStorage.getItem('jg_trophies') || '[]').length }));
   if (!opened.open || opened.hash !== '#title/lead-to-title') errs.push(`${name} title did not open ${JSON.stringify(opened)}`);
-  if (!opened.toast) errs.push(`${name} first open gave no trophy toast`);
+  if (opened.toast || opened.earned) errs.push(`${name} opening a title should not award trophies ${JSON.stringify(opened)}`);
+  const tsec = await p.evaluate(() => [...document.querySelectorAll('article.title.is-open #lead-to-title-trophies .trophy')].map(li => { const f = li.querySelector('.trophy__find'), cs = f && getComputedStyle(f); return { slug: li.dataset.trophy, fact: li.querySelector('p').innerText, find: f && cs.display !== 'none' && f.getBoundingClientRect().width > 0 ? f.getAttribute('href') + ' ' + f.textContent : '' }; }));
+  const want = LIB.titles.find(t => t.id === 'lead-to-title').trophies;
+  const badT = want.filter(sl => { const r = tsec.find(x => x.slug === sl); return !r || !r.fact.includes(LIB.trophies[sl].desc) || r.find !== '#play/lead-to-title Find it in the run'; });
+  if (badT.length) errs.push(`${name} the title's locked trophies should show their facts and Find it in the run: ${JSON.stringify(tsec)}`);
+  else notes.push(`${name} a title's trophies, not yet earned, show every fact and Find it in the run (#play/lead-to-title)`);
   await shot('03-title-open');
   if (!mobile) { await p.keyboard.press('e'); await p.waitForTimeout(900); await shot('04-title-tab'); }
   await p.evaluate(() => document.querySelector('article.title.is-open [data-desk-app]').scrollIntoView({ block: 'center' })); await p.waitForTimeout(900);
@@ -195,19 +202,60 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   const closed = await p.evaluate(() => ({ open: !!document.querySelector('article.title.is-open'), locked: document.documentElement.classList.contains('is-locked'), hash: location.hash, inert: document.querySelectorAll('[inert]').length }));
   if (closed.open || closed.locked || closed.hash || closed.inert) errs.push(`${name} title did not close cleanly ${JSON.stringify(closed)}`);
 
-  // Every career title: the Platinum
+  // Every career title opened: still nothing earned, no Platinum
   for (const id of careers) {
     await p.evaluate(i => window.JG_GAME.open(i, 'test'), id); await p.waitForTimeout(700);
     await p.evaluate(() => window.JG_GAME.back()); await p.waitForTimeout(500);
   }
-  await p.waitForSelector('.clear.is-on', { timeout: 9000 }).catch(() => errs.push(`${name} no Platinum after opening every career title`));
-  await p.waitForTimeout(1600); await shot('07-platinum');
-  await p.keyboard.press('Escape'); await p.waitForTimeout(700);
+  await p.waitForTimeout(2800);
+  const afterAll = await p.evaluate(() => ({ clear: !!document.querySelector('.clear.is-on'), earned: JSON.parse(localStorage.getItem('jg_trophies') || '[]').length, plat: localStorage.getItem('jg_platinum') }));
+  if (afterAll.clear || afterAll.earned || afterAll.plat) errs.push(`${name} opening every career title should earn nothing ${JSON.stringify(afterAll)}`);
+  else notes.push(`${name} opening every career title earns no trophy and no Platinum`);
 
-  // Screens: trophies, profile
-  await p.keyboard.press('t'); await p.waitForTimeout(900); await shot('08-trophies');
-  const seen = await p.evaluate(() => document.querySelector('[data-trophy-seen]').textContent);
-  if (seen !== String(Object.keys(LIB.trophies).length)) errs.push(`${name} trophies seen ${seen} after the Platinum`);
+  // Screens: trophies, profile. Every fact readable before anything is earned; trophies
+  // arrive one medal at a time (the run calls JG_GAME.unlock, as here), the Platinum only after all
+  const medalSlugs = Object.keys(LIB.trophies).filter(s => s !== LIB.platinum);
+  const readTrophies = () => p.evaluate(() => {
+    const lis = [...document.querySelectorAll('#trophies .trophy')];
+    return { n: lis.length, seen: document.querySelector('[data-trophy-seen]').textContent, facts: lis.filter(li => li.querySelector('p').getBoundingClientRect().height > 0).length,
+      find: lis.filter(li => { const f = li.querySelector('.trophy__find'); return f && getComputedStyle(f).display !== 'none'; }).map(li => li.dataset.trophy), earned: lis.filter(li => li.classList.contains('is-seen')).map(li => li.dataset.trophy) };
+  });
+  await p.keyboard.press('t'); await p.waitForTimeout(900);
+  const t0s = await readTrophies();
+  if (t0s.seen !== '0' || t0s.facts !== Object.keys(LIB.trophies).length || t0s.find.length !== Object.keys(LIB.trophies).length) errs.push(`${name} trophies screen before any medal ${JSON.stringify(t0s)}`);
+  else notes.push(`${name} trophies screen, nothing earned: all ${t0s.n} facts readable, each with Find it in the run`);
+  // a mix: six earned (silver on the card), the rest still readable and findable
+  const six = ['title-run', 'keys-to-the-lot', 'essentials', 'associate', 'hand-off', 'by-the-book'];
+  const got = await p.evaluate(list => list.map(s => window.JG_GAME.unlock(s, 'run')), six);
+  const early = await p.evaluate(pl => window.JG_GAME.unlock(pl, 'run'), LIB.platinum);
+  await p.waitForTimeout(500);
+  const t1s = await readTrophies();
+  if (got.some(x => !x) || early || t1s.seen !== '6' || t1s.earned.length !== 6 || t1s.find.length !== Object.keys(LIB.trophies).length - 6 || t1s.facts !== t1s.n) errs.push(`${name} trophies after six medals ${JSON.stringify({ got, early, ...t1s })}`);
+  else notes.push(`${name} six medals: six trophies earned, ${t1s.find.length} still to find with their facts showing, no early Platinum`);
+  await shot('08-trophies');
+  // Player 2's finishes count the same trophies: silver at six, gold at twelve, platinum with the Platinum
+  const fins = async () => { await p.evaluate(() => window.JG_GAME.screen('build', 'test')); await p.waitForTimeout(900); const f = await p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#build [data-fin]')].map(b => [b.dataset.fin, b.getAttribute('aria-disabled') !== 'true']))); await p.evaluate(() => window.JG_GAME.back()); await p.waitForTimeout(400); return f; };
+  const f6 = await fins();
+  if (!f6.silver || f6.gold || f6.platinum) errs.push(`${name} Player 2 finishes after six trophies ${JSON.stringify(f6)}`); else notes.push(`${name} six trophies open the silver finish, not gold or platinum`);
+  await p.keyboard.press('t'); await p.waitForTimeout(700);
+  // a locked trophy's link goes straight into its level
+  await p.evaluate(() => { const a = document.querySelector('#trophies .trophy[data-trophy="booked"] .trophy__find'); a.scrollIntoView({ block: 'center' }); });
+  await p.click('#trophies .trophy[data-trophy="booked"] .trophy__find');
+  const into = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen() && window.JG_RUN.debug.state().level, null, { timeout: 8000 }).then(() => p.evaluate(() => window.JG_RUN.debug.state().level), () => '');
+  if (into !== 'the-inbound') errs.push(`${name} Find it in the run on Booked opened ${into || 'nothing'}`); else notes.push(`${name} Find it in the run on a locked trophy opens its level (the-inbound)`);
+  if (into) { await p.evaluate(() => window.JG_RUN.close('test')); await p.waitForTimeout(800); }
+  // every medal: every trophy, then the Platinum
+  await p.evaluate(list => list.forEach(s => window.JG_GAME.unlock(s, 'run')), medalSlugs);
+  const plat = await p.evaluate(pl => window.JG_GAME.unlock(pl, 'run'), LIB.platinum);
+  await p.keyboard.press('t'); await p.waitForTimeout(900);
+  const t2s = await readTrophies();
+  if (!plat || t2s.seen !== String(Object.keys(LIB.trophies).length) || t2s.find.length) errs.push(`${name} trophies after every medal ${JSON.stringify({ plat, ...t2s })}`);
+  else notes.push(`${name} every medal: all ${t2s.seen} trophies and the Platinum, nothing left to find`);
+  await shot('08b-trophies-all');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+  const fAll = await fins();
+  if (!fAll.silver || !fAll.gold || !fAll.platinum) errs.push(`${name} Player 2 finishes after the Platinum ${JSON.stringify(fAll)}`); else notes.push(`${name} the Platinum opens every finish`);
+  await p.keyboard.press('t'); await p.waitForTimeout(700);
   await p.keyboard.press('Escape'); await p.waitForTimeout(500);
   await p.keyboard.press('p'); await p.waitForTimeout(900); await shot('09-profile');
   await textRules(p, `${name} profile`); await overflow(p, `${name} profile`);
@@ -246,7 +294,23 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
 
   await p.evaluate(() => { dispatchEvent(new Event('pagehide')); }); await p.waitForTimeout(1200);
   notes.push(`${name} events sent: ${[...new Set(tracked)].join(', ')}`);
-  for (const ev of ['intro_shown', 'intro_started', 'role_chosen', 'build_shown', 'build_chosen', 'name_given', 'intro_finished', 'story_opened', 'trophy_unlocked', 'level_clear', 'trophies_opened', 'build_opened', 'build_edited', 'card_saved']) if (!tracked.includes(ev)) errs.push(`${name} never sent ${ev}`);
+  for (const ev of ['intro_shown', 'intro_started', 'role_chosen', 'build_shown', 'build_chosen', 'name_given', 'intro_finished', 'story_opened', 'trophy_unlocked', 'trophies_opened', 'build_opened', 'build_edited', 'card_saved']) if (!tracked.includes(ev)) errs.push(`${name} never sent ${ev}`);
+  await ctx.close();
+}
+
+// A visitor who earned trophies under the old rule (opening a title) keeps them
+if (!only || only === 'desktop') {
+  const ctx = await ctxFor(1440, 900, false); await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
+  const old = ['fifty-three', 'proceeds', 'keys-to-the-lot', 'title-run'];
+  await ctx.addInitScript(o => { if (!localStorage.getItem('jg_seeded')) { localStorage.setItem('jg_seeded', '1'); localStorage.setItem('jg_trophies', JSON.stringify(o)); localStorage.setItem('jg_opened', '["triple-j"]'); } }, old);
+  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`legacy trophies pageerror: ${e.message}`));
+  await p.goto(URL0); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(900);
+  await p.evaluate(() => { window.JG_GAME.open('lead-to-title', 'test'); }); await p.waitForTimeout(700); await p.evaluate(() => window.JG_GAME.back()); await p.waitForTimeout(400);
+  await p.keyboard.press('t'); await p.waitForTimeout(900);
+  const lg = await p.evaluate(() => ({ seen: document.querySelector('[data-trophy-seen]').textContent, earned: [...document.querySelectorAll('#trophies .trophy.is-seen')].map(li => li.dataset.trophy), stored: JSON.parse(localStorage.getItem('jg_trophies') || '[]') }));
+  if (lg.seen !== '4' || old.some(s => !lg.earned.includes(s)) || lg.stored.length !== 4) errs.push(`legacy trophies were not kept as they were ${JSON.stringify(lg)}`);
+  else notes.push('trophies earned under the old rule stay earned; opening another title adds none');
+  await p.screenshot({ path: path.join(OUT, 'lib-legacy-trophies.png') });
   await ctx.close();
 }
 
@@ -720,6 +784,14 @@ for (const flag of ['globalPrivacyControl', 'doNotTrack']) {
   await p.evaluate(() => dispatchEvent(new Event('pagehide'))); await p.waitForTimeout(800);
   if (sent) errs.push(`${flag}: ${sent} request(s) reached /api/track`); else notes.push(`${flag} on: nothing sent`);
   await ctx.close();
+}
+// The run, played through by a bot with real touches and keys: every level to its goal
+// (tools/verify/run-bot.mjs --quick; the full run, every medal, is node tools/verify/run-bot.mjs)
+{
+  const { quickRun } = await import('./run-bot.mjs');
+  const q = await quickRun(b);
+  q.lines.forEach(l => notes.push('run bot: ' + l.split('\n')[0]));
+  errs.push(...q.errs);
 }
 await b.close();
 console.log(notes.join('\n'));
