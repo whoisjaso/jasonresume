@@ -12,7 +12,12 @@
     "note": "The score is part of the game. Press M or the Score button to turn it off any time.",
     "skip": "Skip",
     "tour": "Take the tour",
-    "watch": "Watch the walkthrough"
+    "watch": "Watch the walkthrough",
+    "play": "Play",
+    "library": "Enter the library",
+    "play_note": "Six short levels through my record. Every medal you find is a verified fact.",
+    "attract": "assets/game/loops/run-attract",
+    "muted_library": "Library, muted"
   },
   "question": {
     "title": "Who's playing?",

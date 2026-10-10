@@ -96,6 +96,16 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
     }
     cur = { ...inp };
   }
+  // RUN_REC=<dir> keeps every second frame as a JPEG (30 fps), for the title screen's attract clip
+  const REC = process.env.RUN_REC || '';
+  let recN = 0, recF = 0;
+  async function adv(ms) {
+    if (!REC) return p.clock.runFor(ms);
+    for (let t = 0; t < ms; t += 16) {
+      await p.clock.runFor(16);
+      if (recF++ % 2 === 0) await p.screenshot({ path: path.join(REC, `f${String(recN++).padStart(5, '0')}.jpg`), type: 'jpeg', quality: 88 });
+    }
+  }
   async function playInputs(inputs) {
     let i = 0;
     while (i < inputs.length) {
@@ -103,7 +113,7 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
       const same = (a, b2) => a.x === b2.x && a.run === b2.run && a.jump === b2.jump;
       while (j < inputs.length && same(inputs[j], inputs[i])) j++;
       await setInput(inputs[i]);
-      await p.clock.runFor(16 * (j - i));
+      await adv(16 * (j - i));
       i = j;
     }
   }
