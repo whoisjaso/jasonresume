@@ -1,0 +1,42 @@
+{
+ "id": "jason-lot-jason-3",
+ "text": "So what brings you out here tonight?",
+ "duration": 2.6,
+ "words": [
+  {
+   "w": "So",
+   "s": 0.0,
+   "e": 0.26
+  },
+  {
+   "w": "what",
+   "s": 0.26,
+   "e": 0.62
+  },
+  {
+   "w": "brings",
+   "s": 0.62,
+   "e": 0.94
+  },
+  {
+   "w": "you",
+   "s": 0.94,
+   "e": 1.2
+  },
+  {
+   "w": "out",
+   "s": 1.2,
+   "e": 1.5
+  },
+  {
+   "w": "here",
+   "s": 1.5,
+   "e": 1.88
+  },
+  {
+   "w": "tonight?",
+   "s": 1.88,
+   "e": 2.26
+  }
+ ]
+}

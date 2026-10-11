@@ -1,0 +1,427 @@
+{
+ "_about": "Written by tools/site/story_voice.py from tools/site/story.json. My own lines in After Hours, first person, every fact already in llms.txt, rendered in my voice from my own recording with my permission. Render: /root/cbvenv/bin/python -I tools/voice/narrate_jason.py tools/voice/story_jason_lines.json. The reference recording is never committed.",
+ "out": "assets/voice/story",
+ "say": {
+  "206,777": "two hundred six thousand, seven hundred seventy-seven dollars",
+  "130-U": "one thirty U",
+  "30-day": "thirty-day",
+  "3.63": "three point six three",
+  "n8n": "N eight N",
+  "webDEALER": "web dealer",
+  "SOP": "S O P"
+ },
+ "lines": [
+  {
+   "id": "jason-lot-jason-1",
+   "text": "Hey. You found it. Lot's closed, so it's just us and the rain."
+  },
+  {
+   "id": "jason-lot-jason-2",
+   "text": "I'm Jason. I own this lot, and I run it."
+  },
+  {
+   "id": "jason-lot-jason-3",
+   "text": "So what brings you out here tonight?"
+  },
+  {
+   "id": "jason-lot-jason-4",
+   "text": "Good. Then you'd rather see the work than read about it."
+  },
+  {
+   "id": "jason-lot-jason-5",
+   "text": "What kind of role?"
+  },
+  {
+   "id": "jason-lot-jason-6",
+   "text": "Then find the whiteboard inside. Triple J runs on a CRM I built, and three staff use it daily."
+  },
+  {
+   "id": "jason-lot-jason-7",
+   "text": "Then stay near the phone. I deployed the inbound voice AI that answers it, and I write its prompts and call flows."
+  },
+  {
+   "id": "jason-lot-jason-8",
+   "text": "Then open the filing cabinet. I manage pricing, inventory, vendors, logistics, financing and title here."
+  },
+  {
+   "id": "jason-lot-jason-9",
+   "text": "Then you'll like the desk. Since June 2025 I've personally closed 53 vehicle sales."
+  },
+  {
+   "id": "jason-lot-jason-10",
+   "text": "Then you know the gate closing doesn't mean the day's over."
+  },
+  {
+   "id": "jason-lot-jason-11",
+   "text": "What's slowing your lot down?"
+  },
+  {
+   "id": "jason-lot-jason-12",
+   "text": "Go on."
+  },
+  {
+   "id": "jason-lot-jason-13",
+   "text": "Then listen for the phone inside. Inbound voice AI answers it, books appointments into the CRM and live-transfers what it can't resolve to staff."
+  },
+  {
+   "id": "jason-lot-jason-14",
+   "text": "Then the filing cabinet's yours. I file title transfers inside the Texas 30-day window."
+  },
+  {
+   "id": "jason-lot-jason-15",
+   "text": "Then read the laptop. My Claude API workflow researches Facebook Marketplace leads, and I follow up by phone and text."
+  },
+  {
+   "id": "jason-lot-jason-16",
+   "text": "Then sit at the desk. Triple J runs on a CRM I built, and every sale is saved on file."
+  },
+  {
+   "id": "jason-lot-jason-17",
+   "text": "I know that one. I support my staff on the CRM, phones and computers, and I set up the hardware and network."
+  },
+  {
+   "id": "jason-lot-jason-18",
+   "text": "I prepare our buy here pay here contracts and disclosures, and I service the accounts and collections myself."
+  },
+  {
+   "id": "jason-lot-jason-19",
+   "text": "Curious is a good reason. Look at anything in there. The systems are real. The people at the desk aren't."
+  },
+  {
+   "id": "jason-lot-jason-20",
+   "text": "You'll see."
+  },
+  {
+   "id": "jason-lot-jason-21",
+   "text": "Fair enough. You don't owe me a reason."
+  },
+  {
+   "id": "jason-lot-jason-22",
+   "text": "Look around anyway. The door's open."
+  },
+  {
+   "id": "jason-lot-jason-23",
+   "text": "Come inside when you're ready. It's dry, and the desk is where the work is."
+  },
+  {
+   "id": "jason-lot-jason-24",
+   "text": "Take your time. The office isn't going anywhere."
+  },
+  {
+   "id": "jason-lot-jason-25",
+   "text": "Since June 2025 I've personally closed 53 vehicle sales. Those are mine."
+  },
+  {
+   "id": "jason-off-jason-1",
+   "text": "Welcome to the office. This is Renata."
+  },
+  {
+   "id": "jason-off-jason-2",
+   "text": "The desk is real, though. It's Handle a Sale, the sale desk in the CRM I built for Triple J."
+  },
+  {
+   "id": "jason-off-jason-3",
+   "text": "Go ahead. One question per screen. You can't get lost."
+  },
+  {
+   "id": "jason-off-jason-4",
+   "text": "One plain question at a time. How she's paying, who files the registration."
+  },
+  {
+   "id": "jason-off-jason-5",
+   "text": "I scan her license once, and every form fills itself."
+  },
+  {
+   "id": "jason-off-jason-6",
+   "text": "Then it does the registration math and routes the deal to the right documents. Nothing missing, nothing extra."
+  },
+  {
+   "id": "jason-off-jason-7",
+   "text": "Every sale on file. Three staff use it daily across inventory, deals and follow-up."
+  },
+  {
+   "id": "jason-off-jason-8",
+   "text": "That's the inbound voice AI. It books appointments into the CRM."
+  },
+  {
+   "id": "jason-off-jason-9",
+   "text": "Across August and September 2026 it averaged 41 inbound calls and 14 booked appointments a month."
+  },
+  {
+   "id": "jason-off-jason-10",
+   "text": "Thanks."
+  },
+  {
+   "id": "jason-off-jason-11",
+   "text": "What it can't resolve, it live-transfers to staff. That's the hand-off."
+  },
+  {
+   "id": "jason-off-jason-12",
+   "text": "And 4 CRM-matched vehicle sales a month across those two months. Matched in the CRM. That's all I claim."
+  },
+  {
+   "id": "jason-off-jason-13",
+   "text": "I prepare and file title and registration paperwork, including the Form 130-U and webDEALER."
+  },
+  {
+   "id": "jason-off-jason-14",
+   "text": "Title transfers go in inside the Texas 30-day window. Lien payoffs, plates and temporary tags, I handle myself."
+  },
+  {
+   "id": "jason-off-jason-15",
+   "text": "That's the drawer you came for."
+  },
+  {
+   "id": "jason-off-jason-16",
+   "text": "I designed the lead-to-title data model, the roles and the validation."
+  },
+  {
+   "id": "jason-off-jason-17",
+   "text": "I tested the Supabase row-level security policies, so a role can't reach what it shouldn't."
+  },
+  {
+   "id": "jason-off-jason-18",
+   "text": "Validation stops an invalid deal or inventory record before it's ever written."
+  },
+  {
+   "id": "jason-off-jason-19",
+   "text": "I ran the production schema migrations and kept every existing record and operational table."
+  },
+  {
+   "id": "jason-off-jason-20",
+   "text": "That's my prospecting workflow. Python, the Claude API and n8n."
+  },
+  {
+   "id": "jason-off-jason-21",
+   "text": "It researches Facebook Marketplace leads and writes what it finds to the CRM."
+  },
+  {
+   "id": "jason-off-jason-22",
+   "text": "Then it drafts the reply from the SOP I wrote, for automatic follow-up."
+  },
+  {
+   "id": "jason-off-jason-23",
+   "text": "Since June 2025 I've collected $206,777 in sale proceeds."
+  },
+  {
+   "id": "jason-off-jason-24",
+   "text": "That one's mine too. Later."
+  },
+  {
+   "id": "jason-off-jason-25",
+   "text": "One more thing. See the book on the shelf behind me? That's the other thing I'm working on."
+  },
+  {
+   "id": "jason-off-jason-26",
+   "text": "I'm studying for a Bachelor of Science in Neuroscience at The University of Texas at Austin. Expected 2028."
+  },
+  {
+   "id": "jason-mem-jason-1",
+   "text": "Nineteen completed Anthropic courses. Building with the Claude API is one of them."
+  },
+  {
+   "id": "jason-mem-jason-2",
+   "text": "Google AI Essentials, from Google on Coursera, in 2026."
+  },
+  {
+   "id": "jason-mem-jason-3",
+   "text": "Associate of Arts in Business, San Jacinto College. May 2026."
+  },
+  {
+   "id": "jason-mem-jason-4",
+   "text": "Dean's Honor List. A 3.63."
+  },
+  {
+   "id": "jason-mem-jason-5",
+   "text": "Neuroscience at UT Austin. Expected 2028."
+  },
+  {
+   "id": "jason-mem-jason-6",
+   "text": "One more."
+  },
+  {
+   "id": "jason-mem-jason-7",
+   "text": "That's enough for tonight."
+  },
+  {
+   "id": "jason-keys-jason-1",
+   "text": "August 2024. Owner and Operations Lead of Triple J, from that day on."
+  },
+  {
+   "id": "jason-dec-jason-1",
+   "text": "Rain's letting up."
+  },
+  {
+   "id": "jason-dec-jason-2",
+   "text": "Renata says thanks, by the way. Fictionally."
+  },
+  {
+   "id": "jason-dec-jason-3",
+   "text": "And thanks for grabbing the phone."
+  },
+  {
+   "id": "jason-dec-jason-4",
+   "text": "So. You're hiring for software or data."
+  },
+  {
+   "id": "jason-dec-jason-5",
+   "text": "So. You're hiring for AI and automation."
+  },
+  {
+   "id": "jason-dec-jason-6",
+   "text": "So. You're hiring for operations or the back office."
+  },
+  {
+   "id": "jason-dec-jason-7",
+   "text": "So. You're hiring for sales or the phones."
+  },
+  {
+   "id": "jason-dec-jason-8",
+   "text": "You read every note on that whiteboard."
+  },
+  {
+   "id": "jason-dec-jason-9",
+   "text": "You listened to the whole call."
+  },
+  {
+   "id": "jason-dec-jason-10",
+   "text": "You went through the filing cabinet."
+  },
+  {
+   "id": "jason-dec-jason-11",
+   "text": "You read the laptop over my shoulder."
+  },
+  {
+   "id": "jason-dec-jason-12",
+   "text": "You went straight for the desk."
+  },
+  {
+   "id": "jason-dec-jason-13",
+   "text": "Which job is it, exactly?"
+  },
+  {
+   "id": "jason-dec-jason-14",
+   "text": "I put AI to work where a business loses time."
+  },
+  {
+   "id": "jason-dec-jason-15",
+   "text": "I build software people use every day."
+  },
+  {
+   "id": "jason-dec-jason-16",
+   "text": "I keep a business's people and systems working."
+  },
+  {
+   "id": "jason-dec-jason-17",
+   "text": "I keep a business moving from the first call to the finished paperwork."
+  },
+  {
+   "id": "jason-dec-jason-18",
+   "text": "I get the paperwork right and on file."
+  },
+  {
+   "id": "jason-dec-jason-19",
+   "text": "I sell, and I build the tools a sales team works from."
+  },
+  {
+   "id": "jason-dec-jason-20",
+   "text": "I keep a team staffed, trained and paid."
+  },
+  {
+   "id": "jason-dec-jason-21",
+   "text": "I know a dealership from the desk and from the database."
+  },
+  {
+   "id": "jason-dec-jason-22",
+   "text": "I keep a business's data structured, clean and intact."
+  },
+  {
+   "id": "jason-dec-jason-23",
+   "text": "Here's the one page for that job. It's all true, and you can check every line."
+  },
+  {
+   "id": "jason-dec-jason-24",
+   "text": "So your lot misses calls."
+  },
+  {
+   "id": "jason-dec-jason-25",
+   "text": "So your paperwork keeps coming back."
+  },
+  {
+   "id": "jason-dec-jason-26",
+   "text": "So your leads go cold."
+  },
+  {
+   "id": "jason-dec-jason-27",
+   "text": "So your deals live in a notebook."
+  },
+  {
+   "id": "jason-dec-jason-28",
+   "text": "So your staff need tech help."
+  },
+  {
+   "id": "jason-dec-jason-29",
+   "text": "So it's the buy here pay here accounts."
+  },
+  {
+   "id": "jason-dec-jason-30",
+   "text": "What you saw tonight runs Triple J. I'm also building a sale desk for Texas independent dealers. It's called Obavia."
+  },
+  {
+   "id": "jason-dec-jason-31",
+   "text": "It grew out of Handle a Sale, the desk you just saw. It's in development, so there's nothing to sell you yet."
+  },
+  {
+   "id": "jason-dec-jason-32",
+   "text": "Early access is a conversation, not an account. Your lot, your call."
+  },
+  {
+   "id": "jason-dec-jason-33",
+   "text": "You came to look, and you looked."
+  },
+  {
+   "id": "jason-dec-jason-34",
+   "text": "You didn't skip much, either."
+  },
+  {
+   "id": "jason-dec-jason-35",
+   "text": "There's a cabinet in the break room. It's the whole record as a game, and every medal in it is a fact."
+  },
+  {
+   "id": "jason-dec-jason-36",
+   "text": "You never told me why you came. That's alright."
+  },
+  {
+   "id": "jason-dec-jason-37",
+   "text": "You spent a long time at the whiteboard, though."
+  },
+  {
+   "id": "jason-dec-jason-38",
+   "text": "You listened to that whole call, though."
+  },
+  {
+   "id": "jason-dec-jason-39",
+   "text": "You went through every folder in that cabinet, though."
+  },
+  {
+   "id": "jason-dec-jason-40",
+   "text": "You read that laptop closely, though."
+  },
+  {
+   "id": "jason-dec-jason-41",
+   "text": "Last chance. No pressure."
+  },
+  {
+   "id": "jason-dec-jason-42",
+   "text": "So that's why you came. What kind of role?"
+  },
+  {
+   "id": "jason-dec-jason-43",
+   "text": "So that's why you came. What's slowing your lot down?"
+  },
+  {
+   "id": "jason-dec-jason-44",
+   "text": "Then take the record with you. Every line in it is true."
+  }
+ ]
+}

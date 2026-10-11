@@ -1,0 +1,7 @@
+{
+  "name": "after-hours-cast-tools",
+  "private": true,
+  "type": "module",
+  "description": "Offline tools for After Hours: cast.mjs builds the characters. meshoptimizer (MIT) simplifies and compresses the meshes; its decoder is vendored at vendor/meshopt-0.22.0.",
+  "dependencies": { "meshoptimizer": "0.22.0" }
+}

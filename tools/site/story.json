@@ -1,0 +1,593 @@
+{
+  "_about": "After Hours, Episode One: Lamps On. The story you walk through in 3D (story/*.js, story.css), inlined by assemble_home.py as #story-data. Talks are a branching graph: each has lines, then choices or next, and do-actions when it ends. Conditions (if) are comma-joined terms: k=v, k!=v, k, !k, seen:object. Every line Jason says that states a fact is a first-person fact already in llms.txt; fictional characters say nothing about Jason that is not there, and they are labelled fictional wherever they speak. Jason's lines are voiced in his own voice (tools/voice/story_jason_lines.json, written by tools/site/story_voice.py), the fictional cast in stock Kokoro voices (tools/voice/story_lines.json). Your thoughts (who: you) are text. No em dashes, no percent signs, no invented numbers.",
+  "v": 1,
+  "out": "assets/voice/story",
+  "title": "After Hours",
+  "episode": "Episode One",
+  "name": "Lamps On",
+  "voices_note": "Jason's lines are his own voice, synthesized from his recording with his permission. Dell, Renata, the caller, the voice agent and the library are fictional, voiced with stock Kokoro voices (open source).",
+  "cast": {
+    "jason": { "name": "Jason" },
+    "you": { "name": "" },
+    "dell": { "name": "Dell", "tag": "Night porter, fictional", "voice": "am_onyx", "fictional": true },
+    "renata": { "name": "Renata", "tag": "Buyer, fictional", "voice": "af_bella", "fictional": true },
+    "caller": { "name": "A caller", "tag": "Fictional call", "voice": "af_nicole", "fictional": true },
+    "agent": { "name": "The voice agent", "tag": "Fictional call", "voice": "af_heart", "fictional": true },
+    "library": { "name": "The library", "tag": "Fictional", "voice": "bf_emma", "fictional": true }
+  },
+  "scenes": {
+    "lot": { "name": "The Lot", "card": "Houston, after close", "start": "lot-arrive" },
+    "office": { "name": "The Office", "card": "Inside, out of the rain", "start": "office-arrive" },
+    "memory": { "name": "A Memory", "card": "The library, late", "start": "mem-arrive" },
+    "keys": { "name": "A Memory", "card": "August 2024", "start": "keys-arrive" },
+    "decision": { "name": "Lamps On", "card": "Back out on the lot", "start": "dec-arrive" }
+  },
+  "objectives": {
+    "find": "Find Jason by the showroom.",
+    "office": "Go into the office.",
+    "look": "Look around the office.",
+    "phone": "The phone is ringing.",
+    "book": "There's a book on the shelf behind the desk.",
+    "pack": "Pack up the desk.",
+    "keys": "Take the keys.",
+    "end": "Walk out with Jason."
+  },
+  "talks": {
+    "lot-arrive": {
+      "lines": [
+        { "id": "lot-you-1", "who": "you", "t": "Almeda Genoa Road. The lot's closed, and the lamps are still on." }
+      ],
+      "do": ["obj:find"]
+    },
+
+    "dell-hello": {
+      "lines": [
+        { "id": "lot-dell-1", "who": "dell", "t": "Evening. Lot's closed, but the lamps stay on a while." },
+        { "id": "lot-dell-2", "who": "dell", "t": "If you're after the man in the green suit, he's by the showroom." }
+      ],
+      "choices": [
+        { "t": "Rough night to be out.", "go": "dell-warm", "set": { "dell": "warm" } },
+        { "t": "Do you work here?", "go": "dell-work", "set": { "dell": "asked" } },
+        { "t": "Is he expecting me?", "go": "dell-expect", "set": { "dell": "direct" } },
+        { "t": "Say nothing.", "set": { "dell": "quiet" } }
+      ]
+    },
+    "dell-warm": { "lines": [
+      { "id": "lot-dell-3", "who": "dell", "t": "Rain's the only customer that never haggles." },
+      { "id": "lot-dell-4", "who": "dell", "t": "Go on. Mind the puddles. They're deeper than they look." }
+    ] },
+    "dell-work": { "lines": [
+      { "id": "lot-dell-5", "who": "dell", "t": "Tonight I do. I lock the gate and keep the rain off the windshields." },
+      { "id": "lot-dell-6", "who": "dell", "t": "Mostly the rain wins." }
+    ] },
+    "dell-expect": { "lines": [
+      { "id": "lot-dell-7", "who": "dell", "t": "Nobody's expecting anybody this late. Go say hello." }
+    ] },
+    "dell-again": { "lines": [
+      { "id": "lot-dell-8", "who": "dell", "t": "Showroom's that way. Follow the lamps." }
+    ] },
+
+    "gate": {
+      "lines": [
+        { "id": "lot-dell-9", "who": "dell", "t": "This gate and I have an understanding. It doesn't move, and neither do I." }
+      ],
+      "choices": [
+        { "t": "Give him a hand.", "go": "gate-help", "set": { "gate": "helped" }, "note": "Dell will remember that.", "hold": true },
+        { "t": "Leave him to it.", "set": { "gate": "left" } }
+      ]
+    },
+    "gate-help": { "lines": [
+      { "id": "lot-dell-10", "who": "dell", "t": "Well, look at that. Thank you. Go on in before you drown." }
+    ] },
+
+    "jason-hello": {
+      "lines": [
+        { "id": "lot-jason-1", "who": "jason", "t": "Hey. You found it. Lot's closed, so it's just us and the rain." },
+        { "id": "lot-jason-2", "who": "jason", "t": "I'm Jason. I own this lot, and I run it." },
+        { "id": "lot-jason-3", "who": "jason", "t": "So what brings you out here tonight?" }
+      ],
+      "choices": [
+        { "t": "I'm hiring.", "go": "why-hire", "set": { "why": "hiring", "said": "hiring" } },
+        { "t": "I run a dealership.", "go": "why-deal", "set": { "why": "dealer", "said": "dealer" } },
+        { "t": "Just curious.", "go": "why-curious", "set": { "why": "curious", "said": "curious" }, "note": "Jason will remember that." },
+        { "t": "I'd rather not say.", "go": "why-deflect", "set": { "why": "deflect", "said": "deflect" }, "note": "Jason noticed you kept that to yourself." }
+      ]
+    },
+    "why-hire": {
+      "lines": [
+        { "id": "lot-jason-4", "who": "jason", "t": "Good. Then you'd rather see the work than read about it." },
+        { "id": "lot-jason-5", "who": "jason", "t": "What kind of role?" }
+      ],
+      "choices": [
+        { "t": "Software or data", "go": "hire-build", "set": { "cluster": "build" }, "note": "Jason will remember that." },
+        { "t": "AI and automation", "go": "hire-ai", "set": { "cluster": "ai" }, "note": "Jason will remember that." },
+        { "t": "Operations or the back office", "go": "hire-ops", "set": { "cluster": "ops" }, "note": "Jason will remember that." },
+        { "t": "Sales or the phones", "go": "hire-sales", "set": { "cluster": "sales" }, "note": "Jason will remember that." }
+      ]
+    },
+    "hire-build": { "lines": [ { "id": "lot-jason-6", "who": "jason", "t": "Then find the whiteboard inside. Triple J runs on a CRM I built, and three staff use it daily." } ], "next": "lot-come-in" },
+    "hire-ai": { "lines": [ { "id": "lot-jason-7", "who": "jason", "t": "Then stay near the phone. I deployed the inbound voice AI that answers it, and I write its prompts and call flows." } ], "next": "lot-come-in" },
+    "hire-ops": { "lines": [ { "id": "lot-jason-8", "who": "jason", "t": "Then open the filing cabinet. I manage pricing, inventory, vendors, logistics, financing and title here." } ], "next": "lot-come-in" },
+    "hire-sales": { "lines": [ { "id": "lot-jason-9", "who": "jason", "t": "Then you'll like the desk. Since June 2025 I've personally closed 53 vehicle sales." } ], "next": "lot-come-in" },
+
+    "why-deal": {
+      "lines": [
+        { "id": "lot-jason-10", "who": "jason", "t": "Then you know the gate closing doesn't mean the day's over." },
+        { "id": "lot-jason-11", "who": "jason", "t": "What's slowing your lot down?" }
+      ],
+      "choices": [
+        { "t": "Calls I miss", "go": "lot-calls", "set": { "lot": "calls" }, "note": "Jason will remember that." },
+        { "t": "Paperwork that comes back", "go": "lot-paperwork", "set": { "lot": "paperwork" }, "note": "Jason will remember that." },
+        { "t": "Leads that go cold", "go": "lot-leads", "set": { "lot": "leads" }, "note": "Jason will remember that." },
+        { "t": "Something else", "go": "why-deal-more" }
+      ]
+    },
+    "why-deal-more": {
+      "lines": [ { "id": "lot-jason-12", "who": "jason", "t": "Go on." } ],
+      "choices": [
+        { "t": "Deals in a notebook", "go": "lot-notebook", "set": { "lot": "notebook" }, "note": "Jason will remember that." },
+        { "t": "Staff who need tech help", "go": "lot-tech", "set": { "lot": "tech" }, "note": "Jason will remember that." },
+        { "t": "Buy here pay here accounts", "go": "lot-bhph", "set": { "lot": "bhph" }, "note": "Jason will remember that." }
+      ]
+    },
+    "lot-calls": { "lines": [ { "id": "lot-jason-13", "who": "jason", "t": "Then listen for the phone inside. Inbound voice AI answers it, books appointments into the CRM and live-transfers what it can't resolve to staff." } ], "next": "lot-come-in" },
+    "lot-paperwork": { "lines": [ { "id": "lot-jason-14", "who": "jason", "t": "Then the filing cabinet's yours. I file title transfers inside the Texas 30-day window." } ], "next": "lot-come-in" },
+    "lot-leads": { "lines": [ { "id": "lot-jason-15", "who": "jason", "t": "Then read the laptop. My Claude API workflow researches Facebook Marketplace leads, and I follow up by phone and text." } ], "next": "lot-come-in" },
+    "lot-notebook": { "lines": [ { "id": "lot-jason-16", "who": "jason", "t": "Then sit at the desk. Triple J runs on a CRM I built, and every sale is saved on file." } ], "next": "lot-come-in" },
+    "lot-tech": { "lines": [ { "id": "lot-jason-17", "who": "jason", "t": "I know that one. I support my staff on the CRM, phones and computers, and I set up the hardware and network." } ], "next": "lot-come-in" },
+    "lot-bhph": { "lines": [ { "id": "lot-jason-18", "who": "jason", "t": "I prepare our buy here pay here contracts and disclosures, and I service the accounts and collections myself." } ], "next": "lot-come-in" },
+
+    "why-curious": { "lines": [
+      { "id": "lot-jason-19", "who": "jason", "t": "Curious is a good reason. Look at anything in there. The systems are real. The people at the desk aren't." },
+      { "id": "lot-jason-20", "who": "jason", "t": "You'll see." }
+    ], "next": "lot-come-in" },
+    "why-deflect": { "lines": [
+      { "id": "lot-jason-21", "who": "jason", "t": "Fair enough. You don't owe me a reason." },
+      { "id": "lot-jason-22", "who": "jason", "t": "Look around anyway. The door's open." }
+    ], "next": "lot-come-in" },
+    "lot-come-in": { "lines": [
+      { "id": "lot-jason-23", "who": "jason", "t": "Come inside when you're ready. It's dry, and the desk is where the work is." }
+    ], "do": ["flag:met=1", "obj:office"] },
+    "jason-wait": { "lines": [
+      { "id": "lot-jason-24", "who": "jason", "t": "Take your time. The office isn't going anywhere." }
+    ] },
+
+    "look-sign": { "lines": [
+      { "id": "lot-you-2", "who": "you", "t": "Clear vehicles. Clear terms. Real people. Somebody painted that and meant it." }
+    ], "do": ["journal:sign"] },
+    "look-sold": {
+      "lines": [
+        { "id": "lot-you-3", "who": "you", "t": "A board of sold tags by the door. Somebody keeps count." },
+        { "id": "lot-jason-25", "who": "jason", "t": "Since June 2025 I've personally closed 53 vehicle sales. Those are mine." }
+      ],
+      "do": ["unlock:fifty-three", "journal:sold"]
+    },
+    "look-truck": { "lines": [
+      { "id": "lot-you-4", "who": "you", "t": "Rain beads on the hood like it was waxed this afternoon." }
+    ] },
+    "look-puddle": { "lines": [
+      { "id": "lot-you-5", "who": "you", "t": "The lamps hang upside down in the puddles, waiting for somebody to step on them." }
+    ] },
+
+    "office-arrive": {
+      "lines": [
+        { "id": "off-jason-1", "who": "jason", "t": "Welcome to the office. This is Renata." },
+        { "id": "off-renata-1", "who": "renata", "t": "Hi. I'm fictional, before you ask. So are my numbers." },
+        { "id": "off-jason-2", "who": "jason", "t": "The desk is real, though. It's Handle a Sale, the sale desk in the CRM I built for Triple J." }
+      ],
+      "choices": [
+        { "t": "Let me close her deal.", "go": "desk-help", "set": { "desk": "helped" } },
+        { "t": "Show me how it works.", "go": "desk-watch", "set": { "desk": "watched" } }
+      ]
+    },
+    "renata-again": { "lines": [
+      { "id": "off-renata-4", "who": "renata", "t": "Still fictional. Still happy with the deal." }
+    ] },
+    "desk-help": { "lines": [
+      { "id": "off-jason-3", "who": "jason", "t": "Go ahead. One question per screen. You can't get lost." }
+    ], "do": ["desk"] },
+    "desk-filed": { "lines": [
+      { "id": "off-renata-2", "who": "renata", "t": "Signed. That was quick. Thank you, fictionally." }
+    ], "do": ["note:Renata will remember that."], "next": "desk-end" },
+    "desk-watch": { "lines": [
+      { "id": "off-jason-4", "who": "jason", "t": "One plain question at a time. How she's paying, who files the registration." },
+      { "id": "off-jason-5", "who": "jason", "t": "I scan her license once, and every form fills itself." },
+      { "id": "off-renata-3", "who": "renata", "t": "Least painful thing that's happened to me all week." },
+      { "id": "off-jason-6", "who": "jason", "t": "Then it does the registration math and routes the deal to the right documents. Nothing missing, nothing extra." }
+    ], "next": "desk-end" },
+    "desk-end": { "lines": [
+      { "id": "off-jason-7", "who": "jason", "t": "Every sale on file. Three staff use it daily across inventory, deals and follow-up." }
+    ], "do": ["unlock:daily-driver", "journal:desk", "flag:desked=1", "obj:look", "ring"] },
+
+    "call": {
+      "lines": [
+        { "id": "off-agent-1", "who": "agent", "t": "Thanks for calling Triple J Auto. How can I help?" },
+        { "id": "off-caller-1", "who": "caller", "t": "Hi. Is the gray truck on your site still there? Could I come see it Saturday?" },
+        { "id": "off-agent-2", "who": "agent", "t": "It's still here. I can book you for Saturday morning. What's your name?" },
+        { "id": "off-caller-2", "who": "caller", "t": "Marcus." },
+        { "id": "off-agent-3", "who": "agent", "t": "You're booked, Marcus. We'll see you Saturday." },
+        { "id": "off-jason-8", "who": "jason", "t": "That's the inbound voice AI. It books appointments into the CRM." },
+        { "id": "off-jason-9", "who": "jason", "t": "Across August and September 2026 it averaged 41 inbound calls and 14 booked appointments a month." }
+      ],
+      "do": ["unlock:booked"],
+      "next": "call-2"
+    },
+    "call-2": {
+      "lines": [
+        { "id": "off-caller-3", "who": "caller", "t": "One more thing. Can you hold the truck if I put money down tonight?" },
+        { "id": "off-agent-4", "who": "agent", "t": "That's one for the team. Let me get someone for you." }
+      ],
+      "timed": { "s": 6, "default": 1 },
+      "choices": [
+        { "t": "Hand Jason the phone.", "go": "call-handed", "set": { "phone": "handed" }, "note": "Jason noticed." },
+        { "t": "Let him reach for it.", "go": "call-transfer", "set": { "phone": "waited" } }
+      ]
+    },
+    "call-handed": { "lines": [
+      { "id": "off-jason-10", "who": "jason", "t": "Thanks." }
+    ], "next": "call-transfer" },
+    "call-transfer": { "lines": [
+      { "id": "off-jason-11", "who": "jason", "t": "What it can't resolve, it live-transfers to staff. That's the hand-off." },
+      { "id": "off-jason-12", "who": "jason", "t": "And 4 CRM-matched vehicle sales a month across those two months. Matched in the CRM. That's all I claim." }
+    ], "do": ["unlock:hand-off", "unlock:matched", "journal:phone", "flag:called=1", "obj:look"] },
+
+    "look-cabinet": {
+      "lines": [
+        { "id": "off-you-1", "who": "you", "t": "Folders tabbed by hand. Form 130-U. webDEALER. Liens. Temp tags." },
+        { "id": "off-jason-13", "who": "jason", "t": "I prepare and file title and registration paperwork, including the Form 130-U and webDEALER." },
+        { "id": "off-jason-14", "who": "jason", "t": "Title transfers go in inside the Texas 30-day window. Lien payoffs, plates and temporary tags, I handle myself." },
+        { "id": "off-jason-15", "who": "jason", "if": "lot=paperwork", "t": "That's the drawer you came for." }
+      ],
+      "do": ["unlock:title-run", "journal:cabinet"]
+    },
+    "look-board": {
+      "lines": [
+        { "id": "off-you-2", "who": "you", "t": "A data model in marker. Lead, deal, title. Three notes hang off it." },
+        { "id": "off-jason-16", "who": "jason", "t": "I designed the lead-to-title data model, the roles and the validation." }
+      ],
+      "do": ["close:board", "journal:board"]
+    },
+    "note-rls": { "lines": [
+      { "id": "off-jason-17", "who": "jason", "t": "I tested the Supabase row-level security policies, so a role can't reach what it shouldn't." }
+    ], "do": ["unlock:locked-rows"] },
+    "note-valid": { "lines": [
+      { "id": "off-jason-18", "who": "jason", "t": "Validation stops an invalid deal or inventory record before it's ever written." }
+    ], "do": ["unlock:clean-books"] },
+    "note-migr": { "lines": [
+      { "id": "off-jason-19", "who": "jason", "t": "I ran the production schema migrations and kept every existing record and operational table." }
+    ], "do": ["unlock:nothing-lost"] },
+    "look-laptop": {
+      "lines": [
+        { "id": "off-you-3", "who": "you", "t": "A lead from Facebook Marketplace, researched and waiting. The seller's labelled example." },
+        { "id": "off-jason-20", "who": "jason", "t": "That's my prospecting workflow. Python, the Claude API and n8n." },
+        { "id": "off-jason-21", "who": "jason", "t": "It researches Facebook Marketplace leads and writes what it finds to the CRM." },
+        { "id": "off-jason-22", "who": "jason", "t": "Then it drafts the reply from the SOP I wrote, for automatic follow-up." }
+      ],
+      "do": ["unlock:field-notes", "unlock:by-the-book", "journal:laptop"]
+    },
+    "look-ledger": {
+      "lines": [
+        { "id": "off-you-4", "who": "you", "t": "A ledger, closed. The kind you keep even when the computer keeps it too." },
+        { "id": "off-jason-23", "who": "jason", "t": "Since June 2025 I've collected $206,777 in sale proceeds." }
+      ],
+      "do": ["unlock:proceeds", "journal:ledger"]
+    },
+    "look-arcade": {
+      "lines": [
+        { "id": "off-you-5", "who": "you", "t": "An arcade cabinet. After Hours: The Run. Somebody turned a resume into a game." },
+        { "id": "off-jason-24", "who": "jason", "t": "That one's mine too. Later." }
+      ],
+      "do": ["journal:arcade"]
+    },
+    "look-coffee": { "lines": [
+      { "id": "off-you-6", "who": "you", "t": "The coffee machine ticks as it cools." }
+    ] },
+    "look-window": { "lines": [
+      { "id": "off-you-7", "who": "you", "t": "From in here the lot looks like a painting of itself." }
+    ] },
+    "book-hint": { "lines": [
+      { "id": "off-jason-25", "who": "jason", "t": "One more thing. See the book on the shelf behind me? That's the other thing I'm working on." }
+    ], "do": ["obj:book", "flag:hinted=1"] },
+    "look-book": {
+      "lines": [
+        { "id": "off-jason-26", "who": "jason", "t": "I'm studying for a Bachelor of Science in Neuroscience at The University of Texas at Austin. Expected 2028." }
+      ],
+      "do": ["journal:book", "goto:memory"]
+    },
+
+    "mem-arrive": {
+      "lines": [
+        { "id": "mem-library-1", "who": "library", "t": "The library will close soon. Please bring your books to the front desk." }
+      ],
+      "do": ["obj:pack"]
+    },
+    "mem-laptop": { "lines": [
+      { "id": "mem-jason-1", "who": "jason", "t": "Nineteen completed Anthropic courses. Building with the Claude API is one of them." }
+    ], "do": ["unlock:nineteen", "journal:courses"] },
+    "mem-cert": { "lines": [
+      { "id": "mem-jason-2", "who": "jason", "t": "Google AI Essentials, from Google on Coursera, in 2026." }
+    ], "do": ["unlock:essentials", "journal:essentials"] },
+    "mem-folder": { "lines": [
+      { "id": "mem-jason-3", "who": "jason", "t": "Associate of Arts in Business, San Jacinto College. May 2026." }
+    ], "do": ["unlock:associate", "journal:associate"] },
+    "mem-letter": { "lines": [
+      { "id": "mem-jason-4", "who": "jason", "t": "Dean's Honor List. A 3.63." }
+    ], "do": ["unlock:deans-list", "journal:deans"] },
+    "mem-brain": { "lines": [
+      { "id": "mem-jason-5", "who": "jason", "t": "Neuroscience at UT Austin. Expected 2028." }
+    ], "do": ["journal:brain"] },
+    "mem-lamp": {
+      "lines": [
+        { "id": "mem-you-1", "who": "you", "t": "The desk lamp hums. The rest of the floor has gone dark." }
+      ],
+      "choices": [
+        { "t": "One more chapter.", "go": "mem-on", "set": { "lamp": "on" }, "note": "This will change something later." },
+        { "t": "Lamp off.", "go": "mem-off", "set": { "lamp": "off" }, "note": "This will change something later." }
+      ]
+    },
+    "mem-on": { "lines": [ { "id": "mem-jason-6", "who": "jason", "t": "One more." } ], "do": ["goto:keys"] },
+    "mem-off": { "lines": [ { "id": "mem-jason-7", "who": "jason", "t": "That's enough for tonight." } ], "do": ["lampoff", "goto:keys"] },
+
+    "keys-arrive": { "lines": [
+      { "id": "keys-you-1", "who": "you", "t": "Morning. Dry asphalt. The lamps are off for once." }
+    ], "do": ["obj:keys"] },
+    "keys-take": { "lines": [
+      { "id": "keys-jason-1", "who": "jason", "t": "August 2024. Owner and Operations Lead of Triple J, from that day on." }
+    ], "do": ["unlock:keys-to-the-lot", "journal:keys", "goto:decision"] },
+
+    "dec-arrive": {
+      "lines": [
+        { "id": "dec-jason-1", "who": "jason", "t": "Rain's letting up." },
+        { "id": "dec-dell-1", "who": "dell", "if": "gate=helped", "t": "Thanks again for the gate. Get home safe." },
+        { "id": "dec-jason-2", "who": "jason", "if": "desk=helped", "t": "Renata says thanks, by the way. Fictionally." },
+        { "id": "dec-jason-3", "who": "jason", "if": "phone=handed", "t": "And thanks for grabbing the phone." }
+      ],
+      "next": "dec-route"
+    },
+    "dec-route": {
+      "branch": [
+        { "if": "why=hiring", "go": "dec-hire" },
+        { "if": "why=dealer", "go": "dec-deal" },
+        { "if": "why=curious", "go": "dec-curious" },
+        { "go": "dec-deflect" }
+      ]
+    },
+
+    "dec-hire": {
+      "lines": [
+        { "id": "dec-jason-4", "who": "jason", "if": "cluster=build", "t": "So. You're hiring for software or data." },
+        { "id": "dec-jason-5", "who": "jason", "if": "cluster=ai", "t": "So. You're hiring for AI and automation." },
+        { "id": "dec-jason-6", "who": "jason", "if": "cluster=ops", "t": "So. You're hiring for operations or the back office." },
+        { "id": "dec-jason-7", "who": "jason", "if": "cluster=sales", "t": "So. You're hiring for sales or the phones." },
+        { "id": "dec-jason-8", "who": "jason", "if": "read=board", "t": "You read every note on that whiteboard." },
+        { "id": "dec-jason-9", "who": "jason", "if": "read=phone", "t": "You listened to the whole call." },
+        { "id": "dec-jason-10", "who": "jason", "if": "read=cabinet", "t": "You went through the filing cabinet." },
+        { "id": "dec-jason-11", "who": "jason", "if": "read=laptop", "t": "You read the laptop over my shoulder." },
+        { "id": "dec-jason-12", "who": "jason", "if": "read=desk", "t": "You went straight for the desk." },
+        { "id": "dec-jason-13", "who": "jason", "t": "Which job is it, exactly?" }
+      ],
+      "choices": [
+        { "t": "Software and CRM", "if": "cluster=build", "go": "role-software", "set": { "role": "software" } },
+        { "t": "Data and Databases", "if": "cluster=build", "go": "role-data", "set": { "role": "data" } },
+        { "t": "IT and Systems Support", "if": "cluster=build", "go": "role-it", "set": { "role": "it" } },
+        { "t": "AI and Automation", "if": "cluster=ai", "go": "role-ai", "set": { "role": "ai" } },
+        { "t": "Dealer Technology", "if": "cluster=ai", "go": "role-dealer-tech", "set": { "role": "dealer-tech" } },
+        { "t": "Operations and Logistics", "if": "cluster=ops", "go": "role-ops", "set": { "role": "ops" } },
+        { "t": "Title and Back Office", "if": "cluster=ops", "go": "role-title", "set": { "role": "title" } },
+        { "t": "People and Office", "if": "cluster=ops", "go": "role-people", "set": { "role": "people" } },
+        { "t": "Sales and Phones", "if": "cluster=sales", "go": "role-sales", "set": { "role": "sales" } },
+        { "t": "Dealer Technology", "if": "cluster=sales", "go": "role-dealer-tech", "set": { "role": "dealer-tech" } }
+      ]
+    },
+    "role-ai": { "lines": [ { "id": "dec-jason-14", "who": "jason", "t": "I put AI to work where a business loses time." } ], "next": "dec-hire-end" },
+    "role-software": { "lines": [ { "id": "dec-jason-15", "who": "jason", "t": "I build software people use every day." } ], "next": "dec-hire-end" },
+    "role-it": { "lines": [ { "id": "dec-jason-16", "who": "jason", "t": "I keep a business's people and systems working." } ], "next": "dec-hire-end" },
+    "role-ops": { "lines": [ { "id": "dec-jason-17", "who": "jason", "t": "I keep a business moving from the first call to the finished paperwork." } ], "next": "dec-hire-end" },
+    "role-title": { "lines": [ { "id": "dec-jason-18", "who": "jason", "t": "I get the paperwork right and on file." } ], "next": "dec-hire-end" },
+    "role-sales": { "lines": [ { "id": "dec-jason-19", "who": "jason", "t": "I sell, and I build the tools a sales team works from." } ], "next": "dec-hire-end" },
+    "role-people": { "lines": [ { "id": "dec-jason-20", "who": "jason", "t": "I keep a team staffed, trained and paid." } ], "next": "dec-hire-end" },
+    "role-dealer-tech": { "lines": [ { "id": "dec-jason-21", "who": "jason", "t": "I know a dealership from the desk and from the database." } ], "next": "dec-hire-end" },
+    "role-data": { "lines": [ { "id": "dec-jason-22", "who": "jason", "t": "I keep a business's data structured, clean and intact." } ], "next": "dec-hire-end" },
+    "dec-hire-end": { "lines": [
+      { "id": "dec-jason-23", "who": "jason", "t": "Here's the one page for that job. It's all true, and you can check every line." }
+    ], "do": ["end:hiring"] },
+
+    "dec-deal": {
+      "lines": [
+        { "id": "dec-jason-24", "who": "jason", "if": "lot=calls", "t": "So your lot misses calls." },
+        { "id": "dec-jason-25", "who": "jason", "if": "lot=paperwork", "t": "So your paperwork keeps coming back." },
+        { "id": "dec-jason-26", "who": "jason", "if": "lot=leads", "t": "So your leads go cold." },
+        { "id": "dec-jason-27", "who": "jason", "if": "lot=notebook", "t": "So your deals live in a notebook." },
+        { "id": "dec-jason-28", "who": "jason", "if": "lot=tech", "t": "So your staff need tech help." },
+        { "id": "dec-jason-29", "who": "jason", "if": "lot=bhph", "t": "So it's the buy here pay here accounts." },
+        { "id": "dec-jason-30", "who": "jason", "t": "What you saw tonight runs Triple J. I'm also building a sale desk for Texas independent dealers. It's called Obavia." },
+        { "id": "dec-jason-31", "who": "jason", "t": "It grew out of Handle a Sale, the desk you just saw. It's in development, so there's nothing to sell you yet." },
+        { "id": "dec-jason-32", "who": "jason", "t": "Early access is a conversation, not an account. Your lot, your call." }
+      ],
+      "do": ["end:dealer"]
+    },
+
+    "dec-curious": {
+      "lines": [
+        { "id": "dec-jason-33", "who": "jason", "t": "You came to look, and you looked." },
+        { "id": "dec-jason-34", "who": "jason", "if": "many", "t": "You didn't skip much, either." },
+        { "id": "dec-jason-35", "who": "jason", "t": "There's a cabinet in the break room. It's the whole record as a game, and every medal in it is a fact." }
+      ],
+      "do": ["end:curious"]
+    },
+
+    "dec-deflect": {
+      "lines": [
+        { "id": "dec-jason-36", "who": "jason", "t": "You never told me why you came. That's alright." },
+        { "id": "dec-jason-37", "who": "jason", "if": "read=board", "t": "You spent a long time at the whiteboard, though." },
+        { "id": "dec-jason-38", "who": "jason", "if": "read=phone", "t": "You listened to that whole call, though." },
+        { "id": "dec-jason-39", "who": "jason", "if": "read=cabinet", "t": "You went through every folder in that cabinet, though." },
+        { "id": "dec-jason-40", "who": "jason", "if": "read=laptop", "t": "You read that laptop closely, though." },
+        { "id": "dec-jason-41", "who": "jason", "t": "Last chance. No pressure." }
+      ],
+      "choices": [
+        { "t": "I'm hiring.", "go": "late-hire", "set": { "why": "hiring" } },
+        { "t": "I run a dealership.", "go": "late-deal", "set": { "why": "dealer" } },
+        { "t": "I was just curious.", "go": "dec-curious", "set": { "why": "curious" } },
+        { "t": "Still not saying.", "go": "dec-passing", "set": { "why": "deflect" } }
+      ]
+    },
+    "late-hire": {
+      "lines": [ { "id": "dec-jason-42", "who": "jason", "t": "So that's why you came. What kind of role?" } ],
+      "choices": [
+        { "t": "Software or data", "go": "dec-hire", "set": { "cluster": "build" } },
+        { "t": "AI and automation", "go": "dec-hire", "set": { "cluster": "ai" } },
+        { "t": "Operations or the back office", "go": "dec-hire", "set": { "cluster": "ops" } },
+        { "t": "Sales or the phones", "go": "dec-hire", "set": { "cluster": "sales" } }
+      ]
+    },
+    "late-deal": {
+      "lines": [ { "id": "dec-jason-43", "who": "jason", "t": "So that's why you came. What's slowing your lot down?" } ],
+      "choices": [
+        { "t": "Calls I miss", "go": "dec-deal", "set": { "lot": "calls" } },
+        { "t": "Paperwork that comes back", "go": "dec-deal", "set": { "lot": "paperwork" } },
+        { "t": "Leads that go cold", "go": "dec-deal", "set": { "lot": "leads" } },
+        { "t": "Deals in a notebook", "go": "dec-deal", "set": { "lot": "notebook" } }
+      ]
+    },
+    "dec-passing": { "lines": [
+      { "id": "dec-jason-44", "who": "jason", "t": "Then take the record with you. Every line in it is true." }
+    ], "do": ["end:passing"] }
+  },
+
+  "objects": {
+    "dell": { "scene": "lot", "label": "Dell", "verb": "Talk", "talk": "dell-hello", "again": "dell-again", "who": "dell" },
+    "jason-lot": { "scene": "lot", "label": "Jason", "verb": "Talk", "talk": "jason-hello", "again": "jason-wait", "who": "jason" },
+    "gate": { "scene": "lot", "label": "The gate", "verb": "Help", "talk": "gate", "if": "met", "once": true },
+    "sign": { "scene": "lot", "label": "The sign", "verb": "Look", "talk": "look-sign", "once": true },
+    "sold": { "scene": "lot", "label": "Sold board", "verb": "Look", "talk": "look-sold", "once": true },
+    "truck": { "scene": "lot", "label": "The truck", "verb": "Look", "talk": "look-truck", "once": true },
+    "puddle": { "scene": "lot", "label": "Puddle", "verb": "Look", "talk": "look-puddle", "once": true },
+    "door": { "scene": "lot", "label": "Office door", "verb": "Enter", "if": "met", "go": "office" },
+
+    "renata": { "scene": "office", "label": "Renata", "verb": "Talk", "talk": "renata-again", "who": "renata", "if": "desked" },
+    "phone": { "scene": "office", "label": "The phone", "verb": "Listen", "talk": "call", "if": "ringing", "once": true },
+    "cabinet": { "scene": "office", "label": "Filing cabinet", "verb": "Open", "talk": "look-cabinet", "once": true },
+    "board": { "scene": "office", "label": "Whiteboard", "verb": "Read", "talk": "look-board", "close": true },
+    "laptop": { "scene": "office", "label": "Laptop", "verb": "Read", "talk": "look-laptop", "once": true },
+    "ledger": { "scene": "office", "label": "Ledger", "verb": "Open", "talk": "look-ledger", "once": true },
+    "arcade": { "scene": "office", "label": "Arcade cabinet", "verb": "Look", "talk": "look-arcade", "once": true },
+    "coffee": { "scene": "office", "label": "Coffee machine", "verb": "Look", "talk": "look-coffee", "once": true },
+    "window": { "scene": "office", "label": "Window", "verb": "Look", "talk": "look-window", "once": true },
+    "book": { "scene": "office", "label": "The book", "verb": "Read", "talk": "look-book", "if": "hinted" },
+
+    "mem-laptop": { "scene": "memory", "label": "Laptop", "verb": "Read", "talk": "mem-laptop", "once": true, "pack": true },
+    "mem-cert": { "scene": "memory", "label": "Certificate", "verb": "Read", "talk": "mem-cert", "once": true, "pack": true },
+    "mem-folder": { "scene": "memory", "label": "Folder", "verb": "Open", "talk": "mem-folder", "once": true, "pack": true },
+    "mem-letter": { "scene": "memory", "label": "Letter", "verb": "Read", "talk": "mem-letter", "once": true, "pack": true },
+    "mem-brain": { "scene": "memory", "label": "Brain model", "verb": "Look", "talk": "mem-brain", "once": true },
+    "mem-lamp": { "scene": "memory", "label": "Desk lamp", "verb": "Reach", "talk": "mem-lamp", "if": "packed" },
+
+    "keys": { "scene": "keys", "label": "The keys", "verb": "Take", "talk": "keys-take" },
+
+    "jason-end": { "scene": "decision", "label": "Jason", "verb": "Talk", "talk": "dec-arrive", "who": "jason", "once": true }
+  },
+
+  "board_notes": {
+    "note-rls": "Row-level security",
+    "note-valid": "Validation",
+    "note-migr": "Migrations"
+  },
+
+  "journal": {
+    "jason": { "h": "Jason", "p": "Green suit, browline glasses, the lamps on behind him. Owner and Operations Lead of Triple J since August 2024.", "sketch": "jason" },
+    "dell": { "h": "Dell", "p": "Night porter, fictional. Locks the gate. Loses to the rain.", "sketch": "dell", "fictional": true },
+    "renata": { "h": "Renata", "p": "Buyer, fictional. So are her numbers. The desk she sat at is real.", "sketch": "renata", "fictional": true },
+    "sign": { "h": "The sign", "p": "Triple J Auto Investment, Almeda Genoa Road, Houston. Open Monday to Saturday, 9 to 7. In-house financing, sell and trade valuations, registration and title support.", "sketch": "sign" },
+    "sold": { "h": "The sold board", "p": "Personally closed 53 vehicle sales since June 2025.", "sketch": "sold", "trophy": "fifty-three" },
+    "desk": { "h": "Handle a Sale", "p": "One plain question at a time. Scan the license once and every form fills itself. English or Spanish. Every sale on file. Three staff use the CRM daily across inventory, deals and follow-up.", "sketch": "desk", "trophy": "daily-driver" },
+    "phone": { "h": "The phone", "p": "Inbound voice AI books appointments into the CRM and live-transfers unresolved calls to staff. August and September 2026: 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales a month.", "sketch": "phone", "trophy": "booked" },
+    "cabinet": { "h": "Filing cabinet", "p": "Form 130-U and webDEALER. Title transfers inside the Texas 30-day window. Lien payoffs, plates and temporary tags.", "sketch": "cabinet", "trophy": "title-run" },
+    "board": { "h": "Whiteboard", "p": "The lead-to-title data model. Row-level security tested. Validation before anything's written. Migrations that kept every record.", "sketch": "board" },
+    "laptop": { "h": "The laptop", "p": "Python, the Claude API and n8n. Researches Facebook Marketplace leads, writes findings to the CRM, drafts the reply from an SOP.", "sketch": "laptop", "trophy": "field-notes" },
+    "ledger": { "h": "The ledger", "p": "Collected $206,777 in sale proceeds since June 2025.", "sketch": "ledger", "trophy": "proceeds" },
+    "arcade": { "h": "Arcade cabinet", "p": "After Hours: The Run. Six short levels through the record. Every medal is a fact.", "sketch": "arcade" },
+    "book": { "h": "The book", "p": "Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028.", "sketch": "book" },
+    "courses": { "h": "Coursework", "p": "Nineteen completed Anthropic courses, including Building with the Claude API and Claude Code in Action.", "sketch": "mem-laptop", "trophy": "nineteen" },
+    "essentials": { "h": "Certificate", "p": "Google AI Essentials, Google on Coursera, 2026.", "sketch": "mem-cert", "trophy": "essentials" },
+    "associate": { "h": "The folder", "p": "Associate of Arts in Business, San Jacinto College, May 2026.", "sketch": "mem-folder", "trophy": "associate" },
+    "deans": { "h": "The letter", "p": "Dean's Honor List, GPA 3.63.", "sketch": "mem-letter", "trophy": "deans-list" },
+    "brain": { "h": "Brain model", "p": "Neuroscience, UT Austin, expected 2028.", "sketch": "mem-brain" },
+    "keys": { "h": "The keys", "p": "August 2024. Owner and Operations Lead of Triple J from then on.", "sketch": "keys", "trophy": "keys-to-the-lot" }
+  },
+
+  "recap": {
+    "why": {
+      "hiring": "You told Jason you're hiring.",
+      "dealer": "You told Jason you run a dealership.",
+      "curious": "You told Jason you were just curious.",
+      "deflect": "You kept your reason to yourself."
+    },
+    "said_late": "You told him why at the very end.",
+    "cluster": {
+      "build": "You're hiring for software or data.",
+      "ai": "You're hiring for AI and automation.",
+      "ops": "You're hiring for operations or the back office.",
+      "sales": "You're hiring for sales or the phones."
+    },
+    "lot": {
+      "calls": "Your lot misses calls.",
+      "paperwork": "Your lot's paperwork keeps coming back.",
+      "leads": "Your lot's leads go cold.",
+      "notebook": "Your lot keeps deals in a notebook.",
+      "tech": "Your staff need tech help.",
+      "bhph": "Your lot carries buy here pay here accounts."
+    },
+    "dell": {
+      "warm": "You traded a line about the rain with Dell.",
+      "asked": "You asked Dell about his night.",
+      "direct": "You asked Dell if you were expected.",
+      "quiet": "You walked past Dell without a word."
+    },
+    "gate": { "helped": "You helped Dell with the gate.", "left": "You left Dell to the gate." },
+    "desk": { "helped": "You closed Renata's deal yourself.", "watched": "You watched Jason close Renata's deal." },
+    "phone": { "handed": "You handed Jason the phone.", "waited": "You let Jason reach for the phone." },
+    "lamp": { "on": "In the memory, you kept the lamp on.", "off": "In the memory, you turned the lamp off." },
+    "looked": "You looked at",
+    "none": "You didn't stop to look at much."
+  },
+
+  "endings": {
+    "hiring": { "name": "The Interview", "line": "You came to hire. You leave with the page for the job." },
+    "dealer": { "name": "The Other Desk", "line": "You came about your lot. The next step is a conversation." },
+    "curious": { "name": "The Cabinet", "line": "You came to look. There's more to play." },
+    "passing": { "name": "Passing Through", "line": "You kept your reason. The record is yours anyway." }
+  },
+
+  "ui": {
+    "play": "Play",
+    "continue": "Continue",
+    "loading": "Loading the lot",
+    "skip": "Skip",
+    "journal": "Journal",
+    "pause": "Paused",
+    "resume": "Resume",
+    "restart": "Restart the episode",
+    "chapters": "Chapters",
+    "library": "Quit to the library",
+    "run": "Play the run",
+    "recap_h": "Your choices",
+    "end_h": "End of Episode One",
+    "early": "Ask for Obavia early access",
+    "resume_pdf": "The resume",
+    "enter": "Enter the library",
+    "fictional": "Fictional",
+    "walk_pointer": "WASD or arrows to walk. E to interact. J for the journal.",
+    "walk_touch": "Tap the ground to walk. Tap people and things.",
+    "turn": "Best played sideways.",
+    "hold": "Hold",
+    "timed": "Choose",
+    "j_people": "People",
+    "j_things": "Things",
+    "j_trophies": "Trophies",
+    "j_choices": "Choices",
+    "j_empty": "Nothing yet. Look around.",
+    "sound": "Sound",
+    "captions": "Captions are always on."
+  }
+}

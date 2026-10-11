@@ -1,0 +1,144 @@
+{
+ "_about": "Written by tools/site/story_voice.py from tools/site/story.json. The fictional cast of After Hours in stock Kokoro voices. Render: /root/kvenv/bin/python -I tools/voice/narrate_free.py tools/voice/story_lines.json",
+ "out": "assets/voice/story",
+ "lines": [
+  {
+   "id": "lot-dell-1",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Evening. Lot's closed, but the lamps stay on a while."
+  },
+  {
+   "id": "lot-dell-2",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "If you're after the man in the green suit, he's by the showroom."
+  },
+  {
+   "id": "lot-dell-3",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Rain's the only customer that never haggles."
+  },
+  {
+   "id": "lot-dell-4",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Go on. Mind the puddles. They're deeper than they look."
+  },
+  {
+   "id": "lot-dell-5",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Tonight I do. I lock the gate and keep the rain off the windshields."
+  },
+  {
+   "id": "lot-dell-6",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Mostly the rain wins."
+  },
+  {
+   "id": "lot-dell-7",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Nobody's expecting anybody this late. Go say hello."
+  },
+  {
+   "id": "lot-dell-8",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Showroom's that way. Follow the lamps."
+  },
+  {
+   "id": "lot-dell-9",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "This gate and I have an understanding. It doesn't move, and neither do I."
+  },
+  {
+   "id": "lot-dell-10",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Well, look at that. Thank you. Go on in before you drown."
+  },
+  {
+   "id": "off-renata-1",
+   "who": "renata",
+   "voice": "af_bella",
+   "text": "Hi. I'm fictional, before you ask. So are my numbers."
+  },
+  {
+   "id": "off-renata-4",
+   "who": "renata",
+   "voice": "af_bella",
+   "text": "Still fictional. Still happy with the deal."
+  },
+  {
+   "id": "off-renata-2",
+   "who": "renata",
+   "voice": "af_bella",
+   "text": "Signed. That was quick. Thank you, fictionally."
+  },
+  {
+   "id": "off-renata-3",
+   "who": "renata",
+   "voice": "af_bella",
+   "text": "Least painful thing that's happened to me all week."
+  },
+  {
+   "id": "off-agent-1",
+   "who": "agent",
+   "voice": "af_heart",
+   "text": "Thanks for calling Triple J Auto. How can I help?"
+  },
+  {
+   "id": "off-caller-1",
+   "who": "caller",
+   "voice": "af_nicole",
+   "text": "Hi. Is the gray truck on your site still there? Could I come see it Saturday?"
+  },
+  {
+   "id": "off-agent-2",
+   "who": "agent",
+   "voice": "af_heart",
+   "text": "It's still here. I can book you for Saturday morning. What's your name?"
+  },
+  {
+   "id": "off-caller-2",
+   "who": "caller",
+   "voice": "af_nicole",
+   "text": "Marcus."
+  },
+  {
+   "id": "off-agent-3",
+   "who": "agent",
+   "voice": "af_heart",
+   "text": "You're booked, Marcus. We'll see you Saturday."
+  },
+  {
+   "id": "off-caller-3",
+   "who": "caller",
+   "voice": "af_nicole",
+   "text": "One more thing. Can you hold the truck if I put money down tonight?"
+  },
+  {
+   "id": "off-agent-4",
+   "who": "agent",
+   "voice": "af_heart",
+   "text": "That's one for the team. Let me get someone for you."
+  },
+  {
+   "id": "mem-library-1",
+   "who": "library",
+   "voice": "bf_emma",
+   "text": "The library will close soon. Please bring your books to the front desk."
+  },
+  {
+   "id": "dec-dell-1",
+   "who": "dell",
+   "voice": "am_onyx",
+   "text": "Thanks again for the gate. Get home safe."
+  }
+ ]
+}
