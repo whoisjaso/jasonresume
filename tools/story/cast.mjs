@@ -113,9 +113,9 @@ function character(S) {
   add('body', 'pelvis', ellipsoid(P(0, 0.97, 0), [R(0.158 * W), R(0.115), R(0.108 * W)]), 'hips', pants, 0.04);
   add('body', 'belly', ellipsoid(P(0, 1.1, 0.008 + (S.belly || 0)), [R(0.148 * W + (S.belly || 0) * 0.6), R(0.13), R(0.1 * W + (S.belly || 0))]), 'spine', top, 0.06);
   add('body', 'chest', ellipsoid(P(0, 1.29, 0.0), [R(0.17 * W), R(0.165), R(0.112 * W)]), 'chest', top, 0.06);
-  add('body', 'shoulders', roundCone(P(-0.165, 1.415, -0.015), P(0.165, 1.415, -0.015), R(0.062 * L), R(0.062 * L)), 'chest', top, 0.05);
-  add('body', 'deltL', sphere(P(0.198, 1.395, -0.012), R(0.062 * L)), 'armL', sleeve, 0.04);
-  add('body', 'deltR', sphere(P(-0.198, 1.395, -0.012), R(0.062 * L)), 'armR', sleeve, 0.04);
+  add('body', 'shoulders', roundCone(P(-0.16, 1.405, -0.015), P(0.16, 1.405, -0.015), R(0.056 * L), R(0.056 * L)), 'chest', top, 0.05);
+  add('body', 'deltL', sphere(P(0.192, 1.385, -0.012), R(0.054 * L)), 'armL', sleeve, 0.04);
+  add('body', 'deltR', sphere(P(-0.192, 1.385, -0.012), R(0.054 * L)), 'armR', sleeve, 0.04);
   if (out.skirt) add('body', 'skirt', rbox(P(0, 0.875, 0.004), [R(0.172 * W), R(0.12), R(0.118 * W)], R(0.085)), 'hips', top, 0.05);
   if (out.longcoat) add('body', 'coat', roundCone(P(0, 1.02, 0.0), P(0, 0.62, -0.005), R(0.17 * W), R(0.2 * W)), 'hips', top, 0.06);
   // --- arms ---
@@ -143,7 +143,7 @@ function character(S) {
     add('body', 'sole' + sx, cut(roundCone([a[0], R(0.02), a[2] - R(0.01)], [t[0], R(0.02), t[2] + R(0.012)], R(0.05), R(0.043)), [0, R(0.03), 0], [0, 1, 0], R(0.003)), 'foot' + sx, out.sole || shoe, 0.006);
   }
   // --- collar and neckwear (body side of the seam) ---
-  if (out.collar) add('body', 'collar', roundCone(P(0, 1.455, -0.022), P(0, 1.505, -0.016), R(0.062), R(0.056)), 'chest', out.collar, 0.012);
+  if (out.collar) add('body', 'collar', roundCone(P(0, 1.46, -0.02), P(0, 1.535, -0.012), R(0.062), R(0.056)), 'chest', out.collar, 0.012);
   if (out.scarf) {
     add('body', 'scarf', ellipsoid(P(0, 1.475, -0.005), [R(0.085), R(0.04), R(0.075)]), 'chest', out.scarf, 0.02);
     add('body', 'scarfTail', roundCone(P(0.03, 1.46, 0.06), P(0.05, 1.3, 0.1), R(0.03), R(0.026)), 'chest', out.scarf, 0.02);
@@ -162,16 +162,16 @@ function character(S) {
   add('head', 'brow', ellipsoid(P(0, 1.726, 0.07), [R(0.066), R(0.02), R(0.032)]), 'head', 'skin', 0.03);
   add('head', 'nose', roundCone(P(0, 1.704, 0.088), P(0, 1.655, 0.108 + (hd.nose || 0)), R(0.011), R(0.014 * (hd.noseW || 1))), 'head', 'skin', 0.018);
   add('head', 'nostrils', ellipsoid(P(0, 1.651, 0.098), [R(0.024 * (hd.noseW || 1)), R(0.012), R(0.013)]), 'head', 'skin', 0.014);
-  add('head', 'lips', ellipsoid(P(0, 1.627, 0.091), [R(0.028), R(0.012), R(0.012)]), 'head', 'lip', 0.012);
+  add('head', 'lips', ellipsoid(P(0, 1.627, 0.09), [R(0.024), R(0.009), R(0.011)]), 'head', 'skin', 0.012);
   for (const side of [1, -1]) {
     add('head', 'ear' + side, ellipsoid(P(0.079 * side, 1.688, -0.005), [R(0.011), R(0.03), R(0.02)], [0, side * 0.3, 0]), 'head', 'skin', 0.012);
   }
   // hair, beard and headwear by style
   const hairC = 'hair';
   if (hd.hair === 'short') {
-    add('head', 'hair', cut(cut(ellipsoid(P(0, 1.718, -0.012), [R(0.083), R(0.106), R(0.104)]), P(0, 0, 0.074), [0, 0.15, 1], R(0.01)), P(0, 1.655, 0), [0, -1, 0.35], R(0.012)), 'head', hairC, 0.008);
+    add('head', 'hair', cut(cut(ellipsoid(P(0, 1.722, -0.012), [R(0.084), R(0.108), R(0.104)]), P(0, 1.76, 0.062), [0, 0.55, 1], R(0.008)), P(0, 1.672, 0), [0, -1, 0.3], R(0.01)), 'head', hairC, 0.006);
   } else if (hd.hair === 'bun') {
-    add('head', 'hair', cut(cut(ellipsoid(P(0, 1.718, -0.014), [R(0.085), R(0.108), R(0.106)]), P(0, 0, 0.078), [0, 0.3, 1], R(0.01)), P(0, 1.62, 0), [0, -1, 0.5], R(0.015)), 'head', hairC, 0.01);
+    add('head', 'hair', cut(cut(ellipsoid(P(0, 1.72, -0.014), [R(0.086), R(0.11), R(0.106)]), P(0, 1.765, 0.062), [0, 0.7, 1], R(0.01)), P(0, 1.63, 0), [0, -1, 0.55], R(0.015)), 'head', hairC, 0.008);
     add('head', 'bun', sphere(P(0, 1.665, -0.112), R(0.042)), 'head', hairC, 0.025);
     add('head', 'fringe', ellipsoid(P(0.03, 1.765, 0.07), [R(0.06), R(0.022), R(0.03)], [0.4, 0, -0.35]), 'head', hairC, 0.02);
   } else if (hd.hair === 'cap') {
@@ -186,51 +186,17 @@ function character(S) {
     add('head', 'hoodBack', ellipsoid(P(0, 1.56, -0.06), [R(0.1), R(0.07), R(0.09)]), 'neck', S.outfit.hoodC || S.outfit.top, 0.03);
   }
   if (hd.beard === 'full') {
-    add('head', 'beard', cut(ellipsoid(P(0, 1.62, 0.04), [R(0.074), R(0.06), R(0.066)]), P(0, 1.655, 0), [0, 1, -0.15], R(0.01)), 'head', 'beard', 0.025);
+    add('head', 'beard', cut(ellipsoid(P(0, 1.615, 0.035), [R(0.07), R(0.055), R(0.068)]), P(0, 1.64, 0), [0, 1, -0.2], R(0.01)), 'head', 'beard', 0.02);
   }
 
   // eye sockets: shallow, so the eyeballs (runtime) sit in them
-  const eyeY = 1.698, eyeX = 0.032, eyeZ = 0.077;
+  const eyeY = 1.698, eyeX = 0.031, eyeZ = 0.079;
   const sockets = [sphere(P(eyeX, eyeY, eyeZ + 0.012), R(0.019)), sphere(P(-eyeX, eyeY, eyeZ + 0.012), R(0.019))];
 
-  // painted regions
-  function paint(col, x, y, z, part) {
-    const X = x / s, Y = y / s, Z = z / s, ax = Math.abs(X);
-    if (col === 'skin' && part === 'head') {
-      if (hd.beard === 'goatee') {
-        // a short goatee on the chin, a thin moustache over the lip, a line along the jaw
-        const chin = Y < 1.612 && Z > 0.035 && ax < 0.03 + (1.612 - Y) * 0.35;
-        const mous = Y > 1.633 && Y < 1.646 && Z > 0.083 && ax < 0.03;
-        if (chin || mous) return 'beard';
-      }
-      if (hd.beard === 'stubble') { if (Y < 1.64 && Z > 0.0 && Y > 1.585) return 'stubble'; }
-    }
-    if (out.suit && part === 'body' && Z > 0.03) {
-      // the V of the jacket: the shirt, the tie inside it, lapels along its edges, two buttons below
-      const yV = 1.17, yTop = 1.475;
-      if (Y > yV && Y < yTop + 0.03) {
-        const w = 0.085 * Math.min(1, (Y - yV) / (yTop - yV));
-        if (ax < w) {
-          const tw = Y > 1.43 ? 0.02 : 0.016 + (1.43 - Y) * 0.06;
-          if (ax < tw && Y < 1.465) return 'tie';
-          return 'shirt';
-        }
-        if (ax < w + 0.032 && Y < yTop - 0.01) return 'lapel';
-      }
-      if (ax < 0.009 && (Math.abs(Y - 1.13) < 0.009 || Math.abs(Y - 1.05) < 0.009)) return 'button';
-      if (X > 0.07 && X < 0.13 && Y > 1.3 && Y < 1.325 && Z > 0.08) return 'pocket';
-    }
-    if (out.zip && part === 'body' && Z > 0.04 && ax < 0.006 && Y > 0.8 && Y < 1.47) return 'zip';
-    if (out.cardigan && part === 'body' && Z > 0.03 && Y > 1.0 && Y < 1.47) {
-      const w = 0.03 + Math.max(0, (Y - 1.12)) * 0.25;
-      if (ax < w) return 'shirt';
-      if (ax < w + 0.012) return 'lapel';
-    }
-    if (out.pocketsCoat && part === 'body' && Z > 0.05 && ax > 0.07 && ax < 0.13 && Y > 1.0 && Y < 1.012) return 'lapel';
-    return col;
-  }
+  // coarse regions only: the suit's V, the tie, lapels, buttons and beards are painted in the shader (story/paint.js) from bind-pose positions, so their edges stay crisp
+  function paint(col) { return col; }
 
-  return { S, s, J, prims, sockets, paint, eye: { x: eyeX * s, y: eyeY * s, z: eyeZ * s, r: 0.0148 * s } };
+  return { S, s, J, prims, sockets, paint, eye: { x: eyeX * s, y: eyeY * s, z: eyeZ * s, r: 0.0128 * s, my: 1.627 * s, mz: 0.1005 * s } };
 }
 
 // ---------- meshing ----------
@@ -361,33 +327,36 @@ const CAST = {
     head: { hair: 'short', beard: 'goatee', nose: 0.002, noseW: 1.12, jaw: 1.0, chin: 1.0 },
     outfit: { suit: true, top: 'suit', pants: 'suit', shoe: 'shoe', sole: 'sole', collar: 'shirt', cuff: 'shirt', skirt: true },
     palette: { skin: SKIN_J, hair: '#121011', beard: '#17110f', lip: '#6e4038', suit: '#1f382d', lapel: '#1a2f26', shirt: '#e9e6de', tie: '#22463a', button: '#0f1a15', pocket: '#e9e6de', shoe: '#17120f', sole: '#0c0a09' },
-    glasses: 'browline', studs: true
+    glasses: 'browline', studs: true, regions: { suit: 1, goatee: 1 }
   },
   'jason-memory': {
     h: 1.8, headKey: 'jason', build: 1, limb: 1.04,
     head: { hair: 'short', beard: 'goatee', nose: 0.002, noseW: 1.12 },
     outfit: { top: 'hoodie', pants: 'jeans', shoe: 'sneaker', sole: 'sole', hoodDown: true, zip: true, flare: false },
     palette: { skin: SKIN_J, hair: '#121011', beard: '#17110f', lip: '#6e4038', hoodie: '#5a5d58', jeans: '#2c3546', sneaker: '#d8d2c6', sole: '#efe9dd', zip: '#3c3f3b' },
-    glasses: 'browline'
+    glasses: 'browline', regions: { goatee: 1, zip: 1 }
   },
   player: {
     h: 1.72, build: 0.95, limb: 0.97,
     head: { hair: 'short', hood: true, noseW: 0.95, jaw: 0.95 },
     outfit: { top: 'coat', hoodC: 'coat', pants: 'jeans', shoe: 'sneaker', sole: 'sole', longcoat: true, zip: true, pocketsCoat: true },
-    palette: { skin: '#8f6446', hair: '#2a1d16', lip: '#7a4a3e', coat: '#8a6328', lapel: '#6e4e1e', zip: '#4a3614', jeans: '#283041', sneaker: '#d5d0c6', sole: '#ece6da' }
+    palette: { skin: '#8f6446', hair: '#2a1d16', lip: '#7a4a3e', coat: '#8a6328', lapel: '#6e4e1e', zip: '#4a3614', jeans: '#283041', sneaker: '#d5d0c6', sole: '#ece6da' },
+    regions: { zip: 1 }
   },
   dell: {
     h: 1.74, build: 1.08, limb: 1.05, belly: 0.025,
     head: { hair: 'cap', beard: 'full', jaw: 1.05, noseW: 1.15, nose: 0.004, neck: 1.1 },
     outfit: { top: 'jacket', pants: 'work', shoe: 'boot', sole: 'sole', jacketCollar: true, zip: true },
-    palette: { skin: '#7a5038', hair: '#8f8a82', beard: '#a39d93', lip: '#6b4236', jacket: '#3a4232', work: '#2a2b28', boot: '#2b2119', sole: '#141110', hat: '#34342f', zip: '#24281f' },
+    regions: { zip: 1 },
+    palette: { skin: '#7a5038', hair: '#6f6a62', beard: '#77716a', lip: '#6b4236', jacket: '#3a4232', work: '#2a2b28', boot: '#2b2119', sole: '#141110', hat: '#34342f', zip: '#24281f' },
     umbrella: true
   },
   renata: {
     h: 1.66, build: 0.9, limb: 0.9, hipsW: 1.05,
     head: { hair: 'bun', jaw: 0.92, chin: 0.9, noseW: 0.9, neck: 0.92 },
     outfit: { top: 'cardigan', pants: 'slacks', shoe: 'flat', sole: 'sole', cardigan: true, scarf: 'scarf' },
-    palette: { skin: '#b0805c', hair: '#24170f', lip: '#8a4f48', cardigan: '#7d5a3e', lapel: '#6a4b33', shirt: '#e3dccd', slacks: '#25303c', flat: '#2a1f1a', sole: '#16110e', scarf: '#3e5a55' }
+    palette: { skin: '#b0805c', hair: '#24170f', lip: '#8a4f48', cardigan: '#7d5a3e', lapel: '#6a4b33', shirt: '#e3dccd', slacks: '#25303c', flat: '#2a1f1a', sole: '#16110e', scarf: '#3e5a55' },
+    regions: { cardigan: 1 }
   }
 };
 
@@ -413,7 +382,7 @@ for (const [name, spec] of Object.entries(CAST)) {
   manifest.chars[name] = {
     h: spec.h, palette: Object.values(spec.palette), keys: palette, joints: BONES.map(b => C.J[b].map(v => +v.toFixed(5))),
     eye: Object.fromEntries(Object.entries(C.eye).map(([k, v]) => [k, +v.toFixed(5)])), meshes,
-    glasses: spec.glasses || null, studs: !!spec.studs, umbrella: !!spec.umbrella, hood: !!(spec.head && spec.head.hood)
+    glasses: spec.glasses || null, studs: !!spec.studs, regions: spec.regions || null, s: +s.toFixed(4), umbrella: !!spec.umbrella, hood: !!(spec.head && spec.head.hood)
   };
   console.log(`cast: ${name} body ${body.nV} verts ${body.nI / 3} tris, head ${head.nV} verts ${head.nI / 3} tris, ${Date.now() - t0} ms`);
 }
