@@ -136,6 +136,7 @@ void main(){
   #endif
   col = sat(col, uSat);
   gl_FragColor = vec4(fogged(col, vWP), uAlpha);
+  #include <colorspace_fragment>
 }`;
 
 /* One material. o: { color, map, emap, emit, pal (array of hex), wet, ao, rim, alpha, skinned, vcol, side, tone } */
@@ -176,7 +177,9 @@ export function glow(color, o = {}) {
       #ifdef USE_MAP
       vec4 t = texture2D(uMap, vUv); c *= t.rgb; a *= t.a;
       #endif
-      float f = 1.0 - exp(-uFogDen * 0.5 * length(vWP - cameraPosition)); gl_FragColor = vec4(mix(c, uFog, f * 0.6), a); }`,
+      float f = 1.0 - exp(-uFogDen * 0.5 * length(vWP - cameraPosition)); gl_FragColor = vec4(mix(c, uFog, f * 0.6), a);
+      #include <colorspace_fragment>
+      }`,
     transparent: !!o.transparent || o.alpha != null || !!o.additive, blending: o.additive ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: !o.additive && !o.transparent, side: o.side || THREE.FrontSide
   });
   return m;

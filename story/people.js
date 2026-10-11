@@ -74,6 +74,7 @@ class Person {
     });
     this.B = Object.fromEntries(man.bones.map((n, i) => [n, this.bones[i]]));
     this.rest = this.bones.map(b => b.position.clone());
+    this.group.updateMatrixWorld(true);
     this.skeleton = new THREE.Skeleton(this.bones);
     this.pal = C.palette.slice();
     this.mat = paint({ pal: this.pal, rim: 0.85, wet: 0.08 });

@@ -275,7 +275,7 @@ function surfaceNets(F, lo, hi, cell) {
     verts.push([lo[0] + (i + sx / n) * cell, lo[1] + (j + sy / n) * cell, lo[2] + (k + sz / n) * cell]);
   }
   const tris = [];
-  const quad = (a, b, c, d, flip) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; if (flip) tris.push(a, c, b, a, d, c); else tris.push(a, b, c, a, c, d); };
+  const quad = (a, b, c, d, flip) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; if (!flip) tris.push(a, c, b, a, d, c); else tris.push(a, b, c, a, c, d); };
   for (let k = 1; k < nz - 1; k++) for (let j = 1; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
     const a = G[id(i, j, k)], b = G[id(i + 1, j, k)]; if ((a < 0) === (b < 0)) continue;
     quad(vid[id(i, j - 1, k - 1)], vid[id(i, j, k - 1)], vid[id(i, j, k)], vid[id(i, j - 1, k)], a < 0);
