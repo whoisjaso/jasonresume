@@ -1,10 +1,14 @@
-/* After Hours: the people. Loads the cast built by tools/story/cast.mjs
-   (meshopt-compressed, skinned to a twenty-bone skeleton), gives each one a
-   face (eyes that look and blink, lids, brows, a mouth that talks) and the
-   props they carry (Jason's browline glasses, Dell's umbrella), and animates
-   them in code: breathing idle, walk, turning in place, talking hands, nods,
-   sitting. Nothing is keyframed by hand; every pose is a small function. */
+/* After Hours: the people. The cast is built in Blender from MakeHuman's CC0
+   assets (tools/story/mh_cast.py), one GLB each, compressed with meshopt
+   (tools/story/pack_cast.mjs): a body with real eye sockets, eyes, brows,
+   lashes, teeth, clothes, hair, the game_engine rig, and the face as shape
+   keys. Here each one is painted with the episode's paint (story/paint.js) in
+   its own colours, and animated in code: breathing idle, walk, turning in place,
+   talking hands, nods, blinks, visemes, sitting, holding an umbrella. Poses are
+   written in the character's own axes (x to its left, y up, z ahead), applied on
+   top of each bone's rest. */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
+import { GLTFLoader } from "../vendor/three-0.184.0/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "../vendor/meshopt-0.22.0/meshopt_decoder.module.js";
 import { paint } from "./paint.js";
 
@@ -14,245 +18,239 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
 function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; }
 
+/* each character's colours. Cloth textures keep their folds and light, recoloured */
+export const LOOKS = {
+  jason: { skin: "#45291e", lip: "#5f3730", eyes: "#7a5a48", hair: "#0d0b0b", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#1e3a2d", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
+  "jason-memory": { skin: "#45291e", lip: "#5f3730", eyes: "#7a5a48", hair: "#0d0b0b", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
+  player: { skin: "#9a6d4c", hair: "#2a1d16", brow: "#2a1d16", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
+  dell: { skin: "#6e4631", beard: "#9b958c", hair: "#4a4640", brow: "#7d776e", cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true },
+  renata: { skin: "#b78a66", hair: "#24170f", brow: "#24170f", cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
+};
+
 export async function loadCast(base) {
-  const [man, bin] = await Promise.all([fetch(base + ".json").then(r => r.json()), fetch(base + ".bin").then(r => r.arrayBuffer())]);
-  await MeshoptDecoder.ready;
-  const geos = {};
-  function geo(ref) {
-    const key = ref.v[0];
-    if (geos[key]) return geos[key];
-    const vb = new Uint8Array(ref.nV * 16), ib = new Uint32Array(ref.nI);
-    MeshoptDecoder.decodeVertexBuffer(vb, ref.nV, 16, new Uint8Array(bin, ref.v[0], ref.v[1]));
-    MeshoptDecoder.decodeIndexBuffer(new Uint8Array(ib.buffer), ref.nI, 4, new Uint8Array(bin, ref.i[0], ref.i[1]));
-    const dv = new DataView(vb.buffer), n = ref.nV;
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), ci = new Float32Array(n), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++) {
-      const o = i * 16;
-      for (let a = 0; a < 3; a++) { pos[i * 3 + a] = dv.getInt16(o + a * 2, true) / 8000; nor[i * 3 + a] = dv.getInt8(o + 8 + a) / 127; }
-      ci[i] = dv.getUint8(o + 11);
-      si[i * 4] = dv.getUint8(o + 12); si[i * 4 + 1] = dv.getUint8(o + 13);
-      const w = dv.getUint8(o + 14) / 255; sw[i * 4] = w; sw[i * 4 + 1] = 1 - w;
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  const cache = {};
+  return {
+    async make(name, o) {
+      const g = cache[name] || (cache[name] = await loader.loadAsync(base + name + ".glb"));
+      return new Person(name, g.scene, o || {});
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    g.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
-    g.setAttribute("cidx", new THREE.BufferAttribute(ci, 1));
-    g.setAttribute("skinIndex", new THREE.BufferAttribute(si, 4));
-    g.setAttribute("skinWeight", new THREE.BufferAttribute(sw, 4));
-    g.setIndex(new THREE.BufferAttribute(n > 65535 ? ib : Uint16Array.from(ib), 1));
-    g.computeBoundingSphere(); g.boundingSphere.radius += 0.6;
-    return (geos[key] = g);
-  }
-  return { man, make: (name, o) => new Person(man, man.chars[name], name, geo, o || {}) };
+  };
 }
 
-/* eyeball: vertex-coloured sphere, iris and pupil painted by angle from forward (+Z) */
-function eyeGeo(r, iris) {
-  const g = new THREE.SphereGeometry(r, 20, 14);
-  g.rotateX(Math.PI / 2);
-  const p = g.attributes.position, col = new Float32Array(p.count * 3), c = new THREE.Color();
-  const sclera = new THREE.Color("#d9d3c6"), ir = new THREE.Color(iris), pu = new THREE.Color("#060404"), ring = new THREE.Color(iris).multiplyScalar(0.45);
-  for (let i = 0; i < p.count; i++) {
-    const z = p.getZ(i) / r, a = Math.acos(clamp(z, -1, 1));
-    if (a < 0.24) c.copy(pu); else if (a < 0.5) c.copy(ir).lerp(ring, (a - 0.24) / 0.26 * 0.6); else if (a < 0.56) c.copy(ring); else c.copy(sclera);
-    col.set([c.r, c.g, c.b], i * 3);
-  }
-  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
-  return g;
-}
+const AX = new THREE.Vector3(), Q = new THREE.Quaternion(), Q2 = new THREE.Quaternion(), E = new THREE.Euler(0, 0, 0, "ZXY");
 
 class Person {
-  constructor(man, C, name, geo, o) {
-    this.name = name; this.C = C;
+  constructor(name, scene, o) {
+    this.name = name.replace(/-v\d+$/, ""); this.L = LOOKS[this.name] || LOOKS.player;
     this.group = new THREE.Group(); this.group.name = name;
-    // skeleton
-    this.bones = man.bones.map(n => { const b = new THREE.Bone(); b.name = n; b.rotation.order = "ZXY"; return b; });
-    man.parent.forEach((p, i) => {
-      const j = C.joints[i];
-      if (p < 0) { this.bones[i].position.set(j[0], j[1], j[2]); this.group.add(this.bones[i]); }
-      else { const q = C.joints[p]; this.bones[i].position.set(j[0] - q[0], j[1] - q[1], j[2] - q[2]); this.bones[p].add(this.bones[i]); }
+    this.root = scene; this.group.add(scene);
+    this.bones = {}; this.meshes = []; this.morph = null;
+    scene.traverse(n => {
+      if (n.isBone) this.bones[n.name] = n;
+      if (n.isMesh) { n.frustumCulled = false; n.layers.enable(1); this.meshes.push(n); }
     });
-    this.B = Object.fromEntries(man.bones.map((n, i) => [n, this.bones[i]]));
-    this.rest = this.bones.map(b => b.position.clone());
-    this.group.updateMatrixWorld(true);
-    this.skeleton = new THREE.Skeleton(this.bones);
-    this.pal = C.palette.slice();
-    this.mat = paint({ pal: this.pal, rim: 0.85, wet: 0.08 });
-    this.meshes = [];
-    for (const k of ["body", "head"]) {
-      const m = new THREE.SkinnedMesh(geo(C.meshes[k]), this.mat);
-      m.frustumCulled = false; m.layers.enable(1);
-      this.group.add(m); this.meshes.push(m);
+    this.paint();
+    // rest: each bone's local rotation, and its orientation in character space
+    scene.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(scene.matrixWorld).invert();
+    this.rest = {};
+    for (const [k, b] of Object.entries(this.bones)) {
+      const m = new THREE.Matrix4().multiplyMatrices(inv, b.matrixWorld);
+      const w = new THREE.Quaternion(); m.decompose(new THREE.Vector3(), w, new THREE.Vector3());
+      this.rest[k] = { q: b.quaternion.clone(), w, wi: w.clone().invert(), p: b.position.clone(), at: new THREE.Vector3().setFromMatrixPosition(m) };
     }
-    this.group.updateMatrixWorld(true);
-    this.meshes.forEach(m => m.bind(this.skeleton, new THREE.Matrix4()));
-    this.buildFace(C, o);
+    // the arms hang from the rest pose: the turn that brings each upper arm to hanging
+    this.hang = {};
+    for (const s of ["l", "r"]) {
+      const a = this.rest["upperarm_" + s], f = this.rest["lowerarm_" + s];
+      if (!a || !f) continue;
+      const d0 = f.at.clone().sub(a.at).normalize();
+      const d1 = new THREE.Vector3(s === "l" ? 0.12 : -0.12, -1, 0.02).normalize();
+      this.hang[s] = new THREE.Quaternion().setFromUnitVectors(d0, d1);
+      // the forearm, likewise, continues straight from the hung upper arm
+      const h = this.rest["hand_" + s];
+      // hang_f acts before hang in the chain, so it must aim the forearm at hang^-1 * d1
+      if (h) { const e0 = h.at.clone().sub(f.at).normalize(); const want = d1.clone().applyQuaternion(this.hang[s].clone().invert()); this.hang["f" + s] = new THREE.Quaternion().setFromUnitVectors(e0, want); }
+    }
+    this.height = (this.rest.head ? this.rest.head.at.y : 1.6) + 0.18;
+    this.props(o);
     // state
     this.pos = new THREE.Vector3(); this.yaw = 0; this.wantYaw = 0; this.speed = 0; this.phase = 0; this.t = Math.random() * 10;
     this.lookAtP = null; this.lookYaw = 0; this.lookPitch = 0; this.talk = 0; this.mouth = 0; this.blinkT = 2 + Math.random() * 3; this.blink = 0;
-    this.gest = 0; this.gestT = 0; this.gestSide = 1; this.nod = 0; this.brow = 0; this.browK = 0; this.pose = "stand"; this.sitK = 0; this.hold = o.hold || null; this.turnStep = 0;
-    this.still = false;
+    this.gest = 0; this.gestT = 0; this.gestSide = 1; this.gestAmp = 0.6; this.nod = 0; this.brow = 0; this.browK = 0; this.smile = 0; this.smileK = 0;
+    this.pose = "stand"; this.sitK = 0; this.hold = this.L.umbrella ? "umbrella" : null; this.turnStep = 0; this.vis = 0; this.visT = 0; this.visK = {};
   }
 
-  skinIdx() { return this.C.keys.indexOf("skin"); }
-  buildFace(C, o) {
-    const head = this.B.head, hj = C.joints[5], e = C.eye;
-    const skin = this.pal[this.skinIdx()], hair = this.pal[C.keys.indexOf("hair")] || "#111";
-    const face = new THREE.Group(); face.position.set(0, 0, 0); head.add(face); this.face = face;
-    const at = (x, y, z) => new THREE.Vector3(x - hj[0], y - hj[1], z - hj[2]);
-    this.eyes = [];
-    const eMat = paint({ vcol: true, color: "#fff", wet: 1.6, rim: 0.2 });
-    const lidMat = paint({ color: skin, rim: 0.5, wet: 0.1, side: THREE.DoubleSide });
-    for (const side of [1, -1]) {
-      const pivot = new THREE.Group(); pivot.position.copy(at(e.x * side, e.y, e.z)); face.add(pivot);
-      const ball = new THREE.Mesh(eyeGeo(e.r, o.iris || "#3a2414"), eMat); pivot.add(ball);
-      // the upper lid: a shell over the top of the eye that rotates down to blink
-      const lid = new THREE.Mesh(new THREE.SphereGeometry(e.r * 1.12, 18, 8, 0, TAU, 0, Math.PI * 0.5), lidMat);
-      const lidP = new THREE.Group(); lidP.position.copy(pivot.position); face.add(lidP); lidP.add(lid);
-      lid.rotation.x = -1.25;
-      const low = new THREE.Mesh(new THREE.SphereGeometry(e.r * 1.1, 18, 6, 0, TAU, Math.PI * 0.68, Math.PI * 0.32), lidMat);
-      low.position.copy(pivot.position); face.add(low);
-      this.eyes.push({ pivot, ball, lid, side });
+  paint() {
+    const L = this.L;
+    for (const m of this.meshes) {
+      const name = (m.material && m.material.name) || "";
+      const map = m.material && m.material.map;
+      if (map) map.colorSpace = THREE.SRGBColorSpace;
+      let mat;
+      if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, rim: 0.5, wet: 0.05, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
+      else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 380 * (m.scale.x || 1), rim: 0.3, wet: 0.06 });
+      else if (name === "hair") mat = paint({ color: L.hair, map, alphaTest: 0.4, rim: 0.5, wet: 0.25, side: THREE.DoubleSide, recolor: true, keep: L.hair });
+      else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
+      else if (name === "brow" || name === "lash") mat = paint({ color: L.brow, map, alphaTest: name === "brow" ? 0.28 : 0.5, rim: 0.2, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
+      else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
+      else if (name === "eyes") mat = paint({ color: L.eyes || "#9a8a7a", map, wet: 2.6, rim: 0.15 });
+      else if (name.startsWith("cloth")) {
+        const key = Object.keys(L.cloth).find(k => name.includes(k)) || Object.keys(L.cloth)[0];
+        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: L.keep, tie: L.tie, rim: 0.75, wet: key === "shoes" ? 0.9 : 0.12 });
+      } else mat = paint({ color: "#777" });
+      m.material = mat; m.userData.role = name;
     }
-    // brows
-    const bMat = paint({ color: C.keys.includes("beard") ? this.pal[C.keys.indexOf("beard")] : hair, rim: 0.3 });
-    this.brows = [];
-    for (const side of [1, -1]) {
-      const b = new THREE.Mesh(new THREE.CapsuleGeometry(e.r * 0.2, e.r * 1.25, 3, 6), bMat);
-      b.rotation.z = Math.PI / 2 + side * 0.08;
-      const p = new THREE.Group(); p.position.copy(at(e.x * side * 1.02, e.y + e.r * 1.55, e.z + e.r * 0.62)); p.add(b); face.add(p);
-      this.brows.push({ p, b, side, y0: p.position.y });
-    }
-    // mouth: a dark interior that opens, a hint of teeth
-    const mouthP = new THREE.Group(); mouthP.position.copy(at(0, e.y - 0.069 * C.h / 1.8, e.z + 0.0105)); face.add(mouthP);
-    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.0125 * C.h / 1.8, 14, 8), paint({ color: "#2a1210", rim: 0, wet: 0.4 }));
-    inner.scale.set(1.5, 0.12, 0.45); mouthP.add(inner);
-    const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.004, 0.004), paint({ color: "#d8d0c2", rim: 0 }));
-    teeth.position.set(0, 0.0035, 0.003); mouthP.add(teeth);
-    this.mouthM = { p: mouthP, inner, teeth };
-    // glasses: browline (a heavy black brow bar, thin gold lower rims, gold bridge, black arms)
-    if (C.glasses === "browline") {
-      const black = paint({ color: "#0b0b0b", wet: 1.4, rim: 0.4 }), gold = paint({ color: "#c9a96a", wet: 2.2, rim: 0.4, emit: "#1a1206" });
-      const lens = new THREE.MeshBasicMaterial({ color: "#9fb3c2", transparent: true, opacity: 0.1, depthWrite: false });
-      const g = new THREE.Group(); face.add(g); this.glasses = g;
-      const fz = e.z + e.r * 1.35, R = e.r * 1.55;
+    this.fx = {};
+    this.morphs = this.meshes.filter(m => m.morphTargetDictionary && m.morphTargetInfluences);
+  }
+
+  props(o) {
+    const head = this.bones.head, L = this.L;
+    if (!head) return;
+    const hs = this.rest.head;
+    // the face is about 0.1 above the head bone and 0.09 ahead of it; measured from the eye sockets
+    const at = (x, y, z) => { const v = new THREE.Vector3(x, y, z); return v.applyQuaternion(hs.wi); };
+    if (L.glasses === "browline") {
+      const g = new THREE.Group(); this.glasses = g; head.add(g);
+      const black = paint({ color: "#0a0a0a", wet: 1.6, rim: 0.5 }), gold = paint({ color: "#c9a96a", wet: 2.4, rim: 0.4, emit: "#150f05" });
+      const lens = new THREE.MeshBasicMaterial({ color: "#a9bccb", transparent: true, opacity: 0.08, depthWrite: false });
+      // fit to the eyes: their box in character space, relative to the head bone
+      let ex = 0.0315, ey = 0.075, ez = 0.098, R = 0.0205;
+      const eyes = this.meshes.find(m => m.material && m.material.uniforms && m.userData.role === "eyes");
+      if (eyes) {
+        const bb = new THREE.Box3().setFromBufferAttribute(eyes.geometry.attributes.position).applyMatrix4(eyes.matrixWorld);
+        const r = (bb.max.y - bb.min.y) / 2;
+        ex = (bb.max.x - bb.min.x) / 2 - r; ey = (bb.max.y + bb.min.y) / 2 - hs.at.y; ez = bb.max.z - hs.at.z + 0.011; R = r * 1.45;
+        this.eyeR = r;
+      }
       for (const side of [1, -1]) {
-        const cx = e.x * side, cy = e.y - e.r * 0.15;
-        const top = new THREE.CatmullRomCurve3([at(cx - side * -R * 1.02, cy + R * 0.42, fz - 0.003), at(cx, cy + R * 0.62, fz), at(cx + side * R * 1.05, cy + R * 0.45, fz - 0.004)]);
-        g.add(new THREE.Mesh(new THREE.TubeGeometry(top, 10, 0.0026, 5), black));
-        const pts = []; for (let i = 0; i <= 12; i++) { const a = Math.PI * (i / 12); pts.push(at(cx + Math.cos(a) * R * 1.0, cy - Math.sin(a) * R * 0.78 + R * 0.38, fz - Math.sin(a) * 0.002)); }
-        g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.0009, 4), gold));
-        const lm = new THREE.Mesh(new THREE.CircleGeometry(R * 0.98, 16), lens); lm.position.copy(at(cx, cy + R * 0.02, fz - 0.001)); lm.scale.y = 0.82; g.add(lm);
-        const arm = new THREE.CatmullRomCurve3([at(cx + side * R * 1.05, cy + R * 0.42, fz - 0.004), at(side * 0.074 * C.h / 1.8, cy + R * 0.35, e.z - 0.05), at(side * 0.076 * C.h / 1.8, cy + R * 0.1, -0.02)]);
+        const cx = ex * side;
+        const top = new THREE.CatmullRomCurve3([new THREE.Vector3(cx - side * R * 1.08, ey + R * 0.32, ez - 0.004), new THREE.Vector3(cx, ey + R * 0.56, ez + 0.001), new THREE.Vector3(cx + side * R * 1.12, ey + R * 0.36, ez - 0.006)]);
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(top, 10, 0.0027, 6), black));
+        const pts = []; for (let i = 0; i <= 14; i++) { const a = Math.PI * (i / 14); pts.push(new THREE.Vector3(cx + Math.cos(a) * R * 1.04, ey + R * 0.3 - Math.sin(a) * R * 0.95, ez - Math.sin(a) * 0.002)); }
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 18, 0.0008, 4), gold));
+        const lm = new THREE.Mesh(new THREE.CircleGeometry(R, 18), lens); lm.position.set(cx, ey - R * 0.12, ez - 0.0015); lm.scale.y = 0.86; g.add(lm);
+        const arm = new THREE.CatmullRomCurve3([new THREE.Vector3(cx + side * R * 1.12, ey + R * 0.34, ez - 0.006), new THREE.Vector3(side * 0.071, ey + R * 0.3, ez - 0.05), new THREE.Vector3(side * 0.073, ey + R * 0.05, ez - 0.1)]);
         g.add(new THREE.Mesh(new THREE.TubeGeometry(arm, 8, 0.0016, 4), black));
       }
-      const bridge = new THREE.CatmullRomCurve3([at(e.x - R * 1.0, e.y + R * 0.2, fz), at(0, e.y + R * 0.32, fz + 0.002), at(-e.x + R * 1.0, e.y + R * 0.2, fz)]);
+      const bridge = new THREE.CatmullRomCurve3([new THREE.Vector3(ex - R * 1.04, ey + R * 0.25, ez), new THREE.Vector3(0, ey + R * 0.42, ez + 0.003), new THREE.Vector3(-ex + R * 1.04, ey + R * 0.25, ez)]);
       g.add(new THREE.Mesh(new THREE.TubeGeometry(bridge, 6, 0.0011, 4), gold));
+      g.quaternion.copy(hs.wi);
+      this.glassesFit = g;
     }
-    if (C.studs) {
-      const st = paint({ color: "#e8eef2", wet: 3, emit: "#30343a" });
-      for (const side of [1, -1]) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.0028, 8, 6), st); s.position.copy(at(side * 0.081 * C.h / 1.8, 1.668 * C.h / 1.8, 0.004)); face.add(s); }
+    if (L.studs) {
+      const st = paint({ color: "#eef3f6", wet: 3, emit: "#2a2e33" });
+      this.studs = [];
+      for (const side of [1, -1]) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.0027, 8, 6), st); s.position.copy(at(side * 0.074, 0.035, 0.012)); head.add(s); this.studs.push(s); }
     }
-    if (C.umbrella) {
+    if (L.umbrella && this.bones.hand_r) {
       const u = new THREE.Group();
-      const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.26, 8, 1, true), paint({ color: "#141615", wet: 1.8, rim: 0.7, side: THREE.DoubleSide }));
-      canopy.position.y = 0.86; u.add(canopy);
-      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.95, 6), paint({ color: "#2a2a28", wet: 1 }));
-      shaft.position.y = 0.4; u.add(shaft);
-      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 5, 10, Math.PI), paint({ color: "#3a2a1c" })); hook.position.y = -0.06; hook.rotation.z = Math.PI; u.add(hook);
-      this.B.handR.add(u); u.position.set(0, -0.06, 0.02); this.umbrella = u; this.hold = "umbrella";
+      const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.64, 0.24, 10, 1, true), paint({ color: "#151716", wet: 1.8, rim: 0.7, side: THREE.DoubleSide }));
+      canopy.position.y = 0.92; u.add(canopy);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1.0, 6), paint({ color: "#2a2a28", wet: 1 })); shaft.position.y = 0.42; u.add(shaft);
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 5, 10, Math.PI), paint({ color: "#3a2a1c" })); hook.position.y = -0.08; hook.rotation.z = Math.PI; u.add(hook);
+      this.umbrella = u; this.add(u);
     }
   }
+  add(o) { this.group.add(o); }
 
-  /* where a thing is in the world */
-  headWorld(v = new THREE.Vector3()) { return this.B.head.getWorldPosition(v).add(new THREE.Vector3(0, 0.1 * this.C.h / 1.8, 0)); }
-  eyeLevel() { return this.C.h * 0.94; }
+  /* set a bone from a rotation written in character axes, on top of its rest */
+  rot(name, x, y, z, pre) {
+    const b = this.bones[name], r = this.rest[name]; if (!b) return;
+    E.set(x, y, z, "ZXY"); Q.setFromEuler(E);
+    if (pre) Q.multiply(pre);
+    // conjugate into the bone's rest frame: local = rest * (W^-1 * R * W)
+    Q2.copy(r.wi).multiply(Q).multiply(r.w);
+    b.quaternion.copy(r.q).multiply(Q2);
+  }
+  headWorld(v = new THREE.Vector3()) { const h = this.bones.head; if (h) { h.getWorldPosition(v); v.y += 0.08; } else v.copy(this.pos).setY(1.6); return v; }
+  eyeLevel() { return this.height - 0.1; }
+  setFx(k, v) { for (const m of this.morphs) { const i = m.morphTargetDictionary[k]; if (i != null) m.morphTargetInfluences[i] = v; } }
 
-  update(dt, cam) {
-    const t = (this.t += dt), B = this.B, s = this.C.h / 1.8;
+  update(dt) {
+    const t = (this.t += dt);
     this.group.position.copy(this.pos);
-    // turn toward the wanted heading; a few shuffled steps when turning in place
     const dy = angDiff(this.yaw, this.wantYaw);
     const turnRate = this.speed > 0.2 ? 6 : 4;
     this.yaw += clamp(dy, -turnRate * dt, turnRate * dt);
     if (Math.abs(dy) > 0.35 && this.speed < 0.2 && this.pose === "stand") this.turnStep = Math.min(1, this.turnStep + dt * 4); else this.turnStep = Math.max(0, this.turnStep - dt * 3);
     this.group.rotation.y = this.yaw;
-    // walk cycle: phase follows distance
-    const sp = this.speed, walkK = clamp(sp / 1.3, 0, 1.6), step = Math.max(walkK, this.turnStep * 0.45);
-    this.phase += (sp * dt) / (0.62 * s) * Math.PI + this.turnStep * dt * 7;
-    const ph = this.phase;
+    const sp = this.speed, step = Math.max(clamp(sp / 1.3, 0, 1.6), this.turnStep * 0.45);
+    this.phase += (sp * dt) / 0.62 * Math.PI + this.turnStep * dt * 7;
+    const ph = this.phase, sn = Math.sin(ph), cs = Math.cos(ph), A = 0.42 * step;
     const sitK = (this.sitK = damp(this.sitK, this.pose === "sit" ? 1 : 0, 6, dt));
-    const A = 0.44 * step, sn = Math.sin(ph), cs = Math.cos(ph);
-    const breathe = Math.sin(t * 1.55) * (this.still ? 0.6 : 1);
-    // talking: mouth, gestures, nods
-    this.mouth = damp(this.mouth, this.talk, 18, dt);
+    const breathe = Math.sin(t * 1.55);
+    this.mouth = damp(this.mouth, this.talk, 16, dt);
     this.gestT -= dt;
-    if (this.talk > 0.05 && this.gestT <= 0 && this.hold !== "umbrella" ? true : false) { this.gestT = 1.6 + Math.random() * 2.4; this.gestSide = Math.random() < 0.5 ? 1 : -1; this.gestAmp = 0.5 + Math.random() * 0.5; }
-    const gTarget = this.talk > 0.05 && this.gestT > 0.7 ? this.gestAmp || 0.6 : 0;
-    this.gest = damp(this.gest, gTarget, 3, dt);
+    if (this.talk > 0.05 && this.gestT <= 0) { this.gestT = 1.8 + Math.random() * 2.6; this.gestSide = this.hold === "umbrella" ? 1 : Math.random() < 0.5 ? 1 : -1; this.gestAmp = 0.45 + Math.random() * 0.55; }
+    this.gest = damp(this.gest, this.talk > 0.05 && this.gestT > 0.8 ? this.gestAmp : 0, 3, dt);
     this.nod = damp(this.nod, 0, 4, dt);
     this.browK = damp(this.browK, this.brow, 8, dt);
+    this.smileK = damp(this.smileK, this.smile, 3, dt);
 
-    // ---- body ----
-    const bob = -0.022 * s * Math.abs(cs) * step;
-    B.hips.position.y = this.rest[1].y + bob - sitK * 0.44 * s;
-    B.hips.position.z = this.rest[1].z + sitK * 0.06 * s;
-    B.hips.rotation.set(0, 0.07 * sn * step, 0.025 * Math.sin(t * 0.4) * (1 - step));
-    B.spine.rotation.set(0.04 * step + breathe * 0.008 - sitK * 0.04, -0.05 * sn * step, 0);
-    B.chest.rotation.set(-breathe * 0.012 + 0.03 * step, -0.06 * sn * step + this.gest * 0.06 * this.gestSide, 0);
-    // legs
+    // hips and spine
+    const hp = this.bones.pelvis, hr = this.rest.pelvis;
+    if (hp) { hp.position.copy(hr.p); const drop = -0.02 * Math.abs(cs) * step - sitK * 0.45; hp.position.y += drop * (1 / (this.root.scale.y || 1)); }
+    this.rot("pelvis", 0, 0.07 * sn * step, 0.02 * Math.sin(t * 0.4) * (1 - step));
+    this.rot("spine_01", 0.03 * step + breathe * 0.006 - sitK * 0.05, -0.04 * sn * step, 0);
+    this.rot("spine_02", -breathe * 0.008, -0.03 * sn * step, 0);
+    this.rot("spine_03", -breathe * 0.01 + 0.02 * step, -0.04 * sn * step + this.gest * 0.05 * this.gestSide, 0);
     for (const side of [1, -1]) {
-      const sx = side > 0 ? "L" : "R", f = side > 0 ? 1 : -1;
-      const sw = -A * sn * f;
-      const swing = Math.max(0, cs * f);
-      const knee = 0.06 + step * (0.12 + 0.62 * Math.pow(swing, 1.4));
-      B["thigh" + sx].rotation.set(lerp(sw, -1.52, sitK), 0, side * 0.02);
-      B["shin" + sx].rotation.set(lerp(knee, 1.5, sitK), 0, 0);
-      B["foot" + sx].rotation.set(lerp(-sw * 0.25 - knee * 0.3 + 0.1 * step * Math.max(0, -cs * f), 0.05, sitK), 0, 0);
+      const s = side > 0 ? "l" : "r", f = side;
+      const sw = -A * sn * f, swing = Math.max(0, cs * f);
+      const knee = 0.05 + step * (0.1 + 0.62 * Math.pow(swing, 1.4));
+      this.rot("thigh_" + s, lerp(sw, -1.5, sitK), 0, side * 0.015);
+      this.rot("calf_" + s, lerp(knee, 1.48, sitK), 0, 0);
+      this.rot("foot_" + s, lerp(-sw * 0.25 - knee * 0.3 + 0.1 * step * Math.max(0, -cs * f), 0.05, sitK), 0, 0);
     }
-    // arms: hang inward from the A pose, swing against the legs, gesture when talking
     for (const side of [1, -1]) {
-      const sx = side > 0 ? "L" : "R";
-      const gsel = this.gestSide === side ? this.gest : this.gest * 0.25;
-      let ax = 0.3 * sn * side * step - gsel * 0.55 - sitK * 0.55, az = -side * (0.13 - breathe * 0.01) + side * gsel * 0.18;
-      let fx = -0.18 - 0.14 * step - gsel * 1.05 - sitK * 0.75, fy = side * gsel * 0.4;
-      let hx = 0, hz = -side * gsel * 0.3;
-      if (this.hold === "umbrella" && side < 0) { ax = -0.55; az = side * 0.1; fx = -1.45; fy = 0.15; hz = 0; }
-      if (this.hold === "phone" && side > 0) { ax = -0.35; az = 0.2; fx = -2.35; fy = -0.5; hx = 0.2; }
-      if (this.hold === "pockets") { ax = 0.05; az = -side * 0.02; fx = -0.35; fy = 0; }
-      B["arm" + sx].rotation.set(ax, 0, az);
-      B["fore" + sx].rotation.set(fx, fy, 0);
-      B["hand" + sx].rotation.set(hx, 0, hz);
-      B["clavi" + sx].rotation.set(0, 0, side * breathe * 0.006);
+      const s = side > 0 ? "l" : "r";
+      const gsel = this.gestSide === side ? this.gest : this.gest * 0.2;
+      let ax = 0.3 * sn * side * step - gsel * 0.5 - sitK * 0.6, ay = 0, az = side * gsel * 0.12 - side * breathe * 0.008;
+      let fx = -0.14 - 0.12 * step - gsel * 1.05 - sitK * 0.8, fy = side * gsel * 0.35, hz = -side * gsel * 0.4;
+      if (this.hold === "umbrella" && side < 0) { ax = -0.42; az = -0.06; fx = -1.35; fy = -0.2; hz = 0; }
+      if (this.hold === "phone" && side > 0) { ax = -0.3; az = 0.25; fx = -2.3; fy = -0.6; hz = 0.3; }
+      this.rot("upperarm_" + s, ax, ay, az, this.hang[s]);
+      this.rot("lowerarm_" + s, fx, fy, 0, this.hang["f" + s]);
+      this.rot("hand_" + s, 0, 0, hz);
+      // a relaxed hand: each finger a little curled
+      for (const fg of ["index", "middle", "ring", "pinky"]) for (let k = 1; k <= 3; k++) { const b = this.bones[fg + "_0" + k + "_" + s]; if (b) { const r = this.rest[fg + "_0" + k + "_" + s]; b.quaternion.copy(r.q).multiply(Q.setFromAxisAngle(AX.set(1, 0, 0), 0.22 + k * 0.08 + gsel * -0.15)); } }
     }
-    if (this.umbrella) this.umbrella.rotation.set(0.15, 0, -0.05);
-    // ---- head: look at a point, neck takes some of it ----
+    if (this.umbrella && this.bones.hand_r) {
+      const hand = this.bones.hand_r; hand.updateWorldMatrix(true, false);
+      const p = new THREE.Vector3().setFromMatrixPosition(hand.matrixWorld); this.group.worldToLocal(p);
+      this.umbrella.position.copy(p).add(new THREE.Vector3(0, 0.02, 0.02)); this.umbrella.rotation.set(0.12, 0, -0.06);
+    }
+    // the head looks
     let wantY = 0, wantP = 0;
     if (this.lookAtP) {
-      const hp = this.headWorld(new THREE.Vector3());
-      const d = this.lookAtP.clone().sub(hp);
-      const local = Math.atan2(d.x, d.z) - this.yaw;
-      wantY = clamp(angDiff(0, local), -1.15, 1.15);
+      const hw = this.headWorld(new THREE.Vector3()), d = this.lookAtP.clone().sub(hw);
+      const local = angDiff(0, Math.atan2(d.x, d.z) - this.yaw);
+      wantY = Math.abs(local) > 2.3 ? 0 : clamp(local, -1.1, 1.1);
       wantP = clamp(-Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.45, 0.5);
-      if (Math.abs(angDiff(0, local)) > 2.2) wantY = 0;
     }
     this.lookYaw = damp(this.lookYaw, wantY, 5, dt); this.lookPitch = damp(this.lookPitch, wantP, 5, dt);
-    const idleLook = Math.sin(t * 0.37) * 0.06 + Math.sin(t * 0.91) * 0.03;
-    B.neck.rotation.set(this.lookPitch * 0.35 + breathe * 0.01, this.lookYaw * 0.4 + idleLook * 0.5, 0);
-    B.head.rotation.set(this.lookPitch * 0.55 + this.nod * 0.18 + Math.sin(t * 5.3) * 0.012 * this.mouth, this.lookYaw * 0.6 + idleLook * 0.5, Math.sin(t * 0.53) * 0.02 + this.gest * 0.03 * this.gestSide);
-    // ---- face ----
+    const idle = Math.sin(t * 0.37) * 0.05 + Math.sin(t * 0.91) * 0.025;
+    this.rot("neck_01", this.lookPitch * 0.35 + breathe * 0.008, this.lookYaw * 0.4 + idle * 0.5, 0);
+    this.rot("head", this.lookPitch * 0.55 + this.nod * 0.16 + Math.sin(t * 5.3) * 0.01 * this.mouth, this.lookYaw * 0.6 + idle * 0.5, Math.sin(t * 0.53) * 0.018 + this.gest * 0.025 * this.gestSide);
+    // the face
     this.blinkT -= dt;
-    if (this.blinkT <= 0) { this.blink = 1; this.blinkT = 2.2 + Math.random() * 3.8; if (Math.random() < 0.15) this.blinkT = 0.25; }
-    this.blink = Math.max(0, this.blink - dt * 7.5);
+    if (this.blinkT <= 0) { this.blink = 1; this.blinkT = 2.2 + Math.random() * 3.8; if (Math.random() < 0.15) this.blinkT = 0.28; }
+    this.blink = Math.max(0, this.blink - dt * 7);
     const close = Math.sin(Math.min(1, this.blink) * Math.PI);
-    for (const e of this.eyes) {
-      e.lid.rotation.x = lerp(-1.25 + this.lookPitch * 0.25, 0.05, close);
-      e.ball.rotation.set(this.lookPitch * 0.25 + Math.sin(t * 0.7 + e.side) * 0.02, (wantY - this.lookYaw) * 0.6 + Math.sin(t * 0.43) * 0.05, 0);
+    this.setFx("eyeBlinkLeft", close); this.setFx("eyeBlinkRight", close);
+    // talking: a new mouth shape every syllable, eased
+    this.visT -= dt;
+    if (this.visT <= 0) { this.visT = 0.07 + Math.random() * 0.09; const keys = ["visAA", "visOW", "visEE", "visPBM", "visFV", "jawOpen"]; this.vis = keys[(Math.random() * keys.length) | 0]; }
+    for (const k of ["visAA", "visOW", "visEE", "visPBM", "visFV", "jawOpen"]) {
+      const want = this.mouth > 0.05 && this.vis === k ? (k === "jawOpen" ? 0.35 : 0.75) * this.mouth : 0;
+      this.visK[k] = damp(this.visK[k] || 0, want, 22, dt); this.setFx(k, this.visK[k]);
     }
-    for (const b of this.brows) { b.p.position.y = b.y0 + this.browK * 0.004 + this.mouth * 0.0012; b.b.rotation.z = Math.PI / 2 + b.side * (0.08 - this.browK * 0.12); }
-    const m = this.mouth, chatter = m > 0.02 ? 0.55 + 0.45 * Math.abs(Math.sin(t * 15.5) * Math.sin(t * 7.1 + 1)) : 0;
-    const open = m * chatter;
-    this.mouthM.inner.scale.set(1.5 - open * 0.35, 0.12 + open * 0.95, 0.45);
-    this.mouthM.teeth.visible = open > 0.25;
+    this.setFx("browInnerUp", clamp(this.browK, 0, 1) * 0.8 + this.mouth * 0.08);
+    this.setFx("browDownLeft", clamp(-this.browK, 0, 1) * 0.6); this.setFx("browDownRight", clamp(-this.browK, 0, 1) * 0.6);
+    this.setFx("mouthSmileLeft", this.smileK * 0.55); this.setFx("mouthSmileRight", this.smileK * 0.55);
   }
 }

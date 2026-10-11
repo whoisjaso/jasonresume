@@ -1,0 +1,77 @@
+{
+ "id": "jason-lot-jason-14",
+ "text": "Then the filing cabinet's yours. I file title transfers inside the Texas 30-day window.",
+ "duration": 6.24,
+ "words": [
+  {
+   "w": "Then",
+   "s": 0.0,
+   "e": 0.26
+  },
+  {
+   "w": "the",
+   "s": 0.26,
+   "e": 1.0
+  },
+  {
+   "w": "filing",
+   "s": 1.0,
+   "e": 1.28
+  },
+  {
+   "w": "cabinet's",
+   "s": 1.28,
+   "e": 1.82
+  },
+  {
+   "w": "yours.",
+   "s": 1.82,
+   "e": 1.96
+  },
+  {
+   "w": "I",
+   "s": 2.56,
+   "e": 2.64
+  },
+  {
+   "w": "file",
+   "s": 2.64,
+   "e": 2.94
+  },
+  {
+   "w": "title",
+   "s": 2.94,
+   "e": 3.3
+  },
+  {
+   "w": "transfers",
+   "s": 3.3,
+   "e": 3.84
+  },
+  {
+   "w": "inside",
+   "s": 3.84,
+   "e": 4.42
+  },
+  {
+   "w": "the",
+   "s": 4.42,
+   "e": 4.64
+  },
+  {
+   "w": "Texas",
+   "s": 4.64,
+   "e": 4.96
+  },
+  {
+   "w": "30-day",
+   "s": 4.96,
+   "e": 5.54
+  },
+  {
+   "w": "window.",
+   "s": 5.54,
+   "e": 5.86
+  }
+ ]
+}

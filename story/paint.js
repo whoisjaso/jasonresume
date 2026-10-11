@@ -34,6 +34,10 @@ float brushAt(vec3 wp, vec3 n){
   float x = texture2D(uBrush, wp.zy * 0.9).r, y = texture2D(uBrush, wp.xz * 0.9).g, z = texture2D(uBrush, wp.xy * 0.9).b;
   return x * b.x + y * b.y + z * b.z;
 }
+float hash13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float vnoise(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hash13(i), hash13(i + vec3(1,0,0)), f.x), mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(hash13(i + vec3(0,0,1)), hash13(i + vec3(1,0,1)), f.x), mix(hash13(i + vec3(0,1,1)), hash13(i + vec3(1,1,1)), f.x), f.y), f.z); }
 float ramp(float x, float n){
   // a soft terminator, nudged by the brush so the edge reads as painted
   float a = smoothstep(-0.12 + n * 0.22, 0.28 + n * 0.22, x);
@@ -72,23 +76,28 @@ vec3 sat(vec3 c, float s){ float l = dot(c, vec3(0.299, 0.587, 0.114)); return m
 
 const vert = /* glsl */`
 #include <common>
+#include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 attribute float cidx;
 varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying float vC; varying vec3 vObj; varying vec3 vCol;
+uniform mat3 uUvM;
 #ifdef USE_VCOL
 attribute vec3 color;
 #endif
 void main(){
-  vUv = uv; vC = cidx; vObj = position;
+  vUv = (uUvM * vec3(uv, 1.0)).xy; vC = cidx; vObj = position;
   #ifdef USE_VCOL
   vCol = color;
   #else
   vCol = vec3(1.0);
   #endif
   #include <beginnormal_vertex>
+  #include <morphinstance_vertex>
+  #include <morphnormal_vertex>
   #include <skinbase_vertex>
   #include <skinnormal_vertex>
   #include <begin_vertex>
+  #include <morphtarget_vertex>
   #include <skinning_vertex>
   vec4 wp = modelMatrix * vec4(transformed, 1.0);
   #ifdef USE_INSTANCING
@@ -102,7 +111,7 @@ void main(){
 
 const frag = /* glsl */`
 ${common}
-uniform vec3 uColor; uniform vec3 uEmit; uniform float uWet; uniform float uAo; uniform float uRimK; uniform float uAlpha; uniform float uTone;
+uniform vec3 uColor; uniform vec3 uEmit; uniform float uWet; uniform float uAo; uniform float uRimK; uniform float uAlpha; uniform float uTone; uniform float uAlphaTest; uniform float uSkin; uniform vec3 uKeep; uniform float uCurlK; uniform vec3 uTie;
 uniform vec3 uPal[16];
 #ifdef USE_TMAP
 uniform sampler2D uMap;
@@ -110,32 +119,68 @@ uniform sampler2D uMap;
 #ifdef USE_EMAP
 uniform sampler2D uEMap;
 #endif
+#ifdef USE_MASK
+uniform sampler2D uMask; uniform vec3 uBeard; uniform vec3 uLip;
+#endif
 varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying float vC; varying vec3 vObj; varying vec3 vCol;
 void main(){
   vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
   vec3 V = normalize(cameraPosition - vWP);
+  float curl = 1.0;
+  #ifdef USE_CURL
+  // tight curls: a bumped normal and dark crevices from small-scale noise in object space
+  vec3 cp = vObj * uCurlK;
+  float c0 = vnoise(cp), cx = vnoise(cp + vec3(0.37, 0.0, 0.0)), cy = vnoise(cp + vec3(0.0, 0.37, 0.0)), cz = vnoise(cp + vec3(0.0, 0.0, 0.37));
+  N = normalize(N + (vec3(cx, cy, cz) - c0) * 1.3);
+  curl = mix(0.55, 1.25, smoothstep(0.25, 0.8, c0 * 0.6 + vnoise(cp * 2.3) * 0.4));
+  #endif
   float br = brushAt(vWP, N);
   vec3 alb = uColor * vCol;
   #ifdef USE_PAL
   alb = uPal[int(vC + 0.5)];
   #endif
+  float aout = uAlpha;
   #ifdef USE_TMAP
-  vec4 tx = texture2D(uMap, vUv); alb *= tx.rgb;
+  vec4 tx = texture2D(uMap, vUv);
+  #ifdef USE_RECOLOR
+  // recolour a fabric texture: its light and folds, in a new colour; very light areas (a white shirt) keep their own colour
+  float lum = dot(tx.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 rc = uColor * clamp(lum * 2.4, 0.0, 1.6);
+  alb = mix(rc, uKeep * clamp(lum * 1.15, 0.0, 1.2), smoothstep(0.42, 0.62, lum));
+  // a region marked red in the texture (a tie) takes its own colour
+  float tk = smoothstep(0.12, 0.22, tx.r - max(tx.g, tx.b));
+  alb = mix(alb, uTie * clamp(tx.r * 2.0, 0.0, 1.5), tk);
+  #else
+  alb *= tx.rgb;
   #endif
-  alb *= mix(0.86, 1.12, br);
+  aout *= tx.a;
+  if (aout < uAlphaTest) discard;
+  #endif
+  #ifdef USE_MASK
+  // the face's painted detail: R beard, G lips, B a little warmth on the cheeks
+  vec4 fm = texture2D(uMask, vUv);
+  alb = mix(alb, uLip, fm.g * 0.85);
+  alb *= 1.0 + fm.b * vec3(0.12, 0.02, -0.02);
+  float stub = fm.r * mix(0.55, 1.0, vnoise(vObj * uCurlK * 1.7));
+  alb = mix(alb, uBeard, clamp(stub * 1.15, 0.0, 1.0));
+  #endif
+  alb *= mix(0.86, 1.12, br) * curl;
   float wet = uWet * uWetAll;
   vec3 spec;
   vec3 light = lightAt(vWP, N, V, br, wet, spec);
   // contact shade: things darken toward the ground they stand on
   float ao = mix(1.0, smoothstep(-0.05, 0.55, vWP.y * (uMirror > 0.5 ? -1.0 : 1.0)) * 0.55 + 0.45, uAo);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-  vec3 col = alb * light * ao + spec + uRim * fr * uRimK * (0.5 + br);
+  // skin: a warm wrap where light meets shadow, so faces never go blue-grey in the shade
+  light += uSkin * vec3(0.09, 0.04, 0.025) * (1.0 - smoothstep(-0.2, 0.6, dot(N, uMoonDir))) ;
+  light = mix(light, light * vec3(1.06, 0.98, 0.92) + vec3(0.03, 0.015, 0.008), uSkin);
+  vec3 col = alb * light * ao + spec + uRim * fr * uRimK * (0.5 + br) * mix(1.0, 0.45, uSkin);
   col += uEmit;
   #ifdef USE_EMAP
   col += texture2D(uEMap, vUv).rgb * uTone;
   #endif
   col = sat(col, uSat);
-  gl_FragColor = vec4(fogged(col, vWP), uAlpha);
+  gl_FragColor = vec4(fogged(col, vWP), aout);
   #include <colorspace_fragment>
 }`;
 
@@ -151,11 +196,23 @@ export function paint(o = {}) {
     uRimK: { value: o.rim != null ? o.rim : 0.6 },
     uAlpha: { value: o.alpha != null ? o.alpha : 1 },
     uTone: { value: o.tone != null ? o.tone : 1 },
+    uAlphaTest: { value: o.alphaTest || 0 },
+    uSkin: { value: o.skin ? 1 : 0 },
+    uKeep: { value: new THREE.Color(o.keep || "#e9e6de") },
+    uCurlK: { value: o.curlK || 900 },
+    uUvM: { value: new THREE.Matrix3() },
+    uTie: { value: new THREE.Color(o.tie || "#1d4434") },
     uPal: { value: Array.from({ length: 16 }, (_, i) => new THREE.Color((o.pal && o.pal[i]) || "#ff00ff")) }
   };
-  if (o.map) { defines.USE_TMAP = ""; uniforms.uMap = { value: o.map }; }
+  if (o.map) {
+    defines.USE_TMAP = ""; uniforms.uMap = { value: o.map }; if (o.recolor) defines.USE_RECOLOR = "";
+    // gltfpack quantizes UVs and undoes it with a texture transform: honour it
+    o.map.updateMatrix(); uniforms.uUvM.value.copy(o.map.matrix);
+  }
+  if (o.mask) { defines.USE_MASK = ""; uniforms.uMask = { value: o.mask }; uniforms.uBeard = { value: new THREE.Color(o.beard || "#120d0b") }; uniforms.uLip = { value: new THREE.Color(o.lip || "#5a3028") }; o.mask.updateMatrix(); uniforms.uUvM.value.copy(o.mask.matrix); }
   if (o.emap) { defines.USE_EMAP = ""; uniforms.uEMap = { value: o.emap }; }
   if (o.pal) defines.USE_PAL = "";
+  if (o.curl) defines.USE_CURL = "";
   if (o.vcol) defines.USE_VCOL = "";
   const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: frag, defines, side: o.side || THREE.FrontSide, transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });
   m.userData.paint = true;
