@@ -293,7 +293,7 @@ export function buildLot(o) {
   set.userData.marks = {
     playerStart: V3(0.2, 0, 26.5), playerIn: V3(0.2, 0, 19.5),
     dell: V3(3.2, 0, 19.6), dellYaw: Math.PI * 0.9,
-    jason: V3(10.2, 0, -14.6), jasonYaw: Math.PI * 0.95,
+    jason: V3(10.2, 0, -14.6), jasonYaw: -0.3,
     decisionPlayer: V3(11, 0, -12.5), decisionJason: V3(9.4, 0, -11.2), dellGate: V3(-1.6, 0, 20.4)
   };
   set.userData.spots.dell = { who: "dell", r: 2.6 };
@@ -444,7 +444,7 @@ export function buildLibrary(o) {
     for (let s = 0; s < 6; s++) { let z = zc - 1.9; while (z < zc + 1.85 && n < 1400) { const w = 0.03 + r() * 0.05, h = 0.22 + r() * 0.12; m4.compose(V3(sx + (sx < 0 ? 0.3 : -0.3), 0.3 + s * 0.5 + h / 2, z + w / 2), new THREE.Quaternion(), V3(0.2, h, w)); books.setMatrixAt(n, m4); books.setColorAt(n, col.set(bc[(r() * bc.length) | 0])); n++; z += w + 0.005; } }
   }
   books.count = n; set.add(books);
-  books.material = paint({ color: "#ffffff", rim: 0.3 }); books.material.onBeforeCompile = null;
+  books.material = paint({ color: "#ffffff", rim: 0.3 });
   // the desk where you sit: laptop, certificate, folder, letter, brain model, the lamp
   const D = V3(0, 0, 3);
   const lap = new THREE.Group(); lap.position.set(-0.7, 0.82, 3.1); set.add(lap);

@@ -30,7 +30,7 @@ export class Post {
     this.refl = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
     this.mips = []; for (let i = 0; i < 5; i++) { const a = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }), b = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); this.mips.push([a, b]); }
     this.dof = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
-    this.bright = pass(`uniform sampler2D t; uniform float th; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(th, th + 0.8, l), 1.0); }`, { t: { value: null }, th: { value: 0.9 } });
+    this.bright = pass(`uniform sampler2D t; uniform float th; varying vec2 vUv; void main(){ vec3 c = clamp(texture2D(t, vUv).rgb, 0.0, 24.0); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(th, th + 0.8, l), 1.0); }`, { t: { value: null }, th: { value: 0.9 } });
     this.down = pass(`uniform sampler2D t; uniform vec2 px; varying vec2 vUv; void main(){
       vec3 c = texture2D(t, vUv).rgb * 0.5;
       c += texture2D(t, vUv + vec2(-px.x, -px.y)).rgb * 0.125; c += texture2D(t, vUv + vec2(px.x, -px.y)).rgb * 0.125;
@@ -54,7 +54,7 @@ export class Post {
       vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
       void main(){
         vec2 uv = vUv;
-        vec3 c = texture2D(tCol, uv).rgb;
+        vec3 c = clamp(texture2D(tCol, uv).rgb, 0.0, 24.0);
         // depth of field: blend toward the soft copy by distance from the focal plane
         if (uDofK > 0.0) { float d = lin(texture2D(tDepth, uv).r); float coc = clamp(abs(d - uFocus) / uRange, 0.0, 1.0); coc = coc * coc * uDofK; c = mix(c, texture2D(tDof, uv).rgb, coc); }
         // memory: the frame's edges dissolve into the soft copy, like an old print

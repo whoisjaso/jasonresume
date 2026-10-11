@@ -232,8 +232,9 @@ class Person {
     for (const side of [1, -1]) {
       const s = side > 0 ? "l" : "r";
       const gsel = this.gestSide === side ? this.gest : this.gest * 0.2;
-      let ax = 0.3 * sn * side * step - gsel * 0.5 - sitK * 0.6, ay = 0, az = side * gsel * 0.12 - side * breathe * 0.008;
-      let fx = -0.14 - 0.12 * step - gsel * 1.05 - sitK * 0.8, fy = side * gsel * 0.35, hz = -side * gsel * 0.4;
+      // talking hands: the upper arm comes forward a little and the forearm lifts, palm in; no twist across the body
+      let ax = 0.3 * sn * side * step - gsel * 0.32 - sitK * 0.6, ay = 0, az = side * gsel * 0.08 - side * breathe * 0.008;
+      let fx = -0.14 - 0.12 * step - gsel * 0.85 - sitK * 0.8, fy = 0, hz = 0;
       if (this.hold === "umbrella" && side < 0) { ax = -0.42; az = -0.06; fx = -1.35; fy = -0.2; hz = 0; }
       if (this.hold === "phone" && side > 0) { ax = -0.3; az = 0.25; fx = -2.3; fy = -0.6; hz = 0.3; }
       this.rot("upperarm_" + s, ax, ay, az, this.hang[s]);

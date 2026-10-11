@@ -287,7 +287,7 @@ function choose(T0) {
   const list = (T0.choices || []).filter(c => cond(c.if));
   return new Promise(resolve => {
     choicesOl.innerHTML = list.map((c, i) => '<li><button type="button" class="st-ch" data-i="' + i + '"><kbd aria-hidden="true">' + (i + 1) + "</kbd><span>" + E(c.t) + "</span></button></li>").join("");
-    choicesEl.hidden = false; requestAnimationFrame(() => choicesEl.classList.add("is-on"));
+    choicesEl.hidden = false; requestAnimationFrame(() => choicesEl.classList.add("is-on")); el.classList.add("has-choices");
     choicesEl.setAttribute("aria-label", "Choose");
     const timed = T0.timed && !still() ? T0.timed : null;
     timerEl.hidden = !timed;
@@ -303,7 +303,7 @@ function pick(i, how) {
   const b = $$(".st-ch", choicesOl)[i]; if (b) b.classList.add("is-picked");
   FX("choice");
   T("story_choice", { scene: S.scene, talk: S.talking, choice: i, text: c.t, how: how || "" });
-  setTimeout(() => { choicesEl.classList.remove("is-on"); setTimeout(() => { choicesEl.hidden = true; }, 260); }, 180);
+  setTimeout(() => { choicesEl.classList.remove("is-on"); el.classList.remove("has-choices"); setTimeout(() => { choicesEl.hidden = true; }, 260); }, 180);
   res(c);
 }
 choicesEl.addEventListener("click", e => { const b = e.target.closest(".st-ch"); if (b) pick(+b.dataset.i, "click"); });
@@ -367,8 +367,8 @@ function hide(p) { if (p) { p.group.visible = false; if (p.shadow) p.shadow.visi
    SCENES
    ================================================================ */
 const SCENE_LIGHT = {
-  lot: { sky: "#1b2732", ground: "#0a0c0b", moon: "#25323f", rim: "#5d7d9a", fog: "#0b1115", den: 0.028, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
-  decision: { sky: "#1f2c38", ground: "#0b0d0c", moon: "#2a3846", rim: "#6488a6", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
+  lot: { sky: "#1d2529", ground: "#0b0c0b", moon: "#262c33", rim: "#66737d", fog: "#0b1115", den: 0.028, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
+  decision: { sky: "#212a30", ground: "#0c0d0c", moon: "#2a323c", rim: "#6c7c88", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
   office: { sky: "#33363a", ground: "#1c1a17", moon: "#262a2e", rim: "#56677a", fog: "#141618", den: 0.01, wetAll: 0.25, sat: 1, moonDir: [0.3, 0.8, 0.5] },
   memory: { sky: "#2a2a30", ground: "#1d1712", moon: "#20242c", rim: "#7c6a58", fog: "#1a1612", den: 0.03, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
   keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.012, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] }
@@ -383,7 +383,7 @@ let set = null, rain = null;
 function makeRain() {
   const n = quality >= 2 ? 1400 : 600;
   const g = new THREE.InstancedBufferGeometry(); g.instanceCount = n;
-  g.setAttribute("position", new THREE.Float32BufferAttribute([-0.004, 0, 0, 0.004, 0, 0, 0.004, 1, 0, -0.004, 1, 0], 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
+  g.setAttribute("position", new THREE.Float32BufferAttribute([-0.0025, 0, 0, 0.0025, 0, 0, 0.0025, 1, 0, -0.0025, 1, 0], 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
   const seed = new Float32Array(n * 4); for (let i = 0; i < n; i++) { seed[i * 4] = Math.random(); seed[i * 4 + 1] = Math.random(); seed[i * 4 + 2] = Math.random(); seed[i * 4 + 3] = 0.7 + Math.random() * 0.6; }
   g.setAttribute("seed", new THREE.InstancedBufferAttribute(seed, 4));
   const m = new THREE.ShaderMaterial({
@@ -394,7 +394,7 @@ function makeRain() {
         float len = 0.35 * seed.w; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z);
         vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + side * position.x * 3.0;
         float l = 0.05; for (int i = 0; i < 8; i++) { if (i >= uLampN) break; float d = length(uLampPos[i].xyz - wp); l += max(0.0, 1.0 - d / (uLampPos[i].w * 0.6)) * length(uLampCol[i].rgb) * 0.6; }
-        vL = l; vA = smoothstep(0.0, 3.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
+        vL = l; vA = smoothstep(2.5, 6.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
     fragmentShader: `uniform float uK; varying float vL; varying float vA; void main(){ gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * vL * 0.55 * uK * vA, 1.0); }`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
@@ -510,6 +510,7 @@ function shotChoices() {
 }
 const ray = new THREE.Raycaster();
 function updateCamera(dt) {
+  if (camState.view) { camera.position.copy(camState.view.p); camera.lookAt(camState.view.t); post.comp.u.uFocus.value = camState.view.p.distanceTo(camState.view.t); post.comp.u.uRange.value = camState.view.r || 6; post.comp.u.uDofK.value = quality >= 2 ? 0.8 : 0; return; }
   const k = still() ? 1 : 1 - Math.exp(-6 * dt);
   if (camState.rail) {
     const r = camState.rail; r.t += dt / r.dur; const u = clamp(r.t, 0, 1), e = u * u * (3 - 2 * u);
@@ -1270,12 +1271,21 @@ window.JG_STORY = {
     skip: () => { if (line) endLine(true); },
     choose: i => pick(i, "debug"),
     spots: () => spotsHere().map(s => s.id),
-    warp: id => { const s = spotsHere().find(x => x.id === id); if (!s) return false; const st = s.sp.stand || s.p; me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); return true; },
+    warp: id => {
+      const s = spotsHere().find(x => x.id === id); if (!s) return false;
+      let st = s.sp.stand || s.p;
+      if (s.sp.who) { const w = P[s.sp.who]; st = w.pos.clone().add(new THREE.Vector3(Math.sin(w.yaw), 0, Math.cos(w.yaw)).multiplyScalar(1.35)); }
+      me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
+    },
     interact: id => interact(id, "debug"),
     desk: () => S.deskFinish && S.deskFinish(true),
     closeAll: () => { const f = S.closeFinish; if (f) f(); },
     note: id => { const b = $("[data-note='" + id + "']", closeEl); if (b) b.click(); return !!b; },
     camera: () => [camera.position.x, camera.position.y, camera.position.z],
+    view: (p, t, r) => { camState.view = p ? { p: new THREE.Vector3(...p), t: new THREE.Vector3(...t), r } : null; },
+    box: v => { post.comp.u.uBox.value = v; },
+    place: (who, x, z, yaw) => { const p = P[who]; if (!p) return false; p.pos.set(x, 0, z); p.yaw = p.wantYaw = yaw; return true; },
+    look: (who, x, y, z) => { const p = P[who]; if (p) p.lookAtP = x == null ? null : new THREE.Vector3(x, y, z); },
     perf: () => ({ ...perf, prog: renderer.info.programs ? renderer.info.programs.length : 0 }),
     bench: () => {
       const gl = renderer.getContext(), t = f => { const a = performance.now(); for (let i = 0; i < 3; i++) { f(); gl.finish(); } return +((performance.now() - a) / 3).toFixed(1); };

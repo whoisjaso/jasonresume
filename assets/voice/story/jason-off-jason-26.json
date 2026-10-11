@@ -1,0 +1,97 @@
+{
+ "id": "jason-off-jason-26",
+ "text": "I'm studying for a Bachelor of Science in Neuroscience at The University of Texas at Austin. Expected 2028.",
+ "duration": 10.84,
+ "words": [
+  {
+   "w": "I'm",
+   "s": 0.0,
+   "e": 0.16
+  },
+  {
+   "w": "studying",
+   "s": 0.16,
+   "e": 0.5
+  },
+  {
+   "w": "for",
+   "s": 0.5,
+   "e": 0.82
+  },
+  {
+   "w": "a",
+   "s": 0.82,
+   "e": 0.96
+  },
+  {
+   "w": "Bachelor",
+   "s": 0.96,
+   "e": 1.22
+  },
+  {
+   "w": "of",
+   "s": 1.22,
+   "e": 1.56
+  },
+  {
+   "w": "Science",
+   "s": 1.56,
+   "e": 1.9
+  },
+  {
+   "w": "in",
+   "s": 1.9,
+   "e": 2.24
+  },
+  {
+   "w": "Neuroscience",
+   "s": 2.24,
+   "e": 2.78
+  },
+  {
+   "w": "at",
+   "s": 3.15,
+   "e": 3.52
+  },
+  {
+   "w": "The",
+   "s": 3.52,
+   "e": 3.64
+  },
+  {
+   "w": "University",
+   "s": 3.64,
+   "e": 4.1
+  },
+  {
+   "w": "of",
+   "s": 4.1,
+   "e": 4.58
+  },
+  {
+   "w": "Texas",
+   "s": 4.58,
+   "e": 4.98
+  },
+  {
+   "w": "at",
+   "s": 4.98,
+   "e": 5.62
+  },
+  {
+   "w": "Austin.",
+   "s": 5.62,
+   "e": 6.2
+  },
+  {
+   "w": "Expected",
+   "s": 9.12,
+   "e": 9.86
+  },
+  {
+   "w": "2028.",
+   "s": 9.86,
+   "e": 10.84
+  }
+ ]
+}

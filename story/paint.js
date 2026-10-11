@@ -191,6 +191,8 @@ void main(){
   col += texture2D(uEMap, vUv).rgb * uTone;
   #endif
   col = sat(col, uSat);
+  // keep every value finite and inside half-float range, so the blur passes never spread a bad pixel
+  col = clamp(col, 0.0, 24.0);
   gl_FragColor = vec4(fogged(col, vWP), aout);
   #include <colorspace_fragment>
 }`;

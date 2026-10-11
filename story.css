@@ -39,7 +39,10 @@ html.story-on body > *:not(#story):not(script):not(dialog) { visibility: hidden 
 /* ---------- captions ---------- */
 .st-cap { position: absolute; left: 50%; bottom: max(30px, calc(env(safe-area-inset-bottom) + 18px)); transform: translate(-50%, 8px); z-index: 8; width: min(860px, calc(100% - 32px)); text-align: center; opacity: 0; transition: opacity .35s var(--ease), transform .5s var(--ease); pointer-events: auto; cursor: pointer; }
 .st-cap.is-on { opacity: 1; transform: translate(-50%, 0); }
-.st-cap::before { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 34vh; background: linear-gradient(to top, rgba(4, 6, 8, .72), rgba(4, 6, 8, .32) 55%, transparent); z-index: -1; pointer-events: none; }
+/* the scrim under captions and choices lives on the frame itself (a fixed child of a transformed box would be clipped to it) */
+.story::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40vh; z-index: 7; pointer-events: none; background: linear-gradient(to top, rgba(4, 6, 8, .78), rgba(4, 6, 8, .38) 50%, transparent); opacity: 0; transition: opacity .5s var(--ease); }
+.story.is-talking::after { opacity: 1; }
+.story.has-choices::after { opacity: 1; height: 56vh; }
 .st-cap__who { margin: 0 0 6px; display: inline-flex; align-items: baseline; gap: 10px; }
 .st-cap__who b { font: 600 13px/1 var(--sans); letter-spacing: 0.22em; text-transform: uppercase; color: var(--bone-2); }
 .st-cap__who b:empty { display: none; }
@@ -54,7 +57,6 @@ html.story-on body > *:not(#story):not(script):not(dialog) { visibility: hidden 
 /* ---------- choices ---------- */
 .st-choices { position: absolute; left: 50%; bottom: max(26px, calc(env(safe-area-inset-bottom) + 14px)); transform: translate(-50%, 10px); z-index: 9; width: min(640px, calc(100% - 32px)); opacity: 0; transition: opacity .35s var(--ease), transform .5s var(--ease); }
 .st-choices.is-on { opacity: 1; transform: translate(-50%, 0); }
-.st-choices::before { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 52vh; background: linear-gradient(to top, rgba(4, 6, 8, .8), rgba(4, 6, 8, .4) 55%, transparent); z-index: -1; pointer-events: none; }
 .st-choices ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .st-ch { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 50px; padding: 8px 18px; text-align: left; border-radius: 3px; transition: background-color .25s var(--ease), transform .25s var(--ease); }
 .st-ch kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border: 1px solid rgba(237, 231, 219, .45); border-radius: 50%; font: 600 12px/1 var(--sans); color: var(--bone-2); flex: none; }
@@ -211,7 +213,6 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
 }
 @media (max-height: 480px) and (orientation: landscape) {
   .st-cap { bottom: 12px; }
-  .st-cap::before { height: 46vh; }
   .st-choices { bottom: 10px; width: min(560px, calc(100% - 140px)); }
   .st-choices ol { gap: 0; }
   .st-ch { min-height: 44px; }
