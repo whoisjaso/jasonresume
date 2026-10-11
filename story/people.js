@@ -20,8 +20,8 @@ function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= TAU; while (d <
 
 /* each character's colours. Cloth textures keep their folds and light, recoloured */
 export const LOOKS = {
-  jason: { skin: "#45291e", lip: "#5f3730", eyes: "#7a5a48", hair: "#0d0b0b", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#1e3a2d", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
-  "jason-memory": { skin: "#45291e", lip: "#5f3730", eyes: "#7a5a48", hair: "#0d0b0b", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
+  jason: { skin: "#56331f", lip: "#7a4540", eyes: "#7a5a48", wide: 0.35, pocket: true, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#1e3a2d", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
+  "jason-memory": { skin: "#56331f", lip: "#7a4540", eyes: "#7a5a48", wide: 0.35, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
   player: { skin: "#9a6d4c", hair: "#2a1d16", brow: "#2a1d16", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#9b958c", hair: "#4a4640", brow: "#7d776e", cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true },
   renata: { skin: "#b78a66", hair: "#24170f", brow: "#24170f", cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
@@ -90,8 +90,8 @@ class Person {
       const map = m.material && m.material.map;
       if (map) map.colorSpace = THREE.SRGBColorSpace;
       let mat;
-      if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, rim: 0.5, wet: 0.05, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
-      else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 380 * (m.scale.x || 1), rim: 0.3, wet: 0.06 });
+      if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, rim: 0.55, wet: 0.015, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
+      else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 1100 * (m.scale.x || 1), rim: 0.15, wet: 0.0, hairline: !!m.geometry.attributes.color, keep: L.skin });
       else if (name === "hair") mat = paint({ color: L.hair, map, alphaTest: 0.4, rim: 0.5, wet: 0.25, side: THREE.DoubleSide, recolor: true, keep: L.hair });
       else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
       else if (name === "brow" || name === "lash") mat = paint({ color: L.brow, map, alphaTest: name === "brow" ? 0.28 : 0.5, rim: 0.2, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
@@ -124,27 +124,42 @@ class Person {
         const bb = new THREE.Box3().setFromBufferAttribute(eyes.geometry.attributes.position).applyMatrix4(eyes.matrixWorld);
         const r = (bb.max.y - bb.min.y) / 2;
         ex = (bb.max.x - bb.min.x) / 2 - r; ey = (bb.max.y + bb.min.y) / 2 - hs.at.y; ez = bb.max.z - hs.at.z + 0.011; R = r * 1.45;
-        this.eyeR = r;
+        this.eyeR = r; this.noseY = ey - 0.04; this.noseZ = bb.max.z - hs.at.z + 0.001;
       }
+      // squarer and wider, like his: a straight black brow bar across the top, thin gold rims round the sides and bottom
+      const Rw = R * 1.18, Rh = R * 0.82, bridgeY = ey + Rh * 0.55;
+      const rrect = (cx, cy, w, h, rr, n, from, to) => { const pts = []; for (let i = 0; i <= n; i++) { const a = from + (to - from) * i / n, c = Math.cos(a), s2 = Math.sin(a); const px = Math.sign(c) * Math.pow(Math.abs(c), 0.4) * w, py = Math.sign(s2) * Math.pow(Math.abs(s2), 0.4) * h; pts.push(new THREE.Vector3(cx + px, cy + py, ez - Math.max(0, -s2) * 0.002)); } return pts; };
       for (const side of [1, -1]) {
-        const cx = ex * side;
-        const top = new THREE.CatmullRomCurve3([new THREE.Vector3(cx - side * R * 1.08, ey + R * 0.32, ez - 0.004), new THREE.Vector3(cx, ey + R * 0.56, ez + 0.001), new THREE.Vector3(cx + side * R * 1.12, ey + R * 0.36, ez - 0.006)]);
-        g.add(new THREE.Mesh(new THREE.TubeGeometry(top, 10, 0.0027, 6), black));
-        const pts = []; for (let i = 0; i <= 14; i++) { const a = Math.PI * (i / 14); pts.push(new THREE.Vector3(cx + Math.cos(a) * R * 1.04, ey + R * 0.3 - Math.sin(a) * R * 0.95, ez - Math.sin(a) * 0.002)); }
-        g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 18, 0.0008, 4), gold));
-        const lm = new THREE.Mesh(new THREE.CircleGeometry(R, 18), lens); lm.position.set(cx, ey - R * 0.12, ez - 0.0015); lm.scale.y = 0.86; g.add(lm);
-        const arm = new THREE.CatmullRomCurve3([new THREE.Vector3(cx + side * R * 1.12, ey + R * 0.34, ez - 0.006), new THREE.Vector3(side * 0.071, ey + R * 0.3, ez - 0.05), new THREE.Vector3(side * 0.073, ey + R * 0.05, ez - 0.1)]);
-        g.add(new THREE.Mesh(new THREE.TubeGeometry(arm, 8, 0.0016, 4), black));
+        const cx = (ex + R * 0.12) * side, cy = ey - Rh * 0.08;
+        const top = new THREE.CatmullRomCurve3([new THREE.Vector3(cx - Rw * 1.02, cy + Rh * 0.78, ez - 0.002), new THREE.Vector3(cx, cy + Rh * 1.0, ez + 0.001), new THREE.Vector3(cx + Rw * 1.04, cy + Rh * 0.82, ez - 0.004)]);
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(top, 12, 0.0032, 6), black));
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rrect(cx, cy, Rw, Rh, 0.3, 24, Math.PI * 1.02, Math.PI * 1.98)), 24, 0.0008, 4), gold));
+        const lm = new THREE.Mesh(new THREE.PlaneGeometry(Rw * 2, Rh * 1.9), lens); lm.position.set(cx, cy, ez - 0.0015); g.add(lm);
+        const arm = new THREE.CatmullRomCurve3([new THREE.Vector3(cx + side * Rw * 1.04, cy + Rh * 0.8, ez - 0.004), new THREE.Vector3(side * 0.071, cy + Rh * 0.75, ez - 0.05), new THREE.Vector3(side * 0.073, cy + Rh * 0.3, ez - 0.1)]);
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(arm, 8, 0.0017, 4), gold));
+        // two small gold rivets on the bar, near the hinge
+        for (const k of [0.62, 0.8]) { const rv = new THREE.Mesh(new THREE.SphereGeometry(0.0011, 6, 4), gold); rv.position.set(cx + side * Rw * k, cy + Rh * 0.9, ez + 0.0026); g.add(rv); }
       }
-      const bridge = new THREE.CatmullRomCurve3([new THREE.Vector3(ex - R * 1.04, ey + R * 0.25, ez), new THREE.Vector3(0, ey + R * 0.42, ez + 0.003), new THREE.Vector3(-ex + R * 1.04, ey + R * 0.25, ez)]);
-      g.add(new THREE.Mesh(new THREE.TubeGeometry(bridge, 6, 0.0011, 4), gold));
+      const bridge = new THREE.CatmullRomCurve3([new THREE.Vector3(ex - R * 0.95, bridgeY, ez), new THREE.Vector3(0, bridgeY + 0.002, ez + 0.003), new THREE.Vector3(-ex + R * 0.95, bridgeY, ez)]);
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(bridge, 6, 0.0012, 4), gold));
       g.quaternion.copy(hs.wi);
       this.glassesFit = g;
     }
     if (L.studs) {
       const st = paint({ color: "#eef3f6", wet: 3, emit: "#2a2e33" });
       this.studs = [];
-      for (const side of [1, -1]) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.0027, 8, 6), st); s.position.copy(at(side * 0.074, 0.035, 0.012)); head.add(s); this.studs.push(s); }
+      // a diamond stud in his left ear only
+      const s1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.0032, 0), st); s1.position.copy(at(0.074, 0.032, 0.014)); head.add(s1); this.studs.push(s1);
+    }
+    if (L.nose && this.eyeR) {
+      const ns = new THREE.Mesh(new THREE.SphereGeometry(0.0013, 6, 5), paint({ color: "#eef3f6", wet: 3, emit: "#30343a" }));
+      ns.position.copy(at(0.0145, this.noseY || 0.03, this.noseZ || 0.12)); head.add(ns); this.noseStud = ns;
+    }
+    if (L.pocket && this.bones.spine_03) {
+      // a white pocket square in the jacket's left breast pocket
+      const sp = this.rest.spine_03, ps = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.016, 0.006), paint({ color: "#ece9e1", rim: 0.3 }));
+      const w = this.chestPocket || new THREE.Vector3(0.1, 0.12, 0.125);
+      ps.position.copy(w.clone().applyQuaternion(sp.wi)); ps.quaternion.copy(sp.wi); this.bones.spine_03.add(ps);
     }
     if (L.umbrella && this.bones.hand_r) {
       const u = new THREE.Group();
@@ -251,6 +266,7 @@ class Person {
     }
     this.setFx("browInnerUp", clamp(this.browK, 0, 1) * 0.8 + this.mouth * 0.08);
     this.setFx("browDownLeft", clamp(-this.browK, 0, 1) * 0.6); this.setFx("browDownRight", clamp(-this.browK, 0, 1) * 0.6);
+    this.setFx("eyeWideLeft", this.L.wide || 0); this.setFx("eyeWideRight", this.L.wide || 0);
     this.setFx("mouthSmileLeft", this.smileK * 0.55); this.setFx("mouthSmileRight", this.smileK * 0.55);
   }
 }

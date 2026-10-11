@@ -81,12 +81,12 @@ const vert = /* glsl */`
 attribute float cidx;
 varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying float vC; varying vec3 vObj; varying vec3 vCol;
 uniform mat3 uUvM;
-#ifdef USE_VCOL
+#if defined(USE_VCOL) || defined(USE_HAIRLINE)
 attribute vec3 color;
 #endif
 void main(){
   vUv = (uUvM * vec3(uv, 1.0)).xy; vC = cidx; vObj = position;
-  #ifdef USE_VCOL
+  #if defined(USE_VCOL) || defined(USE_HAIRLINE)
   vCol = color;
   #else
   vCol = vec3(1.0);
@@ -131,11 +131,17 @@ void main(){
   // tight curls: a bumped normal and dark crevices from small-scale noise in object space
   vec3 cp = vObj * uCurlK;
   float c0 = vnoise(cp), cx = vnoise(cp + vec3(0.37, 0.0, 0.0)), cy = vnoise(cp + vec3(0.0, 0.37, 0.0)), cz = vnoise(cp + vec3(0.0, 0.0, 0.37));
-  N = normalize(N + (vec3(cx, cy, cz) - c0) * 1.3);
+  N = normalize(N + (vec3(cx, cy, cz) - c0) * 0.7);
   curl = mix(0.55, 1.25, smoothstep(0.25, 0.8, c0 * 0.6 + vnoise(cp * 2.3) * 0.4));
   #endif
   float br = brushAt(vWP, N);
+  #ifdef USE_HAIRLINE
+  // R: above the hairline (0.5 is the line); G: the crown, where the curls are full
+  if (vCol.r < 0.5) discard;
+  vec3 alb = mix(uKeep, uColor, smoothstep(0.5, 0.75, vCol.r) * mix(0.75, 1.0, vCol.g));
+  #else
   vec3 alb = uColor * vCol;
+  #endif
   #ifdef USE_PAL
   alb = uPal[int(vC + 0.5)];
   #endif
@@ -213,6 +219,7 @@ export function paint(o = {}) {
   if (o.emap) { defines.USE_EMAP = ""; uniforms.uEMap = { value: o.emap }; }
   if (o.pal) defines.USE_PAL = "";
   if (o.curl) defines.USE_CURL = "";
+  if (o.hairline) defines.USE_HAIRLINE = "";
   if (o.vcol) defines.USE_VCOL = "";
   const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: frag, defines, side: o.side || THREE.FrontSide, transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });
   m.userData.paint = true;

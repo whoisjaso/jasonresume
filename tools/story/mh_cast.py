@@ -29,19 +29,19 @@ from bl_ext.user_default.mpfb.services.exportservice import ExportService
 UD = LocationService.get_user_data()
 TDIR = os.path.join(LocationService.get_mpfb_data(), "targets")
 def asset(kind, name): return os.path.join(UD, kind, name, name + ".mhclo")
-FACE = ["eyeBlinkLeft", "eyeBlinkRight", "jawOpen", "mouthClose", "mouthSmileLeft", "mouthSmileRight", "browInnerUp", "browDownLeft", "browDownRight",
+FACE = ["eyeBlinkLeft", "eyeBlinkRight", "eyeWideLeft", "eyeWideRight", "jawOpen", "mouthClose", "mouthSmileLeft", "mouthSmileRight", "browInnerUp", "browDownLeft", "browDownRight",
         "browOuterUpLeft", "browOuterUpRight", "mouthFunnel", "mouthPucker", "mouthPressLeft", "mouthPressRight", "eyeSquintLeft", "eyeSquintRight", "mouthFrownLeft", "mouthFrownRight"]
 VIS = {"aa_02": "visAA", "ow_08": "visOW", "p_b_m_21": "visPBM", "f_v_18": "visFV", "y_iy_ih_ix_06": "visEE"}
 
 # Jason's face, from assets/jason-headshot.png: a slim oval face with a defined jaw and chin,
 # high cheekbones, a broad nose with wide nostrils, full lips (the lower fuller), almond eyes,
 # a high forehead and a long neck
-JASON = {"head/head-round": 0.35, "head/head-scale-vert-decr": 0.12, "chin/chin-prominent-incr": 0.15, "chin/chin-width-incr": 0.1,
+JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-height-decr": 0.25, "chin/chin-prominent-incr": 0.1, "chin/chin-width-incr": 0.3,
          "nose/nose-nostrils-width-incr": 0.45, "nose/nose-flaring-incr": 0.35, "nose/nose-width2-incr": 0.2, "nose/nose-point-width-incr": 0.2,
-         "mouth/mouth-lowerlip-volume-incr": 0.1, "cheek/l-cheek-volume-incr": 0.25, "cheek/r-cheek-volume-incr": 0.25,
-         "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2, "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3,
-         "eyes/l-eye-scale-incr": 0.15, "eyes/r-eye-scale-incr": 0.15, "eyebrows/eyebrows-trans-down": 0.15,
-         "neck/neck-scale-vert-incr": 0.1, "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
+         "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.1, "cheek/l-cheek-volume-incr": 0.35, "cheek/r-cheek-volume-incr": 0.35,
+         "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2, "eyes/l-eye-height2-incr": 0.35, "eyes/r-eye-height2-incr": 0.35,
+         "eyes/l-eye-scale-incr": 0.15, "eyes/r-eye-scale-incr": 0.15, "eyebrows/eyebrows-trans-down": 0.1,
+         "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
 DELL = {"head/head-square": 0.4, "nose/nose-scale-horiz-incr": 0.3, "chin/chin-width-incr": 0.3, "neck/neck-double-incr": 0.3}
 RENATA = {"head/head-oval": 0.4, "mouth/mouth-upperlip-volume-incr": 0.2, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
 
@@ -170,35 +170,28 @@ def grow_goatee(body):
         return mous or chin
     return grow_shell(body, pick, lambda v: 0.0022 + noise.noise(v.co * 400.0) * 0.0006, "goatee", (0.02, 0.015, 0.013, 1), rim=0.002)
 
-def grow_afro(body, depth_top=0.027, depth_side=0.011):
+def grow_afro(body, depth_top=0.019, depth_side=0.006):
+    """a short, tidy afro with a tapered fade: a shell over the scalp, thickest on the crown and close over the ears. The hairline is not cut from faces (that steps); each vertex carries how far it sits above the hairline in its colour (R), and the shader trims and fades at that line, so it is crisp at any distance."""
     top, cx, cy, mz, my = head_frame(body)
+    def ss(a, b, x): t = min(1.0, max(0.0, (x - a) / (b - a))); return t * t * (3 - 2 * t)
     def hl_depth(co):
-        # how far below the crown the hairline sits, by direction around the head: a rounded front with soft temples, above the ears at the sides, low at the nape
         th = abs(math.atan2(co.x - cx, cy - co.y))
-        def ss(a, b, x): t = min(1.0, max(0.0, (x - a) / (b - a))); return t * t * (3 - 2 * t)
-        return 0.068 + 0.012 * ss(0.3, 0.65, th) + 0.022 * ss(0.8, 1.5, th) + 0.06 * ss(1.8, 2.7, th)
-    def pick(f): return all(v.co.z > top - hl_depth(v.co) - 0.02 for v in f.verts)
+        return 0.07 + 0.01 * ss(0.3, 0.65, th) + 0.022 * ss(0.8, 1.5, th) + 0.06 * ss(1.8, 2.7, th)
+    def pick(f): return all(v.co.z > top - hl_depth(v.co) - 0.035 for v in f.verts)
     def off(v):
-        up = max(0.0, (v.co.z - (top - 0.1)) / 0.1)
+        up = ss(top - 0.075, top - 0.01, v.co.z)
         d = depth_side + (depth_top - depth_side) * up
-        return d + noise.noise(v.co * 110.0) * 0.0012 + noise.noise(v.co * 40.0) * 0.0025
+        return d + noise.noise(v.co * 90.0) * 0.0012 * up + noise.noise(v.co * 35.0) * 0.0015 * up
     hair = grow_shell(body, pick, off, "hair", (0.012, 0.01, 0.01, 1), rim=0.0, close=False)
-    # subdivide the shell, then trim it to the hairline so its edge is fine, and close it back onto the scalp
-    bm = bmesh.new(); bm.from_mesh(hair.data)
-    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=2, use_grid_fill=True)
-    bm.faces.ensure_lookup_table()
-    # the hairline test is on the scalp point under each face: pull the centre back in by its offset
-    gone = [f for f in bm.faces if f.calc_center_median().z - 0.012 < top - hl_depth(f.calc_center_median())]
-    bmesh.ops.delete(bm, geom=gone, context="FACES")
-    bm.normal_update()
-    boundary = [e for e in bm.edges if e.is_boundary]
-    ext = bmesh.ops.extrude_edge_only(bm, edges=boundary)
-    layers = list(bm.verts.layers.shape.values())
-    for v in [g for g in ext["geom"] if isinstance(g, bmesh.types.BMVert)]:
-        d = -v.normal * 0.016
-        v.co += d
-        for L in layers: v[L] = v[L] + d
-    bm.to_mesh(hair.data); bm.free()
+    me = hair.data
+    bm = bmesh.new(); bm.from_mesh(me)
+    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
+    bm.to_mesh(me); bm.free()
+    ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    for i, v in enumerate(me.vertices):
+        above = (v.co.z - 0.006) - (top - hl_depth(v.co))  # metres above the hairline, measured on the scalp under the shell
+        ca.data[i].color = (max(0.0, min(1.0, 0.5 + above / 0.012)), ss(top - 0.075, top - 0.03, v.co.z), 0.0, 1.0)
+    me.color_attributes.active_color = ca
     return hair
 
 def face_mask(base, beard=None, size=512):
@@ -349,7 +342,7 @@ def build(name, spec):
     bpy.ops.object.select_all(action="SELECT")
     path = os.path.join(OUT, name + ".glb")
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", use_selection=True, export_skins=True, export_morph=True, export_morph_normal=False,
-                              export_apply=False, export_animations=False, export_image_format="WEBP", export_yup=True, export_texcoords=True, export_normals=True)
+                              export_apply=False, export_animations=False, export_image_format="WEBP", export_yup=True, export_vertex_color="ACTIVE", export_texcoords=True, export_normals=True)
     print("CAST", name, path, os.path.getsize(path))
 
 for name, spec in CAST.items():
