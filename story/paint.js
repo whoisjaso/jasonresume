@@ -91,6 +91,9 @@ void main(){
   #else
   vCol = vec3(1.0);
   #endif
+  #ifdef USE_INSTANCING_COLOR
+  vCol = instanceColor;
+  #endif
   #include <beginnormal_vertex>
   #include <morphinstance_vertex>
   #include <morphnormal_vertex>
@@ -165,7 +168,9 @@ void main(){
   #ifdef USE_MASK
   // the face's painted detail: R beard, G lips, B a little warmth on the cheeks
   vec4 fm = texture2D(uMask, vUv);
-  alb = mix(alb, uLip, fm.g * 0.85);
+  // lips: the upper at half strength in the mask and a little darker, the lower fuller and rosier
+  vec3 lipC = mix(uLip * vec3(0.78, 0.72, 0.72), uLip, smoothstep(0.55, 0.95, fm.g));
+  alb = mix(alb, lipC, smoothstep(0.04, 0.45, fm.g) * 0.9);
   alb *= 1.0 + fm.b * vec3(0.12, 0.02, -0.02);
   float stub = fm.r * mix(0.55, 1.0, vnoise(vObj * uCurlK * 1.7));
   alb = mix(alb, uBeard, clamp(stub * 1.15, 0.0, 1.0));

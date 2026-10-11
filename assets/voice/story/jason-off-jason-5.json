@@ -1,0 +1,57 @@
+{
+ "id": "jason-off-jason-5",
+ "text": "I scan her license once, and every form fills itself.",
+ "duration": 4.12,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.0,
+   "e": 0.18
+  },
+  {
+   "w": "scan",
+   "s": 0.18,
+   "e": 0.56
+  },
+  {
+   "w": "her",
+   "s": 0.56,
+   "e": 0.8
+  },
+  {
+   "w": "license",
+   "s": 0.8,
+   "e": 1.2
+  },
+  {
+   "w": "once,",
+   "s": 1.2,
+   "e": 1.58
+  },
+  {
+   "w": "and",
+   "s": 1.58,
+   "e": 2.2
+  },
+  {
+   "w": "every",
+   "s": 2.2,
+   "e": 2.52
+  },
+  {
+   "w": "form",
+   "s": 2.52,
+   "e": 2.98
+  },
+  {
+   "w": "fills",
+   "s": 2.98,
+   "e": 3.34
+  },
+  {
+   "w": "itself.",
+   "s": 3.34,
+   "e": 3.8
+  }
+ ]
+}

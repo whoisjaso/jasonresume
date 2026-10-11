@@ -32,7 +32,8 @@ const POINTS = {
   contact_click: 15, book_click: 15, call_booked: 40, lead_sent: 40, intro_finished: 1, name_given: 6, reel_started: 1, reel_shot: 0.3, reel_finished: 6,
   story_opened: 2, trophy_unlocked: 0.5, level_clear: 8, build_chosen: 5, build_edited: 0.5, card_saved: 12, build_link_copied: 12,
   listing_matched: 15, build_resume: 10, build_viewed: 6, build_sent: 40,
-  intro_play: 2, game_started: 3, game_level_finished: 4, game_medal: 1, game_platinum: 15, game_quit: 0, game_secret: 1, game_character: 1, game_shared: 12, game_clip: 12
+  intro_play: 2, game_started: 3, game_level_finished: 4, game_medal: 1, game_platinum: 15, game_quit: 0, game_secret: 1, game_character: 1, game_shared: 12, game_clip: 12,
+  story_started: 3, story_choice: 1, story_scene: 2, story_object: 1, story_ending: 10, story_quit: 0
 };
 const TERMINAL = new Set(["call_booked", "lead_sent", "questions_mailed", "build_sent"]);
 const BUILDS = { ai: "AI and Automation", software: "Software and CRM", it: "IT and Systems Support", ops: "Operations and Logistics", title: "Title and Back Office", sales: "Sales and Phones", people: "People and Office", "dealer-tech": "Dealer Technology", data: "Data and Databases",

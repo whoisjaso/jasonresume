@@ -19,6 +19,8 @@
    (window.JG_BOOT.ready). Two ways to be shown around sit under Start: Watch
    the walkthrough (the narrated film, in a dialog; window.JG_FILM) and, on the
    home page, Take the tour (tour.js, through the live library).
+   After Hours (story/main.js): the start screen's one Play opens the episode
+   (Continue when a save exists); jg:intro-done carries story: true.
    The run (game-run.js): someone just looking meets Play after the seat, one
    press into the first level ("jg:intro-done" carries play: true and game.js
    loads the game); a class is the quieter second choice. Someone hiring or
@@ -74,6 +76,9 @@
   var DOOR = /[?&](door=library|cut=)/.test(location.search) || !!FOR;
   if (/[?&]door=library/.test(location.search)) { try { var u2 = new URL(location.href); u2.searchParams.delete("door"); history.replaceState(null, "", u2.pathname + u2.search + u2.hash); } catch (e) {} }
   var TPLAY = !!(PLAY && t.play && !DOOR && document.getElementById("run-data"));
+  /* the start screen's Play starts After Hours (the episode, story/main.js) when the page carries it; a saved episode reads Continue */
+  var STORY = !!document.getElementById("story-data");
+  var SAVED = STORY && (function () { try { var v = JSON.parse(localStorage.getItem("jg_story") || "null"); return !!(v && v.scene); } catch (e) { return false; } })();
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");
   var el = document.createElement("div");
@@ -89,7 +94,7 @@
       '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
         '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
         '<p class="intro__line">' + E(t.line) + "</p>" +
-        '<div class="intro__start"><button class="btn btn--primary btn--lg intro__play" type="button" data-title-play><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(t.play) + "</button></div>" +
+        '<div class="intro__start"><button class="btn btn--primary btn--lg intro__play" type="button" data-title-play><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(SAVED && t.continue ? t.continue : t.play) + "</button></div>" +
         '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
       "</section>"
     :
@@ -213,12 +218,14 @@
     if (phase === "title" && !e.target.closest("button,a,input")) { if (TPLAY) playFromTitle("tap"); else start(true, "tap"); }
   });
 
-  /* Play from the title screen: the score starts with the press, then straight into level 1 */
+  /* Play from the title screen: the score starts with the press, then straight into the episode (or the run where the episode isn't carried) */
+  var storyAfter = false;
   function playFromTitle(how) {
     if (phase !== "title") return;
     if (S()) { S().set(true, "intro"); setTimeout(function () { S().sting("start"); }, 120); }
     T("intro_started", { sound: true, how: "play" });
     if (attract) attract.pause();
+    if (STORY) storyAfter = true;
     playNow(how);
   }
 
@@ -426,7 +433,7 @@
     if (window.JG_FX) window.JG_FX("choice");
     /* a phone goes fullscreen from the press itself */
     if (COARSE && !document.fullscreenElement) { var d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen; if (rq) try { window.JG_RUN_FS = true; var pr = rq.call(d, { navigationUI: "hide" }); if (pr && pr.then) pr.then(function () { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); }).catch(function () {}); } catch (x) {} }
-    T("intro_play", { role: role, how: how || "" });
+    T("intro_play", { role: role, how: how || "", story: storyAfter ? (SAVED ? "continue" : "new") : "" });
     done(false, "play");
   }
   el.addEventListener("click", function (e) {
@@ -447,7 +454,7 @@
       el.remove();
       root.classList.remove("intro-pending");
       if (window.JG_LOCK) window.JG_LOCK(false);
-      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "", play: playAfter } }));
+      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "", play: playAfter && !storyAfter, story: storyAfter } }));
     }, wait(playAfter ? 380 : 700));
   }
   el.querySelector("[data-intro-skip]").addEventListener("click", function () { T("intro_skipped", { phase: phase }); done(true); });

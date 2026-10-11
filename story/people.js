@@ -20,8 +20,8 @@ function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= TAU; while (d <
 
 /* each character's colours. Cloth textures keep their folds and light, recoloured */
 export const LOOKS = {
-  jason: { skin: "#56331f", lip: "#7a4540", eyes: "#7a5a48", wide: 0.35, pocket: true, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#1e3a2d", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
-  "jason-memory": { skin: "#56331f", lip: "#7a4540", eyes: "#7a5a48", wide: 0.35, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
+  jason: { skin: "#56331f", lip: "#8c4f4a", eyes: "#7a5a48", wide: 0.55, pocket: true, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#1e3a2d", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
+  "jason-memory": { skin: "#56331f", lip: "#8c4f4a", eyes: "#7a5a48", wide: 0.55, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
   player: { skin: "#9a6d4c", hair: "#2a1d16", brow: "#2a1d16", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#9b958c", hair: "#4a4640", brow: "#7d776e", cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true },
   renata: { skin: "#b78a66", hair: "#24170f", brow: "#24170f", cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
@@ -113,19 +113,22 @@ class Person {
     const hs = this.rest.head;
     // the face is about 0.1 above the head bone and 0.09 ahead of it; measured from the eye sockets
     const at = (x, y, z) => { const v = new THREE.Vector3(x, y, z); return v.applyQuaternion(hs.wi); };
-    if (L.glasses === "browline") {
-      const g = new THREE.Group(); this.glasses = g; head.add(g);
-      const black = paint({ color: "#0a0a0a", wet: 1.6, rim: 0.5 }), gold = paint({ color: "#c9a96a", wet: 2.4, rim: 0.4, emit: "#150f05" });
-      const lens = new THREE.MeshBasicMaterial({ color: "#a9bccb", transparent: true, opacity: 0.08, depthWrite: false });
-      // fit to the eyes: their box in character space, relative to the head bone
-      let ex = 0.0315, ey = 0.075, ez = 0.098, R = 0.0205;
-      const eyes = this.meshes.find(m => m.material && m.material.uniforms && m.userData.role === "eyes");
+    // the eyes: their box in character space, relative to the head bone (for the glasses, the catchlights, the nose stud)
+    let ex = 0.0315, ey = 0.075, ez = 0.098, R = 0.0205;
+    {
+      const eyes = this.meshes.find(m => m.userData.role === "eyes");
       if (eyes) {
         const bb = new THREE.Box3().setFromBufferAttribute(eyes.geometry.attributes.position).applyMatrix4(eyes.matrixWorld);
         const r = (bb.max.y - bb.min.y) / 2;
         ex = (bb.max.x - bb.min.x) / 2 - r; ey = (bb.max.y + bb.min.y) / 2 - hs.at.y; ez = bb.max.z - hs.at.z + 0.011; R = r * 1.45;
         this.eyeR = r; this.noseY = ey - 0.04; this.noseZ = bb.max.z - hs.at.z + 0.001;
+        this.eyeX = ex; this.eyeY = ey; this.eyeZ = bb.max.z - hs.at.z;
       }
+    }
+    if (L.glasses === "browline") {
+      const g = new THREE.Group(); this.glasses = g; head.add(g);
+      const black = paint({ color: "#0a0a0a", wet: 1.6, rim: 0.5 }), gold = paint({ color: "#c9a96a", wet: 2.4, rim: 0.4, emit: "#150f05" });
+      const lens = new THREE.MeshBasicMaterial({ color: "#a9bccb", transparent: true, opacity: 0.08, depthWrite: false });
       // squarer and wider, like his: a straight black brow bar across the top, thin gold rims round the sides and bottom
       const Rw = R * 1.18, Rh = R * 0.82, bridgeY = ey + Rh * 0.55;
       const rrect = (cx, cy, w, h, rr, n, from, to) => { const pts = []; for (let i = 0; i <= n; i++) { const a = from + (to - from) * i / n, c = Math.cos(a), s2 = Math.sin(a); const px = Math.sign(c) * Math.pow(Math.abs(c), 0.4) * w, py = Math.sign(s2) * Math.pow(Math.abs(s2), 0.4) * h; pts.push(new THREE.Vector3(cx + px, cy + py, ez - Math.max(0, -s2) * 0.002)); } return pts; };
@@ -150,6 +153,11 @@ class Person {
       this.studs = [];
       // a diamond stud in his left ear only
       const s1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.0032, 0), st); s1.position.copy(at(0.074, 0.032, 0.014)); head.add(s1); this.studs.push(s1);
+    }
+    if (this.eyeR) {
+      // a catchlight in each eye: a tiny bright point up and to one side of the pupil, so the eyes read awake
+      const cl = new THREE.MeshBasicMaterial({ color: "#fff6e8", transparent: true, opacity: 0.85, depthWrite: false });
+      for (const side of [1, -1]) { const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.13, 6, 4), cl); d.position.copy(at(this.eyeX * side - this.eyeR * 0.22, this.eyeY + this.eyeR * 0.28, this.eyeZ + 0.0008)); head.add(d); }
     }
     if (L.nose && this.eyeR) {
       const ns = new THREE.Mesh(new THREE.SphereGeometry(0.0013, 6, 5), paint({ color: "#eef3f6", wet: 3, emit: "#30343a" }));

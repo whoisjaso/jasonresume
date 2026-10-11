@@ -38,7 +38,7 @@ VIS = {"aa_02": "visAA", "ow_08": "visOW", "p_b_m_21": "visPBM", "f_v_18": "visF
 # a high forehead and a long neck
 JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-height-decr": 0.25, "chin/chin-prominent-incr": 0.1, "chin/chin-width-incr": 0.3,
          "nose/nose-nostrils-width-incr": 0.45, "nose/nose-flaring-incr": 0.35, "nose/nose-width2-incr": 0.2, "nose/nose-point-width-incr": 0.2,
-         "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.1, "cheek/l-cheek-volume-incr": 0.35, "cheek/r-cheek-volume-incr": 0.35,
+         "mouth/mouth-lowerlip-volume-incr": 0.45, "mouth/mouth-upperlip-volume-incr": 0.3, "mouth/mouth-scale-horiz-decr": 0.25, "mouth/mouth-cupidsbow-incr": 0.5, "cheek/l-cheek-volume-incr": 0.35, "cheek/r-cheek-volume-incr": 0.35,
          "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2, "eyes/l-eye-height2-incr": 0.35, "eyes/r-eye-height2-incr": 0.35,
          "eyes/l-eye-scale-incr": 0.15, "eyes/r-eye-scale-incr": 0.15, "eyebrows/eyebrows-trans-down": 0.1,
          "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
@@ -170,7 +170,7 @@ def grow_goatee(body):
         return mous or chin
     return grow_shell(body, pick, lambda v: 0.0022 + noise.noise(v.co * 400.0) * 0.0006, "goatee", (0.02, 0.015, 0.013, 1), rim=0.002)
 
-def grow_afro(body, depth_top=0.019, depth_side=0.006):
+def grow_afro(body, depth_top=0.036, depth_side=0.006):
     """a short, tidy afro with a tapered fade: a shell over the scalp, thickest on the crown and close over the ears. The hairline is not cut from faces (that steps); each vertex carries how far it sits above the hairline in its colour (R), and the shader trims and fades at that line, so it is crisp at any distance."""
     top, cx, cy, mz, my = head_frame(body)
     def ss(a, b, x): t = min(1.0, max(0.0, (x - a) / (b - a))); return t * t * (3 - 2 * t)
@@ -179,9 +179,12 @@ def grow_afro(body, depth_top=0.019, depth_side=0.006):
         return 0.07 + 0.01 * ss(0.3, 0.65, th) + 0.022 * ss(0.8, 1.5, th) + 0.06 * ss(1.8, 2.7, th)
     def pick(f): return all(v.co.z > top - hl_depth(v.co) - 0.035 for v in f.verts)
     def off(v):
-        up = ss(top - 0.075, top - 0.01, v.co.z)
-        d = depth_side + (depth_top - depth_side) * up
-        return d + noise.noise(v.co * 90.0) * 0.0012 * up + noise.noise(v.co * 35.0) * 0.0015 * up
+        # tight over the ears and temples, full on the crown and over the forehead: a rounded, slightly squared top
+        th = abs(math.atan2(v.co.x - cx, cy - v.co.y))
+        up = ss(top - 0.095, top - 0.035, v.co.z)
+        front = 1.0 - ss(0.4, 1.3, th) * 0.35
+        d = depth_side + (depth_top - depth_side) * up * front
+        return d + noise.noise(v.co * 90.0) * 0.0016 * up + noise.noise(v.co * 35.0) * 0.002 * up
     hair = grow_shell(body, pick, off, "hair", (0.012, 0.01, 0.01, 1), rim=0.0, close=False)
     me = hair.data
     bm = bmesh.new(); bm.from_mesh(me)
@@ -215,9 +218,9 @@ def face_mask(base, beard=None, size=512):
         elif beard == "stubble":
             if -0.075 < dz < 0.02: r = 0.35 * (1 - sm(0.045, 0.06, ax)) * (1 - sm(0.01, 0.02, dz)) * sm(-0.075, -0.06, dz)
         # lips
-        lw, lh = 0.025, 0.011
+        lw, lh = 0.022, 0.012
         e = (ax / lw) ** 2 + ((dz + 0.001) / lh) ** 2
-        if e < 1.6 and p.y < my + 0.018: g = 1 - sm(0.75, 1.3, e)
+        if e < 1.6 and p.y < my + 0.018: g = (1 - sm(0.75, 1.3, e)) * (1.0 if dz < 0.0 else 0.5)
         # cheeks
         d = ((ax - 0.042) ** 2 + (dz - 0.035) ** 2) ** 0.5
         b = 1 - sm(0.0, 0.03, d)

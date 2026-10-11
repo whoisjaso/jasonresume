@@ -33,6 +33,8 @@ const ALLOWED = new Set([
   "intro_tour", "tour_started", "tour_step", "tour_finished", "tour_exit", "walkthrough_opened", "walkthrough_closed",
   // After Hours: The Run, the platformer (game-run.js)
   "intro_play", "game_started", "game_level_finished", "game_medal", "game_platinum", "game_quit", "game_secret", "game_character", "game_shared", "game_clip",
+  // After Hours, the episode (story/main.js)
+  "story_started", "story_choice", "story_scene", "story_object", "story_ending", "story_quit",
   // Stop Thinking Poor, the mentorship page at /stp
   "stp_video_play", "stp_video_complete", "stp_apply_started", "stp_apply_sent",
   // conversion

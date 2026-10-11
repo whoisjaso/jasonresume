@@ -44,6 +44,23 @@ for l in run.get("me", []):
 for l in run.get("lines", []):
     l.pop("voice", None)
 run_json = json.dumps(run, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+# After Hours, the episode (story/main.js): the talks, the objects, the journal and the
+# recap, compact. My own lines are voiced from my recording (tools/voice/story_jason_lines.json,
+# written by tools/site/story_voice.py, rendered to assets/voice/story/jason-<id>.mp3); the text
+# there must match story.json, and every line id is unique.
+story = json.loads((SITE / "story.json").read_text())
+story.pop("_about", None)
+_sj = {l["id"]: l["text"] for l in json.loads((ROOT / "tools/voice/story_jason_lines.json").read_text())["lines"]}
+_sids = set()
+for _t in story["talks"].values():
+    for _l in _t.get("lines", []):
+        assert _l["id"] not in _sids, "duplicate story line id: " + _l["id"]
+        _sids.add(_l["id"])
+        if _l["who"] == "jason":
+            assert _sj.get("jason-" + _l["id"]) == _l["t"], "story_jason_lines.json is out of step with story.json (run tools/site/story_voice.py): " + _l["id"]
+for _o in story["objects"].values():
+    assert _o.get("go") or _o.get("talk") in story["talks"], "story object without a talk"
+story_json = json.dumps(story, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 builds_json = json.dumps(builds, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 head = (SITE / "home.head.html").read_text()
 body = (SITE / "home.body.html").read_text()
@@ -392,6 +409,7 @@ body = (
                  + '\n<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>"
                  + '\n<script type="application/json" id="builds-data">' + builds_json + "</script>"
                  + '\n<script type="application/json" id="run-data">' + run_json + "</script>"
+                 + '\n<script type="application/json" id="story-data">' + story_json + "</script>"
                  + ('\n<script type="application/json" id="tour-data">' + json.dumps(TOUR, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + "</script>" if TOUR else ""))
     .replace("%%BOOT%%", BOOT.strip())
     .replace("%%HELP_WATCH%%", '<a class="btn btn--sm btn--ghost" href="/walkthrough.html">%s</a>' % E(onboarding["title"].get("watch", "Watch the walkthrough")) if onboarding.get("walk") else "")
