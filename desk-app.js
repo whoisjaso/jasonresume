@@ -36,6 +36,10 @@
       '<div class="iphone__stack"></div><div class="iphone__home"></div></div>';
     var stack = host.querySelector(".iphone__stack"), island = host.querySelector(".iphone__island");
     var screens = [], at = -1;
+    /* the next tap: a ring that keeps circling the one control to press (desk.css .is-next) */
+    function next(el) { $$(".is-next", host).forEach(function (n) { if (n !== el) n.classList.remove("is-next"); }); if (el) el.classList.add("is-next"); }
+    var NEXT = ["[data-start]", "[data-car]", "[data-ok]", "[data-shutter]", "[data-ok]", "[data-ok]", "[data-ok]", "[data-auto]"];
+    function coach(i) { var s = screens[i]; next(s && NEXT[i] ? s.querySelector(NEXT[i]) : null); }
     var notes = $$("[data-desk-notes] li");
     var NOTE = ["", "car", "odo", "scan", "pay", "money", "docs", "sign", ""];
     function screen(i, title, html, back) {
@@ -49,14 +53,14 @@
       if (!screens[i]) make(i);
       screens.forEach(function (s, k) { if (!s) return; s.classList.toggle("is-on", k === i); s.classList.toggle("is-past", k < i); });
       if (back) { sfx("swoosh", { gain: 0.2, rate: 1.2 }); } else if (at >= 0) { sfx("swoosh", { gain: 0.24, rate: 1.1 }); hap("tap"); }
-      at = i;
+      at = i; coach(i);
       notes.forEach(function (n) { var k = NOTE.indexOf(n.getAttribute("data-note")); n.classList.toggle("is-now", k === i); n.classList.toggle("is-done", k > 0 && k < i); });
       if (i > 0) T("desk_step", { step: NOTE[i] || "done" });
     }
     function make(i) {
       if (i === 0) {
         var s0 = screen(0, "Handle A Sale", '<p class="app-cap">Open sales</p><ul class="app-list"><li><span class="app-open" style="flex:1"><span>R. Alvarez<span class="sub">2016 Honda Accord</span></span><span class="app-pill app-pill--ink">Waiting on ink</span></span></li><li><span class="app-open" style="flex:1"><span>K. Nguyen<span class="sub">2018 Toyota Camry</span></span><span class="app-pill">3 of 3 signed</span></span></li></ul><p class="app-cap">On the lot</p><ul class="app-list">' + CARS.slice(0, 2).map(function (c) { return '<li><span class="app-tile" style="background:' + c.c + '">' + CAR_SVG + '</span><span>' + c.y + ' ' + c.mk + '<span class="sub">Stock ' + c.st + '</span></span></li>'; }).join("") + '</ul><p class="app-fic">Fictional buyers and cars.</p>');
-        var b = document.createElement("button"); b.className = "app-btn app-btn--gold"; b.type = "button"; b.textContent = "Start A Sale"; s0.querySelector(".app-scroll").appendChild(b);
+        var b = document.createElement("button"); b.className = "app-btn app-btn--gold"; b.type = "button"; b.textContent = "Start A Sale"; b.setAttribute("data-start", ""); s0.querySelector(".app-scroll").appendChild(b);
         b.addEventListener("click", function () { fx("choice"); T("scene_interacted", { scene: "desk_start" }); go(1); });
       }
       if (i === 1) {
@@ -76,7 +80,7 @@
           cam.classList.add("is-in", "is-shot", "is-scanning"); sfx("select", { gain: 0.9 }); hap("tap"); T("desk_step", { step: "scanned" });
           var vals = ["JOHN A. MARTINEZ", "1402 ELM ST, HOUSTON TX", "DL 4821 **** 07"];
           vals.forEach(function (v, k) { var el = s3.querySelector('[data-f="' + k + '"]'); setTimeout(function () { type(el, v); }, 700 + k * 380); });
-          setTimeout(function () { okb.disabled = false; fx("unlock"); }, 2000);
+          setTimeout(function () { okb.disabled = false; fx("unlock"); next(okb); }, 2000);
         });
         okb.addEventListener("click", function () { deal.buyer = "J. Martinez"; fx("choice"); go(4); });
       }
@@ -108,12 +112,12 @@
         var size = function () { var r = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2); cv.width = r.width * dpr; cv.height = r.height * dpr; ctx = cv.getContext("2d"); ctx.scale(dpr, dpr); ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#111"; };
         var pt = function (e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
         cv.addEventListener("pointerdown", function (e) { if (!ctx) size(); drawing = true; cv.setPointerCapture(e.pointerId); var p = pt(e); ctx.beginPath(); ctx.moveTo(p[0], p[1]); });
-        cv.addEventListener("pointermove", function (e) { if (!drawing) return; var p = pt(e); ctx.lineTo(p[0], p[1]); ctx.stroke(); ink++; if (ink > 12) ok7.disabled = false; });
+        cv.addEventListener("pointermove", function (e) { if (!drawing) return; var p = pt(e); ctx.lineTo(p[0], p[1]); ctx.stroke(); ink++; if (ink > 12 && ok7.disabled) { ok7.disabled = false; next(ok7); } });
         cv.addEventListener("pointerup", function () { drawing = false; });
         s7.querySelector("[data-auto]").addEventListener("click", function () {
           if (!ctx) size(); var w = cv.clientWidth, h = cv.clientHeight; ctx.beginPath();
           for (var k = 0; k <= 60; k++) { var x = 20 + k / 60 * (w - 40), y = h * 0.55 + Math.sin(k / 4) * 12 * Math.sin(k / 19 * Math.PI); if (k) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
-          ctx.stroke(); ok7.disabled = false; fx("choice");
+          ctx.stroke(); ok7.disabled = false; fx("choice"); next(ok7);
         });
         ok7.addEventListener("click", function () { filed(); });
       }

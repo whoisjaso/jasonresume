@@ -94,3 +94,15 @@
 .app-pill { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: #e9f7ee; color: #1f8a43; }
 .app-pill--ink { background: #fff4dd; color: #94650b; }
 @media (prefers-reduced-motion: reduce) { .app-screen, .app-lic { transition-duration: .01s !important; } }
+/* the next tap: one control at a time wears a ring of light that keeps circling it,
+   with a soft pulse behind, so it is plain what to press. Static under reduced motion. */
+@property --coach-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.is-next { position: relative; z-index: 1; }
+.is-next::before, .is-next::after { content: ""; position: absolute; inset: -6px; border-radius: 20px; pointer-events: none; }
+.is-next::after { padding: 3.5px; background: conic-gradient(from var(--coach-a), rgba(95, 174, 134, .28) 0deg 150deg, rgba(95, 174, 134, .6) 230deg, #5fae86 300deg, #d6f6e3 350deg, rgba(95, 174, 134, .28) 360deg); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); filter: drop-shadow(0 0 7px rgba(95, 174, 134, .95)); animation: coach-spin 1.3s linear infinite; }
+.is-next::before { animation: coach-pulse 1.3s var(--ease) infinite; }
+.app-shutter.is-next::before, .app-shutter.is-next::after { inset: -10px; border-radius: 50%; }
+.app-list li.is-next::before, .app-list li.is-next::after { inset: 3px; border-radius: 10px; }
+@keyframes coach-spin { to { --coach-a: 360deg; } }
+@keyframes coach-pulse { 0% { box-shadow: 0 0 0 0 rgba(95, 174, 134, .7), 0 0 18px 2px rgba(95, 174, 134, .45); } 70%, 100% { box-shadow: 0 0 0 16px rgba(95, 174, 134, 0), 0 0 18px 2px rgba(95, 174, 134, .25); } }
+@media (prefers-reduced-motion: reduce) { .is-next::after { animation: none; background: #5fae86; } .is-next::before { animation: none; } }
