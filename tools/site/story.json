@@ -476,7 +476,7 @@
     "window": { "scene": "office", "label": "Window", "verb": "Look", "talk": "look-window", "once": true },
     "book": { "scene": "office", "label": "The book", "verb": "Read", "talk": "look-book", "if": "hinted" },
 
-    "mem-laptop": { "scene": "memory", "label": "Laptop", "verb": "Read", "talk": "mem-laptop", "once": true, "pack": true },
+    "mem-laptop": { "scene": "memory", "label": "Laptop", "recap": "old laptop", "verb": "Read", "talk": "mem-laptop", "once": true, "pack": true },
     "mem-cert": { "scene": "memory", "label": "Certificate", "verb": "Read", "talk": "mem-cert", "once": true, "pack": true },
     "mem-folder": { "scene": "memory", "label": "Folder", "verb": "Open", "talk": "mem-folder", "once": true, "pack": true },
     "mem-letter": { "scene": "memory", "label": "Letter", "verb": "Read", "talk": "mem-letter", "once": true, "pack": true },

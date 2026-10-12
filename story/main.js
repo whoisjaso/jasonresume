@@ -1018,7 +1018,7 @@ function recapLines() {
   if (f.desk) out.push(R.desk[f.desk]);
   if (f.phone) out.push(R.phone[f.phone]);
   if (f.lamp) out.push(R.lamp[f.lamp]);
-  const things = Object.keys(S.looked).filter(k => OBJ[k] && !OBJ[k].who && !OBJ[k].go && !k.startsWith("note-")).map(k => OBJ[k].label.toLowerCase()).filter((t, i, a) => a.indexOf(t) === i);
+  const things = Object.keys(S.looked).filter(k => OBJ[k] && !OBJ[k].who && !OBJ[k].go && !k.startsWith("note-")).map(k => (OBJ[k].recap || OBJ[k].label).toLowerCase()).filter((t, i, a) => a.indexOf(t) === i);
   if (things.length) out.push(R.looked + " " + listOf(things.map(t => (/^(dell|jason|renata)$/i.test(t) ? t : (t.startsWith("the ") ? t : "the " + t)))) + ".");
   else out.push(R.none);
   return out.filter(Boolean);
