@@ -337,12 +337,47 @@ def tailor(body):
             if not hit or hit[0] is None: continue
             loc, nrm, idx, dist = hit
             k = min(1.0, max(0.0, (w.z - (sh_z - 0.16)) / 0.08))
-            keep = 0.012
+            keep = 0.007
             if dist > keep:
-                nd = keep + (dist - keep) * (1 - 0.8 * k)
+                nd = keep + (dist - keep) * (1 - 0.9 * k)
                 v.co = mi @ (loc + (w - loc).normalized() * nd); moved += 1
         print("TAILOR", o.name, moved)
     bm.free()
+
+def smooth_shoulders():
+    """the rig binds in an A pose, so an arm hanging at the side swings 45 degrees and linear skinning bulges the jacket at
+    the deltoid. Smoothing the shoulder weights (collarbone, upper arm, the upper chest) over the mesh spreads the bend
+    over more of the shoulder, then each vertex's weights are normalised again."""
+    import numpy as np
+    for o in [o for o in bpy.data.objects if o.type == "MESH" and o.data.materials and (o.data.materials[0].name.startswith("cloth_") or o.data.materials[0].name == "skin")]:
+        if o.data.materials[0].name == "cloth_shoes": continue
+        me = o.data; n = len(me.vertices)
+        names = [g.name for g in o.vertex_groups]
+        targets = [k for k, g in enumerate(names) if g in ("upperarm_l", "upperarm_r", "clavicle_l", "clavicle_r", "spine_03")]
+        if not targets: continue
+        W = np.zeros((n, len(names)), dtype=np.float32)
+        for v in me.vertices:
+            for ge in v.groups: W[v.index, ge.group] = ge.weight
+        ed = np.array([e.vertices[:] for e in me.edges], dtype=np.int64)
+        if not len(ed): continue
+        deg = np.bincount(ed.ravel(), minlength=n).astype(np.float32); deg[deg == 0] = 1
+        region = W[:, targets].sum(1) > 0.001
+        for _ in range(4):
+            for k in targets:
+                w = W[:, k]
+                acc = np.bincount(ed[:, 0], weights=w[ed[:, 1]], minlength=n) + np.bincount(ed[:, 1], weights=w[ed[:, 0]], minlength=n)
+                W[:, k] = np.where(region, 0.45 * w + 0.55 * acc / deg, w)
+        tot = W.sum(1, keepdims=True); tot[tot == 0] = 1; W = W / tot
+        for k in targets:
+            g = o.vertex_groups[k]
+            for vi in np.nonzero(region)[0]:
+                if W[vi, k] > 0.0005: g.add([int(vi)], float(W[vi, k]), "REPLACE")
+                else: g.remove([int(vi)])
+        for k, g in enumerate(o.vertex_groups):
+            if k in targets: continue
+            idx = np.nonzero(region & (W[:, k] > 0))[0]
+            for vi in idx: g.add([int(vi)], float(W[vi, k]), "REPLACE")
+        print("SMOOTH", o.name, int(region.sum()))
 
 def add_eye_bones(rig):
     """two bones in the head, one at the centre of each eye, and each eye weighted wholly to its own, so the runtime can aim the eyes (saccades, looking at whoever speaks) independently of the head"""
@@ -461,6 +496,7 @@ def build(name, spec):
         if not any(md.type == "ARMATURE" for md in g.modifiers):
             md = g.modifiers.new("Armature", "ARMATURE"); md.object = rig
     paint_tie(base)
+    smooth_shoulders()
     add_eye_bones(rig)
     # export
     bpy.ops.object.select_all(action="SELECT")

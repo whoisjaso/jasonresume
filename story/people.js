@@ -587,7 +587,9 @@ class Person {
     this.rot("spine_01", this.leanF * 0.3 + breathe * 0.004, 0, -this.lean * 0.25);
     this.rot("spine_02", -breathe * 0.006, 0, -this.lean * 0.15);
     this.rot("spine_03", -breathe * 0.012, 0, 0);
-    this.rot("clavicle_l", 0, 0, breathe * 0.012); this.rot("clavicle_r", 0, 0, -breathe * 0.012);
+    // shoulders down and back a touch: relaxed, not braced
+    const cd = DEBUG.cdrop == null ? 0.2 : DEBUG.cdrop;
+    this.rot("clavicle_l", 0, 0.03, breathe * 0.012 - cd); this.rot("clavicle_r", 0, -0.03, -breathe * 0.012 + cd);
     // a slow weight shift when standing a long time
     const sway = Math.sin(t * 0.21 + this.tempo * 9) * still;
     this.rot("pelvis", 0, sway * 0.03, sway * 0.015); hipC.x += sway * 0.012;

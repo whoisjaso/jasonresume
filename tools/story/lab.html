@@ -44,6 +44,7 @@ const P = [];
 for (let i = 0; i < who.length; i++) { const p = await cast.make(who[i] + "-v1"); scene.add(p.group); p.pos.set((i - (who.length - 1) / 2) * 1.2, 0, 0); P.push(p); }
 if (q.get("noik")) DEBUG.ik = false;
 if (q.get("clav") != null) DEBUG.clav = +q.get("clav");
+if (q.get("cdrop") != null) DEBUG.cdrop = +q.get("cdrop");
 // a reference: the library's own mannequin playing the source clip, beside the first person
 let refMix = null, refObj = null;
 if (q.get("ref")) {

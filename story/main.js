@@ -615,7 +615,8 @@ function followView(dt, probe) {
   }
   const inside = S.scene === "office" || S.scene === "memory", mem = S.scene === "memory", upright = innerWidth < innerHeight;
   const dist = (mem ? 2.2 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
-  const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0) + (probe ? 0 : camState.lift || 0);
+  // close to a wall, the camera rises and looks down over you rather than sit behind your head
+  const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0) + (probe ? 0 : (camState.lift || 0) + (camState.close || 0));
   const off = new THREE.Vector3(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
   const right = new THREE.Vector3(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw));
   const sh = (mem ? 0.55 : inside ? 0.45 : 0.38) * (upright ? 0.45 : 1);
@@ -631,19 +632,21 @@ function followView(dt, probe) {
   // march out from the pivot; stop short of the first thing in the way
   const reach = o => { for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + o.x * t, y = pivot.y + o.y * t, z = pivot.z + o.z * t; if (insideAny(x, y, z, 0.24)) return Math.max(0.1, t - 0.22); } return dist; };
   let free = reach(off);
+  // how much room there is to see the way the camera looks (a view into the room beats a view of the wall)
+  const view = (dx, dz) => { const l = Math.hypot(dx, dz) || 1; for (let i = 1; i <= 16; i++) { const t = i * 0.5; if (insideAny(head.x + dx / l * t, 1.2, head.z + dz / l * t, 0.05)) return t; } return 8; };
   // backed against a wall: rather than sit on your head, the camera swings round to where there's room (unless you're steering it)
   // in a corner it also rises and looks down over you
   if (!probe) {
     let best = 0, lift = 0;
     if (free < dist * 0.7 && camState.drag <= 0) {
-      let bs = free;
+      let bs = Math.min(free, dist) + (camState.init || camState.reframe ? 0.35 * view(-off.x, -off.z) : 0);
       // just arrived or just finished talking: look the whole way round for the room; walking: only lean a little
       const re = camState.init || camState.reframe;
       const das = re ? [...Array(16)].map((_, i) => ((i + 1) >> 1) * (i % 2 ? 1 : -1) * Math.PI / 8) : [0, 0.3, -0.3, 0.6, -0.6];
       for (const da of das) for (const pe of re ? [0, 0.2] : [0, 0.15, 0.3]) {
         if (!da && !pe) continue;
         const a = camState.yaw + da, pt = Math.min(0.95, pitch + pe), o2 = new THREE.Vector3(Math.sin(a) * Math.cos(pt), Math.sin(pt), Math.cos(a) * Math.cos(pt));
-        const f = reach(o2), sc = f - Math.abs(da) * (re ? 0.12 : 0.5) - pe * 0.6;
+        const f = reach(o2), sc = Math.min(f, dist) + (re ? 0.35 * view(-o2.x, -o2.z) : 0) - Math.abs(da) * (re ? 0.12 : 0.5) - pe * 0.6;
         if (sc > bs + 0.25) { bs = sc; best = da; lift = pe; }
       }
       if (best) camState.yaw += best * (camState.init || camState.reframe ? 1 : 1 - Math.exp(-2.5 * dt));
@@ -655,9 +658,12 @@ function followView(dt, probe) {
   if (probe || camState.cd == null || camState.init) camState.cd = free;
   else camState.cd = free < camState.cd ? damp(camState.cd, free, 18, dt) : damp(camState.cd, free, 2.2, dt);
   const want = pivot.clone().addScaledVector(off, Math.min(camState.cd, free + 0.05));
+  if (!probe) camState.close = damp(camState.close || 0, clamp((1.6 - Math.min(camState.cd, free)) / 1.1, 0, 1) * 0.3, 3, dt);
   // forced right up against you, you step out of the frame rather than fill it
   if (!probe && S.phase === "explore") me.group.visible = Math.min(camState.cd, free) > 0.45;
   const look = head.clone().addScaledVector(right, sh * 0.7).add(ahead).add(new THREE.Vector3(0, mem ? -0.25 : -0.1, 0));
+  // risen close over you, it looks out past you into the room, not down at the floor
+  if (!probe && camState.close > 0.01) look.add(new THREE.Vector3(-off.x, 0, -off.z).normalize().multiplyScalar(camState.close * 5)).add(new THREE.Vector3(0, camState.close * 0.8, 0));
   return { want, look };
 }
 function rail(points, looks, dur) {
