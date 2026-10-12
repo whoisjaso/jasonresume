@@ -4,11 +4,11 @@
 //
 // Reads tools/voice/tour_lines.json (or the file given), and for every line calls
 // the text-to-speech "with-timestamps" endpoint, then writes
-//   assets/voice/tour/<id>.mp3    the line, mp3 44.1 kHz 128 kbps
-//   assets/voice/tour/<id>.json   { id, text, duration, words: [{ w, s, e }] } in seconds,
+//   assets/voice/tour-v2/<id>.mp3    the line, mp3 44.1 kHz 128 kbps
+//   assets/voice/tour-v2/<id>.json   { id, text, duration, words: [{ w, s, e }] } in seconds,
 //                                 built from the character alignment, so captions
 //                                 light word by word on the real voice
-//   assets/voice/tour/manifest.json  every voiced line, its hash, the voice and model
+//   assets/voice/tour-v2/manifest.json  every voiced line, its hash, the voice and model
 // A line whose text, voice, model and settings are unchanged since the last run is
 // skipped (its hash is in the manifest), so editing one line re-voices one line.
 //
@@ -32,7 +32,7 @@ import { fileURLToPath } from 'url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
-const OUT = path.join(ROOT, 'assets', 'voice', 'tour');
+const OUT = path.join(ROOT, 'assets', 'voice', 'tour-v2');
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const onlyAt = args.indexOf('--only');

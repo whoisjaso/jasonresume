@@ -12,10 +12,10 @@
 #
 # Reads tools/voice/tour_lines.json (or the file given) and writes the same files
 # tools/voice/eleven.mjs would, so timeline.mjs, the film and the tour read either:
-#   assets/voice/tour/<id>.mp3    the line, mp3 44.1 kHz 128 kbps
-#   assets/voice/tour/<id>.json   { id, text, duration, words: [{ w, s, e }] } in seconds,
+#   assets/voice/tour-v2/<id>.mp3    the line, mp3 44.1 kHz 128 kbps
+#   assets/voice/tour-v2/<id>.json   { id, text, duration, words: [{ w, s, e }] } in seconds,
 #                                 from Kokoro's own predicted word durations
-#   assets/voice/tour/manifest.json  every voiced line, its hash, the voice and model
+#   assets/voice/tour-v2/manifest.json  every voiced line, its hash, the voice and model
 # A line whose text, voice and speed are unchanged since the last run is skipped.
 # A line in the json may carry its own "speed" (KOKORO_SPEED is the default) and
 # its own stock "voice" (for a cast of characters, e.g. the run's speakers); the
@@ -30,7 +30,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-OUT = ROOT / "assets" / "voice" / "tour"
+OUT = ROOT / "assets" / "voice" / "tour-v2"
 FFMPEG = ROOT / "tools/film/node_modules/@remotion/compositor-linux-x64-gnu/ffmpeg"
 MODEL = "hexgrad/Kokoro-82M"
 SR = 24000

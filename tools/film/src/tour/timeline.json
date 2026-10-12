@@ -15,7 +15,7 @@
    "speakAt": 90,
    "speechFrom": 78,
    "voiced": true,
-   "audio": "assets/voice/tour/f-open.mp3",
+   "audio": "assets/voice/tour-v2/f-open.mp3",
    "words": [
     {
      "w": "After",
@@ -82,7 +82,7 @@
    "speakAt": 306,
    "speechFrom": 295,
    "voiced": true,
-   "audio": "assets/voice/tour/f-career.mp3",
+   "audio": "assets/voice/tour-v2/f-career.mp3",
    "words": [
     {
      "w": "This",
@@ -146,7 +146,7 @@
    "speakAt": 492,
    "speechFrom": 481,
    "voiced": true,
-   "audio": "assets/voice/tour/f-seat.mp3",
+   "audio": "assets/voice/tour-v2/f-seat.mp3",
    "words": [
     {
      "w": "Who's",
@@ -205,7 +205,7 @@
    "speakAt": 652,
    "speechFrom": 642,
    "voiced": true,
-   "audio": "assets/voice/tour/f-build.mp3",
+   "audio": "assets/voice/tour-v2/f-build.mp3",
    "words": [
     {
      "w": "Pick",
@@ -322,7 +322,7 @@
    "speakAt": 970,
    "speechFrom": 957,
    "voiced": true,
-   "audio": "assets/voice/tour/f-titles.mp3",
+   "audio": "assets/voice/tour-v2/f-titles.mp3",
    "words": [
     {
      "w": "Six",
@@ -416,7 +416,7 @@
    "speakAt": 1267,
    "speechFrom": 1255,
    "voiced": true,
-   "audio": "assets/voice/tour/f-desk.mp3",
+   "audio": "assets/voice/tour-v2/f-desk.mp3",
    "words": [
     {
      "w": "In",
@@ -535,7 +535,7 @@
    "speakAt": 1604,
    "speechFrom": 1593,
    "voiced": true,
-   "audio": "assets/voice/tour/f-trophies.mp3",
+   "audio": "assets/voice/tour-v2/f-trophies.mp3",
    "words": [
     {
      "w": "18",
@@ -589,7 +589,7 @@
    "speakAt": 1753,
    "speechFrom": 1742,
    "voiced": true,
-   "audio": "assets/voice/tour/f-level.mp3",
+   "audio": "assets/voice/tour-v2/f-level.mp3",
    "words": [
     {
      "w": "Level",
@@ -663,7 +663,7 @@
    "speakAt": 2002,
    "speechFrom": 1991,
    "voiced": true,
-   "audio": "assets/voice/tour/f-resume.mp3",
+   "audio": "assets/voice/tour-v2/f-resume.mp3",
    "words": [
     {
      "w": "Check",
@@ -707,7 +707,7 @@
    "speakAt": 2247,
    "speechFrom": 2237,
    "voiced": true,
-   "audio": "assets/voice/tour/f-start.mp3",
+   "audio": "assets/voice/tour-v2/f-start.mp3",
    "words": [
     {
      "w": "Press",

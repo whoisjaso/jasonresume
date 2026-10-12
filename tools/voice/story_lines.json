@@ -1,6 +1,6 @@
 {
  "_about": "Written by tools/site/story_voice.py from tools/site/story.json. The fictional cast of After Hours in stock Kokoro voices. Render: /root/kvenv/bin/python -I tools/voice/narrate_free.py tools/voice/story_lines.json",
- "out": "assets/voice/story",
+ "out": "assets/voice/story-v2",
  "lines": [
   {
    "id": "lot-dell-1",
@@ -114,7 +114,7 @@
    "id": "off-agent-3",
    "who": "agent",
    "voice": "af_heart",
-   "text": "You're booked, Marcus. We'll see you Saturday."
+   "text": "You're all booked, Marcus. See you Saturday."
   },
   {
    "id": "off-caller-3",

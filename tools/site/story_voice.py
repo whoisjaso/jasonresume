@@ -31,7 +31,10 @@ for tid, t in story["talks"].items():
             v = cast[who].get("voice")
             if not v:
                 raise SystemExit("story_voice: no voice for " + who)
-            fict.append({"id": l["id"], "who": who, "voice": v, "text": l["t"]})
+            fl = {"id": l["id"], "who": who, "voice": v, "text": l["t"]}
+            if l.get("speed"):
+                fl["speed"] = l["speed"]  # a line that needs saying slower to be clear
+            fict.append(fl)
 
 (ROOT / "tools/voice/story_lines.json").write_text(json.dumps({
     "_about": "Written by tools/site/story_voice.py from tools/site/story.json. The fictional cast of After Hours in stock Kokoro voices. Render: /root/kvenv/bin/python -I tools/voice/narrate_free.py tools/voice/story_lines.json",

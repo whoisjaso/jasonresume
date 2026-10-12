@@ -1,6 +1,9 @@
-/* After Hours: textures, painted in code. Brush grain, wet asphalt with its
-   lines and puddles, paper, and every sign, screen and label in the episode,
-   drawn on canvases in the site's two typefaces. Nothing here is a photo. */
+/* After Hours: textures, painted in code. Brush grain, the lot's ground as data
+   over the tiled CC0 asphalt (patches, oil, worn lines, cracks, puddles, contact
+   shade, the lamps' baked shadows), chain-link, tiles, plates, ceilings, clocks,
+   paper, and every sign, screen and label in the episode, drawn on canvases in
+   the site's two typefaces. The photographic materials live in
+   assets/story/world/tex-v1 (Poly Haven, CC0). */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 
 const SERIF = '"Cormorant Garamond", Cormorant, Garamond, serif';
@@ -51,50 +54,252 @@ export function brush(size = 256) {
   return tex(c, { repeat: true, linear: true });
 }
 
-/* the lot's asphalt: colour in RGB, puddles in a second texture (R puddle, G paint, B cracks) */
-export function asphalt(W, H, px, lines) {
+/* the lot's ground, as data over the tiled asphalt (assets/story/world/asphalt_*): two textures, linear, opaque
+   (a canvas keeps colour premultiplied, so no channel can live in alpha).
+   detail: R the albedo's multiplier (128 is 1: patched tar darker, faded areas lighter, oil under where cars stand),
+           G painted lines (worn), B ambient occlusion (cars' footprints, curbs, walls).
+   mask:   R standing water (puddles in the low spots), G how wet (the dry strip under the canopy),
+           B 255 concrete instead of asphalt (walks, aprons), 128 a tar-sealed crack.
+   o: { puddles: [[x, z, rx, rz]], lines: [[x0, z0, x1, z1]], cars: [{x, z, yaw, w, l}], conc: [[x0, z0, x1, z1]], dry: [[x0, z0, x1, z1]], ao: [[x0, z0, x1, z1, k]] }
+   Returns the textures and the raw puddle and concrete grids for surfaceAt(). */
+export function lotGround(W, H, px, o = {}) {
   const w = Math.round(W * px), h = Math.round(H * px);
-  const c = cv(w, h), g = c.getContext("2d"), r = rng(21);
-  g.fillStyle = "#2b2c2b"; g.fillRect(0, 0, w, h);
-  // patches of older and newer tar
-  for (let i = 0; i < 70; i++) {
-    const x = r() * w, y = r() * h, rr = (0.8 + r() * 4) * px;
+  const r = rng(21);
+  const P = (x, z) => [(x + W / 2) * px, (z + H / 2) * px];
+  // detail
+  const c = cv(w, h), g = c.getContext("2d");
+  g.fillStyle = "rgb(128,0,255)"; g.fillRect(0, 0, w, h);
+  // patches: older, greyer tar and newer, blacker tar, as soft blotches and as hard-edged rectangles (patched cuts)
+  g.globalCompositeOperation = "source-over";
+  for (let i = 0; i < 90; i++) {
+    const x = r() * w, y = r() * h, rr = (0.8 + r() * 5) * px, dark = r() < 0.55;
     const gr = g.createRadialGradient(x, y, 0, x, y, rr);
-    const v = r() < 0.5 ? "rgba(20,21,21," : "rgba(58,58,55,";
-    gr.addColorStop(0, v + (0.25 + r() * 0.3) + ")"); gr.addColorStop(1, v + "0)");
+    const v = dark ? 96 + r() * 20 : 150 + r() * 25;
+    gr.addColorStop(0, `rgba(${v | 0},0,255,${(0.35 + r() * 0.4).toFixed(2)})`); gr.addColorStop(1, `rgba(${v | 0},0,255,0)`);
     g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, rr, rr * (0.4 + r() * 0.8), r() * 3, 0, 7); g.fill();
   }
-  // aggregate speckle
-  const img = g.getImageData(0, 0, w, h), d = img.data;
-  for (let i = 0; i < d.length; i += 4) { const n = (r() - 0.5) * 26; d[i] += n; d[i + 1] += n; d[i + 2] += n * 0.9; }
-  g.putImageData(img, 0, 0);
-  // painted lines (bone, worn)
-  const m = cv(w, h), mg = m.getContext("2d");
-  mg.fillStyle = "#000"; mg.fillRect(0, 0, w, h);
-  const P = (x, z) => [(x + W / 2) * px, (z + H / 2) * px];
-  g.lineCap = "butt";
-  for (const L of lines) {
-    const [x0, y0] = P(L[0], L[1]), [x1, y1] = P(L[2], L[3]);
-    g.strokeStyle = "rgba(214,206,186,0.62)"; g.lineWidth = 0.12 * px;
-    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    mg.strokeStyle = "#0f0"; mg.lineWidth = 0.12 * px; mg.beginPath(); mg.moveTo(x0, y0); mg.lineTo(x1, y1); mg.stroke();
+  for (let i = 0; i < 9; i++) {
+    const x = r() * w, y = r() * h, ww = (1.2 + r() * 3.5) * px, hh = (0.8 + r() * 2.5) * px;
+    g.save(); g.translate(x, y); g.rotate((r() - 0.5) * 0.08); g.fillStyle = `rgba(${(88 + r() * 14) | 0},0,255,0.85)`; g.fillRect(-ww / 2, -hh / 2, ww, hh); g.restore();
   }
-  // wear the paint
-  g.globalCompositeOperation = "multiply";
-  for (let i = 0; i < 2600; i++) { g.fillStyle = "rgba(40,40,40," + (0.3 + r() * 0.5) + ")"; g.fillRect(r() * w, r() * h, (0.05 + r() * 0.3) * px, (0.03 + r() * 0.1) * px); }
+  // oil: where engines sit, dark and a little sheen (the shader reads very low R as oil)
+  for (const car of o.cars || []) {
+    const [x, y] = P(car.x + Math.sin(car.yaw) * car.l * 0.28, car.z + Math.cos(car.yaw) * car.l * 0.28);
+    for (let k = 0; k < 3; k++) {
+      const rr = (0.25 + r() * 0.45) * px, ox = (r() - 0.5) * 0.6 * px, oy = (r() - 0.5) * 0.6 * px;
+      const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rr);
+      gr.addColorStop(0, "rgba(40,0,255,0.7)"); gr.addColorStop(1, "rgba(40,0,255,0)"); g.fillStyle = gr; g.beginPath(); g.arc(x + ox, y + oy, rr, 0, 7); g.fill();
+    }
+  }
+  // drips and tyre marks along the drive lanes
+  g.lineCap = "round";
+  for (let i = 0; i < 26; i++) {
+    const x0 = r() * w, y0 = (0.42 + (r() - 0.5) * 0.15) * h, len = (3 + r() * 9) * px;
+    g.strokeStyle = `rgba(${(100 + r() * 10) | 0},0,255,0.25)`; g.lineWidth = (0.18 + r() * 0.06) * px;
+    g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(x0 + len * 0.5, y0 + (r() - 0.5) * px * 2, x0 + len, y0 + (r() - 0.5) * px * 3); g.stroke();
+  }
+  // the painted lines into G, worn: broken by small gaps and scuffs
+  g.globalCompositeOperation = "lighter";
+  for (const L of o.lines || []) {
+    const [x0, y0] = P(L[0], L[1]), [x1, y1] = P(L[2], L[3]);
+    g.strokeStyle = "rgba(0,235,0,1)"; g.lineWidth = Math.max(1.5, 0.11 * px);
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  }
+  g.globalCompositeOperation = "destination-out";
+  for (let i = 0; i < 3200; i++) { g.fillStyle = `rgba(0,0,0,${(0.1 + r() * 0.35).toFixed(2)})`; g.fillRect(r() * w, r() * h, (0.04 + r() * 0.25) * px, (0.03 + r() * 0.08) * px); }
   g.globalCompositeOperation = "source-over";
-  // puddles: low spots, soft edges
-  const n1 = noise2(w, h, 6 * px, r), n2 = noise2(w, h, 1.6 * px, r);
-  const mi = mg.getImageData(0, 0, w, h), md = mi.data;
+  // read back, then do AO and crack seal per pixel
+  const img = g.getImageData(0, 0, w, h), d = img.data;
+  const n1 = noise2(w, h, 7 * px, r), n2 = noise2(w, h, 1.8 * px, r), n3 = noise2(w, h, 0.5 * px, r);
+  for (let i = 0; i < w * h; i++) { const x = i % w, y = (i / w) | 0; d[i * 4] = Math.max(0, Math.min(255, d[i * 4] + (n3(x, y) - 0.5) * 18)); if (d[i * 4 + 3] < 255) { d[i * 4 + 1] = Math.round(d[i * 4 + 1] * d[i * 4 + 3] / 255); d[i * 4 + 3] = 255; } d[i * 4 + 2] = 255; d[i * 4 + 3] = 255; }
+  // AO: soft rounded rectangles under each car, darker at the wheels; plus walls and curbs
+  const aoAt = new Float32Array(w * h).fill(1);
+  const box = (cx, cz, hw, hl, yaw, k, soft) => {
+    const ca = Math.cos(yaw), sa = Math.sin(yaw), rad = Math.hypot(hw, hl) + soft;
+    const [px0, py0] = P(cx - rad, cz - rad), [px1, py1] = P(cx + rad, cz + rad);
+    for (let y = Math.max(0, py0 | 0); y < Math.min(h, py1 + 1); y++) for (let x = Math.max(0, px0 | 0); x < Math.min(w, px1 + 1); x++) {
+      const wx = x / px - W / 2 - cx, wz = y / px - H / 2 - cz;
+      const lx = wx * ca - wz * sa, lz = wx * sa + wz * ca;
+      const qx = Math.max(Math.abs(lx) - hw, 0), qz = Math.max(Math.abs(lz) - hl, 0), dd = Math.hypot(qx, qz);
+      const a = 1 - k * Math.pow(Math.max(0, 1 - dd / soft), 2);
+      const j = y * w + x; if (a < aoAt[j]) aoAt[j] = a;
+    }
+  };
+  for (const car of o.cars || []) {
+    box(car.x, car.z, car.w * 0.42, car.l * 0.44, car.yaw, 0.72, 0.9);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const lx = sx * (car.w / 2 - 0.15), lz = sz * (car.l / 2 - 0.95); const ca = Math.cos(car.yaw), sa = Math.sin(car.yaw); box(car.x + lx * ca + lz * sa, car.z - lx * sa + lz * ca, 0.08, 0.16, car.yaw, 0.9, 0.35); }
+  }
+  for (const a of o.ao || []) box((a[0] + a[2]) / 2, (a[1] + a[3]) / 2, Math.abs(a[2] - a[0]) / 2, Math.abs(a[3] - a[1]) / 2, 0, a[4] || 0.6, a[5] || 0.6);
+  // cracks: long wandering tar-sealed lines (A)
+  const seal = new Uint8Array(w * h);
+  for (let i = 0; i < 34; i++) {
+    let x = r() * w, y = r() * h, a = r() * 6.28; const n = 40 + r() * 140;
+    for (let k = 0; k < n; k++) {
+      a += (r() - 0.5) * 0.7; x += Math.cos(a) * px * 0.12; y += Math.sin(a) * px * 0.12;
+      const wd = Math.max(1, Math.round(px * (0.03 + r() * 0.03)));
+      for (let dy = -wd; dy <= wd; dy++) for (let dx = -wd; dx <= wd; dx++) { const xx = (x + dx) | 0, yy = (y + dy) | 0; if (xx >= 0 && yy >= 0 && xx < w && yy < h) seal[yy * w + xx] = 255; }
+    }
+  }
+  for (let i = 0; i < w * h; i++) { d[i * 4 + 2] = Math.round(255 * aoAt[i]); d[i * 4 + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  // mask: puddles in the low spots (noise), more of them along the lines and the drive lane's crown; dry under the canopy; concrete
+  const m = cv(w, h), mg = m.getContext("2d"), mi = mg.createImageData(w, h), md = mi.data;
+  const conc = new Uint8Array(w * h), pud = new Uint8Array(w * h);
+  const inR = (x, z, R) => x > R[0] && x < R[2] && z > R[1] && z < R[3];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = (y * w + x) * 4;
-    const v = n1(x, y) * 0.75 + n2(x, y) * 0.25;
-    md[i] = Math.max(0, Math.min(255, (v - 0.5) * 6 * 255));
-    md[i + 2] = 0;
+    const i = y * w + x, wx = x / px - W / 2, wz = y / px - H / 2;
+    let v = n1(x, y) * 0.62 + n2(x, y) * 0.3 + n3(x, y) * 0.08;
+    // water gathers where the asphalt dips: away from the cars' footprints, toward the lanes
+    v += (1 - aoAt[i]) * -0.25;
+    // puddles the story needs, where it needs them
+    for (const q of o.puddles || []) { const dd = Math.hypot((wx - q[0]) / q[2], (wz - q[1]) / (q[3] || q[2])); if (dd < 1.6) v = Math.max(v, 0.66 + (1 - dd) * 0.25 + (n3(x, y) - 0.5) * 0.12); }
+    const p = Math.max(0, Math.min(1, (v - 0.615) * 9));
+    let wet = 1; for (const R of o.dry || []) if (inR(wx, wz, R)) wet = Math.min(wet, 0.15 + 0.85 * Math.min(1, Math.min(wz - R[1], R[3] - wz) * 0.6));
+    let cc = 0; for (const R of o.conc || []) if (inR(wx, wz, R)) cc = 1;
+    md[i * 4] = Math.round(255 * p * wet * (cc ? 0.2 : 1)); md[i * 4 + 1] = Math.round(255 * wet); md[i * 4 + 2] = cc ? 255 : seal[i] ? 128 : 0; md[i * 4 + 3] = 255;
+    pud[i] = md[i * 4]; conc[i] = cc;
   }
   mg.putImageData(mi, 0, 0);
-  const t1 = tex(c, { repeat: false }), t2 = tex(m, { linear: true });
-  return { color: t1, mask: t2 };
+  const t1 = tex(c, { linear: true }), t2 = tex(m, { linear: true });
+  return { detail: t1, mask: t2, w, h, px, W, H, pud, conc };
+}
+/* which lamp lights each texel of the ground: up to eight lamps, one channel each across two textures,
+   visibility from the ground to the lamp through the boxes in the way (cars, walls), softened.
+   lamps: [{ x, y, z, range }], boxes: [{ x, z, hw, hl, yaw, h, y0 }] */
+export function lampShadows(W, H, px, lamps, boxes) {
+  const w = Math.round(W * px), h = Math.round(H * px), n = Math.min(8, lamps.length);
+  const vis = [new Uint8ClampedArray(w * h * 4).fill(255), new Uint8ClampedArray(w * h * 4).fill(255)];
+  const pre = boxes.map(b => ({ ...b, ca: Math.cos(b.yaw || 0), sa: Math.sin(b.yaw || 0), rad: Math.hypot(b.hw, b.hl) }));
+  for (let li = 0; li < n; li++) {
+    const L = lamps[li], arr = vis[li >> 2], ch = li & 3;
+    const near = pre.filter(b => Math.hypot(b.x - L.x, b.z - L.z) < L.range + b.rad);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const gx = x / px - W / 2 + 0.5 / px, gz = y / px - H / 2 + 0.5 / px;
+      const dx = L.x - gx, dz = L.z - gz, dl = Math.hypot(dx, dz);
+      if (dl > L.range) continue;
+      let lit = 1;
+      for (const b of near) {
+        // quick reject: the box's centre far from the ground-to-lamp segment in plan
+        const t = Math.max(0, Math.min(1, ((b.x - gx) * dx + (b.z - gz) * dz) / (dl * dl + 1e-6)));
+        if (Math.hypot(gx + dx * t - b.x, gz + dz * t - b.z) > b.rad) continue;
+        // slab test in the box's frame: ray from (gx, 0, gz) to (L.x, L.y, L.z)
+        const ox = (gx - b.x) * b.ca - (gz - b.z) * b.sa, oz = (gx - b.x) * b.sa + (gz - b.z) * b.ca;
+        const vx = dx * b.ca - dz * b.sa, vz = dx * b.sa + dz * b.ca, vy = L.y;
+        let t0 = 0, t1 = 1;
+        for (const [o0, v, lo, hi] of [[ox, vx, -b.hw, b.hw], [0, vy, b.y0 || 0, b.h], [oz, vz, -b.hl, b.hl]]) {
+          if (Math.abs(v) < 1e-6) { if (o0 < lo || o0 > hi) { t0 = 2; break; } continue; }
+          let a = (lo - o0) / v, c = (hi - o0) / v; if (a > c) [a, c] = [c, a];
+          t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) break;
+        }
+        if (t0 <= t1) { lit = 0; break; }
+      }
+      arr[(y * w + x) * 4 + ch] = lit * 255;
+    }
+  }
+  // soften: a small blur, the lamp head is not a point
+  const out = vis.map(a => {
+    const b = new Uint8ClampedArray(a.length);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let c = 0; c < 4; c++) {
+      let s = 0, k = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const xx = Math.min(w - 1, Math.max(0, x + dx)), yy = Math.min(h - 1, Math.max(0, y + dy)); const wt = 3 - Math.abs(dx) * 0.5 - Math.abs(dy) * 0.5; s += a[(yy * w + xx) * 4 + c] * wt; k += wt; }
+      b[(y * w + x) * 4 + c] = s / k;
+    }
+    const t = new THREE.DataTexture(b, w, h, THREE.RGBAFormat); t.colorSpace = THREE.NoColorSpace; t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true; t.flipY = false;
+    return t;
+  });
+  return out;
+}
+
+/* chain-link: a tile of the diamond weave, wire in white on clear (alpha), two diamonds across */
+export function chainTex() {
+  const c = cv(128, 128), g = c.getContext("2d");
+  g.clearRect(0, 0, 128, 128); g.strokeStyle = "rgba(255,255,255,1)"; g.lineWidth = 5; g.lineCap = "round";
+  for (let k = -1; k <= 2; k++) { g.beginPath(); g.moveTo(k * 64 - 64, 0); g.lineTo(k * 64 + 64, 128); g.stroke(); g.beginPath(); g.moveTo(k * 64 + 64, 0); g.lineTo(k * 64 - 64, 128); g.stroke(); }
+  const t = tex(c, { repeat: true }); t.anisotropy = 8; return t;
+}
+/* the showroom's floor: large porcelain tiles with grout lines, R grout */
+export function tileTex(n = 4) {
+  const c = cv(512, 512), g = c.getContext("2d"), r = rng(31);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const v = 196 + (r() - 0.5) * 18; g.fillStyle = `rgb(${v | 0},${(v * 0.97) | 0},${(v * 0.92) | 0})`; g.fillRect(i * 512 / n, j * 512 / n, 512 / n, 512 / n); }
+  g.fillStyle = "rgba(90,84,76,1)"; for (let i = 0; i <= n; i++) { g.fillRect(i * 512 / n - 1.5, 0, 3, 512); g.fillRect(0, i * 512 / n - 1.5, 512, 3); }
+  return tex(c, { repeat: true });
+}
+/* a poster with no words: a car in profile, lit, on a dark ground (the showroom's walls) */
+export function posterTex(seed = 1) {
+  const c = cv(256, 360), g = c.getContext("2d"), r = rng(seed);
+  const gr = g.createLinearGradient(0, 0, 0, 360); gr.addColorStop(0, "#1c2420"); gr.addColorStop(1, "#0d1110"); g.fillStyle = gr; g.fillRect(0, 0, 256, 360);
+  g.fillStyle = ["#9b1b14", "#d9d8d2", "#1d2b40", "#aeb2b5"][seed % 4];
+  g.beginPath(); g.moveTo(30, 230); g.quadraticCurveTo(60, 196, 110, 192); g.quadraticCurveTo(140, 168, 180, 172); g.quadraticCurveTo(222, 190, 228, 228); g.lineTo(228, 238); g.lineTo(30, 240); g.closePath(); g.fill();
+  g.fillStyle = "#0a0a0a"; for (const x of [72, 190]) { g.beginPath(); g.arc(x, 240, 17, 0, 7); g.fill(); }
+  g.fillStyle = "rgba(237,231,219,0.8)"; g.fillRect(30, 300, 120, 6); g.fillRect(30, 316, 80, 4);
+  return tex(c);
+}
+
+/* a plate's face: an embossed rim and rows of raised marks that read as characters from a distance and as
+   nothing up close (no real plate numbers). nrm: the same as a normal map. Tiled in the car's own space. */
+let plateC = null;
+export function plateTex(nrm) {
+  if (!plateC) {
+    const c = cv(256, 256), g = c.getContext("2d"), r = rng(9);
+    g.fillStyle = "#808080"; g.fillRect(0, 0, 256, 256);
+    for (let row = 0; row < 4; row++) for (let i = 0; i < 7; i++) {
+      const x = 14 + i * 34, y = 18 + row * 62, w = 18 + r() * 8, hh = 34;
+      g.fillStyle = "#b8b8b8"; g.beginPath(); g.roundRect(x, y, w, hh, 5); g.fill();
+      g.fillStyle = "#808080"; g.beginPath(); g.roundRect(x + 5, y + 6 + r() * 8, w - 10, 6 + r() * 10, 3); g.fill();
+    }
+    plateC = c;
+  }
+  if (!nrm) { const t = tex(plateC, { repeat: true }); return t; }
+  // a normal map from the height in R
+  const s = plateC.getContext("2d").getImageData(0, 0, 256, 256).data, c2 = cv(256, 256), g2 = c2.getContext("2d"), im = g2.createImageData(256, 256);
+  const H = (x, y) => s[(((y + 256) % 256) * 256 + ((x + 256) % 256)) * 4] / 255;
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+    const dx = (H(x + 1, y) - H(x - 1, y)) * 2.0, dy = (H(x, y + 1) - H(x, y - 1)) * 2.0, i = (y * 256 + x) * 4;
+    const n = [-dx, dy, 1], l = Math.hypot(...n);
+    im.data[i] = (n[0] / l * 0.5 + 0.5) * 255; im.data[i + 1] = (n[1] / l * 0.5 + 0.5) * 255; im.data[i + 2] = (n[2] / l * 0.5 + 0.5) * 255; im.data[i + 3] = 255;
+  }
+  g2.putImageData(im, 0, 0);
+  return tex(c2, { repeat: true, linear: true });
+}
+
+/* a suspended ceiling: 2 by 2 foot acoustic tiles in a white T-bar grid, fissured; tiled one tile per repeat */
+export function ceilTex() {
+  const c = cv(256, 256), g = c.getContext("2d"), r = rng(41);
+  g.fillStyle = "#d9d6ce"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${r() < 0.5 ? "120,116,108" : "250,248,240"},${(0.15 + r() * 0.35).toFixed(2)})`; g.fillRect(r() * 256, r() * 256, 1 + r() * 3, 1 + r() * 1.5); }
+  g.fillStyle = "#f2f0ea"; g.fillRect(0, 0, 256, 7); g.fillRect(0, 0, 7, 256);
+  g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(7, 7, 249, 2); g.fillRect(7, 7, 2, 249);
+  return tex(c, { repeat: true });
+}
+/* a troffer's lens: a prismatic diffuser in a white frame */
+export function troffTex() {
+  const c = cv(128, 256), g = c.getContext("2d");
+  g.fillStyle = "#e8e6e0"; g.fillRect(0, 0, 128, 256);
+  g.fillStyle = "#fffaf0"; g.fillRect(10, 10, 108, 236);
+  g.fillStyle = "rgba(200,196,186,0.5)"; for (let y = 10; y < 246; y += 6) g.fillRect(10, y, 108, 1);
+  return tex(c);
+}
+/* a wall clock's face: ticks and hands, no numerals */
+export function clockTex(h = 10, m = 8) {
+  const c = cv(256, 256), g = c.getContext("2d");
+  g.fillStyle = "#f1eee6"; g.beginPath(); g.arc(128, 128, 126, 0, 7); g.fill();
+  g.strokeStyle = "#1b1d1a"; g.lineCap = "round";
+  for (let i = 0; i < 60; i++) { const a = i / 60 * Math.PI * 2, l = i % 5 ? 8 : 20; g.lineWidth = i % 5 ? 2 : 5; g.beginPath(); g.moveTo(128 + Math.sin(a) * 112, 128 - Math.cos(a) * 112); g.lineTo(128 + Math.sin(a) * (112 - l), 128 - Math.cos(a) * (112 - l)); g.stroke(); }
+  const hand = (a, l, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(128, 128); g.lineTo(128 + Math.sin(a) * l, 128 - Math.cos(a) * l); g.stroke(); };
+  hand((h + m / 60) / 12 * Math.PI * 2, 60, 8); hand(m / 60 * Math.PI * 2, 92, 5);
+  g.fillStyle = "#1b1d1a"; g.beginPath(); g.arc(128, 128, 7, 0, 7); g.fill();
+  return tex(c);
+}
+/* night through a library's tall window: a dark campus, a few warm windows and lamps, out of focus */
+export function nightTex(seed = 3) {
+  const c = cv(256, 512), g = c.getContext("2d"), r = rng(seed);
+  const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, "#0b1018"); gr.addColorStop(0.65, "#18202a"); gr.addColorStop(1, "#0a0c0e"); g.fillStyle = gr; g.fillRect(0, 0, 256, 512);
+  g.fillStyle = "#07090b"; g.fillRect(0, 330, 256, 182); g.fillRect(20, 250, 120, 100); g.fillRect(170, 280, 90, 60);
+  g.filter = "blur(3px)";
+  for (let i = 0; i < 16; i++) { g.fillStyle = r() < 0.7 ? "rgba(255,196,120,0.75)" : "rgba(190,210,255,0.6)"; g.fillRect(r() * 250, 260 + r() * 120, 6 + r() * 6, 8 + r() * 6); }
+  for (let i = 0; i < 5; i++) { const x = r() * 256, y = 360 + r() * 60; const rg = g.createRadialGradient(x, y, 0, x, y, 30); rg.addColorStop(0, "rgba(255,200,130,0.8)"); rg.addColorStop(1, "rgba(255,200,130,0)"); g.fillStyle = rg; g.fillRect(x - 30, y - 30, 60, 60); }
+  g.filter = "none";
+  return tex(c);
 }
 
 /* paper with a tooth, for the journal and the memory */

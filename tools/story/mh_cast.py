@@ -40,40 +40,42 @@ JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-h
          "nose/nose-nostrils-width-incr": 0.45, "nose/nose-flaring-incr": 0.35, "nose/nose-width2-incr": 0.2, "nose/nose-point-width-incr": 0.2,
          "mouth/mouth-lowerlip-volume-incr": 0.45, "mouth/mouth-upperlip-volume-incr": 0.3, "mouth/mouth-scale-horiz-decr": 0.25, "mouth/mouth-cupidsbow-incr": 0.5, "cheek/l-cheek-volume-incr": 0.35, "cheek/r-cheek-volume-incr": 0.35,
          "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2, "eyes/l-eye-height2-incr": 0.35, "eyes/r-eye-height2-incr": 0.35,
-         "eyes/l-eye-scale-incr": 0.15, "eyes/r-eye-scale-incr": 0.15, "eyebrows/eyebrows-trans-down": 0.1,
-         "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
+         "eyebrows/eyebrows-trans-down": 0.1,
+         "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2,
+         # a lean frame with a natural shoulder: about 2.8 head widths across the suit's shoulder seams
+         "torso/measure-shoulder-dist-decr": 1.0, "torso/torso-vshape-decr": 0.5, "torso/torso-muscle-dorsi-decr": 0.7, "torso/torso-scale-horiz-decr": 0.3}
 DELL = {"head/head-square": 0.4, "nose/nose-scale-horiz-incr": 0.3, "chin/chin-width-incr": 0.3, "neck/neck-double-incr": 0.3}
 PLAYER = {"head/head-oval": 0.3, "head/head-round": 0.15, "chin/chin-height-decr": 0.15, "chin/chin-width-incr": 0.1,
-          "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, "eyes/l-eye-scale-incr": 0.12, "eyes/r-eye-scale-incr": 0.12,
-          "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.2, "mouth/mouth-cupidsbow-incr": 0.35,
+          "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, 
+          "mouth/mouth-lowerlip-volume-decr": 0.25, "mouth/mouth-upperlip-volume-decr": 0.2, "mouth/mouth-cupidsbow-incr": 0.15, "mouth/mouth-scale-depth-decr": 0.35, "mouth/mouth-trans-backward": 0.25, "mouth/mouth-lowerlip-height-decr": 0.35, "mouth/mouth-upperlip-height-decr": 0.3,
           "cheek/l-cheek-volume-incr": 0.2, "cheek/r-cheek-volume-incr": 0.2, "nose/nose-point-width-incr": 0.1, "eyebrows/eyebrows-trans-down": 0.05}
-RENATA = {"head/head-oval": 0.4, "mouth/mouth-upperlip-volume-incr": 0.2, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
+RENATA = {"head/head-oval": 0.4, "mouth/mouth-lowerlip-volume-decr": 0.6, "mouth/mouth-upperlip-volume-decr": 0.4, "mouth/mouth-scale-depth-decr": 0.45, "mouth/mouth-trans-backward": 0.35, "mouth/mouth-lowerlip-height-decr": 0.45, "mouth/mouth-upperlip-height-decr": 0.35, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
 
 CAST = {
     "jason": {
-        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
+        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.45, "weight": 0.42, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
-        "clothes": ["male_elegantsuit01", "shoes02"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON"
+        "clothes": ["male_elegantsuit01", "shoes02"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON", "iris": (0.11, 0.065, 0.045)
     },
     "jason-memory": {
-        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
+        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.45, "weight": 0.42, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
-        "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON"
+        "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": {"depth_top": 0.047, "depth_side": 0.008}, "goatee": True, "face": "JASON", "iris": (0.11, 0.065, 0.045)
     },
     "player": {
         "macro": {"gender": 0.62, "age": 0.45, "muscle": 0.5, "weight": 0.5, "proportions": 0.7, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.35, "asian": 0.3, "caucasian": 0.35}},
-        "clothes": ["male_casualsuit05", "shoes01"], "hair": "short02", "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER"
+        "clothes": ["male_casualsuit05", "shoes01"], "afro": {"depth_top": 0.024, "depth_side": 0.005}, "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER", "iris": (0.24, 0.14, 0.075)
     },
     "dell": {
         "macro": {"gender": 1.0, "age": 0.85, "muscle": 0.5, "weight": 0.68, "proportions": 0.55, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.85, "asian": 0.0, "caucasian": 0.15}},
-        "clothes": ["male_worksuit01", "shoes06", "jujube_newsboy_cap"], "brows": "eyebrow010", "lashes": "eyelashes01", "stubble": True, "face": "DELL"
+        "clothes": ["male_worksuit01", "shoes06", "jujube_newsboy_cap"], "brows": "eyebrow010", "lashes": "eyelashes01", "stubble": True, "face": "DELL", "iris": (0.10, 0.07, 0.05)
     },
     "renata": {
         "macro": {"gender": 0.0, "age": 0.52, "muscle": 0.45, "weight": 0.48, "proportions": 0.75, "height": 0.42, "cupsize": 0.5, "firmness": 0.6,
                   "race": {"african": 0.2, "asian": 0.1, "caucasian": 0.7}},
-        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "bob02", "brows": "eyebrow009", "lashes": "eyelashes03", "face": "RENATA"
+        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "ponytail01", "brows": "eyebrow006", "lashes": "eyelashes03", "face": "RENATA", "iris": (0.27, 0.16, 0.085)
     }
 }
 
@@ -96,6 +98,14 @@ def role_material(obj, role, color=(0.5, 0.5, 0.5, 1), image=None):
     nt = mat.node_tree
     bsdf = nt.nodes.get("Principled BSDF")
     bsdf.inputs["Base Color"].default_value = color
+    if img is not None and role == "brow":
+        # brows carry only their shape (alpha); their colour comes from the runtime tint, so a light brown brow can be light
+        import numpy as np
+        img = img.copy(); W, H = img.size
+        px = np.array(img.pixels[:], dtype=np.float32).reshape(H, W, 4)
+        lum = px[..., :3].mean(-1, keepdims=True)
+        px[..., :3] = 0.55 + 0.35 * (lum / max(1e-3, float(lum.max())))
+        img.pixels.foreach_set(px.ravel())
     if img is not None:
         lim = 256 if role in ("eyes", "brow", "lash") else 512
         if max(img.size) > lim:
@@ -205,7 +215,7 @@ def grow_afro(body, depth_top=0.036, depth_side=0.006):
     return hair
 
 def face_mask(base, beard=None, size=512):
-    """paint the face's detail into a small texture in the body's UV space: R the beard (a goatee and a thin moustache, or stubble), G the lips, B warmth on the cheeks. Rasterized from the mesh, so edges are smooth."""
+    """paint the face's detail into a small texture in the body's UV space: R the beard (a goatee and a thin moustache, or stubble), G the lips, B warmth (cheeks, the nose, a soft mottle), A the cool, thinner skin under the eyes (1 none, lower cooler). Rasterized from the mesh, so edges are smooth."""
     import numpy as np
     top, cx, cy, mz, my = head_frame(base)
     me = base.data; me.calc_loop_triangles()
@@ -213,7 +223,7 @@ def face_mask(base, beard=None, size=512):
     img = np.zeros((size, size, 4), dtype=np.float32); img[..., 3] = 1.0
     def sm(e0, e1, x): t = min(1.0, max(0.0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t)
     def fn(p, n):
-        if n.y > -0.05 or p.z < mz - 0.09 or p.z > mz + 0.08: return (0, 0, 0)
+        if n.y > -0.05 or p.z < mz - 0.09 or p.z > mz + 0.13: return (0, 0, 0, 1)
         ax, dz = abs(p.x - cx), p.z - mz
         r = g = b = 0.0
         if beard == "goatee":
@@ -228,10 +238,17 @@ def face_mask(base, beard=None, size=512):
         lw, lh = 0.022, 0.012
         e = (ax / lw) ** 2 + ((dz + 0.001) / lh) ** 2
         if e < 1.6 and p.y < my + 0.018: g = (1 - sm(0.75, 1.3, e)) * (1.0 if dz < 0.0 else 0.5)
-        # cheeks
+        # warmth: the cheeks, the nose and its tip, and a soft mottle so the skin is never one flat colour
         d = ((ax - 0.042) ** 2 + (dz - 0.035) ** 2) ** 0.5
-        b = 1 - sm(0.0, 0.03, d)
-        return (r, g, b)
+        b = 1 - sm(0.0, 0.032, d)
+        nose = ((ax / 0.016) ** 2 + ((dz - 0.04) / 0.03) ** 2) ** 0.5
+        b = max(b, 0.8 * (1 - sm(0.6, 1.0, nose)))
+        b = max(b, 0.25 + 0.2 * noise.noise(p * 60.0)) if dz < 0.11 else b
+        # under the eyes: a cooler crescent
+        ue = (((ax - 0.032) / 0.02) ** 2 + ((dz - 0.062) / 0.009) ** 2) ** 0.5
+        a = 1 - 0.7 * (1 - sm(0.5, 1.0, ue))
+        if dz > 0.1: g = 0
+        return (r, g, min(1.0, b), a)
     co = me.vertices
     for tri in me.loop_triangles:
         P = [co[v].co for v in tri.vertices]
@@ -251,7 +268,8 @@ def face_mask(base, beard=None, size=512):
                 c = 1 - a - bb
                 if a < -0.02 or bb < -0.02 or c < -0.02: continue
                 p = P[0] * a + P[1] * bb + P[2] * c
-                img[py, px, :3] = np.maximum(img[py, px, :3], fn(p, n))
+                v = fn(p, n)
+                img[py, px, :3] = np.maximum(img[py, px, :3], v[:3]); img[py, px, 3] = min(img[py, px, 3], v[3])
     im = bpy.data.images.new("facemask", size, size, alpha=True)
     im.pixels.foreach_set(img.ravel())
     m = base.data.materials[0]
@@ -298,6 +316,137 @@ def paint_tie(base, size=None):
                     px[py, pxx, :3] = (0.25 + 0.5 * min(1.0, l * 1.6), 0.0, 0.0)
     im.pixels.foreach_set(px.ravel())
 
+def tailor(body):
+    """take in the jacket's shoulders: MakeHuman's suits stand well off the body over the shoulders and upper arms (padded,
+    rounded, like sports pads once the arms move). Over the shoulders and arms, any cloth more than a little off the skin is
+    pulled back to it, so the shoulder line ends just past the deltoid and the sleeve follows the arm."""
+    from mathutils.bvhtree import BVHTree
+    dg = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new(); bm.from_mesh(body.data); bm.transform(body.matrix_world)
+    tree = BVHTree.FromBMesh(bm)
+    top = max(v.co.z for v in body.data.vertices)
+    sh_z = top * 0.80  # about the shoulder line on a standing figure
+    for o in [o for o in bpy.data.objects if o.type == "MESH" and o is not body and o.parent in (body, body.parent)]:
+        n = o.name.lower()
+        if not any(k in n for k in ("suit", "worksuit", "casualsuit", "elegant")): continue
+        mw, mi = o.matrix_world, o.matrix_world.inverted()
+        moved = 0
+        for v in o.data.vertices:
+            w = mw @ v.co
+            # the shoulders and the upper arms: above the chest, out past the neck
+            if w.z < sh_z - 0.16 or abs(w.x) < 0.09: continue
+            hit = tree.find_nearest(w)
+            if not hit or hit[0] is None: continue
+            loc, nrm, idx, dist = hit
+            k = min(1.0, max(0.0, (w.z - (sh_z - 0.16)) / 0.08))
+            keep = 0.007
+            if dist > keep:
+                nd = keep + (dist - keep) * (1 - 0.9 * k)
+                v.co = mi @ (loc + (w - loc).normalized() * nd); moved += 1
+        print("TAILOR", o.name, moved)
+    bm.free()
+
+def smooth_shoulders():
+    """the rig binds in an A pose, so an arm hanging at the side swings 45 degrees and linear skinning bulges the jacket at
+    the deltoid. Smoothing the shoulder weights (collarbone, upper arm, the upper chest) over the mesh spreads the bend
+    over more of the shoulder, then each vertex's weights are normalised again."""
+    import numpy as np
+    for o in [o for o in bpy.data.objects if o.type == "MESH" and o.data.materials and (o.data.materials[0].name.startswith("cloth_") or o.data.materials[0].name == "skin")]:
+        if o.data.materials[0].name == "cloth_shoes": continue
+        me = o.data; n = len(me.vertices)
+        names = [g.name for g in o.vertex_groups]
+        targets = [k for k, g in enumerate(names) if g in ("upperarm_l", "upperarm_r", "clavicle_l", "clavicle_r", "spine_03")]
+        if not targets: continue
+        W = np.zeros((n, len(names)), dtype=np.float32)
+        for v in me.vertices:
+            for ge in v.groups: W[v.index, ge.group] = ge.weight
+        ed = np.array([e.vertices[:] for e in me.edges], dtype=np.int64)
+        if not len(ed): continue
+        deg = np.bincount(ed.ravel(), minlength=n).astype(np.float32); deg[deg == 0] = 1
+        region = W[:, targets].sum(1) > 0.001
+        for _ in range(4):
+            for k in targets:
+                w = W[:, k]
+                acc = np.bincount(ed[:, 0], weights=w[ed[:, 1]], minlength=n) + np.bincount(ed[:, 1], weights=w[ed[:, 0]], minlength=n)
+                W[:, k] = np.where(region, 0.45 * w + 0.55 * acc / deg, w)
+        tot = W.sum(1, keepdims=True); tot[tot == 0] = 1; W = W / tot
+        for k in targets:
+            g = o.vertex_groups[k]
+            for vi in np.nonzero(region)[0]:
+                if W[vi, k] > 0.0005: g.add([int(vi)], float(W[vi, k]), "REPLACE")
+                else: g.remove([int(vi)])
+        for k, g in enumerate(o.vertex_groups):
+            if k in targets: continue
+            idx = np.nonzero(region & (W[:, k] > 0))[0]
+            for vi in idx: g.add([int(vi)], float(W[vi, k]), "REPLACE")
+        print("SMOOTH", o.name, int(region.sum()))
+
+def add_eye_bones(rig):
+    """two bones in the head, one at the centre of each eye, and each eye weighted wholly to its own, so the runtime can aim the eyes (saccades, looking at whoever speaks) independently of the head"""
+    eyes = [o for o in bpy.data.objects if o.type == "MESH" and o.data.materials and o.data.materials[0].name == "eyes"]
+    if not eyes or "head" not in rig.data.bones: return
+    eye = eyes[0]
+    inv = rig.matrix_world.inverted()
+    pts = {"l": [], "r": []}
+    for v in eye.data.vertices:
+        w = inv @ (eye.matrix_world @ v.co)
+        pts["l" if w.x > 0 else "r"].append(w)
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.context.view_layer.objects.active = rig; rig.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = rig.data.edit_bones
+    for s, P in pts.items():
+        if not P: continue
+        c = sum(P, Vector()) / len(P)
+        b = eb.new("eye_" + s); b.head = c; b.tail = c + Vector((0, -0.025, 0)); b.parent = eb["head"]; b.use_deform = True
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for g in list(eye.vertex_groups): eye.vertex_groups.remove(g)
+    gl, gr = eye.vertex_groups.new(name="eye_l"), eye.vertex_groups.new(name="eye_r")
+    for v in eye.data.vertices:
+        w = inv @ (eye.matrix_world @ v.co)
+        (gl if w.x > 0 else gr).add([v.index], 1.0, "REPLACE")
+    if not any(md.type == "ARMATURE" for md in eye.modifiers):
+        md = eye.modifiers.new("Armature", "ARMATURE"); md.object = rig
+
+def eye_image(o, spec):
+    im = eye_texture(os.path.join(UD, "eyes", "materials", "brown_eye.png"), spec.get("iris", (0.2, 0.12, 0.07)))
+    if max(im.size) > 256: im.scale(256, 256)
+    m = o.data.materials[0]; nt = m.node_tree
+    tex = nt.nodes.new("ShaderNodeTexImage"); tex.image = im
+    nt.links.new(tex.outputs["Color"], nt.nodes.get("Principled BSDF").inputs["Base Color"])
+
+def eye_texture(path, iris):
+    """MakeHuman's brown eye, repainted: the iris a believable brown (no red), its detail kept as light and shade, a dark
+    limbal ring at its edge, a black pupil, and whites toned down a little so they never glare"""
+    import numpy as np
+    im = bpy.data.images.load(path)
+    W, H = im.size
+    px = np.array(im.pixels[:], dtype=np.float32).reshape(H, W, 4)
+    rgb = px[..., :3]
+    lum = rgb @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
+    sat = rgb.max(-1) - rgb.min(-1)
+    yy, xx = np.mgrid[0:H, 0:W]
+    out = rgb * 0.9  # the whites, a touch down
+    # the two irises: the saturated discs; split them by the diagonal the texture lays them out on
+    iris_px = (sat > 0.18) & (lum < 0.5)
+    for side in (xx + yy > W, xx + yy <= W):
+        m = iris_px & side
+        if m.sum() < 50: continue
+        cy, cx = yy[m].mean(), xx[m].mean()
+        R = np.sqrt(m.sum() / np.pi) * 1.04
+        r = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2) / R
+        inside = r < 1.12
+        detail = np.clip(lum / max(1e-3, float(lum[m].mean())), 0.55, 1.5)[..., None]
+        col = np.array(iris, dtype=np.float32) * detail
+        col *= (1.0 - 0.55 * np.clip((r - 0.72) / 0.28, 0, 1))[..., None]          # the limbal ring
+        col *= (0.55 + 0.45 * np.clip((r - 0.26) / 0.12, 0, 1))[..., None]         # darker round the pupil
+        col = np.where((r < 0.27)[..., None], np.array([0.012, 0.01, 0.01], dtype=np.float32), col)
+        edge = np.clip((1.12 - r) / 0.12, 0, 1)[..., None]
+        out = np.where(inside[..., None], out * (1 - edge) + col * edge, out)
+    px[..., :3] = out
+    im.pixels.foreach_set(px.ravel())
+    return im
+
 def build(name, spec):
     clear()
     base = HumanService.create_human(mask_helpers=True, detailed_helpers=True, extra_vertex_groups=True, feet_on_ground=True, scale=0.1, macro_detail_dict=spec["macro"])
@@ -315,6 +464,7 @@ def build(name, spec):
         HumanService.add_mhclo_asset(asset("hair", spec["hair"]), base, asset_type="hair", subdiv_levels=0)
     for c in spec["clothes"]:
         HumanService.add_mhclo_asset(asset("clothes", c), base, asset_type="clothes", subdiv_levels=0)
+    tailor(base)
     # the face, as shape keys on the body
     for t in FACE:
         TargetService.load_target(base, os.path.join(UD, "targets", "faceunits", t + ".target"), weight=0.0, name=t)
@@ -334,20 +484,22 @@ def build(name, spec):
         elif "eyebrow" in n: role_material(o, "brow")
         elif "eyelash" in n: role_material(o, "lash")
         elif "teeth" in n: role_material(o, "teeth", (0.85, 0.82, 0.75, 1))
-        elif n in ("low-poly", "high-poly") or ("eye" in n and "glass" not in n): role_material(o, "eyes", image=os.path.join(UD, "eyes", "materials", "brown_eye.png"))
+        elif n in ("low-poly", "high-poly") or ("eye" in n and "glass" not in n): role_material(o, "eyes"); eye_image(o, spec)
         elif any(h in n for h in ("short", "bob", "ponytail", "afro", "long", "braid")): role_material(o, "hair")
         elif "shoe" in n: role_material(o, "cloth_shoes")
         elif "cap" in n or "hat" in n: role_material(o, "cloth_hat")
         else: role_material(o, "cloth_" + n.replace(" ", "_")[:24])
     face_mask(base, beard="goatee" if spec.get("goatee") else "stubble" if spec.get("stubble") else None)
     grown = []
-    if spec.get("afro"): grown.append(grow_afro(base))
+    if spec.get("afro"): grown.append(grow_afro(base, **(spec["afro"] if isinstance(spec["afro"], dict) else {})))
     for g in grown:
         if g is None: continue
         g.parent = rig
         if not any(md.type == "ARMATURE" for md in g.modifiers):
             md = g.modifiers.new("Armature", "ARMATURE"); md.object = rig
     paint_tie(base)
+    smooth_shoulders()
+    add_eye_bones(rig)
     # export
     bpy.ops.object.select_all(action="SELECT")
     path = os.path.join(OUT, name + ".glb")

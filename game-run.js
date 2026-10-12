@@ -167,7 +167,7 @@
     capEl.classList.toggle("is-me", L.who === "me");
     capEl.hidden = false; requestAnimationFrame(function () { capEl.classList.add("is-on"); });
     say(speaker(L.who) + ": " + L.text);
-    var base = D.out || "assets/voice/run", file = L.who === "me" ? "jason-" + id : id;
+    var base = D.out || "assets/voice/run-v2", file = L.who === "me" ? "jason-" + id : id;
     if (L.who === "me" && soundOn() && meVoice[id] == null) {
       /* my lines play in my own voice once they've been rendered; until then they're captions */
       meVoice[id] = 0;
