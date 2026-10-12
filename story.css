@@ -357,3 +357,42 @@ html[data-still] .st-dot.is-new::after { animation: none; opacity: .5; transform
 .pz-done { min-height: 44px; min-width: 88px; padding: 0 18px; border: 1px solid var(--bone) !important; border-radius: 22px; font: 600 14px/1 var(--sans) !important; letter-spacing: .06em; }
 .pz-done:hover, .pz-done:focus-visible { background: rgba(237, 231, 219, .1) !important; outline: none; }
 @media (max-height: 480px) { .pz--set { padding: 14px 18px 18px; } .pz-top { margin: -14px -18px 4px; padding: 10px 18px 8px; } }
+
+/* ---------- driving: the touch controls, the buttons, the hint ---------- */
+.story.is-driving .st-obj, .story.is-driving .st-way, .story.is-driving .st-dots, .story.is-driving .st-hint, .story.is-driving .st-prompt, .story.is-driving .st-act { opacity: 0 !important; pointer-events: none; }
+.st-drive { position: absolute; inset: 0; z-index: 9; pointer-events: none; opacity: 0; transition: opacity .35s var(--ease); }
+.st-drive.is-on { opacity: 1; }
+.st-drive.is-on .st-drive__steer, .st-drive.is-on button { pointer-events: auto; }
+.st-drive button { -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; -webkit-user-select: none; color: var(--bone); font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; }
+.st-drive__top { position: absolute; left: max(16px, calc(env(safe-area-inset-left) + 12px)); top: max(16px, env(safe-area-inset-top)); display: flex; gap: 8px; }
+.st-drive__btn { height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 9px; border-radius: 22px; border: 1px solid var(--hair-2); background: rgba(5, 7, 10, .42); transition: transform .2s var(--ease), background-color .2s var(--ease); }
+.st-drive__btn:active, .st-drive__btn.is-on { transform: scale(.96); background: rgba(237, 231, 219, .16); }
+.st-drive__btn kbd { font: 600 11px/1 var(--sans); letter-spacing: 0.04em; color: var(--ink); background: var(--bone); border-radius: 5px; padding: 4px 6px; min-width: 9px; text-align: center; }
+.st-drive__btn kbd[hidden] { display: none; }
+.st-drive [data-drv="hb"] { display: none; }
+.st-drive__steer, .st-drive__pedals { display: none; }
+.st-drive__hint { position: absolute; left: 50%; bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); transform: translateX(-50%); margin: 0; width: max-content; max-width: calc(100% - 32px); text-align: center; font: 500 13px/1.4 var(--sans); letter-spacing: 0.04em; color: var(--bone-2); text-shadow: 0 1px 8px rgba(0, 0, 0, .9); animation: st-drive-hint 9s var(--ease) forwards; }
+@keyframes st-drive-hint { 0% { opacity: 0; } 6% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+/* touch: the steering pad under the left thumb, the pedals and the handbrake under the right */
+.st-drive[data-dev="touch"] .st-drive__steer { display: grid; place-items: center; position: absolute; left: max(18px, calc(env(safe-area-inset-left) + 14px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px)); width: 184px; height: 112px; border-radius: 56px; border: 1px solid var(--hair-2); background: rgba(5, 7, 10, .32); touch-action: none; }
+.st-drive__steer::before, .st-drive__steer::after { content: ""; position: absolute; top: 50%; width: 8px; height: 8px; border: solid rgba(237, 231, 219, .45); border-width: 0 0 1.5px 1.5px; }
+.st-drive__steer::before { left: 18px; transform: translateY(-50%) rotate(45deg); }
+.st-drive__steer::after { right: 18px; transform: translateY(-50%) rotate(-135deg); }
+.st-drive__steer.is-on { border-color: rgba(237, 231, 219, .55); }
+.st-drive__wheel { width: 64px; height: 64px; display: block; transition: transform .08s linear; }
+.st-drive__wheel svg { width: 100%; height: 100%; fill: none; stroke: var(--bone); stroke-width: 2.6; stroke-linecap: round; }
+.st-drive[data-dev="touch"] .st-drive__pedals { display: flex; align-items: flex-end; gap: 12px; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px)); }
+.st-drive__pedal { width: 78px; height: 96px; border-radius: 18px; border: 1px solid rgba(237, 231, 219, .34); background: rgba(5, 7, 10, .42); display: grid; place-items: end center; padding-bottom: 14px; transition: transform .12s var(--ease), background-color .12s var(--ease); }
+.st-drive__pedal.is-gas { width: 84px; height: 132px; }
+.st-drive__pedal.is-on { transform: scale(.95) translateY(2px); background: rgba(237, 231, 219, .2); border-color: rgba(237, 231, 219, .7); }
+.st-drive[data-dev="touch"] [data-drv="hb"] { display: inline-flex; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: calc(max(18px, calc(env(safe-area-inset-bottom) + 14px)) + 146px); }
+.st-drive[data-dev="touch"] [data-drv="hb"].is-on { background: rgba(237, 231, 219, .2); }
+@media (max-height: 480px) {
+  .st-drive[data-dev="touch"] .st-drive__steer { width: 164px; height: 96px; }
+  .st-drive__pedal { width: 70px; height: 84px; }
+  .st-drive__pedal.is-gas { width: 76px; height: 112px; }
+  .st-drive[data-dev="touch"] [data-drv="hb"] { right: auto; bottom: auto; position: static; display: inline-flex; }
+  .st-drive__btn { height: 40px; padding: 0 14px; }
+}
+.story.is-paused .st-drive { opacity: 0 !important; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .st-drive__wheel { transition: none; } .st-drive__hint { animation: none; } }

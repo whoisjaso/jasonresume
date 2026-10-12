@@ -230,6 +230,7 @@ export function createAudio(o) {
     for (const n of old) { try { ramp(n.g.gain, 0, secs); n.s.stop(now() + secs + 0.1); } catch (e) {} }
     A.lamps = []; A.roof = null; A.window = null; A.typingAt = null; A.lines = []; A.arcade = null;
     if (A.car) { try { A.car.stop(); } catch (e) {} A.car = null; }
+    if (A.drv) { try { A.drv.stop(0.3); } catch (e) {} }
   }
   /* a scene's soundscape: called on every arrival */
   function scene(name, set, info = {}) {
@@ -488,6 +489,137 @@ export function createAudio(o) {
     log("sfx", "ring");
   }
 
+  /* ---------- the car you drive ----------
+     The engine is synthesized from its rpm and load: a saw at the firing
+     rate (two pulses a turn for a four), a square an octave down for the
+     body, a little detuned saw an octave up for the edge, and the intake's
+     breath, all through a soft clip that bites harder under load and a
+     lowpass that opens with the throttle. A shift dips it for a beat. The
+     tyres squeal from slip; the road hisses with speed, wetter on the wet;
+     impacts thump by strength. From inside the car the world closes down
+     behind the glass and the rain drums on the roof. */
+  function drive(o = {}) {
+    if (!A.ctx) return null;
+    if (A.drv) A.drv.stop(0.05);
+    const C = A.ctx, N = A.nodes, t0 = now();
+    const out = C.createGain(); out.gain.value = 0; out.connect(N.sfx);
+    // engine
+    const eng = C.createGain(); eng.gain.value = 0;
+    const clip = C.createWaveShaper(), curve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(x * 2.2); } clip.curve = curve; clip.oversample = A.mobile ? "none" : "2x";
+    const pre = C.createGain(); pre.gain.value = 0.6;
+    const lp = C.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 600; lp.Q.value = 1.6;
+    const body = C.createBiquadFilter(); body.type = "peaking"; body.frequency.value = 120; body.Q.value = 0.9; body.gain.value = 5;
+    pre.connect(clip); clip.connect(lp); lp.connect(body); body.connect(eng); eng.connect(out);
+    const o1 = C.createOscillator(), o2 = C.createOscillator(), o3 = C.createOscillator();
+    o1.type = "sawtooth"; o2.type = "square"; o3.type = "sawtooth"; o3.detune.value = 9;
+    const g1 = C.createGain(), g2 = C.createGain(), g3 = C.createGain(); g1.gain.value = 0.5; g2.gain.value = 0.28; g3.gain.value = 0.12;
+    o1.connect(g1); o2.connect(g2); o3.connect(g3); g1.connect(pre); g2.connect(pre); g3.connect(pre);
+    // the firing pulse: a little amplitude wobble at the firing rate, so it isn't a pure buzz
+    const wob = C.createOscillator(), wobG = C.createGain(); wob.type = "sine"; wobG.gain.value = 0.18; wob.connect(wobG); wobG.connect(g1.gain);
+    const intake = C.createBufferSource(); intake.buffer = A.pink; intake.loop = true;
+    const ibp = C.createBiquadFilter(); ibp.type = "bandpass"; ibp.frequency.value = 400; ibp.Q.value = 1.4;
+    const ig = C.createGain(); ig.gain.value = 0; intake.connect(ibp); ibp.connect(ig); ig.connect(eng);
+    // tyres
+    const sq = C.createBufferSource(); sq.buffer = A.white; sq.loop = true;
+    const sbp = C.createBiquadFilter(); sbp.type = "bandpass"; sbp.frequency.value = 1150; sbp.Q.value = 9;
+    const sqT = C.createOscillator(); sqT.type = "triangle"; sqT.frequency.value = 980;
+    const sqV = C.createOscillator(), sqVG = C.createGain(); sqV.frequency.value = 7; sqVG.gain.value = 22; sqV.connect(sqVG); sqVG.connect(sqT.frequency);
+    const sqTG = C.createGain(); sqTG.gain.value = 0.05; sqT.connect(sqTG);
+    const sg = C.createGain(); sg.gain.value = 0; sq.connect(sbp); sbp.connect(sg); sqTG.connect(sg); sg.connect(out);
+    // the road: a rumble and, on the wet, the spray
+    const road = C.createBufferSource(); road.buffer = A.brown; road.loop = true;
+    const rlp = C.createBiquadFilter(); rlp.type = "lowpass"; rlp.frequency.value = 250;
+    const rg = C.createGain(); rg.gain.value = 0; road.connect(rlp); rlp.connect(rg); rg.connect(out);
+    const spray = C.createBufferSource(); spray.buffer = A.pink; spray.loop = true;
+    const shp = C.createBiquadFilter(); shp.type = "highpass"; shp.frequency.value = 2200;
+    const spg = C.createGain(); spg.gain.value = 0; spray.connect(shp); shp.connect(spg); spg.connect(out);
+    // the roof: rain drumming on thin metal, heard from inside
+    const roof = C.createBufferSource(); roof.buffer = A.drops; roof.loop = true; roof.playbackRate.value = 0.8;
+    const rbp = C.createBiquadFilter(); rbp.type = "bandpass"; rbp.frequency.value = 1400; rbp.Q.value = 0.6;
+    const rlp2 = C.createBiquadFilter(); rlp2.type = "lowpass"; rlp2.frequency.value = 3200;
+    const roofG = C.createGain(); roofG.gain.value = 0; roof.connect(rbp); rbp.connect(rlp2); rlp2.connect(roofG); roofG.connect(out);
+    const srcs = [o1, o2, o3, wob, intake, sq, sqT, sqV, road, spray, roof];
+    srcs.forEach(n => n.start(t0 + 0.01));
+    ramp(out.gain, 1, 0.4);
+    const rain = o.rain == null ? 1 : o.rain;
+    const D = { rpm: 0, on: !!o.running, inside: false, dip: 0, last: {}, gearT: 0 };
+    log("car", "drive");
+    if (!D.on && o.start !== false) start();
+    function start() {
+      // the starter: a ragged whirr, then the engine catches
+      const t = now(), st = C.createOscillator(), sg2 = C.createGain(), am = C.createOscillator(), amg = C.createGain();
+      st.type = "sawtooth"; st.frequency.setValueAtTime(48, t); st.frequency.linearRampToValueAtTime(66, t + 0.55);
+      am.frequency.value = 9; amg.gain.value = 0.05; am.connect(amg); amg.connect(sg2.gain);
+      sg2.gain.setValueAtTime(0.0001, t); sg2.gain.exponentialRampToValueAtTime(0.07, t + 0.05); sg2.gain.setValueAtTime(0.07, t + 0.5); sg2.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      const f = C.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900; st.connect(f); f.connect(sg2); sg2.connect(out);
+      st.start(t); am.start(t); st.stop(t + 0.75); am.stop(t + 0.75);
+      setTimeout(() => { D.on = true; D.catch = 1; }, 520);
+      log("car", "start");
+    }
+    function update(v) {
+      const t = now(), rpm = Math.max(0, v.rpm || 0), load = Math.max(0, Math.min(1, v.load || 0)), sp = Math.abs(v.speed || 0);
+      D.dip = Math.max(0, D.dip - 0.016 * 5);
+      const on = D.on && (v.engine !== false);
+      const f = Math.max(14, rpm / 60 * 2);
+      const tc = 0.04;
+      o1.frequency.setTargetAtTime(f, t, tc); o2.frequency.setTargetAtTime(f / 2, t, tc); o3.frequency.setTargetAtTime(f * 2, t, tc); wob.frequency.setTargetAtTime(f / 2, t, tc);
+      const r = Math.min(1, rpm / 6400);
+      lp.frequency.setTargetAtTime(340 + load * 2200 + r * 1500 - (D.inside ? 150 : 0), t, 0.06);
+      pre.gain.setTargetAtTime(0.45 + load * 1.4, t, 0.06);
+      ibp.frequency.setTargetAtTime(250 + r * 1300, t, 0.06);
+      ig.gain.setTargetAtTime(on ? (0.02 + load * 0.12) * (0.4 + r) : 0, t, 0.06);
+      const catchK = D.catch ? Math.min(1, (D.catch += 0.03)) : 1;
+      eng.gain.setTargetAtTime(on ? (0.11 + load * 0.16 + r * 0.06) * (1 - D.dip * 0.6) * (D.inside ? 1.15 : 1) * catchK : 0, t, 0.05);
+      const slip = Math.max(0, Math.min(1, v.slip || 0)), sk = Math.pow(slip, 1.5) * Math.min(1, sp / 5);
+      sg.gain.setTargetAtTime(sk * 0.22 * (D.inside ? 0.6 : 1), t, 0.05);
+      sbp.frequency.setTargetAtTime(950 + slip * 600 + sp * 6, t, 0.08); sqT.frequency.setTargetAtTime(880 + slip * 260, t, 0.08);
+      const wet = /wet|puddle/.test(v.surface || "wet");
+      rg.gain.setTargetAtTime(Math.min(1, sp / 22) * 0.32, t, 0.1); rlp.frequency.setTargetAtTime(160 + sp * 14, t, 0.1);
+      spg.gain.setTargetAtTime((wet ? 1 : 0.15) * Math.min(1, sp / 16) * 0.09 * (D.inside ? 0.4 : 1) * (v.surface === "puddle" ? 2.2 : 1), t, 0.1);
+      roofG.gain.setTargetAtTime(D.inside ? 0.16 * rain : 0.025 * rain, t, 0.3);
+      if (v.gear !== D.last.gear && D.last.gear != null && v.gear > 0 && D.last.gear > 0) shift(v.gear > D.last.gear);
+      D.last = { gear: v.gear }; D.rpm = rpm;
+    }
+    function shift(up) {
+      D.dip = 1;
+      tone({ f: up ? 150 : 120, to: 70, glide: 0.04, decay: 0.06, gain: 0.05 * (D.inside ? 1.4 : 0.7), bus: out });
+      log("car", "shift");
+    }
+    /* from inside, the world closes down behind the glass */
+    function inside(on) {
+      if (D.inside === on) return; D.inside = on;
+      const t = now();
+      N.outLp.frequency.cancelScheduledValues(t); N.outLp.frequency.setValueAtTime(N.outLp.frequency.value, t);
+      N.outLp.frequency.exponentialRampToValueAtTime(on ? 700 : (A.scene === "office" ? N.outLp.frequency.value : 16000), t + 0.35);
+      ramp(N.ambDuck.gain, on ? 0.55 : A.duckV < 1 ? Math.max(0.35, A.duckV) : 1, 0.35);
+      log("car", on ? "inside" : "outside");
+    }
+    function impact(k, at) {
+      const s = Math.max(0, Math.min(1, k / 9));
+      if (s < 0.03) return;
+      const ref = at ? 3 : null;
+      tone({ f: 95, to: 38, glide: 0.12, decay: 0.18 + s * 0.25, gain: 0.08 + s * 0.4, at, ref });
+      burst({ type: "lowpass", f: 900 + s * 1600, gain: 0.05 + s * 0.35, decay: 0.06 + s * 0.12, at, ref, buf: A.brown });
+      if (s > 0.25) { sprite("click-metal", { at, ref: 3, gain: 0.15 + s * 0.35, rate: 0.55 + Math.random() * 0.15, lp: 3800 }); burst({ type: "highpass", f: 3000, gain: 0.04 + s * 0.12, decay: 0.12 + s * 0.2, delay: 0.02, at, ref }); }
+      if (s > 0.6) sprite("chain-" + ((Math.random() * 3) | 0), { at, ref: 3, gain: 0.2, rate: 0.6, delay: 0.05, lp: 3000 });
+      log("car", "impact");
+    }
+    function door(open, at) {
+      if (open) { sprite("latch", { at, ref: 2, gain: 0.32, rate: 1.25 }); burst({ type: "bandpass", f: 500, q: 1.2, gain: 0.05, attack: 0.04, decay: 0.2, delay: 0.05, at }); }
+      else { tone({ f: 85, to: 45, glide: 0.08, decay: 0.16, gain: 0.22, at, ref: 2 }); sprite("latch", { at, ref: 2, gain: 0.35, rate: 0.9 }); burst({ type: "lowpass", f: 700, gain: 0.12, decay: 0.08, at, buf: A.brown }); }
+      log("car", open ? "door-open" : "door-close");
+    }
+    function stop(secs = 0.5) {
+      inside(false);
+      ramp(out.gain, 0, secs); const t = now() + secs + 0.05; srcs.forEach(n => { try { n.stop(t); } catch (e) {} });
+      if (A.drv === api) A.drv = null;
+      log("car", "stop");
+    }
+    const api = { start, update, shift, inside, impact, door, stop, get on() { return D.on; }, get state() { return { on: D.on, inside: D.inside, rpm: D.rpm, eng: eng.gain.value, squeal: sg.gain.value, roof: roofG.gain.value, out: N.outLp.frequency.value }; } };
+    A.drv = api;
+    return api;
+  }
+
   /* ---------- the interface ---------- */
   function ui(kind) {
     if (!A.ctx) return false;
@@ -509,13 +641,13 @@ export function createAudio(o) {
   function stopAll() { if (!A.ctx) return; clearAmb(0.6); A.clockOn = false; }
 
   return {
-    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll,
+    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive,
     debug: () => {
       const N = A.nodes;
       return {
         built: !!A.ctx, state: A.ctx ? A.ctx.state : "none", loaded: !!A.buf, scene: A.scene, mix: { ...mix },
         buses: A.ctx ? { master: N.master.gain.value, voice: N.voice.gain.value, sfx: N.sfx.gain.value, amb: N.amb.gain.value, ui: N.ui.gain.value, ambDuck: N.ambDuck.gain.value, sfxDuck: N.sfxDuck.gain.value, out: N.outLp.frequency.value, limiter: N.limit.threshold.value } : null,
-        amb: A.amb.filter(n => n.name).map(n => n.name), peak: +(A.peak || 0).toFixed(3), peakMax: +(A.peakMax || 0).toFixed(3), events: A.events.slice(-60)
+        amb: A.amb.filter(n => n.name).map(n => n.name), car: A.drv ? A.drv.state : null, peak: +(A.peak || 0).toFixed(3), peakMax: +(A.peakMax || 0).toFixed(3), events: A.events.slice(-60)
       };
     }
   };

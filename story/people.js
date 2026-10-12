@@ -487,7 +487,11 @@ class Person {
   update(dt) {
     dt = Math.min(dt, 0.1);
     const t = (this.t += dt), M = this.M, L = this.L;
-    // ---- where the body is and how fast it really moves
+    // ---- in or at a car: the sequence (walking up, the door, sitting in, the wheel) moves the body
+    if (this.car) this.carStep(dt);
+    const seated = !!(this.car && this.car.seated);
+    // ---- where the body is and how fast it really moves (seated, the car moves it: no walking)
+    if (seated) { this.lastPos = (this.lastPos || new THREE.Vector3()).copy(this.pos); this.vel.set(0, 0, 0); }
     if (!this.lastPos || this.lastPos.distanceTo(this.pos) > 3) { this.lastPos = this.pos.clone(); this.vel.set(0, 0, 0); this.feet.l.init = this.feet.r.init = false; }
     if (dt > 0) { _v1.copy(this.pos).sub(this.lastPos).divideScalar(dt); _v1.y = 0; this.vel.lerp(_v1, 1 - Math.exp(-14 * dt)); }
     this.lastPos.copy(this.pos);
@@ -499,12 +503,13 @@ class Person {
     const turnRate = moving ? 6 : this.sitK > 0.3 ? 0 : 3.2 * sstep(0.02, 0.35, Math.abs(dy)) + 0.6;
     this.yaw += clamp(dy, -turnRate * dt, turnRate * dt);
     this.group.rotation.y = this.yaw; this.group.updateMatrix();
+    if (seated) this.carPlace();
     this.yawRate = damp(this.yawRate, dt > 0 ? angDiff(prevYaw, this.yaw) / dt : 0, 8, dt);
     // forward speed along the facing (strafing during a sharp turn counts less)
     const fwd = _v2.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
     const v = Math.max(0, this.vel.dot(fwd)) * 0.85 + this.vel.length() * 0.15;
     const prevGs = this.gs;
-    this.gs = damp(this.gs, v, 10, dt);
+    this.gs = seated ? 0 : damp(this.gs, v, 10, dt);
     const acc = dt > 0 ? (this.gs - prevGs) / dt : 0;
     this.gsF = damp(this.gsF, acc, 4, dt);
 
@@ -580,6 +585,9 @@ class Person {
       else { M.sample(M.clips.sit, t, P.b); if (M.clips.sitTalk && this.talk > 0.05) { M.sample(M.clips.sitTalk, t, P.c); blendPose(P.b, P.c, 0.8, this.mk.upper); } }
       blendPose(acc0, P.b, this.sitK, null);
     }
+    // in a car: the seated clip under everything below the hips' placement (the legs and arms go by IK)
+    this.carK = this.car ? this.car.sitW : 0;
+    if (this.carK > 0.001 && M.clips.sit) { M.sample(M.clips.sit, t, P.b); blendPose(acc0, P.b, this.carK, null); }
     // a one-shot over everything, eased in and out
     if (this.shot) {
       const s = this.shot; s.t += dt;
@@ -623,6 +631,7 @@ class Person {
     // sitting: the seat is 0.49 high; settle the hips on it whatever this body's legs
     if (this.sitK > 0.001) hipC.y += this.sitK * this.seatFix(sHip);
     this.hipC = hipC;
+    if (this.car && this.car.hipW > 0) this.carHip(hipC);
 
     // ---- procedural layers in character axes
     const breathe = Math.sin(t * TAU * 0.24 + this.tempo * 5);
@@ -661,6 +670,8 @@ class Person {
     if (jw > 0.01) { this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0); }
     // reaching: lean and turn toward what the hand goes for, and bend at the knees for something low
     this.reachBody(hipC, dt);
+    // driving: reclined in the seat, ducking under the roof getting in and out, pushed about by the corners
+    if (this.car) this.carBody(dt);
 
     // ---- the head looks
     let wantY = 0, wantP = 0;
@@ -733,6 +744,7 @@ class Person {
 
   /* ---- the legs: stride warp, foot locks, little steps, two-bone IK ---- */
   legs(dt) {
+    if (this.car && this.car.feetW > 0.001) { this.carLegs(); return; }
     if (this.sitK > 0.05) { this.feet.l.init = this.feet.r.init = false; return; }
     const M = this.M, LC = this.locoClips, SW = this.SW;
     // character space to the space the body stands in (its parent's), and back
@@ -1028,6 +1040,9 @@ class Person {
     this.rFx = damp(this.rFx || 0, fx, 10, dt); this.rFz = damp(this.rFz || 0, fz, 10, dt);
     if (this.rLean + Math.abs(this.rTwist) + this.rDrop + Math.abs(this.rFz) < 0.002) return;
     // low: a squat, hips back, back bent forward (the knees follow from the feet staying planted)
+    // seated, the hips stay on the seat: only the back leans and turns
+    const sk = 1 - clamp(this.carK || 0, 0, 1);
+    this.rDrop *= sk; this.rFx *= sk; this.rFz *= sk;
     const d = this.rDrop;
     hipC.y -= d * 0.6; hipC.z -= d * 0.18; hipC.x += this.rFx; hipC.z += this.rFz * (1 - d);
     this.rot("pelvis", d * 0.3, 0, 0);
@@ -1035,6 +1050,297 @@ class Person {
     this.rot("spine_02", this.rLean * 0.35 + d * 0.14, this.rTwist * 0.35, 0);
     this.rot("spine_03", this.rLean * 0.25 + d * 0.05, this.rTwist * 0.35, 0);
     this.rot("neck_01", -d * 0.35, 0, 0);
+  }
+
+  /* ================================================================
+     CARS: getting in and out, and driving. The car is a vehicle from story/vehicle.js (tools/story/HANDOFF-drive.md):
+     body, seat / seatP, steeringWheel (its rim in its local XY plane, turning about its local Z), doors (open, get,
+     node, handle, inner), speed, steerAngle, wheelAngle. Car local axes: +Z forward, +X the driver's side, +Y up.
+     While a sequence runs, people.js moves the body itself: main.js leaves pos and wantYaw alone until it resolves.
+     ================================================================ */
+  enterCar(v, side = "driver") { return this.carRun(v, side, "enter"); }
+  exitCar(v) { const c = this.car; if (!c) return Promise.resolve(false); return this.carRun(v || c.v, c.side, "exit"); }
+  /* driving each frame: p.drive(car) (or p.driving = car) puts the body straight in the seat, hands on the wheel */
+  drive(v, side = "driver") { if (!v) { this.driving = null; return; } if (!this.car || this.car.v !== v) this.seatIn(v, side); }
+  get driving() { return this.car && this.car.mode === "drive" ? this.car.v : null; }
+  set driving(v) { if (v) this.drive(v); else if (this.car) this.unseat(); }
+  get inCar() { return !!this.car; }
+
+  carGeo(v, side) {
+    const body = v.body || v.object;
+    body.updateWorldMatrix(true, true);
+    const inv = new THREE.Matrix4().copy(body.matrixWorld).invert();
+    const loc = o => o.getWorldPosition(new THREE.Vector3()).applyMatrix4(inv);
+    const seatN = side === "passenger" ? v.seatP || v.seat : v.seat;
+    const S = seatN ? loc(seatN) : new THREE.Vector3(side === "passenger" ? -0.39 : 0.39, 0.56, -0.19);
+    const sx = Math.sign(S.x) || 1;
+    const dn = v.doors && v.doors.node ? v.doors.node(side) : null;
+    const H = dn ? loc(dn) : new THREE.Vector3(sx * 0.9, 0.55, S.z + 0.93);
+    const steer = side === "passenger" ? null : v.steeringWheel || null;
+    return { body, inv, S, sx, H, half: Math.abs(H.x), steer, rimR: steer && steer.userData && steer.userData.rimR ? steer.userData.rimR : 0.185 };
+  }
+  /* body-local (the car body's frame) to world and character space */
+  carW(p, out) { return out.copy(p).applyMatrix4(this.car.G.body.matrixWorld); }
+  carL(p, out) { this.car.G.body.updateWorldMatrix(true, false); return out.copy(p).applyMatrix4(_m2.copy(this.car.G.body.matrixWorld).invert()); }
+  carYaw() { const e = this.car.G.body.matrixWorld.elements; return Math.atan2(e[8], e[10]); }
+
+  newCar(v, side, mode) {
+    const G = this.carGeo(v, side), S = G.S;
+    const c = this.car = { v, side, G, mode, steps: [], seated: false, sitW: 0, hipW: 0, feetW: 0, wheelK: 0, duck: 0, root: new THREE.Vector3(), yaw: 0, hip: new THREE.Vector3(),
+      feet: { l: new THREE.Vector3(), r: new THREE.Vector3() }, hands: { l: { th: null, sw: null }, r: { th: null, sw: null } }, lean: 0, pitch: 0, lastYaw: null, lastSpeed: 0 };
+    // where things are, in the body's frame
+    const sx = G.sx, half = G.half;
+    c.P = {
+      A: new THREE.Vector3(sx * (half + 0.62), 0, G.H.z - 1.35),             // outside, behind the open door's sweep
+      B: new THREE.Vector3(sx * (half + 0.2), 0, S.z + 0.08),                // in the opening, beside the seat
+      E: new THREE.Vector3(sx * (Math.abs(S.x) + 0.3), S.y + 0.03, S.z + 0.02), // the seat's edge by the door
+      out: { l: new THREE.Vector3(sx * (half + 0.3), 0.08, S.z + 0.02 - 0.12 * sx), r: new THREE.Vector3(sx * (half + 0.3), 0.08, S.z + 0.02 + 0.12 * sx) }, // facing out, the left foot is the rear one on the driver's side
+      // the pedals: the right foot on the accelerator (or the brake), the left on the rest
+      gas: new THREE.Vector3(S.x - 0.15, S.y - 0.24, S.z + 0.74), brake: new THREE.Vector3(S.x - 0.02, S.y - 0.2, S.z + 0.7),
+      rest: new THREE.Vector3(S.x + 0.14, S.y - 0.26, S.z + 0.64)
+    };
+    return c;
+  }
+  seatIn(v, side) {
+    if (this.car) this.unseat();
+    const c = this.newCar(v, side, "drive");
+    c.seated = true; c.sitW = c.hipW = c.feetW = c.wheelK = 1; c.yaw = 0;
+    c.hip.copy(c.G.S); c.root.set(c.G.S.x, 0, c.G.S.z);
+    c.feet.l.copy(c.P.rest); c.feet.r.copy(c.P.gas);
+    this.lastPos = null;
+  }
+  unseat() {
+    const c = this.car; if (!c) return;
+    this.car = null; this.carK = 0; this.taskLook = null; this.wheelHands = null;
+    this.feet.l.init = this.feet.r.init = false; this.lastPos = null;
+  }
+
+  /* build and run a sequence; resolves when it ends */
+  carRun(v, side, mode) {
+    if (this.car && mode === "enter") this.unseat();
+    const c = mode === "enter" ? this.newCar(v, side, "enter") : this.car;
+    c.mode = mode;
+    const G = c.G, S = G.S, sx = G.sx, P = c.P;
+    const door = (a, b, d) => ({ run: st => { const u = sstep(0, 1, st.t / d); if (v.doors && v.doors.open) v.doors.open(side, lerp(a, b, u)); return st.t >= d; } });
+    const handle = () => v.doors && v.doors.handle ? v.doors.handle(side) : this.carW(_v1.set(sx * (G.half + 0.03), 0.92, G.H.z - 0.95), new THREE.Vector3());
+    const inner = () => v.doors && v.doors.inner ? v.doors.inner(side) : this.carW(_v1.set(sx * (G.half - 0.09), 0.82, G.H.z - 0.6), new THREE.Vector3());
+    const reach = (hand, P, hold) => ({ start: st => { st.p = this.reachTo(P, { hand, hold, stay: true }); }, run: () => this.reaches && this.reaches[hand] && this.reaches[hand].phase === "on" });
+    const release = hand => ({ start: () => this.release(hand), run: () => !(this.reaches && this.reaches[hand]) });
+    const wait = d => ({ run: st => st.t >= d });
+    // the hand nearer the handle from outside, and the door's hand seated
+    const hOut = sx > 0 ? "l" : "r", hIn = sx > 0 ? "l" : "r";
+    const steps = [];
+    if (mode === "enter") {
+      steps.push(this.cWalk(P.A, 1.25), this.cFace(() => { const h = this.carL(handle(), new THREE.Vector3()); return Math.atan2(h.x - P.A.x, h.z - P.A.z); }),
+        reach(hOut, handle, "grip"), door(0, 0.85, 1.0), release(hOut),
+        this.cWalk(P.B, 0.9), this.cFace(() => sx * Math.PI / 2),
+        this.cSit(0.9), this.cSwing(1.1, true),
+        reach(hIn, inner, "grip"), door(0.85, 0, 0.7), release(hIn),
+        this.cWheel(1, 0.55), { run: () => { c.mode = "drive"; return true; } });
+    } else {
+      steps.push(this.cWheel(0, 0.4), reach(hIn, inner, "grip"), door(v.doors && v.doors.get ? v.doors.get(side) : 0, 0.85, 0.8), release(hIn),
+        this.cSwing(1.0, false), this.cStand(0.9),
+        this.cWalk(P.A, 1.1), this.cFace(() => { const h = this.carL(handle(), new THREE.Vector3()); return Math.atan2(h.x - P.A.x, h.z - P.A.z); }),
+        reach(hOut, handle, "grip"), door(0.85, 0, 0.75), release(hOut), wait(0.1));
+    }
+    c.steps = steps;
+    return new Promise(res => { c.done = () => { if (mode === "exit") this.unseat(); res(true); }; });
+  }
+  /* sequence steps */
+  cWalk(to, sp) {
+    return { run: (st, dt) => {
+      const w = this.carW(to, _f1); const dx = w.x - this.pos.x, dz = w.z - this.pos.z, d = Math.hypot(dx, dz);
+      if (d < 0.03 || st.t > 8) return true;
+      const k = Math.min(1, sp * dt / d) * sstep(0, 0.25, st.t + 0.05);
+      this.pos.x += dx * k; this.pos.z += dz * k; this.speed = sp;
+      if (d > 0.12) this.wantYaw = Math.atan2(dx, dz);
+      return false;
+    } };
+  }
+  cFace(yf) {
+    return { start: st => { st.y = yf(); }, run: st => { this.speed = 0; this.wantYaw = this.carYaw() + st.y; return Math.abs(angDiff(this.yaw, this.wantYaw)) < 0.05 || st.t > 2.5; } };
+  }
+  /* sit: from standing in the opening down onto the seat's edge, back first, ducking under the roof */
+  cSit(d) {
+    const c = this.car;
+    return { start: st => {
+      c.seated = true; c.root.copy(this.carL(this.pos, _f1)).setY(0); c.yaw = angDiff(this.carYaw(), this.yaw);
+      // where the hips are now, and the feet, in the body's frame
+      st.h0 = this.toWorld(this.hipC || _f2.set(0, 0.95, 0), new THREE.Vector3()); this.carL(st.h0, st.h0);
+      for (const s of ["l", "r"]) this.carL(this.feet[s].init ? this.feet[s].pos : this.toWorld(this.wp[this.leg[s].fo], _f3), c.feet[s]);
+      c.feetW = 1;
+    }, run: st => {
+      const u = sstep(0, 1, st.t / d);
+      c.hip.copy(st.h0).lerp(c.P.E, u); c.hip.y = lerp(st.h0.y, c.P.E.y, u) - Math.sin(u * Math.PI) * 0.03;
+      c.hipW = 1; c.sitW = sstep(0.1, 0.9, st.t / d); c.duck = Math.sin(clamp(st.t / d, 0, 1) * Math.PI * 0.85);
+      return st.t >= d;
+    } };
+  }
+  /* swing round on the seat: in (from the edge, facing out, to the seat, facing forward, the feet over the sill onto the
+     pedals) or out (the reverse, the feet onto the ground) */
+  cSwing(d, inward) {
+    const c = this.car, P = c.P, sx = c.G.sx;
+    return { start: st => {
+      st.y0 = c.yaw; st.y1 = inward ? 0 : sx * Math.PI / 2;
+      st.h0 = c.hip.clone(); st.h1 = inward ? c.G.S.clone() : P.E.clone();
+      st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() };
+      st.f1 = inward ? { l: P.rest.clone(), r: P.gas.clone() } : { l: P.out.l.clone(), r: P.out.r.clone() };
+      c.root.set(c.hip.x, 0, c.hip.z);
+    }, run: st => {
+      const u = sstep(0, 1, st.t / d);
+      c.hip.lerpVectors(st.h0, st.h1, u); c.root.set(c.hip.x, 0, c.hip.z);
+      c.yaw = st.y0 + angDiff(st.y0, st.y1) * u;
+      c.duck = (1 - u) * 0.6 * (inward ? 1 : 0) + u * 0.6 * (inward ? 0 : 1);
+      c.sitW = 1; c.hipW = 1;
+      // the door-side foot goes last on the way in, first on the way out
+      for (const s of ["l", "r"]) {
+        const late = (s === "l") === (sx > 0) === inward ? 0.25 : 0;
+        const k = sstep(late, late + 0.75, st.t / d);
+        c.feet[s].lerpVectors(st.f0[s], st.f1[s], k); c.feet[s].y += Math.sin(k * Math.PI) * 0.32;
+      }
+      return st.t >= d;
+    } };
+  }
+  /* stand: up from the seat's edge onto the feet outside, ducking, and back to walking */
+  cStand(d) {
+    const c = this.car;
+    return { start: st => {
+      // the body stands over its feet: that ground point becomes the root
+      st.root = c.feet.l.clone().add(c.feet.r).multiplyScalar(0.5).setY(0);
+      st.root.x += c.G.sx * 0.06;
+      st.h0 = c.hip.clone(); c.root.copy(st.root);
+      st.h1 = st.root.clone().setY(0.92 * (this.rest.thigh_l ? this.rest.thigh_l.at.y / 0.98 : 1)); st.h1.x -= c.G.sx * 0.05;
+    }, run: st => {
+      const u = sstep(0, 1, st.t / d);
+      c.hip.lerpVectors(st.h0, st.h1, u); c.hipW = 1 - sstep(0.75, 1, st.t / d);
+      c.sitW = 1 - sstep(0.15, 0.85, st.t / d); c.duck = Math.sin(clamp(1 - st.t / d, 0, 1) * Math.PI * 0.85);
+      if (st.t >= d) {
+        // walking again: the body's own place and facing
+        const w = this.carW(c.root, _f1); this.pos.set(w.x, this.pos.y, w.z);
+        this.yaw = this.wantYaw = this.carYaw() + c.yaw; this.speed = 0;
+        c.seated = false; c.feetW = 0; c.hipW = 0; c.sitW = 0; c.duck = 0;
+        this.feet.l.init = this.feet.r.init = false; this.lastPos = null;
+        return true;
+      }
+      return false;
+    } };
+  }
+  cWheel(on, d) {
+    const c = this.car;
+    return { start: st => { st.k0 = c.wheelK; }, run: st => { c.wheelK = lerp(st.k0, on, sstep(0, 1, st.t / d)); if (!on) c.hands.l.th = c.hands.r.th = null; return st.t >= d; } };
+  }
+  carStep(dt) {
+    const c = this.car;
+    let st = c.steps[0], guard = 0;
+    while (st && guard++ < 8) {
+      if (!st.started) { st.started = true; st.t = 0; if (st.start) st.start(st); }
+      else st.t += dt;
+      if (!st.run(st, dt)) break;
+      c.steps.shift(); st = c.steps[0];
+    }
+    if (!st && c.done) { const f = c.done; c.done = null; f(); }
+  }
+  /* seated: the body goes where the car's body is (pitch and roll too), at its root and facing in the car */
+  carPlace() {
+    const c = this.car, B = c.G.body;
+    B.updateWorldMatrix(true, false);
+    _m.makeRotationY(c.yaw).setPosition(c.root); _m.premultiply(B.matrixWorld);
+    if (this.group.parent) { this.group.parent.updateWorldMatrix(true, false); _m.premultiply(_m2.copy(this.group.parent.matrixWorld).invert()); }
+    _m.decompose(this.group.position, this.group.quaternion, _v1);
+    this.group.updateMatrix(); this.group.updateMatrixWorld(true);
+    this.pos.copy(this.group.position); this.yaw = this.carYaw() + c.yaw; this.wantYaw = this.yaw;
+  }
+  carHip(hipC) {
+    const c = this.car;
+    const h = _f1.copy(c.hip).sub(c.root).applyAxisAngle(UP, -c.yaw);
+    hipC.lerp(h, c.hipW);
+  }
+  carBody(dt) {
+    const c = this.car, v = c.v, k = c.sitW;
+    // seated back in the seat, the head up; ducking under the roof getting in and out
+    if (k > 0.001) {
+      this.rot("pelvis", -0.12 * k * c.wheelK - 0.02 * k, 0, 0);
+      this.rot("spine_03", 0.06 * k * c.wheelK, 0, 0);
+    }
+    if (c.duck > 0.001) { this.rot("spine_01", 0.28 * c.duck, 0, 0); this.rot("spine_02", 0.22 * c.duck, 0, 0); this.rot("neck_01", 0.15 * c.duck, 0, 0); }
+    // driving: thrown a little outward in the corners, back under acceleration and forward under braking; the head
+    // stays level (the reflex) and looks where the car is going
+    if (c.mode === "drive" || c.wheelK > 0.01) {
+      const yaw = this.carYaw(), sp = v.speed || 0;
+      const yr = c.lastYaw == null || dt <= 0 ? 0 : angDiff(c.lastYaw, yaw) / dt; c.lastYaw = yaw;
+      const acc = dt > 0 ? (sp - c.lastSpeed) / dt : 0; c.lastSpeed = sp;
+      c.lean = damp(c.lean, clamp(sp * yr / G * 0.32, -0.16, 0.16), 5, dt);
+      c.pitch = damp(c.pitch, clamp(-acc / G * 0.35, -0.1, 0.12), 4, dt);
+      this.rot("spine_01", c.pitch * 0.5, 0, c.lean * 0.45); this.rot("spine_02", c.pitch * 0.4, 0, c.lean * 0.35);
+      this.rot("neck_01", -c.pitch * 0.4, 0, -c.lean * 0.5); this.rot("head", 0, 0, -c.lean * 0.3);
+      // the look: ahead, turned into the bend
+      const st = v.steerAngle != null ? v.steerAngle : (v.wheelAngle || 0) / 14;
+      const hw = this.headWorld(_f2), e = c.G.body.matrixWorld.elements;
+      const fx = e[8], fz = e[10], fl = Math.hypot(fx, fz) || 1, a = -clamp(st * 2.4 + yr * 0.25, -1.1, 1.1);
+      const ca = Math.cos(a), sa = Math.sin(a), dx = (fx * ca + fz * sa) / fl, dz = (-fx * sa + fz * ca) / fl;
+      this.taskLook = (this._clook || (this._clook = new THREE.Vector3())).set(hw.x + dx * 12, hw.y - 0.35, hw.z + dz * 12);
+    } else if (!(this.reaches && (this.reaches.l || this.reaches.r))) this.taskLook = null;
+  }
+  carLegs() {
+    const c = this.car, v = c.v;
+    // the right foot on the accelerator, over to the brake when braking, pressing with the pedal
+    if (c.mode === "drive" && c.feetW > 0.5) {
+      const th = clamp(v.throttle != null ? v.throttle : v.input && v.input.throttle || 0, 0, 1), br = clamp(v.brake != null ? v.brake : v.input && v.input.brake || 0, 0, 1);
+      c.brk = damp(c.brk || 0, br > 0.05 ? 1 : 0, 12, 1 / 60);
+      c.feet.r.copy(c.P.gas).lerp(c.P.brake, c.brk); c.feet.r.z += (th * (1 - c.brk) + br * c.brk) * 0.04; c.feet.r.y -= (th * (1 - c.brk) + br * c.brk) * 0.02;
+      c.feet.l.copy(c.P.rest);
+    }
+    for (const s of ["l", "r"]) {
+      const g = this.leg[s];
+      const tgt = this.toChar(this.carW(c.feet[s], _f1), _f4);
+      const cur = _f3.copy(this.wp[g.fo]);
+      this.ik2(g.th, g.ca, g.fo, g.l1, g.l2, cur.lerp(tgt, c.feetW), 0);
+    }
+  }
+  /* the hands on the wheel: each holds the rim at about 10 and 2 and turns with it; past about a quarter turn a hand
+     lets go and takes the rim again further round (hand over hand) while the other one holds */
+  wheelArms(dt) {
+    const c = this.car; if (!c || !c.G.steer || c.wheelK < 0.001) { this.wheelHands = null; return; }
+    const W = c.G.steer, R = c.G.rimR;
+    W.updateWorldMatrix(true, false);
+    if (!W.userData.restQ) { W.userData.restQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(W.rotation.x, W.rotation.y, 0, W.rotation.order)); }
+    const alpha = W.rotation.z;
+    // the wheel's frame at rest, in its own axes: which way is up and which way is the driver's left
+    const qi = _kq.copy(W.userData.restQ).invert();
+    const up = _f1.set(0, 1, 0).applyQuaternion(qi); up.z = 0; up.normalize();
+    const left = _f2.set(1, 0, 0).applyQuaternion(qi); left.z = 0; left.normalize();
+    const home = { l: Math.atan2(up.y * 0.5 + left.y * 0.866, up.x * 0.5 + left.x * 0.866), r: Math.atan2(up.y * 0.5 - left.y * 0.866, up.x * 0.5 - left.x * 0.866) };
+    const hub = W.getWorldPosition(_f3);
+    const N = _f4.set(0, 0, 1).transformDirection(W.matrixWorld);
+    const seatW = this.carW(c.G.S, _v1); if (N.dot(_v2.copy(seatW).sub(hub)) < 0) N.negate();
+    const toC = _m2.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert();
+    this.wheelHands = this.wheelHands || { l: { k: 0, n: new THREE.Vector3(), d: new THREE.Vector3() }, r: { k: 0, n: new THREE.Vector3(), d: new THREE.Vector3() } };
+    for (const s of ["l", "r"]) {
+      const h = c.hands[s], o = c.hands[s === "l" ? "r" : "l"], g = this.arm[s], H = this.handRig[s];
+      if (!g || !H) continue;
+      if (h.th == null) h.th = home[s] - alpha;
+      const drift = angDiff(home[s], h.th + alpha);
+      if (!h.sw && !o.sw && Math.abs(drift) > 1.75) h.sw = { t: 0, a0: h.th + alpha };
+      let ang = h.th, lift = 0;
+      if (h.sw) {
+        h.sw.t += dt; const u = sstep(0, 1, h.sw.t / 0.34);
+        ang = h.sw.a0 + angDiff(h.sw.a0, home[s]) * u - alpha; lift = Math.sin(u * Math.PI);
+        if (h.sw.t >= 0.34) { h.th = home[s] - alpha; h.sw = null; }
+      }
+      const P = _v3.set(R * Math.cos(ang), R * Math.sin(ang), 0).applyMatrix4(W.matrixWorld);
+      const r = _v4.copy(P).sub(hub).normalize();
+      // fingers through the wheel's plane round the rim, the palm toward the hub; lifted toward the driver changing grip
+      const d = _k1.copy(N).multiplyScalar(-1).addScaledVector(r, 0.25).normalize(), n = _k2.copy(r).multiplyScalar(-1);
+      n.addScaledVector(d, -n.dot(d)).normalize();
+      P.addScaledVector(N, lift * 0.08);
+      // into character space
+      const Pc = P.applyMatrix4(toC), dc = d.transformDirection(toC), nc = n.transformDirection(toC);
+      const off = this.handOffset(H, H.gripL, dc, nc, _f1);
+      const wrist = Pc.sub(off);
+      const S = this.wp[g.ua], side = s === "l" ? 1 : -1;
+      this.ikArm(s, wrist, _f2.set(S.x + side * 0.3, S.y - 0.5, S.z - 0.05), c.wheelK);
+      const wh = this.wheelHands[s]; wh.k = c.wheelK * (1 - lift * 0.8); wh.n.copy(nc); wh.d.copy(dc);
+    }
   }
 
   /* ---- the hands: a pose for each (fingers, thumb, spread), the forearm turned so the palm faces the right way, the

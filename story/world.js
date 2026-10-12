@@ -752,7 +752,8 @@ export function buildLot(o) {
   let k = 0;
   for (let x = -17.6; x <= 17.6; x += 3.2) { if (r() < 0.12) continue; addCar(x + (r() - 0.5) * 0.12, -5.6 + (r() - 0.5) * 0.25, Math.PI + (r() - 0.5) * 0.05, KINDS[k % KINDS.length], k * 7 + 3); k++; }
   for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; addCar(x + (r() - 0.5) * 0.12, 4.5 + (r() - 0.5) * 0.25, (r() - 0.5) * 0.05, kd, x > 4 && x < 6 ? 2 : k * 3 + 1); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.9), r: 3, stand: V3(x, 0, 8.8) }; k++; }
-  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x + (r() - 0.5) * 0.12, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
+  // (the stalls in front of the gate stay empty: it's the way in and out)
+  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25 || Math.abs(x) < 3) continue; addCar(x + (r() - 0.5) * 0.12, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
   // one car by the showroom with its engine running and its lights on: someone's ride, waiting (not in the morning)
   let idleCar = null;
   if (!day) { const idle = idleCar = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true }; lotCars.push(idle); idle.wall = { x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 }; set.userData.walls.push(idle.wall);
@@ -776,7 +777,7 @@ export function buildLot(o) {
   set.userData.rockCar = rockCar;
   set.userData.tickCars = dt => tickCars(parked, dt);
   // the cars, now or when they land
-  const land = () => { parkCars(set, parked.concat(showCars)); for (const c of drivable) buildRig(set, c); for (const c of parked) { const [w, l] = carSize(c.kind); c.collider.hw = w / 2; c.collider.hl = l / 2; } };
+  const land = () => { parkCars(set, parked.concat(showCars)); for (const c of drivable) buildRig(set, c); for (const c of parked) if (c.collider) { const [w, l] = carSize(c.kind); c.collider.hw = w / 2; c.collider.hl = l / 2; } };
   if (Object.keys(carLib).length) land();
   else lotReady.then(() => { land(); set.userData.envTex = null; });
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
@@ -852,9 +853,10 @@ export function buildLot(o) {
     }
     // power poles and their wires, along the lot's side of the road
     const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
-    for (let x = -66; x <= 66; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); CO.push({ type: "circle", x, z: 25.4, r: 0.2, what: "pole" }); }
+    // (none in front of the gate: it's a driveway)
+    for (let x = -55; x <= 55; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); CO.push({ type: "circle", x, z: 25.4, r: 0.2, what: "pole" }); }
     for (const [dx, y] of [[-1.0, 10.3], [1.0, 10.3], [0, 9.2]]) {
-      for (let x = -66; x < 66; x += 22) {
+      for (let x = -55; x < 55; x += 22) {
         const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(x + t * 22, y - Math.sin(t * Math.PI) * 0.45, 25.4 + dx * 0.05)); }
         const wm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.012, 3), pbr({ color: "#111", rough: 0.6, wet: 0.5 })); set.add(wm);
       }
@@ -870,7 +872,7 @@ export function buildLot(o) {
       x += w;
     }
     // palms along the road and the lot's west side
-    for (let i = 0; i < 9; i++) palm(-30 + i * 7.5 + (r() - 0.5) * 3, 24.8 + r() * 1.0, 8 + r() * 4, set, r);
+    for (let i = 0; i < 9; i++) { const px = -30 + i * 7.5 + (r() - 0.5) * 3, pz = 24.8 + r() * 1.0, ph = 8 + r() * 4; if (Math.abs(px) > 4.5) palm(px, pz, ph, set, r); }
     for (let i = 0; i < 4; i++) palm(-38 - r() * 4, -20 + i * 11, 7 + r() * 4, set, r);
     const sky = skyDome(o); sky.renderOrder = -1; set.add(sky);
     set.userData.sounds.road = { x: 0, y: 0.5, z: 31, kind: "traffic" };
@@ -921,6 +923,7 @@ export function buildLot(o) {
   set.userData.camRail = [V3(-22, 1.0, 26), V3(-12, 0.7, 16), V3(-2, 1.3, 6), V3(6, 2.2, -3), V3(10, 2.0, -8.5)];
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
   set.userData.ready = lotReady;
+  _debug.sets[day ? "keys" : "lot"] = set;
   return set;
 }
 
@@ -1430,4 +1433,4 @@ loadTotal += CAR_KINDS.length;
 export const lotReady = Promise.all([loadCars().catch(e => console.warn("[world] cars", e)), loadSetTex(LOT_TEX)]);
 lotReady.then(patchLate);
 export const roomsReady = lotReady.then(() => loadSetTex(ROOM_TEX)).then(patchLate);
-export const _debug = { carLib, T, TIER };
+export const _debug = { carLib, T, TIER, sets: {} };

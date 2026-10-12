@@ -598,6 +598,7 @@ function makeRain() {
 }
 
 async function enter(name, o = {}) {
+  if (DRV.state) exitCar("scene", true); // on your feet before anything moves you
   const prev = S.scene;
   S.scene = name; S.phase = "cinematic";
   S.visited = S.visited || {}; S.visited[name] = 1;
@@ -741,6 +742,7 @@ function framePenalty(pos, pts) {
 }
 const ray = new THREE.Raycaster();
 function updateCamera(dt) {
+  if (DRV.state && DRV.veh && !camState.view && !camState.rail && S.phase === "drive" && driveView(dt)) return;
   if (camState.view) { camera.position.copy(camState.view.p); camera.lookAt(camState.view.t); post.comp.u.uFocus.value = camState.view.p.distanceTo(camState.view.t); post.comp.u.uRange.value = camState.view.r || 6; post.comp.u.uDofK.value = quality >= 2 ? 0.8 : 0; return; }
   const k = still() ? 1 : 1 - Math.exp(-6 * dt);
   if (camState.rail) {
@@ -771,7 +773,7 @@ function updateCamera(dt) {
 /* the follow camera: behind you and a little over the right shoulder, leading the way you walk,
    pulled in along the line to your head whenever a wall, a car, a pole or the room's edge would be in the way */
 // outside, a car is as good as a wall (a camera skimming a roof sees nothing but paint); in a room the desks and tables are low enough to look over
-const camWalls = () => (set.userData.walls || []).map(w => ({ ...w, h: w.h != null ? w.h : (set.userData.bounds && (w.x1 - w.x0) > 1.2 && (w.z1 - w.z0) > 1.0 && (w.x1 - w.x0) * (w.z1 - w.z0) < 14 ? 1.1 : 99) }));
+const camWalls = () => (set.userData.walls || []).map(w => ({ ...w, src: w, h: w.h != null ? w.h : (set.userData.bounds && (w.x1 - w.x0) > 1.2 && (w.z1 - w.z0) > 1.0 && (w.x1 - w.x0) * (w.z1 - w.z0) < 14 ? 1.1 : 99) }));
 let camWallsFor = null, camWallList = [];
 function insideAny(x, y, z, pad) {
   if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
@@ -953,7 +955,12 @@ function padPoll(dt) {
   const edge = i => btn(i) && !padPrev[i];
   const any = m > 0.3 || gp.buttons.some(b => b.pressed);
   if (any) { setDev("pad"); mv.idle = 0; }
-  if (edge(0)) act("a"); if (edge(1)) act("b"); if (edge(9)) act("pause"); if (edge(3) || edge(8)) act("journal");
+  // in the car: RT gas, LT brake, the left stick steers, A the handbrake, X the camera, B out
+  const bv = i => (gp.buttons[i] ? gp.buttons[i].value || (gp.buttons[i].pressed ? 1 : 0) : 0);
+  pad.drive = S.phase === "drive" ? { rt: bv(7), lt: bv(6), sx: Math.abs(ax) > DEAD ? Math.sign(ax) * Math.min(1, (Math.abs(ax) - DEAD) / (1 - DEAD - 0.05)) : 0, a: bv(0) } : null;
+  if (S.phase === "drive") { if (edge(1)) exitCar("pad"); if (edge(2)) driveCam(); if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; } }
+  else { if (edge(0)) act("a"); if (edge(1)) act("b"); }
+  if (edge(9)) act("pause"); if (edge(3) || edge(8)) act("journal");
   if (choosing) { if (edge(12)) moveChoice(-1); if (edge(13)) moveChoice(1); }
   if (S.phase === "pause" || S.phase === "journal") { if (edge(12)) moveFocus(-1); if (edge(13)) moveFocus(1); }
   padPrev = {}; gp.buttons.forEach((b, i) => (padPrev[i] = b.pressed));
@@ -977,7 +984,7 @@ function spotsHere() {
     out.push({ id, o, sp, p });
   }
   if (S.scene === "decision") return out.filter(s => s.id === "jason-end");
-  return out;
+  return out.concat(carSpots());
 }
 let near = null;
 const v2 = new THREE.Vector3();
@@ -1030,6 +1037,7 @@ function goInteract(id) {
 }
 async function interact(id, how) {
   if (S.phase !== "explore") return;
+  if (id.startsWith("car:")) { const c = drivables().find(x => "car:" + x.id === id); if (c) enterCar(c, how); return; }
   const o = OBJ[id]; if (!o) return;
   const s = set.userData.spots[id] || {};
   mv.path = null; mv.after = null; guide.clearRing(); progress();
@@ -1038,9 +1046,20 @@ async function interact(id, how) {
   const first = !S.looked[id];
   S.looked[id] = (S.looked[id] || 0) + 1;
   T("story_object", { id, scene: S.scene, first });
-  FX("arrive"); AU.thing(id, at);
-  // reach for the things you can touch
-  if (me && me.play && /^(ledger|phone|keys|cabinet|book|laptop|mem-(folder|letter|cert|laptop|lamp))$/.test(id)) { try { me.play("reach"); } catch (e) {} }
+  // reach for the things you can touch: the sound, the haptic and the motion land when the hand does
+  let fired = false;
+  const feel = () => { if (fired) return; fired = true; FX("arrive"); AU.thing(id, at); };
+  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|mem-(folder|letter|cert|laptop|lamp))$/.test(id) && s.p;
+  if (me && touchable && me.reachTo) {
+    try {
+      const r = me.reachTo(s.p.clone(), { hold: id === "keys" ? "pinch" : /^(cabinet|door)$/.test(id) ? "grip" : "touch", onContact: feel });
+      if (r && r.catch) r.catch(feel);
+      setTimeout(feel, FAST ? 0 : 1200); // a reach that never lands still gets its answer
+    } catch (e) { feel(); }
+  } else {
+    feel();
+    if (me && me.play && touchable) { try { me.play("reach"); } catch (e) {} }
+  }
   // face it, and let whoever it is face you
   const target = s.who ? P[s.who] : null;
   const tp = target ? target.pos : s.p;
@@ -1480,7 +1499,7 @@ const KEYNAME = { shift: "Shift", " ": "Space", enter: "Enter", arrowup: "Up", a
 const keyLabel = k => KEYNAME[k] || (k && k.length === 1 ? k.toUpperCase() : String(k || "").replace(/^./, c => c.toUpperCase()));
 function setDev(d) {
   if (dev === d) return;
-  dev = d; el.dataset.dev = d; glyphs();
+  dev = d; el.dataset.dev = d; glyphs(); driveGlyphs();
 }
 function glyphs() {
   const key = $(".st-prompt__key", promptEl);
@@ -1497,7 +1516,7 @@ function hintText() {
 function act(k) {
   if (S.skipOpen && (k === "a" || k === "pause" || k === "b")) { S.skipOpen(); return; }
   if (k === "pause") { if (S.phase === "pause") unpause(); else if (S.phase === "journal") closeJournal(); else pause(); return; }
-  if (k === "journal") { if (S.phase === "journal") closeJournal(); else if (S.phase === "explore" || S.phase === "talk") openJournal(); return; }
+  if (k === "journal") { if (S.phase === "journal") closeJournal(); else if (S.phase === "explore" || S.phase === "talk" || (S.phase === "drive" && DRV.state === "drive")) openJournal(); return; }
   if (k === "b") { if (S.phase === "journal") closeJournal(); else if (S.phase === "pause") { if (pzView !== "main") pauseView("main"); else unpause(); } else if (S.phase === "close" && S.closeFinish) S.closeFinish(); else if (S.phase === "sheet" && S.deskFinish) S.deskFinish(false); return; }
   if (k === "a") {
     if (S.phase === "pause" || S.phase === "journal") { const a = document.activeElement; if (a && a.click && (pauseEl.contains(a) || journalEl.contains(a))) a.click(); return; }
@@ -1516,6 +1535,16 @@ addEventListener("keydown", e => {
   if (S.phase === "end") return;
   if (S.skipOpen && (k === "escape" || k === "enter" || k === " " || k === SET.keys.act)) { e.preventDefault(); S.skipOpen(); return; }
   if (S.phase === "pause") { if (k === "escape" || k === "p") { e.preventDefault(); act("b"); } return; }
+  if (S.phase === "drive") {
+    // in the car: the keys drive; Esc pauses, Tab or J opens the journal, C swaps the camera, E or F gets out
+    e.preventDefault();
+    if (k === "escape" || k === "p") act("pause");
+    else if (k === "tab" || k === SET.keys.journal) act("journal");
+    else if (k === SET.keys.act || k === "f") { if (!e.repeat) exitCar("key"); }
+    else if (k === "c") { if (!e.repeat) driveCam(); }
+    else keys[k] = true;
+    return;
+  }
   if (k === "tab") { e.preventDefault(); act("journal"); return; }
   const moveKey = ["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || ["up", "down", "left", "right", "run"].some(a => SET.keys[a] === k);
   if (moveKey) { keys[k] = true; if (S.phase === "explore") e.preventDefault(); if (k === SET.keys.run && SET.runToggle && !e.repeat) mv.runLatch = !mv.runLatch; }
@@ -1544,6 +1573,7 @@ cv.addEventListener("pointerdown", e => {
   AU.sound(soundOn()); // a suspended context wakes on the first press inside the episode
   if (S.skipOpen) return;
   if (S.phase === "talk" && line && !choosing) { endLine(true); return; } // a skip: silent
+  if (S.phase === "drive") { if (DRV.state === "drive") { ptrs.set(e.pointerId, { role: "dlook", x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), moved: false, button: e.button, touch }); try { cv.setPointerCapture(e.pointerId); } catch (x) {} } return; }
   if (S.phase !== "explore") return;
   if (!touch && SET.lock && document.pointerLockElement !== cv && e.button === 0) { try { cv.requestPointerLock(); } catch (x) {} }
   if (document.pointerLockElement === cv) { if (e.button === 0 && near) interact(near.id, "click"); return; }
@@ -1555,9 +1585,11 @@ cv.addEventListener("pointerdown", e => {
 });
 cv.addEventListener("pointermove", e => {
   if (document.pointerLockElement === cv && S.phase === "explore") { look(e.movementX || 0, e.movementY || 0, 1); return; }
+  if (document.pointerLockElement === cv && S.phase === "drive") { DRV.look = clamp(DRV.look - (e.movementX || 0) * 0.004 * SET.look, -2.6, 2.6); DRV.lookT = 1.4; return; }
   const p = ptrs.get(e.pointerId); if (!p) return;
   const dx0 = e.clientX - p.x0, dy0 = e.clientY - p.y0;
   if (Math.hypot(dx0, dy0) > 9) p.moved = true;
+  if (p.role === "dlook") { DRV.look = clamp(DRV.look - (e.clientX - p.x) * 0.006 * SET.look, -2.6, 2.6); DRV.lookT = 1.4; p.x = e.clientX; p.y = e.clientY; return; }
   if (p.role === "stick") {
     let dx = e.clientX - p.bx, dy = e.clientY - p.by, d = Math.hypot(dx, dy);
     // the base follows a thumb that runs past the rim, so the stick is never lost
@@ -1609,6 +1641,262 @@ el.addEventListener("click", e => {
   if (b.dataset.st === "journal") act("journal");
   else if (b.dataset.st === "pause") act("pause");
 });
+
+/* ================================================================
+   DRIVING: free play on the lot. A drivable car (set.userData.drivable,
+   story/vehicle.js) gets a Drive prompt while you explore; you walk to the
+   driver's door, reach for the handle, get in, and the camera eases into a
+   chase cam. Keys, a pad or the touch pedals drive it; Get out puts you back
+   on your feet beside it. Never required, never in the story's way: talk
+   prompts are off from inside a car, and anything that needs you on foot (a
+   scene change, a chapter, closing) gets you out first.
+   ================================================================ */
+const DRV = { mod: null, tried: false, veh: null, entry: null, state: null, cam: "chase", blend: 0, au: null, shake: 0, steer: 0, thr: 0, brk: 0, look: 0, lookT: 0, fov: 0, yawC: 0, pos: new THREE.Vector3(), tgt: new THREE.Vector3(), lastGear: 0, hits: 0, log: [], touch: { steer: 0, gas: 0, brake: 0, hb: 0 } };
+function vehMod() {
+  if (DRV.tried) return DRV.modP;
+  DRV.tried = true;
+  DRV.modP = import("./vehicle.js").then(m => (DRV.mod = m && m.createVehicle ? m : null)).catch(() => (DRV.mod = null));
+  return DRV.modP;
+}
+function drivables() {
+  if (!set || (S.scene !== "lot" && S.scene !== "keys") || S.ending) return [];
+  const list = set.userData.drivable; if (!list || !list.length) return [];
+  if (!DRV.tried) vehMod();
+  if (!DRV.mod) return [];
+  return list.filter(c => c.object && c.object.userData.rig);
+}
+function carMeta(c) { const r = c.object.userData.rig; return (r && r.meta) || { W: 1.8, L: 4.6 }; }
+/* the driver's door handle and where to stand for it, from the car where it is now */
+function doorPoint(c) { if (DRV.veh && DRV.veh.entry === c && DRV.veh.doors) { const h = DRV.veh.doors.handle("driver"); if (h) return h; } c.object.updateMatrixWorld(true); return c.object.localToWorld(new THREE.Vector3(carMeta(c).W / 2 + 0.04, 0.98, 0.3)); }
+function doorStand(c) { c.object.updateMatrixWorld(true); const p = c.object.localToWorld(new THREE.Vector3(carMeta(c).W / 2 + 0.62, 0, 0.1)); p.y = 0; return p; }
+function carSpots() { return drivables().map(c => ({ id: "car:" + c.id, o: { verb: UI.drive, label: UI["car_" + c.id] || UI.car, car: true, who: "car" }, sp: { r: 2.3, stand: doorStand(c) }, p: doorPoint(c), car: c })); }
+
+/* the touch controls: a steering pad under the left thumb, the pedals under the right, the handbrake, the camera and Get out */
+const drvEl = document.createElement("div");
+drvEl.className = "st-drive"; drvEl.hidden = true;
+drvEl.innerHTML =
+  '<div class="st-drive__steer" aria-label="' + E(UI.drive_steer) + '"><span class="st-drive__wheel" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="4.5"/><path d="M5.5 22h14M28.5 22h14M24 28.5V43"/></svg></span></div>' +
+  '<div class="st-drive__pedals"><button type="button" class="st-drive__pedal" data-drv="brake" aria-label="' + E(UI.drive_brake) + '"><span>' + E(UI.drive_brake) + '</span></button><button type="button" class="st-drive__pedal is-gas" data-drv="gas" aria-label="' + E(UI.drive_gas) + '"><span>' + E(UI.drive_gas) + "</span></button></div>" +
+  '<div class="st-drive__top"><button type="button" class="st-drive__btn" data-drv="hb"><span>' + E(UI.drive_hb) + '</span></button><button type="button" class="st-drive__btn" data-drv="cam"><kbd>C</kbd><span>' + E(UI.drive_cam) + '</span></button><button type="button" class="st-drive__btn is-out" data-drv="out"><kbd>E</kbd><span>' + E(UI.drive_out) + "</span></button></div>" +
+  '<p class="st-drive__hint"></p>';
+el.appendChild(drvEl);
+const drvSteer = $(".st-drive__steer", drvEl), drvWheel = $(".st-drive__wheel", drvEl), drvHint = $(".st-drive__hint", drvEl);
+const STEER_R = 70;
+let steerPtr = null;
+drvSteer.addEventListener("pointerdown", e => {
+  e.preventDefault(); e.stopPropagation(); setDev("touch");
+  steerPtr = { id: e.pointerId, x0: e.clientX };
+  try { drvSteer.setPointerCapture(e.pointerId); } catch (x) {}
+  drvSteer.classList.add("is-on");
+});
+drvSteer.addEventListener("pointermove", e => {
+  if (!steerPtr || e.pointerId !== steerPtr.id) return;
+  let dx = e.clientX - steerPtr.x0;
+  // a thumb that runs past the rim drags the centre with it, so steering back is always one move
+  if (dx > STEER_R) { steerPtr.x0 = e.clientX - STEER_R; dx = STEER_R; } else if (dx < -STEER_R) { steerPtr.x0 = e.clientX + STEER_R; dx = -STEER_R; }
+  const raw = dx / STEER_R, m = Math.abs(raw) < 0.06 ? 0 : Math.sign(raw) * Math.min(1, (Math.abs(raw) - 0.06) / 0.9);
+  DRV.touch.steer = m;
+});
+const steerEnd = e => { if (!steerPtr || e.pointerId !== steerPtr.id) return; steerPtr = null; DRV.touch.steer = 0; drvSteer.classList.remove("is-on"); };
+drvSteer.addEventListener("pointerup", steerEnd); drvSteer.addEventListener("pointercancel", steerEnd);
+for (const b of $$("[data-drv]", drvEl)) {
+  const k = b.dataset.drv;
+  if (k === "gas" || k === "brake" || k === "hb") {
+    const on = e => { e.preventDefault(); e.stopPropagation(); setDev(e.pointerType === "mouse" ? dev : "touch"); try { b.setPointerCapture(e.pointerId); } catch (x) {} DRV.touch[k] = 1; b.classList.add("is-on"); };
+    const off = e => { DRV.touch[k] = 0; b.classList.remove("is-on"); };
+    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); b.addEventListener("lostpointercapture", off);
+    b.addEventListener("click", e => e.preventDefault());
+  } else b.addEventListener("click", e => { e.stopPropagation(); if (k === "out") exitCar("button"); else if (k === "cam") driveCam(); });
+}
+drvEl.addEventListener("contextmenu", e => e.preventDefault());
+function driveGlyphs() {
+  if (!DRV.state) return;
+  drvEl.dataset.dev = dev;
+  const K = SET.keys, out = $('[data-drv="out"] kbd', drvEl), cam = $('[data-drv="cam"] kbd', drvEl);
+  out.textContent = dev === "pad" ? "B" : keyLabel(K.act); cam.textContent = dev === "pad" ? "X" : "C";
+  out.hidden = cam.hidden = dev === "touch";
+  const wasd = [K.up, K.left, K.down, K.right].every(k => k.length === 1);
+  drvHint.textContent = dev === "touch" ? UI.drive_touch : dev === "pad" ? UI.drive_pad : UI.drive_pointer.replace("{gas}", wasd ? K.up.toUpperCase() : "Up").replace("{brake}", wasd ? K.down.toUpperCase() : "Down").replace("{left}", wasd ? K.left.toUpperCase() : "Left").replace("{right}", wasd ? K.right.toUpperCase() : "Right").replace("{act}", keyLabel(K.act));
+}
+
+/* in: walk to the door, reach for the handle (the door opens as the hand lands), sit, close it, and the engine catches */
+async function enterCar(c, how) {
+  if (S.phase !== "explore" || DRV.state || !me) return;
+  const mod = await vehMod(); if (!mod || S.phase !== "explore") return;
+  mv.path = null; mv.after = null; guide.clearRing(); progress();
+  let v = DRV.veh;
+  if (!v || v.entry !== c) {
+    if (v) { try { v.dispose(); } catch (e) {} }
+    try { v = mod.createVehicle(set, c, { quality }); } catch (e) { return; }
+    v.entry = c; DRV.veh = v;
+  }
+  S.phase = "drive"; DRV.state = "enter"; DRV.entry = c; DRV.hits = 0;
+  el.classList.add("is-driving"); hideWorldUI();
+  T("story_drive", { car: c.id, scene: S.scene, how: how || "" });
+  const at = doorPoint(c);
+  me.wantYaw = Math.atan2(at.x - me.pos.x, at.z - me.pos.z);
+  const running = !!(v.engine && v.engine.on);
+  DRV.au = AU.drive({ running, start: false, rain: S.scene === "keys" ? 0 : 1 });
+  let opened = false;
+  const open = () => { if (opened) return; opened = true; FX("arrive"); hap("tap"); if (DRV.au) DRV.au.door(true, at); };
+  if (me.reachTo) { try { const r = me.reachTo(() => doorPoint(c), { hold: "grip", onContact: open }); if (r && r.catch) r.catch(open); } catch (e) { open(); } }
+  await sleep(FAST ? 0 : 520); open();
+  await swingDoor(v, 1, 0.42);
+  if (DRV.state !== "enter") return;
+  if (me.release) { try { me.release(); } catch (e) {} }
+  let seated = false;
+  if (me.enterCar) { try { await me.enterCar(v, { side: "driver" }); seated = true; } catch (e) {} }
+  if (!seated) { await sleep(FAST ? 0 : 320); hide(me); }
+  DRV.seated = seated;
+  await swingDoor(v, 0, 0.3);
+  if (DRV.state !== "enter") return;
+  if (DRV.au) DRV.au.door(false, at); hap("tap");
+  if (v.engine && !v.engine.on) { v.engine.start(); if (DRV.au) DRV.au.start(); }
+  DRV.state = "drive"; DRV.blend = 0; DRV.camInit = true; DRV.look = 0;
+  if (DRV.au) DRV.au.inside(DRV.cam === "car");
+  drvEl.hidden = false; requestAnimationFrame(() => drvEl.classList.add("is-on")); driveGlyphs();
+}
+function swingDoor(v, to, secs) {
+  return new Promise(res => {
+    if (!v.doors) { res(); return; }
+    const from = v.doors.get("driver") || 0, t0 = performance.now(), d = (FAST ? 0.02 : still() ? 0.12 : secs) * 1000;
+    const step = () => { const u = Math.min(1, (performance.now() - t0) / d); v.doors.open("driver", from + (to - from) * EZ(u)); if (u < 1) requestAnimationFrame(step); else res(); };
+    step();
+  });
+}
+/* out: the car stops, the door opens, you step out beside it; the camera comes back to your shoulder */
+async function exitCar(how, instant) {
+  if (!DRV.state || DRV.state === "exit") return;
+  const v = DRV.veh, c = DRV.entry;
+  const was = DRV.state; DRV.state = "exit";
+  drvEl.classList.remove("is-on"); setTimeout(() => { if (!DRV.state || DRV.state === "exit") drvEl.hidden = true; }, 250);
+  T("story_drive_out", { car: c ? c.id : "", how: how || "" });
+  if (!instant && was === "drive") {
+    // a moving car brakes to a stop before the door opens
+    const t0 = performance.now();
+    while (Math.abs(v.speed) > 0.4 && performance.now() - t0 < 2500 && DRV.state === "exit") await sleep(40);
+  }
+  try { v.park(); } catch (e) {}
+  if (DRV.au) DRV.au.inside(false);
+  if (!instant) { if (DRV.au) DRV.au.door(true, doorPoint(c)); await swingDoor(v, 1, 0.38); }
+  const st = doorStand(c);
+  if (me.exitCar && DRV.seated && !instant) { try { await me.exitCar(v, { side: "driver" }); } catch (e) {} }
+  else { me.pos.set(st.x, 0, st.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.PI / 2; me.speed = 0; if (me.exitCar && DRV.seated) { try { me.exitCar(v, { side: "driver", instant: true }); } catch (e) {} } }
+  // something parked against the driver's door: step out to the first clear side
+  if (blocked(me.pos.x, me.pos.z, 0.2)) { c.object.updateMatrixWorld(true); const W = carMeta(c).W / 2 + 0.62, L = carMeta(c).L / 2 + 0.6; for (const [lx, lz] of [[-W, 0.1], [0, -L], [0, L], [W, -1.2]]) { const q = c.object.localToWorld(new THREE.Vector3(lx, 0, lz)); if (!blocked(q.x, q.z, 0.2)) { me.pos.set(q.x, 0, q.z); break; } } }
+  me.group.visible = true; if (me.shadow) me.shadow.visible = true;
+  if (!instant) { await swingDoor(v, 0, 0.3); if (DRV.au) DRV.au.door(false, doorPoint(c)); hap("tap"); }
+  else if (v.doors) v.doors.open("driver", 0);
+  if (DRV.au) { DRV.au.stop(instant ? 0.1 : 1.2); DRV.au = null; }
+  // the car stays where you left it, a parked car the walk and the camera go round
+  try { v.dispose(); } catch (e) {}
+  DRV.veh = null; navFor = null; camWallsFor = null; if (set) set.userData.navDirty = false;
+  DRV.state = null; DRV.entry = null; DRV.seated = false; DRV.touch = { steer: 0, gas: 0, brake: 0, hb: 0 };
+  el.classList.remove("is-driving");
+  post.comp.u.uDofK.value = 0;
+  if (S.phase === "drive") S.phase = "explore";
+  else if (S.prevPhase === "drive") S.prevPhase = "explore";
+  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true; setTimeout(() => { camState.reframe = false; }, 400);
+  if (!instant) { camera.fov = innerWidth / innerHeight < 1 ? 62 : 48; camera.updateProjectionMatrix(); }
+}
+function driveCam() {
+  if (DRV.state !== "drive") return;
+  DRV.cam = DRV.cam === "chase" ? "car" : "chase"; DRV.camInit = true;
+  if (DRV.au) DRV.au.inside(DRV.cam === "car");
+  if (DRV.seated && me) me.group.visible = DRV.cam === "chase";
+  AU.ui("toggle"); hap("tap");
+}
+/* the inputs, from whichever device was used last; keys snap, but ramp so a tap isn't a lurch */
+function driveInput(dt) {
+  const K = SET.keys, kb = n => !!keys[n];
+  const up = kb(K.up) || kb("arrowup"), dn = kb(K.down) || kb("arrowdown"), lf = kb(K.left) || kb("arrowleft"), rt = kb(K.right) || kb("arrowright");
+  let thr = up ? 1 : 0, brk = dn ? 1 : 0, steer = (rt ? 1 : 0) - (lf ? 1 : 0), hb = kb(" ") ? 1 : 0;
+  const gp = pad.drive;
+  if (gp) { thr = Math.max(thr, gp.rt); brk = Math.max(brk, gp.lt); if (Math.abs(gp.sx) > Math.abs(steer)) steer = gp.sx; hb = Math.max(hb, gp.a); }
+  const t = DRV.touch; thr = Math.max(thr, t.gas); brk = Math.max(brk, t.brake); hb = Math.max(hb, t.hb); if (Math.abs(t.steer) > Math.abs(steer)) steer = t.steer;
+  // keys and pedals ease in and out; an analog stick passes straight through
+  DRV.thr = thr > DRV.thr ? Math.min(thr, DRV.thr + dt * 4) : Math.max(thr, DRV.thr - dt * 6);
+  DRV.brk = brk > DRV.brk ? Math.min(brk, DRV.brk + dt * 6) : Math.max(brk, DRV.brk - dt * 8);
+  DRV.steer = steer === 0 ? damp(DRV.steer, 0, 8, dt) : Math.abs(steer) < 1 ? steer : damp(DRV.steer, steer, 7, dt);
+  return { throttle: DRV.thr, brake: DRV.brk, steer: DRV.steer, handbrake: hb };
+}
+function tickDrive(dt) {
+  const v = DRV.veh; if (!v || !DRV.state) return;
+  const inp = DRV.state === "drive" ? driveInput(dt) : { throttle: 0, brake: DRV.state === "exit" ? 1 : 0, steer: 0, handbrake: DRV.state === "exit" ? 0.3 : 1 };
+  v.update(dt, inp);
+  const p = v.pose || { x: v.object.position.x, z: v.object.position.z, yaw: v.object.rotation.y };
+  if (!DRV.seated && me) { me.pos.set(p.x, 0, p.z); me.yaw = me.wantYaw = p.yaw; me.speed = 0; }
+  if (DRV.touch.steer || dev === "touch") drvWheel.style.transform = "rotate(" + ((v.wheelAngle != null ? v.wheelAngle : DRV.steer * 7) * 57.3 * 0.35).toFixed(1) + "deg)";
+  for (const e of v.events || []) {
+    if (e.type === "impact") {
+      const k = Math.min(1, e.strength / 8);
+      DRV.shake = Math.max(DRV.shake, 0.06 + k * 0.5); DRV.hits++;
+      if (DRV.au) DRV.au.impact(e.strength, e.what === "bound" ? null : { x: e.x, y: e.y || 0.5, z: e.z });
+      if (e.strength > 0.8) hap(e.strength > 5 ? "success" : e.strength > 2 ? "unlock" : "tap");
+      DRV.log.push({ t: S.t, what: e.what, k: +e.strength.toFixed(2) }); if (DRV.log.length > 20) DRV.log.shift();
+    } else if (e.type === "shift") { if (DRV.state === "drive" && e.gear > 0 && DRV.lastGear > 0) hap("tap"); DRV.lastGear = e.gear; }
+    else if (e.type === "splash" && DRV.au) AU.step("puddle", { at: { x: p.x, y: 0.1, z: p.z }, gain: Math.min(1.6, e.strength / 6), ref: 4 });
+    else if (e.type === "bump") DRV.shake = Math.max(DRV.shake, 0.04 * Math.min(1, e.strength || 1));
+  }
+  if (DRV.au) DRV.au.update({ rpm: v.rpm, load: v.load, speed: v.speed, slip: v.slip, gear: v.gear, surface: v.surface, engine: v.engine ? v.engine.on : true });
+  if (set.userData.navDirty) { navFor = null; camWallsFor = null; set.userData.navDirty = false; }
+}
+/* the chase cam: behind and over the car, a beat of lag, looking ahead of where it's going; wider with speed;
+   pulled in short of anything in the way; a shake on a hit. In the car: the driver's eyes. */
+function driveView(dt) {
+  const v = DRV.veh; if (!v) return false;
+  const p = v.pose || { x: v.object.position.x, z: v.object.position.z, yaw: v.object.rotation.y, speed: v.speed };
+  const sp = v.speed || 0, as = Math.abs(sp);
+  const fwd = new THREE.Vector3(Math.sin(p.yaw), 0, Math.cos(p.yaw));
+  // the look: right stick, or a drag, swings the chase cam round; it drifts back behind when you let go
+  DRV.lookT -= dt; if (DRV.lookT <= 0) DRV.look = damp(DRV.look, 0, 2.5, dt);
+  if (DRV.camInit) { DRV.yawC = p.yaw; }
+  // heading the camera follows: the car's yaw with a lag that tightens with speed; reversing it stays put
+  DRV.yawC += angTo(DRV.yawC, p.yaw) * (1 - Math.exp(-(1.6 + as * 0.12) * dt));
+  const fovBase = innerWidth / innerHeight < 1 ? 64 : 52;
+  let pos, look, fov;
+  if (DRV.cam === "car" && DRV.state === "drive") {
+    const seat = v.seat ? v.seat.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(p.x, 0.5, p.z);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(v.body ? v.body.getWorldQuaternion(new THREE.Quaternion()) : new THREE.Quaternion());
+    pos = seat.clone().addScaledVector(up, 0.64).addScaledVector(fwd, 0.04);
+    const ly = p.yaw + DRV.look * 0.8 + (v.steerAngle || 0) * 0.35;
+    look = pos.clone().add(new THREE.Vector3(Math.sin(ly) * 10, -0.6, Math.cos(ly) * 10));
+    fov = fovBase + 6 + Math.min(8, as * 0.25);
+  } else {
+    const a = DRV.yawC + Math.PI + DRV.look, dist = 5.4 + Math.min(1.8, as * 0.06), h = 1.75 + Math.min(0.5, as * 0.015);
+    const pivot = new THREE.Vector3(p.x, 1.25, p.z);
+    const off = new THREE.Vector3(Math.sin(a) * dist, h - 1.25, Math.cos(a) * dist);
+    // march out from the roof; stop short of the first thing in the way (but not the car itself)
+    let free = dist, own = DRV.entry && DRV.entry.wall;
+    if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
+    for (let i = 1; i <= 16; i++) {
+      const t = i / 16, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t;
+      let hit = false;
+      for (const w of camWallList) { if (own && w.src === own) continue; if (y < w.h + 0.2 && x > w.x0 - 0.2 && x < w.x1 + 0.2 && z > w.z0 - 0.2 && z < w.z1 + 0.2) { hit = true; break; } }
+      if (!hit && set.userData.inDriveBounds && t > 0.5 && !set.userData.inDriveBounds(x, z) && S.scene !== "keys") hit = false;
+      if (hit) { free = Math.max(1.6, (t - 0.08) * dist); break; }
+    }
+    DRV.free = DRV.free == null || DRV.camInit ? free : free < DRV.free ? damp(DRV.free, free, 16, dt) : damp(DRV.free, free, 2, dt);
+    const k = DRV.free / dist;
+    pos = new THREE.Vector3(pivot.x + off.x * k, pivot.y + off.y * Math.max(k, 0.7) + (1 - k) * 0.8, pivot.z + off.z * k);
+    const lead = clamp(sp * 0.32, -3, 6);
+    look = new THREE.Vector3(p.x, 1.0, p.z).addScaledVector(fwd, 1.2 + lead);
+    fov = fovBase + Math.min(16, as * 0.55);
+  }
+  // the shake: a hit rattles the frame and settles
+  if (DRV.shake > 0.002 && !still()) { const s = DRV.shake; pos.x += (Math.random() - 0.5) * s * 0.5; pos.y += (Math.random() - 0.5) * s * 0.35; pos.z += (Math.random() - 0.5) * s * 0.5; }
+  DRV.shake = damp(DRV.shake, 0, 7, dt);
+  // easing in from wherever the camera was (the walk's shoulder), then following tightly
+  DRV.blend = Math.min(1, DRV.blend + dt / (FAST ? 0.05 : 1.1));
+  const tight = DRV.camInit || still() ? 1 : DRV.cam === "car" ? 1 - Math.exp(-30 * dt) : 1 - Math.exp(-(2 + 9 * EZ(DRV.blend)) * dt);
+  if (DRV.camInit) { if (DRV.blend < 1 && DRV.cam === "chase" && camera.position.lengthSq() > 0) { DRV.pos.copy(camera.position); DRV.tgt.copy(camState.look); } else { DRV.pos.copy(pos); DRV.tgt.copy(look); } DRV.camInit = false; }
+  DRV.pos.lerp(pos, tight); DRV.tgt.lerp(look, DRV.cam === "car" ? 1 : tight);
+  camera.position.copy(DRV.pos); camState.look.copy(DRV.tgt); camera.lookAt(DRV.tgt);
+  DRV.fov = DRV.fov ? damp(DRV.fov, fov, 3, dt) : fov;
+  if (Math.abs(camera.fov - DRV.fov) > 0.05) { camera.fov = DRV.fov; camera.updateProjectionMatrix(); }
+  post.comp.u.uDofK.value = 0; post.comp.u.uRange.value = 12; post.comp.u.uFocus.value = camera.position.distanceTo(DRV.tgt);
+  return true;
+}
 
 /* ================================================================
    LAMPS: the eight that matter, nearest the camera
@@ -1745,6 +2033,8 @@ function frame(now) {
   const tA = performance.now();
   if (!over) {
     tickLine(dt); tickChoices(dt); ringTick(dt);
+    if (DRV.veh) tickDrive(dt);
+    drvEl.classList.toggle("is-on", S.phase === "drive" && DRV.state === "drive");
     moveMe(dt); movePeople(dt);
     const tP = performance.now();
     for (const p of Object.values(P)) if (p.group.visible) p.update(dt);
@@ -1926,6 +2216,7 @@ async function open(sceneName, how) {
 }
 function close(how) {
   if (!S.open) return;
+  if (DRV.state) exitCar("close", true);
   S.open = false; S.phase = "closed";
   if (line) endLine(true);
   AU.stopAll(); ringOn = false; if (SC() && SC().mix) SC().mix(1, 1);

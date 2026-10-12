@@ -623,6 +623,20 @@
     "k_act": "Interact",
     "k_journal": "Journal",
     "way": "This way",
-    "act": "Interact"
+    "act": "Interact",
+    "drive": "Drive",
+    "car": "the car",
+    "car_idle": "the idling sedan",
+    "car_sedan": "the sedan",
+    "car_truck": "the pickup",
+    "drive_out": "Get out",
+    "drive_cam": "Camera",
+    "drive_hb": "Handbrake",
+    "drive_gas": "Gas",
+    "drive_brake": "Brake",
+    "drive_steer": "Steer",
+    "drive_pointer": "{gas} to drive, {brake} to brake and reverse, {left} and {right} to steer. Space for the handbrake, C for the camera, {act} to get out.",
+    "drive_pad": "RT to drive, LT to brake and reverse, the left stick steers. A for the handbrake, X for the camera, B to get out.",
+    "drive_touch": "Steer with your left thumb. Gas and brake are on the right; hold brake to reverse."
   }
 }
