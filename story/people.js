@@ -47,9 +47,9 @@ const G = 9.81;
 export const LOOKS = {
   jason: { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, pocket: true, nose: true, hair: "#19130f", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#2a4c3a", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
   "jason-memory": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
-  player: { skin: "#8a5d40", lip: "#8a5048", eyes: "#6a4a36", wide: 0.05, hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
+  player: { skin: "#8a5d40", lip: "#7f4c3c", eyes: "#6a4a36", wide: 0.05, hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#6f6a62", hair: "#4a4640", brow: "#7d776e", wide: 0, cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true, tempo: 0.92 },
-  renata: { skin: "#b78a66", lip: "#9a5c50", hair: "#24170f", brow: "#5c4232", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
+  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
 };
 
 export async function loadCast(base, o = {}) {
@@ -310,7 +310,7 @@ class Person {
       else if (name === "lash") { mat = paint({ color: L.brow, map, alphaTest: 0.5, rim: 0, wet: 0, side: THREE.DoubleSide, recolor: true, keep: L.brow, depthWrite: false }); m.renderOrder = -1; }
       else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
       // the eye texture carries its own white and brown iris: a near-white tint keeps the whites white
-      else if (name === "eyes") mat = paint({ color: "#cfd1d3", map, wet: 2.6, rim: 0.1 });
+      else if (name === "eyes") mat = paint({ color: "#e8e6e2", map, wet: 2.6, rim: 0.1 });
       else if (name.startsWith("cloth")) {
         const key = Object.keys(L.cloth).find(k => name.includes(k)) || Object.keys(L.cloth)[0];
         mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: 0.4, wet: key === "shoes" ? 0.35 : 0.12 });
@@ -370,9 +370,9 @@ class Person {
       // a catchlight in each eye, on the eye itself when it has a bone so it moves with the look
       const cl = new THREE.MeshBasicMaterial({ color: "#f3e9d8", transparent: true, opacity: 0.55, depthWrite: false });
       for (const side of [1, -1]) {
-        const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.09, 6, 4), cl);
+        const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.07, 6, 4), cl);
         const eb = this.bones[side > 0 ? "eye_l" : "eye_r"];
-        const p = at(this.eyeX * side - this.eyeR * 0.22, this.eyeY + this.eyeR * 0.28, this.eyeZ + 0.0008);
+        const p = at(this.eyeX * side - this.eyeR * 0.12, this.eyeY + this.eyeR * 0.14, this.eyeZ + 0.0004);
         if (eb) { const r = this.rest[eb.name]; const pw = p.clone().applyQuaternion(hs.w).add(hs.at); d.position.copy(pw.sub(r.at).applyQuaternion(r.wi)); eb.add(d); }
         else { d.position.copy(p); head.add(d); }
       }

@@ -45,35 +45,35 @@ JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-h
 DELL = {"head/head-square": 0.4, "nose/nose-scale-horiz-incr": 0.3, "chin/chin-width-incr": 0.3, "neck/neck-double-incr": 0.3}
 PLAYER = {"head/head-oval": 0.3, "head/head-round": 0.15, "chin/chin-height-decr": 0.15, "chin/chin-width-incr": 0.1,
           "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, 
-          "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.2, "mouth/mouth-cupidsbow-incr": 0.35,
+          "mouth/mouth-lowerlip-volume-decr": 0.25, "mouth/mouth-upperlip-volume-decr": 0.2, "mouth/mouth-cupidsbow-incr": 0.15, "mouth/mouth-scale-depth-decr": 0.35, "mouth/mouth-trans-backward": 0.25, "mouth/mouth-lowerlip-height-decr": 0.35, "mouth/mouth-upperlip-height-decr": 0.3,
           "cheek/l-cheek-volume-incr": 0.2, "cheek/r-cheek-volume-incr": 0.2, "nose/nose-point-width-incr": 0.1, "eyebrows/eyebrows-trans-down": 0.05}
-RENATA = {"head/head-oval": 0.4, "mouth/mouth-lowerlip-volume-decr": 0.5, "mouth/mouth-upperlip-volume-decr": 0.3, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
+RENATA = {"head/head-oval": 0.4, "mouth/mouth-lowerlip-volume-decr": 0.6, "mouth/mouth-upperlip-volume-decr": 0.4, "mouth/mouth-scale-depth-decr": 0.45, "mouth/mouth-trans-backward": 0.35, "mouth/mouth-lowerlip-height-decr": 0.45, "mouth/mouth-upperlip-height-decr": 0.35, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
 
 CAST = {
     "jason": {
         "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
-        "clothes": ["male_elegantsuit01", "shoes02"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON"
+        "clothes": ["male_elegantsuit01", "shoes02"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON", "iris": (0.11, 0.065, 0.045)
     },
     "jason-memory": {
         "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
-        "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": {"depth_top": 0.047, "depth_side": 0.008}, "goatee": True, "face": "JASON"
+        "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": {"depth_top": 0.047, "depth_side": 0.008}, "goatee": True, "face": "JASON", "iris": (0.11, 0.065, 0.045)
     },
     "player": {
         "macro": {"gender": 0.62, "age": 0.45, "muscle": 0.5, "weight": 0.5, "proportions": 0.7, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.35, "asian": 0.3, "caucasian": 0.35}},
-        "clothes": ["male_casualsuit05", "shoes01"], "afro": {"depth_top": 0.024, "depth_side": 0.005}, "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER"
+        "clothes": ["male_casualsuit05", "shoes01"], "afro": {"depth_top": 0.024, "depth_side": 0.005}, "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER", "iris": (0.24, 0.14, 0.075)
     },
     "dell": {
         "macro": {"gender": 1.0, "age": 0.85, "muscle": 0.5, "weight": 0.68, "proportions": 0.55, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.85, "asian": 0.0, "caucasian": 0.15}},
-        "clothes": ["male_worksuit01", "shoes06", "jujube_newsboy_cap"], "brows": "eyebrow010", "lashes": "eyelashes01", "stubble": True, "face": "DELL"
+        "clothes": ["male_worksuit01", "shoes06", "jujube_newsboy_cap"], "brows": "eyebrow010", "lashes": "eyelashes01", "stubble": True, "face": "DELL", "iris": (0.10, 0.07, 0.05)
     },
     "renata": {
         "macro": {"gender": 0.0, "age": 0.52, "muscle": 0.45, "weight": 0.48, "proportions": 0.75, "height": 0.42, "cupsize": 0.5, "firmness": 0.6,
                   "race": {"african": 0.2, "asian": 0.1, "caucasian": 0.7}},
-        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "ponytail01", "brows": "eyebrow012", "lashes": "eyelashes03", "face": "RENATA"
+        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "ponytail01", "brows": "eyebrow012", "lashes": "eyelashes03", "face": "RENATA", "iris": (0.27, 0.16, 0.085)
     }
 }
 
@@ -333,6 +333,45 @@ def add_eye_bones(rig):
     if not any(md.type == "ARMATURE" for md in eye.modifiers):
         md = eye.modifiers.new("Armature", "ARMATURE"); md.object = rig
 
+def eye_image(o, spec):
+    im = eye_texture(os.path.join(UD, "eyes", "materials", "brown_eye.png"), spec.get("iris", (0.2, 0.12, 0.07)))
+    if max(im.size) > 256: im.scale(256, 256)
+    m = o.data.materials[0]; nt = m.node_tree
+    tex = nt.nodes.new("ShaderNodeTexImage"); tex.image = im
+    nt.links.new(tex.outputs["Color"], nt.nodes.get("Principled BSDF").inputs["Base Color"])
+
+def eye_texture(path, iris):
+    """MakeHuman's brown eye, repainted: the iris a believable brown (no red), its detail kept as light and shade, a dark
+    limbal ring at its edge, a black pupil, and whites toned down a little so they never glare"""
+    import numpy as np
+    im = bpy.data.images.load(path)
+    W, H = im.size
+    px = np.array(im.pixels[:], dtype=np.float32).reshape(H, W, 4)
+    rgb = px[..., :3]
+    lum = rgb @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
+    sat = rgb.max(-1) - rgb.min(-1)
+    yy, xx = np.mgrid[0:H, 0:W]
+    out = rgb * 0.9  # the whites, a touch down
+    # the two irises: the saturated discs; split them by the diagonal the texture lays them out on
+    iris_px = (sat > 0.18) & (lum < 0.5)
+    for side in (xx + yy > W, xx + yy <= W):
+        m = iris_px & side
+        if m.sum() < 50: continue
+        cy, cx = yy[m].mean(), xx[m].mean()
+        R = np.sqrt(m.sum() / np.pi) * 1.04
+        r = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2) / R
+        inside = r < 1.12
+        detail = np.clip(lum / max(1e-3, float(lum[m].mean())), 0.55, 1.5)[..., None]
+        col = np.array(iris, dtype=np.float32) * detail
+        col *= (1.0 - 0.55 * np.clip((r - 0.72) / 0.28, 0, 1))[..., None]          # the limbal ring
+        col *= (0.55 + 0.45 * np.clip((r - 0.26) / 0.12, 0, 1))[..., None]         # darker round the pupil
+        col = np.where((r < 0.27)[..., None], np.array([0.012, 0.01, 0.01], dtype=np.float32), col)
+        edge = np.clip((1.12 - r) / 0.12, 0, 1)[..., None]
+        out = np.where(inside[..., None], out * (1 - edge) + col * edge, out)
+    px[..., :3] = out
+    im.pixels.foreach_set(px.ravel())
+    return im
+
 def build(name, spec):
     clear()
     base = HumanService.create_human(mask_helpers=True, detailed_helpers=True, extra_vertex_groups=True, feet_on_ground=True, scale=0.1, macro_detail_dict=spec["macro"])
@@ -369,7 +408,7 @@ def build(name, spec):
         elif "eyebrow" in n: role_material(o, "brow")
         elif "eyelash" in n: role_material(o, "lash")
         elif "teeth" in n: role_material(o, "teeth", (0.85, 0.82, 0.75, 1))
-        elif n in ("low-poly", "high-poly") or ("eye" in n and "glass" not in n): role_material(o, "eyes", image=os.path.join(UD, "eyes", "materials", "brown_eye.png"))
+        elif n in ("low-poly", "high-poly") or ("eye" in n and "glass" not in n): role_material(o, "eyes"); eye_image(o, spec)
         elif any(h in n for h in ("short", "bob", "ponytail", "afro", "long", "braid")): role_material(o, "hair")
         elif "shoe" in n: role_material(o, "cloth_shoes")
         elif "cap" in n or "hat" in n: role_material(o, "cloth_hat")

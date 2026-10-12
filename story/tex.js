@@ -305,6 +305,46 @@ export function plateTex(nrm) {
   return tex(c2, { repeat: true, linear: true });
 }
 
+/* a suspended ceiling: 2 by 2 foot acoustic tiles in a white T-bar grid, fissured; tiled one tile per repeat */
+export function ceilTex() {
+  const c = cv(256, 256), g = c.getContext("2d"), r = rng(41);
+  g.fillStyle = "#d9d6ce"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${r() < 0.5 ? "120,116,108" : "250,248,240"},${(0.15 + r() * 0.35).toFixed(2)})`; g.fillRect(r() * 256, r() * 256, 1 + r() * 3, 1 + r() * 1.5); }
+  g.fillStyle = "#f2f0ea"; g.fillRect(0, 0, 256, 7); g.fillRect(0, 0, 7, 256);
+  g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(7, 7, 249, 2); g.fillRect(7, 7, 2, 249);
+  return tex(c, { repeat: true });
+}
+/* a troffer's lens: a prismatic diffuser in a white frame */
+export function troffTex() {
+  const c = cv(128, 256), g = c.getContext("2d");
+  g.fillStyle = "#e8e6e0"; g.fillRect(0, 0, 128, 256);
+  g.fillStyle = "#fffaf0"; g.fillRect(10, 10, 108, 236);
+  g.fillStyle = "rgba(200,196,186,0.5)"; for (let y = 10; y < 246; y += 6) g.fillRect(10, y, 108, 1);
+  return tex(c);
+}
+/* a wall clock's face: ticks and hands, no numerals */
+export function clockTex(h = 10, m = 8) {
+  const c = cv(256, 256), g = c.getContext("2d");
+  g.fillStyle = "#f1eee6"; g.beginPath(); g.arc(128, 128, 126, 0, 7); g.fill();
+  g.strokeStyle = "#1b1d1a"; g.lineCap = "round";
+  for (let i = 0; i < 60; i++) { const a = i / 60 * Math.PI * 2, l = i % 5 ? 8 : 20; g.lineWidth = i % 5 ? 2 : 5; g.beginPath(); g.moveTo(128 + Math.sin(a) * 112, 128 - Math.cos(a) * 112); g.lineTo(128 + Math.sin(a) * (112 - l), 128 - Math.cos(a) * (112 - l)); g.stroke(); }
+  const hand = (a, l, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(128, 128); g.lineTo(128 + Math.sin(a) * l, 128 - Math.cos(a) * l); g.stroke(); };
+  hand((h + m / 60) / 12 * Math.PI * 2, 60, 8); hand(m / 60 * Math.PI * 2, 92, 5);
+  g.fillStyle = "#1b1d1a"; g.beginPath(); g.arc(128, 128, 7, 0, 7); g.fill();
+  return tex(c);
+}
+/* night through a library's tall window: a dark campus, a few warm windows and lamps, out of focus */
+export function nightTex(seed = 3) {
+  const c = cv(256, 512), g = c.getContext("2d"), r = rng(seed);
+  const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, "#0b1018"); gr.addColorStop(0.65, "#18202a"); gr.addColorStop(1, "#0a0c0e"); g.fillStyle = gr; g.fillRect(0, 0, 256, 512);
+  g.fillStyle = "#07090b"; g.fillRect(0, 330, 256, 182); g.fillRect(20, 250, 120, 100); g.fillRect(170, 280, 90, 60);
+  g.filter = "blur(3px)";
+  for (let i = 0; i < 16; i++) { g.fillStyle = r() < 0.7 ? "rgba(255,196,120,0.75)" : "rgba(190,210,255,0.6)"; g.fillRect(r() * 250, 260 + r() * 120, 6 + r() * 6, 8 + r() * 6); }
+  for (let i = 0; i < 5; i++) { const x = r() * 256, y = 360 + r() * 60; const rg = g.createRadialGradient(x, y, 0, x, y, 30); rg.addColorStop(0, "rgba(255,200,130,0.8)"); rg.addColorStop(1, "rgba(255,200,130,0)"); g.fillStyle = rg; g.fillRect(x - 30, y - 30, 60, 60); }
+  g.filter = "none";
+  return tex(c);
+}
+
 /* paper with a tooth, for the journal and the memory */
 export function paper(w = 512, h = 512, tone = "#e9e1d0") {
   const c = cv(w, h), g = c.getContext("2d"), r = rng(5);

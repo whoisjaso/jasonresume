@@ -181,7 +181,9 @@ void main(){
   // lips: the upper at half strength in the mask and a little darker, the lower fuller and rosier
   vec3 lipC = mix(uLip * vec3(0.78, 0.72, 0.72), uLip, smoothstep(0.55, 0.95, fm.g));
   alb = mix(alb, lipC, smoothstep(0.04, 0.45, fm.g) * 0.9);
-  alb *= 1.0 + fm.b * vec3(0.12, 0.02, -0.02);
+  alb *= 1.0 + fm.b * vec3(0.18, 0.03, -0.03);
+  // the cooler, thinner skin under the eyes (A: 1 none, lower cooler)
+  alb *= mix(vec3(0.9, 0.93, 1.0), vec3(1.0), fm.a);
   float stub = fm.r * mix(0.55, 1.0, vnoise(vObj * uCurlK * 1.7));
   alb = mix(alb, uBeard, clamp(stub * 1.15, 0.0, 1.0));
   #endif
@@ -193,7 +195,9 @@ void main(){
   float ao = mix(1.0, smoothstep(-0.05, 0.55, vWP.y * (uMirror > 0.5 ? -1.0 : 1.0)) * 0.55 + 0.45, uAo);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 3.0);
   // skin: a warm wrap where light meets shadow, so faces never go blue-grey in the shade
-  light += uSkin * vec3(0.09, 0.04, 0.025) * (1.0 - smoothstep(-0.2, 0.6, dot(N, uMoonDir))) ;
+  light += uSkin * vec3(0.11, 0.05, 0.03) * (1.0 - smoothstep(-0.3, 0.6, dot(N, uMoonDir)));
+  // skin scatters: a softer, lower highlight than a wet surface's
+  spec *= mix(1.0, 0.6, uSkin);
   light = mix(light, light * vec3(1.06, 0.98, 0.92) + vec3(0.03, 0.015, 0.008), uSkin);
   vec3 col = alb * light * ao + spec + uRim * fr * uRimK * (0.5 + br) * mix(1.0, 0.45, uSkin);
   col += uEmit;
@@ -299,6 +303,9 @@ uniform sampler2D uEMap; uniform float uEK;
 #ifdef USE_PANEL
 uniform sampler2D uPanel; uniform vec4 uPanelBox;
 #endif
+#ifdef USE_ROOMAO
+uniform vec4 uRoom; uniform float uRoomH;
+#endif
 varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying vec4 vC; varying vec3 vLocal; varying vec3 vLN;
 
 // sample a map by UV, or projected from world space (three planes blended by the normal)
@@ -400,6 +407,16 @@ void main(){
     ao *= mix(0.12, 1.0, seam); rough = mix(0.6, rough, seam);
   }
   #endif
+  #ifdef USE_ROOMAO
+  {
+    // a box room's ambient occlusion, analytic: corners where two surfaces meet darken, and everything near the floor a little
+    vec3 p = vWP; if (uMirror > 0.5) p.y = -p.y;
+    float dx = min(p.x - uRoom.x, uRoom.y - p.x), dz = min(p.z - uRoom.z, uRoom.w - p.z), dy = p.y, dc = uRoomH - p.y;
+    float fw = 1.0 - smoothstep(0.0, 0.7, min(dx, dz)), ff = 1.0 - smoothstep(0.0, 0.5, dy), fc = 1.0 - smoothstep(0.0, 0.6, dc);
+    float wx = 1.0 - smoothstep(0.0, 0.7, dx), wz = 1.0 - smoothstep(0.0, 0.7, dz);
+    ao *= (1.0 - 0.45 * fw * ff) * (1.0 - 0.35 * fw * fc) * (1.0 - 0.3 * wx * wz) * (1.0 - 0.12 * ff);
+  }
+  #endif
   float wet = uWet * uWetAll;
   float up = smoothstep(0.35, 0.85, N.y * (uMirror > 0.5 ? -1.0 : 1.0));
   #ifdef USE_DROPS
@@ -483,7 +500,7 @@ void main(){
 /* one physically based material.
    o: { color, map, nmap, rmap (AO, roughness, metal in R, G, B), emap, ek, emit, rough, metal, coat, coatRough, wet, ao (how much baked AO counts),
         vao (AO in the vertex colour's R), tri (world-space scale for projected maps, 1 / metres), nk (normal strength), spec, diff,
-        drops (water beads), glass (Fresnel opacity), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
+        drops (water beads), glass (Fresnel opacity), room ([x0, x1, z0, z1, height]: a box room's corner occlusion), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
 export function pbr(o = {}) {
   const defines = {};
   const uniforms = {
@@ -512,6 +529,7 @@ export function pbr(o = {}) {
   if (o.vao) defines.USE_VAO = "";
   if (o.drops) defines.USE_DROPS = "";
   if (o.glass) defines.USE_GLASS = "";
+  if (o.room) { defines.USE_ROOMAO = ""; uniforms.uRoom = { value: new THREE.Vector4(...o.room.slice(0, 4)) }; uniforms.uRoomH = { value: o.room[4] }; }
   if (o.panel) { defines.USE_PANEL = ""; uniforms.uPanel = { value: o.panel.tex }; uniforms.uPanelBox = { value: new THREE.Vector4(...o.panel.box) }; }
   const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vertPBR, fragmentShader: fragPBR, defines, side: o.side || THREE.FrontSide,
     transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });
