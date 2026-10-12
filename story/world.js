@@ -514,10 +514,10 @@ export function carLights(own, o) {
   const k = (v) => (v === true ? 1 : v ? +v : 0);
   const head = k(o.head), tail = Math.max(k(o.tail), head * 0.6), brake = k(o.brake), rev = k(o.reverse), cl = k(o.cluster);
   const set = (m, hex, f) => { if (m) m.uniforms.uEmit.value.set(hex).multiplyScalar(f); };
-  set(own.lamp_head_in, "#fff6e6", head * 1.4); set(own.lamp_head, "#fff4e0", head * 0.55);
+  set(own.lamp_head_in, "#fff6e6", head * 1.6); set(own.lamp_head, "#fff4e0", head * 0.12);
   set(own.lamp_tail_in, "#ff1a0a", Math.max(tail * 0.45, brake * 1.6)); set(own.lamp_tail, "#5a0604", Math.max(tail * 0.35, brake * 1.0));
   set(own.lamp_brake, "#ff1a0a", brake * 1.5); set(own.lamp_rev, "#fff4ea", rev * 1.3);
-  set(own.cluster, "#8fb4c8", cl * 0.22);
+  set(own.cluster, "#6f8a96", cl * 0.05);
 }
 function buildRig(set, c) {
   const lib = carLib[c.kind] || carLib[Object.keys(carLib)[0]]; if (!lib || !lib.nodes || !lib.nodes.body) return null;

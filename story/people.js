@@ -1012,6 +1012,7 @@ class Person {
     if (r.phase !== "in") r.from.copy(this.wp[g.ha]);
     const pole = _v4.set(S.x + side * 0.35, S.y - 0.45, S.z - 0.2);
     this.ikArm(r.s, tgt, pole, 1);
+    (r.pole || (r.pole = new THREE.Vector3())).copy(pole); r.cl = cl.clone ? cl.clone() : cl;
     r.k2 = r.k; // used by hands() for the aim and the pose
     this.taskLook = r.k > 0.2 ? this.toWorld(tc, this._look || (this._look = new THREE.Vector3())) : this.taskLook;
   }
@@ -1329,17 +1330,19 @@ class Person {
       }
       const P = _v3.set(R * Math.cos(ang), R * Math.sin(ang), 0).applyMatrix4(W.matrixWorld);
       const r = _v4.copy(P).sub(hub).normalize();
-      // fingers through the wheel's plane round the rim, the palm toward the hub; lifted toward the driver changing grip
-      const d = _k1.copy(N).multiplyScalar(-1).addScaledVector(r, 0.25).normalize(), n = _k2.copy(r).multiplyScalar(-1);
-      n.addScaledVector(d, -n.dot(d)).normalize();
+      // the rim runs across the knuckles (its tangent), the fingers go round it continuing the line of the arm, the
+      // palm on its outside toward the hub; lifted toward the driver while changing grip
       P.addScaledVector(N, lift * 0.08);
-      // into character space
-      const Pc = P.applyMatrix4(toC), dc = d.transformDirection(toC), nc = n.transformDirection(toC);
-      const off = this.handOffset(H, H.gripL, dc, nc, _f1);
-      const wrist = Pc.sub(off);
-      const S = this.wp[g.ua], side = s === "l" ? 1 : -1;
-      this.ikArm(s, wrist, _f2.set(S.x + side * 0.3, S.y - 0.5, S.z - 0.05), c.wheelK);
-      const wh = this.wheelHands[s]; wh.k = c.wheelK * (1 - lift * 0.8); wh.n.copy(nc); wh.d.copy(dc);
+      const Pc = P.applyMatrix4(toC), S = this.wp[g.ua], side = s === "l" ? 1 : -1;
+      const tg = _k3.crossVectors(N, r).transformDirection(toC), rc = r.transformDirection(toC), Nc = _k4.copy(N).transformDirection(toC);
+      const d = _k1.copy(Pc).sub(S).normalize().addScaledVector(Nc, -0.35); d.addScaledVector(tg, -d.dot(tg)).normalize();
+      const n = _k2.crossVectors(tg, d).normalize(); if (n.dot(rc) > 0) n.negate();
+      const off = this.handOffset(H, H.gripL, d, n, _f1);
+      const wrist = _f3.copy(Pc).sub(off);
+      const pole = _f2.set(S.x + side * 0.3, S.y - 0.5, S.z - 0.05);
+      this.ikArm(s, wrist, pole, c.wheelK);
+      const wh = this.wheelHands[s]; wh.k = c.wheelK * (1 - lift * 0.8); wh.n.copy(n); wh.d.copy(d);
+      (wh.at || (wh.at = new THREE.Vector3())).copy(Pc); (wh.pole || (wh.pole = new THREE.Vector3())).copy(pole);
     }
   }
 
@@ -1421,6 +1424,18 @@ class Person {
         lq[ha].slerp(_q2, aimK);
       }
       wq[ha].copy(wq[la]).multiply(lq[ha]);
+      // the contact: wherever the wrist's limits left the hand, put the gripping part of it exactly on the target
+      // (move the wrist by the miss and solve the arm again, the hand keeping its frame); twice converges
+      let ct = null, ccl = null, cpole = null, ck = 0;
+      if (r && r.cl && r.k2 > 0) { ct = r.tc; ccl = r.cl; cpole = r.pole; ck = r.k2; }
+      if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s] && this.wheelHands[s].at && this.car.wheelK > 0.01) { const wh = this.wheelHands[s]; ct = wh.at; ccl = H.gripL; cpole = wh.pole; ck = this.car.wheelK; }
+      if (ct && ck > 0.5) for (let it = 0; it < 3; it++) {
+        const cur = _v4.copy(ccl).applyQuaternion(wq[ha]).add(wp[ha]), e = _v3.copy(ct).sub(cur);
+        if (e.lengthSq() < 4e-6) break;
+        const hw = _kq.copy(wq[ha]);
+        this.ikArm(s, _f3.copy(wp[ha]).add(e), cpole, 1);
+        lq[ha].copy(wq[la]).invert().multiply(hw); wq[ha].copy(hw);
+      }
       // 3. the fingers
       for (const F of H.fingers) {
         const c = cur[F.f][F.j - 1] + (F.f !== "t" ? life * (F.j === 1 ? 1 : 0.5) : 0);

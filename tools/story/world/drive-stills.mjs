@@ -22,7 +22,7 @@ for (const vp of vps) {
   if (fs.existsSync(fonts)) await ctx.route('https://fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: fs.readFileSync(fonts, 'utf8') }));
   await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":false}' }));
   const p = await ctx.newPage(); p.setDefaultTimeout(240000);
-  p.on('pageerror', e => errs.push(`${vp}: ${e.message}`));
+  p.on('pageerror', e => errs.push(`${vp}: ${e.message}`)); p.on('response', r => { if (r.status() >= 400) console.log(`  [${vp}] HTTP ${r.status()} ${r.url()}`); });
   p.on('console', m => { if (m.type() === 'error') console.log(`  [${vp}] ${m.text().slice(0, 300)}`); });
   await p.goto(`http://127.0.0.1:8765/?debug=story&fast=1&pr=1&wq=${vp === 'phone' ? 'lo' : 'hi'}#story/lot`);
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 30000 }).then(() => p.click('#intro [data-intro-skip]')).catch(() => {});
@@ -46,7 +46,7 @@ for (const vp of vps) {
     steer: `(() => { const v = D.cars.truck; v.reset(4.0, 9.5, -Math.PI / 2 + 0.3); v.engine.start(); v.update(0.5, { steer: 1 }); v.lights.set({ head: true }); return cam(v, [2.6, 0.9, 4.2], [0, 0.45, 1.4]); })()`,
     lights: `(() => { const v = D.cars.idle; v.lights.set({ head: true }); v.update(0.05, {}); return cam(v, [1.5, 1.0, 6.5], [0, 0.6, 0]); })()`,
     brake: `(() => { const v = D.cars.idle; v.reset(v.pose.x, v.pose.z, v.pose.yaw); v.lights.auto = false; v.lights.set({ head: true, brake: 1, reverse: 1 }); return cam(v, [-1.2, 1.1, -6.2], [0, 0.7, 0]); })()`,
-    slide: `(() => { const v = D.cars.car; v.doors.close('driver'); v.lights.set({ head: true }); v.reset(-26, -0.7, Math.PI / 2); v.engine.start(); for (let i = 0; i < 120; i++) v.update(1 / 60, { throttle: 1 }); for (let i = 0; i < 34; i++) v.update(1 / 60, { throttle: 0.6, steer: -1, handbrake: i < 22 ? 1 : 0 }); const p = v.pose; return { p: [p.x + 5.5, 1.3, p.z + 4.5], t: [p.x, 0.7, p.z], slip: v.slip, speed: v.speed }; })()`,
+    slide: `(() => { const v = D.cars.car; v.doors.close('driver'); v.lights.set({ head: true }); v.reset(-26, -0.7, Math.PI / 2); v.engine.start(); for (let i = 0; i < 150; i++) v.update(1 / 60, { throttle: 1 }); for (let i = 0; i < 30; i++) v.update(1 / 60, { throttle: 0.6, steer: -1, handbrake: i < 22 ? 1 : 0 }); const p = v.pose; return { p: [p.x + 7.5, 1.5, -0.2], t: [p.x, 0.6, p.z], slip: v.slip, speed: v.speed }; })()`,
     road: `(() => { const v = D.cars.truck; D.set.userData.gate.position.x = -3.2; v.reset(6, 30.5, Math.PI / 2 + 0.05); v.lights.set({ head: true }); v.update(0.1, {}); return cam(v, [-1.5, 1.5, -8.5], [0, 0.9, 2]); })()`
   };
   for (const [name, code] of Object.entries(VIEWS)) {

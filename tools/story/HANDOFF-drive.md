@@ -46,7 +46,8 @@ and there is no power pole or palm in front of the gate (it's a driveway now).
 
 ```js
 import { createVehicle } from "./vehicle.js";
-const car = createVehicle(set, set.userData.drivable[0], { quality });   // quality 0..2 from main.js, optional
+await set.userData.ready;                                   // the rigs are built when the car models land
+const car = createVehicle(set, set.userData.drivable[0]);  // one per car; keep it for the scene's life
 // every frame (vehicle.js substeps internally at 1/120 s; pass the real dt, it clamps at 0.1):
 car.update(dt, { throttle, brake, steer, handbrake });
 ```
@@ -58,7 +59,7 @@ Read every frame:
 | `speed` | m/s along the car's forward axis, signed |
 | `kmh`, `mph` | abs speed |
 | `rpm` | engine rpm, 800 idle to 6400 redline (0 when the engine is off) |
-| `gear` | `-1` reverse, `0` neutral (engine off or stopped with no input), `1..5` |
+| `gear` | `-1` reverse, `0` engine off, `1..5` (automatic: up near 5900 rpm, down under 1900) |
 | `load` | 0..1 how hard the engine is working (throttle times torque); for the engine sound |
 | `slip` | 0..1 how much the tyres are sliding (for squeal and smoke) |
 | `slipF`, `slipR` | 0..1 front and rear separately |
@@ -81,12 +82,22 @@ Parts (Object3D, live, read their world matrices):
 | `steeringWheel` | the wheel, pivot at its hub. `steeringWheel.userData.rimR` is the rim's centre-line radius (m) |
 | `grips()` | `{ left, right, normal }` world Vector3s: the rim at 10 and 2 o'clock as it turns now, and the wheel's face normal toward the driver |
 | `wheels` | `[FL, FR, RL, RR]` nodes, pivot at the hub (FL is the driver's side front) |
-| `doors` | `doors.open(side, t)` with side `"driver"`/`"left"` or `"passenger"`/`"right"`, t 0..1 (1 is about 65 degrees); `doors.get(side)` the t now; `doors.node(side)` the door (pivot on the hinge, local Y up). `doors.handle(side)` the outside handle's world point, `doors.inner(side)` the inside pull |
+| `doors` | `doors.open(side, t)` with side `"driver"`/`"left"` or `"passenger"`/`"right"`, t 0..1 (1 is about 65 degrees; it is set at once, so animate t yourself for a swing; an eased curve is applied to the angle), `doors.close(side)`; `doors.get(side)` the t now; `doors.node(side)` the door (pivot on the hinge, local Y up). `doors.handle(side)` the outside handle's world point, `doors.inner(side)` the inside pull |
 | `lights` | `lights.set({ head, tail, brake, reverse, cluster })` each true/false or 0..1; `update` drives `brake` and `reverse` from the inputs on its own unless you set `lights.auto = false`. `head` also moves a lamp (in `set.userData.lamps`, `car: true`) with the car |
 | `engine` | `engine.on` (bool), `engine.start()`, `engine.stop()`; off means no drive, no rpm, no cluster glow |
 
 Other calls: `reset(x, z, yaw)`, `park()` (stop, handbrake, engine left as is), `dispose()`
-(puts it back as a parked car where it stands).
+(puts it back as a parked car where it stands: it becomes a collider the next car can hit),
+`spec` (`{ kind, mass, wheelbase, a, b, track, cgH, R, torque, L, W, H }`).
+
+Notes:
+- `createVehicle` takes the car out of `set.userData.colliders` (it can't hit itself) and moves its
+  `wall`; nothing else needs doing to "unpark" it.
+- A door left open swings shut on its own once the car does more than 3 m/s.
+- Feel numbers, sedan: 0 to 100 km/h in about 7.5 s (traction-limited in first, wet), 100 to 0 in
+  about 2.6 s and 28 m; a full-lock turn at 40 km/h sits near the grip limit (slip about 0.25);
+  the handbrake at 40 km/h with full lock brings the rear round (slip 1, drifting) in half a second.
+  The steering is quick at a crawl (34 degrees lock) and calm at speed (about 8 degrees at 30 m/s).
 
 Reverse is automatic, the arcade way: holding `brake` when nearly stopped engages reverse and
 `brake` then drives backwards; `throttle` in reverse brakes, and pulls it back into first once stopped.
@@ -165,7 +176,7 @@ x -60 to 60. Past the road's ends there is a soft wall (a spring, no crash) and 
 
 ## 5. Status
 
-- [ ] cars rebuilt with nodes (v2)
-- [ ] vehicle.js driving
-- [ ] colliders and bounds
-- [ ] stills and drive-test
+- [x] cars rebuilt with nodes (v2), five kinds, desktop and phone tiers
+- [x] vehicle.js driving (`node tools/story/world/drive-test.mjs car|idle|truck`: all checks pass)
+- [x] colliders and bounds (parked cars rock, poles stop you dead, the gate is live, soft road ends)
+- [x] stills (`node tools/story/world/drive-stills.mjs <tag>` into tools/verify/out/drive-world-*)
