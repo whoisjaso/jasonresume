@@ -56,12 +56,13 @@ html.story-on body > *:not(#story):not(script):not(dialog) { visibility: hidden 
 .st-cap.is-thought .st-cap__said { font: italic 500 clamp(20px, 2vw, 25px)/1.35 var(--serif); color: var(--bone-2); }
 .st-cap.is-me .st-cap__who b { color: var(--bone); }
 /* the caption ball: hops word to word with the voice; transforms and opacity only */
-.st-cap.has-ball .st-cap__said { line-height: 1.78; }
-.st-cap.has-ball.is-thought .st-cap__said { line-height: 1.62; }
+.st-cap.has-ball .st-cap__said { line-height: 1.95; }
+.st-cap.has-ball.is-thought .st-cap__said { line-height: 1.8; }
 .st-cap__said i.is-now { text-shadow: 0 0 14px rgba(237, 231, 219, .38), 0 1px 2px rgba(0, 0, 0, .9); }
 .st-ball { position: absolute; inset: 0; pointer-events: none; }
-.st-ball i { position: absolute; left: 0; top: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--bone); opacity: 0; will-change: transform, opacity; box-shadow: 0 0 0 1px rgba(10, 15, 13, .28), 0 1px 3px rgba(0, 0, 0, .55), 0 0 9px rgba(237, 231, 219, .4); transform-origin: 50% 50%; }
-.st-ball i.is-ghost { box-shadow: 0 0 6px rgba(237, 231, 219, .5); }
+.st-ball i { position: absolute; left: 0; top: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--bone); opacity: 0; will-change: transform, opacity; box-shadow: 0 0 0 1px rgba(10, 15, 13, .25), 0 1px 4px rgba(0, 0, 0, .6), 0 0 6px rgba(237, 231, 219, .7), 0 0 18px rgba(237, 231, 219, .38); transform-origin: 50% 50%; }
+.st-ball i.is-ghost { box-shadow: 0 0 8px rgba(237, 231, 219, .55); }
+.st-ball b.is-streak { position: absolute; left: 0; top: 0; width: 20px; border-radius: 999px; opacity: 0; will-change: transform, opacity; background: linear-gradient(to right, rgba(237, 231, 219, 0), rgba(237, 231, 219, .55) 70%, rgba(237, 231, 219, .85)); box-shadow: 0 0 10px rgba(237, 231, 219, .25); }
 .st-cap:not(.has-ball) .st-ball { display: none; }
 
 /* ---------- choices ---------- */
@@ -382,17 +383,22 @@ html[data-still] .st-dot.is-new::after { animation: none; opacity: .5; transform
 .st-drive__wheel { width: 64px; height: 64px; display: block; transition: transform .08s linear; }
 .st-drive__wheel svg { width: 100%; height: 100%; fill: none; stroke: var(--bone); stroke-width: 2.6; stroke-linecap: round; }
 .st-drive[data-dev="touch"] .st-drive__pedals { display: flex; align-items: flex-end; gap: 12px; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px)); }
-.st-drive__pedal { width: 78px; height: 96px; border-radius: 18px; border: 1px solid rgba(237, 231, 219, .38) !important; background: rgba(5, 7, 10, .46) !important; display: grid; place-items: end center; padding-bottom: 14px; transition: transform .12s var(--ease), background-color .12s var(--ease); }
-.st-drive__pedal.is-gas { width: 84px; height: 132px; }
+.st-drive__pedal { width: 80px; height: 124px; border-radius: 18px; border: 1px solid rgba(237, 231, 219, .38) !important; background: rgba(5, 7, 10, .46) !important; display: grid; place-items: end center; padding-bottom: 14px; transition: transform .12s var(--ease), background-color .12s var(--ease); }
 .st-drive__pedal.is-on { transform: scale(.95) translateY(2px); background: rgba(237, 231, 219, .22) !important; border-color: rgba(237, 231, 219, .75) !important; }
-.st-drive[data-dev="touch"] [data-drv="hb"] { display: inline-flex; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: calc(max(18px, calc(env(safe-area-inset-bottom) + 14px)) + 146px); }
+.st-drive[data-dev="touch"] [data-drv="hb"] { display: inline-flex; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: calc(max(18px, calc(env(safe-area-inset-bottom) + 14px)) + 138px); }
 .st-drive[data-dev="touch"] [data-drv="hb"].is-on { background: rgba(237, 231, 219, .22) !important; }
 @media (max-height: 480px) {
   .st-drive[data-dev="touch"] .st-drive__steer { width: 164px; height: 96px; }
-  .st-drive__pedal { width: 70px; height: 84px; }
-  .st-drive__pedal.is-gas { width: 76px; height: 112px; }
+  .st-drive__pedal { width: 74px; height: 108px; }
   .st-drive[data-dev="touch"] [data-drv="hb"] { right: auto; bottom: auto; position: static; display: inline-flex; }
   .st-drive__btn { height: 40px; padding: 0 14px; }
 }
 .story.is-paused .st-drive { opacity: 0 !important; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .st-drive__wheel { transition: none; } .st-drive__hint { animation: none; } }
+@media (max-width: 430px) {
+  .st-drive[data-dev="touch"] .st-drive__steer { width: 150px; height: 100px; }
+  .st-drive__pedal { width: 70px; height: 112px; }
+  .st-drive[data-dev="touch"] .st-drive__pedals { gap: 10px; }
+  .st-drive__top { gap: 6px; }
+  .st-drive__btn { padding: 0 12px; }
+}

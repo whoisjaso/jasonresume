@@ -405,14 +405,18 @@ const EZ = (() => { // the site's one ease, cubic-bezier(0.2, 0.7, 0.1, 1), solv
 })();
 const ball = (() => {
   const layer = document.createElement("div"); layer.className = "st-ball"; layer.setAttribute("aria-hidden", "true");
-  const els = [0, 1, 2, 3].map(i => { const b = document.createElement("i"); if (i) b.className = "is-ghost"; layer.appendChild(b); return b; });
+  // the streak first (under everything), then three ghosts, then the ball on top
+  const streak = document.createElement("b"); streak.className = "is-streak"; layer.appendChild(streak);
+  const els = [0, 1, 2, 3].map(i => { const b = document.createElement("i"); if (i) b.className = "is-ghost"; return b; });
+  [3, 2, 1, 0].forEach(i => layer.appendChild(els[i]));
   capEl.appendChild(layer);
   let on = false, pos = [], R = 3.5, host = null, lastK = -1;
   function measure() {
     if (!host) return;
     const c = capEl.getBoundingClientRect(), fs = parseFloat(getComputedStyle(host).fontSize) || 18;
-    R = Math.max(2.6, Math.min(4, fs * 0.19));
+    R = Math.max(4.5, Math.min(6, fs * 0.25)); // about half an em across: 9 px on a phone, 10 to 12 on a desktop
     els.forEach(b => { b.style.width = b.style.height = (2 * R).toFixed(1) + "px"; });
+    streak.style.height = (2 * R * 0.86).toFixed(1) + "px";
     pos = [].map.call(host.children, s => { const r = s.getBoundingClientRect(); return { x: r.left - c.left + r.width / 2, y: r.top - c.top + (r.height - fs) * 0.5 + fs * 0.1 - R - 2, row: Math.round(r.top), bot: r.bottom - c.top - (r.height - fs) * 0.5 }; });
     // on a lower row the hop stays in the gap under the row above, never over its letters
     for (const p of pos) { const above = pos.filter(q => q.row < p.row); p.room = above.length ? Math.max(2.5, p.y - R - Math.max(...above.map(q => q.bot)) - 1) : 40; }
@@ -452,7 +456,7 @@ const ball = (() => {
     return { x: p.x, y: p.y, o: 1, land: t - W[k].s, air: false, rest: t - W[k].e };
   }
   function draw(l, pnow) {
-    if (!on || !l || l.mode === "wait") { if (on) els.forEach(b => { b.style.opacity = "0"; }); return; }
+    if (!on || !l || l.mode === "wait") { if (on) { els.forEach(b => { b.style.opacity = "0"; }); streak.style.opacity = "0"; } return; }
     const W = lineWords(l); if (!W) return;
     const t = lineNow(l, pnow), b = at(W, t); if (!b) return;
     const b1 = at(W, t - 1 / 120) || b;
@@ -466,6 +470,14 @@ const ball = (() => {
     els[0].style.transform = tf(b.x, b.y + dy, ang, sx, sy); els[0].style.opacity = b.o.toFixed(2);
     // the blur: ghosts a beat behind along the same arc, fading, only while it's really moving
     const blur = b.air && !b.wrap ? Math.min(1, sp / 260) : 0;
+    // the streak: a soft pill trailing back along the velocity, as long as the last few hundredths of a second of travel
+    if (blur > 0.05) {
+      const len = Math.min(70, sp * 0.055), w = 2 * R + len, hh = 2 * R * 0.86;
+      streak.style.width = w.toFixed(1) + "px";
+      streak.style.transform = "translate3d(" + (b.x - w + R).toFixed(1) + "px," + (b.y + dy - hh / 2).toFixed(1) + "px,0) rotate(" + ang.toFixed(3) + "rad)";
+      streak.style.transformOrigin = (w - R).toFixed(1) + "px 50%";
+      streak.style.opacity = (blur * 0.75 * b.o).toFixed(2);
+    } else streak.style.opacity = "0";
     for (let i = 1; i < 4; i++) {
       const g = blur > 0.05 ? at(W, t - i * 0.024) : null;
       if (!g || !g.air || g.wrap) { els[i].style.opacity = "0"; continue; }
@@ -1789,7 +1801,9 @@ async function exitCar(how, instant) {
   if (DRV.au) DRV.au.inside(false);
   if (me) me.group.visible = true;
   let out = false;
-  if (!instant && me.inCar && me.exitCar) {
+  // the driver's door against something (another car, a wall): no climbing out into it; you step out on a clear side
+  const ds = doorStand(c), doorFree = !blocked(ds.x, ds.z, 0.25);
+  if (!instant && me.inCar && me.exitCar && doorFree) {
     let p = null; try { p = me.exitCar(v); } catch (e) {}
     out = (await Promise.race([p || Promise.resolve(), skipped])) !== "skip";
   } else if (!instant && !me.inCar) { await swingDoor(v, 1, 0.38); await Promise.race([sleep(260), skipped]); await swingDoor(v, 0, 0.3); }
@@ -1885,19 +1899,37 @@ function driveView(dt) {
     look = pos.clone().add(new THREE.Vector3(Math.sin(ly) * 10, -0.6, Math.cos(ly) * 10));
     fov = fovBase + 6 + Math.min(8, as * 0.25);
   } else {
-    const a = DRV.yawC + Math.PI + DRV.look, dist = 5.4 + Math.min(1.8, as * 0.06), h = 1.75 + Math.min(0.5, as * 0.015);
+    const dist = 5.4 + Math.min(1.8, as * 0.06), h = 1.75 + Math.min(0.5, as * 0.015);
     const pivot = new THREE.Vector3(p.x, 1.25, p.z);
-    const off = new THREE.Vector3(Math.sin(a) * dist, h - 1.25, Math.cos(a) * dist);
-    // march out from the roof; stop short of the first thing in the way (but not the car itself)
-    let free = dist, own = DRV.entry && DRV.entry.wall;
+    const own = DRV.entry && DRV.entry.wall, ownC = DRV.entry && DRV.entry.collider, cols = set.userData.colliders || [];
     if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
-    for (let i = 1; i <= 16; i++) {
-      const t = i / 16, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t;
-      let hit = false;
-      for (const w of camWallList) { if (own && w.src === own) continue; if (y < w.h + 0.2 && x > w.x0 - 0.2 && x < w.x1 + 0.2 && z > w.z0 - 0.2 && z < w.z1 + 0.2) { hit = true; break; } }
-      if (!hit && set.userData.inDriveBounds && t > 0.5 && !set.userData.inDriveBounds(x, z) && S.scene !== "keys") hit = false;
-      if (hit) { free = Math.max(1.6, (t - 0.08) * dist); break; }
-    }
+    // how far out the camera can sit along a heading, and how close a pole or a wall passes the line of sight
+    const probe = a => {
+      const off = new THREE.Vector3(Math.sin(a) * dist, h - 1.25, Math.cos(a) * dist);
+      let free = dist, near = 9;
+      for (let i = 1; i <= 16; i++) {
+        const t = i / 16, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t;
+        let hit = false;
+        for (const w of camWallList) { if (own && w.src === own) continue; if (y < w.h + 0.2 && x > w.x0 - 0.2 && x < w.x1 + 0.2 && z > w.z0 - 0.2 && z < w.z1 + 0.2) { hit = true; break; } }
+        for (const o of cols) {
+          if (o === ownC || o.type !== "circle") continue;
+          const d = Math.hypot(x - o.x, z - o.z) - o.r;
+          if (d < 0.25) { hit = true; break; }
+          if (t > 0.35) near = Math.min(near, d);
+        }
+        if (hit) { free = Math.max(1.6, (t - 0.08) * dist); break; }
+      }
+      return { off, free, near };
+    };
+    // straight behind unless something big is in the way; then swing a little either side to where the view is clear
+    const base = DRV.yawC + Math.PI + DRV.look;
+    let best = probe(base + (DRV.swing || 0)), bestA = DRV.swing || 0;
+    const score = r => r.free / dist * 2 + Math.min(1.2, r.near) - Math.abs(r.a) * 0.6;
+    best.a = bestA;
+    if (best.free < dist * 0.8 || best.near < 0.9) for (const da of [0, 0.3, -0.3, 0.6, -0.6, 0.9, -0.9]) { const r = probe(base + da); r.a = da; if (score(r) > score(best) + 0.15) { best = r; bestA = da; } }
+    else if (DRV.swing) { const r = probe(base); r.a = 0; if (score(r) >= score(best) - 0.05) { best = r; bestA = 0; } }
+    DRV.swingT = bestA; DRV.swing = DRV.camInit ? bestA : damp(DRV.swing || 0, bestA, 2.5, dt);
+    const fin = Math.abs(DRV.swing - bestA) < 0.01 ? best : probe(base + DRV.swing), off = fin.off, free = fin.free;
     DRV.free = DRV.free == null || DRV.camInit ? free : free < DRV.free ? damp(DRV.free, free, 16, dt) : damp(DRV.free, free, 2, dt);
     const k = DRV.free / dist;
     pos = new THREE.Vector3(pivot.x + off.x * k, pivot.y + off.y * Math.max(k, 0.7) + (1 - k) * 0.8, pivot.z + off.z * k);

@@ -629,7 +629,7 @@ async function drive(vname, w, h, mobile) {
   await until(p, () => window.JG_STORY.debug.drive().visible, null, 30000);
   const dOut = await D();
   if (!out) errs.push(`${label}: never got out (${JSON.stringify(dOut)})`);
-  else if (!dOut.visible || dOut.inCar) errs.push(`${label}: out of the car but not on your feet (${JSON.stringify(dOut)})`);
+  else if (!dOut.visible || dOut.inCar) errs.push(`${label}: out of the car but not on your feet (${JSON.stringify(dOut)}, you at ${JSON.stringify((await st(p)).me)})`);
   else notes.push(`${label}: got out on your feet; the walk is back`);
   await ctx.close();
 }
