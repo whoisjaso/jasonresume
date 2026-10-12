@@ -1853,6 +1853,7 @@ function tickDrive(dt) {
     else if (e.type === "splash" && DRV.au) AU.step("puddle", { at: { x: p.x, y: 0.1, z: p.z }, gain: Math.min(1.6, e.strength / 6), ref: 4 });
     else if (e.type === "bump") DRV.shake = Math.max(DRV.shake, 0.04 * Math.min(1, e.strength || 1));
   }
+  if (!DRV.au && DRV.state === "drive" && AU.ctx && soundOn()) { DRV.au = AU.drive({ running: true, start: false, rain: S.scene === "keys" ? 0 : 1 }); if (DRV.au) DRV.au.inside(DRV.cam === "car"); } // the sound came on mid-drive
   if (DRV.au) DRV.au.update({ rpm: v.rpm, load: v.load, speed: v.speed, slip: v.slip, gear: v.gear, surface: v.surface, engine: v.engine ? v.engine.on : true });
   if (set.userData.navDirty) { navFor = null; camWallsFor = null; set.userData.navDirty = false; }
 }
