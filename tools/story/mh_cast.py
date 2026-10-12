@@ -40,11 +40,11 @@ JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-h
          "nose/nose-nostrils-width-incr": 0.45, "nose/nose-flaring-incr": 0.35, "nose/nose-width2-incr": 0.2, "nose/nose-point-width-incr": 0.2,
          "mouth/mouth-lowerlip-volume-incr": 0.45, "mouth/mouth-upperlip-volume-incr": 0.3, "mouth/mouth-scale-horiz-decr": 0.25, "mouth/mouth-cupidsbow-incr": 0.5, "cheek/l-cheek-volume-incr": 0.35, "cheek/r-cheek-volume-incr": 0.35,
          "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2, "eyes/l-eye-height2-incr": 0.35, "eyes/r-eye-height2-incr": 0.35,
-         "eyes/l-eye-scale-incr": 0.15, "eyes/r-eye-scale-incr": 0.15, "eyebrows/eyebrows-trans-down": 0.1,
+         "eyebrows/eyebrows-trans-down": 0.1,
          "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
 DELL = {"head/head-square": 0.4, "nose/nose-scale-horiz-incr": 0.3, "chin/chin-width-incr": 0.3, "neck/neck-double-incr": 0.3}
 PLAYER = {"head/head-oval": 0.3, "head/head-round": 0.15, "chin/chin-height-decr": 0.15, "chin/chin-width-incr": 0.1,
-          "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, "eyes/l-eye-scale-incr": 0.12, "eyes/r-eye-scale-incr": 0.12,
+          "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, 
           "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.2, "mouth/mouth-cupidsbow-incr": 0.35,
           "cheek/l-cheek-volume-incr": 0.2, "cheek/r-cheek-volume-incr": 0.2, "nose/nose-point-width-incr": 0.1, "eyebrows/eyebrows-trans-down": 0.05}
 RENATA = {"head/head-oval": 0.4, "mouth/mouth-upperlip-volume-incr": 0.2, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
@@ -58,12 +58,12 @@ CAST = {
     "jason-memory": {
         "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
-        "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON"
+        "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": {"depth_top": 0.047, "depth_side": 0.008}, "goatee": True, "face": "JASON"
     },
     "player": {
         "macro": {"gender": 0.62, "age": 0.45, "muscle": 0.5, "weight": 0.5, "proportions": 0.7, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.35, "asian": 0.3, "caucasian": 0.35}},
-        "clothes": ["male_casualsuit05", "shoes01"], "hair": "short02", "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER"
+        "clothes": ["male_casualsuit05", "shoes01"], "afro": {"depth_top": 0.024, "depth_side": 0.005}, "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER"
     },
     "dell": {
         "macro": {"gender": 1.0, "age": 0.85, "muscle": 0.5, "weight": 0.68, "proportions": 0.55, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
@@ -298,6 +298,33 @@ def paint_tie(base, size=None):
                     px[py, pxx, :3] = (0.25 + 0.5 * min(1.0, l * 1.6), 0.0, 0.0)
     im.pixels.foreach_set(px.ravel())
 
+def add_eye_bones(rig):
+    """two bones in the head, one at the centre of each eye, and each eye weighted wholly to its own, so the runtime can aim the eyes (saccades, looking at whoever speaks) independently of the head"""
+    eyes = [o for o in bpy.data.objects if o.type == "MESH" and o.data.materials and o.data.materials[0].name == "eyes"]
+    if not eyes or "head" not in rig.data.bones: return
+    eye = eyes[0]
+    inv = rig.matrix_world.inverted()
+    pts = {"l": [], "r": []}
+    for v in eye.data.vertices:
+        w = inv @ (eye.matrix_world @ v.co)
+        pts["l" if w.x > 0 else "r"].append(w)
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.context.view_layer.objects.active = rig; rig.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = rig.data.edit_bones
+    for s, P in pts.items():
+        if not P: continue
+        c = sum(P, Vector()) / len(P)
+        b = eb.new("eye_" + s); b.head = c; b.tail = c + Vector((0, -0.025, 0)); b.parent = eb["head"]; b.use_deform = True
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for g in list(eye.vertex_groups): eye.vertex_groups.remove(g)
+    gl, gr = eye.vertex_groups.new(name="eye_l"), eye.vertex_groups.new(name="eye_r")
+    for v in eye.data.vertices:
+        w = inv @ (eye.matrix_world @ v.co)
+        (gl if w.x > 0 else gr).add([v.index], 1.0, "REPLACE")
+    if not any(md.type == "ARMATURE" for md in eye.modifiers):
+        md = eye.modifiers.new("Armature", "ARMATURE"); md.object = rig
+
 def build(name, spec):
     clear()
     base = HumanService.create_human(mask_helpers=True, detailed_helpers=True, extra_vertex_groups=True, feet_on_ground=True, scale=0.1, macro_detail_dict=spec["macro"])
@@ -341,13 +368,14 @@ def build(name, spec):
         else: role_material(o, "cloth_" + n.replace(" ", "_")[:24])
     face_mask(base, beard="goatee" if spec.get("goatee") else "stubble" if spec.get("stubble") else None)
     grown = []
-    if spec.get("afro"): grown.append(grow_afro(base))
+    if spec.get("afro"): grown.append(grow_afro(base, **(spec["afro"] if isinstance(spec["afro"], dict) else {})))
     for g in grown:
         if g is None: continue
         g.parent = rig
         if not any(md.type == "ARMATURE" for md in g.modifiers):
             md = g.modifiers.new("Armature", "ARMATURE"); md.object = rig
     paint_tie(base)
+    add_eye_bones(rig)
     # export
     bpy.ops.object.select_all(action="SELECT")
     path = os.path.join(OUT, name + ".glb")

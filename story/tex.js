@@ -97,6 +97,159 @@ export function asphalt(W, H, px, lines) {
   return { color: t1, mask: t2 };
 }
 
+/* the lot's ground, as data over the tiled asphalt (assets/story/world/asphalt_*): two textures, linear.
+   detail: R the albedo's multiplier (128 is 1: patched tar darker, faded areas lighter, oil under where cars stand),
+           G painted lines (worn), B ambient occlusion (cars' footprints, curbs, walls), A tar crack seal.
+   mask:   R standing water (puddles in the low spots and along the lines), G how wet (the dry strip under
+           the canopy), B concrete instead of asphalt (walks, aprons, curbs' tops).
+   o: { lines: [[x0, z0, x1, z1]], cars: [{x, z, yaw, w, l}], conc: [[x0, z0, x1, z1]], dry: [[x0, z0, x1, z1]], ao: [[x0, z0, x1, z1, k]] }
+   Returns the textures and the raw puddle and concrete grids for surfaceAt(). */
+export function lotGround(W, H, px, o = {}) {
+  const w = Math.round(W * px), h = Math.round(H * px);
+  const r = rng(21);
+  const P = (x, z) => [(x + W / 2) * px, (z + H / 2) * px];
+  // detail
+  const c = cv(w, h), g = c.getContext("2d");
+  g.fillStyle = "rgb(128,0,255)"; g.fillRect(0, 0, w, h);
+  // patches: older, greyer tar and newer, blacker tar, as soft blotches and as hard-edged rectangles (patched cuts)
+  g.globalCompositeOperation = "source-over";
+  for (let i = 0; i < 90; i++) {
+    const x = r() * w, y = r() * h, rr = (0.8 + r() * 5) * px, dark = r() < 0.55;
+    const gr = g.createRadialGradient(x, y, 0, x, y, rr);
+    const v = dark ? 96 + r() * 20 : 150 + r() * 25;
+    gr.addColorStop(0, `rgba(${v | 0},0,255,${(0.35 + r() * 0.4).toFixed(2)})`); gr.addColorStop(1, `rgba(${v | 0},0,255,0)`);
+    g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, rr, rr * (0.4 + r() * 0.8), r() * 3, 0, 7); g.fill();
+  }
+  for (let i = 0; i < 9; i++) {
+    const x = r() * w, y = r() * h, ww = (1.2 + r() * 3.5) * px, hh = (0.8 + r() * 2.5) * px;
+    g.save(); g.translate(x, y); g.rotate((r() - 0.5) * 0.08); g.fillStyle = `rgba(${(88 + r() * 14) | 0},0,255,0.85)`; g.fillRect(-ww / 2, -hh / 2, ww, hh); g.restore();
+  }
+  // oil: where engines sit, dark and a little sheen (the shader reads very low R as oil)
+  for (const car of o.cars || []) {
+    const [x, y] = P(car.x + Math.sin(car.yaw) * car.l * 0.28, car.z + Math.cos(car.yaw) * car.l * 0.28);
+    for (let k = 0; k < 3; k++) {
+      const rr = (0.25 + r() * 0.45) * px, ox = (r() - 0.5) * 0.6 * px, oy = (r() - 0.5) * 0.6 * px;
+      const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rr);
+      gr.addColorStop(0, "rgba(40,0,255,0.7)"); gr.addColorStop(1, "rgba(40,0,255,0)"); g.fillStyle = gr; g.beginPath(); g.arc(x + ox, y + oy, rr, 0, 7); g.fill();
+    }
+  }
+  // drips and tyre marks along the drive lanes
+  g.lineCap = "round";
+  for (let i = 0; i < 26; i++) {
+    const x0 = r() * w, y0 = (0.42 + (r() - 0.5) * 0.15) * h, len = (3 + r() * 9) * px;
+    g.strokeStyle = `rgba(${(100 + r() * 10) | 0},0,255,0.25)`; g.lineWidth = (0.18 + r() * 0.06) * px;
+    g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(x0 + len * 0.5, y0 + (r() - 0.5) * px * 2, x0 + len, y0 + (r() - 0.5) * px * 3); g.stroke();
+  }
+  // the painted lines into G, worn: broken by small gaps and scuffs
+  g.globalCompositeOperation = "lighter";
+  for (const L of o.lines || []) {
+    const [x0, y0] = P(L[0], L[1]), [x1, y1] = P(L[2], L[3]);
+    g.strokeStyle = "rgba(0,235,0,1)"; g.lineWidth = Math.max(1.5, 0.11 * px);
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  }
+  g.globalCompositeOperation = "destination-out";
+  for (let i = 0; i < 3200; i++) { g.fillStyle = `rgba(0,0,0,${(0.1 + r() * 0.35).toFixed(2)})`; g.fillRect(r() * w, r() * h, (0.04 + r() * 0.25) * px, (0.03 + r() * 0.08) * px); }
+  g.globalCompositeOperation = "source-over";
+  // read back, then do AO and crack seal per pixel
+  const img = g.getImageData(0, 0, w, h), d = img.data;
+  const n1 = noise2(w, h, 7 * px, r), n2 = noise2(w, h, 1.8 * px, r), n3 = noise2(w, h, 0.5 * px, r);
+  for (let i = 0; i < w * h; i++) { const x = i % w, y = (i / w) | 0; d[i * 4] = Math.max(0, Math.min(255, d[i * 4] + (n3(x, y) - 0.5) * 18)); if (d[i * 4 + 3] < 255) { d[i * 4 + 1] = Math.round(d[i * 4 + 1] * d[i * 4 + 3] / 255); d[i * 4 + 3] = 255; } d[i * 4 + 2] = 255; d[i * 4 + 3] = 0; }
+  // AO: soft rounded rectangles under each car, darker at the wheels; plus walls and curbs
+  const aoAt = new Float32Array(w * h).fill(1);
+  const box = (cx, cz, hw, hl, yaw, k, soft) => {
+    const ca = Math.cos(yaw), sa = Math.sin(yaw), rad = Math.hypot(hw, hl) + soft;
+    const [px0, py0] = P(cx - rad, cz - rad), [px1, py1] = P(cx + rad, cz + rad);
+    for (let y = Math.max(0, py0 | 0); y < Math.min(h, py1 + 1); y++) for (let x = Math.max(0, px0 | 0); x < Math.min(w, px1 + 1); x++) {
+      const wx = x / px - W / 2 - cx, wz = y / px - H / 2 - cz;
+      const lx = wx * ca - wz * sa, lz = wx * sa + wz * ca;
+      const qx = Math.max(Math.abs(lx) - hw, 0), qz = Math.max(Math.abs(lz) - hl, 0), dd = Math.hypot(qx, qz);
+      const a = 1 - k * Math.pow(Math.max(0, 1 - dd / soft), 2);
+      const j = y * w + x; if (a < aoAt[j]) aoAt[j] = a;
+    }
+  };
+  for (const car of o.cars || []) {
+    box(car.x, car.z, car.w * 0.42, car.l * 0.44, car.yaw, 0.72, 0.9);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const lx = sx * (car.w / 2 - 0.15), lz = sz * (car.l / 2 - 0.95); const ca = Math.cos(car.yaw), sa = Math.sin(car.yaw); box(car.x + lx * ca + lz * sa, car.z - lx * sa + lz * ca, 0.08, 0.16, car.yaw, 0.9, 0.35); }
+  }
+  for (const a of o.ao || []) box((a[0] + a[2]) / 2, (a[1] + a[3]) / 2, Math.abs(a[2] - a[0]) / 2, Math.abs(a[3] - a[1]) / 2, 0, a[4] || 0.6, a[5] || 0.6);
+  // cracks: long wandering tar-sealed lines (A)
+  const seal = new Uint8Array(w * h);
+  for (let i = 0; i < 34; i++) {
+    let x = r() * w, y = r() * h, a = r() * 6.28; const n = 40 + r() * 140;
+    for (let k = 0; k < n; k++) {
+      a += (r() - 0.5) * 0.7; x += Math.cos(a) * px * 0.12; y += Math.sin(a) * px * 0.12;
+      const wd = Math.max(1, Math.round(px * (0.03 + r() * 0.03)));
+      for (let dy = -wd; dy <= wd; dy++) for (let dx = -wd; dx <= wd; dx++) { const xx = (x + dx) | 0, yy = (y + dy) | 0; if (xx >= 0 && yy >= 0 && xx < w && yy < h) seal[yy * w + xx] = 255; }
+    }
+  }
+  for (let i = 0; i < w * h; i++) { d[i * 4 + 2] = Math.round(255 * aoAt[i]); d[i * 4 + 3] = seal[i]; }
+  g.putImageData(img, 0, 0);
+  // mask: puddles in the low spots (noise), more of them along the lines and the drive lane's crown; dry under the canopy; concrete
+  const m = cv(w, h), mg = m.getContext("2d"), mi = mg.createImageData(w, h), md = mi.data;
+  const conc = new Uint8Array(w * h), pud = new Uint8Array(w * h);
+  const inR = (x, z, R) => x > R[0] && x < R[2] && z > R[1] && z < R[3];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, wx = x / px - W / 2, wz = y / px - H / 2;
+    let v = n1(x, y) * 0.62 + n2(x, y) * 0.3 + n3(x, y) * 0.08;
+    // water gathers where the asphalt dips: away from the cars' footprints, toward the lanes
+    v += (1 - aoAt[i]) * -0.25;
+    const p = Math.max(0, Math.min(1, (v - 0.56) * 7));
+    let wet = 1; for (const R of o.dry || []) if (inR(wx, wz, R)) wet = Math.min(wet, 0.15 + 0.85 * Math.min(1, Math.min(wz - R[1], R[3] - wz) * 0.6));
+    let cc = 0; for (const R of o.conc || []) if (inR(wx, wz, R)) cc = 1;
+    md[i * 4] = Math.round(255 * p * wet * (cc ? 0.2 : 1)); md[i * 4 + 1] = Math.round(255 * wet); md[i * 4 + 2] = cc * 255; md[i * 4 + 3] = 255;
+    pud[i] = md[i * 4]; conc[i] = cc;
+  }
+  mg.putImageData(mi, 0, 0);
+  const t1 = tex(c, { linear: true }), t2 = tex(m, { linear: true });
+  return { detail: t1, mask: t2, w, h, px, W, H, pud, conc };
+}
+/* which lamp lights each texel of the ground: up to eight lamps, one channel each across two textures,
+   visibility from the ground to the lamp through the boxes in the way (cars, walls), softened.
+   lamps: [{ x, y, z, range }], boxes: [{ x, z, hw, hl, yaw, h, y0 }] */
+export function lampShadows(W, H, px, lamps, boxes) {
+  const w = Math.round(W * px), h = Math.round(H * px), n = Math.min(8, lamps.length);
+  const vis = [new Uint8ClampedArray(w * h * 4).fill(255), new Uint8ClampedArray(w * h * 4).fill(255)];
+  const pre = boxes.map(b => ({ ...b, ca: Math.cos(b.yaw || 0), sa: Math.sin(b.yaw || 0), rad: Math.hypot(b.hw, b.hl) }));
+  for (let li = 0; li < n; li++) {
+    const L = lamps[li], arr = vis[li >> 2], ch = li & 3;
+    const near = pre.filter(b => Math.hypot(b.x - L.x, b.z - L.z) < L.range + b.rad);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const gx = x / px - W / 2 + 0.5 / px, gz = y / px - H / 2 + 0.5 / px;
+      const dx = L.x - gx, dz = L.z - gz, dl = Math.hypot(dx, dz);
+      if (dl > L.range) continue;
+      let lit = 1;
+      for (const b of near) {
+        // quick reject: the box's centre far from the ground-to-lamp segment in plan
+        const t = Math.max(0, Math.min(1, ((b.x - gx) * dx + (b.z - gz) * dz) / (dl * dl + 1e-6)));
+        if (Math.hypot(gx + dx * t - b.x, gz + dz * t - b.z) > b.rad) continue;
+        // slab test in the box's frame: ray from (gx, 0, gz) to (L.x, L.y, L.z)
+        const ox = (gx - b.x) * b.ca - (gz - b.z) * b.sa, oz = (gx - b.x) * b.sa + (gz - b.z) * b.ca;
+        const vx = dx * b.ca - dz * b.sa, vz = dx * b.sa + dz * b.ca, vy = L.y;
+        let t0 = 0, t1 = 1;
+        for (const [o0, v, lo, hi] of [[ox, vx, -b.hw, b.hw], [0, vy, b.y0 || 0, b.h], [oz, vz, -b.hl, b.hl]]) {
+          if (Math.abs(v) < 1e-6) { if (o0 < lo || o0 > hi) { t0 = 2; break; } continue; }
+          let a = (lo - o0) / v, c = (hi - o0) / v; if (a > c) [a, c] = [c, a];
+          t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) break;
+        }
+        if (t0 <= t1) { lit = 0; break; }
+      }
+      arr[(y * w + x) * 4 + ch] = lit * 255;
+    }
+  }
+  // soften: a small blur, the lamp head is not a point
+  const out = vis.map(a => {
+    const b = new Uint8ClampedArray(a.length);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let c = 0; c < 4; c++) {
+      let s = 0, k = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const xx = Math.min(w - 1, Math.max(0, x + dx)), yy = Math.min(h - 1, Math.max(0, y + dy)); const wt = 3 - Math.abs(dx) * 0.5 - Math.abs(dy) * 0.5; s += a[(yy * w + xx) * 4 + c] * wt; k += wt; }
+      b[(y * w + x) * 4 + c] = s / k;
+    }
+    const t = new THREE.DataTexture(b, w, h, THREE.RGBAFormat); t.colorSpace = THREE.NoColorSpace; t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true; t.flipY = false;
+    return t;
+  });
+  return out;
+}
+
 /* paper with a tooth, for the journal and the memory */
 export function paper(w = 512, h = 512, tone = "#e9e1d0") {
   const c = cv(w, h), g = c.getContext("2d"), r = rng(5);

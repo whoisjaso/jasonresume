@@ -276,6 +276,172 @@ async function decision(p, mobile, o, label) {
   fps.push(`${label}: ${f.join(' ')}`);
 }
 
+/* ---------- the feel: the way, the controls, the camera, the sound (one short run per viewport) ---------- */
+const FEEL = process.argv.includes('--feel');
+const NOFEEL = process.argv.includes('--nofeel');
+async function feel(vname, w, h, mobile) {
+  const label = `${vname} feel`;
+  const ctx = await ctxFor(w, h, mobile);
+  // every AudioContext the page makes is logged with whether the visitor had pressed anything yet
+  await ctx.addInitScript(() => {
+    window.__ac = [];
+    for (const k of ['AudioContext', 'webkitAudioContext']) {
+      const C = window[k]; if (!C) continue;
+      window[k] = class extends C { constructor(...a) { super(...a); window.__ac.push({ t: performance.now(), active: !!(navigator.userActivation && navigator.userActivation.hasBeenActive) }); } };
+    }
+  });
+  const p = await ctx.newPage();
+  p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
+  await p.goto(URL0 + '?debug=story&fast=1&pr=0.4');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.waitForTimeout(1500);
+  const before = await p.evaluate(() => window.__ac.length);
+  if (before) errs.push(`${label}: ${before} audio context(s) before any gesture`);
+  await p.click('[data-title-play]');
+  await phase(p, 'explore', 120000);
+  await until(p, () => !window.JG_STORY.debug.state().line, null, 30000);
+  const acs = await p.evaluate(() => window.__ac);
+  if (acs.some(a => !a.active)) errs.push(`${label}: an audio context was made before a gesture`);
+  // the sound: built after the press, with its buses, the lot's rain and lamps playing, nothing clipping
+  await until(p, () => window.JG_STORY.debug.audio().loaded, null, 30000);
+  let au = await p.evaluate(() => window.JG_STORY.debug.audio());
+  if (!au.built || !au.buses) errs.push(`${label}: no audio graph after Play (${JSON.stringify(au).slice(0, 200)})`);
+  else {
+    for (const k of ['master', 'voice', 'sfx', 'amb', 'ui']) if (!(au.buses[k] > 0)) errs.push(`${label}: bus ${k} is silent (${au.buses[k]})`);
+    for (const k of ['rain-hiss', 'roof', 'lamp', 'traffic']) if (!au.amb.includes(k)) errs.push(`${label}: the lot has no ${k}`);
+    if (au.peakMax >= 1) errs.push(`${label}: the mix clips (peak ${au.peakMax})`);
+    notes.push(`${label}: audio graph built on Play (${au.state}), buses ${Object.entries(au.buses).filter(([k]) => ['master', 'voice', 'sfx', 'amb', 'ui'].includes(k)).map(([k, v]) => k + ' ' + (+v).toFixed(2)).join(', ')}; lot bed: ${au.amb.join(' ')}`);
+  }
+  // the way: a trail toward Jason; turn the camera and the arrow moves to the side he's on
+  const g0 = await p.evaluate(() => window.JG_STORY.debug.guide());
+  if (!g0.target || g0.target.id !== 'jason-lot') errs.push(`${label}: the way doesn't lead to Jason (${JSON.stringify(g0.target)})`);
+  if (!(g0.trail > 0) || !g0.route || g0.route.length < 2) errs.push(`${label}: no trail on the ground (${g0.trail})`);
+  await p.waitForTimeout(300);
+  await shot0(p, `real-feel-guidance-${vname}`);
+  const sides = {};
+  for (const off of [1.7, -1.7]) {
+    const t = g0.target, a = await p.evaluate(([x, z, o]) => window.JG_STORY.debug.yawTo(x, z, o), [t.x, t.z, off]);
+    await p.waitForTimeout(400);
+    const ar = (await p.evaluate(() => window.JG_STORY.debug.guide())).arrow;
+    if (!ar.shown) { errs.push(`${label}: no edge arrow with the target off screen (turned ${off})`); continue; }
+    const right = ar.x > w / 2, points = Math.cos(ar.ang) > 0;
+    if (right !== points) errs.push(`${label}: the edge arrow at x ${ar.x} points ${points ? 'right' : 'left'}`);
+    sides[off] = right;
+    if (off > 0) await shot0(p, `real-feel-guidance-${vname}-arrow`);
+  }
+  if (sides[1.7] === sides[-1.7]) errs.push(`${label}: the arrow stayed on one side when the camera turned both ways`);
+  else notes.push(`${label}: the trail leads to Jason; the edge arrow follows him off either side of the screen`);
+  // the stuck helper: the arrow pulses once and the objective repeats
+  const n0 = (await p.evaluate(() => window.JG_STORY.debug.guide())).nudges;
+  await p.evaluate(() => window.JG_STORY.debug.stuck()); await p.waitForTimeout(1500);
+  if (!((await p.evaluate(() => window.JG_STORY.debug.guide())).nudges > n0)) errs.push(`${label}: the stuck helper never nudged`);
+  // controls: analog walk and run
+  await p.evaluate(() => window.JG_STORY.debug.put(-8, 9, 0));
+  if (mobile) {
+    const cdp = await ctx.newCDPSession(p);
+    const T0 = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    const bx = Math.round(w * 0.18), by = Math.round(h * 0.75);
+    await T0('touchStart', bx, by); await T0('touchMove', bx, by - 6); await T0('touchMove', bx, by - 26);
+    await p.waitForTimeout(200);
+    const lite = await p.evaluate(() => window.JG_STORY.debug.input());
+    if (!lite.stick || lite.run || !(lite.want > 0.3 && lite.want < 1.46)) errs.push(`${label}: a light push should walk (${JSON.stringify(lite)})`);
+    await T0('touchMove', bx, by - 58); await p.waitForTimeout(200);
+    const full = await p.evaluate(() => window.JG_STORY.debug.input());
+    if (!full.run || !full.stickRun || full.want < 2.5) errs.push(`${label}: a full push should run (${JSON.stringify(full)})`);
+    await p.evaluate(() => window.JG_STORY.debug.sim(45, 1 / 30));
+    const sp = (await p.evaluate(() => window.JG_STORY.debug.input())).speed;
+    if (sp < 2.2) errs.push(`${label}: running speed only ${sp}`);
+    await shot0(p, `real-feel-controls-${vname}`);
+    await T0('touchMove', bx, by - 300); await p.waitForTimeout(100);
+    const follow = await p.evaluate(() => window.JG_STORY.debug.input());
+    if (!follow.run) errs.push(`${label}: a thumb past the rim lost the stick`);
+    await T0('touchEnd'); await p.waitForTimeout(200);
+    const off = await p.evaluate(() => window.JG_STORY.debug.input());
+    if (off.stick || off.mag) errs.push(`${label}: the stick stayed after the thumb lifted`);
+    notes.push(`${label}: floating stick: a light push walks at ${lite.want.toFixed(2)} m/s, a full push runs at ${full.want.toFixed(2)}, the base follows the thumb`);
+    // a drag on the right turns the camera
+    const yaw0 = await p.evaluate(() => window.JG_STORY.debug.camera());
+    await T0('touchStart', Math.round(w * 0.8), Math.round(h * 0.5)); for (let i = 1; i <= 6; i++) await T0('touchMove', Math.round(w * 0.8) - i * 20, Math.round(h * 0.5)); await T0('touchEnd');
+    await p.evaluate(() => window.JG_STORY.debug.sim(1, 1 / 30)); await p.waitForTimeout(1200);
+    const yaw1 = await p.evaluate(() => window.JG_STORY.debug.camera());
+    if (Math.hypot(yaw0[0] - yaw1[0], yaw0[2] - yaw1[2]) < 0.05) errs.push(`${label}: dragging on the right did not turn the camera`);
+  } else {
+    await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(45, 1 / 30));
+    const walk = (await p.evaluate(() => window.JG_STORY.debug.input())).speed;
+    await p.keyboard.down('Shift'); await p.evaluate(() => window.JG_STORY.debug.sim(45, 1 / 30));
+    const run = (await p.evaluate(() => window.JG_STORY.debug.input())).speed;
+    await p.keyboard.up('Shift'); await p.keyboard.up('w');
+    if (!(walk > 1.2 && walk < 1.6) || !(run > 2.3)) errs.push(`${label}: W walks at ${walk}, Shift W runs at ${run}`);
+    else notes.push(`${label}: W walks at ${walk.toFixed(2)} m/s, Shift runs at ${run.toFixed(2)}`);
+    const sf = await p.evaluate(() => [0.1, 0.3, 0.6, 0.85, 1].map(m => window.JG_STORY.debug.speedFor(m)));
+    if (!(sf[0] === 0 || sf[0] < sf[1]) || !(sf[1] < sf[2]) || sf[3] < 2.5) errs.push(`${label}: the analog curve is off ${sf}`);
+  }
+  // tap to walk around a parked car: the path bends round it and gets there
+  const walls = await p.evaluate(() => window.JG_STORY.debug.walls());
+  const car = walls.find(r => r[1] - r[0] > 1.8 && r[1] - r[0] < 3 && r[3] - r[2] > 4 && r[3] - r[2] < 6 && r[2] > 0 && r[3] < 10);
+  if (!car) errs.push(`${label}: no parked car to walk around`);
+  else {
+    const cx = (car[0] + car[1]) / 2, from = [cx, car[3] + 1.2], to = [cx, car[2] - 1.2];
+    await p.evaluate(([x, z]) => window.JG_STORY.debug.put(x, z, Math.PI), from);
+    const path = await p.evaluate(([x, z]) => window.JG_STORY.debug.walk(x, z), to);
+    if (!path || path.length < 3) errs.push(`${label}: the walk across the car went straight (${JSON.stringify(path)})`);
+    else {
+      const hit = (x, z) => walls.some(r => x > r[0] - 0.05 && x < r[1] + 0.05 && z > r[2] - 0.05 && z < r[3] + 0.05);
+      let through = false;
+      for (let i = 1; i < path.length; i++) for (let k = 0; k <= 20; k++) { const t = k / 20; if (hit(path[i - 1][0] + (path[i][0] - path[i - 1][0]) * t, path[i - 1][1] + (path[i][1] - path[i - 1][1]) * t)) through = true; }
+      if (through) errs.push(`${label}: the path cuts through a wall ${JSON.stringify(path)}`);
+      const end = await p.evaluate(() => window.JG_STORY.debug.sim(600, 1 / 30));
+      const miss = Math.hypot(end[0] - to[0], end[1] - to[1]);
+      if (miss > 0.4) errs.push(`${label}: walking round the car ended ${miss.toFixed(2)} m short`);
+      else notes.push(`${label}: tap to walk goes round a parked car in ${path.length - 1} legs and arrives`);
+    }
+  }
+  // the camera never ends up inside a car, a pole, a fence or a person
+  const pts = [[0.2, 19.5], [3, 18.5], [-6, 9], [cxOr(car, 0), 8.6], [4.8, 1], [10.6, -16.2], [13, -16.3], [-13.6, -6.4], [-1.5, 12.6], [18, -1], [-20, 0.5], [9, -12.5]];
+  const pr = await p.evaluate(pts => window.JG_STORY.debug.camProbe(pts), pts);
+  if (pr.bad.length) errs.push(`${label}: camera inside geometry at ${pr.bad.length} of ${pr.n} samples, e.g. ${JSON.stringify(pr.bad.slice(0, 3))}`);
+  else notes.push(`${label}: camera clear of geometry at all ${pr.n} sampled positions on the lot`);
+  // skips are silent: no FX, no haptic, no interface sound when a line is cut short
+  await p.evaluate(() => window.JG_STORY.debug.put(3.2, 18.2, 0));
+  await use(p, mobile, 'dell', label);
+  const lineOn = await until(p, () => !!window.JG_STORY.debug.state().line, null, 20000);
+  if (lineOn) {
+    await p.evaluate(() => { window.__fx = 0; const f = window.JG_FX, h = window.JG_HAPTIC; window.JG_FX = k => { window.__fx++; return f(k); }; window.JG_HAPTIC = k => { window.__fx++; return h(k); }; window.__ev = window.JG_STORY.debug.audio().events.length; window.__evT = performance.now(); });
+    if (mobile) await p.tap('.st-cap', { force: true }); else await p.click('.st-cap', { force: true });
+    await p.waitForTimeout(400);
+    const r = await p.evaluate(() => ({ fx: window.__fx, ev: window.JG_STORY.debug.audio().events.filter(e => e.t > window.__evT && !['step', 'cloth', 'amb', 'scene', 'loaded', 'voice'].includes(e.kind)) }));
+    if (r.fx || r.ev.length) errs.push(`${label}: skipping a line made sound or a haptic (${r.fx} fx, ${JSON.stringify(r.ev)})`);
+    else notes.push(`${label}: skipping a line is silent`);
+  } else errs.push(`${label}: Dell never spoke`);
+  // finish Dell's talk with the first choice
+  const sc = await untilChoice(p, label); if (sc && sc.choices) await choose(p, mobile, sc.choices[0], label);
+  await finishTalk(p, label);
+  // settings: in the pause menu, sliders that stick across a reload
+  if (mobile) await p.tap('[data-st="pause"]'); else await p.keyboard.press('Escape');
+  await phase(p, 'pause', 8000);
+  if (mobile) await p.tap('[data-p="settings"]'); else await p.click('[data-p="settings"]');
+  await p.waitForSelector('[data-mix="master"]', { timeout: 5000 });
+  await p.evaluate(() => { const r = document.querySelector('[data-mix="master"]'); r.value = 40; r.dispatchEvent(new Event('input', { bubbles: true })); const m = document.querySelector('[data-mix="music"]'); m.value = 25; m.dispatchEvent(new Event('input', { bubbles: true })); });
+  if (!mobile) await p.click('[data-c="runToggle"]');
+  await p.waitForTimeout(400);
+  au = await p.evaluate(() => window.JG_STORY.debug.audio());
+  const lv = await p.evaluate(() => window.JG_SCORE.level && window.JG_SCORE.level());
+  if (Math.abs(au.mix.master - 0.4) > 0.01 || Math.abs(au.buses.master - 0.4) > 0.05) errs.push(`${label}: the Master slider did not set the level (${au.mix.master}, bus ${au.buses.master})`);
+  if (!lv || Math.abs(lv.music - 0.1) > 0.02) errs.push(`${label}: the Music slider did not reach the score (${JSON.stringify(lv)})`);
+  await shot0(p, `real-feel-settings-${vname}`);
+  await textRules(p, `${label} settings`);
+  await p.reload();
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.click('[data-title-play]');
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().open, null, 60000);
+  const kept = await p.evaluate(() => window.JG_STORY.debug.settings());
+  if (Math.abs(kept.mix.master - 0.4) > 0.01 || Math.abs(kept.mix.music - 0.25) > 0.01 || (!mobile && !kept.runToggle)) errs.push(`${label}: settings not kept across a reload ${JSON.stringify(kept)}`);
+  else notes.push(`${label}: Master, Music${mobile ? '' : ' and the run toggle'} kept across a reload`);
+  await ctx.close();
+}
+function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
+async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
+
 const VIEWS = [['desktop', 1440, 900, false], ['landscape', 844, 390, true], ['portrait', 390, 844, true]];
 let RAN_PORTRAIT = false;
 const ALL_MEDALS = Object.keys(LIB.trophies).filter(s => s !== LIB.platinum);
@@ -289,6 +455,8 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (!NOFEEL && !ONLY_PATH) { try { await feel(vname, w, h, mobile); } catch (e) { errs.push(`${vname} feel: ${e.message.split('\n')[0]}`); } }
+  if (FEEL) continue;
   if (vname === 'portrait') RAN_PORTRAIT = true;
   const paths = vname === 'desktop' ? PATHS : vname === 'landscape' ? [PATHS[0], PATHS[1], PATHS[2]] : [PATHS[3], PATHS[4]];
   for (const P0 of paths) {

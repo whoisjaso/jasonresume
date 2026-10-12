@@ -137,14 +137,27 @@ function plane(w, h, mat, parent) { const m = new THREE.Mesh(new THREE.PlaneGeom
 function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
 /* ---------- the wet ground: puddles, ripples, the lamps' pools and their streaked reflections ---------- */
-export function groundMat(color, mask, o = {}) {
+export function groundMat(g, o = {}) {
+  const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
+  const flat = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1); flat.needsUpdate = true;
+  const grey = new THREE.DataTexture(new Uint8Array([60, 60, 60, 255]), 1, 1); grey.colorSpace = THREE.SRGBColorSpace; grey.needsUpdate = true;
+  const arm0 = new THREE.DataTexture(new Uint8Array([255, 200, 0, 255]), 1, 1); arm0.needsUpdate = true;
   return new THREE.ShaderMaterial({
-    uniforms: { ...U, uCol: { value: color }, uMask: { value: mask }, uRefl: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uSize: { value: new THREE.Vector2(o.w || 70, o.h || 50) }, uRain: { value: o.rain != null ? o.rain : 1 }, uWet: { value: o.wet != null ? o.wet : 1 }, uReflK: { value: 1 } },
+    uniforms: { ...U, uDetail: { value: g.detail }, uMask: { value: g.mask }, uRefl: { value: null }, uRes: { value: new THREE.Vector2(1, 1) },
+      uSize: { value: new THREE.Vector2(g.W, g.H) }, uRain: { value: o.rain != null ? o.rain : 1 }, uWet: { value: o.wet != null ? o.wet : 1 }, uReflK: { value: 1 },
+      uAsC: { value: T.asphC || grey }, uAsN: { value: T.asphN || flat }, uAsR: { value: T.asphR || arm0 },
+      uCoC: { value: T.concC || grey }, uCoN: { value: T.concN || flat }, uCoR: { value: T.concR || arm0 },
+      uSh0: { value: o.sh ? o.sh[0] : white }, uSh1: { value: o.sh ? o.sh[1] : white }, uShLamp: { value: (o.shLamps || []).concat(Array(8).fill(new THREE.Vector3(0, -999, 0))).slice(0, 8) },
+      uTile: { value: 3.6 }, uDay: { value: o.day ? 1 : 0 } },
     vertexShader: `varying vec3 vWP; varying vec2 vUv; void main(){ vUv = uv; vec4 wp = modelMatrix * vec4(position, 1.0); vWP = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }`,
     fragmentShader: `
-      uniform float uTime; uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uMoonDir; uniform vec3 uMoon;
-      uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; uniform vec3 uFog; uniform float uFogDen;
-      uniform sampler2D uCol; uniform sampler2D uMask; uniform sampler2D uRefl; uniform vec2 uRes; uniform float uRain; uniform float uWet; uniform float uReflK;
+      #define PI_ 3.14159265
+      uniform float uTime; uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uMoonDir; uniform vec3 uMoon; uniform vec3 uRim;
+      uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; uniform vec3 uFog; uniform float uFogDen; uniform float uSat;
+      uniform sampler2D uDetail; uniform sampler2D uMask; uniform sampler2D uRefl; uniform vec2 uRes; uniform vec2 uSize; uniform float uRain; uniform float uWet; uniform float uReflK;
+      uniform sampler2D uAsC; uniform sampler2D uAsN; uniform sampler2D uAsR; uniform sampler2D uCoC; uniform sampler2D uCoN; uniform sampler2D uCoR;
+      uniform sampler2D uSh0; uniform sampler2D uSh1; uniform vec3 uShLamp[8]; uniform float uTile; uniform float uDay;
+      uniform samplerCube uEnv; uniform float uEnvOn; uniform float uEnvMax;
       varying vec3 vWP; varying vec2 vUv;
       float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       // rain rings: each cell drops a ring at its own time
@@ -159,40 +172,86 @@ export function groundMat(color, mask, o = {}) {
         }
         return g;
       }
+      // splashes: a drop lands and throws up a bright point for a few frames
+      float splash(vec2 p, float t){
+        vec2 q = p * 2.2; vec2 c = floor(q), f = fract(q);
+        float ph = fract(t * 1.7 + h21(c + 1.3)); vec2 o = vec2(h21(c + 5.1), h21(c + 9.2));
+        return smoothstep(0.06, 0.0, length(f - o)) * smoothstep(0.12, 0.0, ph);
+      }
+      float D_GGX(float a, float nh){ float a2 = a * a; float d = nh * nh * (a2 - 1.0) + 1.0; return a2 / (PI_ * d * d + 1e-6); }
+      float V_Smith(float a, float nv, float nl){ float a2 = a * a; float gv = nl * sqrt(nv * nv * (1.0 - a2) + a2); float gl = nv * sqrt(nl * nl * (1.0 - a2) + a2); return 0.5 / max(gv + gl, 1e-5); }
+      float shadowOf(vec3 lp, vec4 s0, vec4 s1){
+        for (int k = 0; k < 8; k++) { if (distance(lp, uShLamp[k]) < 0.05) { return k < 4 ? s0[k] : s1[k - 4]; } }
+        return 1.0;
+      }
       void main(){
-        vec3 alb = texture2D(uCol, vUv).rgb;
-        vec4 mk = texture2D(uMask, vUv);
-        float pud = mk.r * uWet;
-        // wet asphalt is darker, puddles darker still (until they reflect)
-        alb *= mix(1.0, 0.55, uWet) * mix(1.0, 0.6, pud);
+        vec2 wuv = vWP.xz / uTile;
+        vec4 dt = texture2D(uDetail, vUv), mk = texture2D(uMask, vUv);
+        float conc = mk.b;
+        // the asphalt, tiled at two scales against repetition; concrete where the mask says so
+        vec3 asC = texture2D(uAsC, wuv).rgb * mix(0.82, 1.18, texture2D(uAsC, wuv * 0.173 + 0.37).g * 2.0 - 0.4);
+        vec3 coC = texture2D(uCoC, wuv * 0.8).rgb;
+        vec3 alb = mix(asC * 0.85, coC * 1.05, conc);
+        vec3 arm = mix(texture2D(uAsR, wuv).rgb, texture2D(uCoR, wuv * 0.8).rgb, conc);
+        vec3 tn = mix(texture2D(uAsN, wuv).xyz, texture2D(uCoN, wuv * 0.8).xyz, conc) * 2.0 - 1.0;
+        // patches and oil (R), worn paint (G), tar seal (A)
+        float mul = dt.r * 2.0; alb *= mix(1.0, mul, 1.0 - conc);
+        float oil = smoothstep(0.42, 0.2, dt.r) * (1.0 - conc);
+        vec3 paintC = vec3(0.78, 0.74, 0.62) * mix(0.75, 1.0, texture2D(uAsC, wuv * 3.1).r * 2.0);
+        float pnt = smoothstep(0.15, 0.6, dt.g);
+        alb = mix(alb, paintC, pnt);
+        alb = mix(alb, vec3(0.025), dt.a * 0.85 * (1.0 - conc));
+        float ao = dt.b * mix(1.0, arm.r, 0.6);
+        float rough = mix(arm.g, 0.55, pnt * 0.5); rough = mix(rough, 0.32, dt.a * 0.6);
+        // water: the whole lot is wet, the low spots stand in puddles
+        float wet = uWet * mk.g;
+        float pud = smoothstep(0.32, 0.62, mk.r) * uWet;
+        float damp = clamp(wet * (0.7 + 0.3 * (1.0 - arm.g)), 0.0, 1.0);
+        alb *= mix(1.0, 0.5, damp * (1.0 - pud * 0.3)); alb *= mix(1.0, 0.75, pud);
+        rough = mix(rough, mix(0.32, 0.18, oil), damp); rough = mix(rough, 0.02, pud);
+        // normal: the asphalt's grain flattens under water; rain rings in puddles, finer pitting elsewhere
         vec2 rp = ripple(vWP.xz, uTime) * uRain;
-        vec3 N = normalize(vec3(rp.x * (0.06 + pud * 0.12), 1.0, rp.y * (0.06 + pud * 0.12)));
+        vec3 N = normalize(vec3(tn.x * (1.0 - pud) * 0.9, 1.0, tn.y * (1.0 - pud) * 0.9));
+        N = normalize(N + vec3(rp.x, 0.0, rp.y) * (0.03 + pud * 0.14));
         vec3 V = normalize(cameraPosition - vWP);
-        vec3 light = mix(uGround, uSky, 0.55) + uMoon * max(dot(N, uMoonDir), 0.0) * 0.6;
+        float nv = max(dot(N, V), 1e-3);
+        vec4 s0 = texture2D(uSh0, (vWP.xz + uSize * 0.5) / uSize), s1 = texture2D(uSh1, (vWP.xz + uSize * 0.5) / uSize);
+        // light: sky and ground fill, the moon, the lamps with their baked shadows
+        vec3 dif = mix(uGround, uSky, 0.55) * ao + uMoon * max(dot(N, uMoonDir), 0.0) * 0.6;
         vec3 spec = vec3(0.0);
+        float a = max(rough * rough, 0.002);
         for (int i = 0; i < 8; i++) {
           if (i >= uLampN) break;
           vec3 L = uLampPos[i].xyz - vWP; float d = length(L); L /= d;
           float att = clamp(1.0 - d / uLampPos[i].w, 0.0, 1.0); att *= att;
           float cone = 1.0; if (uLampCol[i].w > 0.0) cone = smoothstep(uLampCol[i].w, uLampCol[i].w + 0.25, dot(-L, vec3(0.0, -1.0, 0.0)));
-          light += uLampCol[i].rgb * max(dot(N, L), 0.0) * att * cone;
-          vec3 H = normalize(L + V);
-          // long highlights on wet ground: a broad lobe stretched toward the viewer
-          float sp = pow(max(dot(N, H), 0.0), mix(40.0, 160.0, pud));
-          spec += uLampCol[i].rgb * sp * att * mix(0.35, 1.4, pud) * uWet * 1.6;
+          vec3 lc = uLampCol[i].rgb * att * cone * shadowOf(uLampPos[i].xyz, s0, s1);
+          float nl = max(dot(N, L), 0.0);
+          dif += lc * nl;
+          // the lamp's highlight: GGX, widened by the lamp's size; wet asphalt stretches it toward you
+          float ap = clamp(a + 0.2 / max(d * 2.0, 0.5), 0.0, 1.0);
+          vec3 H = normalize(L + V); float nh = max(dot(N, H), 0.0), vh = max(dot(V, H), 0.0);
+          float F = 0.03 + 0.97 * pow(1.0 - vh, 5.0);
+          spec += lc * D_GGX(ap, nh) * V_Smith(ap, nv, nl) * nl * F * PI_ * (a * a / max(ap * ap, 1e-4) * 0.7 + 0.3) * (0.4 + 0.6 * damp);
         }
-        vec3 col = alb * light + spec;
-        // the reflection: the mirrored scene, streaked downward the way wet asphalt smears light
-        float fres = mix(0.06, 1.0, pow(1.0 - max(V.y, 0.0), 4.0));
-        float rk = mix(0.18, 0.95, pud) * fres * uWet * uReflK;
-        vec2 suv = gl_FragCoord.xy / uRes + N.xz * vec2(0.02, 0.05);
-        vec3 rc = vec3(0.0); float tot = 0.0;
-        for (int j = -3; j <= 3; j++) { float w = 1.0 - abs(float(j)) / 4.0; rc += texture2D(uRefl, suv + vec2(0.0, float(j) * mix(0.012, 0.004, pud))).rgb * w; tot += w; }
+        vec3 col = alb * dif * (1.0 - pud * 0.25) + spec;
+        // the reflection: the mirrored scene, sharp in puddles, smeared downward on wet asphalt
+        float fres = 0.025 + 0.975 * pow(1.0 - nv, 5.0);
+        float rk = mix(mix(0.05, 0.7, damp) * (1.0 - rough), 0.98, pud) * fres * uReflK;
+        rk = mix(rk, max(rk, 0.18 * damp * (1.0 - rough)), 0.6);
+        vec2 suv = gl_FragCoord.xy / uRes + N.xz * vec2(0.012, 0.03) * (1.0 + pud);
+        vec3 rc = vec3(0.0); float tot = 0.0; float spread = mix(0.03, 0.002, pud) * (0.4 + rough);
+        for (int j = -3; j <= 3; j++) { float w = 1.0 - abs(float(j)) / 4.0; rc += texture2D(uRefl, suv + vec2(0.0, float(j) * spread)).rgb * w; tot += w; }
         rc /= tot;
-        col = mix(col, rc, clamp(rk, 0.0, 0.92));
-        col += mk.g * 0.0;
+        // before the mirror has a frame (or on a low tier), the set's cube stands in
+        if (uReflK < 0.01 && uEnvOn > 0.5) { vec3 R = reflect(-V, N); rc = textureLod(uEnv, R, rough * uEnvMax).rgb; rk = mix(0.04, 0.9, pud) * fres * damp; }
+        col = mix(col, rc, clamp(rk, 0.0, 0.95));
+        // oil on water: a faint film where the oil is
+        col += oil * pud * vec3(0.02, 0.012, 0.03) * (0.5 + 0.5 * sin(dot(vWP.xz, vec2(9.0, 13.0)) + uTime * 0.3));
+        col += vec3(1.0, 0.85, 0.65) * splash(vWP.xz, uTime) * uRain * length(dif) * 0.6;
+        float l = dot(col, vec3(0.299, 0.587, 0.114)); col = mix(vec3(l), col, uSat);
         float fd = length(vWP - cameraPosition); col = mix(col, uFog, clamp(1.0 - exp(-uFogDen * fd), 0.0, 1.0));
-        gl_FragColor = vec4(col, 1.0);
+        gl_FragColor = vec4(clamp(col, 0.0, 24.0), 1.0);
         #include <colorspace_fragment>
       }`
   });
@@ -400,10 +459,8 @@ export function buildLot(o) {
   const lines = [];
   for (const zRow of [-5.5, 4.5]) for (let x = -19.2; x <= 19.2; x += 3.2) lines.push([x, zRow - 2.6, x, zRow + 2.6]);
   for (let x = -19.2; x <= 19.2; x += 3.2) lines.push([x, 12, x, 16.5]);
-  const asph = TX.asphalt(W, H, o.lowres ? 14 : 24, lines);
-  const gm = groundMat(asph.color, asph.mask, { w: W, h: H, wet: o.day ? 0 : 1, rain: o.day ? 0 : 1 });
-  const ground = plane(W, H, gm, set); ground.rotation.x = -Math.PI / 2; ground.layers.set(4);
-  set.userData.groundMat = gm;
+  // the ground's material waits for the cars and lamps (it bakes their shade and shadows); see the end of buildLot
+  const ground = plane(W, H, null, set); ground.rotation.x = -Math.PI / 2; ground.layers.set(4);
   // the showroom: a glass front glowing warm, the wordmark over it
   const wall = paint({ color: "#2b2f2c", wet: 0.3, rim: 0.4, ao: 0.6 }), trim = paint({ color: "#141716", wet: 0.6, rim: 0.6 });
   const sh = new THREE.Group(); sh.position.set(2, 0, -18); set.add(sh);
@@ -506,6 +563,32 @@ export function buildLot(o) {
       #include <colorspace_fragment>
       }`, side: THREE.BackSide, depthWrite: false }));
   sky.position.y = 6; set.add(sky); sky.renderOrder = -1;
+  // the ground, now that everything standing on it is known: shade under the cars, the lamps' shadows, puddles, the dry strip under the canopy
+  {
+    const px = o.lowres ? 14 : 24;
+    const carsG = lotCars.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
+    const conc = [[-12.4, -17.9, 16.4, -15.6]];
+    const g = TX.lotGround(W, H, px, { lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25]] });
+    const shBoxes = lotCars.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
+      .concat([{ x: 2, z: -22, hw: 13.3, hl: 4.3, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }]);
+    const lampsSh = set.userData.lamps.slice(0, 8).map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range }));
+    const sh = o.day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, lampsSh, shBoxes);
+    const gm = groundMat(g, { wet: o.day ? 0 : 1, rain: o.day ? 0 : 1, sh, shLamps: set.userData.lamps.slice(0, 8).map(l => l.p.clone()), day: o.day });
+    ground.material = gm; set.userData.groundMat = gm;
+    // what's underfoot, for footsteps: puddle, concrete, wet asphalt (dry in the morning), tile inside the showroom
+    set.userData.surfaceAt = (x, z) => {
+      if (z < -17.7 && x > -11.3 && x < 15.3) return "tile";
+      const i = Math.floor((x + W / 2) * g.px), j = Math.floor((z + H / 2) * g.px);
+      if (i < 0 || j < 0 || i >= g.w || j >= g.h) return o.day ? "asphalt" : "wet";
+      const k = j * g.w + i;
+      if (g.conc[k]) return "concrete";
+      if (!o.day && g.pud[k] > 110) return "puddle";
+      return o.day ? "asphalt" : "wet";
+    };
+    // the bigger puddles, for anyone who wants them as circles
+    const pz = []; for (let z = -H / 2 + 1; z < H / 2; z += 1.2) for (let x = -W / 2 + 1; x < W / 2; x += 1.2) { const k = Math.floor((z + H / 2) * g.px) * g.w + Math.floor((x + W / 2) * g.px); if (g.pud[k] > 170) pz.push({ x: +x.toFixed(2), z: +z.toFixed(2), r: 0.7 }); }
+    set.userData.puddles = o.day ? [] : pz;
+  }
   envHook(set, V3(1, 1.7, 3));
   mergeStatic(set);
   // where people stand

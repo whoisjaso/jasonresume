@@ -38,7 +38,7 @@ for (const vp of vps) {
       await ctx.route('**/pwfonts/*', r => r.fulfill({ status: 200, contentType: 'font/woff2', body: fs.readFileSync(path.join(ROOT, 'tools', 'fonts', r.request().url().split('/').pop())) }));
     }
     await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":false}' }));
-    const p = await ctx.newPage();
+    const p = await ctx.newPage(); p.setDefaultTimeout(240000);
     p.on('pageerror', e => errs.push(`${vp} ${scene}: ${e.message}`));
     p.on('console', m => { if (m.type() === 'error' || /\[world\]/.test(m.text())) console.log(`  [${vp} ${scene}] ${m.type()}: ${m.text().slice(0, 300)}`); });
     let bytes = 0; p.on('response', async r => { try { const l = +(r.headers()['content-length'] || 0); bytes += l; } catch (e) {} });
@@ -53,7 +53,7 @@ for (const vp of vps) {
       await p.evaluate(([pos, look]) => window.JG_STORY.debug.view(pos, look, 8), [pos, look]);
       await p.waitForTimeout(1500);
       const f = path.join(OUT, `real-world-${tag}-${scene}-${name}-${vp}.png`);
-      await p.screenshot({ path: f });
+      await p.screenshot({ path: f, timeout: 240000 });
       console.log(f);
     }
     const perf = await p.evaluate(() => window.JG_STORY.debug.bench());

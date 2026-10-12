@@ -305,7 +305,8 @@ class Person {
       else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
       else if (name === "brow" || name === "lash") mat = paint({ color: L.brow, map, alphaTest: name === "brow" ? 0.28 : 0.5, rim: 0.2, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
       else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
-      else if (name === "eyes") mat = paint({ color: L.eyes || "#9a8a7a", map, wet: 2.6, rim: 0.15 });
+      // the eye texture carries its own white and brown iris: a near-white tint keeps the whites white
+      else if (name === "eyes") mat = paint({ color: "#d9dadb", map, wet: 2.6, rim: 0.1 });
       else if (name.startsWith("cloth")) {
         const key = Object.keys(L.cloth).find(k => name.includes(k)) || Object.keys(L.cloth)[0];
         mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: 0.4, wet: key === "shoes" ? 0.35 : 0.12 });
@@ -792,7 +793,7 @@ class Person {
     this.setFx("browInnerUp", clamp(this.browK, 0, 1) * 0.7 + this.mouth * 0.06 + stress);
     this.setFx("browOuterUpLeft", clamp(this.browK, 0, 1) * 0.35); this.setFx("browOuterUpRight", clamp(this.browK, 0, 1) * 0.35);
     this.setFx("browDownLeft", clamp(-this.browK, 0, 1) * 0.5); this.setFx("browDownRight", clamp(-this.browK, 0, 1) * 0.5);
-    const wide = L.wide != null ? L.wide : 0.1;
+    const wide = 0.14 + (L.wide || 0);
     this.setFx("eyeWideLeft", wide); this.setFx("eyeWideRight", wide);
     this.setFx("mouthSmileLeft", this.smileK * 0.5); this.setFx("mouthSmileRight", this.smileK * 0.5);
   }
