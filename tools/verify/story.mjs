@@ -427,7 +427,7 @@ async function feel(vname, w, h, mobile) {
   if (mobile) await p.tap('[data-st="pause"]'); else await p.keyboard.press('Escape');
   await phase(p, 'pause', 8000);
   if (mobile) await p.tap('[data-p="settings"]'); else await p.click('[data-p="settings"]');
-  if (!(await p.waitForSelector('[data-mix="master"]', { timeout: 8000 }).catch(() => null))) { await shot0(p, `real-feel-fail-${vname}`); throw new Error('no settings panel ' + JSON.stringify(await st(p)).slice(0, 300)); }
+  if (!(await p.waitForSelector('[data-mix="master"]', { timeout: 30000 }).catch(() => null))) { await shot0(p, `real-feel-fail-${vname}`); throw new Error('no settings panel ' + JSON.stringify(await st(p)).slice(0, 300)); }
   await p.evaluate(() => { const r = document.querySelector('[data-mix="master"]'); r.value = 40; r.dispatchEvent(new Event('input', { bubbles: true })); const m = document.querySelector('[data-mix="music"]'); m.value = 25; m.dispatchEvent(new Event('input', { bubbles: true })); });
   if (!mobile) await p.click('[data-c="runToggle"]');
   await p.waitForTimeout(400);
@@ -506,7 +506,7 @@ if (!only || only === 'desktop') {
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`deeplink pageerror: ${e.message}`));
   await p.goto(URL0 + '?debug=story&fast=1&pr=0.3#story/office');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 20000 }); await p.click('#intro [data-intro-skip]');
-  const ok = await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 60000);
+  const ok = await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
   if (!ok) errs.push('#story/office did not open the office'); else notes.push('#story/office opens the office');
   await ctx.close();
 }

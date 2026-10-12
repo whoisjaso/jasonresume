@@ -504,7 +504,7 @@ void main(){
         vao (AO in the vertex colour's R), tri (world-space scale for projected maps, 1 / metres), nk (normal strength), spec, diff,
         drops (water beads), glass (Fresnel opacity), room ([x0, x1, z0, z1, height]: a box room's corner occlusion), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
 /* phones (and ?wq=lo) skip the clear coat's own lamp highlights; the coat still reflects the set */
-const LOWQ = typeof location !== "undefined" && /[?&]wq=lo/.test(location.search) || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && !/[?&]wq=hi/.test(location.search));
+const LOWQ = typeof location !== "undefined" && (/[?&]wq=lo/.test(location.search) || (/[?&]debug=story/.test(location.search) && /[?&]fast=1/.test(location.search) && !/[?&]wq=hi/.test(location.search))) || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && !/[?&]wq=hi/.test(location.search));
 export function pbr(o = {}) {
   const defines = LOWQ ? { LOWQ: "" } : {};
   const uniforms = {

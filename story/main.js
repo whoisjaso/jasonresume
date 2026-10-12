@@ -1243,11 +1243,11 @@ function pauseView(v) {
       '<div class="pz-row pz-kb"><span>' + E(UI.c_run) + "</span>" + tog("runToggle", UI.c_run_hold, UI.c_run_toggle) + "</div>" +
       '<div class="pz-row pz-kb"><span>' + E(UI.c_look) + "</span>" + tog("lock", UI.c_look_drag, UI.c_look_lock) + "</div>" +
       '<div class="pz-row"><span>' + E(UI.c_invert) + "</span>" + tog("invert", UI.c_normal, UI.c_inverted) + "</div>" +
-      '<div class="pz-foot"><button type="button" class="pz-link pz-kb" data-p="keys">' + E(UI.c_keys) + '</button><button type="button" class="pz-link" data-p="back">' + E(UI.back) + "</button></div></div>";
+      '<div class="pz-foot pz-kb"><button type="button" class="pz-link" data-p="keys">' + E(UI.c_keys) + "</button></div></div>";
   } else if (v === "keys") {
     h = '<div class="pz pz--set"><div class="pz-top"><h3 class="pz-h">' + E(UI.c_keys) + '</h3><button type="button" class="pz-done" data-p="settings">' + E(UI.done) + '</button></div><div class="pz-keys">' +
       ACTS.map(([a, l]) => '<div class="pz-row"><span>' + E(UI[l]) + '</span><button type="button" class="pz-key" data-key="' + a + '">' + E(rebinding === a ? UI.c_press : keyLabel(SET.keys[a])) + "</button></div>").join("") +
-      '</div><p class="pz-fine">' + E(UI.c_keys_fine) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-keys">' + E(UI.c_reset) + '</button><button type="button" class="pz-link" data-p="settings">' + E(UI.back) + "</button></div></div>";
+      '</div><p class="pz-fine">' + E(UI.c_keys_fine) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-keys">' + E(UI.c_reset) + "</button></div></div>";
   }
   pauseEl.innerHTML = h;
   setTimeout(() => { if (dev === "touch") return; const b = $(v === "main" ? "button" : "input, button", pauseEl); if (b) b.focus({ preventScroll: true }); }, 40);

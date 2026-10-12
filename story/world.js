@@ -27,7 +27,9 @@ import { RoundedBoxGeometry } from "../vendor/three-0.184.0/addons/geometries/Ro
 
 /* the quality ladder's asset half: phones get the lighter cars and smaller textures; ?wq=lo|hi forces one */
 const COARSE = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-const WQ = (typeof location !== "undefined" && (location.search.match(/[?&]wq=(lo|hi)/) || [])[1]) || (COARSE ? "lo" : "hi");
+// the test harness (?debug=story&fast=1) plays on a software renderer: it gets the light tier so the game clock keeps up
+const HARNESS = typeof location !== "undefined" && /[?&]debug=story/.test(location.search) && /[?&]fast=1/.test(location.search);
+const WQ = (typeof location !== "undefined" && (location.search.match(/[?&]wq=(lo|hi)/) || [])[1]) || (COARSE || HARNESS ? "lo" : "hi");
 export const TIER = { name: WQ, carLo: WQ === "lo", tex: WQ === "lo" ? 512 : 1024, env: WQ === "lo" ? 64 : 128 };
 const BASE = new URL("../assets/story/world/", import.meta.url).href;
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
@@ -1039,7 +1041,7 @@ export function buildOffice(o) {
     box(0.68, 0.006, 0.01, M.plastic, 0, 1.2, 0.335, fr); rbox(0.03, 0.42, 0.04, 0.012, M.chrome, -0.28, 1.45, 0.35, fr); rbox(0.03, 0.3, 0.04, 0.012, M.chrome, -0.28, 0.95, 0.35, fr);
     for (let i = 0; i < 3; i++) box(0.06, 0.06, 0.004, pbr({ color: ["#c9a96a", "#1c3229", "#a85a3a"][i], rough: 0.5, wet: 0 }), 0.1 + i * 0.08, 1.5 - i * 0.05, 0.336, fr);
     set.userData.walls.push({ x0: -7, x1: -6.25, z0: 1.05, z1: 1.85 }); set.userData.sounds.fridge = { x: -6.62, y: 0.9, z: 1.45, kind: "fridge-hum" }; }
-  set.userData.sounds.coffee = { x: -6.4, y: 1.1, z: 2.6, kind: "fridge-hum" };
+  set.userData.sounds.coffee = { x: -6.4, y: 1.1, z: 2.6, kind: "coffee-machine" };
   set.userData.walls.push({ x0: -7, x1: -5.9, z0: 2.2, z1: 3.0 });
 
   // the break room's arcade cabinet

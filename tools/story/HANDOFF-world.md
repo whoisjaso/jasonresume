@@ -39,7 +39,7 @@ assets are built.
 | `puddles` | `[{ x, z, r }]`, the larger standing water on the lot (empty in the morning) | lot |
 | `sounds` | where things make noise (all `{ x, y, z, kind }`, some with `w`, the width of a long source): | |
 | | lot: `idle` (the black sedan by the showroom, engine running, lights on, kind `engine-idle`), `lamps` (each pole's head, `sodium-hum`), `gate` (`chain-link`), `road` (Almeda Genoa Rd beyond the fence, `traffic`), `rain` (`rain-canopy` along the showroom canopy, `rain-cars` over the rows, `rain-glass` on the storefront) | lot (keys: no idle, no rain) |
-| | office: `fridge` (`fridge-hum`), `window` (`rain-glass`), `lamps` (`fluorescent-hum`), `phone` (`desk-phone`), `laptop` (`laptop-fan`), `coffee` (`fridge-hum`), `arcade` (`arcade-attract`), `clock` (`clock-tick`, the wall clock above the break room door) | office |
+| | office: `fridge` (`fridge-hum`), `window` (`rain-glass`), `lamps` (`fluorescent-hum`), `phone` (`desk-phone`), `laptop` (`laptop-fan`), `coffee` (`coffee-machine`), `arcade` (`arcade-attract`), `clock` (`clock-tick`, the wall clock above the break room door) | office |
 | | memory: `windows` (`rain-glass`, w 18), `clock` | memory |
 | `ready` | promise: the set's streamed textures are in | all |
 | `fogDen` | the room's own fog density, applied every frame while the set is up (office 0.006, memory 0.006); the lot leaves main.js's value alone | office, memory |

@@ -43,7 +43,7 @@ for (const vp of vps) {
     p.on('pageerror', e => errs.push(`${vp} ${scene}: ${e.message}`));
     p.on('console', m => { if (m.type() === 'error' || /\[world\]/.test(m.text())) console.log(`  [${vp} ${scene}] ${m.type()}: ${m.text().slice(0, 300)}`); });
     let bytes = 0; p.on('response', async r => { try { const l = +(r.headers()['content-length'] || 0); bytes += l; } catch (e) {} });
-    await p.goto(`http://127.0.0.1:8765/?debug=story&fast=1&pr=1#story/${scene}`);
+    await p.goto(`http://127.0.0.1:8765/?debug=story&fast=1&pr=1&wq=${vp === "phone" ? "lo" : "hi"}#story/${scene}`);
     await p.waitForSelector('#intro [data-intro-skip]', { timeout: 30000 }).then(() => p.click('#intro [data-intro-skip]')).catch(() => {});
     const ok = await p.waitForFunction(s => window.JG_STORY && window.JG_STORY.debug.state().scene === s, scene, { timeout: 90000 }).then(() => true, () => false);
     if (!ok) { errs.push(`${vp} ${scene}: did not open`); await ctx.close(); continue; }
