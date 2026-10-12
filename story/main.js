@@ -886,6 +886,9 @@ function closeUp(which) {
       $(".st-close__spots", closeEl).innerHTML = ids.map(id => { const q = project(set.userData.spots[id].p), x = clamp(q.x, 84, innerWidth - 84); return '<button type="button" class="st-note-spot' + (S.looked[id] ? " is-read" : "") + '" data-note="' + id + '" style="left:' + x.toFixed(0) + "px;top:" + q.y.toFixed(0) + 'px"><span>' + E(D.board_notes[id]) + "</span></button>"; }).join("");
     };
     closeEl.hidden = false; setTimeout(draw, FAST ? 300 : 700);
+    // the notes follow the board until the camera has settled (a slow device draws the cut late)
+    const place = () => { for (const b of $$("[data-note]", closeEl)) { const q = project(set.userData.spots[b.dataset.note].p); b.style.left = clamp(q.x, 84, innerWidth - 84).toFixed(0) + "px"; b.style.top = q.y.toFixed(0) + "px"; } };
+    const follow = setInterval(place, 250);
     const onResize = () => draw(); addEventListener("resize", onResize); setTimeout(() => closeEl.classList.add("is-on"), 20);
     const onClick = async e => {
       const b = e.target.closest("[data-note]");
@@ -900,7 +903,7 @@ function closeUp(which) {
       }
       if (e.target.closest("[data-st='back']")) finish();
     };
-    const finish = () => { closeEl.removeEventListener("click", onClick); removeEventListener("resize", onResize); if (me) me.group.visible = true; closeEl.classList.remove("is-on"); setTimeout(() => (closeEl.hidden = true), 300); el.classList.remove("is-close"); S.phase = "talk"; resolve(); };
+    const finish = () => { clearInterval(follow); closeEl.removeEventListener("click", onClick); removeEventListener("resize", onResize); if (me) me.group.visible = true; closeEl.classList.remove("is-on"); setTimeout(() => (closeEl.hidden = true), 300); el.classList.remove("is-close"); S.phase = "talk"; resolve(); };
     closeEl.addEventListener("click", onClick);
     S.closeFinish = finish;
   });
