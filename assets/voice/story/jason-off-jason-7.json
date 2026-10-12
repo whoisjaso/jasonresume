@@ -1,0 +1,77 @@
+{
+ "id": "jason-off-jason-7",
+ "text": "Every sale on file. Three staff use it daily across inventory, deals and follow-up.",
+ "duration": 6.04,
+ "words": [
+  {
+   "w": "Every",
+   "s": 0.0,
+   "e": 0.28
+  },
+  {
+   "w": "sale",
+   "s": 0.28,
+   "e": 0.68
+  },
+  {
+   "w": "on",
+   "s": 0.68,
+   "e": 0.98
+  },
+  {
+   "w": "file.",
+   "s": 0.98,
+   "e": 1.38
+  },
+  {
+   "w": "Three",
+   "s": 1.96,
+   "e": 2.06
+  },
+  {
+   "w": "staff",
+   "s": 2.06,
+   "e": 2.44
+  },
+  {
+   "w": "use",
+   "s": 2.44,
+   "e": 2.78
+  },
+  {
+   "w": "it",
+   "s": 2.78,
+   "e": 2.98
+  },
+  {
+   "w": "daily",
+   "s": 2.98,
+   "e": 3.3
+  },
+  {
+   "w": "across",
+   "s": 3.3,
+   "e": 3.84
+  },
+  {
+   "w": "inventory,",
+   "s": 3.84,
+   "e": 4.38
+  },
+  {
+   "w": "deals",
+   "s": 4.82,
+   "e": 4.94
+  },
+  {
+   "w": "and",
+   "s": 5.24,
+   "e": 5.3
+  },
+  {
+   "w": "follow-up.",
+   "s": 5.3,
+   "e": 6.04
+  }
+ ]
+}

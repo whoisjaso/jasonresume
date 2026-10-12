@@ -1,0 +1,176 @@
+{
+ "lines": {
+  "lot-dell-1": {
+   "hash": "deff3acb793d",
+   "duration": 3.975,
+   "file": "lot-dell-1.mp3",
+   "timings": "lot-dell-1.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-2": {
+   "hash": "e087cbe7ac15",
+   "duration": 4.225,
+   "file": "lot-dell-2.mp3",
+   "timings": "lot-dell-2.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-3": {
+   "hash": "3b90466a826a",
+   "duration": 3.725,
+   "file": "lot-dell-3.mp3",
+   "timings": "lot-dell-3.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-4": {
+   "hash": "8a4d949f6534",
+   "duration": 3.675,
+   "file": "lot-dell-4.mp3",
+   "timings": "lot-dell-4.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-5": {
+   "hash": "66e5615a7b80",
+   "duration": 4.5,
+   "file": "lot-dell-5.mp3",
+   "timings": "lot-dell-5.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-6": {
+   "hash": "18b24fa0436f",
+   "duration": 2.6,
+   "file": "lot-dell-6.mp3",
+   "timings": "lot-dell-6.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-7": {
+   "hash": "420f854fd709",
+   "duration": 4.4,
+   "file": "lot-dell-7.mp3",
+   "timings": "lot-dell-7.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-8": {
+   "hash": "557277e534b5",
+   "duration": 3.3,
+   "file": "lot-dell-8.mp3",
+   "timings": "lot-dell-8.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-9": {
+   "hash": "be763a96dd3b",
+   "duration": 4.825,
+   "file": "lot-dell-9.mp3",
+   "timings": "lot-dell-9.json",
+   "voice": "am_onyx"
+  },
+  "lot-dell-10": {
+   "hash": "54b709d8dbde",
+   "duration": 4.05,
+   "file": "lot-dell-10.mp3",
+   "timings": "lot-dell-10.json",
+   "voice": "am_onyx"
+  },
+  "off-renata-1": {
+   "hash": "765fb73d93df",
+   "duration": 4.225,
+   "file": "off-renata-1.mp3",
+   "timings": "off-renata-1.json",
+   "voice": "af_bella"
+  },
+  "off-renata-4": {
+   "hash": "a4c736f8fad9",
+   "duration": 3.3,
+   "file": "off-renata-4.mp3",
+   "timings": "off-renata-4.json",
+   "voice": "af_bella"
+  },
+  "off-renata-2": {
+   "hash": "ed40fb4ed9c5",
+   "duration": 3.5,
+   "file": "off-renata-2.mp3",
+   "timings": "off-renata-2.json",
+   "voice": "af_bella"
+  },
+  "off-renata-3": {
+   "hash": "26f99fbb3444",
+   "duration": 3.525,
+   "file": "off-renata-3.mp3",
+   "timings": "off-renata-3.json",
+   "voice": "af_bella"
+  },
+  "off-agent-1": {
+   "hash": "76a927c1a927",
+   "duration": 3.65,
+   "file": "off-agent-1.mp3",
+   "timings": "off-agent-1.json",
+   "voice": "af_heart"
+  },
+  "off-caller-1": {
+   "hash": "46a98776f737",
+   "duration": 7.375,
+   "file": "off-caller-1.mp3",
+   "timings": "off-caller-1.json",
+   "voice": "af_nicole"
+  },
+  "off-agent-2": {
+   "hash": "8a2693297eee",
+   "duration": 4.45,
+   "file": "off-agent-2.mp3",
+   "timings": "off-agent-2.json",
+   "voice": "af_heart"
+  },
+  "off-caller-2": {
+   "hash": "2f8bd5e0dd02",
+   "duration": 1.65,
+   "file": "off-caller-2.mp3",
+   "timings": "off-caller-2.json",
+   "voice": "af_nicole"
+  },
+  "off-agent-3": {
+   "hash": "97e6a3a6cf83",
+   "duration": 2.975,
+   "file": "off-agent-3.mp3",
+   "timings": "off-agent-3.json",
+   "voice": "af_heart"
+  },
+  "off-caller-3": {
+   "hash": "c2e6087cb825",
+   "duration": 6.35,
+   "file": "off-caller-3.mp3",
+   "timings": "off-caller-3.json",
+   "voice": "af_nicole"
+  },
+  "off-agent-4": {
+   "hash": "73336a23e066",
+   "duration": 3.45,
+   "file": "off-agent-4.mp3",
+   "timings": "off-agent-4.json",
+   "voice": "af_heart"
+  },
+  "mem-library-1": {
+   "hash": "996c3c28f49a",
+   "duration": 4.6,
+   "file": "mem-library-1.mp3",
+   "timings": "mem-library-1.json",
+   "voice": "bf_emma"
+  },
+  "dec-dell-1": {
+   "hash": "90e7ed7039a5",
+   "duration": 3.3,
+   "file": "dec-dell-1.mp3",
+   "timings": "dec-dell-1.json",
+   "voice": "am_onyx"
+  }
+ },
+ "voice": {
+  "id": "am_michael",
+  "name": "am_michael",
+  "model": "hexgrad/Kokoro-82M",
+  "format": "mp3_44100_128",
+  "settings": {
+   "speed": 0.95
+  },
+  "source": "Kokoro-82M, an open-weight model (Apache-2.0), a stock voice (not a clone)"
+ },
+ "updated": "2026-10-11"
+}

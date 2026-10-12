@@ -15,9 +15,10 @@
     "watch": "Watch the walkthrough",
     "play": "Play",
     "library": "Enter the library",
-    "play_note": "Six short levels through my record. Every medal you find is a verified fact.",
-    "attract": "assets/game/loops/run-attract",
-    "muted_library": "Library, muted"
+    "play_note": "An episode on my lot after hours. What you say and look at changes how it ends.",
+    "attract": "assets/game/loops/story-attract",
+    "muted_library": "Library, muted",
+    "continue": "Continue"
   },
   "question": {
     "title": "Who's playing?",

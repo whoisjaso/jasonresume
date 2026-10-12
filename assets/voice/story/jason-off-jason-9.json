@@ -1,0 +1,87 @@
+{
+ "id": "jason-off-jason-9",
+ "text": "Across August and September 2026 it averaged 41 inbound calls and 14 booked appointments a month.",
+ "duration": 8.4,
+ "words": [
+  {
+   "w": "Across",
+   "s": 0.0,
+   "e": 0.4
+  },
+  {
+   "w": "August",
+   "s": 0.4,
+   "e": 0.84
+  },
+  {
+   "w": "and",
+   "s": 0.84,
+   "e": 1.2
+  },
+  {
+   "w": "September",
+   "s": 1.2,
+   "e": 1.64
+  },
+  {
+   "w": "2026",
+   "s": 1.64,
+   "e": 3.48
+  },
+  {
+   "w": "it",
+   "s": 3.48,
+   "e": 3.54
+  },
+  {
+   "w": "averaged",
+   "s": 3.54,
+   "e": 3.86
+  },
+  {
+   "w": "41",
+   "s": 3.86,
+   "e": 4.54
+  },
+  {
+   "w": "inbound",
+   "s": 4.54,
+   "e": 5.22
+  },
+  {
+   "w": "calls",
+   "s": 5.22,
+   "e": 5.68
+  },
+  {
+   "w": "and",
+   "s": 5.68,
+   "e": 6.22
+  },
+  {
+   "w": "14",
+   "s": 6.22,
+   "e": 6.76
+  },
+  {
+   "w": "booked",
+   "s": 6.76,
+   "e": 7.14
+  },
+  {
+   "w": "appointments",
+   "s": 7.14,
+   "e": 7.7
+  },
+  {
+   "w": "a",
+   "s": 7.7,
+   "e": 7.98
+  },
+  {
+   "w": "month.",
+   "s": 7.98,
+   "e": 8.18
+  }
+ ]
+}

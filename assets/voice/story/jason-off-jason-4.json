@@ -1,0 +1,72 @@
+{
+ "id": "jason-off-jason-4",
+ "text": "One plain question at a time. How she's paying, who files the registration.",
+ "duration": 4.76,
+ "words": [
+  {
+   "w": "One",
+   "s": 0.0,
+   "e": 0.24
+  },
+  {
+   "w": "plain",
+   "s": 0.24,
+   "e": 0.54
+  },
+  {
+   "w": "question",
+   "s": 0.54,
+   "e": 0.94
+  },
+  {
+   "w": "at",
+   "s": 0.94,
+   "e": 1.14
+  },
+  {
+   "w": "a",
+   "s": 1.14,
+   "e": 1.34
+  },
+  {
+   "w": "time.",
+   "s": 1.34,
+   "e": 1.62
+  },
+  {
+   "w": "How",
+   "s": 2.02,
+   "e": 2.2
+  },
+  {
+   "w": "she's",
+   "s": 2.2,
+   "e": 2.5
+  },
+  {
+   "w": "paying,",
+   "s": 2.5,
+   "e": 2.8
+  },
+  {
+   "w": "who",
+   "s": 3.2,
+   "e": 3.4
+  },
+  {
+   "w": "files",
+   "s": 3.4,
+   "e": 3.74
+  },
+  {
+   "w": "the",
+   "s": 3.74,
+   "e": 3.94
+  },
+  {
+   "w": "registration.",
+   "s": 3.94,
+   "e": 4.38
+  }
+ ]
+}

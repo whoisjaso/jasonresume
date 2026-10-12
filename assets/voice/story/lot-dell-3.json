@@ -1,0 +1,42 @@
+{
+ "id": "lot-dell-3",
+ "text": "Rain's the only customer that never haggles.",
+ "duration": 3.725,
+ "words": [
+  {
+   "w": "Rain's",
+   "s": 0.275,
+   "e": 0.637
+  },
+  {
+   "w": "the",
+   "s": 0.637,
+   "e": 0.775
+  },
+  {
+   "w": "only",
+   "s": 0.775,
+   "e": 1.087
+  },
+  {
+   "w": "customer",
+   "s": 1.087,
+   "e": 1.675
+  },
+  {
+   "w": "that",
+   "s": 1.675,
+   "e": 1.887
+  },
+  {
+   "w": "never",
+   "s": 1.887,
+   "e": 2.263
+  },
+  {
+   "w": "haggles.",
+   "s": 2.263,
+   "e": 3.4
+  }
+ ]
+}

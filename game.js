@@ -15,7 +15,9 @@
    window.JG_GAME.focus(id)
    window.JG_GAME.unlock(slug, how)  one trophy, earned in the run (game-run.js)
    window.JG_GAME.play(levelId, how) the run: loads game-run.js and its CSS on first press
-   Routes also take #play and #play/<level>, key G, [data-play] buttons and ?run=<level>.
+   window.JG_GAME.story(scene, how)  After Hours, the episode: loads story/main.js (and three.js) on first press
+   Routes also take #play and #play/<level>, key G, [data-play] buttons and ?run=<level>,
+   and #story and #story/<scene> (lot, office, memory, keys, decision).
    Events: document "jg:title" {id, open} */
 (function () {
   "use strict";
@@ -188,9 +190,11 @@
     if (/^#build(\/.*)?$/.test(h) && screens.build) { if (window.JG_BUILD) window.JG_BUILD.load(h); openScreen("build", how || "link"); return; }
     var pl = h.match(/^#play(?:\/([a-z0-9-]+))?$/);
     if (pl) { play(pl[1] || "", how || "link"); return; }
+    var sy = h.match(/^#story(?:\/([a-z]+))?$/);
+    if (sy) { story(sy[1] || "", how || "link"); return; }
     var t = h.match(/^#title-([a-z0-9-]+)$/);
     if (t && arts[t[1]]) { open(t[1], how || "link"); return; }
-    if (!h || h === "#" || h === "#library") { if (window.JG_RUN && window.JG_RUN.isOpen()) window.JG_RUN.close("back"); if (openId) closeTitle(true); if (screen) closeScreen(true); }
+    if (!h || h === "#" || h === "#library") { if (window.JG_STORY && window.JG_STORY.isOpen()) window.JG_STORY.close("back"); if (window.JG_RUN && window.JG_RUN.isOpen()) window.JG_RUN.close("back"); if (openId) closeTitle(true); if (screen) closeScreen(true); }
   }
   addEventListener("popstate", function () { route(location.hash, "back"); });
 
@@ -232,6 +236,30 @@
     if (clear && !clear.hidden) closeClear();
     loadRun().then(function () { if (window.JG_RUN) window.JG_RUN.open(level || "", how || ""); }, function () {});
   }
+  /* ---------- After Hours, the episode: lazy, loaded on Play (story/main.js with three.js, vendored) ---------- */
+  var storyP = null;
+  function loadStory() {
+    if (window.JG_STORY) return Promise.resolve();
+    if (!storyP) storyP = new Promise(function (res, rej) {
+      // the loading screen shows at once, before three.js and the cast arrive
+      if (!document.getElementById("story")) {
+        var el = document.createElement("div"); el.id = "story"; el.className = "story is-loading is-on";
+        el.innerHTML = '<div class="st-load" style="position:fixed;inset:0;display:grid;place-content:center;justify-items:center;background:#05070a;color:#ede7db;text-align:center;z-index:90"><p class="st-load__t" style="margin:0;font:600 clamp(34px,6vw,64px)/1 var(--serif);letter-spacing:.16em;text-transform:uppercase">After Hours</p><p class="st-load__s" style="margin:10px 0 0;font:italic 500 20px var(--serif);color:#9a9890">Episode One. Lamps On</p></div>';
+        document.body.appendChild(el); root.classList.add("story-on");
+      }
+      var l = document.createElement("link"); l.rel = "stylesheet"; l.href = "story.css?v=s1"; document.head.appendChild(l);
+      import("./story/main.js?v=s1").then(function () { res(); }, function (e) { storyP = null; var x = document.getElementById("story"); if (x) x.remove(); root.classList.remove("story-on"); rej(e); });
+    });
+    return storyP;
+  }
+  function story(scene, how) {
+    if (openId) closeTitle(true);
+    if (screen) closeScreen(true);
+    if (window.JG_RUN && window.JG_RUN.isOpen()) window.JG_RUN.close("story");
+    loadStory().then(function () { if (window.JG_STORY) window.JG_STORY.open(scene || "", how || ""); }, function () { play("", "fallback"); });
+  }
+  document.addEventListener("jg:story-closed", function () { if (tiles[focusId]) tiles[focusId].focus({ preventScroll: true }); });
+
   /* the press itself asks for fullscreen on a phone (it has to come from the gesture) */
   function playPress(level, how) {
     if (matchMedia("(pointer: coarse)").matches && !document.fullscreenElement) {
@@ -345,7 +373,7 @@
   function move(d, how) { var i = Math.max(0, Math.min(order.length - 1, ix() + d)); if (order[i] !== focusId) { focus(order[i], how || "key"); var t = tiles[order[i]]; if (t && document.activeElement && document.activeElement.classList.contains("tile")) t.focus({ preventScroll: true }); } }
   addEventListener("keydown", function (e) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (root.classList.contains("intro-on") || root.classList.contains("run-on") || document.querySelector("dialog[open]")) return;
+    if (root.classList.contains("intro-on") || root.classList.contains("run-on") || root.classList.contains("story-on") || document.querySelector("dialog[open]")) return;
     var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     var k = e.key;
     if (k === "Escape" || (k === "Backspace" && (openId || screen))) { if (back()) e.preventDefault(); return; }
@@ -380,7 +408,7 @@
   function poll(ts) {
     if (!pads) return;
     var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
-    if (gp && !root.classList.contains("intro-on") && !root.classList.contains("run-on") && !document.querySelector("dialog[open]")) {
+    if (gp && !root.classList.contains("intro-on") && !root.classList.contains("run-on") && !root.classList.contains("story-on") && !document.querySelector("dialog[open]")) {
       var x = gp.axes[0] || 0, d = (pressed(gp, 15) || x > 0.35) ? 1 : (pressed(gp, 14) || x < -0.35) ? -1 : 0;
       if (d && !openId && !screen) {
         if (rep.d !== d) { rep.d = d; rep.at = ts + 380; move(d, "pad"); }
@@ -405,7 +433,8 @@
     var r = (e.detail && e.detail.role) || store.get("jg_role");
     if (r && LIB.seats[r]) seat(r, "init");
     root.classList.add("lib-in");
-    if (e.detail && e.detail.play) play("", "intro");
+    if (e.detail && e.detail.story) story("", "intro");
+    else if (e.detail && e.detail.play) play("", "intro");
   });
   /* ?run=<level>: a friend's link drops straight into that level (the head script skips the title screen) */
   (function () {
@@ -417,5 +446,5 @@
   if (!root.classList.contains("intro-pending")) root.classList.add("lib-in");
   RM.addEventListener && RM.addEventListener("change", function () { if (RM.matches) Object.keys(plates).forEach(function (k) { sleep(plates[k]); }); });
 
-  window.JG_GAME = { route: route, seat: seat, arrange: arrange, screen: openScreen, focus: function (id) { focus(id, "api"); }, open: open, back: back, unlock: unlock, play: play, cleared: function () { paintCleared(); }, focusId: function () { return focusId; } };
+  window.JG_GAME = { route: route, seat: seat, arrange: arrange, screen: openScreen, focus: function (id) { focus(id, "api"); }, open: open, back: back, unlock: unlock, play: play, story: story, cleared: function () { paintCleared(); }, focusId: function () { return focusId; } };
 })();

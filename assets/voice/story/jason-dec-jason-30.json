@@ -1,0 +1,107 @@
+{
+ "id": "jason-dec-jason-30",
+ "text": "What you saw tonight runs Triple J. I'm also building a sale desk for Texas independent dealers. It's called Obavia.",
+ "duration": 9.56,
+ "words": [
+  {
+   "w": "What",
+   "s": 0.0,
+   "e": 0.16
+  },
+  {
+   "w": "you",
+   "s": 0.16,
+   "e": 0.3
+  },
+  {
+   "w": "saw",
+   "s": 0.3,
+   "e": 0.58
+  },
+  {
+   "w": "tonight",
+   "s": 0.58,
+   "e": 0.98
+  },
+  {
+   "w": "runs",
+   "s": 0.98,
+   "e": 1.44
+  },
+  {
+   "w": "Triple",
+   "s": 1.44,
+   "e": 1.74
+  },
+  {
+   "w": "J.",
+   "s": 1.74,
+   "e": 2.14
+  },
+  {
+   "w": "I'm",
+   "s": 2.66,
+   "e": 2.88
+  },
+  {
+   "w": "also",
+   "s": 2.88,
+   "e": 3.08
+  },
+  {
+   "w": "building",
+   "s": 3.08,
+   "e": 3.42
+  },
+  {
+   "w": "a",
+   "s": 3.42,
+   "e": 3.64
+  },
+  {
+   "w": "sale",
+   "s": 3.64,
+   "e": 3.92
+  },
+  {
+   "w": "desk",
+   "s": 3.92,
+   "e": 4.26
+  },
+  {
+   "w": "for",
+   "s": 4.26,
+   "e": 4.52
+  },
+  {
+   "w": "Texas",
+   "s": 4.52,
+   "e": 4.94
+  },
+  {
+   "w": "independent",
+   "s": 4.94,
+   "e": 5.58
+  },
+  {
+   "w": "dealers.",
+   "s": 5.58,
+   "e": 6.06
+  },
+  {
+   "w": "It's",
+   "s": 6.66,
+   "e": 6.78
+  },
+  {
+   "w": "called",
+   "s": 6.78,
+   "e": 7.06
+  },
+  {
+   "w": "Obavia.",
+   "s": 7.06,
+   "e": 9.56
+  }
+ ]
+}

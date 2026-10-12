@@ -1,0 +1,62 @@
+{
+ "id": "jason-off-jason-8",
+ "text": "That's the inbound voice AI. It books appointments into the CRM.",
+ "duration": 5.2,
+ "words": [
+  {
+   "w": "That's",
+   "s": 0.0,
+   "e": 0.28
+  },
+  {
+   "w": "the",
+   "s": 0.28,
+   "e": 0.42
+  },
+  {
+   "w": "inbound",
+   "s": 0.42,
+   "e": 0.88
+  },
+  {
+   "w": "voice",
+   "s": 0.88,
+   "e": 1.24
+  },
+  {
+   "w": "AI.",
+   "s": 1.24,
+   "e": 1.74
+  },
+  {
+   "w": "It",
+   "s": 2.32,
+   "e": 2.4
+  },
+  {
+   "w": "books",
+   "s": 2.4,
+   "e": 2.68
+  },
+  {
+   "w": "appointments",
+   "s": 2.68,
+   "e": 3.26
+  },
+  {
+   "w": "into",
+   "s": 3.26,
+   "e": 3.82
+  },
+  {
+   "w": "the",
+   "s": 3.82,
+   "e": 4.1
+  },
+  {
+   "w": "CRM.",
+   "s": 4.1,
+   "e": 5.2
+  }
+ ]
+}

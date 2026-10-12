@@ -1,0 +1,127 @@
+{
+ "id": "jason-lot-jason-13",
+ "text": "Then listen for the phone inside. Inbound voice AI answers it, books appointments into the CRM and live-transfers what it can't resolve to staff.",
+ "duration": 9.64,
+ "words": [
+  {
+   "w": "Then",
+   "s": 0.0,
+   "e": 0.32
+  },
+  {
+   "w": "listen",
+   "s": 0.32,
+   "e": 0.6
+  },
+  {
+   "w": "for",
+   "s": 0.6,
+   "e": 0.88
+  },
+  {
+   "w": "the",
+   "s": 0.88,
+   "e": 1.0
+  },
+  {
+   "w": "phone",
+   "s": 1.0,
+   "e": 1.26
+  },
+  {
+   "w": "inside.",
+   "s": 1.26,
+   "e": 1.76
+  },
+  {
+   "w": "Inbound",
+   "s": 2.36,
+   "e": 2.7
+  },
+  {
+   "w": "voice",
+   "s": 2.7,
+   "e": 3.06
+  },
+  {
+   "w": "AI",
+   "s": 3.06,
+   "e": 3.54
+  },
+  {
+   "w": "answers",
+   "s": 3.54,
+   "e": 4.04
+  },
+  {
+   "w": "it,",
+   "s": 4.04,
+   "e": 4.4
+  },
+  {
+   "w": "books",
+   "s": 4.6,
+   "e": 4.84
+  },
+  {
+   "w": "appointments",
+   "s": 4.84,
+   "e": 5.36
+  },
+  {
+   "w": "into",
+   "s": 5.36,
+   "e": 5.72
+  },
+  {
+   "w": "the",
+   "s": 5.72,
+   "e": 5.9
+  },
+  {
+   "w": "CRM",
+   "s": 5.9,
+   "e": 6.7
+  },
+  {
+   "w": "and",
+   "s": 6.7,
+   "e": 6.96
+  },
+  {
+   "w": "live-transfers",
+   "s": 6.96,
+   "e": 7.68
+  },
+  {
+   "w": "what",
+   "s": 7.68,
+   "e": 7.94
+  },
+  {
+   "w": "it",
+   "s": 7.94,
+   "e": 8.1
+  },
+  {
+   "w": "can't",
+   "s": 8.1,
+   "e": 8.4
+  },
+  {
+   "w": "resolve",
+   "s": 8.4,
+   "e": 8.66
+  },
+  {
+   "w": "to",
+   "s": 8.66,
+   "e": 8.9
+  },
+  {
+   "w": "staff.",
+   "s": 8.9,
+   "e": 9.22
+  }
+ ]
+}

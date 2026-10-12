@@ -51,13 +51,14 @@ def say_number(tok):
 
 # How the written line is said: each written word becomes one or more spoken words.
 SAY = {"CRM": "C R M", "UT": "U T", "SOPs": "S.O.P.s", "Obavia": "Oh-bah-vee-uh"}
-def spoken_words(text):
+def spoken_words(text, say_map=None):
+    say_map = say_map or SAY
     out = []  # (spoken word, index of the written word it belongs to)
     for i, w in enumerate(text.split()):
         core = re.sub(r"^[^\w]+|[^\w']+$", "", w)
         trail = w[len(w.rstrip(".,!?;:")):]
         if core.isdigit(): say = say_number(core)
-        elif core in SAY: say = SAY[core]
+        elif core in say_map: say = say_map[core]
         else: say = core
         parts = say.split()
         for j, p in enumerate(parts):
@@ -75,6 +76,8 @@ def main():
     if not REF.exists():
         sys.exit("narrate_jason: no tools/voice/ref.wav (the reference recording stays local and is never committed)")
     doc = json.loads(lines_file.read_text())
+    # a lines file may add its own pronunciations ("say": {written word: spoken words}); files without one hash as before
+    say_map = {**SAY, **doc["say"]} if doc.get("say") else SAY
     out = ROOT / doc.get("out", "assets/voice/run")
     out.mkdir(parents=True, exist_ok=True)
     man_path = out / "manifest-jason.json"
@@ -88,11 +91,11 @@ def main():
 
     for l in doc["lines"]:
         if only and l["id"] not in only: continue
-        h = hashlib.sha1(json.dumps([l["text"], "chatterbox", SAY]).encode()).hexdigest()[:12]
+        h = hashlib.sha1(json.dumps([l["text"], "chatterbox", say_map]).encode()).hexdigest()[:12]
         mp3, js = out / f"{l['id']}.mp3", out / f"{l['id']}.json"
         if not force and man["lines"].get(l["id"], {}).get("hash") == h and mp3.exists() and js.exists():
             continue
-        spoken = spoken_words(l["text"])
+        spoken = spoken_words(l["text"], say_map)
         say_text = " ".join(w for w, _ in spoken)
         target = [norm(w) for w, _ in spoken]
         best, tried = None, []

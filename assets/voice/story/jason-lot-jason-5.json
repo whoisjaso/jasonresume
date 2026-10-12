@@ -1,0 +1,27 @@
+{
+ "id": "jason-lot-jason-5",
+ "text": "What kind of role?",
+ "duration": 1.32,
+ "words": [
+  {
+   "w": "What",
+   "s": 0.0,
+   "e": 0.28
+  },
+  {
+   "w": "kind",
+   "s": 0.28,
+   "e": 0.56
+  },
+  {
+   "w": "of",
+   "s": 0.56,
+   "e": 0.8
+  },
+  {
+   "w": "role?",
+   "s": 0.8,
+   "e": 1.06
+  }
+ ]
+}

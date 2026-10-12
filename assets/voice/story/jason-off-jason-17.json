@@ -1,0 +1,82 @@
+{
+ "id": "jason-off-jason-17",
+ "text": "I tested the Supabase row-level security policies, so a role can't reach what it shouldn't.",
+ "duration": 6.56,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.0,
+   "e": 0.18
+  },
+  {
+   "w": "tested",
+   "s": 0.18,
+   "e": 0.66
+  },
+  {
+   "w": "the",
+   "s": 0.66,
+   "e": 0.9
+  },
+  {
+   "w": "Supabase",
+   "s": 0.9,
+   "e": 1.69
+  },
+  {
+   "w": "row-level",
+   "s": 1.69,
+   "e": 2.48
+  },
+  {
+   "w": "security",
+   "s": 2.48,
+   "e": 3.0
+  },
+  {
+   "w": "policies,",
+   "s": 3.0,
+   "e": 3.78
+  },
+  {
+   "w": "so",
+   "s": 3.78,
+   "e": 4.4
+  },
+  {
+   "w": "a",
+   "s": 4.4,
+   "e": 4.56
+  },
+  {
+   "w": "role",
+   "s": 4.56,
+   "e": 4.84
+  },
+  {
+   "w": "can't",
+   "s": 4.84,
+   "e": 5.56
+  },
+  {
+   "w": "reach",
+   "s": 5.56,
+   "e": 5.56
+  },
+  {
+   "w": "what",
+   "s": 5.56,
+   "e": 5.8
+  },
+  {
+   "w": "it",
+   "s": 5.8,
+   "e": 5.98
+  },
+  {
+   "w": "shouldn't.",
+   "s": 5.98,
+   "e": 6.44
+  }
+ ]
+}

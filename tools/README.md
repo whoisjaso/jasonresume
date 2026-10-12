@@ -11,6 +11,7 @@ Everything that produced the site's media and proved it works, moved out of the 
 | `score/` | The adaptive score in `assets/score/`: the notes as data (`score.py`), a theory check, the SFZ sampler, render, encode and verify. See `tools/score/README.md`. | Python 3.11 with numpy, scipy, soundfile, pyloudnorm, matplotlib, mido, numba; an ffmpeg with libopus and libmp3lame; the sample libraries in a work folder outside the repo (the README lists the downloads). |
 | `sfx/` | Rebuilds `assets/sfx` from the raw Mixkit recordings. | `pip install soundfile numpy imageio-ffmpeg`; raw files in `tools/sfx/raw/` (see `assets/sfx/CREDITS.md`). |
 | `verify/` | Playwright harnesses that play the home page, the Obavia page, overflow, and the resume PDFs against a local server; `match.test.mjs` checks the listing match. | `npm install playwright` at the repo root, a local server on port 8765, poppler-utils for the resume gates. |
+| `story/` | After Hours, the episode's cast. `mh_cast.py` builds the five people in headless Blender 4.2 LTS with the MPFB2 extension from MakeHuman's CC0 assets (bodies, eyes, brows, lashes, teeth, clothes, hair, the game_engine rig, face shape keys), grows Jason's short afro and goatee as geometry, bakes a face mask and marks the tie; `pack_cast.mjs` compresses each GLB with gltfpack (meshoptimizer, MIT) into `assets/story/cast/`. `cast.mjs` is the earlier signed-distance cast, kept for reference; its output is no longer shipped. See "After Hours, the episode" below. | Blender 4.2 LTS (download.blender.org), MPFB2 (static.makehumancommunity.org/mpfb), the MakeHuman system assets, glasses01, hats01, visemes01 and faceunits01 packs (CC0); `npm install` inside `tools/story` (meshoptimizer 0.22.0, gltfpack 0.22.0). |
 | `fonts/` | `cut_static.py` cuts the static resume fonts in assets/fonts (Hanken Grotesk 400 and 600, Cormorant Garamond 600) from the variable OFL sources; a variable font prints as Type 3. The woff2 files beside it are Google Fonts copies for offline harness runs. | `pip install fonttools brotli`. |
 
 ## Run the site locally
@@ -34,6 +35,7 @@ python3 tools/site/build_resume.py  # the ten resume pages and match.js's data, 
 node tools/verify/resume.mjs     # ten PDFs and .txt copies (assets/ and assets/resume/), gated: one page, tagged, no Type 3, reading order, numbers in llms.txt
 node tools/verify/match.test.mjs # the listing match on realistic listings and lookalike phrases
 node tools/verify/run-bot.mjs    # After Hours: The Run played by a bot, every level, desktop keys and phone touches
+node tools/verify/story.mjs      # After Hours, the episode: every branch through real keys, clicks and taps, desktop and phone both ways
 ```
 
 ## The run, played by a bot
@@ -45,6 +47,34 @@ node tools/verify/run-bot.mjs    # After Hours: The Run played by a bot, every l
 Desktop has to finish every level with every medal; the phone has to finish every level. Per level it prints whether it finished, the medals found, the level time, respawns, how forgiving each jump was (of 21 timings around the planned one, how many don't fall), and any jump whose landing was off screen at take-off. `--walk` plans the goal without Shift (the tutorial never mentions running, so every main path has to work at a walk). `humanTrial()` in run-sim.mjs plays the same plans with every press and release up to k frames early or late, replanning after each miss and respawning at the last lamp, to estimate falls per run for a careful but imprecise player. `--quick` plays every level to the goal by touch and the first by keys, no medals; `tools/verify/library.mjs` runs it at the end. Screenshots land in `tools/verify/out/bot-*.png`, the summary in `tools/verify/out/run-bot.txt`.
 
 Screenshots land in `tools/verify/out/`.
+
+## After Hours, the episode
+
+The story is data: `tools/site/story.json` (talks with lines, choices, conditions and actions; the objects you can look at; the journal; the recap; the endings). `assemble_home.py` inlines it as `#story-data` and refuses a Jason line that differs from the voice file. The engine is `story/` (ES modules: `main.js` the game, `world.js` the sets, `people.js` the cast, `paint.js` the shading, `post.js` the lens, `tex.js` the painted canvases) and `story.css`; game.js loads them with three.js only when someone presses Play.
+
+Third-party code it loads, all vendored, pinned and self-hosted, nothing from a CDN at runtime:
+
+- three.js 0.184.0 (MIT, Copyright 2010-2026 three.js authors): `vendor/three-0.184.0/three.module.min.js` and `three.core.min.js`, and from its examples `addons/loaders/GLTFLoader.js`, `addons/utils/BufferGeometryUtils.js`, `addons/utils/SkeletonUtils.js` (their `from 'three'` import rewritten to the pinned file). Licence in `vendor/three-0.184.0/LICENSE`. three.js is the approved exception to the site's first-party rule.
+- meshoptimizer 0.22.0 decoder (MIT, Arseny Kapoulkine): `vendor/meshopt-0.22.0/meshopt_decoder.module.js`, licence beside it.
+
+The cast (MakeHuman system assets, CC0; MPFB2 is GPL but only runs offline in Blender, nothing of it ships):
+
+```
+# once: Blender 4.2 LTS, then the extension and the asset packs into MPFB's user data
+blender -b --command extension install-file -r user_default -e mpfb2-latest.zip
+unzip makehuman_system_assets_cc0.zip glasses01_cc0.zip hats01_cc0.zip  -> ~/.config/blender/4.2/extensions/.user/user_default/mpfb/data/
+unzip visemes01.zip faceunits01.zip -> .../mpfb/data/targets/{visemes,faceunits}/
+cd tools/story && npm install
+# each time
+blender -b --python tools/story/mh_cast.py -- /tmp/cast [jason jason-memory player dell renata]
+node tools/story/pack_cast.mjs /tmp/cast v1      # assets/story/cast/<name>-v1.glb, about 450 KB each
+```
+
+`/assets` is cached for a year, so a rebuilt cast ships under a new version (`v2`) and story/main.js's `VER` moves with it.
+
+Voices: `python3 tools/site/story_voice.py` writes `tools/voice/story_lines.json` (the fictional cast, each with a stock Kokoro voice) and `tools/voice/story_jason_lines.json` (my lines, with pronunciations for the figures). Render with `/root/kvenv/bin/python -I tools/voice/narrate_free.py tools/voice/story_lines.json` and `/root/cbvenv/bin/python -I tools/voice/narrate_jason.py tools/voice/story_jason_lines.json --takes 1` (needs `tools/voice/ref.wav`, never committed; about two minutes a line on a 4-core CPU). Both skip lines that haven't changed. Until a line of mine is rendered, it plays as a caption.
+
+`node tools/verify/story.mjs [desktop|landscape|portrait] [--shots]` plays every branch (hiring, a dealer, curious, deflecting all the way, deflecting then telling) through real keys, clicks and taps, checks the endings, Continue after a reload, trophies in the library's store, no page errors, no dashes, percent signs or unverified numbers; `--shots` adds stills of every scene and moment and contact sheets in `tools/verify/out/story-sheet-*.png`. It opens the page with `?debug=story` (a read-only state view and a hook that stands you at a spot) and `&pr=0.3` (a low render resolution, since headless Chromium draws WebGL in software).
 
 ## Re-render voice
 
