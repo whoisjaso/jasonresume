@@ -307,7 +307,7 @@ function sayLine(L) {
       on("playing", () => { if (line !== base || base.mode === "text") return; if (base.mode === "wait") { rec.playing = performance.now(); base.ctAt = performance.now(); base.lastCT = a.currentTime; } base.mode = "voice"; rec.mode = "voice"; base.stall = false; });
       on("waiting", () => { if (line === base) base.stall = true; });
       on("stalled", () => { if (line === base && base.mode === "wait") base.stall = true; });
-      on("ended", () => { if (line === base && base.mode === "voice") { rec.ended = performance.now(); base.vt = Math.max(base.vt, a.duration || base.vt); base.endAt = base.t + HOLD; } });
+      on("ended", () => { if (line === base && base.mode === "voice") { rec.ended = performance.now(); base.vt = Math.max(base.vt, a.duration || base.vt); base.endAt = performance.now() + HOLD * 1000; } });
       on("error", () => { if (line === base) toText(base, "error"); });
       const p = a.play(); if (p && p.catch) p.catch(e => { if (line === base && base.mode !== "text" && !(e && e.name === "AbortError")) toText(base, "refused"); });
       if (SC() && SC().voice) SC().voice(true); AU.duck(0.45);
@@ -363,7 +363,7 @@ function tickLine(dt) {
     const a = l.audio, ct = a.currentTime;
     if (ct !== l.lastCT) { l.lastCT = ct; l.vt = ct; l.ctAt = pnow; l.stall = false; l.stallT = 0; }
     else if (!a.paused && !a.ended && dt > 0) { l.stallT += dt; if (l.stallT > STALL_MAX) toText(l, "stalled"); }
-    if (l.endAt == null && a.ended) { l.rec.ended = l.rec.ended || pnow; l.endAt = l.t + HOLD; }
+    if (l.endAt == null && a.ended) { l.rec.ended = l.rec.ended || pnow; l.endAt = pnow + HOLD * 1000; }
   } else { l.clock += dt; l.perf = pnow; }
   const now = lineNow(l, pnow);
   l.now = now;
@@ -381,7 +381,7 @@ function tickLine(dt) {
     }
   }
   if (l.mode === "text" && l.clock > l.dur) return endLine(false);
-  if (l.mode === "voice" && l.endAt != null && l.t >= l.endAt && !S.holdLines) return endLine(false);
+  if (l.mode === "voice" && l.endAt != null && pnow >= l.endAt && S.phase !== "pause" && !S.holdLines) return endLine(false);
 }
 /* the voice picks up again after the pause menu or a hidden tab, if it was the clock */
 function resumeVoice() { if (line && line.audio && line.mode !== "text") { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); } }

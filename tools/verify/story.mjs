@@ -462,8 +462,9 @@ async function sync(vname, w, h, mobile) {
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   await p.click('[data-title-play]');
-  if (!(await phase(p, 'explore', 400000))) { errs.push(`${label}: never got to explore ${JSON.stringify(await st(p))}`); await ctx.close(); return; }
-  await until(p, () => !window.JG_STORY.debug.state().line, null, 60000);
+  // the arrival is your own thought (no voice): skip through it, silently, to the people who speak
+  await until(p, () => { const d = window.JG_STORY.debug; if (d.state().line) d.skip(); return d.state().phase === 'explore'; }, null, 400000);
+  if ((await st(p)).phase !== 'explore') { errs.push(`${label}: never got to explore ${JSON.stringify(await st(p))}`); await ctx.close(); return; }
   const on = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
   if (!on) { errs.push(`${label}: the score is off after Play, so nothing is voiced`); await ctx.close(); return; }
   // sample every frame: the caption's clock against the recording's, the lit words, the ball, how many voices sound
