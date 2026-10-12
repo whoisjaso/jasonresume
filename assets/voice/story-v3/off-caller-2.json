@@ -1,0 +1,18 @@
+{
+ "id": "off-caller-2",
+ "text": "Marcus.",
+ "duration": 1.65,
+ "words": [
+  {
+   "w": "Marcus.",
+   "s": 0.084,
+   "e": 1.006
+  }
+ ],
+ "retimed": {
+  "k": 0.838,
+  "b": -0.125,
+  "before": 0.776,
+  "after": 0.897
+ }
+}

@@ -80,3 +80,91 @@ alb *= mix(vec3(0.9, 0.93, 1.0), vec3(1.0), fm.a);
 Raising the warmth term from 0.12 to about 0.18 would also lift the cheeks
 and nose. A soft roughness and subsurface look for skin is paint.js's to
 add, for example a slightly broader wrap and lower specular on `uSkin`.
+
+## 7. Hands, reaching for things (wanted)
+
+The hands now have a pose library (relaxed, flat, open, fist, grip, pinch,
+point, phone), with per-finger curls blended per hand by what the body does.
+Running uses loose fists swung by IK. Walking swings the arms past the thighs.
+Standing lets the arms hang (the idle capture clasped the hands, and the fingers
+went through each other). Talking makes word-timed open-palm beats. Forearm
+twist and wrist limits keep the palms facing the thighs, with no bent-back
+wrists.
+
+To touch, take or press something, the hand goes to the object's real point
+with two-bone arm IK: approach, contact, retract. The body leans, turns or
+squats when the point is far or low.
+
+```js
+await me.reachTo(worldPoint, { hold: "touch" });              // ledger, laptop, a sign: a flat hand on it
+await me.reachTo(keysWorldPoint, { hold: "pinch" });          // keys, a card, a book off a shelf
+await me.reachTo(handleWorldPoint, { hold: "grip", stay: true }); // resolves at contact and holds on
+await me.release("l");                                        // let go of a held reach
+await me.reachTo(buttonWorldPoint, { hold: "press" });        // a fingertip on a button
+```
+
+Options: `hand` "l" or "r" (default: the side the point is on), `hold`,
+`stay`, `palm` (a world direction for the palm at contact), `dur` (the approach
+in seconds) and `onContact()`. The point may be a live `Vector3` or a function,
+so a hand on a door handle follows the door as it opens. In `interact()`,
+`me.reachTo(point, { hold })` replaces `me.play("reach")`, which still works.
+`me.hold = "phone"` now holds the phone at the ear by IK, with a small phone
+in the hand (`me.showPhone = false` hides it).
+
+## 8. Cars (wanted, against tools/story/HANDOFF-drive.md)
+
+```js
+await me.enterCar(car, "driver");   // walk to the door, open it by the handle, step in, sit, legs in, close it, hands on the wheel
+me.drive(car);                      // or me.driving = car: straight into the seat (skips, saves); me.driving = null: out at once
+await me.exitCar(car);              // the reverse: let go of the wheel, open the door, legs out, stand, step clear, close it
+me.inCar                            // true from the start of enterCar until exitCar resolves
+```
+
+While a sequence runs, people.js moves the body. main.js leaves `me.pos` and
+`me.wantYaw` alone until the promise resolves, and while seated the body
+follows `car.body` (pitch and roll included).
+
+Seated, the driver:
+
+- sits with the hips on the seat's H-point, leaning back
+- holds the rim at about 10 and 2, the hands following it as it turns; past
+  about 75 degrees, or when an arm would straighten, a hand lets go and takes
+  the rim again (hand over hand), and one that is still out of reach slides
+  round the rim
+- keeps the right foot on the accelerator, moving it to the brake (`car.throttle`
+  and `car.brake`, or `car.input.throttle` and `car.input.brake`)
+- looks into the turn (`car.steerAngle`, or `car.wheelAngle / 14`)
+- is thrown outward in corners and pitches with acceleration and braking
+
+The steering wheel's turning axis is read from its mesh (the thinnest axis),
+and the turn from `steeringWheel.rotation[axis]`.
+
+## 9. Voice timings (for whoever owns assets/voice and the line clock)
+
+Laid over the audio, my lines' word timings (narrate_jason.py, from
+faster-whisper) are compressed: right at the start, then early by 0.2 to 0.4 s
+by the end of a line. The captions light words early, and the mouth closes
+while the voice is still talking. The fictional voices are on time, but each
+line's last word runs on into the silence after it.
+
+`/root/kvenv/bin/python -I tools/story/retime.py assets/voice/story-v2 --write <dir>`
+fits each line's timings to its own audio. On the 126 story lines it takes the
+agreement between "inside a word" and "voice on" from 0.843 to 0.925, the lag
+to a median of 0 ms, and the last word's end to within 2 ms of the voice's.
+/assets is cached for a year, so ship the result as a new directory (copy the
+mp3s and manifests next to the retimed json) and point story.json's voice
+`out` at it, rather than overwriting story-v2 in place.
+
+people.js itself caps each word's mouth shapes to the time they take to say, so
+a word whose timing runs on closes the mouth. With the blend rates now used,
+the mouth leads the sound by 10 to 60 ms, as lips do.
+
+## Checks
+
+- `node tools/story/lab-check.mjs`: contact gate, exits 1 if a holding hand is
+  more than 2 cm off the wheel's rim or a reach target
+- `tools/story/lab.html`:
+  - `?run=reach&pt=0..3&cam=reachl|reachr`
+  - `?run=car&car=sedan&seq=enter|drive|exit&cam=car|carin|carside`
+  - `?run=talk|jog|walk&cam=hand|arm|armr`
+  - `?words=<voice line id>` plays a line's timings on the mouth (`&vdir=` picks the voice directory)

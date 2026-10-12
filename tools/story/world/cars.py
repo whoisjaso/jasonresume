@@ -152,6 +152,7 @@ def mats():
         "seat": mat("seat", (0.05, 0.05, 0.05, 1), 0.0, 0.9), "dash": mat("dash", (0.03, 0.03, 0.03, 1), 0.0, 0.6),
         "cluster": mat("cluster", (0.02, 0.03, 0.04, 1), 0.0, 0.3), "lamp_rev": mat("lamp_rev", (0.9, 0.9, 0.9, 1), 0.0, 0.2),
         "lamp_brake": mat("lamp_brake", (0.6, 0.03, 0.02, 1), 0.0, 0.2), "jamb": mat("jamb", (0.6, 0.6, 0.6, 1), 0.0, 0.3),
+        "mirror": mat("mirror", (0.4, 0.42, 0.44, 1), 1.0, 0.05),
     }
     return MATS
 
@@ -233,6 +234,13 @@ def body(K, name):
     sub = ob.modifiers.new("sub", "SUBSURF"); sub.levels = 1; sub.render_levels = 1
     bpy.context.view_layer.objects.active = ob; ob.select_set(True)
     bpy.ops.object.modifier_apply(modifier="sub")
+    # the dark band round every pane (the frit and the seals), so the pillars and frames read solid behind
+    # see-through glass; on a front door it becomes the door's own window frame when the door is cut out
+    bm = bmesh.new(); bm.from_mesh(ob.data)
+    gl = [f for f in bm.faces if f.material_index == 1]
+    rim = bmesh.ops.inset_region(bm, faces=gl, thickness=0.04, depth=0.0, use_even_offset=True, use_boundary=True)
+    for f in rim["faces"]: f.material_index = 2
+    bm.to_mesh(ob.data); bm.free()
     # wheel wells: exact boolean with a cylinder per axle (wider than the car, so both sides cut)
     for ax in K["axles"]:
         bpy.ops.mesh.primitive_cylinder_add(vertices=40, radius=K["arch"], depth=K["W"] * 0.5, location=(K["W"] * 0.5, -ax, K["tr"] + 0.005), rotation=(0, math.pi / 2, 0))
@@ -321,32 +329,39 @@ def outline(cx, cy, w, h, r=0.3, n=6):
 def details(K, ob, name):
     L, W = K["L"], K["W"]; parts = []
     zbelt_f = cr(K["belt"], 0.1); zb_f = cr(K["bot"], 0.05); zbelt_r = cr(K["belt"], L - 0.1); zb_r = cr(K["bot"], L - 0.05)
-    hl_z = zb_f + (zbelt_f - zb_f) * 0.80; tl_z = zb_r + (zbelt_r - zb_r) * 0.80
+    hl_z = zb_f + (zbelt_f - zb_f) * 0.80; tl_z = zb_r + (zbelt_r - zb_r) * (0.80 if "bed" in K else 0.64)
+    # the tail lamp: a lens on the flat of the tail (not over its rounded top edge, where a projected patch smears),
+    # and inside it a lit element; the reverse lamp sits inboard beside it
+    tlx, tlw, tlh = (W * 0.36, W * 0.1, 0.34) if "bed" in K else (W * 0.265, W * 0.2, 0.15)
     # headlights: wrap round the front corners (projected from the front, then from the side for the wrap)
     for s in (1, -1):
         cx = s * W * 0.335
         parts.append(patch(ob, "hl", "lamp_head", outline(cx, hl_z, W * 0.28, 0.15 if K["L"] < 5 else 0.19, 0.4), lambda u, v: (u, 5, v), (0, -1, 0), 0.006))
-        parts.append(patch(ob, "tl", "lamp_tail", outline(s * W * 0.36, tl_z, W * 0.25 if "bed" not in K else W * 0.1, 0.13 if "bed" not in K else 0.34, 0.3), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.006))
+        parts.append(patch(ob, "tl", "lamp_tail", outline(s * tlx, tl_z, tlw, tlh, 0.3), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.006, rings=6))
         # tail light wrap onto the side, and the amber marker at the front corner
         # the lens's inner element: a smaller bar a hair proud of the lens, the part that lights
-        parts.append(patch(ob, "tli", "lamp_tail_in", outline(s * W * 0.36, tl_z, (W * 0.25 if "bed" not in K else W * 0.1) * 0.7, (0.13 if "bed" not in K else 0.34) * 0.35, 0.5), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.009))
-        rv = (s * W * 0.36, tl_z - 0.10, 0.09, 0.05) if "bed" in K else (s * W * 0.27, tl_z - 0.005, 0.075, 0.04)
+        parts.append(patch(ob, "tli", "lamp_tail_in", outline(s * (tlx + tlw * 0.08), tl_z + tlh * 0.08, tlw * 0.72, tlh * 0.5, 0.45), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.009))
+        rv = (s * W * 0.36, tl_z - 0.10, 0.09, 0.05) if "bed" in K else (s * (tlx - tlw * 0.36), tl_z - tlh * 0.18, tlw * 0.2, tlh * 0.42)
         parts.append(patch(ob, "rev", "lamp_rev", outline(rv[0], rv[1], rv[2], rv[3], 0.4), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.0105))
         parts.append(patch(ob, "hli", "lamp_head_in", outline(cx + s * W * 0.03, hl_z, W * 0.09, 0.06, 0.5), lambda u, v: (u, 5, v), (0, -1, 0), 0.009))
-        parts.append(patch(ob, "tlw", "lamp_tail", outline(-(L - 0.12), tl_z, 0.16, 0.09, 0.3), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
+        parts.append(patch(ob, "tlw", "lamp_tail", outline(-(L - 0.1), tl_z + 0.01, 0.12, 0.08, 0.35), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         parts.append(patch(ob, "am", "lamp_amber", outline(-0.16, hl_z - 0.02, 0.1, 0.05, 0.45), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         # side mirror: a small rounded block on a stalk at the A-pillar base
         c0 = K["cab"][0]; zb = cr(K["belt"], c0 + 0.2)
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.09), -(c0 + 0.24), zb + 0.11))
-        mr = bpy.context.active_object; mr.scale = (0.2, 0.1, 0.125); mr.data.materials.append(mats()["paint"])
-        bpy.ops.object.transform_apply(scale=True)
-        for v in mr.data.vertices:   # a housing, not a box: the tip narrower, the face toward the rear flat
-            t = (v.co.x * s + 0.1) / 0.2
-            v.co.z *= 1 - 0.25 * t; v.co.y = v.co.y * (1 - 0.35 * t) if v.co.y > 0 else v.co.y
-        bv = mr.modifiers.new("bv", "BEVEL"); bv.width = 0.035; bv.segments = 4
-        bpy.context.view_layer.objects.active = mr; bpy.ops.object.modifier_apply(modifier="bv"); bpy.ops.object.shade_smooth(); parts.append(mr)
-        bpy.ops.mesh.primitive_plane_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.1), -(c0 + 0.24) - 0.047, zb + 0.11), rotation=(math.pi / 2, 0, 0))
-        mg = bpy.context.active_object; mg.scale = (0.16, 0.095, 1); mg.data.materials.append(mats()["chrome"]); parts.append(mg)
+        mx, my, mz = s * (cr(K["hw"], c0 + 0.2) + 0.1), -(c0 + 0.24), zb + 0.11
+        ang = Matrix.Rotation(-s * 0.16, 4, "Z")   # turned a little to face the driver
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=10, radius=1)
+        mr = bpy.context.active_object
+        for v in mr.data.vertices:   # an egg-shaped shell, cut flat at the back where the glass sits
+            x, y, z = v.co
+            y = min(y, 0.25)                          # flat on +Y, which the half turn below puts at the rear
+            v.co = Vector((x * 0.11 * (1 - 0.12 * max(0, -x * s)), y * 0.075, z * 0.068 * (1 - 0.15 * max(0, -x * s))))
+        mr.data.transform(Matrix.Translation(Vector((mx, my, mz))) @ ang @ Matrix.Rotation(math.pi, 4, "Z"))
+        mr.data.materials.append(mats()["paint"]); bpy.context.view_layer.objects.active = mr; bpy.ops.object.shade_smooth(); parts.append(mr)
+        bpy.ops.mesh.primitive_circle_add(vertices=24, radius=1, fill_type="NGON")
+        mg = bpy.context.active_object
+        mg.data.transform(Matrix.Translation(Vector((mx, my, mz))) @ ang @ Matrix.Translation(Vector((0, -0.0195, 0))) @ Matrix.Rotation(math.pi / 2, 4, "X") @ Matrix.Diagonal((0.095, 0.058, 1, 1)))
+        mg.data.materials.append(mats()["mirror"]); parts.append(mg)
         bpy.ops.mesh.primitive_cube_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.02), -(c0 + 0.22), zb + 0.06))
         st = bpy.context.active_object; st.scale = (0.08, 0.04, 0.03); st.data.materials.append(mats()["trim"]); parts.append(st)
         # door handles: one per door, on the shoulder below the belt

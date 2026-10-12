@@ -1,0 +1,88 @@
+{
+ "id": "jason-lot-jason-8",
+ "text": "Then open the filing cabinet. I manage pricing, inventory, vendors, logistics, financing and title here.",
+ "duration": 6.6,
+ "words": [
+  {
+   "w": "Then",
+   "s": 0.0,
+   "e": -0.057
+  },
+  {
+   "w": "open",
+   "s": 0.0,
+   "e": 0.228
+  },
+  {
+   "w": "the",
+   "s": 0.228,
+   "e": 0.378
+  },
+  {
+   "w": "filing",
+   "s": 0.378,
+   "e": 0.596
+  },
+  {
+   "w": "cabinet.",
+   "s": 0.596,
+   "e": 0.998
+  },
+  {
+   "w": "I",
+   "s": 1.233,
+   "e": 1.25
+  },
+  {
+   "w": "manage",
+   "s": 1.25,
+   "e": 1.535
+  },
+  {
+   "w": "pricing,",
+   "s": 1.535,
+   "e": 1.954
+  },
+  {
+   "w": "inventory,",
+   "s": 2.205,
+   "e": 2.44
+  },
+  {
+   "w": "vendors,",
+   "s": 2.909,
+   "e": 3.144
+  },
+  {
+   "w": "logistics,",
+   "s": 3.395,
+   "e": 3.68
+  },
+  {
+   "w": "financing",
+   "s": 4.049,
+   "e": 4.3
+  },
+  {
+   "w": "and",
+   "s": 4.669,
+   "e": 4.686
+  },
+  {
+   "w": "title",
+   "s": 4.686,
+   "e": 4.937
+  },
+  {
+   "w": "here.",
+   "s": 4.937,
+   "e": 5.172
+  }
+ ],
+ "retimed": {
+  "k": 0.838,
+  "b": -0.225,
+  "before": 0.641,
+  "after": 0.985
+ }
+}

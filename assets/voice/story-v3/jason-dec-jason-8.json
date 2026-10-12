@@ -1,0 +1,48 @@
+{
+ "id": "jason-dec-jason-8",
+ "text": "You read every note on that whiteboard.",
+ "duration": 2.44,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.05,
+   "e": 0.242
+  },
+  {
+   "w": "read",
+   "s": 0.242,
+   "e": 0.497
+  },
+  {
+   "w": "every",
+   "s": 0.497,
+   "e": 0.922
+  },
+  {
+   "w": "note",
+   "s": 0.922,
+   "e": 1.263
+  },
+  {
+   "w": "on",
+   "s": 1.263,
+   "e": 1.689
+  },
+  {
+   "w": "that",
+   "s": 1.689,
+   "e": 1.901
+  },
+  {
+   "w": "whiteboard.",
+   "s": 1.901,
+   "e": 2.433
+  }
+ ],
+ "retimed": {
+  "k": 1.064,
+  "b": 0.05,
+  "before": 0.91,
+  "after": 0.984
+ }
+}

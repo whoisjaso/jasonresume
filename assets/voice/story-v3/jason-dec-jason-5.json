@@ -1,0 +1,48 @@
+{
+ "id": "jason-dec-jason-5",
+ "text": "So. You're hiring for AI and automation.",
+ "duration": 4.836,
+ "words": [
+  {
+   "w": "So.",
+   "s": 0.05,
+   "e": 0.5
+  },
+  {
+   "w": "You're",
+   "s": 1.7,
+   "e": 2.725
+  },
+  {
+   "w": "hiring",
+   "s": 2.725,
+   "e": 3.275
+  },
+  {
+   "w": "for",
+   "s": 3.275,
+   "e": 3.6
+  },
+  {
+   "w": "AI",
+   "s": 3.6,
+   "e": 4.2
+  },
+  {
+   "w": "and",
+   "s": 4.2,
+   "e": 4.75
+  },
+  {
+   "w": "automation.",
+   "s": 4.75,
+   "e": 4.83
+  }
+ ],
+ "retimed": {
+  "k": 1.25,
+  "b": 0.05,
+  "before": 0.76,
+  "after": 0.896
+ }
+}

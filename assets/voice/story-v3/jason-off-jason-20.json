@@ -1,0 +1,63 @@
+{
+ "id": "jason-off-jason-20",
+ "text": "That's my prospecting workflow. Python, the Claude API and n8n.",
+ "duration": 4.72,
+ "words": [
+  {
+   "w": "That's",
+   "s": 0.05,
+   "e": 0.343
+  },
+  {
+   "w": "my",
+   "s": 0.343,
+   "e": 0.499
+  },
+  {
+   "w": "prospecting",
+   "s": 0.499,
+   "e": 1.163
+  },
+  {
+   "w": "workflow.",
+   "s": 1.163,
+   "e": 1.534
+  },
+  {
+   "w": "Python,",
+   "s": 2.1,
+   "e": 2.334
+  },
+  {
+   "w": "the",
+   "s": 2.685,
+   "e": 2.783
+  },
+  {
+   "w": "Claude",
+   "s": 2.783,
+   "e": 3.017
+  },
+  {
+   "w": "API",
+   "s": 3.017,
+   "e": 3.388
+  },
+  {
+   "w": "and",
+   "s": 3.798,
+   "e": 3.856
+  },
+  {
+   "w": "n8n.",
+   "s": 3.856,
+   "e": 4.657
+  }
+ ],
+ "retimed": {
+  "k": 0.976,
+  "b": 0.05,
+  "before": 0.691,
+  "after": 0.718
+ }
+}

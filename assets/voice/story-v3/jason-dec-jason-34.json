@@ -1,0 +1,38 @@
+{
+ "id": "jason-dec-jason-34",
+ "text": "You didn't skip much, either.",
+ "duration": 1.6,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.04,
+   "e": 0.27
+  },
+  {
+   "w": "didn't",
+   "s": 0.27,
+   "e": 0.684
+  },
+  {
+   "w": "skip",
+   "s": 0.684,
+   "e": 0.868
+  },
+  {
+   "w": "much,",
+   "s": 0.868,
+   "e": 1.213
+  },
+  {
+   "w": "either.",
+   "s": 1.213,
+   "e": 1.6
+  }
+ ],
+ "retimed": {
+  "k": 1.15,
+  "b": 0.04,
+  "before": 0.831,
+  "after": 0.994
+ }
+}

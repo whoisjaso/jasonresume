@@ -1,0 +1,43 @@
+{
+ "id": "lot-dell-8",
+ "text": "Showroom's that way. Follow the lamps.",
+ "duration": 3.3,
+ "words": [
+  {
+   "w": "Showroom's",
+   "s": 0.271,
+   "e": 0.669
+  },
+  {
+   "w": "that",
+   "s": 0.669,
+   "e": 0.9
+  },
+  {
+   "w": "way.",
+   "s": 0.9,
+   "e": 1.151
+  },
+  {
+   "w": "Follow",
+   "s": 1.225,
+   "e": 1.528
+  },
+  {
+   "w": "the",
+   "s": 1.528,
+   "e": 1.633
+  },
+  {
+   "w": "lamps.",
+   "s": 1.633,
+   "e": 2.492
+  }
+ ],
+ "retimed": {
+  "k": 0.838,
+  "b": 0.02,
+  "before": 0.779,
+  "after": 0.924
+ }
+}

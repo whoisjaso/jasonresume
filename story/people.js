@@ -19,8 +19,15 @@
      ends up twisted or out of place takes a real step back under the body, which
      is also how a turn in place happens
    - leaning into turns and into a start, a breathing chest, weight shifts
-   - upper-body layers: talking gestures, a phone at the ear, an umbrella held up,
-     one-shot moves (reach, pick up, hand over, nod, shake), with arm IK for props
+   - upper-body layers: one-shot moves (pick up, hand over, nod, shake); then the arms by
+     IK with a pole: swinging walking and running, hanging standing, word-timed beats
+     talking, a phone at the ear, an umbrella held up, reaches to a point in the world
+     (reachTo), and the steering wheel
+   - the hands: a pose library (relaxed, open, fist, grip, pinch, point...) blended per
+     hand, the forearm turned so the palm faces the right way, the wrist kept natural,
+     and the gripping part of the hand put exactly on what it holds
+   - cars: walking up, the door, sitting in, the legs over the sill, the wheel, the
+     pedals, the look into the turn and the lean in the corners (enterCar, drive, exitCar)
    - the head and eyes look at whoever is speaking or what is in focus, eyes lead
      and saccade, lids blink and track
    - the face: visemes from the voice's word timings, brows that react, a smile
@@ -857,7 +864,7 @@ class Person {
     }
     // standing: the capture clasps its hands in front, where the fingers pass through each other; the arms hang instead,
     // relaxed at the sides, elbows soft, the hands by the thighs and swaying a little with the breath and the weight
-    const hang = (this.stillK || 0) * (1 - this.talkW) * (1 - (this.styleW || 0)) * (this.shot ? 0 : 1) * (1 - (this.carK || 0));
+    const hang = (this.stillK || 0) * (1 - (this.styleW || 0)) * (this.shot ? 0 : 1) * (1 - (this.carK || 0));
     if (hang > 0.01) for (const s of ["l", "r"]) {
       const g = this.arm[s]; if (!g) continue;
       const k = hang * (s === "r" ? (1 - this.holdK.umbrella) * (1 - this.holdK.phone) : 1) * (1 - this.engW * 0.25);
@@ -1293,7 +1300,10 @@ class Person {
     const c = this.car, v = c.v;
     // the right foot on the accelerator, over to the brake when braking, pressing with the pedal
     if (c.mode === "drive" && c.feetW > 0.5) {
-      const th = clamp(v.throttle != null ? v.throttle : v.input && v.input.throttle || 0, 0, 1), br = clamp(v.brake != null ? v.brake : v.input && v.input.brake || 0, 0, 1);
+      // (vehicle.js shows the throttle as load and the brake as its brake lights)
+      const lit = v.lights && v.lights.get ? v.lights.get() : null;
+      const th = clamp(v.throttle != null ? v.throttle : v.input ? v.input.throttle || 0 : v.load || 0, 0, 1);
+      const br = clamp(v.brake != null ? v.brake : v.input ? v.input.brake || 0 : lit && lit.brake && !lit.reverse ? 1 : 0, 0, 1);
       c.brk = damp(c.brk || 0, br > 0.05 ? 1 : 0, 12, 1 / 60);
       c.feet.r.copy(c.P.gas).lerp(c.P.brake, c.brk); c.feet.r.z += (th * (1 - c.brk) + br * c.brk) * 0.04; c.feet.r.y -= (th * (1 - c.brk) + br * c.brk) * 0.02;
       c.feet.l.copy(c.P.rest);
@@ -1314,8 +1324,10 @@ class Person {
     // the axis the wheel turns about: local Z by the handoff; found from the rim's mesh (its thin axis) to be sure
     const ax = W.userData.rimAxis || (W.userData.rimAxis = rimAxisOf(W));
     const e1 = { z: "x", y: "z", x: "y" }[ax], e2 = { z: "y", y: "x", x: "z" }[ax];
-    if (!W.userData.restQ) { const r = W.rotation; W.userData.restQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(ax === "x" ? 0 : r.x, ax === "y" ? 0 : r.y, ax === "z" ? 0 : r.z, r.order)); }
-    const alpha = W.rotation[ax];
+    // the wheel at rest: vehicle.js keeps it as userData.q0 and turns it on top (q = q0 * turn about the axis); else
+    // the rest is the node's rotation without its turn
+    if (!W.userData.restQ) { const r = W.rotation; W.userData.restQ = W.userData.q0 ? W.userData.q0.clone() : new THREE.Quaternion().setFromEuler(new THREE.Euler(ax === "x" ? 0 : r.x, ax === "y" ? 0 : r.y, ax === "z" ? 0 : r.z, r.order)); }
+    const qt = _kq2.copy(W.userData.restQ).invert().multiply(W.quaternion), alpha = 2 * Math.atan2(qt[ax], qt.w);
     // the wheel's frame at rest, in its own axes (e1, e2 across the rim): which way is up and which way the driver's left
     const qi = _kq.copy(W.userData.restQ).invert();
     const up = _f1.set(0, 1, 0).applyQuaternion(qi), left = _f2.set(1, 0, 0).applyQuaternion(qi);

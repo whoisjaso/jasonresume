@@ -1,0 +1,43 @@
+{
+ "id": "jason-mem-jason-5",
+ "text": "Neuroscience at UT Austin. Expected 2028.",
+ "duration": 4.04,
+ "words": [
+  {
+   "w": "Neuroscience",
+   "s": 0.04,
+   "e": 0.702
+  },
+  {
+   "w": "at",
+   "s": 0.702,
+   "e": 1.326
+  },
+  {
+   "w": "UT",
+   "s": 1.326,
+   "e": 1.637
+  },
+  {
+   "w": "Austin.",
+   "s": 1.637,
+   "e": 2.144
+  },
+  {
+   "w": "Expected",
+   "s": 2.494,
+   "e": 2.962
+  },
+  {
+   "w": "2028.",
+   "s": 2.962,
+   "e": 3.975
+  }
+ ],
+ "retimed": {
+  "k": 0.974,
+  "b": 0.04,
+  "before": 0.886,
+  "after": 0.911
+ }
+}

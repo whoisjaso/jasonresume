@@ -1,0 +1,83 @@
+{
+ "id": "jason-off-jason-13",
+ "text": "I prepare and file title and registration paperwork, including the Form 130-U and webDEALER.",
+ "duration": 5.84,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.04,
+   "e": 0.203
+  },
+  {
+   "w": "prepare",
+   "s": 0.203,
+   "e": 0.55
+  },
+  {
+   "w": "and",
+   "s": 0.55,
+   "e": 0.856
+  },
+  {
+   "w": "file",
+   "s": 0.856,
+   "e": 1.101
+  },
+  {
+   "w": "title",
+   "s": 1.101,
+   "e": 1.468
+  },
+  {
+   "w": "and",
+   "s": 1.468,
+   "e": 1.794
+  },
+  {
+   "w": "registration",
+   "s": 1.794,
+   "e": 2.264
+  },
+  {
+   "w": "paperwork,",
+   "s": 2.264,
+   "e": 2.876
+  },
+  {
+   "w": "including",
+   "s": 2.876,
+   "e": 3.365
+  },
+  {
+   "w": "the",
+   "s": 3.365,
+   "e": 3.692
+  },
+  {
+   "w": "Form",
+   "s": 3.692,
+   "e": 3.896
+  },
+  {
+   "w": "130-U",
+   "s": 3.896,
+   "e": 4.956
+  },
+  {
+   "w": "and",
+   "s": 4.956,
+   "e": 5.262
+  },
+  {
+   "w": "webDEALER.",
+   "s": 5.262,
+   "e": 5.752
+  }
+ ],
+ "retimed": {
+  "k": 1.02,
+  "b": 0.04,
+  "before": 0.967,
+  "after": 0.997
+ }
+}

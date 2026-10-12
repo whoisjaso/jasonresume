@@ -1,0 +1,53 @@
+{
+ "id": "jason-lot-jason-24",
+ "text": "Take your time. The office isn't going anywhere.",
+ "duration": 3.12,
+ "words": [
+  {
+   "w": "Take",
+   "s": 0.06,
+   "e": 0.31
+  },
+  {
+   "w": "your",
+   "s": 0.31,
+   "e": 0.518
+  },
+  {
+   "w": "time.",
+   "s": 0.518,
+   "e": 0.85
+  },
+  {
+   "w": "The",
+   "s": 1.308,
+   "e": 1.37
+  },
+  {
+   "w": "office",
+   "s": 1.37,
+   "e": 1.703
+  },
+  {
+   "w": "isn't",
+   "s": 1.703,
+   "e": 2.182
+  },
+  {
+   "w": "going",
+   "s": 2.182,
+   "e": 2.431
+  },
+  {
+   "w": "anywhere.",
+   "s": 2.431,
+   "e": 2.993
+  }
+ ],
+ "retimed": {
+  "k": 1.04,
+  "b": 0.06,
+  "before": 0.788,
+  "after": 0.846
+ }
+}

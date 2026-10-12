@@ -1,0 +1,68 @@
+{
+ "id": "jason-off-jason-11",
+ "text": "What it can't resolve, it live-transfers to staff. That's the hand-off.",
+ "duration": 5.4,
+ "words": [
+  {
+   "w": "What",
+   "s": 0.025,
+   "e": 0.312
+  },
+  {
+   "w": "it",
+   "s": 0.312,
+   "e": 0.598
+  },
+  {
+   "w": "can't",
+   "s": 0.598,
+   "e": 1.09
+  },
+  {
+   "w": "resolve,",
+   "s": 1.09,
+   "e": 1.622
+  },
+  {
+   "w": "it",
+   "s": 1.889,
+   "e": 1.971
+  },
+  {
+   "w": "live-transfers",
+   "s": 1.971,
+   "e": 3.036
+  },
+  {
+   "w": "to",
+   "s": 3.036,
+   "e": 3.343
+  },
+  {
+   "w": "staff.",
+   "s": 3.343,
+   "e": 3.67
+  },
+  {
+   "w": "That's",
+   "s": 4.141,
+   "e": 4.633
+  },
+  {
+   "w": "the",
+   "s": 4.633,
+   "e": 4.776
+  },
+  {
+   "w": "hand-off.",
+   "s": 4.776,
+   "e": 5.288
+  }
+ ],
+ "retimed": {
+  "k": 1.024,
+  "b": 0.025,
+  "before": 0.85,
+  "after": 0.88
+ }
+}

@@ -1,0 +1,48 @@
+{
+ "id": "off-renata-4",
+ "text": "Still fictional. Still happy with the deal.",
+ "duration": 3.3,
+ "words": [
+  {
+   "w": "Still",
+   "s": 0.41,
+   "e": 0.639
+  },
+  {
+   "w": "fictional.",
+   "s": 0.639,
+   "e": 1.24
+  },
+  {
+   "w": "Still",
+   "s": 1.361,
+   "e": 1.59
+  },
+  {
+   "w": "happy",
+   "s": 1.59,
+   "e": 1.884
+  },
+  {
+   "w": "with",
+   "s": 1.884,
+   "e": 1.972
+  },
+  {
+   "w": "the",
+   "s": 1.972,
+   "e": 2.048
+  },
+  {
+   "w": "deal.",
+   "s": 2.048,
+   "e": 2.682
+  }
+ ],
+ "retimed": {
+  "k": 0.874,
+  "b": 0.06,
+  "before": 0.821,
+  "after": 0.906
+ }
+}

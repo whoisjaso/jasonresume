@@ -1,0 +1,43 @@
+{
+ "id": "jason-dec-jason-25",
+ "text": "So your paperwork keeps coming back.",
+ "duration": 1.88,
+ "words": [
+  {
+   "w": "So",
+   "s": 0.04,
+   "e": 0.202
+  },
+  {
+   "w": "your",
+   "s": 0.202,
+   "e": 0.364
+  },
+  {
+   "w": "paperwork",
+   "s": 0.364,
+   "e": 0.829
+  },
+  {
+   "w": "keeps",
+   "s": 0.829,
+   "e": 1.173
+  },
+  {
+   "w": "coming",
+   "s": 1.173,
+   "e": 1.457
+  },
+  {
+   "w": "back.",
+   "s": 1.457,
+   "e": 1.801
+  }
+ ],
+ "retimed": {
+  "k": 1.012,
+  "b": 0.04,
+  "before": 0.952,
+  "after": 0.995
+ }
+}

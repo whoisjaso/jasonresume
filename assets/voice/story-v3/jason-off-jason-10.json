@@ -1,0 +1,18 @@
+{
+ "id": "jason-off-jason-10",
+ "text": "Thanks.",
+ "duration": 0.72,
+ "words": [
+  {
+   "w": "Thanks.",
+   "s": 0.04,
+   "e": 0.43
+  }
+ ],
+ "retimed": {
+  "k": 1.22,
+  "b": 0.04,
+  "before": 0.569,
+  "after": 0.75
+ }
+}

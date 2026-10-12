@@ -1,0 +1,48 @@
+{
+ "id": "jason-dec-jason-2",
+ "text": "Renata says thanks, by the way. Fictionally.",
+ "duration": 2.6,
+ "words": [
+  {
+   "w": "Renata",
+   "s": 0.045,
+   "e": 0.468
+  },
+  {
+   "w": "says",
+   "s": 0.468,
+   "e": 0.743
+  },
+  {
+   "w": "thanks,",
+   "s": 1.04,
+   "e": 1.124
+  },
+  {
+   "w": "by",
+   "s": 1.124,
+   "e": 1.378
+  },
+  {
+   "w": "the",
+   "s": 1.378,
+   "e": 1.526
+  },
+  {
+   "w": "way.",
+   "s": 1.526,
+   "e": 1.78
+  },
+  {
+   "w": "Fictionally.",
+   "s": 2.098,
+   "e": 2.584
+  }
+ ],
+ "retimed": {
+  "k": 1.058,
+  "b": 0.045,
+  "before": 0.692,
+  "after": 0.762
+ }
+}

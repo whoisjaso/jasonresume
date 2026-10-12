@@ -244,7 +244,7 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
    never comes) the line falls back to a reading clock from where it was.
    While a line plays the next one's recording is already loading.
    ================================================================ */
-const VBASE = D.out || "assets/voice/story-v2";
+const VBASE = D.out || "assets/voice/story-v3";
 const have = { fict: {}, me: {} };
 fetch(VBASE + "/manifest.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
 fetch(VBASE + "/manifest-jason.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});

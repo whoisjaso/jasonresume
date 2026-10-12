@@ -1,0 +1,83 @@
+{
+ "id": "jason-off-jason-19",
+ "text": "I ran the production schema migrations and kept every existing record and operational table.",
+ "duration": 6.16,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.035,
+   "e": 0.199
+  },
+  {
+   "w": "ran",
+   "s": 0.199,
+   "e": 0.444
+  },
+  {
+   "w": "the",
+   "s": 0.444,
+   "e": 0.628
+  },
+  {
+   "w": "production",
+   "s": 0.628,
+   "e": 1.037
+  },
+  {
+   "w": "schema",
+   "s": 1.037,
+   "e": 1.732
+  },
+  {
+   "w": "migrations",
+   "s": 1.732,
+   "e": 2.447
+  },
+  {
+   "w": "and",
+   "s": 2.447,
+   "e": 2.958
+  },
+  {
+   "w": "kept",
+   "s": 2.958,
+   "e": 3.183
+  },
+  {
+   "w": "every",
+   "s": 3.183,
+   "e": 3.694
+  },
+  {
+   "w": "existing",
+   "s": 3.694,
+   "e": 4.205
+  },
+  {
+   "w": "record",
+   "s": 4.205,
+   "e": 4.675
+  },
+  {
+   "w": "and",
+   "s": 4.675,
+   "e": 5.002
+  },
+  {
+   "w": "operational",
+   "s": 5.002,
+   "e": 5.615
+  },
+  {
+   "w": "table.",
+   "s": 5.615,
+   "e": 6.044
+  }
+ ],
+ "retimed": {
+  "k": 1.022,
+  "b": 0.035,
+  "before": 0.959,
+  "after": 0.99
+ }
+}

@@ -1,0 +1,58 @@
+{
+ "id": "jason-dec-jason-6",
+ "text": "So. You're hiring for operations or the back office.",
+ "duration": 4.52,
+ "words": [
+  {
+   "w": "So.",
+   "s": 0.06,
+   "e": 0.51
+  },
+  {
+   "w": "You're",
+   "s": 1.86,
+   "e": 2.61
+  },
+  {
+   "w": "hiring",
+   "s": 2.61,
+   "e": 2.96
+  },
+  {
+   "w": "for",
+   "s": 2.96,
+   "e": 3.26
+  },
+  {
+   "w": "operations",
+   "s": 3.26,
+   "e": 3.885
+  },
+  {
+   "w": "or",
+   "s": 3.885,
+   "e": 4.36
+  },
+  {
+   "w": "the",
+   "s": 4.36,
+   "e": 4.485
+  },
+  {
+   "w": "back",
+   "s": 4.485,
+   "e": 4.52
+  },
+  {
+   "w": "office.",
+   "s": 4.76,
+   "e": 4.84
+  }
+ ],
+ "retimed": {
+  "k": 1.25,
+  "b": 0.06,
+  "before": 0.803,
+  "after": 0.938
+ }
+}

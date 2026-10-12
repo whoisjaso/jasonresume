@@ -1,0 +1,48 @@
+{
+ "id": "jason-dec-jason-15",
+ "text": "I build software people use every day.",
+ "duration": 2.64,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.03,
+   "e": 0.222
+  },
+  {
+   "w": "build",
+   "s": 0.222,
+   "e": 0.52
+  },
+  {
+   "w": "software",
+   "s": 0.52,
+   "e": 1.117
+  },
+  {
+   "w": "people",
+   "s": 1.117,
+   "e": 1.437
+  },
+  {
+   "w": "use",
+   "s": 1.437,
+   "e": 1.949
+  },
+  {
+   "w": "every",
+   "s": 1.949,
+   "e": 2.311
+  },
+  {
+   "w": "day.",
+   "s": 2.311,
+   "e": 2.631
+  }
+ ],
+ "retimed": {
+  "k": 1.066,
+  "b": 0.03,
+  "before": 0.92,
+  "after": 0.996
+ }
+}

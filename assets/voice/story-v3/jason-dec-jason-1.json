@@ -1,0 +1,28 @@
+{
+ "id": "jason-dec-jason-1",
+ "text": "Rain's letting up.",
+ "duration": 1.52,
+ "words": [
+  {
+   "w": "Rain's",
+   "s": 0.04,
+   "e": 0.796
+  },
+  {
+   "w": "letting",
+   "s": 0.796,
+   "e": 1.142
+  },
+  {
+   "w": "up.",
+   "s": 1.142,
+   "e": 1.466
+  }
+ ],
+ "retimed": {
+  "k": 1.08,
+  "b": 0.04,
+  "before": 0.888,
+  "after": 0.993
+ }
+}

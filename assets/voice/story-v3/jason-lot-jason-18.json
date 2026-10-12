@@ -1,0 +1,103 @@
+{
+ "id": "jason-lot-jason-18",
+ "text": "I prepare our buy here pay here contracts and disclosures, and I service the accounts and collections myself.",
+ "duration": 6.6,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.0,
+   "e": -0.057
+  },
+  {
+   "w": "prepare",
+   "s": 0.0,
+   "e": 0.228
+  },
+  {
+   "w": "our",
+   "s": 0.228,
+   "e": 0.479
+  },
+  {
+   "w": "buy",
+   "s": 0.479,
+   "e": 0.73
+  },
+  {
+   "w": "here",
+   "s": 0.73,
+   "e": 0.982
+  },
+  {
+   "w": "pay",
+   "s": 1.133,
+   "e": 1.216
+  },
+  {
+   "w": "here",
+   "s": 1.216,
+   "e": 1.384
+  },
+  {
+   "w": "contracts",
+   "s": 1.384,
+   "e": 1.887
+  },
+  {
+   "w": "and",
+   "s": 1.887,
+   "e": 2.289
+  },
+  {
+   "w": "disclosures,",
+   "s": 2.289,
+   "e": 2.658
+  },
+  {
+   "w": "and",
+   "s": 2.658,
+   "e": 3.261
+  },
+  {
+   "w": "I",
+   "s": 3.261,
+   "e": 3.362
+  },
+  {
+   "w": "service",
+   "s": 3.362,
+   "e": 3.613
+  },
+  {
+   "w": "the",
+   "s": 3.613,
+   "e": 3.831
+  },
+  {
+   "w": "accounts",
+   "s": 3.831,
+   "e": 4.099
+  },
+  {
+   "w": "and",
+   "s": 4.099,
+   "e": 4.3
+  },
+  {
+   "w": "collections",
+   "s": 4.3,
+   "e": 4.669
+  },
+  {
+   "w": "myself.",
+   "s": 4.669,
+   "e": 5.088
+  }
+ ],
+ "retimed": {
+  "k": 0.838,
+  "b": -0.225,
+  "before": 0.935,
+  "after": 0.991
+ }
+}

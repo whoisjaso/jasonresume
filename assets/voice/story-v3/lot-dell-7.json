@@ -1,0 +1,53 @@
+{
+ "id": "lot-dell-7",
+ "text": "Nobody's expecting anybody this late. Go say hello.",
+ "duration": 4.4,
+ "words": [
+  {
+   "w": "Nobody's",
+   "s": 0.284,
+   "e": 0.739
+  },
+  {
+   "w": "expecting",
+   "s": 0.739,
+   "e": 1.238
+  },
+  {
+   "w": "anybody",
+   "s": 1.238,
+   "e": 1.672
+  },
+  {
+   "w": "this",
+   "s": 1.672,
+   "e": 1.868
+  },
+  {
+   "w": "late.",
+   "s": 1.868,
+   "e": 2.193
+  },
+  {
+   "w": "Go",
+   "s": 2.258,
+   "e": 2.454
+  },
+  {
+   "w": "say",
+   "s": 2.454,
+   "e": 2.671
+  },
+  {
+   "w": "hello.",
+   "s": 2.671,
+   "e": 3.56
+  }
+ ],
+ "retimed": {
+  "k": 0.868,
+  "b": 0.045,
+  "before": 0.811,
+  "after": 0.895
+ }
+}

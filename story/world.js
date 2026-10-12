@@ -398,6 +398,7 @@ function carMats() {
     cluster: pbr({ ...v, color: "#08090a", rough: 0.2, wet: 0, spec: 0.8 }),
     lamp_rev: pbr({ ...v, color: "#c8c8c4", metal: 0.6, rough: 0.12, wet: 0.6, drops: true }),
     lamp_brake: pbr({ ...v, color: "#3a0605", rough: 0.08, wet: 0.8, spec: 1.1 }),
+    mirror: pbr({ ...v, color: "#5d6266", metal: 1, rough: 0.04, wet: 0.5, drops: true }),
     sticker: pbr({ color: "#ece5d4", rough: 0.6, wet: 0, ao: 0, emit: "#0c0a07" }),
     idleTail: pbr({ ...v, color: "#5a0806", rough: 0.05, wet: 1, drops: true, emit: "#3a0302" }),
     idleTailIn: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#ff1a0a" }),
