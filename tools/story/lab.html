@@ -43,6 +43,7 @@ const cast = await loadCast("../../assets/story/cast/", { clips: q.get("clips") 
 const P = [];
 for (let i = 0; i < who.length; i++) { const p = await cast.make(who[i] + "-v1"); scene.add(p.group); p.pos.set((i - (who.length - 1) / 2) * 1.2, 0, 0); P.push(p); }
 if (q.get("noik")) DEBUG.ik = false;
+if (q.get("clav") != null) DEBUG.clav = +q.get("clav");
 // a reference: the library's own mannequin playing the source clip, beside the first person
 let refMix = null, refObj = null;
 if (q.get("ref")) {
@@ -108,6 +109,7 @@ const camMode = q.get("cam") || "side";
 function placeCam() {
   const p = P[0], c = p.pos;
   if (camMode === "side") { camera.position.set(c.x + 5.5, 1.0, c.z); camera.lookAt(c.x, 0.85, c.z); }
+  else if (camMode === "chest") { camera.position.set(c.x + Math.sin(p.yaw) * 2.2, 1.35, c.z + Math.cos(p.yaw) * 2.2); camera.lookAt(c.x, 1.25, c.z); }
   else if (camMode === "front") { camera.position.set(c.x + 0.8, 1.2, c.z + 5); camera.lookAt(c.x, 0.9, c.z); }
   else if (camMode === "follow") { const y = p.yaw; camera.position.set(c.x - Math.sin(y) * 4 + 1.2, 1.7, c.z - Math.cos(y) * 4); camera.lookAt(c.x, 1.0, c.z); }
   else if (camMode === "feet") { camera.position.set(c.x + 2.2, 0.35, c.z + 0.4); camera.lookAt(c.x, 0.25, c.z); }

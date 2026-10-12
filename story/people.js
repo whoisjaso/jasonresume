@@ -176,6 +176,7 @@ function chainOf(name) {
   return "other";
 }
 const MASKS = {
+  calm: c => ({ armL: 0.4, armR: 0.4 })[c] || 1,
   upper: c => ({ spine1: 0.35, spine: 1, head: 1, armL: 1, armR: 1 })[c] || 0,
   upperL: c => ({ spine1: 0.3, spine: 0.8, head: 1, armL: 1 })[c] || 0,
   arms: c => ({ spine: 0.4, head: 0.6, armL: 1, armR: 1 })[c] || 0,
@@ -225,6 +226,8 @@ class Person {
     this.feet = { l: this.foot("l"), r: this.foot("r") };
     this.tempo = (this.L.tempo || 1) * (0.96 + Math.random() * 0.08);
     this.lod = 0; this._hip = new THREE.Vector3();
+    // the debug view (?debug=story) can reach the cast from the console and the harness
+    if (typeof location !== "undefined" && /debug=story/.test(location.search)) (window.__people || (window.__people = {}))[this.name] = this;
   }
 
   /* map the source skeleton onto this body: per bone, the constant K with  T_world = S_world * K */
@@ -279,7 +282,8 @@ class Person {
     for (const s of ["l", "r"]) {
       const ua = this.bi["upperarm_" + s], la = this.bi["lowerarm_" + s], ha = this.bi["hand_" + s];
       if (ua == null) continue;
-      this.arm[s] = { ua, la, ha, l1: R["lowerarm_" + s].at.distanceTo(R["upperarm_" + s].at), l2: R["hand_" + s].at.distanceTo(R["lowerarm_" + s].at) };
+      this.arm[s] = { ua, la, ha, l1: R["lowerarm_" + s].at.distanceTo(R["upperarm_" + s].at), l2: R["hand_" + s].at.distanceTo(R["lowerarm_" + s].at),
+        dir: R["lowerarm_" + s].at.clone().sub(R["upperarm_" + s].at).normalize().applyQuaternion(R["upperarm_" + s].wi) };
     }
     // eyes, when the body has eye bones
     this.eyeB = ["eye_l", "eye_r"].map(n => this.bones[n]).filter(Boolean);
@@ -290,6 +294,7 @@ class Person {
     this.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(M.restW.q[M.ix.head].clone().invert());
   }
 
+  under(k, a) { for (let p = this.par[k]; p >= 0; p = this.par[p]) if (p === a) return true; return false; }
   foot(s) { return { lock: false, w: 0, pos: new THREE.Vector3(), yaw: 0, step: 0, from: new THREE.Vector3(), fromYaw: 0, to: new THREE.Vector3(), toYaw: 0, init: false }; }
 
   paint() {
@@ -499,7 +504,7 @@ class Person {
     // a standing style the episode can set: "fold" (arms folded) or "lean" (forearms on a rail or a car roof)
     this.styleW = damp(this.styleW || 0, this.idleStyle && M.clips[this.idleStyle] ? 1 : 0, 2, dt);
     if (this.styleW > 0.01) { const c = M.clips[this.idleStyle || this.lastStyle]; if (c) { this.lastStyle = c.name; M.sample(c, this.idleT, P.b); blendPose(acc0, P.b, this.styleW, c.name === "fold" ? this.mk.upper : null); } }
-    if (this.engW > 0.01 && M.clips.converse) { this.convT = (this.convT || Math.random() * 9) + dt * this.tempo; M.sample(M.clips.converse, this.convT, P.c); blendPose(acc0, P.c, this.engW * 0.85, null); }
+    if (this.engW > 0.01 && M.clips.converse) { this.convT = (this.convT || Math.random() * 9) + dt * this.tempo; M.sample(M.clips.converse, this.convT, P.c); blendPose(acc0, P.c, this.engW * 0.85, this.mk.calm); }
     if (this.locoW > 0.001) {
       let tot = 0, first = true;
       for (let i = 0; i < LC.length; i++) {
@@ -516,11 +521,8 @@ class Person {
     // talking hands, standing (the gesture loop slows and quickens with the voice, and fades walking)
     const talking = this.talk > 0.05 && this.sitK < 0.5;
     this.talkW = damp(this.talkW, talking ? 1 : 0, talking ? 2.2 : 1.2, dt);
-    if (this.talkW > 0.01 && M.clips.talk) {
-      this.talkT += dt * (0.8 + 0.25 * this.mouth);
-      M.sample(M.clips.talk, this.talkT, P.c);
-      blendPose(acc0, P.c, this.talkW * 0.55 * (1 - this.locoW), this.hold === "umbrella" ? this.mk.upperL : this.mk.arms);
-    }
+    // speaking: the captured conversation's hands come through more strongly (they stay inside the arm limits below)
+    if (this.talkW > 0.01 && M.clips.converse) { M.sample(M.clips.converse, this.convT || 0, P.c); blendPose(acc0, P.c, this.talkW * 0.6 * (1 - this.locoW), this.hold === "umbrella" ? this.mk.armL : this.mk.arms); }
     // sitting: down, settled (talking when talking), and up
     if (this.sitK > 0.001 && M.clips.sit) {
       const st = this.sitState;
@@ -546,10 +548,27 @@ class Person {
       else if (par[i] >= 0) wq[i].copy(wq[par[i]]).multiply(this.rest[this.order[i].name].q);
       else wq[i].copy(this.baseQ).multiply(this.rest[this.order[i].name].q);
     }
+    // the upper arms stay within a cone round hanging: the captured talker throws his arms up and out, and these
+    // jackets are weighted for a man at ease, so past about 55 degrees the cloth balloons at the shoulder
+    for (const sd of ["l", "r"]) {
+      const g = this.arm[sd]; if (!g) continue;
+      const d = _v1.copy(g.dir).applyQuaternion(wq[g.ua]);
+      const lim = this.hold === "phone" && sd === "r" ? -0.1 : -0.57;
+      if (d.y > lim) {
+        const h = Math.hypot(d.x, d.z) || 1, want = _v2.set(d.x / h * Math.sqrt(1 - lim * lim), lim, d.z / h * Math.sqrt(1 - lim * lim));
+        _q3.setFromUnitVectors(d, want);
+        for (let k = g.ua; k < n; k++) { if (k !== g.ua && !this.under(k, g.ua)) break; wq[k].premultiply(_q3); }
+      }
+    }
     for (let i = 0; i < n; i++) {
       const pq = par[i] >= 0 ? wq[par[i]] : this.baseQ;
       lq[i].copy(pq).invert().multiply(wq[i]);
     }
+    // relaxed hands: the library's idle hand is half a fist; open it toward a resting curl
+    if (!this.fingers) this.fingers = this.order.map((b, i) => (/^(index|middle|ring|pinky|thumb)_0[123]_[lr]$/.test(b.name) ? i : -1)).filter(i => i >= 0);
+    for (const i of this.fingers) lq[i].slerp(this.rest[this.order[i].name].q, /thumb/.test(this.order[i].name) ? 0.25 : 0.45);
+    // the collarbones: captured shoulders shrug and roll more than these jackets can take; keep most of their rest
+    for (const sd of ["l", "r"]) { const i = this.bi["clavicle_" + sd]; if (i != null && DEBUG.clav !== 0) lq[i].slerp(this.rest["clavicle_" + sd].q, DEBUG.clav == null ? 0.65 : DEBUG.clav); }
     // the hips: the source's hip travel, scaled to this body
     const pi = this.bi.pelvis, sp = SW.p[M.pel];
     const sHip = this.sHip.copy(SW.p[M.ix.thigh_l]).add(SW.p[M.ix.thigh_r]).multiplyScalar(0.5);

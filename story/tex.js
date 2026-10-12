@@ -1,6 +1,9 @@
-/* After Hours: textures, painted in code. Brush grain, wet asphalt with its
-   lines and puddles, paper, and every sign, screen and label in the episode,
-   drawn on canvases in the site's two typefaces. Nothing here is a photo. */
+/* After Hours: textures, painted in code. Brush grain, the lot's ground as data
+   over the tiled CC0 asphalt (patches, oil, worn lines, cracks, puddles, contact
+   shade, the lamps' baked shadows), chain-link, tiles, plates, ceilings, clocks,
+   paper, and every sign, screen and label in the episode, drawn on canvases in
+   the site's two typefaces. The photographic materials live in
+   assets/story/world/tex-v1 (Poly Haven, CC0). */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 
 const SERIF = '"Cormorant Garamond", Cormorant, Garamond, serif';
@@ -49,52 +52,6 @@ export function brush(size = 256) {
   }
   g.putImageData(img, 0, 0);
   return tex(c, { repeat: true, linear: true });
-}
-
-/* the lot's asphalt: colour in RGB, puddles in a second texture (R puddle, G paint, B cracks) */
-export function asphalt(W, H, px, lines) {
-  const w = Math.round(W * px), h = Math.round(H * px);
-  const c = cv(w, h), g = c.getContext("2d"), r = rng(21);
-  g.fillStyle = "#2b2c2b"; g.fillRect(0, 0, w, h);
-  // patches of older and newer tar
-  for (let i = 0; i < 70; i++) {
-    const x = r() * w, y = r() * h, rr = (0.8 + r() * 4) * px;
-    const gr = g.createRadialGradient(x, y, 0, x, y, rr);
-    const v = r() < 0.5 ? "rgba(20,21,21," : "rgba(58,58,55,";
-    gr.addColorStop(0, v + (0.25 + r() * 0.3) + ")"); gr.addColorStop(1, v + "0)");
-    g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, rr, rr * (0.4 + r() * 0.8), r() * 3, 0, 7); g.fill();
-  }
-  // aggregate speckle
-  const img = g.getImageData(0, 0, w, h), d = img.data;
-  for (let i = 0; i < d.length; i += 4) { const n = (r() - 0.5) * 26; d[i] += n; d[i + 1] += n; d[i + 2] += n * 0.9; }
-  g.putImageData(img, 0, 0);
-  // painted lines (bone, worn)
-  const m = cv(w, h), mg = m.getContext("2d");
-  mg.fillStyle = "#000"; mg.fillRect(0, 0, w, h);
-  const P = (x, z) => [(x + W / 2) * px, (z + H / 2) * px];
-  g.lineCap = "butt";
-  for (const L of lines) {
-    const [x0, y0] = P(L[0], L[1]), [x1, y1] = P(L[2], L[3]);
-    g.strokeStyle = "rgba(214,206,186,0.62)"; g.lineWidth = 0.12 * px;
-    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    mg.strokeStyle = "#0f0"; mg.lineWidth = 0.12 * px; mg.beginPath(); mg.moveTo(x0, y0); mg.lineTo(x1, y1); mg.stroke();
-  }
-  // wear the paint
-  g.globalCompositeOperation = "multiply";
-  for (let i = 0; i < 2600; i++) { g.fillStyle = "rgba(40,40,40," + (0.3 + r() * 0.5) + ")"; g.fillRect(r() * w, r() * h, (0.05 + r() * 0.3) * px, (0.03 + r() * 0.1) * px); }
-  g.globalCompositeOperation = "source-over";
-  // puddles: low spots, soft edges
-  const n1 = noise2(w, h, 6 * px, r), n2 = noise2(w, h, 1.6 * px, r);
-  const mi = mg.getImageData(0, 0, w, h), md = mi.data;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = (y * w + x) * 4;
-    const v = n1(x, y) * 0.75 + n2(x, y) * 0.25;
-    md[i] = Math.max(0, Math.min(255, (v - 0.5) * 6 * 255));
-    md[i + 2] = 0;
-  }
-  mg.putImageData(mi, 0, 0);
-  const t1 = tex(c, { repeat: false }), t2 = tex(m, { linear: true });
-  return { color: t1, mask: t2 };
 }
 
 /* the lot's ground, as data over the tiled asphalt (assets/story/world/asphalt_*): two textures, linear, opaque

@@ -74,6 +74,7 @@ function envHook(set, at) {
   let pending = false;
   m.onBeforeRender = renderer => {
     const ud = set.userData;
+    if (ud.fogDen != null) U.uFogDen.value = ud.fogDen;
     if (ud.envTex) { if (U.uEnv.value !== ud.envTex) { U.uEnv.value = ud.envTex; U.uEnvMax.value = Math.log2(TIER.env); } U.uEnvOn.value = 1; return; }
     U.uEnvOn.value = 0;
     if (pending || ud.baking) return;
@@ -882,7 +883,9 @@ export function buildOffice(o) {
   };
   // the shell: floor (carpet, vinyl in the coffee corner), walls with a baseboard, a suspended ceiling
   const fl = plane(14, 10, M.carpet, set); fl.rotation.x = -Math.PI / 2;
-  const vin = plane(2.2, 4.2, M.vinyl, set); vin.rotation.x = -Math.PI / 2; vin.position.set(-5.9, 0.004, 2.9);
+  // the kitchenette in the corner: vinyl tile behind a metal threshold, the fridge, the counter (below)
+  const vin = plane(2.2, 4.0, M.vinyl, set); vin.rotation.x = -Math.PI / 2; vin.position.set(-5.9, 0.004, 3.0);
+  box(0.03, 0.008, 4.0, M.alu, -4.8, 0.004, 3.0, set); box(2.2, 0.008, 0.03, M.alu, -5.9, 0.004, 1.0, set);
   const ce = plane(14, 10, M.ceil, set); ce.rotation.x = Math.PI / 2; ce.position.y = 3.1;
   const back = plane(14, 3.1, M.wall, set); back.position.set(0, 1.55, -5);
   const left = plane(10, 3.1, M.wall, set); left.position.set(-7, 1.55, 0); left.rotation.y = Math.PI / 2;
@@ -1030,6 +1033,12 @@ export function buildOffice(o) {
   box(0.06, 0.03, 0.02, glow("#c94a2a", { k: 1.2 }), 0.1, 1.25, 0.11, cof);
   for (let i = 0; i < 3; i++) cyl(0.04, 0.036, 0.09, pbr({ color: ["#ece8de", "#1c3229", "#ece8de"][i], rough: 0.25, wet: 0 }), -0.28 + i * 0.1, 0.965, 0.18, cof, 14);
   set.userData.spots.coffee = { p: V3(-6.3, 1.1, 2.6), r: 1.7, stand: V3(-5.4, 0, 2.6) };
+  // the fridge beside it
+  { const fr = new THREE.Group(); fr.position.set(-6.62, 0, 1.45); fr.rotation.y = Math.PI / 2; set.add(fr);
+    const enamel = pbr({ color: "#e4e2dc", rough: 0.25, wet: 0, room: ROOM }); rbox(0.7, 1.72, 0.66, 0.03, enamel, 0, 0.86, 0, fr);
+    box(0.68, 0.006, 0.01, M.plastic, 0, 1.2, 0.335, fr); rbox(0.03, 0.42, 0.04, 0.012, M.chrome, -0.28, 1.45, 0.35, fr); rbox(0.03, 0.3, 0.04, 0.012, M.chrome, -0.28, 0.95, 0.35, fr);
+    for (let i = 0; i < 3; i++) box(0.06, 0.06, 0.004, pbr({ color: ["#c9a96a", "#1c3229", "#a85a3a"][i], rough: 0.5, wet: 0 }), 0.1 + i * 0.08, 1.5 - i * 0.05, 0.336, fr);
+    set.userData.walls.push({ x0: -7, x1: -6.25, z0: 1.05, z1: 1.85 }); set.userData.sounds.fridge = { x: -6.62, y: 0.9, z: 1.45, kind: "fridge-hum" }; }
   set.userData.sounds.coffee = { x: -6.4, y: 1.1, z: 2.6, kind: "fridge-hum" };
   set.userData.walls.push({ x0: -7, x1: -5.9, z0: 2.2, z1: 3.0 });
 
@@ -1082,6 +1091,24 @@ export function buildOffice(o) {
   const fsh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.3, 20, 1, true), glow("#f1d6a8", { k: 1.1, side: THREE.DoubleSide })); fsh.position.set(-6.3, 1.6, 4.2); set.add(fsh);
   set.userData.lamps.push({ p: V3(-6.3, 1.5, 4.2), range: 4.5, col: [1.2, 0.8, 0.45], cone: 0, fixed: true });
   set.userData.walls.push({ x0: -6.6, x1: -6.0, z0: 3.9, z1: 4.5 });
+  // a second desk at the back for whoever works the phones in the day, its chair pushed in, a coat stand by the right wall
+  { const d2 = new THREE.Group(); d2.position.set(3.3, 0, -1.4); set.add(d2);
+    rbox(1.6, 0.035, 0.75, 0.01, M.wood, 0, 0.74, 0, d2); for (const sx of [-0.76, 0.76]) box(0.04, 0.72, 0.7, M.steel, sx, 0.36, 0, d2); box(1.5, 0.4, 0.02, M.steel, 0, 0.5, -0.34, d2);
+    rbox(0.5, 0.32, 0.02, 0.006, M.plastic, -0.2, 1.0, -0.2, d2); box(0.05, 0.2, 0.05, M.plastic, -0.2, 0.84, -0.22, d2);
+    const sc2 = plane(0.47, 0.29, glow("#22303a", { k: 0.5 }), d2); sc2.position.set(-0.2, 1.0, -0.188);
+    for (let i = 0; i < 2; i++) box(0.215, 0.006, 0.28, M.paper, 0.4 + i * 0.03, 0.76 + i * 0.006, 0.05, d2).rotation.y = 0.1 * i;
+    plantPot(0.62, -0.22, 0.3, d2, 21).scale.setScalar(0.45); d2.children[d2.children.length - 1].position.y = 0.76;
+    taskChair(3.4, -0.75, Math.PI + 0.2, set, M);
+    const sh3 = new THREE.Mesh(BLOB_GEO, blobMat(0.45, true)); sh3.scale.set(1.9, 1, 1.0); sh3.position.y = 0.011; sh3.layers.set(2); d2.add(sh3);
+    set.userData.walls.push({ x0: 2.4, x1: 4.2, z0: -1.85, z1: -0.95 }, { x0: 3.05, x1: 3.75, z0: -1.05, z1: -0.4 }); }
+  { const cs = new THREE.Group(); cs.position.set(6.45, 0, -1.5); set.add(cs);
+    for (let i = 0; i < 4; i++) { const leg = cyl(0.012, 0.012, 0.42, M.wood, Math.cos(i * 1.57) * 0.16, 0.12, Math.sin(i * 1.57) * 0.16, cs, 6); leg.rotation.set(Math.sin(i * 1.57) * 0.9, 0, -Math.cos(i * 1.57) * 0.9); }
+    cyl(0.018, 0.022, 1.75, M.wood, 0, 0.9, 0, cs, 8);
+    for (let i = 0; i < 4; i++) { const hk = cyl(0.008, 0.008, 0.16, M.wood, Math.cos(i * 1.57 + 0.6) * 0.06, 1.68, Math.sin(i * 1.57 + 0.6) * 0.06, cs, 5); hk.rotation.set(Math.sin(i * 1.57 + 0.6) * 0.8, 0, -Math.cos(i * 1.57 + 0.6) * 0.8); }
+    // a raincoat on one hook, an umbrella leaning on the pole
+    const coat = rbox(0.42, 0.9, 0.2, 0.08, pbr({ color: "#3a3f36", rough: 0.6, wet: 0.4 }), 0.08, 1.25, 0.05, cs); coat.rotation.z = 0.05;
+    const um = cyl(0.035, 0.015, 0.85, pbr({ color: "#151716", rough: 0.4, wet: 0.6 }), -0.1, 0.42, 0.1, cs, 8); um.rotation.z = 0.15;
+    set.userData.walls.push({ x0: 6.15, x1: 6.75, z0: -1.8, z1: -1.2 }); }
   // a waste basket by the desk, the door out to the lot on the left wall, a thermostat
   { const wbk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.32, 16, 1, true), pbr({ color: "#2a2b2c", rough: 0.5, wet: 0, side: THREE.DoubleSide })); wbk.position.set(0.55, 0.16, -2.3); set.add(wbk); }
   { const d = new THREE.Group(); d.position.set(-6.98, 0, 4.2); d.rotation.y = Math.PI / 2; set.add(d); box(1.0, 2.1, 0.04, rmat({ color: "#6b5440", mapK: "woodC", tri: 1.2, rough: 0.5, wet: 0 }), 0, 1.05, 0.02, d); box(1.1, 2.18, 0.03, M.steel, 0, 1.09, 0.0, d); rbox(0.12, 0.03, 0.05, 0.01, M.chrome, 0.38, 1.0, 0.07, d); }
@@ -1095,7 +1122,8 @@ export function buildOffice(o) {
   };
   set.userData.spots.renata = { who: "renata", r: 2.0 };
   set.userData.bounds = { x0: -6.6, x1: 6.6, z0: -4.6, z1: 4.6 };
-  set.userData.surfaceAt = (x, z) => (x < -4.8 && z > 0.8 ? "tile" : "carpet");
+  set.userData.surfaceAt = (x, z) => (x < -4.8 && z > 1.0 ? "tile" : "carpet");
+  set.userData.fogDen = 0.006;
   set.userData.ready = roomsReady;
   return set;
 }
@@ -1145,7 +1173,7 @@ export function buildLibrary(o) {
       cyl(0.07, 0.08, 0.02, M.brass, lx, 0.825, 0, t, 16); cyl(0.01, 0.01, 0.3, M.brass, lx, 0.97, -0.05, t, 6);
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 0.08, 20, 1, true, 0, Math.PI), shade); sh.rotation.z = Math.PI / 2; sh.rotation.y = Math.PI / 2; sh.position.set(lx, 1.13, 0.0); t.add(sh);
       const bulb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), glow("#ffe2b0", { k: 2.4 })); bulb.rotation.z = Math.PI / 2; bulb.position.set(lx, 1.1, 0.0); t.add(bulb);
-      set.userData.lamps.push({ p: V3(tx + lx, 1.05, tz), range: 4.2, col: [1.6, 1.15, 0.62], cone: 0, fixed: true });
+      set.userData.lamps.push({ p: V3(tx + lx, 1.08, tz), range: 3.6, col: [2.4, 1.75, 0.9], cone: 0, fixed: true });
     }
     const sh2 = new THREE.Mesh(BLOB_GEO, blobMat(0.5, true)); sh2.scale.set(4.6, 1, 1.8); sh2.position.y = 0.01; sh2.layers.set(2); t.add(sh2);
     set.userData.walls.push({ x0: tx - 2.2, x1: tx + 2.2, z0: tz - 0.8, z1: tz + 0.8 });
@@ -1207,6 +1235,7 @@ export function buildLibrary(o) {
   mergeStatic(set);
   envHook(set, V3(0, 1.6, 4));
   set.userData.marks = { playerStart: V3(0, 0, 4.4), playerYaw: Math.PI };
+  set.userData.fogDen = 0.006; // a big quiet room: clear air, the windows' bokeh still soft
   set.userData.bounds = { x0: -11.5, x1: 11.5, z0: -8.5, z1: 8.5 };
   set.userData.surfaceAt = (x, z) => (Math.abs(x) < 1.5 && Math.abs(z) < 7 ? "carpet" : "wood");
   set.userData.ready = roomsReady;

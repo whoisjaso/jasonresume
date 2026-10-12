@@ -603,7 +603,7 @@ function insideAny(x, y, z, pad) {
   for (const w of camWallList) if (y < w.h + pad && x > w.x0 - pad && x < w.x1 + pad && z > w.z0 - pad && z < w.z1 + pad) return true;
   // people, and Dell's umbrella, are solid too
   for (const k in P) { const q = P[k]; if (q === me || !q.group.visible) continue; const r = (q.hold === "umbrella" ? 0.72 : 0.42) + pad * 0.5; if (y < 2.35 && (x - q.pos.x) ** 2 + (z - q.pos.z) ** 2 < r * r) return true; }
-  const b = set.userData.bounds; if (b && (x < b.x0 + pad * 0.5 || x > b.x1 - pad * 0.5 || z < b.z0 + pad * 0.5 || z > b.z1 - pad * 0.5 || y > 2.95)) return true;
+  const b = set.userData.bounds; if (b && (x < b.x0 + pad * 0.5 || x > b.x1 - pad * 0.5 || z < b.z0 + pad * 0.5 || z > b.z1 - pad * 0.5 || y > (set.userData.ceilingY || (S.scene === "memory" ? 6.2 : 2.95)) - pad * 0.5)) return true;
   return y < 0.15;
 }
 function followView(dt, probe) {
@@ -614,11 +614,12 @@ function followView(dt, probe) {
     camState.drag -= dt;
   }
   const inside = S.scene === "office" || S.scene === "memory", mem = S.scene === "memory", upright = innerWidth < innerHeight;
-  const dist = (mem ? 1.85 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
-  const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0);
+  const dist = (mem ? 2.2 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
+  const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0) + (probe ? 0 : camState.lift || 0);
   const off = new THREE.Vector3(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
   const right = new THREE.Vector3(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw));
-  const sh = (mem ? 0.55 : inside ? 0.28 : 0.38) * (upright ? 0.35 : 1);
+  const sh = (mem ? 0.55 : inside ? 0.45 : 0.38) * (upright ? 0.45 : 1);
+  if (inside) head.y += 0.12; // indoors a little higher, looking over the shoulder
   // look ahead the way you're going, more at a run
   const ahead = camState.ahead || (camState.ahead = new THREE.Vector3());
   const lead = probe ? 0 : Math.min(1, me.speed / RUN) * (inside ? 0.45 : 0.9);
@@ -628,12 +629,34 @@ function followView(dt, probe) {
   const pivot = head.clone().addScaledVector(right, sh);
   if (insideAny(pivot.x, pivot.y, pivot.z, 0.18)) pivot.copy(head);
   // march out from the pivot; stop short of the first thing in the way
-  let free = dist;
-  for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t; if (insideAny(x, y, z, 0.24)) { free = Math.max(0.1, t - 0.22); break; } }
+  const reach = o => { for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + o.x * t, y = pivot.y + o.y * t, z = pivot.z + o.z * t; if (insideAny(x, y, z, 0.24)) return Math.max(0.1, t - 0.22); } return dist; };
+  let free = reach(off);
+  // backed against a wall: rather than sit on your head, the camera swings round to where there's room (unless you're steering it)
+  // in a corner it also rises and looks down over you
+  if (!probe) {
+    let best = 0, lift = 0;
+    if (free < dist * 0.7 && camState.drag <= 0) {
+      let bs = free;
+      // just arrived or just finished talking: look the whole way round for the room; walking: only lean a little
+      const re = camState.init || camState.reframe;
+      const das = re ? [...Array(16)].map((_, i) => ((i + 1) >> 1) * (i % 2 ? 1 : -1) * Math.PI / 8) : [0, 0.3, -0.3, 0.6, -0.6];
+      for (const da of das) for (const pe of re ? [0, 0.2] : [0, 0.15, 0.3]) {
+        if (!da && !pe) continue;
+        const a = camState.yaw + da, pt = Math.min(0.95, pitch + pe), o2 = new THREE.Vector3(Math.sin(a) * Math.cos(pt), Math.sin(pt), Math.cos(a) * Math.cos(pt));
+        const f = reach(o2), sc = f - Math.abs(da) * (re ? 0.12 : 0.5) - pe * 0.6;
+        if (sc > bs + 0.25) { bs = sc; best = da; lift = pe; }
+      }
+      if (best) camState.yaw += best * (camState.init || camState.reframe ? 1 : 1 - Math.exp(-2.5 * dt));
+      if (camState.init || camState.reframe) camState.lift = lift;
+    }
+    camState.lift = damp(camState.lift || 0, free < dist * 0.7 ? Math.max(lift, camState.lift > 0.02 && free < dist * 0.9 ? camState.lift : 0) : 0, 2, dt);
+  }
   // in fast, out slow, so a pole sliding past doesn't make the camera pump
   if (probe || camState.cd == null || camState.init) camState.cd = free;
   else camState.cd = free < camState.cd ? damp(camState.cd, free, 18, dt) : damp(camState.cd, free, 2.2, dt);
   const want = pivot.clone().addScaledVector(off, Math.min(camState.cd, free + 0.05));
+  // forced right up against you, you step out of the frame rather than fill it
+  if (!probe && S.phase === "explore") me.group.visible = Math.min(camState.cd, free) > 0.45;
   const look = head.clone().addScaledVector(right, sh * 0.7).add(ahead).add(new THREE.Vector3(0, mem ? -0.25 : -0.1, 0));
   return { want, look };
 }
@@ -848,6 +871,7 @@ async function interact(id, how) {
   await runTalk(talk);
 }
 async function runTalk(id) {
+  if (me) me.group.visible = true;
   S.phase = "talk"; promptEl.hidden = true; dotsEl.innerHTML = ""; objEl.classList.add("is-dim");
   el.classList.add("is-talking");
   const partner = S.partner;
@@ -888,7 +912,7 @@ function endTalk() {
   if (me) me.lookAtP = null;
   camState.shot = null; S.partner = null; S.focusPoint = null;
   S.phase = "explore";
-  camState.yaw = me ? me.yaw + Math.PI : camState.yaw;
+  camState.yaw = me ? me.yaw + Math.PI : camState.yaw; camState.reframe = true; setTimeout(() => (camState.reframe = false), 80);
   save();
   afterTalk();
 }
