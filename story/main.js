@@ -1162,7 +1162,18 @@ async function interact(id, how) {
   // reach for the things you can touch: the sound, the haptic and the motion land when the hand does
   let fired = false;
   const feel = () => { if (fired) return; fired = true; FX("arrive"); AU.thing(id, at); };
-  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|mem-(folder|letter|cert|laptop|lamp))$/.test(id) && s.p;
+  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|arcade|mem-(folder|letter|cert|laptop|lamp))$/.test(id) && s.p;
+  // the arcade cabinet plays The Run: the episode steps aside, and comes back to this spot in the office when the run closes
+  if (o.play) {
+    if (!S.journal.includes("arcade")) { try { await doAct("journal:arcade"); } catch (e) {} }
+    save(); S.fromArcade = true;
+    if (me && me.reachTo && s.p) { try { me.reachTo(s.p.clone(), { hold: "press" }); } catch (e) {} }
+    FX("arrive"); AU.thing(id, at); hap("tap");
+    await sleep(FAST ? 0 : 450);
+    close("arcade");
+    setTimeout(() => { if (window.JG_GAME && window.JG_GAME.play) window.JG_GAME.play("", "cabinet"); }, 200);
+    return;
+  }
   if (me && touchable && me.reachTo) {
     try {
       const r = me.reachTo(s.p.clone(), { hold: id === "keys" ? "pinch" : /^(cabinet|door)$/.test(id) ? "grip" : "touch", onContact: feel });
@@ -2466,7 +2477,7 @@ async function open(sceneName, how) {
   setTimeout(() => (loadEl.hidden = true), 900);
   if (target === "lot" && fresh) { await coldOpen(); return; }
   await fade(0, 10);
-  FX("arrive"); await sceneCard(target);
+  if (how !== "arcade") { FX("arrive"); await sceneCard(target); }
   if (saved && !sceneName && saved.scene === target && saved.pos && me && target !== "memory" && target !== "keys") { me.pos.set(saved.pos[0], 0, saved.pos[1]); me.yaw = me.wantYaw = saved.pos[2] || 0; unstick(me); camState.yaw = me.yaw + Math.PI; camState.init = true; }
   setPhase("explore");
   if (S.obj) objective(S.obj);
@@ -2490,6 +2501,11 @@ function close(how) {
   document.dispatchEvent(new CustomEvent("jg:story-closed", { detail: { how } }));
 }
 
+document.addEventListener("jg:run-closed", () => {
+  if (!S.fromArcade) return;
+  S.fromArcade = false;
+  setTimeout(() => { if (!S.open) open(null, "arcade"); }, 120);
+});
 window.JG_STORY = {
   open, close, isOpen: () => S.open, hasSave: () => !!loadSave(),
   debug: {

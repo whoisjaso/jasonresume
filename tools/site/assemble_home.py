@@ -95,37 +95,16 @@ if _m and _m.group(1) in STEM:
 if onboarding.get("art"):
     assert has(onboarding["art"] + "-1920.webp") and has(onboarding["art"] + "-m.webp"), "title screen art missing: " + onboarding["art"]
 
-# The walkthrough: the narrated film (tools/film/render-tour.sh) and the guided
-# tour's lines and timings (tools/voice/timeline.mjs writes tools/site/tour.json).
-# The title screen offers the film only once it has been rendered.
-TOUR = {}
-try:
-    TOUR = json.loads((SITE / "tour.json").read_text())
-except Exception:
-    pass
-FILM = "assets/film/after-hours"  # a new film ships under a new name (/assets is cached for a year)
-if has(FILM + ".mp4"):
-    walk = {"src": FILM + ".mp4", "poster": FILM + ".jpg", "note": TOUR.get("label", ""), "page": "/walkthrough.html", "page_label": "The film page"}
-    if has(FILM + "-vertical.mp4"):
-        walk.update({"vsrc": FILM + "-vertical.mp4", "vposter": FILM + "-vertical.jpg"})
-    if has(FILM + ".webm"):
-        walk["webm"] = FILM + ".webm"
-    if has(FILM + "-vertical.webm"):
-        walk["vwebm"] = FILM + "-vertical.webm"
-    if has(FILM + ".vtt"):
-        walk["vtt"] = FILM + ".vtt"
-    onboarding["walk"] = walk
 onboarding_json = json.dumps(onboarding, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
 # The title screen plays for every arrival from outside the site, on whichever
 # page the visitor lands (home or /obavia.html); clicks between the site's own
-# pages skip it, crawlers skip it, ?intro=1 forces it, and a ?run=<level> link
-# (a friend's shared run) goes straight into the game. Shared by both pages.
+# pages skip it, crawlers skip it, and ?intro=1 forces it. Shared by both pages.
 HEAD_SCRIPT = (
     '<script>(function(){var d=document.documentElement;d.classList.add("js");'
     'try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).host===location.host}catch(e){}'
-    'if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&!/[?&]run=/.test(location.search)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}'
+    'if(!/bot|crawl|spider|slurp|lighthouse|preview|facebookexternalhit/i.test(navigator.userAgent)&&(!inside||/[?&]intro=1/.test(location.search)))d.classList.add("intro-pending")}catch(e){}'
     'setTimeout(function(){if(!document.getElementById("intro"))d.classList.remove("intro-pending")},5000)})()</script>'
 )
 
@@ -147,11 +126,8 @@ head += (
 # (tools/site/boot.js, inlined so it runs while the page parses)
 boot_js = re.sub(r"/\*.*?\*/", "", (SITE / "boot.js").read_text(), flags=re.S)
 boot_js = "\n".join(l.strip() for l in boot_js.splitlines() if l.strip())
-WATCH_BTN = ('<button class="boot__watch" type="button" data-watch><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>%s</button>'
-             % E(onboarding["title"].get("watch", "Watch the walkthrough"))) if onboarding.get("walk") else ""
 BOOT = ((SITE / "boot.html").read_text()
         .replace("%%BOOT_ART%%", E(onboarding.get("art", "")))
-        .replace("%%BOOT_FILM%%", WATCH_BTN)
         .replace("%%BOOT_JS%%", boot_js.replace("</", "<\\/")))
 
 # JSON-LD: the home-page nodes of schema.json plus the FAQ
@@ -178,7 +154,7 @@ def medal(slug, size):
     return '<img class="medal medal--%s" src="%s" alt="" width="%d" height="%d" loading="lazy" decoding="async" />' % (TR[slug]["tier"], src, size, size)
 
 
-# every trophy is earned by finding its medal in the run: which level holds it
+# every trophy is earned by finding its medal in the run (the arcade cabinet in the episode): which level holds it
 MEDAL_LEVEL = {m[0]: l["id"] for l in run["levels"] for m in l.get("md", [])}
 assert set(MEDAL_LEVEL) == set(TR) - {lib["platinum"]}, "every trophy but the platinum needs a medal in run.json, and only those"
 
@@ -188,12 +164,8 @@ def trophy_li(slug, size=64):
     desc = E(t["desc"])
     if t.get("href"):
         desc += ' <a href="%s" data-proof="%s">See the proof</a>' % (E(t["href"]), E(t["name"]))
-    # not yet earned: the fact is all there, and a quiet way into the level that holds it
-    lvl = MEDAL_LEVEL.get(slug, "")
-    find = '<a class="trophy__find" href="#play%s" data-play="%s" data-where="trophy">%s</a>' % (
-        "/" + lvl if lvl else "", lvl, "Find it in the run" if lvl else "Find every medal in the run")
-    return '<li class="trophy" data-trophy="%s" data-tier="%s">%s<div><b>%s<small>%s</small></b><p>%s</p>%s</div></li>' % (
-        slug, t["tier"], medal(slug, size), E(t["name"]), TIER[t["tier"]], desc, find)
+    return '<li class="trophy" data-trophy="%s" data-tier="%s">%s<div><b>%s<small>%s</small></b><p>%s</p></div></li>' % (
+        slug, t["tier"], medal(slug, size), E(t["name"]), TIER[t["tier"]], desc)
 
 
 def plates():
@@ -276,8 +248,6 @@ def title_article(i, t):
         ov += '<p class="proof">' + "".join(
             '<a class="btn btn--sm" href="%s"%s>%s</a>' % (E(a["href"]), (' data-contact="%s" data-where="obavia"' % a["contact"]) if a.get("contact") else (' data-cta="%s"' % a["cta"] if a.get("cta") else ""), E(a["label"]))
             for a in t["actions"]) + "</p>"
-    # the title's level in the run (game-run.js), from its own page
-    ov += '<p class="proof"><button class="btn btn--sm" type="button" data-play="%s" data-where="title"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg>Play the level</button></p>' % tid
     sec("overview", "Overview", ov)
     if t.get("film"):
         f = t["film"]
@@ -328,7 +298,8 @@ def trophy_groups():
 def profile():
     p = lib["profile"]
     portrait = "assets/game/portrait/jason-relit-800.webp"
-    img = ('<img src="%s" alt="Jason Obawemimo, in a dark green suit and glasses" width="800" height="960" loading="lazy" decoding="async" />' % portrait) if has(portrait) else '<img src="assets/jason-headshot-620.webp" alt="Jason Obawemimo, in a dark green suit and glasses" width="620" height="620" loading="lazy" />'
+    assert has(portrait), "profile portrait missing: " + portrait
+    img = '<img src="%s" alt="Jason Obawemimo, in a dark green suit and glasses" width="800" height="960" loading="lazy" decoding="async" />' % portrait
     loadout = '<dl class="loadout">' + "".join("<div><dt>%s</dt><dd>%s</dd></div>" % (E(s["slot"]), E(", ".join(s["items"]))) for s in p["loadout"]) + "</dl>"
     links = '<ul class="links">' + "".join(
         '<li><a href="%s"%s%s><b>%s</b><span>%s</span></a></li>' % (
@@ -409,10 +380,8 @@ body = (
                  + '\n<script type="application/json" id="onboarding-data">' + onboarding_json + "</script>"
                  + '\n<script type="application/json" id="builds-data">' + builds_json + "</script>"
                  + '\n<script type="application/json" id="run-data">' + run_json + "</script>"
-                 + '\n<script type="application/json" id="story-data">' + story_json + "</script>"
-                 + ('\n<script type="application/json" id="tour-data">' + json.dumps(TOUR, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + "</script>" if TOUR else ""))
+                 + '\n<script type="application/json" id="story-data">' + story_json + "</script>")
     .replace("%%BOOT%%", BOOT.strip())
-    .replace("%%HELP_WATCH%%", '<a class="btn btn--sm btn--ghost" href="/walkthrough.html">%s</a>' % E(onboarding["title"].get("watch", "Watch the walkthrough")) if onboarding.get("walk") else "")
     .replace("%%PLATES%%", plates())
     .replace("%%TILES%%", tiles())
     .replace("%%TITLES%%", "".join(title_article(i, t) for i, t in enumerate(lib["titles"])))
@@ -446,37 +415,3 @@ o2 = re.sub(r"<!-- boot -->.*?<!-- /boot -->", lambda m: "<!-- boot -->" + BOOT.
 if o2 != o:
     ob.write_text(o2)
     print("obavia.html title screen synced")
-
-
-# The walkthrough's own page: the film, the vertical cut, and the words as a
-# transcript (the film's lines in order), so it reads without the video too.
-if onboarding.get("walk"):
-    W = onboarding["walk"]
-    tl = json.loads((SITE.parent / "voice/tour_lines.json").read_text())
-    L = {l["id"]: l["text"] for l in tl["lines"]}
-    transcript = "".join("<li>%s</li>" % E(L[s_["line"]]) for s_ in tl["film"] if s_.get("line"))
-    track = '<track kind="captions" srclang="en" label="English" src="%s" />' % E(W["vtt"]) if W.get("vtt") else ""
-    vert = ('<p class="walk__alt"><a href="%s">The vertical cut</a>, for a phone.</p>' % E(W["vsrc"])) if W.get("vsrc") else ""
-    page = (
-        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\" />\n"
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />\n'
-        "<title>The walkthrough | Jason Obawemimo</title>\n"
-        '<meta name="description" content="After Hours, a narrated walkthrough of jasonobawemimo.com: the lot at night, who is playing, the build, the six titles, the sale desk, a trophy, Level 53 and the resume." />\n'
-        '<link rel="canonical" href="https://jasonobawemimo.com/walkthrough.html" />\n'
-        '<meta name="theme-color" content="#0a0d0b" />\n<link rel="icon" href="/favicon.ico" />\n'
-        '<meta property="og:type" content="video.other" />\n<meta property="og:title" content="The walkthrough | Jason Obawemimo" />\n'
-        '<meta property="og:image" content="https://jasonobawemimo.com/%s" />\n<meta property="og:video" content="https://jasonobawemimo.com/%s" />\n'
-        '<link rel="preconnect" href="https://fonts.googleapis.com" />\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n'
-        '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet" />\n'
-        '<link rel="stylesheet" href="game.css?v=%s" />\n</head>\n'
-        '<body class="lib walk">\n<main class="walk__main">\n'
-        '<a class="btn btn--ghost walk__back" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>The library</a>\n'
-        '<h1 class="walk__h">The walkthrough</h1>\n<p class="walk__sub">%s</p>\n'
-        '<figure class="walk__film"><video controls playsinline preload="metadata" poster="%s"><source src="%s" type="video/mp4" />%s%s</video></figure>\n%s'
-        '<h2 class="walk__k">What the narrator says</h2>\n<ol class="walk__lines">%s</ol>\n'
-        '<p class="walk__fine">Made from the site\'s own key art, score, card, sale desk, medal and resume. Every fact in it is in <a href="/llms.txt">llms.txt</a>.</p>\n'
-        "</main>\n</body>\n</html>\n"
-        % (E(W["poster"]), E(W["src"]), V, E(W.get("note", "")), E(W["poster"]), E(W["src"]), ('<source src="%s" type="video/webm" />' % E(W["webm"])) if W.get("webm") else "", track, vert, transcript)
-    )
-    (ROOT / "walkthrough.html").write_text(page)
-    print("walkthrough.html written")

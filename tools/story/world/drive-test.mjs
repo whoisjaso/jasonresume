@@ -81,9 +81,9 @@ const out = await p.evaluate(async (which) => {
   R(1.6, 2, 0); ev = run(6, t => ({ throttle: car.speed < 6 ? 0.7 : 0, steer: Math.max(-1, Math.min(1, car.pose.x * 0.35 + car.pose.yaw * 2.5)) }), 0.5, 'gate');
   check(car.onRoad, `through the gate: z ${car.pose.z.toFixed(1)} (on the road past 22.4)`);
   check(!ev.some(e => e.type === 'impact'), `through the gate clean: ${ev.filter(e => e.type === 'impact').map(e => e.what).join(',') || 'no impacts'}`);
-  R(40, 31, Math.PI / 2); ev = run(6, { throttle: 1 }, 1, 'road end');
-  check(ev.some(e => e.what === 'bound') && car.pose.x < 62, `road end: soft wall, x ${car.pose.x.toFixed(1)}`);
-  check(set.userData.inDriveBounds(car.pose.x, car.pose.z) || car.pose.x < 61.6, 'stays in the drivable area');
+  R(56, 31, Math.PI / 2); ev = run(6, { throttle: 1 }, 1, 'road end');
+  check(ev.some(e => e.what === 'bound') && car.pose.x < 78, `road end: soft wall, x ${car.pose.x.toFixed(1)}`);
+  check(set.userData.inDriveBounds(car.pose.x, car.pose.z) || car.pose.x < 77.6, 'stays in the drivable area');
 
   // 9. bounds sweep: random inputs for 60 s never leave the area or go NaN
   R(0, -1, Math.PI / 2); let bad = 0; let seed = 7; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);

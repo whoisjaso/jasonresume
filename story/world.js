@@ -678,6 +678,286 @@ function skyDome(o) {
 }
 
 /* ================================================================
+   THINGS YOU CAN USE, AND THE PLACES ACROSS THE ROAD
+   (tools/story/HANDOFF-explore.md). A thing is a spot in set.userData.spots with a kind main.js knows
+   (exit, toggle, open, sit, press, pickup, read, splash, knock), a short label, where it is (p), where you
+   stand (stand), and use({ kind, on }) which the world answers by animating its own state. Animations
+   run from a hook in the render (no per-frame allocation), so nothing has to call them; set.userData.tick
+   (dt, { player }) runs them by hand if you'd rather.
+   ================================================================ */
+const TICK_CTX = { player: null, t: 0 };
+function thingsOf(set) {
+  const ud = set.userData;
+  if (ud.anims) return ud;
+  ud.anims = []; ud.things = [];
+  ud.tick = (dt, ctx) => { const c = ctx || TICK_CTX; for (let i = 0; i < ud.anims.length; i++) ud.anims[i](dt, c); };
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3));
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, depthTest: false }));
+  m.frustumCulled = false; m.userData.keep = true; m.layers.enableAll(); m.renderOrder = -11;
+  let last = 0;
+  m.onBeforeRender = (r, sc, cam) => {
+    const now = performance.now(); if (now - last < 6) return; // once a frame, not once per pass
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
+    TICK_CTX.player = cam.position; TICK_CTX.t += dt; ud.tick(dt, TICK_CTX);
+  };
+  set.add(m);
+  return ud;
+}
+function thing(set, id, def) {
+  const ud = thingsOf(set);
+  const sp = Object.assign({ id, r: 1.6, on: false }, def);
+  if (sp.use && !sp.act) sp.act = sp.use;
+  ud.spots[id] = sp; ud.things.push(id); return sp;
+}
+const easeTo = (cur, goal, k, dt) => cur + (goal - cur) * (1 - Math.exp(-k * dt));
+function anim(set, f) { thingsOf(set).anims.push(f); }
+/* a hinged part that swings to its goal: a lid, a door, a drawer (slide) */
+function swinger(set, obj, axis, open, k = 7) {
+  const s = { v: 0, goal: 0 };
+  anim(set, dt => { if (Math.abs(s.v - s.goal) < 1e-4) return; s.v = easeTo(s.v, s.goal, k, dt); if (axis === "slide") obj.position.z = obj.userData.z0 + s.v * open; else obj.rotation[axis] = s.v * open; });
+  if (axis === "slide") obj.userData.z0 = obj.position.z;
+  return s;
+}
+
+/* ---------- across Almeda Genoa Road: a bus stop, a closed shop front, a lit gas station, an empty lot with
+   its streetlight, a crosswalk; all fictional, no names, no numbers ---------- */
+function placesAcross(set, o, day, CO) {
+  const W = set.userData.walls, steel = pbr({ color: "#5d6265", metal: 0.8, rough: 0.45, wet: 1 });
+  const conc = rmat({ color: "#9a968e", rough: 0.85, wet: day ? 0 : 0.9, mapK: "concC", tri: 0.6 });
+  const darkM = pbr({ color: "#1c1e1e", rough: 0.5, metal: 0.3, wet: 1 });
+  const wall = (x0, x1, z0, z1, what = "wall", h = 3) => { W.push({ x0, x1, z0, z1 }); CO.push({ type: "box", x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hl: (z1 - z0) / 2, yaw: 0, h, what }); };
+  const post = (x, z, r = 0.12) => { W.push({ x0: x - r, x1: x + r, z0: z - r, z1: z + r }); CO.push({ type: "circle", x, z, r, what: "pole" }); };
+  // the edges of where you can go: the road's far ends, and the back of the places across it
+  W.push({ x0: -78, x1: -77, z0: 21.8, z1: 58 }, { x0: 77, x1: 78, z0: 21.8, z1: 58 }, { x0: -78, x1: 78, z0: 56, z1: 57 });
+  set.userData.nav = { x0: -77.5, x1: 77.5, z0: -26.4, z1: 56.5, cell: 0.4 };
+
+  /* the crosswalk by the gate, with a button and a signal on each side */
+  { const zebra = pbr({ color: "#d8d4c8", rough: 0.6, wet: day ? 0 : 1 });
+    for (let i = 0; i < 12; i++) { const b = plane(3.0, 0.45, zebra, set); b.rotation.x = -Math.PI / 2; b.position.set(-7.5, -0.003, 24.9 + i * 1.08); }
+    const sigs = [];
+    for (const [x, z, face] of [[-9.6, 24.3, 1], [-9.6, 38.2, -1]]) {
+      const pole = cyl(0.05, 0.06, 3.0, steel, x, 1.5, z, set, 8); post(x, z, 0.12);
+      box(0.12, 0.2, 0.1, darkM, x, 1.1, z + face * 0.07, set);
+      const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 12), glow0("#d8c9a0", { k: 0.25 })); btn.rotation.x = Math.PI / 2; btn.position.set(x, 1.12, z + face * 0.13); btn.userData.keep = true; set.add(btn);
+      box(0.32, 0.36, 0.22, darkM, x, 2.75, z + face * 0.05, set);
+      const head = plane(0.24, 0.26, glow0("#f2efe6", { k: 1 }), set); head.material.uniforms.uK.value = 0; head.position.set(x, 2.75, z + face * 0.165); if (face < 0) head.rotation.y = Math.PI; head.userData.keep = true;
+      sigs.push({ btn, head });
+    }
+    const st = { t: 0 };
+    anim(set, dt => { if (st.t <= 0) return; st.t -= dt; const on = st.t > 0 && (st.t > 2 || Math.floor(st.t * 3) % 2 === 0) ? 1 : 0; for (const s of sigs) { s.head.material.uniforms.uK.value = on * 1.6; s.btn.material.uniforms.uK.value = st.t > 0 ? 1.4 : 0.25; } });
+    for (const [i, [x, z, face]] of [[-9.6, 24.3, 1], [-9.6, 38.2, -1]].entries())
+      thing(set, "crosswalk-" + i, { kind: "press", label: "Button", p: V3(x, 1.12, z + face * 0.13), stand: V3(x + 0.3, 0, z + face * 0.75), r: 1.4, use: () => { st.t = 8; } });
+  }
+
+  /* the bus stop on the far side: a shelter with a glass back, a bench, the stop's sign */
+  { const x0 = -18, zb = 40.4;
+    const glassM = pbr({ color: "#0b0f10", rough: 0.03, wet: 0.8, alpha: 0.2, glass: true, depthWrite: false, spec: 1, diff: 0.2 });
+    for (const dx of [-1.9, 1.9]) { cyl(0.05, 0.05, 2.5, steel, x0 + dx, 1.25, zb, set, 8); post(x0 + dx, zb, 0.1); }
+    box(4.2, 0.08, 1.6, darkM, x0, 2.52, zb - 0.6, set);
+    const back = plane(3.8, 1.9, glassM, set); back.position.set(x0, 1.35, zb + 0.02); back.rotation.y = Math.PI; back.userData.keep = true; back.renderOrder = 2;
+    const roofGlow = plane(3.6, 0.25, glow("#f4ead2", { k: day ? 0.1 : 1.0 }), set); roofGlow.rotation.x = Math.PI / 2; roofGlow.position.set(x0, 2.47, zb - 0.5);
+    const wood = pbr({ color: "#6b5440", rough: 0.6, wet: 0.8 });
+    box(2.4, 0.06, 0.42, wood, x0, 0.46, zb - 0.3, set); box(2.4, 0.4, 0.05, wood, x0, 0.72, zb - 0.08, set);
+    for (const dx of [-1.0, 1.0]) box(0.06, 0.46, 0.38, steel, x0 + dx, 0.23, zb - 0.3, set);
+    wall(x0 - 2.0, x0 + 2.0, zb - 0.1, zb + 0.15, "wall", 2.5);
+    thing(set, "bus-bench", { kind: "sit", label: "Bench", p: V3(x0, 0.5, zb - 0.3), stand: V3(x0, 0, zb - 1.1), seat: V3(x0, 0.49, zb - 0.32), yaw: Math.PI, r: 1.6 });
+    // the stop's sign: a disc on a pole, a bus drawn on it (no words, no numbers)
+    cyl(0.04, 0.04, 2.8, steel, x0 + 3.2, 1.4, zb - 1.0, set, 8); post(x0 + 3.2, zb - 1.0, 0.1);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.3, 24), glow("#ffffff", { map: TX.busSignTex(), k: day ? 0.8 : 0.9 })); disc.position.set(x0 + 3.2, 2.55, zb - 1.04); disc.rotation.y = Math.PI; set.add(disc);
+    const disc2 = disc.clone(); disc2.rotation.y = 0; disc2.position.z = zb - 0.96; set.add(disc2);
+    thing(set, "bus-sign", { kind: "read", label: "Sign", text: "Bus stop", p: V3(x0 + 3.2, 2.4, zb - 1.0), stand: V3(x0 + 3.2, 0, zb - 2.2), r: 2.4 });
+  }
+
+  /* a shop across the road, closed for the night: the shutter down, its sign dark, a side door, a light over it */
+  { const x0 = 14, zf = 41.2, w = 14, d = 9, h = 5.2;
+    box(w, h, d, rmat({ color: "#4a4743", rough: 0.9, wet: day ? 0 : 0.6, mapK: "concC", tri: 0.3 }), x0, h / 2, zf + d / 2, set); wall(x0 - w / 2, x0 + w / 2, zf, zf + d);
+    for (let i = 0; i < 16; i++) box(9.6, 0.16, 0.06, pbr({ color: i % 2 ? "#6c6f70" : "#5c5f60", metal: 0.6, rough: 0.5, wet: day ? 0 : 1 }), x0 - 1.6, 0.1 + i * 0.17, zf - 0.04, set);
+    box(9.8, 0.3, 0.3, darkM, x0 - 1.6, 2.85, zf - 0.1, set);
+    box(10.4, 0.9, 0.12, pbr({ color: "#2a2c2c", rough: 0.4, metal: 0.3, wet: 1 }), x0 - 1.6, 3.8, zf - 0.07, set);
+    // the side door: glass, dark inside, a sign that says it's closed
+    box(1.1, 2.2, 0.08, darkM, x0 + 5.0, 1.1, zf - 0.04, set);
+    const dg = plane(0.8, 1.6, pbr({ color: "#0b0f10", rough: 0.04, wet: 0.6, spec: 1 }), set); dg.position.set(x0 + 5.0, 1.25, zf - 0.09); dg.rotation.y = Math.PI;
+    const cl = plane(0.34, 0.14, pbr({ map: TX.labelTex("CLOSED", { bg: "#e9e4d8", fg: "#1c1e1e", w: 256, h: 104 }), color: "#fff", rough: 0.7, wet: 0, ao: 0 }), set); cl.position.set(x0 + 5.0, 1.5, zf - 0.1); cl.rotation.y = Math.PI;
+    box(0.35, 0.12, 0.18, darkM, x0 + 5.0, 2.55, zf - 0.12, set);
+    const ln = plane(0.3, 0.14, glow("#ffe0b0", { k: day ? 0.2 : 2.4 }), set); ln.rotation.x = Math.PI / 2; ln.position.set(x0 + 5.0, 2.485, zf - 0.13);
+    if (!day) set.userData.lamps.push({ p: V3(x0 + 5.0, 2.4, zf - 0.6), range: 6, col: [1.2, 0.85, 0.5], cone: 0, fixed: false });
+    thing(set, "shop-door", { kind: "knock", label: "Door", p: V3(x0 + 5.0, 1.3, zf - 0.1), stand: V3(x0 + 5.0, 0, zf - 1.1), r: 1.6 });
+    thing(set, "shop-sign", { kind: "read", label: "Sign", text: "Closed", p: V3(x0 + 5.0, 1.5, zf - 0.1), stand: V3(x0 + 4.4, 0, zf - 1.1), r: 1.4 });
+    thing(set, "shop-shutter", { kind: "knock", label: "Shutter", p: V3(x0 - 1.6, 1.2, zf - 0.1), stand: V3(x0 - 1.6, 0, zf - 1.2), r: 2.0 });
+  }
+
+  /* a gas station, open and lit under its canopy: two pump islands, a kiosk at the back (no brand, no prices) */
+  { const cx = 34, cz = 46;
+    const fore = plane(20, 12, conc, set); fore.rotation.x = -Math.PI / 2; fore.position.set(cx, -0.008, 45.5);
+    const canopyM = pbr({ color: "#d9d6cf", rough: 0.5, wet: day ? 0 : 0.5 });
+    box(15, 0.7, 8.5, canopyM, cx, 5.0, cz, set);
+    box(15.2, 0.25, 8.7, pbr({ color: "#1c3229", rough: 0.4, wet: 0.8 }), cx, 4.55, cz, set);
+    const panel = glow("#fff6e4", { k: day ? 0.3 : 2.6 });
+    for (const px of [-4.5, 0, 4.5]) for (const pz of [-2, 2]) { const p0 = plane(1.6, 0.6, panel, set); p0.rotation.x = Math.PI / 2; p0.position.set(cx + px, 4.42, cz + pz); }
+    for (const px of [-5.8, 5.8]) for (const pz of [-1.6, 1.6]) { cyl(0.22, 0.22, 4.4, canopyM, cx + px, 2.2, cz + pz, set, 12); post(cx + px, cz + pz, 0.26); }
+    for (const pz of [-1.6, 1.6]) {
+      box(6.0, 0.18, 1.1, conc, cx, 0.09, cz + pz, set);
+      for (const px of [-1.6, 1.6]) {
+        box(0.75, 1.55, 0.45, pbr({ color: "#e4e1d9", rough: 0.4, wet: 0.3 }), cx + px, 0.95, cz + pz, set);
+        for (const f of [-1, 1]) { const sc = plane(0.4, 0.22, glow("#cfe0d8", { k: day ? 0.2 : 0.6 }), set); sc.position.set(cx + px, 1.35, cz + pz + f * 0.23); if (f < 0) sc.rotation.y = Math.PI; }
+        box(0.06, 0.5, 0.06, darkM, cx + px + 0.3, 0.95, cz + pz + 0.25, set);
+      }
+      wall(cx - 3.0, cx + 3.0, cz + pz - 0.55, cz + pz + 0.55, "wall", 1.6);
+    }
+    set.userData.lamps.push({ p: V3(cx, 4.3, cz), range: 16, col: [2.0, 1.95, 1.8], cone: 0, fixed: false });
+    // the kiosk, its windows lit
+    box(10, 3.4, 5, rmat({ color: "#cfcac0", rough: 0.85, wet: day ? 0 : 0.5, mapK: "concC", tri: 0.4 }), cx, 1.7, 53.5, set); wall(cx - 5, cx + 5, 51, 56);
+    const kw = plane(6, 1.6, glow("#f3e6c8", { k: day ? 0.3 : 1.1 }), set); kw.position.set(cx - 1, 1.5, 50.98); kw.rotation.y = Math.PI;
+    box(1.0, 2.1, 0.06, darkM, cx + 3.4, 1.05, 50.97, set);
+    for (let i = 0; i < 2; i++) thing(set, "pump-" + i, { kind: "press", label: "Pump", p: V3(cx - 1.6 + i * 3.2, 1.3, cz - 1.6 - 0.25), stand: V3(cx - 1.6 + i * 3.2, 0, cz - 2.9), r: 1.4 });
+    thing(set, "kiosk-door", { kind: "knock", label: "Door", p: V3(cx + 3.4, 1.2, 50.95), stand: V3(cx + 3.4, 0, 50.0), r: 1.6 });
+    set.userData.sounds.gas = { x: cx, y: 4.3, z: cz, kind: "sodium-hum" };
+  }
+
+  /* the empty lot to the west: gravel, weeds, one streetlight on a wooden pole, a puddle */
+  { const cx = -30, cz = 45.5;
+    const grav = plane(16, 11, rmat({ color: "#5e5a52", rough: 0.95, wet: day ? 0 : 0.7, mapK: "asphC", tri: 0.5 }), set); grav.rotation.x = -Math.PI / 2; grav.position.set(cx, -0.006, cz);
+    const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
+    cyl(0.13, 0.16, 7.5, wood, cx + 3, 3.75, cz + 2, set, 8); post(cx + 3, cz + 2, 0.18);
+    const arm = cyl(0.04, 0.04, 1.8, steel, cx + 3, 7.2, cz + 1.2, set, 6); arm.rotation.x = Math.PI / 2;
+    box(0.3, 0.14, 0.6, steel, cx + 3, 7.15, cz + 0.3, set);
+    const ln = plane(0.26, 0.5, glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 3.2 }), set); ln.rotation.x = Math.PI / 2; ln.position.set(cx + 3, 7.07, cz + 0.3); ln.userData.keep = true;
+    if (!day) { const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 3.4, 6.9, 24, 1, true), coneMat0("#ffb466", 0.6)); cone.position.set(cx + 3, 3.55, cz + 0.3); cone.layers.set(3); cone.userData.keep = true; set.add(cone);
+      set.userData.lamps.push({ p: V3(cx + 3, 6.9, cz + 0.3), range: 14, col: [2.6, 1.6, 0.75], cone: 0.28, fixed: false }); }
+    const weed = paint({ color: "#2c3424", map: set.userData.frond, alphaTest: 0.5, side: THREE.DoubleSide, rim: 0.2 });
+    const rw = rng(91);
+    for (let i = 0; i < 18; i++) { const wp = plane(0.5 + rw() * 0.5, 0.4 + rw() * 0.4, weed, set); wp.position.set(cx - 7 + rw() * 14, 0.2, cz - 4.5 + rw() * 9); wp.rotation.y = rw() * 6.28; }
+    if (!day) { const pd = plane(2.6, 1.6, pbr({ color: "#0b0e0f", rough: 0.02, wet: 1, spec: 1.2, diff: 0.3 }), set); pd.rotation.x = -Math.PI / 2; pd.position.set(cx - 2, 0.002, cz - 1);
+      thing(set, "lot-puddle", { kind: "splash", label: "Puddle", p: V3(cx - 2, 0.05, cz - 1), stand: V3(cx - 2, 0, cz + 0.6), r: 1.8 }); }
+  }
+}
+
+/* ---------- the lot's things: the showroom's lights, a vending machine, the dumpster and its lid, a mailbox
+   by the gate, puddles to stamp in, the glass to knock on, and the life: a moth at Jason's lamp, a stray cat ---------- */
+function lotThings(set, day, refs) {
+  const darkM = pbr({ color: "#1c1e1e", rough: 0.5, metal: 0.3, wet: 1 });
+  const CO = set.userData.colliders, W = set.userData.walls;
+  const solid = (x0, x1, z0, z1, h = 1.5) => { W.push({ x0, x1, z0, z1 }); CO.push({ type: "box", x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hl: (z1 - z0) / 2, yaw: 0, h, what: "wall" }); };
+  // the showroom's lights: a switch plate by the office door
+  { box(0.08, 0.12, 0.02, pbr({ color: "#e9e6de", rough: 0.4, wet: 0.4 }), 14.25, 1.3, -17.79, set);
+    const k0 = refs.panelM.uniforms.uK.value, k1 = refs.dl.uniforms.uK.value, cols = refs.lamps.map(l => l.col.slice());
+    const st = { v: 1, goal: 1 };
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 9, dt);
+      refs.panelM.uniforms.uK.value = k0 * (0.06 + 0.94 * st.v); refs.dl.uniforms.uK.value = k1 * (0.06 + 0.94 * st.v);
+      refs.lamps.forEach((l, i) => { l.col[0] = cols[i][0] * st.v; l.col[1] = cols[i][1] * st.v; l.col[2] = cols[i][2] * st.v; }); });
+    thing(set, "showroom-lights", { kind: "toggle", label: "Lights", on: true, p: V3(14.25, 1.3, -17.75), stand: V3(14.4, 0, -16.6), r: 1.4, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  // a vending machine against the showroom's east wall, lit, no words; a can drops when you press
+  { const x = 15.75, z = -19.6;
+    box(0.8, 1.85, 0.95, pbr({ color: "#2a3a33", rough: 0.4, metal: 0.3, wet: 0.8 }), x, 0.925, z, set);
+    const front = plane(0.62, 1.2, glow("#e8f0ea", { k: day ? 0.4 : 1.1 }), set); front.rotation.y = Math.PI / 2; front.position.set(x + 0.405, 1.15, z - 0.08);
+    box(0.02, 0.5, 0.18, darkM, x + 0.41, 1.05, z + 0.32, set);
+    const tray = box(0.04, 0.16, 0.5, darkM, x + 0.41, 0.3, z - 0.05, set);
+    const can = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.033, 0.12, 12), pbr({ color: "#7a2a22", metal: 0.7, rough: 0.3, wet: 0.2 })); can.rotation.x = Math.PI / 2; can.position.set(x + 0.43, -1, z - 0.05); can.userData.keep = true; set.add(can);
+    const st = { t: 0 };
+    anim(set, dt => { if (st.t <= 0) return; st.t -= dt; const u = Math.min(1, (1.4 - st.t) / 0.35); can.position.y = st.t > 0 ? 0.62 - 0.36 * Math.max(0, Math.min(1, u)) : -1; });
+    solid(x - 0.45, x + 0.45, z - 0.5, z + 0.5, 1.9);
+    if (!day) set.userData.lamps.push({ p: V3(x + 0.9, 1.2, z), range: 3.2, col: [0.45, 0.6, 0.52], cone: 0, fixed: false });
+    thing(set, "vending", { kind: "press", label: "Machine", p: V3(x + 0.42, 1.1, z + 0.32), stand: V3(x + 1.25, 0, z), r: 1.5, use: () => { st.t = 6; } });
+    set.userData.sounds.vending = { x, y: 1, z, kind: "fridge-hum" }; }
+  // the dumpster behind the west end of the showroom, its lid on a hinge, and a cat that lives by it
+  { const x = -13.8, z = -20.8;
+    const green = pbr({ color: "#24352c", metal: 0.5, rough: 0.55, wet: 1 });
+    box(1.9, 1.15, 1.2, green, x, 0.62, z, set); box(1.95, 0.08, 1.25, green, x, 0.08, z, set);
+    const lid = new THREE.Group(); lid.position.set(x, 1.22, z - 0.62); lid.userData.keep = true; set.add(lid);
+    box(1.98, 0.05, 1.26, pbr({ color: "#1b1d1c", rough: 0.6, wet: 1 }), 0, 0, 0.63, lid);
+    const lidS = swinger(set, lid, "x", -1.6, 5);
+    solid(x - 1.0, x + 1.0, z - 0.65, z + 0.65, 1.3);
+    thing(set, "dumpster", { kind: "open", label: "Lid", p: V3(x, 1.2, z + 0.6), stand: V3(x, 0, z + 1.5), r: 1.6, use: ({ on }) => { lidS.goal = on ? 1 : 0; } });
+    // the stray: a low cat shape that keeps its distance; walks off when you come near, comes back when you leave
+    const catM = paint({ color: "#2a2622", rim: 0.4 });
+    const cat = new THREE.Group(); cat.userData.keep = true; set.add(cat);
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.28, 4, 8), catM); body.rotation.z = Math.PI / 2; body.rotation.y = Math.PI / 2; body.position.y = 0.2; cat.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), catM); head.position.set(0, 0.29, 0.22); cat.add(head);
+    for (const s of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 4), catM); ear.position.set(s * 0.035, 0.36, 0.22); cat.add(ear); }
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.018, 0.3, 5), catM); tail.position.set(0, 0.3, -0.25); tail.rotation.x = -0.6; cat.add(tail);
+    const legs = []; for (const [lx, lz] of [[-0.05, 0.12], [0.05, 0.12], [-0.05, -0.12], [0.05, -0.12]]) { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.16, 5), catM); lg.position.set(lx, 0.08, lz); cat.add(lg); legs.push(lg); }
+    const home = { x: x + 1.5, z: z + 1.4 }, away = { x: x - 4.5, z: z + 3.0 };
+    const c = { x: home.x, z: home.z, yaw: -0.6, gait: 0, goal: home };
+    cat.position.set(c.x, 0, c.z);
+    anim(set, (dt, ctx) => {
+      const pl = ctx.player; if (pl) { const d = Math.hypot(pl.x - c.x, pl.z - c.z), dh = Math.hypot(pl.x - home.x, pl.z - home.z); c.goal = d < 3.2 || dh < 3.5 ? away : home; }
+      const dx = c.goal.x - c.x, dz = c.goal.z - c.z, dd = Math.hypot(dx, dz);
+      if (dd > 0.05) { const sp = Math.min(dd, 1.6 * dt); c.x += dx / dd * sp; c.z += dz / dd * sp; const ty = Math.atan2(dx, dz); c.yaw += Math.atan2(Math.sin(ty - c.yaw), Math.cos(ty - c.yaw)) * Math.min(1, dt * 8); c.gait += dt * 14; }
+      cat.position.set(c.x, 0, c.z); cat.rotation.y = c.yaw;
+      const g = dd > 0.05 ? 1 : 0; for (let i = 0; i < 4; i++) legs[i].rotation.x = Math.sin(c.gait + (i % 2 ? 0 : Math.PI) + (i > 1 ? Math.PI : 0)) * 0.5 * g;
+      tail.rotation.z = Math.sin(TICK_CTX.t * 1.7) * 0.25;
+    });
+  }
+  // a mailbox on a post by the gate, its door on a hinge
+  { const x = 5.8, z = 22.8;
+    const steelM = pbr({ color: "#3a4048", metal: 0.6, rough: 0.4, wet: 1 });
+    box(0.08, 1.0, 0.08, pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 }), x, 0.5, z, set);
+    box(0.24, 0.24, 0.48, steelM, x, 1.12, z, set);
+    const md = new THREE.Group(); md.position.set(x, 1.0, z + 0.245); md.userData.keep = true; set.add(md); box(0.24, 0.24, 0.015, steelM, 0, 0.12, 0, md);
+    const mdS = swinger(set, md, "x", 1.5, 7);
+    solid(x - 0.15, x + 0.15, z - 0.3, z + 0.3, 1.2);
+    thing(set, "mailbox", { kind: "open", label: "Mailbox", p: V3(x, 1.12, z + 0.26), stand: V3(x, 0, z + 0.95), r: 1.3, use: ({ on }) => { mdS.goal = on ? 1 : 0; } }); }
+  // the storefront's glass, to knock on
+  thing(set, "showroom-glass", { kind: "knock", label: "Glass", p: V3(4, 1.4, -17.95), stand: V3(4, 0, -16.9), r: 1.8 });
+  // puddles to stamp in (the story's own puddle keeps its spot)
+  if (!day) [[-12.5, 1.2], [9.5, 10.5], [-6.2, -9.6]].forEach(([px, pz], i) => thing(set, "puddle-" + i, { kind: "splash", label: "Puddle", p: V3(px, 0.05, pz), stand: V3(px, 0, pz + 1.0), r: 1.6 }));
+  // a moth at the lamp by Jason
+  if (!day) { const L = set.userData.lamps[5]; if (L) {
+    const moth = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.035), glow0("#efe3c8", { k: 0.9, side: THREE.DoubleSide })); moth.userData.keep = true; set.add(moth);
+    anim(set, (dt, ctx) => { const t = ctx.t; moth.position.set(L.p.x + Math.sin(t * 3.1) * 0.32 + Math.sin(t * 7.3) * 0.06, L.p.y - 0.12 + Math.sin(t * 5.2) * 0.08, L.p.z + Math.cos(t * 2.6) * 0.28); moth.rotation.y = t * 6; moth.scale.x = 0.6 + 0.4 * Math.abs(Math.sin(t * 40)); });
+  } }
+}
+
+/* ---------- the office's things: the way out to the lot, the desk lamp, the room's lights, a radio, the filing
+   drawers, the fridge, chairs and armchairs, a mug to pick up ---------- */
+function officeThings(set, refs) {
+  const ud = set.userData;
+  // the door out to the lot (left wall, by the coffee corner)
+  thing(set, "office-exit", { kind: "exit", label: "Lot", to: "lot", p: V3(-6.9, 1.1, 4.2), stand: V3(-6.0, 0, 4.2), r: 1.8 });
+  ud.marks["lot-door"] = V3(-6.0, 0, 4.2); ud.marks["lot-doorYaw"] = Math.PI / 2;
+  // the desk lamp
+  { const L = ud.lamps.find(l => Math.abs(l.p.x + 2.1) < 0.01), bulb = refs.deskBulb, k0 = bulb ? bulb.material.uniforms.uK.value : 1, c0 = L ? L.col.slice() : null, st = { v: 1, goal: 1 };
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 12, dt); if (bulb) bulb.material.uniforms.uK.value = k0 * st.v; if (L) { L.col[0] = c0[0] * st.v; L.col[1] = c0[1] * st.v; L.col[2] = c0[2] * st.v; } });
+    thing(set, "desk-lamp", { kind: "toggle", label: "Lamp", on: true, p: V3(-2.1, 1.15, -2.0), stand: V3(-2.4, 0, -0.9), r: 1.5, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  // the light switch by the door: the troffers
+  { box(0.08, 0.12, 0.02, pbr({ color: "#e9e6de", rough: 0.4, wet: 0 }), -6.97, 1.3, 3.4, set).rotation.y = Math.PI / 2;
+    const tro = ud.lamps.filter(l => l.p.y > 2.9), c0 = tro.map(l => l.col.slice()), k0 = refs.trof.uniforms.uK.value, st = { v: 1, goal: 1 };
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 14, dt); refs.trof.uniforms.uK.value = k0 * (0.04 + 0.96 * st.v); tro.forEach((l, i) => { l.col[0] = c0[i][0] * st.v; l.col[1] = c0[i][1] * st.v; l.col[2] = c0[i][2] * st.v; }); });
+    thing(set, "office-lights", { kind: "toggle", label: "Lights", on: true, p: V3(-6.95, 1.3, 3.4), stand: V3(-6.0, 0, 3.3), r: 1.4, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  // a radio on the credenza under the whiteboard: its dial lights when it plays (main.js plays the sound)
+  { const rg = new THREE.Group(); rg.position.set(1.95, 0.7, -4.75); set.add(rg);
+    rbox(0.34, 0.18, 0.12, 0.02, pbr({ color: "#3a2c22", rough: 0.5, wet: 0 }), 0, 0.09, 0, rg);
+    box(0.14, 0.12, 0.005, pbr({ color: "#1b1a18", rough: 0.8, wet: 0 }), -0.08, 0.09, 0.062, rg);
+    const dial = plane(0.1, 0.04, glow0("#f3c98a", { k: 1 }), rg); dial.position.set(0.09, 0.11, 0.063); dial.material.uniforms.uK.value = 0.05; dial.userData.keep = true;
+    thing(set, "radio", { kind: "toggle", label: "Radio", p: V3(1.95, 0.85, -4.7), stand: V3(1.95, 0, -3.8), r: 1.4, use: ({ on }) => { dial.material.uniforms.uK.value = on ? 1.2 : 0.05; ud.sounds.radio = on ? { x: 1.95, y: 0.8, z: -4.7, kind: "radio" } : null; } }); }
+  // the filing cabinet's top drawer slides out
+  if (refs.drawer) { const dS = swinger(set, refs.drawer, "slide", 0.42, 8);
+    thing(set, "drawer", { kind: "open", label: "Drawer", p: V3(-6.25, 1.15, -2.6), stand: V3(-5.4, 0, -2.6), r: 1.5, use: ({ on }) => { dS.goal = on ? 1 : 0; } }); }
+  // the fridge door
+  if (refs.fridgeDoor) { const fS = swinger(set, refs.fridgeDoor, "y", 1.7, 6);
+    thing(set, "fridge", { kind: "open", label: "Fridge", p: V3(-6.25, 1.2, 1.45), stand: V3(-5.5, 0, 1.45), r: 1.5, use: ({ on }) => { fS.goal = on ? 1 : 0; } }); }
+  // somewhere to sit: the second desk's chair, the armchairs by the window
+  thing(set, "chair-2", { kind: "sit", label: "Chair", p: V3(3.4, 0.5, -0.75), stand: V3(3.5, 0, 0.0), seat: V3(3.4, 0.48, -0.75), yaw: Math.PI + 0.2, r: 1.3 });
+  for (const [x, ry] of [[-2.2, 0.35], [2.2, -0.35]]) thing(set, "armchair" + (x < 0 ? "-l" : "-r"), { kind: "sit", label: "Armchair", p: V3(x, 0.45, 3.9), stand: V3(x - Math.sin(Math.PI + ry) * 0.9, 0, 3.9 - Math.cos(Math.PI + ry) * 0.9), seat: V3(x, 0.42, 3.92), yaw: Math.PI + ry, r: 1.4 });
+  // a mug on the coffee counter you can pick up and put down
+  if (refs.mug) { const m = refs.mug, home = m.position.clone(), st = { held: false };
+    thing(set, "mug", { kind: "pickup", label: "Mug", p: V3(-6.58, 0.97, 2.78), stand: V3(-5.55, 0, 2.8), r: 1.4, use: ({ on }) => { st.held = on; m.visible = !on; ud.held = on ? "mug" : null; } }); }
+}
+
+/* ---------- the library's things: the doors out, the reading lamps, the chairs, a book from the cart ---------- */
+function libraryThings(set, refs) {
+  const ud = set.userData;
+  thing(set, "memory-exit", { kind: "exit", label: "Doors", to: "office", p: V3(0, 1.3, 8.85), stand: V3(0, 0, 7.6), r: 2.2 });
+  ud.marks["office-door"] = V3(0, 0, 7.6); ud.marks["office-doorYaw"] = Math.PI;
+  { const st = { v: 1, goal: 1 }, k0 = refs.bulb.uniforms.uK.value, L = ud.lamps.filter(l => l.range < 4 && l.p.y < 1.2), c0 = L.map(l => l.col.slice());
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 12, dt); refs.bulb.uniforms.uK.value = k0 * (0.03 + 0.97 * st.v); refs.shade.uniforms.uK.value = refs.shadeK * (0.3 + 0.7 * st.v); L.forEach((l, i) => { l.col[0] = c0[i][0] * st.v; l.col[1] = c0[i][1] * st.v; l.col[2] = c0[i][2] * st.v; }); });
+    thing(set, "reading-lamps", { kind: "toggle", label: "Lamps", on: true, p: V3(-1.1, 1.12, 3.0), stand: V3(-1.1, 0, 4.1), r: 1.3, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  (refs.chairs || []).slice(0, 4).forEach((c, i) => thing(set, "lib-chair-" + i, { kind: "sit", label: "Chair", p: V3(c.x, 0.5, c.z), stand: V3(c.x + Math.sin(c.yaw) * 0.8, 0, c.z + Math.cos(c.yaw) * 0.8), seat: V3(c.x, 0.47, c.z), yaw: c.yaw, r: 1.2 }));
+  if (refs.book) { const b = refs.book;
+    thing(set, "cart-book", { kind: "pickup", label: "Book", p: b.getWorldPosition(new THREE.Vector3()), stand: V3(-2.4, 0, 7.2), r: 1.5, use: ({ on }) => { b.visible = !on; ud.held = on ? "book" : null; } }); }
+}
+
+/* ================================================================
    THE LOT
    ================================================================ */
 export function buildLot(o) {
@@ -714,7 +994,7 @@ export function buildLot(o) {
   const fl = plane(22.8, 5.8, tile, sh); fl.rotation.x = -Math.PI / 2; fl.position.set(-1, 0.01, -3.0);
   const ceilM = pbr({ color: "#d9d6cf", rough: 0.9, wet: 0 });
   const ce = plane(22.8, 5.8, ceilM, sh); ce.rotation.x = Math.PI / 2; ce.position.set(-1, 4.0, -3.0);
-  const panelM = glow("#fff3e0", { k: day ? 0.6 : 2.0 });
+  const panelM = glow("#fff3e0", { k: day ? 0.6 : 2.0 }); set.userData._panelM = panelM; set.userData._dl = dl;
   for (let i = 0; i < 7; i++) for (const zz of [-1.6, -4.2]) { const p0 = plane(1.2, 0.6, panelM, sh); p0.rotation.x = Math.PI / 2; p0.position.set(-11 + i * 3.3, 3.98, zz); }
   const wallIn = pbr({ color: "#e4ddd0", rough: 0.85, wet: 0 });
   const bw = plane(22.8, 4.0, wallIn, sh); bw.position.set(-1, 2.0, -5.88);
@@ -986,6 +1266,7 @@ export function buildLot(o) {
     // rain on things: the canopy, the cars' roofs, the showroom's glass
     set.userData.sounds.rain = day ? [] : [{ x: 2, y: 4.0, z: -16.9, kind: "rain-canopy", w: 27 }, { x: 0, y: 1.4, z: 0, kind: "rain-cars", w: 36 }, { x: 1, y: 1.9, z: -17.98, kind: "rain-glass", w: 22 }];
   }
+  lotThings(set, day, { panelM: set.userData._panelM, dl: set.userData._dl, lamps: set.userData.lamps.filter(l => l.fixed && l.p.z < -16 && l.p.x < 5) });
   envHook(set, V3(1, 1.7, 1));
   mergeStatic(set);
   // where people stand
@@ -1405,6 +1686,7 @@ export function buildOffice(o) {
   set.userData.surfaceAt = (x, z) => (x < -4.8 && z > 1.0 ? "tile" : "carpet");
   set.userData.fogDen = 0.006;
   set.userData.ready = roomsReady;
+  _debug.sets.office = set;
   return set;
 }
 
@@ -1496,7 +1778,7 @@ export function buildLibrary(o) {
   for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3], [0, 3]]) for (const side of [-1, 1]) for (const cx of [-1.2, 0, 1.2]) {
     if (tx === 0 && side > 0) continue; // your side of the desk stays open
     const c = new THREE.Group(); c.position.set(tx + cx + (rr() - 0.5) * 0.2, 0, tz + side * (0.95 + rr() * 0.25)); c.rotation.y = (side > 0 ? Math.PI : 0) + (rr() - 0.5) * 0.4; set.add(c);
-    if (tz > 0 && Math.abs(tx) > 1 && side > 0 && Math.abs(cx) < 0.1) chairs.push({ x: c.position.x, z: c.position.z, yaw: c.rotation.y + Math.PI });
+    if (tz > 0 && tx !== 0 && side > 0) chairs.push({ x: c.position.x, z: c.position.z, yaw: c.rotation.y + Math.PI });
     rbox(0.44, 0.045, 0.42, 0.012, chairM, 0, 0.46, 0, c);
     for (const [lx, lz] of [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]]) cyl(0.018, 0.015, 0.46, chairM, lx, 0.23, lz, c, 8);
     for (const lx of [-0.19, 0.19]) cyl(0.015, 0.015, 0.5, chairM, lx, 0.72, 0.19, c, 8);
@@ -1526,13 +1808,16 @@ export function buildLibrary(o) {
     set.userData.lamps.push({ p: V3(0, 3.0, 8.3), range: 5, col: [0.9, 0.7, 0.45], cone: 0, fixed: true }); }
   const runner = plane(3, 14, M.runner, set); runner.rotation.x = -Math.PI / 2; runner.position.set(0, 0.008, 0);
   { const clk = new THREE.Group(); clk.position.set(0, 5.6, -8.95); set.add(clk); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.03, 8, 40), M.brass); clk.add(rim); const face = new THREE.Mesh(new THREE.CircleGeometry(0.35, 40), pbr({ map: TX.clockTex(11, 40), color: "#fff", rough: 0.4, wet: 0, ao: 0 })); face.position.z = 0.01; clk.add(face); set.userData.sounds.clock = { x: 0, y: 5.6, z: -8.9, kind: "clock-tick" }; }
+  set.userData.marks = {};
+  libraryThings(set, { bulb: bulbM, shade, shadeK: shade.uniforms.uK.value, chairs, book: cartBook });
   mergeStatic(set);
   envHook(set, V3(0, 1.6, 4));
-  set.userData.marks = { playerStart: V3(0, 0, 4.4), playerYaw: Math.PI };
+  set.userData.marks = { ...set.userData.marks, playerStart: V3(0, 0, 4.4), playerYaw: Math.PI };
   set.userData.fogDen = 0.006; // a big quiet room: clear air, the windows' bokeh still soft
   set.userData.bounds = { x0: -11.5, x1: 11.5, z0: -8.5, z1: 8.5 };
   set.userData.surfaceAt = (x, z) => (Math.abs(x) < 1.5 && Math.abs(z) < 7 ? "carpet" : "wood");
   set.userData.ready = roomsReady;
+  _debug.sets.memory = set;
   return set;
 }
 

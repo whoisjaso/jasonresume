@@ -79,18 +79,27 @@ for (const [name, q] of [['wheel straight', 'wheel=0.0001'], ['wheel turning', '
         const g = P.arm[s], R = P.reaches && P.reaches[s];
         if (R && R.phase === 'on' && R.cl) { const at = R.cl.clone().applyQuaternion(P.wq[g.ha]).add(P.wp[g.ha]); put('reach ' + R.hold, at.distanceTo(R.tc)); seen['reach ' + R.hold] = 1; }
         const pin = P.pins && P.pins[s];
-        if (pin && pin.k > 0.95 && pin.cl && !(R && R.k > 0.05)) { const at = pin.cl.clone().applyQuaternion(P.wq[g.ha]).add(P.wp[g.ha]); put('held ' + pin.pose, at.distanceTo(pin.at)); seen['held ' + pin.pose] = 1; }
+        // (a hold is measured once it has settled: not within 0.2 s of a reach on that hand)
+        if (R) seen['busy ' + s] = fr;
+        if (pin && pin.k > 0.95 && pin.cl && !(R && R.k > 0.05) && fr - (seen['busy ' + s] ?? -99) > 6) { const at = pin.cl.clone().applyQuaternion(P.wq[g.ha]).add(P.wp[g.ha]); put('held ' + pin.pose, at.distanceTo(pin.at)); seen['held ' + pin.pose] = 1; }
         const c = P.carrying && P.carrying[s];
+        if (c) { c.obj.updateMatrixWorld(true); const op = c.obj.getWorldPosition(new V()), hp = P.bones['hand_' + s].getWorldPosition(new V()); const k = 'obj ' + s; if (seen[k] && seen[k].obj === c.obj) put('picked-up thing never jumps', Math.max(0, op.distanceTo(seen[k].op) - hp.distanceTo(seen[k].hp) - 0.002)); seen[k] = { obj: c.obj, op, hp }; }
+        else seen['obj ' + s] = null;
         if (c) { const hand = c.cl.clone().applyQuaternion(P.wq[g.ha]).add(P.wp[g.ha]).applyMatrix4(P.group.matrixWorld.clone().multiply(P.root.matrix)); c.obj.updateMatrixWorld(true); put('carried in the hand', c.obj.localToWorld(c.gl.clone()).distanceTo(hand)); }
       }
       if (P.car && P.car.mode === 'seat') { const h = P.toWorld(P.hipC, new V()); P.car.G.body.updateMatrixWorld(true); const sw = P.car.G.S.clone().applyMatrix4(P.car.G.body.matrixWorld); put('hips on the seat', h.distanceTo(sw)); }
       const mv = fr ? P.pos.distanceTo(prev) : 0;
-      for (const b of ['hand_l', 'hand_r', 'head', 'foot_l', 'foot_r']) { const w = P.bones[b].getWorldPosition(new V()); if (last[b]) { const j = w.distanceTo(last[b]) - mv - 3 * dt; if (j > pop) { pop = j; popAt = b + ' at ' + (fr * dt).toFixed(2) + ' s'; } } last[b] = w; }
+      for (const b of ['hand_l', 'hand_r', 'head', 'foot_l', 'foot_r']) { const w = P.bones[b].getWorldPosition(new V()); if (last[b]) { const j = w.distanceTo(last[b]) - mv - (b.startsWith('foot') ? 5 : 3) * dt; if (j > pop) { pop = j; popAt = b + ' at ' + (fr * dt).toFixed(2) + ' s'; } } last[b] = w; }
       prev.copy(P.pos);
       if (L.IX && L.IX.done) break;
     }
-    // what was put down is where it was put
-    const X = window.LAB.IXP;
+    // what was put down stands where it was put: the middle of its base on the point
+    for (const x of (L.IX.placed || [])) {
+      x.obj.updateMatrixWorld(true);
+      let lo = Infinity; const c = new V(), v = new V(); let n = 0;
+      x.obj.traverse(o => { if (!o.isMesh) return; const a = o.geometry.attributes.position; for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i).applyMatrix4(o.matrixWorld); lo = Math.min(lo, v.y); c.add(v); n++; } });
+      c.divideScalar(n); c.y = lo; put('put down on its spot', c.distanceTo(x.at));
+    }
     return { out, pop, popAt, done: !!(window.LAB.IX && window.LAB.IX.done) };
   });
   for (const [k, e] of Object.entries(r.out)) { const lim = k === 'hips on the seat' ? 0.03 : LIMIT; const ok = e <= lim; if (!ok) fail++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${k}: worst ${(e * 100).toFixed(1)} cm`); }

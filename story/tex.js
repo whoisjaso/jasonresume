@@ -333,6 +333,17 @@ export function signTex(img) {
   else { g.fillStyle = BONE; g.font = "600 120px " + SERIF; tracked(g, "TRIPLE J", 512, 150, 14); }
   return tex(c);
 }
+/* the bus stop's disc: a bus drawn in a circle, no words, no numbers */
+export function busSignTex() {
+  const c = cv(256, 256), g = c.getContext("2d");
+  g.fillStyle = "#1d3b5a"; g.beginPath(); g.arc(128, 128, 126, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "#ede7db"; g.lineWidth = 8; g.beginPath(); g.arc(128, 128, 112, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = "#ede7db"; g.beginPath(); g.roundRect ? g.roundRect(58, 78, 140, 86, 14) : g.rect(58, 78, 140, 86); g.fill();
+  g.fillStyle = "#1d3b5a"; for (let i = 0; i < 3; i++) g.fillRect(68 + i * 42, 90, 34, 30); g.fillRect(70, 132, 116, 6);
+  g.fillStyle = "#ede7db"; for (const x of [84, 172]) { g.beginPath(); g.arc(x, 170, 13, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = "#1d3b5a"; for (const x of [84, 172]) { g.beginPath(); g.arc(x, 170, 6, 0, Math.PI * 2); g.fill(); }
+  return tex(c);
+}
 /* the office's door sign: one word, lit from behind */
 export function officeSignTex() {
   const c = cv(512, 144), g = c.getContext("2d");

@@ -7,31 +7,20 @@
 const ALLOWED = new Set([
   // arrival and attention
   "page_view", "site_arrived", "section_viewed", "page_left",
-  // the cut, chrome and toggles
-  "role_chosen", "menu_opened", "sound_toggled", "still_toggled", "commentary_toggled", "commentary_line",
+  // the seat, the score and copies
+  "role_chosen", "sound_toggled", "copy_clicked",
   // the desk and the films
-  "scene_interacted", "desk_step", "desk_finished", "film_play", "film_progress", "film_complete", "film_chapter", "film_sound",
+  "scene_interacted", "desk_step", "desk_finished", "film_play", "film_complete",
   // the resume and proof
   "resume_open", "resume_print", "deck_slide", "deck_finished", "proof_open", "verify_opened", "verify_link", "chat_asked",
-  // games and lessons
-  "mark_words", "card_copied",
-  // questions, forwards, extras
-  "question_added", "questions_copied", "questions_mailed", "forward_copied", "share_opened", "rig_toggled", "cues_toggled",
-  "trailer_opened", "trailer_shot", "trailer_finished", "water_touched", "copy_clicked",
   // the intro: tap to begin, the question, the name
   "intro_shown", "intro_started", "intro_finished", "intro_skipped", "name_given", "name_skipped",
-  // the reel: a cut for each visitor
-  "reel_started", "reel_shot", "reel_finished", "reel_exited",
-  // the Today feed: a card opens into its story, the desk app
-  "story_opened", "desk_step", "desk_finished",
   // the library: titles, trophies, screens, the platinum
-  "trophy_unlocked", "trophies_opened", "screen_opened", "level_clear",
+  "story_opened", "trophy_unlocked", "trophies_opened", "screen_opened",
   // Player 2: the build, the card, the listing match, the send
   "build_shown", "build_chosen", "build_skipped", "build_edited", "build_opened", "build_viewed", "card_saved", "build_link_copied",
   "listing_matched", "build_resume", "build_sent",
-  // the walkthrough: the guided tour and the narrated film
-  "intro_tour", "tour_started", "tour_step", "tour_finished", "tour_exit", "walkthrough_opened", "walkthrough_closed",
-  // After Hours: The Run, the platformer (game-run.js)
+  // After Hours: The Run, the platformer (game-run.js, on the arcade cabinet)
   "intro_play", "game_started", "game_level_finished", "game_medal", "game_platinum", "game_quit", "game_secret", "game_character", "game_shared", "game_clip",
   // After Hours, the episode (story/main.js)
   "story_started", "story_choice", "story_scene", "story_object", "story_ending", "story_quit",
@@ -39,10 +28,7 @@ const ALLOWED = new Set([
   // Stop Thinking Poor, the mentorship page at /stp
   "stp_video_play", "stp_video_complete", "stp_apply_started", "stp_apply_sent",
   // conversion
-  "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent",
-  // older pages still in the wild
-  "guide_line", "guide_skipped", "guide_finished", "guide_reopened",
-  "chat_asked", "intake_step", "intake_sent", "laptop_played", "vsl_play", "vsl_complete"
+  "cta_click", "outbound_click", "contact_click", "book_click", "call_booked", "lead_sent"
 ]);
 const STR = (v, n) => String(v == null ? "" : v).slice(0, n);
 

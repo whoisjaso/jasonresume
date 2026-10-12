@@ -71,25 +71,17 @@
     jump(secs[n]); mark(n); setHash(secs[n].id); FX("key");
   });
 
-  /* ---------- older links: the story ids from the dash days land on their section ---------- */
-  var HASH = location.hash, LEGACY = { "#story-desk": "run", "#story-drive": "run", "#story-obavia": "top" };
+  /* ---------- a link to a section lands on it once the title screen ends ---------- */
+  var HASH = location.hash;
   function target(h) {
     if (!h || h.length < 2) return null;
-    if (LEGACY[h]) return document.getElementById(LEGACY[h]);
     try { return document.getElementById(decodeURIComponent(h.slice(1))); } catch (e) { return null; }
   }
-  window.JG_STORY = window.JG_STORY || function (id, how) {
-    var alt = $('[data-story-alt~="' + id + '"]'); if (!alt) return;
-    jump(alt, true); FX("arrive"); track("story_opened", { story: id, how: how || "tap" });
-  };
   function land() {
     var t = target(HASH); if (!t) return;
-    if (LEGACY[HASH]) setHash(t.id);
     if (t.id !== "top") jump(t);
   }
-  /* the title screen plays first on an arrival from outside; the link lands when it ends */
   if (root.classList.contains("intro-pending")) document.addEventListener("jg:intro-done", function () { setTimeout(land, 80); });
-  else if (LEGACY[HASH]) addEventListener("load", function () { setTimeout(land, 80); });
 
   /* ---------- the films: one plays at a time, with sound ---------- */
   var boxes = $$("[data-film-box]");

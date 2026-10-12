@@ -6,7 +6,8 @@
    a trophy from library.json; picking one up unlocks that same trophy through
    window.JG_GAME.unlock, so the library, the profile and the platinum agree.
    The run is the only place trophies are earned; every medal earns the platinum.
-   Lazy: game.js loads this file and game-run.css only when someone presses Play.
+   Lazy: game.js loads this file and game-run.css only when the arcade cabinet
+   in the office in After Hours is played (window.JG_GAME.play).
 
    Feel: fixed 120 Hz step, coyote time, jump buffering, variable jump height,
    an apex hang, squash and stretch, dust, a little shake on hard landings
@@ -1248,7 +1249,6 @@
     if (SC()) SC().focus(L.id);
     loadGhosts(L.id);
     store.set("jg_run_at", L.id);
-    try { if (!/^#play\//.test(location.hash) || location.hash !== "#play/" + L.id) history.replaceState(history.state, "", location.pathname + location.search + "#play/" + L.id); } catch (e) {}
     T("game_started", { level: L.id, how: how || "", seat: store.get("jg_role") || "" });
     clip.start();
     if (panel.hidden && OPEN) { RUNNING = true; last = performance.now(); acc = 0; }
@@ -1456,12 +1456,12 @@
     g.font = "500 64px 'Hanken Grotesk', sans-serif"; g.fillText(fmt(SAVE.best[LV.id] || levelT), 540, 1010);
     var ms = W.medals, n = ms.length, sx = 540 - (n * 110 - 20) / 2;
     ms.forEach(function (m, i) { var x = sx + i * 110; if (SAVE.medals[m.slug] && m.img.complete) g.drawImage(m.img, x, 1060, 90, 90); else { g.strokeStyle = "rgba(237,231,219,0.35)"; g.setLineDash([6, 6]); g.beginPath(); g.arc(x + 45, 1105, 42, 0, 7); g.stroke(); g.setLineDash([]); } });
-    g.font = "500 30px 'Hanken Grotesk', sans-serif"; g.fillStyle = "rgba(237,231,219,0.85)"; g.fillText("jasonobawemimo.com/?run=" + LV.id, 540, 1250);
+    g.font = "500 30px 'Hanken Grotesk', sans-serif"; g.fillStyle = "rgba(237,231,219,0.85)"; g.fillText("jasonobawemimo.com", 540, 1250);
     return c;
   }
   function share() {
     if (window.JG_FX) window.JG_FX("send");
-    var c = shareCanvas(), url = "https://jasonobawemimo.com/?run=" + LV.id, t = TITLES[LV.id] || {};
+    var c = shareCanvas(), url = "https://jasonobawemimo.com/", t = TITLES[LV.id] || {};
     var text = "I cleared " + (t.logo || LV.id) + " in After Hours: The Run.";
     c.toBlob(function (b) {
       if (!b) return;
@@ -1598,7 +1598,8 @@
       last = performance.now(); acc = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
       requestAnimationFrame(function () { el.classList.add("is-on"); });
       el.setAttribute("tabindex", "-1"); el.focus({ preventScroll: true });
-      if (/^#play/.test(location.hash) === false) { try { history.pushState({ run: 1 }, "", location.pathname + location.search + "#play/" + id); } catch (e) {} }
+      /* one history entry, same address: Back closes the run (game.js reads the state on popstate) */
+      if (!(history.state && history.state.run)) { try { history.pushState({ run: 1 }, "", location.pathname + location.search + location.hash); } catch (e) {} }
     }
     if (!panel.hidden) closePanel();
     runTotal = { on: BYID[id].n === 0, ms: 0, splits: [] };
@@ -1622,7 +1623,7 @@
     setTimeout(function () { if (!OPEN) el.hidden = true; }, 360);
     if (window.JG_LOCK) window.JG_LOCK(false);
     if ((fsMine || window.JG_RUN_FS) && document.fullscreenElement && document.exitFullscreen) { document.exitFullscreen().catch(function () {}); } fsMine = false; window.JG_RUN_FS = false;
-    if (/^#play/.test(location.hash)) { try { history.pushState({}, "", location.pathname + location.search); } catch (e) {} }
+    if (how !== "back" && history.state && history.state.run) { window.JG_RUN_POP = true; try { history.back(); } catch (e) { window.JG_RUN_POP = false; } }
     if (SC() && window.JG_GAME && window.JG_GAME.focusId) SC().focus(window.JG_GAME.focusId());
     document.dispatchEvent(new CustomEvent("jg:run-closed", { detail: { how: how || "" } }));
   }

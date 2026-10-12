@@ -881,7 +881,7 @@ class Person {
     // relaxed at the sides, elbows soft, the hands by the thighs and swaying a little with the breath and the weight
     // (on a chair the arms keep hanging until the hands come to rest on the thighs; in a car they go to the wheel)
     const seatM = this.car && /^seat/.test(this.car.mode);
-    const hang = (seatM ? 1 - this.sitK : (this.stillK || 0)) * (1 - (this.styleW || 0)) * (this.shot ? 0 : 1) * (seatM ? 1 : 1 - (this.carK || 0));
+    const hang = (this.stillK || 0) * (1 - (this.styleW || 0)) * (this.shot ? 0 : 1) * (seatM ? 1 : 1 - (this.carK || 0));
     if (hang > 0.01) for (const s of ["l", "r"]) {
       const g = this.arm[s]; if (!g) continue;
       const k = hang * (s === "r" ? (1 - this.holdK.umbrella) * (1 - this.holdK.phone) : 1) * (1 - this.engW * 0.25);
@@ -1631,7 +1631,7 @@ class Person {
         pin.d.copy(kn).sub(th).normalize();
         pin.at.copy(th).lerp(kn, 0.62).addScaledVector(UP, 0.075); pin.at.x += side * 0.012;
         pin.n.set(0, -1, 0); pin.n.addScaledVector(pin.d, -pin.n.dot(pin.d)).normalize();
-        pin.pole.set(S.x + side * 0.35, S.y - 0.4, S.z - 0.3);
+        pin.pole.set(S.x + side * 0.12, S.y - 0.45, S.z - 0.35);
       }
       pin.k = damp(pin.k, want, want > pin.k ? (c ? 6 : 4) : 4, dt);
       if (pin.k < 0.001) continue;
@@ -1727,7 +1727,7 @@ class Person {
       let ct = null, ccl = null, cpole = null, ck = 0;
       if (r && r.cl && r.k2 > 0) { ct = r.tc; ccl = r.cl; cpole = r.pole; ck = r.k2; }
       if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s] && this.wheelHands[s].at && this.car.wheelK > 0.01) { const wh = this.wheelHands[s]; ct = wh.at; ccl = H.gripL; cpole = wh.pole; ck = this.car.wheelK; }
-      if (!ct && pin && pin.k > 0.5 && pin.cl && !(r && r.k2 > 0.2)) { ct = pin.at; ccl = pin.cl; cpole = pin.pole; ck = pin.k; }
+      if (!ct && pin && pin.k > 0.05 && pin.cl && !(r && r.k2 > 0.2)) { ct = pin.at; ccl = pin.cl; cpole = pin.pole; ck = pin.k; }
       if (ct && ck > 0.05) {
         // solved fully, then blended in with the hold's weight (no step when it starts)
         const cw = sstep(0.05, 0.6, ck), ua = g.ua;

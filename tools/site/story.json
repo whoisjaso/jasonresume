@@ -471,7 +471,7 @@
     "board": { "scene": "office", "label": "Whiteboard", "verb": "Read", "talk": "look-board", "close": true },
     "laptop": { "scene": "office", "label": "Laptop", "verb": "Read", "talk": "look-laptop", "once": true },
     "ledger": { "scene": "office", "label": "Ledger", "verb": "Open", "talk": "look-ledger", "once": true },
-    "arcade": { "scene": "office", "label": "Arcade cabinet", "verb": "Look", "talk": "look-arcade", "once": true },
+    "arcade": { "scene": "office", "label": "Arcade cabinet", "verb": "Play", "talk": "look-arcade", "play": true },
     "coffee": { "scene": "office", "label": "Coffee machine", "verb": "Look", "talk": "look-coffee", "once": true },
     "window": { "scene": "office", "label": "Window", "verb": "Look", "talk": "look-window", "once": true },
     "book": { "scene": "office", "label": "The book", "verb": "Read", "talk": "look-book", "if": "hinted" },

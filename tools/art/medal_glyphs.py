@@ -4,7 +4,7 @@ Every glyph sits on a 48 unit grid and is one weight of line: stroke 3, round
 caps and round joins, no fills. Where two lines cross and one should pass
 under the other (rings, links, the monogram) the under line is cut back so a
 clear gap shows on both sides of the over line, the way an engraver would cut
-it. The files in assets/game/medals/glyphs are the source medals.py reads;
+it. The files in tools/art/glyphs are the source medals.py reads;
 run this to rewrite them after changing a shape here.
 
     python3 tools/art/medal_glyphs.py                 # all 34
@@ -20,7 +20,7 @@ STROKE = 3.0
 GAP = 1.75  # clear metal between an over line and the cut ends of the under line
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "..", "..", "assets", "game", "medals", "glyphs")
+OUT = os.path.join(HERE, "glyphs")
 
 
 # ---------- pieces ----------

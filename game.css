@@ -140,10 +140,6 @@ html:not(.lib-on) .sys { position: absolute; }
 /* a level of the run cleared: a small lit diamond beside the name */
 .tile.is-cleared .tile__name::after { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 0 2px 9px; background: var(--bone); transform: rotate(45deg); box-shadow: 0 0 8px rgba(246, 222, 170, .7); }
 /* the run's door in the bar, and its line on the card scene */
-.sys__play svg { width: 21px; height: 21px; opacity: 1; }
-.intro__scene--play .intro__acts { flex-wrap: wrap; }
-.intro__runline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.intro__runline .intro__textbtn svg { width: 18px; height: 18px; }
 .tile[data-size="sm"] { --s: calc(var(--tile) * 0.882); }
 .tile[data-size="sm"].is-focus .tile__frame { width: calc(var(--tile-f) * 0.864); height: calc(var(--tile-f) * 0.864); }
 .tile:focus-visible .tile__frame::after { opacity: 1; transform: none; }
@@ -229,9 +225,6 @@ html:not(.lib-on) .legend, .title-open .legend, .screen-open .legend { display: 
 .trophy p { margin: 4px 0 0; color: var(--bone-2); font-size: 15px; }
 .trophy a { color: var(--bone); }
 /* not earned yet: the fact stays readable, with a quiet way into the level that holds its medal */
-.trophy .trophy__find { display: inline-block; margin-top: 6px; font: 500 13px/1.3 var(--sans); color: var(--ash); text-decoration: underline; text-decoration-color: var(--hair-2); text-underline-offset: 4px; transition: color .3s var(--ease), text-decoration-color .3s var(--ease); }
-.trophy .trophy__find:hover, .trophy .trophy__find:focus-visible { color: var(--bone); text-decoration-color: var(--bone); }
-.trophy.is-seen .trophy__find, html:not(.lib-on) .trophy__find { display: none; }
 .hud-trophies li:not(.is-seen) .medal { filter: saturate(0.35) brightness(0.78); }
 .stack { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .stack li { padding: 9px 14px; border: 1px solid var(--hair-2); border-radius: 3px; background: rgba(17, 27, 23, .7); font: 500 14px/1 var(--sans); }
@@ -282,18 +275,13 @@ html:not(.lib-on) .credits { display: block; padding-top: 40px; border-top: 1px 
 .credits__links { display: flex; flex-wrap: wrap; gap: 18px; }
 
 /* =========================================================================
-   TOASTS AND THE LEVEL CLEAR
+   TOASTS
    ========================================================================= */
 .toasts { position: fixed; z-index: 80; top: 92px; right: var(--pad); display: grid; gap: 12px; pointer-events: none; }
 /* a status line from the title screen (the card saved, a link copied) shows above it */
 .intro-on .toasts { z-index: 210; }
 .toast { display: flex; align-items: center; gap: 16px; width: min(380px, calc(100vw - 32px)); padding: 14px 18px; background: var(--lacquer); border-radius: 6px; box-shadow: inset 0 1px 0 var(--hair-2), 0 0 0 1px rgba(0, 0, 0, .4), 0 18px 40px rgba(0, 0, 0, .55); opacity: 0; transform: translateX(24px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
 .toast.is-on { opacity: 1; transform: none; }
-.toast__medal { position: relative; flex: none; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; }
-.toast__medal .medal { width: 52px; height: 52px; }
-.toast__sheen { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; mix-blend-mode: screen; }
-.toast.is-on .toast__medal .medal { animation: coin .9s var(--ease) both; }
-.toast.is-on .toast__sheen { animation: sheen 1.1s .2s var(--ease) both; }
 @keyframes coin { from { transform: perspective(300px) rotateY(-180deg); } to { transform: perspective(300px) rotateY(0); } }
 @keyframes sheen { 0% { opacity: 0; transform: translateX(-70%); } 30% { opacity: .9; } 100% { opacity: 0; transform: translateX(70%); } }
 .toast__t small { margin-left: 8px; font: 500 11px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ash); }
@@ -301,20 +289,6 @@ html:not(.lib-on) .credits { display: block; padding-top: 40px; border-top: 1px 
 .toast__s { margin: 4px 0 0; font: 400 13px/1.4 var(--sans); color: var(--bone-2); }
 .toast--status { padding: 14px 18px; }
 .toast--status .toast__t { margin: 0; font-size: 15px; }
-.clear { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(6, 9, 8, 0); transition: background .8s var(--ease); }
-.clear.is-on { background: rgba(6, 9, 8, 0.86); }
-.clear[hidden] { display: none; }
-.clear__card { position: relative; display: grid; justify-items: center; text-align: center; gap: 10px; width: min(640px, 100%); padding: 44px 36px 36px; background: var(--lacquer); border-radius: 8px; box-shadow: inset 0 1px 0 var(--hair-2), 0 30px 80px rgba(0, 0, 0, .7); opacity: 0; transform: translateY(16px) scale(.98); transition: opacity .8s .2s var(--ease), transform .8s .2s var(--ease); }
-.clear.is-on .clear__card { opacity: 1; transform: none; }
-.clear__medal { position: relative; width: 132px; height: 132px; border-radius: 50%; overflow: hidden; }
-.clear__medal .medal { width: 132px; height: 132px; }
-.clear.is-on .clear__medal .medal { animation: coin 1.4s .4s var(--ease) both; }
-.clear.is-on .toast__sheen { animation: sheen 1.6s 1s var(--ease) both; }
-.clear__k { margin: 8px 0 0; font: 500 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ash); }
-.clear__h { margin: 0; font: 500 54px/1 var(--serif); letter-spacing: 0.14em; text-transform: uppercase; outline: none; }
-.clear__s { margin: 0; max-width: 46ch; color: var(--bone-2); }
-.clear__portrait { width: 200px; height: auto; margin: 6px 0; opacity: .92; }
-.clear__acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 8px; }
 
 /* =========================================================================
    DIALOGS: the deck, Check me, the controls
@@ -364,7 +338,7 @@ dialog.sheet::backdrop { background: rgba(6, 9, 8, 0.82); }
 /* =========================================================================
    THE TITLE SCREEN
    ========================================================================= */
-html.intro-pending body > :not(#intro):not(#boot):not(script):not(dialog):not(.toasts):not(.tour) { visibility: hidden; }
+html.intro-pending body > :not(#intro):not(#boot):not(script):not(dialog):not(.toasts) { visibility: hidden; }
 .intro { position: fixed; inset: 0; z-index: 200; overflow: hidden; background: var(--ink); color: var(--bone); opacity: 0; transition: opacity .9s var(--ease); }
 .intro.is-shown { opacity: 1; }
 .intro.is-leaving { opacity: 0; transition-duration: .7s; }
@@ -620,88 +594,9 @@ html.intro-pending .boot { display: block; position: fixed; inset: 0; z-index: 2
 .boot__lit circle:not([fill]) { fill: var(--bone); }
 .boot__wet { fill: none; stroke: var(--bone); stroke-opacity: .24; stroke-width: 2.4; stroke-dasharray: 10 16; }
 .boot.is-lit .boot__lit { opacity: 1; }
-.boot__foot { position: absolute; left: var(--pad); right: var(--pad); bottom: clamp(70px, 12vh, 130px); display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
-.boot__label { margin: 0; font: 500 12px/1 var(--sans); letter-spacing: .32em; text-transform: uppercase; color: var(--bone-2); }
-.boot__bar { position: relative; width: 120px; height: 1px; background: var(--hair-2); overflow: hidden; }
-.boot__bar i { position: absolute; inset: 0; background: var(--bone); transform: scaleX(0); transform-origin: left center; transition: transform .3s var(--ease); }
-.boot__foot .intro__textbtn { margin-left: auto; }
 @media (prefers-reduced-motion: reduce) { .boot__draw, .boot.is-out .boot__draw { transform: none; } }
 
-/* the title screen's two ways to be shown around: a narrated film, and the tour in the live site */
-.intro__more { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 16px; }
-.intro__textbtn, .boot__watch { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 0; background: none; border: 0; color: var(--bone-2); font: 500 15px/1 var(--sans); letter-spacing: .01em; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: .3em; transition: color .3s var(--ease), text-decoration-color .3s var(--ease); }
-.intro__textbtn:hover, .boot__watch:hover { color: var(--bone); text-decoration-color: var(--bone); }
-.intro__textbtn svg, .boot__watch svg { width: 18px; height: 18px; }
+.intro__textbtn { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 0; background: none; border: 0; color: var(--bone-2); font: 500 15px/1 var(--sans); letter-spacing: .01em; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: .3em; transition: color .3s var(--ease), text-decoration-color .3s var(--ease); }
+.intro__textbtn:hover { color: var(--bone); text-decoration-color: var(--bone); }
+.intro__textbtn svg { width: 18px; height: 18px; }
 
-/* the walkthrough film, in a frame over the dimmed page */
-dialog.film-sheet { width: min(1280px, calc(100vw - 2 * var(--pad))); margin: auto; }
-.film-sheet__frame { position: relative; background: var(--ink); border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px rgba(237, 231, 219, .14), 0 30px 80px rgba(0, 0, 0, .7); }
-.film-sheet video { width: 100%; height: auto; max-height: calc(100dvh - 160px); background: #000; }
-.film-sheet__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; padding: 14px 2px 0; }
-.film-sheet__note { margin: 0; color: var(--ash); font-size: 14px; }
-.film-sheet__acts { display: flex; align-items: center; gap: 12px; }
-@media (max-width: 759px) and (orientation: portrait) {
-  dialog.film-sheet { width: min(440px, calc(100vw - 32px)); }
-  .film-sheet video { max-height: calc(100dvh - 190px); }
-}
-
-/* =========================================================================
-   THE GUIDED TOUR (tour.js): the live site, one stop at a time, as if you were
-   taken there. Letterbox bars slide in at the top and bottom, everything but
-   the stop's subject falls to near black, the camera glides to each subject
-   with the light travelling alongside, and the line plays one caption line at a
-   time in the lower bar, lighting word by word. No panels: the bars carry the
-   few controls (Exit, Back, Next) and the narration's label.
-   ========================================================================= */
-.tour { position: fixed; inset: 0; z-index: 240; pointer-events: none; --bar: #050807; }
-.tour__veil { position: fixed; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; transition: opacity .9s var(--ease); }
-.tour__veil path { fill: rgba(5, 8, 7, .93); }
-.tour.is-on .tour__veil { opacity: 1; }
-.tour__bar, .tour__cap { position: fixed; left: 0; right: 0; background: var(--bar); transition: transform .9s var(--ease); }
-.tour__bar { top: 0; height: clamp(40px, 7vh, 64px); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--pad); transform: translateY(-100%); }
-.tour__cap { bottom: 0; pointer-events: auto; padding: 18px var(--pad) max(12px, env(safe-area-inset-bottom)); transform: translateY(100%); }
-.tour.is-on .tour__bar, .tour.is-on .tour__cap { transform: none; }
-.tour__mode { color: var(--ash-2); font-size: 12px; letter-spacing: .02em; }
-.tour__n { color: var(--ash); font-size: 12px; letter-spacing: .14em; font-variant-numeric: tabular-nums; }
-.tour__line { margin: 0 auto; max-width: 1100px; min-height: 1.4em; text-align: center; font: 500 clamp(18px, 1.6vw, 24px)/1.4 var(--sans); color: var(--bone); letter-spacing: .005em; }
-.tour__line .w { display: inline-block; opacity: .26; transform: translateY(6px); filter: blur(2px); transition: opacity .32s var(--ease), transform .45s var(--ease), filter .45s var(--ease); }
-.tour__line .w.is-said { opacity: 1; transform: none; filter: none; }
-.tour__line .w.is-off { display: none; }
-.tour__line.is-in { animation: tour-line .5s var(--ease); }
-@keyframes tour-line { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.tour__row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
-.tour__row [data-tour-exit] { margin-right: auto; }
-.tour__row [data-tour-next] { margin-left: 0; }
-.tour__time { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--hair); overflow: hidden; }
-.tour__time i { position: absolute; inset: 0; background: var(--bone-2); transform: scaleX(0); transform-origin: left center; }
-.tour .btn { min-height: 40px; color: var(--ash); }
-.tour .btn:hover, .tour .btn:focus-visible { color: var(--bone); }
-html.tour-on .legend { opacity: 0; }
-/* while you are being shown around, nothing else speaks up */
-html.tour-on .toasts { visibility: hidden; }
-@media (max-width: 759px) {
-  .tour__cap { padding-top: 14px; }
-  .tour__line { font-size: 17px; }
-  .tour .btn { padding: 0 12px; }
-  .tour__mode { font-size: 11px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tour__veil, .tour__bar, .tour__cap { transition: none; }
-  .tour__line .w { transform: none; filter: none; transition: none; }
-  .tour__line.is-in { animation: none; }
-}
-
-/* /walkthrough.html: the film on its own page, with what the narrator says */
-body.walk { min-height: 100vh; }
-.walk__main { max-width: 1100px; margin: 0 auto; padding: 28px var(--pad) 80px; }
-.walk__back { margin-left: -14px; }
-.walk__h { margin: 34px 0 0; font: 600 clamp(40px, 6vw, 76px)/1 var(--serif); letter-spacing: .12em; text-transform: uppercase; }
-.walk__sub { margin: 14px 0 0; color: var(--ash); font-size: 15px; }
-.walk__film { margin: 30px 0 0; }
-.walk__film video { width: 100%; height: auto; border-radius: 6px; background: #000; box-shadow: 0 0 0 1px rgba(237, 231, 219, .14), 0 18px 40px rgba(0, 0, 0, .5); }
-.walk__alt { margin: 14px 0 0; color: var(--bone-2); font-size: 15px; }
-.walk__k { margin: 46px 0 12px; font: 500 12px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ash); }
-.walk__lines { margin: 0; padding: 0 0 0 1.4em; max-width: 66ch; color: var(--bone-2); font-size: 17px; line-height: 1.6; }
-.walk__lines li + li { margin-top: 8px; }
-.walk__fine { margin: 34px 0 0; color: var(--ash); font-size: 14px; }
-.help__tour { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }

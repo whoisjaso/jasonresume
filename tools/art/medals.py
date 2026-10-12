@@ -29,7 +29,7 @@ A partial run writes only the named medals and their sidecars (plus the proofs
 contact sheet when it strikes a proof medal); the blanks, the sheen and the
 trophy contact sheet come only from a full run.
 
-The glyphs are the SVGs in assets/game/medals/glyphs (tools/art/medal_glyphs.py
+The glyphs are the SVGs in tools/art/glyphs (tools/art/medal_glyphs.py
 writes them); this script reads them back, so an edited SVG is what ships.
 Needs numpy, scipy, opencv-python-headless and Pillow.
 """
@@ -52,7 +52,7 @@ ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 BASE = os.path.join(HERE, "candidates", "medal-base.png")
 BASE_PROMPT = os.path.join(HERE, "candidates", "medal-base.prompt.txt")
 OUT = os.path.join(ROOT, "assets", "game", "medals")
-GLYPHS = os.path.join(OUT, "glyphs")
+GLYPHS = os.path.join(HERE, "glyphs")
 SHEET = os.path.join(HERE, "candidates", "medals-contact.png")
 PROOF_SHEET = os.path.join(HERE, "candidates", "medals-contact-proofs.png")
 

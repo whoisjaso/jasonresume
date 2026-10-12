@@ -47,14 +47,6 @@ export const LoopFade: React.FC<{ inF?: number; outF?: number }> = ({ inF = 14, 
   return <AbsoluteFill style={{ background: C.seam, opacity: o, pointerEvents: "none" }} />;
 };
 
-/* ---------- the needle's ignition sweep: up to the stop, then settle on the value ---------- */
-export function sweep(frame: number, fps: number, start: number, min: number, max: number, value: number) {
-  const up = spring({ frame: frame - start, fps, config: dash.spring.slow });
-  const down = spring({ frame: frame - start - Math.round(fps * 0.8), fps, config: dash.spring.needle });
-  const peak = min + (max - min) * up;
-  return peak * (1 - down) + value * down;
-}
-
 /* ---------- a gauge: chrome bezel, ivory face, ticks, numerals, red needle ---------- */
 export const Gauge: React.FC<{
   size: number; min: number; max: number; value: number; major: number; minor: number;
@@ -122,30 +114,6 @@ export const Lamp: React.FC<{ icon: keyof typeof LAMP_PATHS; on: number; color: 
   </svg>
 );
 
-/* ---------- the odometer: black drums, ivory digits, rolling into place ---------- */
-export const Odometer: React.FC<{ value: string; start: number; h?: number }> = ({ value, start, h = 92 }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  return (
-    <div style={{ display: "flex", gap: 6, padding: 8, background: C.seam, borderRadius: 10, boxShadow: `inset 0 0 0 2px ${C.chromeLo}, 0 18px 30px rgba(0,0,0,0.5)` }}>
-      {value.split("").map((d, i) => {
-        const target = parseInt(d, 10);
-        const p = spring({ frame: frame - start - i * 5, fps, config: dash.spring.slow });
-        const pos = target * p + (1 - p) * 0;
-        return (
-          <div key={i} style={{ width: h * 0.62, height: h, overflow: "hidden", borderRadius: 6, background: `linear-gradient(180deg, #050505, ${C.dash2} 50%, #050505)` }}>
-            <div style={{ transform: `translateY(${-pos * h}px)` }}>
-              {Array.from({ length: 10 }).map((_, k) => (
-                <div key={k} style={{ height: h, display: "grid", placeItems: "center", fontFamily: dash.font.sans, fontWeight: 700, fontSize: h * 0.66, color: C.dial, fontVariantNumeric: "tabular-nums" }}>{k}</div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 /* ---------- words land one at a time: rise, sharpen, settle ---------- */
 export const Words: React.FC<{ text: string; start: number; per?: number; size: number; weight?: number; color?: string; em?: string[]; italic?: boolean; family?: string; exitAt?: number }> =
   ({ text, start, per = 3, size, weight = 800, color = C.text, em = [], italic = false, family = dash.font.sans, exitAt }) => {
@@ -164,15 +132,3 @@ export const Words: React.FC<{ text: string; start: number; per?: number; size: 
     </div>
   );
 };
-
-/* a soft rise for any block */
-export const Rise: React.FC<{ start: number; children: React.ReactNode; exitAt?: number; style?: React.CSSProperties }> = ({ start, children, exitAt, style }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const p = spring({ frame: frame - start, fps, config: dash.spring.smooth });
-  const out = exitAt === undefined ? 0 : interpolate(frame, [exitAt, exitAt + 10], [0, 1], { easing: dash.ease.in, ...clamp });
-  return <div style={{ opacity: p * (1 - out), transform: `translateY(${interpolate(p, [0, 1], [30, 0]) - out * 24}px) scale(${interpolate(p, [0, 1], [0.96, 1])})`, ...style }}>{children}</div>;
-};
-
-/* idle breathing for anything on screen more than two seconds */
-export const breathe = (frame: number, amp = 0.012, rate = 26) => 1 + Math.sin(frame / rate) * amp;

@@ -12,7 +12,7 @@
      .focus(id)              bring a title's layer in on the next bar ("bed" alone for none)
      .sting(name)            "open" | "trophy-bronze" | "trophy-silver" | "trophy-gold" | "trophy-platinum" | "level-clear" | "start"
      .tick()                 the soft focus-move tick, tuned to the piece
-     .voice(on)              hold the music down under a narrator's line (tour.js), and let it back up
+     .voice(on)              hold the music down under a narrator's line (the episode, the run), and let it back up
    window.JG_SFX            the old effects API, kept so older modules stay quiet and unbroken
    Event: document "jg:score" { on } */
 (function () {
@@ -181,7 +181,7 @@
   }
   function reading() {
     var c = document.documentElement.classList;
-    return c.contains("title-open") || c.contains("screen-open") || c.contains("clear-on") || !!document.querySelector("dialog[open]");
+    return c.contains("title-open") || c.contains("screen-open") || !!document.querySelector("dialog[open]");
   }
   function syncVeil() { var r = reading(); if (r !== veiled) setVeil(r); }
   if (window.MutationObserver) {

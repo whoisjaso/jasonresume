@@ -216,8 +216,8 @@ function ixScene(p) {
       await walkTo(0.15, 2.3); await face(0); await wait(0.2);
       await p.pickUp(cup); await wait(0.3);
       await walkTo(1.4, 0.6, 1.2); await face(Math.atan2(0, 0.4)); await wait(0.2);
-      await p.putDown(V(1.38, 0.75, 1.02)); await wait(0.3);
-      if (seq === "cup") { await walkTo(-0.1, 2.3); await face(0); await p.pickUp(book); await wait(0.6); await p.putDown(V(-0.2, 0.75, 2.85)); }
+      await p.putDown(V(1.38, 0.75, 1.02)); (IX.placed = IX.placed || []).push({ obj: cup, at: V(1.38, 0.75, 1.02), t: T }); await wait(0.3);
+      if (seq === "cup") { await walkTo(-0.1, 2.3); await face(0); await p.pickUp(book); await wait(0.6); await p.putDown(V(-0.2, 0.75, 2.85)); (IX.placed = IX.placed || []).push({ obj: book, at: V(-0.2, 0.75, 2.85), t: T }); }
     }
     if (seq === "knock" || seq === "all") { IX.stage = "knock"; await walkTo(0.1, -1.45); await face(Math.PI); await p.knock(V(0.12, 1.35, -1.97)); await wait(0.3); }
     if (seq === "switch" || seq === "all") { IX.stage = "switch"; await walkTo(0.62, -1.5); await face(Math.PI); await p.flip(V(0.7, 1.25, -1.97)); await wait(0.3); await p.press(V(0.7, 1.05, -1.975)); await wait(0.3); }

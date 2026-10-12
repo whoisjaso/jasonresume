@@ -91,17 +91,9 @@
 
   /* ---------- deep links ----------
      #present/N the deck, #verify the proof drawer, #title/id a title, #trophies,
-     #profile. Older links still land: #story-desk, #story-obavia, #story-lot,
-     #story-record, #story-check, #record, ?cut=screening|dealer|trailer. */
-  var LEGACY = { "#story-desk": "#title/lead-to-title", "#story-obavia": "#title/obavia", "#story-lot": "#title/triple-j", "#story-record": "#profile", "#record": "#profile", "#slate": "", "#top": "", "#move": "#profile", "#trailer": "" };
-  var SEAT = { screening: "interviewer", trailer: "lurker" };
+     #profile, #build, #story and #story/<scene> (game.js routes the rest). */
   function arrive() {
-    var q = new URLSearchParams(location.search).get("cut");
-    if (q === "dealer" || q === "agency") { location.replace("/obavia.html"); return; }
-    if (q && SEAT[q] && window.JG_GAME) window.JG_GAME.seat(SEAT[q], "link");
     var h = location.hash;
-    if (h === "#story-check") h = "#verify";
-    if (LEGACY.hasOwnProperty(h)) { h = LEGACY[h]; try { history.replaceState(history.state, "", location.pathname + location.search + h); } catch (e) {} }
     if (/^#present(\/\d+)?$/.test(h)) window.JG_OPEN("deck", "link");
     else if (h === "#verify" && window.JG_HAS.verify) window.JG_OPEN("verify", "link");
     else if (window.JG_GAME) window.JG_GAME.route(h, "link");

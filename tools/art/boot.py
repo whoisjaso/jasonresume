@@ -9,8 +9,6 @@ it draws (the page sets --p from 0 to 1 as the art, the fonts and the scripts
 arrive). Once everything is in, the lamps and the showroom light, the wet
 asphalt takes their reflections, and the drawing gives way to the title screen.
 
-Also writes tools/film/src/tour/boot.json: the walkthrough film opens on it.
-
 Run:  python3 tools/art/boot.py   (then python3 tools/site/assemble_home.py)
 """
 import math
@@ -152,14 +150,8 @@ html_out = (
     '<svg class="boot__draw" viewBox="0 0 1920 1080" aria-hidden="true" focusable="false">'
     '<defs><radialGradient id="boot-glow"><stop offset="0" stop-color="#ede7db" stop-opacity=".55"/><stop offset=".35" stop-color="#ede7db" stop-opacity=".16"/><stop offset="1" stop-color="#ede7db" stop-opacity="0"/></radialGradient></defs>'
     + glow
-    + '<g class="boot__lines">' + strokes + "</g></svg>"
-    '<div class="boot__foot"><p class="boot__label">Opening the lot</p><span class="boot__bar" aria-hidden="true"><i></i></span>'
-    "%%BOOT_FILM%%</div></div>\n"
+    + '<g class="boot__lines">' + strokes + "</g></svg></div>\n"
     "<script>%%BOOT_JS%%</script>\n"
 )
 (ROOT / "tools/site/boot.html").write_text(html_out)
-# the walkthrough film opens on the same drawing (tools/film/src/tour)
-import json
-(ROOT / "tools/film/src/tour").mkdir(parents=True, exist_ok=True)
-(ROOT / "tools/film/src/tour/boot.json").write_text(json.dumps({"paths": paths, "lit": glow}, separators=(",", ":")) + "\n")
 print("tools/site/boot.html", len(html_out), "bytes,", len(paths), "strokes")
