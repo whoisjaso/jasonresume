@@ -413,7 +413,9 @@ const ball = (() => {
     const c = capEl.getBoundingClientRect(), fs = parseFloat(getComputedStyle(host).fontSize) || 18;
     R = Math.max(2.6, Math.min(4, fs * 0.19));
     els.forEach(b => { b.style.width = b.style.height = (2 * R).toFixed(1) + "px"; });
-    pos = [].map.call(host.children, s => { const r = s.getBoundingClientRect(); return { x: r.left - c.left + r.width / 2, y: r.top - c.top + (r.height - fs) * 0.5 + fs * 0.1 - R - 2, row: Math.round(r.top) }; });
+    pos = [].map.call(host.children, s => { const r = s.getBoundingClientRect(); return { x: r.left - c.left + r.width / 2, y: r.top - c.top + (r.height - fs) * 0.5 + fs * 0.1 - R - 2, row: Math.round(r.top), bot: r.bottom - c.top - (r.height - fs) * 0.5 }; });
+    // on a lower row the hop stays in the gap under the row above, never over its letters
+    for (const p of pos) { const above = pos.filter(q => q.row < p.row); p.room = above.length ? Math.max(2.5, p.y - R - Math.max(...above.map(q => q.bot)) - 1) : 40; }
   }
   function start(h, rm) {
     host = h; on = !rm; lastK = -1;
@@ -438,7 +440,7 @@ const ball = (() => {
       if (t >= take) {
         const q = pos[k + 1], u = (t - take) / T;
         const wait = Math.max(0, W[k + 1].s - W[k].e);
-        const h = clamp(5 + Math.abs(q.x - p.x) * 0.1 + wait * 16 + T * 14, 6, 30);
+        const h = Math.min(clamp(5 + Math.abs(q.x - p.x) * 0.1 + wait * 16 + T * 14, 6, 30), p.room, q.room);
         if (q.row !== p.row) { // a new row: up and out, then down onto the next word from above
           if (u < 0.4) { const v = u / 0.4; return { x: p.x, y: p.y - h * EZ(v), o: 1 - v, land: -1, air: true, wrap: true }; }
           const v = (u - 0.4) / 0.6; return { x: q.x, y: q.y - h * (1 - v * v), o: Math.min(1, v * 1.5), land: -1, air: true, wrap: true };
