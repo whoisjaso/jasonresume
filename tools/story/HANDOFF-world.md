@@ -121,3 +121,13 @@ node tools/story/world/probe.mjs "<expression>"                       # evaluate
 
 `/assets` is cached for a year: a rebuilt car or texture set ships under a
 new version (`v2`, `tex-v2`) and story/world.js moves with it.
+
+## 6. Verification, last run
+
+- `node tools/story/world/smoke.mjs lot office memory keys`: all open, no page errors.
+- `story.mjs` under the shared lock: desktop every branch clean; landscape every branch clean;
+  portrait failed once on a different step in each of two runs ("laptop did not respond", then
+  "board did not respond") at 1 to 3 fps under a load average near 19, while the same steps
+  passed in the other portrait branches. Worth a rerun on a quiet machine.
+- The harness URL (`?debug=story&fast=1`) gets the light world tier (`-lo` cars, 512 textures,
+  no clear-coat lamp loop) so the game clock keeps up on SwiftShader; stills.mjs pins `wq`.
