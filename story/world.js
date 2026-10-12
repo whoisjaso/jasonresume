@@ -1,28 +1,105 @@
-/* After Hours: the sets. Built in code from boxes, extrusions and canvases,
-   painted with story/paint.js. Each builder returns a group, the lamps that
-   light it, the spots you can interact with, the walls you can't walk through,
-   and where people stand.
+/* After Hours: the sets. The lot, the office and the library, built in code
+   around first-party models and CC0 textures, lit by the shared lamps in
+   story/paint.js. Each builder returns a group, the lamps that light it, the
+   spots you can interact with, the walls you can't walk through, where people
+   stand, and the hooks the rest of the episode reads (see
+   tools/story/HANDOFF-world.md): surfaceAt(x, z) for footsteps, puddles, sounds
+   (where things hum, idle and drip), nav, and ready (a promise that settles when
+   the set's streamed assets are in).
 
-   The lot: Triple J at night on Almeda Genoa Road. Wet asphalt with puddles,
-   sodium lamps with their cones, rows of cars, the showroom glowing, the sign,
-   the sold board, the gate, palms and the city beyond the fence.
+   The lot: Triple J at night on Almeda Genoa Road. Wet asphalt with cracks,
+   oil and puddles that mirror the lamps, painted bays, curbs and wheel stops,
+   sodium lamps with their cones, rows of used cars (tools/story/world/cars.py),
+   the showroom glowing, the sign, the sold board, the fence and the gate, palms
+   and the city glow beyond.
    The office: the sale desk, the phone, the filing cabinet, the whiteboard, the
    laptop, the ledger, the shelf with the book, the break room's arcade cabinet,
-   and a window onto the lot (the lot's key art, graded the same way).
+   and a window onto the lot with the rain running down it.
    The library: a memory. Long tables, green lamps, the stacks, one desk.
    The morning lot: the same lot, dry, in the sun, lamps off (a memory too). */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
-import { paint as paint0, glow as glow0, coneMat as coneMat0, blobMat as blobMat0, U } from "./paint.js";
+import { paint as paint0, glow as glow0, coneMat as coneMat0, blobMat as blobMat0, pbr as pbr0, U } from "./paint.js";
 import * as TX from "./tex.js";
 import { mergeGeometries, mergeVertices } from "../vendor/three-0.184.0/addons/utils/BufferGeometryUtils.js";
+import { GLTFLoader } from "../vendor/three-0.184.0/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "../vendor/meshopt-0.22.0/meshopt_decoder.module.js";
+
+/* the quality ladder's asset half: phones get the lighter cars and smaller textures; ?wq=lo|hi forces one */
+const COARSE = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+const WQ = (typeof location !== "undefined" && (location.search.match(/[?&]wq=(lo|hi)/) || [])[1]) || (COARSE ? "lo" : "hi");
+export const TIER = { name: WQ, carLo: WQ === "lo", tex: WQ === "lo" ? 512 : 1024, env: WQ === "lo" ? 64 : 128 };
+const BASE = new URL("../assets/story/world/", import.meta.url).href;
+const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+const texLoader = new THREE.TextureLoader();
+const texCache = new Map();
+/* a texture from assets/story/world, tiled, sRGB for colour and linear for data; resolves even when it fails (null) */
+function loadTex(name, o = {}) {
+  const url = BASE + name.replace("{s}", String(TIER.tex));
+  if (texCache.has(url)) return texCache.get(url);
+  const p = new Promise(res => texLoader.load(url, t => {
+    t.colorSpace = o.data ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+    res(t);
+  }, undefined, () => res(null)));
+  texCache.set(url, p); return p;
+}
+const T = {}; // loaded textures by key
+async function loadSetTex(list) { await Promise.all(Object.entries(list).map(async ([k, [n, o]]) => { if (!(k in T)) T[k] = await loadTex(n, o); })); }
+const LOT_TEX = {
+  asphC: ["asphalt_col_{s}.webp"], asphN: ["asphalt_nor_512.webp", { data: true }], asphR: ["asphalt_arm_512.webp", { data: true }],
+  concC: ["concrete_col_512.webp"], concN: ["concrete_nor_512.webp", { data: true }], concR: ["concrete_arm_512.webp", { data: true }]
+};
+const ROOM_TEX = {
+  plasC: ["plaster_col_{s}.webp"], plasN: ["plaster_nor_512.webp", { data: true }],
+  woodC: ["wood_col_{s}.webp"], woodN: ["wood_nor_512.webp", { data: true }], woodR: ["wood_arm_512.webp", { data: true }],
+  carpC: ["carpet_col_{s}.webp"], carpN: ["carpet_nor_512.webp", { data: true }],
+  floorC: ["floor_col_{s}.webp"], floorN: ["floor_nor_512.webp", { data: true }], floorR: ["floor_arm_512.webp", { data: true }],
+  fabC: ["fabric_col_512.webp"], fabN: ["fabric_nor_512.webp", { data: true }]
+};
+/* the set's reflections: once the set is on screen, render a small cube from where the camera spends its time,
+   blur it through the mips, and hand it to every PBR surface (uEnv). Each set keeps its own; the hook swaps it in. */
+function envHook(set, at) {
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3));
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, depthTest: false }));
+  m.frustumCulled = false; m.userData.keep = true; m.layers.enableAll(); m.renderOrder = -10;
+  let pending = false;
+  m.onBeforeRender = renderer => {
+    const ud = set.userData;
+    if (ud.envTex) { if (U.uEnv.value !== ud.envTex) { U.uEnv.value = ud.envTex; U.uEnvMax.value = Math.log2(TIER.env); } U.uEnvOn.value = 1; return; }
+    U.uEnvOn.value = 0;
+    if (pending || ud.baking) return;
+    pending = true;
+    // after this frame, outside any render call
+    requestAnimationFrame(() => { pending = false; try { bakeEnv(renderer, set, at); } catch (e) { console.warn("[world] env", e); } });
+  };
+  set.add(m);
+}
+function bakeEnv(renderer, set, at) {
+  const ud = set.userData; if (ud.envTex || !set.visible) return;
+  let root = set; while (root.parent) root = root.parent;
+  ud.baking = true;
+  const rt = new THREE.WebGLCubeRenderTarget(TIER.env, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter });
+  const cam = new THREE.CubeCamera(0.1, 220, rt); cam.position.copy(at);
+  for (const c of cam.children) { c.layers.set(0); c.layers.enable(1); c.layers.enable(4); }
+  const gm = ud.groundMat, rk = gm ? gm.uniforms.uReflK.value : 0; if (gm) gm.uniforms.uReflK.value = 0;
+  const env0 = U.uEnv.value, on0 = U.uEnvOn.value; U.uEnvOn.value = 0; U.uEnv.value = null;
+  root.add(cam); cam.updateMatrixWorld(true);
+  const prev = renderer.getRenderTarget();
+  cam.update(renderer, root);
+  renderer.setRenderTarget(prev);
+  root.remove(cam);
+  if (gm) gm.uniforms.uReflK.value = rk;
+  U.uEnv.value = env0; U.uEnvOn.value = on0;
+  ud.envTex = rt.texture; ud.baking = false;
+}
 
 /* one material per look, shared, so the static merge can fold meshes together */
 const memo = new Map();
 const keyOf = (n, a) => n + JSON.stringify(a, (k, v) => (v && v.isTexture ? "tex:" + v.uuid : v));
 const paint = o => { const k = keyOf("p", o); if (!memo.has(k)) memo.set(k, paint0(o)); return memo.get(k); };
+const pbr = o => { const k = keyOf("r", o); if (!memo.has(k)) memo.set(k, pbr0(o)); return memo.get(k); };
 const glow = (c, o) => { const k = keyOf("g" + c, o || {}); if (!memo.has(k)) memo.set(k, glow0(c, o)); return memo.get(k); };
 const coneMat = (c, k0) => { const k = "c" + c + k0; if (!memo.has(k)) memo.set(k, coneMat0(c, k0)); return memo.get(k); };
-const blobMat = k0 => { const k = "b" + k0; if (!memo.has(k)) memo.set(k, blobMat0(k0)); return memo.get(k); };
+const blobMat = (k0, rect) => { const k = "b" + k0 + !!rect; if (!memo.has(k)) memo.set(k, blobMat0(k0, rect)); return memo.get(k); };
 
 /* fold every static mesh that shares a material into one draw: bakes transforms relative to the set */
 export function mergeStatic(set) {
@@ -121,69 +198,165 @@ export function groundMat(color, mask, o = {}) {
   });
 }
 
-/* ---------- a car: a smooth side profile, extruded, then rounded in plan and pulled in at the top ---------- */
-const PROFILES = {
-  // [length, width, body key points (x along the car from the front, y up), cabin key points, beltline]
-  sedan: { L: 4.7, W: 1.82, belt: 0.86, body: [[0.02, 0.34], [0.0, 0.55], [0.12, 0.7], [0.55, 0.78], [1.3, 0.84], [3.4, 0.88], [4.35, 0.86], [4.66, 0.74], [4.7, 0.5], [4.62, 0.34]], cab: [[1.25, 0.84], [1.75, 1.18], [2.25, 1.38], [3.05, 1.38], [3.6, 1.2], [4.0, 0.88]] },
-  suv: { L: 4.8, W: 1.92, belt: 1.04, body: [[0.02, 0.42], [0.0, 0.72], [0.15, 0.9], [0.7, 0.99], [1.3, 1.03], [4.5, 1.06], [4.78, 0.98], [4.8, 0.6], [4.74, 0.42]], cab: [[1.3, 1.02], [1.75, 1.42], [2.15, 1.66], [4.45, 1.68], [4.68, 1.5], [4.72, 1.05]] },
-  truck: { L: 5.6, W: 1.98, belt: 1.08, body: [[0.02, 0.46], [0.0, 0.8], [0.15, 1.0], [0.8, 1.07], [2.1, 1.09], [5.55, 1.1], [5.6, 0.9], [5.58, 0.46]], cab: [[2.0, 1.08], [2.35, 1.5], [2.6, 1.72], [3.55, 1.74], [3.72, 1.5], [3.78, 1.09]] }
-};
-function smoothPts(pts, n) { const c = new THREE.CatmullRomCurve3(pts.map(p => V3(p[0], p[1], 0)), false, "centripetal"); return c.getPoints(n).map(v => [v.x, v.y]); }
-function carShell(P, pts, width, bev, inwardTop, closeBottom) {
-  const s = new THREE.Shape(); const sm = smoothPts(pts, 40);
-  sm.forEach((p, i) => (i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1])));
-  if (closeBottom) s.lineTo(sm[0][0], sm[0][1]);
-  const geo = new THREE.ExtrudeGeometry(s, { depth: width - bev * 2, bevelEnabled: true, bevelThickness: bev, bevelSize: bev * 0.8, bevelSegments: 4, curveSegments: 6 });
-  geo.translate(-P.L / 2, 0, -(width - bev * 2) / 2); geo.rotateY(Math.PI / 2);
-  // round the corners in plan and pull the sides in toward the top (tumblehome)
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const zn = Math.abs(z) / (P.L / 2);
-    let k = 1 - 0.16 * Math.pow(zn, 6);
-    if (y > P.belt) k *= 1 - (y - P.belt) * inwardTop;
-    pos.setX(i, x * k);
+/* ---------- the cars: first-party models (tools/story/world/cars.py), instanced by kind and material ---------- */
+const CAR_KINDS = ["sedan", "compact", "hatch", "suv", "truck"];
+const carLib = {};
+/* glTF from gltfpack is quantized; bring every attribute back to floats in the car's own space */
+function floatGeo(mesh) {
+  const g = mesh.geometry.clone();
+  for (const k of Object.keys(g.attributes)) {
+    const a = g.attributes[k];
+    if (!(a.array instanceof Float32Array) || a.isInterleavedBufferAttribute) {
+      const n = a.count, s = a.itemSize, f = new Float32Array(n * s);
+      for (let i = 0; i < n; i++) for (let j = 0; j < s; j++) f[i * s + j] = a.getComponent ? a.getComponent(i, j) : [a.getX, a.getY, a.getZ, a.getW][j].call(a, i);
+      g.setAttribute(k, new THREE.BufferAttribute(f, s));
+    }
   }
-  geo.deleteAttribute("uv"); geo.deleteAttribute("normal");
-  const g2 = mergeVertices(geo, 1e-3); g2.computeVertexNormals();
-  return g2;
-}
-export function car(kind, color, r) {
-  const P = PROFILES[kind], g = new THREE.Group();
-  const paintM = paint({ color, wet: 1.6, rim: 0.7, ao: 0.6 });
-  g.add(new THREE.Mesh(carShell(P, P.body, P.W, 0.1, 0.2, true), paintM));
-  const glass = paint({ color: "#0b1216", wet: 3.0, rim: 1.0 });
-  g.add(new THREE.Mesh(carShell(P, P.cab, P.W - 0.08, 0.08, 0.5, true), glass));
-  // a roof skin and pillars in the paint colour, slightly proud of the glass, so the cabin reads as glass in a frame
-  const roofPts = P.cab.slice(1, -1).map(p => [p[0], p[1] + 0.02]);
-  const top = roofPts[Math.floor(roofPts.length / 2) - 1], top2 = roofPts[Math.floor(roofPts.length / 2)];
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(P.W * 0.62, 0.045, Math.abs(top2[0] - top[0]) + 0.5), paintM);
-  roof.position.set(0, Math.max(top[1], top2[1]) + 0.012, P.L / 2 - (top[0] + top2[0]) / 2); g.add(roof);
-  if (kind === "truck") { const bed = new THREE.Mesh(new THREE.BoxGeometry(P.W - 0.32, 0.06, 1.7), paint({ color: "#121415", wet: 0.4 })); bed.position.set(0, 1.07, -(P.L / 2 - 1.0)); g.add(bed); }
-  const tire = paint({ color: "#0d0d0d", wet: 0.5, rim: 0.3 }), rim = paint({ color: "#8a8f94", wet: 2.0, rim: 0.6 }), arch = paint({ color: "#070808", rim: 0.2 });
-  const wg = new THREE.CylinderGeometry(0.36, 0.36, 0.25, 18); wg.rotateZ(Math.PI / 2);
-  const hg = new THREE.CylinderGeometry(0.22, 0.22, 0.26, 12); hg.rotateZ(Math.PI / 2);
-  const ag = new THREE.TorusGeometry(0.43, 0.06, 6, 14, Math.PI); ag.rotateY(Math.PI / 2);
-  const ax = [P.L / 2 - 1.05, -(P.L / 2 - 1.15)];
-  for (const z of ax) for (const s of [1, -1]) {
-    const w = new THREE.Mesh(wg, tire); w.position.set(s * (P.W / 2 - 0.13), 0.36, z); g.add(w);
-    const h = new THREE.Mesh(hg, rim); h.position.copy(w.position); h.position.x += s * 0.012; g.add(h);
-    const a = new THREE.Mesh(ag, arch); a.position.set(s * (P.W / 2 - 0.02), 0.38, z); g.add(a);
-  }
-  // lamps: headlights off and faintly cold, tail lights glowing red
-  const head = glow("#d8dde0", { k: 0.35 }), tail = glow("#b3241c", { k: 1.4 });
-  const fy = P.body[2][1] - 0.06, ry = P.body[P.body.length - 3][1] - 0.1;
-  for (const s of [1, -1]) {
-    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.09, 0.05), head); hl.position.set(s * (P.W / 2 - 0.34), fy, P.L / 2 - 0.03); g.add(hl);
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 0.05), tail); tl.position.set(s * (P.W / 2 - 0.3), ry, -P.L / 2 + 0.02); g.add(tl);
-  }
-  // a sticker on the windshield: Triple J's name, no price
-  const st = plane(0.3, 0.14, paint({ color: "#e8e1d0", rim: 0.2 }), g);
-  st.position.set(P.W / 2 - 0.62, P.cab[1][1] + 0.02, P.L / 2 - P.cab[1][0] - 0.05); st.rotation.x = -0.9;
-  const sh = plane(P.W + 0.7, P.L + 0.6, blobMat(0.75), g); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.012; sh.renderOrder = 1; sh.layers.set(2);
-  g.userData.size = [P.W, P.L];
+  mesh.updateWorldMatrix(true, false);
+  g.applyMatrix4(mesh.matrixWorld);
+  if (g.attributes.normal) g.attributes.normal.needsUpdate = true;
   return g;
 }
+async function loadCars() {
+  await Promise.all(CAR_KINDS.map(async kind => {
+    const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v1.glb";
+    const gltf = await loader.loadAsync(url);
+    const byMat = new Map(); let meta = null;
+    gltf.scene.updateMatrixWorld(true);
+    gltf.scene.traverse(o => {
+      if (o.userData && o.userData.L) meta = o.userData;
+      if (!o.isMesh) return;
+      const name = (o.material && o.material.name || "trim").replace(/\.\d+$/, "");
+      if (!byMat.has(name)) byMat.set(name, []);
+      byMat.get(name).push(floatGeo(o));
+    });
+    const parts = {};
+    for (const [name, list] of byMat) {
+      for (const g of list) for (const k of Object.keys(g.attributes)) if (!["position", "normal", "color"].includes(k)) g.deleteAttribute(k);
+      for (const g of list) if (!g.attributes.color) { const c = new Float32Array(g.attributes.position.count * 4).fill(1); g.setAttribute("color", new THREE.BufferAttribute(c, 4)); }
+      const m = list.length > 1 ? mergeGeometries(list.map(g => (g.index ? g : g)), false) : list[0];
+      m.computeBoundingSphere(); parts[name] = m;
+    }
+    carLib[kind] = { parts, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
+  }));
+}
+/* panel lines, door handle recesses and the fuel door, drawn from the car's own measurements */
+function panelTex(meta) {
+  const c = TX.cv(1024, 256), g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, 1024, 256);
+  const L = meta.L, H = meta.H, X = x => (x / L) * 1024; // x from the front
+  const sideY = y => 256 - (y / H) * 128;                 // lower half: side view, y up
+  const [c0, c1, c2, c3] = meta.cab, [s0, s1] = meta.sg, belt = meta.belt || [0.85, 0.92, 0.95];
+  const bel = x => belt[0] + (belt[2] - belt[0]) * (x / L);
+  const bot = 0.24;
+  g.strokeStyle = "#000"; g.lineWidth = 2.2; g.lineCap = "round";
+  const line = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(X(x0), sideY(y0)); g.lineTo(X(x1), sideY(y1)); g.stroke(); };
+  // the doors: front door from just behind the front wheel to the B pillar, rear from there to the rear wheel
+  const fa = meta.axles[0] + (meta.arch || 0.4) + 0.02, ra = meta.axles[1] - (meta.arch || 0.4) - 0.02;
+  const pB = meta.pillars[0];
+  const doors = meta.pillars.length && s1 - s0 > 1.4 && L < 5.2 ? [[Math.max(fa, s0 - 0.05), pB], [pB, Math.min(ra + 0.12, s1 + 0.02)]] : [[Math.max(fa, s0 - 0.05), pB + 0.02]];
+  for (const [a, b] of doors) {
+    line(a, bot + 0.04, a + 0.03, bel(a) + 0.02); line(b, bot + 0.04, b, bel(b) + 0.02); line(a, bot + 0.05, b, bot + 0.05);
+  }
+  // the fuel door, on the rear quarter
+  { const fx = Math.min(L - 0.75, meta.axles[1] + 0.35), fy = bel(fx) - 0.17; g.strokeRect(X(fx) - 9, sideY(fy) - 9, 18, 16); }
+  // the hood's shut line and the trunk's, seen from above (upper half: plan view, centre line at the top edge)
+  const planY = w => 128 - (w / (meta.W / 2)) * 128;
+  g.lineWidth = 2;
+  const hoodEnd = c0 - 0.06; g.beginPath(); g.moveTo(X(0.1), planY(0.66)); g.lineTo(X(hoodEnd), planY(0.62)); g.stroke();
+  g.beginPath(); g.moveTo(X(hoodEnd), planY(0.62)); g.lineTo(X(hoodEnd), 0); g.stroke();
+  if (c3 < L - 0.5) { g.beginPath(); g.moveTo(X(c3 + 0.05), 0); g.lineTo(X(c3 + 0.05), planY(0.62)); g.lineTo(X(L - 0.12), planY(0.62)); g.stroke(); }
+  // soften: a shut line is a shadow, not ink
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.NoColorSpace; t.anisotropy = 4; t.generateMipmaps = true;
+  return t;
+}
+/* the shared car materials (paint is per kind, for its panel lines; its colour is per car) */
+let CARM = null;
+function carMats() {
+  if (CARM) return CARM;
+  const v = { vao: true };
+  CARM = {
+    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6 }),
+    trim: pbr({ ...v, color: "#141516", rough: 0.55, wet: 0.8 }),
+    chrome: pbr({ ...v, color: "#c9ccd0", metal: 1, rough: 0.14, wet: 0.6 }),
+    tire: pbr({ ...v, color: "#141414", rough: 0.82, wet: 0.7 }),
+    rim: pbr({ ...v, color: "#a3a7ab", metal: 1, rough: 0.28, wet: 0.6 }),
+    disc: pbr({ ...v, color: "#4c4946", metal: 1, rough: 0.55, wet: 0.3 }),
+    well: pbr({ ...v, color: "#060606", rough: 0.9, wet: 0.3, spec: 0.5 }),
+    lamp_head: pbr({ ...v, color: "#b9bdc0", metal: 0.85, rough: 0.07, wet: 1, drops: true }),
+    lamp_tail: pbr({ ...v, color: "#5a0806", rough: 0.08, wet: 1, drops: true, emit: "#120100" }),
+    lamp_amber: pbr({ ...v, color: "#7a3c06", rough: 0.08, wet: 1, emit: "#0a0400" }),
+    plate: pbr({ ...v, color: "#d9d3c6", rough: 0.45, wet: 0.6 }),
+    interior: pbr({ ...v, color: "#0b0b0b", rough: 0.85, wet: 0, spec: 0.4 }),
+    sticker: pbr({ color: "#ece5d4", rough: 0.6, wet: 0, ao: 0, emit: "#0c0a07" }),
+    idleTail: pbr({ ...v, color: "#7a0a06", rough: 0.08, wet: 1, drops: true, emit: "#ff1408" }),
+    idleHead: pbr({ ...v, color: "#e8ecf0", rough: 0.07, wet: 1, emit: "#fff4e0" }),
+    paint: {}
+  };
+  return CARM;
+}
+function paintMat(kind, metallic) {
+  const M = carMats(), key = kind + (metallic ? "-m" : "");
+  if (!M.paint[key]) {
+    const meta = carLib[kind].meta;
+    M.paint[key] = pbr({ vao: true, color: "#ffffff", rough: metallic ? 0.38 : 0.5, metal: metallic ? 0.55 : 0.0, coat: 1, coatRough: 0.045, wet: 1, drops: true, ao: 1,
+      panel: { tex: panelTex(meta), box: [-meta.L / 2, meta.L, meta.H, meta.W / 2] } });
+  }
+  return M.paint[key];
+}
+/* a used-car lot's colours: mostly white, silver, grey and black, then the few that sell on colour */
+export const CAR_COLORS = [
+  ["#d9d8d2", 0], ["#aeb2b5", 1], ["#6f7478", 1], ["#16181a", 0], ["#f0eee8", 0], ["#3a3f44", 1], ["#1d2b40", 1], ["#5b1416", 1],
+  ["#8d8270", 1], ["#2c3a30", 0], ["#9b1b14", 0], ["#c5c7c9", 1], ["#4a5560", 1], ["#2a2a2c", 1], ["#e6e3dc", 0], ["#7d8b97", 1]
+];
+/* place cars: list of { kind, x, z, yaw, color, metal, idle } in the set's space; returns the instanced meshes */
+function parkCars(set, list) {
+  const M = carMats(), out = [];
+  const byKind = {};
+  for (const c of list) (byKind[c.kind] = byKind[c.kind] || []).push(c);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s1 = new THREE.Vector3(1, 1, 1), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0);
+  for (const [kind, cars] of Object.entries(byKind)) {
+    const lib = carLib[kind]; if (!lib) continue;
+    for (const [name, geo] of Object.entries(lib.parts)) {
+      if (name === "paint") {
+        for (const metallic of [false, true]) {
+          const sub = cars.filter(c => !!c.metal === metallic); if (!sub.length) continue;
+          const im = new THREE.InstancedMesh(geo, paintMat(kind, metallic), sub.length);
+          sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(c.color).convertSRGBToLinear()); });
+          im.userData.keep = true; set.add(im); out.push(im);
+        }
+        continue;
+      }
+      const idleSwap = name === "lamp_tail" ? M.idleTail : name === "lamp_head" ? M.idleHead : null;
+      const groups = idleSwap ? [cars.filter(c => !c.idle), cars.filter(c => c.idle)] : [cars];
+      groups.forEach((sub, gi) => {
+        if (!sub.length) return;
+        const im = new THREE.InstancedMesh(geo, gi === 1 ? idleSwap : (M[name] || M.trim), sub.length);
+        sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); });
+        im.userData.keep = true; set.add(im); out.push(im);
+      });
+    }
+    // a plain sticker inside each windshield, low on the passenger side: no figures on it
+    const meta = lib.meta, [c0, c1] = meta.cab, belt = (meta.belt || [0.9, 0.95])[1];
+    const top = meta.H || 1.45, sl = Math.atan2(c1 - c0, top - belt);
+    const st = new THREE.InstancedMesh(STICKER_GEO, M.sticker, cars.length);
+    cars.forEach((c, i) => {
+      const local = new THREE.Matrix4().compose(new THREE.Vector3(-0.42, belt + 0.1, meta.L / 2 - c0 - (c1 - c0) * 0.18 - 0.03), new THREE.Quaternion().setFromEuler(new THREE.Euler(-sl, 0, 0)), s1);
+      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local); st.setMatrixAt(i, m4);
+    });
+    st.userData.keep = true; set.add(st); out.push(st);
+    // the soft dark under each car (the ground bakes its own too; this one sits on anything)
+    const sh = new THREE.InstancedMesh(BLOB_GEO, blobMat(0.8, true), cars.length);
+    cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); });
+    sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; set.add(sh); out.push(sh);
+  }
+  for (const im of out) { im.computeBoundingSphere(); im.frustumCulled = true; }
+  return out;
+}
+const STICKER_GEO = new THREE.PlaneGeometry(0.2, 0.14);
+const BLOB_GEO = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+/* the footprint of a parked car, for walls and the ground's shade */
+function carSize(kind) { const m = carLib[kind] && carLib[kind].meta; return m ? [m.W, m.L] : [1.85, 4.7]; }
 
 /* ---------- a sodium lamp post ---------- */
 function lampPost(x, z, h, set, k = 1) {
@@ -240,7 +413,8 @@ export function buildLot(o) {
   box(1, 5.2, 3.6, wall, -12.5, 2.6, -1.8, sh); box(3, 5.2, 3.6, wall, 11.5, 2.6, -1.8, sh);
   const roomFloor = plane(22, 3.6, paint({ color: "#6b5640", wet: 0.9, rim: 0.1, emit: "#3a2a1a" }), sh); roomFloor.rotation.x = -Math.PI / 2; roomFloor.position.set(-1, 0.02, -1.8);
   const roomCeil = plane(22, 3.6, glow("#f6e3c4", { k: o.day ? 0.25 : 0.55 }), sh); roomCeil.rotation.x = Math.PI / 2; roomCeil.position.set(-1, 3.88, -1.8);
-  for (const [x, yaw, kind, col] of [[-7.5, 0.5, "sedan", "#9b2a22"], [-2.2, -0.35, "suv", "#d8d4ca"], [3.6, 0.42, "sedan", "#3b4a55"]]) { const c = car(kind, col, rng(99)); c.position.set(x, 0, -1.9); c.rotation.y = yaw; sh.add(c); }
+  // three cars on the showroom floor, angled to the glass
+  const showCars = [[-7.5, 0.5, "sedan", "#9b1b14", 0], [-2.2, -0.35, "suv", "#e6e3dc", 0], [3.6, 0.42, "compact", "#3a3f44", 1]].map(([x, yaw, kind, color, metal]) => ({ kind, x: x + 2, z: -1.9 - 18, yaw, color, metal: !!metal }));
   box(26.6, 0.5, 8.6, trim, 0, 5.4, -4, sh); // roof edge
   const glassIn = TX.cv(1024, 256); { const g = glassIn.getContext("2d"); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, "#f2c98d"); gr.addColorStop(1, "#b07a42"); g.fillStyle = gr; g.fillRect(0, 0, 1024, 256);
     g.fillStyle = "rgba(40,28,18,0.55)"; for (let i = 0; i < 5; i++) { const x = 80 + i * 200; g.beginPath(); g.ellipse(x, 210, 80, 24, 0, 0, 7); g.fill(); g.fillRect(x - 70, 170, 140, 40); }
@@ -272,20 +446,26 @@ export function buildLot(o) {
   set.userData.spots.sign = { p: V3(-15, 4.7, -8.8), r: 4.5, stand: V3(-13.6, 0, -6.4) };
   set.userData.walls.push({ x0: -17, x1: -13, z0: -9.5, z1: -8.5 });
   // cars, two rows facing each other, and some along the fence
-  const COLORS = ["#6b1d1a", "#c9c6bd", "#8d9093", "#14181b", "#203247", "#7a6a52", "#38403a", "#9a9d9f", "#4a1a1c", "#e2ddd2"];
-  const KINDS = ["sedan", "suv", "sedan", "truck", "sedan", "suv"];
-  set.userData.cars = [];
-  const addCar = (x, z, yaw, kind, col) => {
-    const c = car(kind, col, r); c.position.set(x, 0, z); c.rotation.y = yaw; set.add(c);
-    const [w, l] = c.userData.size; const ca = Math.abs(Math.cos(yaw)), sa = Math.abs(Math.sin(yaw));
-    const hw = (w * ca + l * sa) / 2 + 0.25, hl = (w * sa + l * ca) / 2 + 0.25;
+  const KINDS = ["sedan", "suv", "compact", "truck", "hatch", "sedan", "suv", "compact"];
+  const lotCars = [];
+  set.userData.cars = lotCars;
+  const addCar = (x, z, yaw, kind, ci) => {
+    const [color, metal] = CAR_COLORS[ci % CAR_COLORS.length];
+    const c = { kind, x, z, yaw, color, metal: !!metal }; lotCars.push(c);
+    const [w, l] = carSize(kind); const ca = Math.abs(Math.cos(yaw)), sa = Math.abs(Math.sin(yaw));
+    const hw = (w * ca + l * sa) / 2 + 0.2, hl = (w * sa + l * ca) / 2 + 0.2;
     set.userData.walls.push({ x0: x - hw, x1: x + hw, z0: z - hl, z1: z + hl });
-    set.userData.cars.push(c); return c;
+    return c;
   };
   let k = 0;
-  for (let x = -17.6; x <= 17.6; x += 3.2) { if (r() < 0.12) continue; addCar(x, -5.5 + (r() - 0.5) * 0.3, Math.PI + (r() - 0.5) * 0.06, KINDS[k % KINDS.length], COLORS[(k * 7) % COLORS.length]); k++; }
-  for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; const c = addCar(x, 4.5 + (r() - 0.5) * 0.3, (r() - 0.5) * 0.06, kd, x > 4 && x < 6 ? "#7d8186" : COLORS[(k * 3) % COLORS.length]); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.6), r: 3, stand: V3(x, 0, 8.6) }; k++; }
-  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x, 14.2, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], COLORS[(k * 5) % COLORS.length]); k++; }
+  // nose out, the way a lot shows its stock: the front row faces the road, the back row the showroom
+  for (let x = -17.6; x <= 17.6; x += 3.2) { if (r() < 0.12) continue; addCar(x, -5.6 + (r() - 0.5) * 0.25, Math.PI + (r() - 0.5) * 0.05, KINDS[k % KINDS.length], k * 7 + 3); k++; }
+  for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; addCar(x, 4.5 + (r() - 0.5) * 0.25, (r() - 0.5) * 0.05, kd, x > 4 && x < 6 ? 2 : k * 3 + 1); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.9), r: 3, stand: V3(x, 0, 8.8) }; k++; }
+  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
+  // one car by the showroom with its engine running and its lights on: someone's ride, waiting
+  const idle = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true };
+  lotCars.push(idle); set.userData.walls.push({ x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 });
+  parkCars(set, lotCars.concat(showCars));
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
   // lamps
   [[-9, -1.2, 8], [8, -1.2, 8], [-1, 9.4, 8], [13, 9.4, 8], [-17, 12, 7.5], [11.6, -13.4, 6.5]].forEach(([x, z, h]) => lampPost(x, z, h, set));
@@ -326,6 +506,7 @@ export function buildLot(o) {
       #include <colorspace_fragment>
       }`, side: THREE.BackSide, depthWrite: false }));
   sky.position.y = 6; set.add(sky); sky.renderOrder = -1;
+  envHook(set, V3(1, 1.7, 3));
   mergeStatic(set);
   // where people stand
   set.userData.marks = {
@@ -600,3 +781,8 @@ export function addKeys(set) {
   set.userData.keys = g;
   set.userData.spots.keys = { p: V3(13.8, 1.2, -17.8), r: 2.2, stand: V3(13.6, 0, -16.3) };
 }
+/* the loads, last so everything above exists. The lot is the first scene: its cars and ground arrive before the module finishes (a slow line gives up after a while and the lot builds with what it has) */
+export const lotReady = Promise.all([loadCars().catch(e => console.warn("[world] cars", e)), loadSetTex(LOT_TEX)]);
+export const roomsReady = lotReady.then(() => loadSetTex(ROOM_TEX));
+await Promise.race([lotReady, new Promise(r => setTimeout(r, 15000))]);
+export const _debug = { carLib, T, TIER };

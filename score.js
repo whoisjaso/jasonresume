@@ -25,6 +25,7 @@
   function T(e, p) { if (window.JG_TRACK) window.JG_TRACK(e, p); }
   var AC = window.AudioContext || window.webkitAudioContext;
   var ctx = null, master = null, music = null, fxBus = null, comp = null, veil = null, veilLp = null, veiled = false;
+  var userM = null, userF = null, userLv = { m: 1, f: 1 };
   var manifest = null, manifestP = null;
   var buffers = {}, loading = {};
   var layers = {}; /* id -> { gain, src } */
@@ -71,7 +72,9 @@
     /* the veil: when the visitor goes into something to read, the score steps back and goes soft, as if heard from the next room */
     veil = ctx.createGain(); veil.gain.value = 1;
     veilLp = ctx.createBiquadFilter(); veilLp.type = "lowpass"; veilLp.frequency.value = 18000; veilLp.Q.value = 0.5;
-    music.connect(veilLp); veilLp.connect(veil); veil.connect(comp); fxBus.connect(comp);
+    /* the listener's own levels (the episode's Music and Effects sliders), between the buses and the glue */
+    userM = ctx.createGain(); userM.gain.value = userLv.m; userF = ctx.createGain(); userF.gain.value = userLv.f;
+    music.connect(veilLp); veilLp.connect(veil); veil.connect(userM); userM.connect(comp); fxBus.connect(userF); userF.connect(comp);
     setTimeout(syncVeil, 0); comp.connect(shelf); shelf.connect(master); master.connect(ctx.destination);
     return true;
   }
@@ -256,7 +259,16 @@
     focus: focus,
     sting: sting,
     tick: tick,
-    voice: voice
+    voice: voice,
+    /* the episode's sliders: the stems' level and the stings' level, 0 to 1 */
+    mix: function (m, f) {
+      userLv.m = Math.max(0, Math.min(1, +m)); userLv.f = Math.max(0, Math.min(1, f == null ? userLv.f : +f));
+      if (!ctx || !userM) return;
+      var t = ctx.currentTime;
+      userM.gain.cancelScheduledValues(t); userM.gain.setValueAtTime(userM.gain.value, t); userM.gain.linearRampToValueAtTime(userLv.m, t + 0.12);
+      userF.gain.cancelScheduledValues(t); userF.gain.setValueAtTime(userF.gain.value, t); userF.gain.linearRampToValueAtTime(userLv.f, t + 0.12);
+    },
+    level: function () { return { music: userLv.m, fx: userLv.f }; }
   };
   /* the old effects API: everything that used to click or swoosh is silent now */
   window.JG_SFX = {

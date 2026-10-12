@@ -28,6 +28,9 @@ import * as TX from "./tex.js";
 import { loadCast } from "./people.js";
 import { buildLot, buildOffice, buildLibrary, addKeys } from "./world.js";
 import { Post, GRADES, applyGrade } from "./post.js";
+import { createAudio } from "./audio.js";
+import { buildNav, pathLen } from "./nav.js";
+import { Guide } from "./guide.js";
 
 const root = document.documentElement, body = document.body;
 const D = JSON.parse(document.getElementById("story-data").textContent);
@@ -53,6 +56,13 @@ function hap(k) { if (window.JG_HAPTIC) window.JG_HAPTIC(k); }
 function SC() { return window.JG_SCORE; }
 const soundOn = () => !!(SC() && SC().isOn());
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+
+/* ---------- settings: the mix lives in audio.js; controls here; both persist ---------- */
+const KEYS0 = { up: "w", down: "s", left: "a", right: "d", run: "shift", act: "e", journal: "j" };
+const SET = Object.assign({ runToggle: false, lock: false, invert: false, look: 1 }, (() => { try { return JSON.parse(store.get("jg_story_controls") || "null") || {}; } catch (e) { return {}; } })());
+SET.keys = Object.assign({}, KEYS0, SET.keys || {});
+function saveSet() { store.set("jg_story_controls", JSON.stringify(SET)); }
+const AU = createAudio({ soundOn: () => !!(window.JG_SCORE && window.JG_SCORE.isOn()), store, base: "assets/story/sfx/", mobile: matchMedia("(pointer: coarse)").matches });
 const still = () => RM.matches;
 function angTo(a, b) { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; }
 
@@ -98,7 +108,10 @@ el.innerHTML =
   '<div class="st-card" aria-hidden="true" hidden><p class="st-card__ep"></p><h2 class="st-card__h"></h2><p class="st-card__sub"></p></div>' +
   '<div class="st-hud"><button class="st-ico" type="button" data-st="journal" aria-label="' + E(UI.journal) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 17a2 2 0 0 1 2-2h12M9 7h6M9 10h4"/></svg></button><button class="st-ico" type="button" data-st="pause" aria-label="' + E(UI.pause) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg></button></div>' +
   '<p class="st-hint" hidden></p>' +
-  '<div class="st-stick" aria-hidden="true" hidden><i></i></div>' +
+  '<div class="st-stick" aria-hidden="true" hidden><b></b><i></i></div>' +
+  '<div class="st-way" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5.5l7 6.5-7 6.5"/></svg></div>' +
+  '<button class="st-act" type="button" hidden><span class="st-act__dot" aria-hidden="true"></span><span class="st-act__verb"></span></button>' +
+  '<button class="st-skip" type="button" hidden>' + E(UI.skip) + '</button>' +
   '<div class="st-close" hidden><div class="st-close__spots"></div><button class="st-back" type="button" data-st="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Back</button></div>' +
   '<section class="st-sheet" hidden aria-label="Handle a Sale"><div class="st-sheet__in"><p class="st-sheet__note">' + E("Handle a Sale. Fictional buyer, example figures.") + '</p><div class="iphone" data-desk-app></div><button class="st-back" type="button" data-st="sheet-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Back</button></div></section>' +
   '<section class="st-journal" hidden aria-label="' + E(UI.journal) + '"></section>' +
@@ -110,6 +123,7 @@ const cv = $(".st-cv", el), capEl = $(".st-cap", el), whoEl = $(".st-cap__who b"
 const choicesEl = $(".st-choices", el), choicesOl = $("ol", choicesEl), timerEl = $(".st-timer", el);
 const promptEl = $(".st-prompt", el), objEl = $(".st-obj", el), noteEl = $(".st-note", el), trophyEl = $(".st-trophy", el), toastEl = $(".st-toast", el);
 const cardEl = $(".st-card", el), fadeEl = $(".st-fade", el), dotsEl = $(".st-dots", el), hintEl = $(".st-hint", el), stickEl = $(".st-stick", el);
+const wayEl = $(".st-way", el), actEl = $(".st-act", el), skipEl = $(".st-skip", el);
 const closeEl = $(".st-close", el), sheetEl = $(".st-sheet", el), journalEl = $(".st-journal", el), pauseEl = $(".st-pause", el), endEl = $(".st-end", el), loadEl = $(".st-load", el);
 function setLoad(f, line) { $(".st-load__bar i", el).style.transform = "scaleX(" + clamp(f, 0, 1) + ")"; if (line != null) $(".st-load__line", el).textContent = line; }
 setLoad(0.15, D.scenes.lot.card);
@@ -124,6 +138,7 @@ const scene = new THREE.Scene();
 const world = new THREE.Group(); scene.add(world);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.08, 220);
 camera.layers.enableAll();
+const guide = new Guide(world);
 let quality = COARSE.matches ? 1 : 2;
 { const m = location.search.match(/[?&]sq=(\d)/); if (DEBUG && m) quality = +m[1]; }
 const post = new Post(renderer, { quality });
@@ -137,7 +152,7 @@ function resize() {
   camera.aspect = w / h; camera.fov = w / h < 1 ? 62 : 48; camera.updateProjectionMatrix();
   el.classList.toggle("is-upright", w < h);
 }
-addEventListener("resize", resize);
+addEventListener("resize", () => { resize(); try { readSafe(); } catch (e) {} });
 
 U.uBrush.value = TX.brush();
 const sets = {};
@@ -170,53 +185,51 @@ function arcadeVideo() {
 }
 
 /* ================================================================
-   AUDIO: rain, footsteps, the phone (only with the score on)
+   SOUND: story/audio.js does the work; here it learns where things are
    ================================================================ */
-const A = { ctx: null, rain: null, rainG: null, rainF: null };
-function audio() {
-  if (A.ctx || !soundOn()) return A.ctx;
-  try {
-    const C = new (window.AudioContext || window.webkitAudioContext)(); A.ctx = C;
-    const len = C.sampleRate * 2, buf = C.createBuffer(1, len, C.sampleRate), d = buf.getChannelData(0);
-    let b0 = 0, b1 = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.98 * b0 + w * 0.1; b1 = 0.6 * b1 + w * 0.4; d[i] = b0 * 0.6 + b1 * 0.25 + (Math.random() < 0.0006 ? (Math.random() - 0.5) * 2.2 : 0); }
-    A.noise = buf;
-    const src = C.createBufferSource(); src.buffer = buf; src.loop = true;
-    const f = C.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 4200;
-    const hp = C.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 280;
-    const g = C.createGain(); g.gain.value = 0;
-    src.connect(hp); hp.connect(f); f.connect(g); g.connect(C.destination); src.start();
-    A.rain = src; A.rainG = g; A.rainF = f;
-  } catch (e) {}
-  return A.ctx;
+/* what's underfoot; the world can answer for itself (set.userData.surfaceAt) */
+function surfaceAt(x, z) {
+  const ud = set && set.userData; if (!ud) return "concrete";
+  if (typeof ud.surfaceAt === "function") { try { const s = ud.surfaceAt(x, z); if (s) return s; } catch (e) {} }
+  if (S.scene === "keys") return "asphalt";
+  if (S.scene === "lot" || S.scene === "decision") {
+    const pud = (ud.puddles || []).slice(); if (ud.spots && ud.spots.puddle) pud.push({ x: ud.spots.puddle.p.x, z: ud.spots.puddle.p.z, r: 1.4 });
+    for (const q of pud) if (Math.hypot(x - q.x, z - q.z) < (q.r || 1.2)) return "puddle";
+    if (z < -16.8 && x > -11 && x < 15.3) return "concrete"; // the dry strip under the showroom's front
+    return "wet";
+  }
+  if (S.scene === "office") return Math.abs(x + 0.9) < 2.4 && z > -3.2 && z < 1.0 ? "carpet" : "tile";
+  if (S.scene === "memory") return Math.abs(x) < 2.0 ? "carpet" : "wood";
+  return "concrete";
 }
-function rainLevel(v, muffled) {
-  if (!audio() || !A.rainG) return;
-  const t = A.ctx.currentTime;
-  A.rainG.gain.cancelScheduledValues(t); A.rainG.gain.linearRampToValueAtTime(soundOn() ? v : 0, t + 1.2);
-  A.rainF.frequency.linearRampToValueAtTime(muffled ? 900 : 4200, t + 1.2);
+const footAt = p => ({ x: p.pos.x, y: 0.05, z: p.pos.z });
+/* a footstep for anyone walking: on a foot-contact event from people.js when it sends them (p.onFoot), else on the stride's phase */
+function feet() {
+  for (const p of Object.values(P)) {
+    if (!p.group.visible) { p._ph = undefined; continue; }
+    if (!p.onFoot) p.onFoot = (side, k) => { p.footHook = true; footstep(p, k); };
+    const ph = Math.floor(p.phase / Math.PI);
+    if (p._ph === undefined) { p._ph = ph; continue; }
+    if (ph !== p._ph) { p._ph = ph; if (!p.footHook && (p.speed > 0.3 || (p.turnStep || 0) > 0.4)) footstep(p, p.speed > 0.3 ? 1 : 0.45); }
+  }
 }
-function step(wet) {
-  if (!soundOn() || !audio()) return;
-  const C = A.ctx, s = C.createBufferSource(); s.buffer = A.noise;
-  const f = C.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = wet ? 1400 + Math.random() * 500 : 700 + Math.random() * 200; f.Q.value = 1.2;
-  const g = C.createGain(); const t = C.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(wet ? 0.07 : 0.05, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0008, t + (wet ? 0.16 : 0.09));
-  s.connect(f); f.connect(g); g.connect(C.destination); s.start(t, Math.random() * 1.5, 0.2);
+function footstep(p, k) {
+  if (S.phase === "load" || p.pose === "sit") return;
+  const mine = p === me;
+  AU.step(surfaceAt(p.pos.x, p.pos.z), { at: footAt(p), run: p.speed > 2.0, gain: (mine ? 1 : 0.62) * (k == null ? 1 : k), ref: mine ? 4.2 : 2.6 });
 }
 let ringOn = false, ringT = 0;
 function ringTick(dt) {
   if (!ringOn) return;
+  const was = ringT % 4 < 1.6;
   ringT += dt;
   const ph = ringT % 4, on = ph < 1.6;
   const led = sets.office && sets.office.userData.phone.led;
   if (led) led.material.uniforms.uK.value = on && (ph * 8 % 1 < 0.5) ? 3 : 0.4;
-  if (on && !A.ringing && soundOn() && audio()) {
-    A.ringing = true; const C = A.ctx, t = C.currentTime, g = C.createGain(); g.gain.value = 0; g.connect(C.destination);
-    for (const fq of [440, 480]) { const o = C.createOscillator(); o.frequency.value = fq; o.connect(g); o.start(t); o.stop(t + 1.6); }
-    const lfo = C.createOscillator(), lg = C.createGain(); lfo.frequency.value = 20; lg.gain.value = 0.03; lfo.connect(lg); lg.connect(g.gain); lfo.start(t); lfo.stop(t + 1.6);
-    g.gain.setValueAtTime(0.03, t); g.gain.setValueAtTime(0.03, t + 1.55); g.gain.linearRampToValueAtTime(0, t + 1.6);
-  }
-  if (!on) A.ringing = false;
+  if (on && (!was || ringT - dt <= 0)) { const sp = sets.office.userData.spots.phone; AU.ring({ x: sp.p.x, y: sp.p.y, z: sp.p.z }, 1.6); }
 }
+/* the score toggle (M, or Sound in the pause menu) is the episode's sound too */
+document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on)); });
 
 /* ================================================================
    VOICES AND CAPTIONS
@@ -247,13 +260,13 @@ function sayLine(L) {
     const id = L.who === "jason" ? "jason-" + L.id : L.id;
     const voiced = L.who !== "you" && soundOn() && !FAST && (L.who === "jason" ? have.me[id] : have.fict[id]);
     if (voiced) {
-      const a = new Audio(); a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3"; a.volume = 0.96;
+      const a = new Audio(); a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3"; a.volume = 0.96; AU.voice(a);
       a.addEventListener("loadedmetadata", () => { if (line === base && a.duration) base.dur = a.duration + 0.35; });
       a.addEventListener("ended", () => { if (line === base) base.dur = Math.min(base.dur, base.t + 0.3); });
       const p = a.play(); if (p && p.catch) p.catch(() => {});
-      base.audio = a; if (SC() && SC().voice) SC().voice(true);
+      base.audio = a; if (SC() && SC().voice) SC().voice(true); AU.duck(0.45);
       fetch(VBASE + "/" + id + ".json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && line === base) base.words = j.words; }).catch(() => {});
-    } else $$("i", saidEl).forEach(w => w.classList.add("is-said"));
+    } else { $$("i", saidEl).forEach(w => w.classList.add("is-said")); AU.duck(0.8); }
     const sr = $(".st-sr", el) || (() => { const s = document.createElement("p"); s.className = "st-sr vh"; s.setAttribute("aria-live", "polite"); el.appendChild(s); return s; })();
     sr.textContent = (c.name ? c.name + ": " : "") + L.t;
   });
@@ -263,7 +276,7 @@ function endLine(skipped) {
   const L = line;
   if (L.audio) { try { L.audio.pause(); } catch (e) {} if (SC() && SC().voice) SC().voice(false); }
   if (L.sp) { L.sp.talk = 0; L.sp.brow = 0; }
-  line = null;
+  line = null; AU.duck(1);
   capEl.classList.remove("is-on");
   L.resolve(skipped);
 }
@@ -288,14 +301,14 @@ function choose(T0) {
   const list = (T0.choices || []).filter(c => cond(c.if));
   chHide.forEach(clearTimeout); chHide = [];
   return new Promise(resolve => {
-    choicesOl.innerHTML = list.map((c, i) => '<li><button type="button" class="st-ch" data-i="' + i + '"><kbd aria-hidden="true">' + (i + 1) + "</kbd><span>" + E(c.t) + "</span></button></li>").join("");
+    choicesOl.innerHTML = list.map((c, i) => '<li><button type="button" class="st-ch" data-i="' + i + '"><kbd aria-hidden="true">' + (dev === "pad" ? "" : i + 1) + "</kbd><span>" + E(c.t) + "</span></button></li>").join("");
     choicesEl.hidden = false; requestAnimationFrame(() => choicesEl.classList.add("is-on")); el.classList.add("has-choices");
     choicesEl.setAttribute("aria-label", "Choose");
     const timed = T0.timed && !still() ? T0.timed : null;
     timerEl.hidden = !timed;
     choosing = { list, resolve, t: 0, timed, idx: 0 };
     shotChoices();
-    setTimeout(() => { const b = $(".st-ch", choicesOl); if (b && !COARSE.matches) b.focus({ preventScroll: true }); }, 60);
+    setTimeout(() => { const b = $(".st-ch", choicesOl); if (b && dev !== "touch") b.focus({ preventScroll: true }); }, 60);
   });
 }
 function pick(i, how) {
@@ -303,7 +316,7 @@ function pick(i, how) {
   const c = choosing.list[i]; if (!c) return;
   const res = choosing.resolve; choosing = null;
   const b = $$(".st-ch", choicesOl)[i]; if (b) b.classList.add("is-picked");
-  FX("choice");
+  FX("choice"); AU.ui("choice");
   T("story_choice", { scene: S.scene, talk: S.talking, choice: i, text: c.t, how: how || "" });
   // a choice that leads straight to more choices cancels these, so the new ones never vanish under it
   chHide.push(setTimeout(() => { choicesEl.classList.remove("is-on"); el.classList.remove("has-choices"); chHide.push(setTimeout(() => { choicesEl.hidden = true; }, 260)); }, 180));
@@ -321,13 +334,14 @@ function tickChoices(dt) {
 let noteT = null;
 function notice(text) {
   $("span", noteEl).textContent = text; noteEl.hidden = false; noteEl.classList.remove("is-on"); void noteEl.offsetWidth; noteEl.classList.add("is-on");
-  hap("tap"); if (SC()) SC().tick && SC().tick();
+  hap("tap"); if (SC()) SC().tick && SC().tick(); AU.ui("notice");
   clearTimeout(noteT); noteT = setTimeout(() => { noteEl.classList.remove("is-on"); setTimeout(() => (noteEl.hidden = true), 500); }, FAST ? 200 : 3600);
   S.log.push({ note: text });
 }
 let toastT = null;
 function toast(text) { toastEl.textContent = text; toastEl.hidden = false; toastEl.classList.add("is-on"); clearTimeout(toastT); toastT = setTimeout(() => { toastEl.classList.remove("is-on"); setTimeout(() => (toastEl.hidden = true), 400); }, FAST ? 200 : 2200); }
 function objective(k) {
+  if (k !== S.obj) progress();
   S.obj = k; const t = k && D.objectives[k];
   if (!t) { objEl.classList.remove("is-on"); setTimeout(() => { if (!S.obj) objEl.hidden = true; }, 400); return; }
   objEl.textContent = t; objEl.hidden = false; objEl.classList.remove("is-on"); void objEl.offsetWidth; objEl.classList.add("is-on");
@@ -349,7 +363,7 @@ function showTrophy() {
   const t = LIB.trophies[slug];
   trophyEl.innerHTML = '<img src="assets/game/medals/' + slug + '-160.webp" alt="" width="56" height="56" /><div><p class="st-trophy__k">' + E(t.tier.charAt(0).toUpperCase() + t.tier.slice(1)) + ' trophy</p><p class="st-trophy__h">' + E(t.name) + '</p><p class="st-trophy__p">' + E(t.desc) + "</p></div>";
   trophyEl.hidden = false; trophyEl.classList.remove("is-on"); void trophyEl.offsetWidth; trophyEl.classList.add("is-on");
-  hap("success"); if (SC()) SC().sting("trophy-" + t.tier);
+  hap("success"); if (SC()) SC().sting("trophy-" + t.tier); AU.ui("trophy");
   setTimeout(() => { trophyEl.classList.remove("is-on"); setTimeout(() => { trophyEl.hidden = true; trophyQ.shift(); if (trophyQ.length) showTrophy(); }, 450); }, FAST ? 250 : 4200);
 }
 
@@ -448,7 +462,8 @@ async function enter(name, o = {}) {
   rain.visible = name === "lot" || name === "decision";
   rain.material.uniforms.uK.value = name === "decision" ? 0.55 : 1;
   if (set.userData.groundMat) set.userData.groundMat.uniforms.uRain.value = name === "decision" ? 0.5 : name === "keys" ? 0 : 1;
-  rainLevel(name === "lot" ? 0.32 : name === "decision" ? 0.18 : name === "office" ? 0.12 : 0, name === "office");
+  AU.scene(name, set);
+  nav = null; navFor = null; guideRoute = null;
   // the desk lamp in the memory remembers what you chose
   if (S.scene === "decision" && S.flags.lamp === "off") { const l = sets.lot.userData.lamps[5]; if (l) { l.col = [0.6, 0.38, 0.18]; l.glow.material.uniforms.uK.value = 0.7; } }
   // the score: the title's layer for where you are
@@ -569,33 +584,55 @@ function updateCamera(dt) {
   }
   if (!me) return;
   post.comp.u.uDofK.value = quality >= 2 ? 0.45 : 0; post.comp.u.uRange.value = 9;
-  const head = me.pos.clone().add(new THREE.Vector3(0, me.height * 0.86, 0));
-  // drift behind the walker unless the visitor is steering the camera
-  if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-1.6 * dt));
-  camState.drag -= dt;
-  const inside = S.scene === "office" || S.scene === "memory";
-  const mem = S.scene === "memory";
-  let dist = mem ? 1.85 : inside ? 2.7 : 3.6; const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0);
-  const off = new THREE.Vector3(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
-  // keep the camera inside the room; in the memory it sits close, over your right shoulder
-  const want = head.clone().addScaledVector(off, dist);
-  const shoulder = mem ? new THREE.Vector3(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw)).multiplyScalar(0.55) : null;
-  if (mem) want.add(shoulder);
-  const b = set.userData.bounds;
-  if (b) { want.x = clamp(want.x, b.x0 + 0.2, b.x1 - 0.2); want.z = clamp(want.z, b.z0 + 0.2, b.z1 - 0.2); want.y = Math.min(want.y, 2.85); }
-  else {
-    // outside, the camera never ends up inside a parked car or a wall: it comes in along the line to your head
-    const walls = set.userData.walls || [];
-    for (let i = 1; i <= 12; i++) {
-      const t = i / 12, x = head.x + (want.x - head.x) * t, y = head.y + (want.y - head.y) * t, z = head.z + (want.z - head.z) * t;
-      if (y < 1.8 && walls.some(w => x > w.x0 - 0.25 && x < w.x1 + 0.25 && z > w.z0 - 0.25 && z < w.z1 + 0.25)) { const tt = Math.max(0.3, t - 0.12); want.copy(head).lerp(want, tt); want.y = Math.max(want.y, head.y + 0.25); break; }
-    }
-  }
-  if (camState.init) { camera.position.copy(want); camState.look.copy(head); camState.init = false; }
-  if (shoulder) head.add(shoulder).add(new THREE.Vector3(0, -0.15, 0));
-  camera.position.lerp(want, k); camState.look.lerp(head.add(new THREE.Vector3(0, -0.1, 0)), k);
+  const { want, look } = followView(dt, false);
+  if (camState.init) { camera.position.copy(want); camState.look.copy(look); camState.init = false; }
+  camera.position.lerp(want, k); camState.look.lerp(look, k);
   camera.lookAt(camState.look);
   post.comp.u.uFocus.value = camera.position.distanceTo(camState.look);
+}
+/* the follow camera: behind you and a little over the right shoulder, leading the way you walk,
+   pulled in along the line to your head whenever a wall, a car, a pole or the room's edge would be in the way */
+// outside, a car is as good as a wall (a camera skimming a roof sees nothing but paint); in a room the desks and tables are low enough to look over
+const camWalls = () => (set.userData.walls || []).map(w => ({ ...w, h: w.h != null ? w.h : (set.userData.bounds && (w.x1 - w.x0) > 1.2 && (w.z1 - w.z0) > 1.0 && (w.x1 - w.x0) * (w.z1 - w.z0) < 14 ? 1.1 : 99) }));
+let camWallsFor = null, camWallList = [];
+function insideAny(x, y, z, pad) {
+  if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
+  for (const w of camWallList) if (y < w.h + pad && x > w.x0 - pad && x < w.x1 + pad && z > w.z0 - pad && z < w.z1 + pad) return true;
+  // people, and Dell's umbrella, are solid too
+  for (const k in P) { const q = P[k]; if (q === me || !q.group.visible) continue; const r = (q.hold === "umbrella" ? 0.72 : 0.42) + pad * 0.5; if (y < 2.35 && (x - q.pos.x) ** 2 + (z - q.pos.z) ** 2 < r * r) return true; }
+  const b = set.userData.bounds; if (b && (x < b.x0 + pad * 0.5 || x > b.x1 - pad * 0.5 || z < b.z0 + pad * 0.5 || z > b.z1 - pad * 0.5 || y > 2.95)) return true;
+  return y < 0.15;
+}
+function followView(dt, probe) {
+  const head = me.pos.clone().add(new THREE.Vector3(0, me.height * 0.86, 0));
+  // drift behind the walker unless the visitor is steering the camera
+  if (!probe) {
+    if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-(mv.path ? 1.0 : 1.6) * dt));
+    camState.drag -= dt;
+  }
+  const inside = S.scene === "office" || S.scene === "memory", mem = S.scene === "memory", upright = innerWidth < innerHeight;
+  const dist = (mem ? 1.85 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
+  const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0);
+  const off = new THREE.Vector3(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
+  const right = new THREE.Vector3(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw));
+  const sh = (mem ? 0.55 : inside ? 0.28 : 0.38) * (upright ? 0.35 : 1);
+  // look ahead the way you're going, more at a run
+  const ahead = camState.ahead || (camState.ahead = new THREE.Vector3());
+  const lead = probe ? 0 : Math.min(1, me.speed / RUN) * (inside ? 0.45 : 0.9);
+  const aim = new THREE.Vector3(Math.sin(me.yaw), 0, Math.cos(me.yaw)).multiplyScalar(lead);
+  if (probe) ahead.set(0, 0, 0); else ahead.lerp(aim, 1 - Math.exp(-2.2 * dt));
+  // the pivot: the shoulder, pulled toward the head if the shoulder itself would be inside something
+  const pivot = head.clone().addScaledVector(right, sh);
+  if (insideAny(pivot.x, pivot.y, pivot.z, 0.18)) pivot.copy(head);
+  // march out from the pivot; stop short of the first thing in the way
+  let free = dist;
+  for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t; if (insideAny(x, y, z, 0.24)) { free = Math.max(0.35, t - 0.2); break; } }
+  // in fast, out slow, so a pole sliding past doesn't make the camera pump
+  if (probe || camState.cd == null || camState.init) camState.cd = free;
+  else camState.cd = free < camState.cd ? damp(camState.cd, free, 18, dt) : damp(camState.cd, free, 2.2, dt);
+  const want = pivot.clone().addScaledVector(off, Math.min(camState.cd, free + 0.05));
+  const look = head.clone().addScaledVector(right, sh * 0.7).add(ahead).add(new THREE.Vector3(0, mem ? -0.25 : -0.1, 0));
+  return { want, look };
 }
 function rail(points, looks, dur) {
   return new Promise(res => {
@@ -604,71 +641,118 @@ function rail(points, looks, dur) {
 }
 
 /* ================================================================
-   MOVEMENT: keys, stick, tap to walk; walls; footsteps
+   MOVEMENT: keys, the stick, the pad (analog: a light push walks, a full one
+   runs), and tap to walk along a path around the cars; walls; cloth
    ================================================================ */
 const keys = {};
-const mv = { x: 0, z: 0, run: false, target: null, after: null };
+const WALK = 1.45, RUN = 2.6, RUN_AT = 0.82, DEAD = 0.14;
+const mv = { x: 0, z: 0, mag: 0, runLatch: false, path: null, pi: 1, after: null, stuck: 0, idle: 0, running: false, src: "" };
+const pad = { x: 0, y: 0, mag: 0 };
+let nav = null, navFor = null;
+function navNow() { if (!set) return null; if (navFor !== set) { nav = buildNav(set); navFor = set; } return nav; }
 function blocked(x, z, r = 0.28) {
   for (const w of set.userData.walls) if (x > w.x0 - r && x < w.x1 + r && z > w.z0 - r && z < w.z1 + r) return true;
   const b = set.userData.bounds; if (b && (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1)) return true;
   for (const k of Object.keys(P)) { const p = P[k]; if (p === me || !p.group.visible) continue; if (Math.hypot(p.pos.x - x, p.pos.z - z) < 0.55) return true; }
   return false;
 }
-let stepPh = 0;
+const keyOn = name => !!keys[SET.keys[name]];
+const runHeld = () => (SET.runToggle ? mv.runLatch : !!keys[SET.keys.run]);
+/* how fast for a push: a dead zone, a walk that grows with the push, then a clear step up to a run */
+function speedFor(m) { return m <= 0 ? 0 : m >= RUN_AT ? RUN : WALK * (0.28 + 0.72 * Math.min(1, m / (RUN_AT - 0.04))); }
+function wantInput() {
+  if (S.phase !== "explore") return null;
+  const kx = (keyOn("right") || keys.arrowright ? 1 : 0) - (keyOn("left") || keys.arrowleft ? 1 : 0);
+  const kz = (keyOn("down") || keys.arrowdown ? 1 : 0) - (keyOn("up") || keys.arrowup ? 1 : 0);
+  if (kx || kz) { const l = Math.hypot(kx, kz); return { x: kx / l, z: kz / l, m: runHeld() ? 1 : RUN_AT - 0.04, src: "keys" }; }
+  if (mv.mag > 0) return { x: mv.x, z: mv.z, m: mv.mag, src: "stick" };
+  if (pad.mag > 0) return { x: pad.x, z: pad.y, m: pad.mag, src: "pad" };
+  return null;
+}
+let clothT = 0;
 function moveMe(dt) {
   if (!me) return;
-  let ix = 0, iz = 0;
-  const free = S.phase === "explore";
-  if (free) {
-    ix = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0) + mv.x;
-    iz = (keys.s || keys.arrowdown ? 1 : 0) - (keys.w || keys.arrowup ? 1 : 0) + mv.z;
-    const pad = padState(); ix += pad.x; iz += pad.y;
-  }
+  const inp = wantInput();
   let speed = 0, dir = null;
-  const run = keys.shift || mv.run;
-  if (Math.hypot(ix, iz) > 0.12) {
-    mv.target = null; mv.after = null;
-    const a = Math.atan2(ix, iz) + camState.yaw; // camera relative
+  const prevSpeed = me.speed;
+  if (inp) {
+    if (mv.path) { mv.path = null; mv.after = null; guide.clearRing(); }
+    const a = Math.atan2(inp.x, inp.z) + camState.yaw; // camera relative
     dir = new THREE.Vector3(Math.sin(a), 0, Math.cos(a));
-    speed = (run ? 2.6 : 1.45) * Math.min(1, Math.hypot(ix, iz));
-  } else if (mv.target) {
-    const d = mv.target.clone().sub(me.pos).setY(0); const L = d.length();
-    if (L < 0.12) { mv.target = null; const f = mv.after; mv.after = null; if (f) f(); }
-    else { dir = d.normalize(); speed = Math.min(L * 2.2, run ? 2.6 : 1.45); }
-  }
+    speed = speedFor(inp.m); mv.running = inp.m >= RUN_AT; mv.src = inp.src;
+    mv.idle = 0;
+  } else if (mv.path && S.phase === "explore") {
+    const last = mv.path.length - 1;
+    let tgt = mv.path[mv.pi], d = new THREE.Vector3(tgt.x - me.pos.x, 0, tgt.z - me.pos.z), L = d.length();
+    while (L < 0.25 && mv.pi < last) { mv.pi++; tgt = mv.path[mv.pi]; d.set(tgt.x - me.pos.x, 0, tgt.z - me.pos.z); L = d.length(); }
+    let rest = L; for (let k = mv.pi; k < last; k++) rest += Math.hypot(mv.path[k + 1].x - mv.path[k].x, mv.path[k + 1].z - mv.path[k].z);
+    if (mv.pi === last && L < 0.12) arrive(false);
+    else { dir = d.normalize(); speed = Math.min(rest * 2.2, mv.pathRun && rest > 3 ? RUN : WALK); mv.running = speed > WALK + 0.1; }
+    mv.idle = 0;
+  } else { mv.idle += dt; mv.running = false; }
   if (dir && speed > 0) {
     me.wantYaw = Math.atan2(dir.x, dir.z);
     const turn = Math.abs(angTo(me.yaw, me.wantYaw));
     const sp = speed * (turn > 1.6 ? 0.25 : 1);
     let nx = me.pos.x + dir.x * sp * dt, nz = me.pos.z + dir.z * sp * dt;
+    let moved = true;
     if (!blocked(nx, nz)) { me.pos.x = nx; me.pos.z = nz; }
     else if (!blocked(nx, me.pos.z)) me.pos.x = nx;
     else if (!blocked(me.pos.x, nz)) me.pos.z = nz;
-    else if (mv.target) { mv.target = null; const f = mv.after; mv.after = null; if (f) f(); }
+    else {
+      // someone in the way: lean around them
+      moved = false;
+      for (const s2 of [0.8, -0.8, 1.4, -1.4]) { const c = Math.cos(s2), si = Math.sin(s2), x2 = me.pos.x + (dir.x * c - dir.z * si) * sp * dt, z2 = me.pos.z + (dir.x * si + dir.z * c) * sp * dt; if (!blocked(x2, z2)) { me.pos.x = x2; me.pos.z = z2; moved = true; break; } }
+    }
+    if (mv.path) { mv.stuck = moved ? 0 : mv.stuck + dt; if (mv.stuck > 0.8) arrive(true); }
     me.speed = damp(me.speed, sp, 10, dt);
-  } else me.speed = damp(me.speed, 0, 12, dt);
-  // footsteps on the beat of the walk
-  const ph = Math.floor(me.phase / Math.PI);
-  if (ph !== stepPh && me.speed > 0.3) { stepPh = ph; step(S.scene === "lot" || S.scene === "decision"); }
+    // cloth: setting off, or a sharp turn
+    clothT -= dt;
+    if (clothT <= 0 && ((prevSpeed < 0.25 && me.speed > 0.25) || turn > 1.3)) { AU.cloth(footAt(me), turn > 1.3 ? 0.9 : 0.6); clothT = 0.9; }
+  } else {
+    if (prevSpeed > 1.2 && clothT <= 0) { AU.cloth(footAt(me), 0.5); clothT = 0.9; }
+    me.speed = damp(me.speed, 0, 12, dt);
+  }
 }
-function walkTo(v, then) { mv.target = v.clone().setY(0); mv.after = then || null; }
+/* the end of a tap-to-walk: the ring closes with a soft sound and a tap, or, when it led to a thing, the thing takes over */
+function arrive(gaveUp) {
+  const f = mv.after; mv.path = null; mv.after = null; mv.stuck = 0;
+  if (gaveUp) { guide.clearRing(); return; } // a walk that can't finish ends quietly
+  if (f) { guide.clearRing(); f(); return; }
+  guide.land(); AU.ui("land"); hap("tap");
+}
+function walkTo(v, then, o = {}) {
+  const n = navNow(); if (!n || !me) return false;
+  const path = n.path(me.pos.x, me.pos.z, v.x, v.z);
+  if (!path) return false;
+  mv.path = path; mv.pi = 1; mv.after = then || null; mv.stuck = 0;
+  mv.pathRun = !!o.run || pathLen(path) > 9;
+  if (o.ring !== false) { const e = path[path.length - 1]; guide.ring(e.x, e.z); }
+  return true;
+}
 
-/* ---------- gamepad ---------- */
-let padPrev = {};
-function padState() {
+/* ---------- gamepad: left stick walks (all the way over runs), right stick looks; A, B, Y, Start ---------- */
+let padPrev = {}, padSeen = false;
+function padPoll(dt) {
   const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g && g.connected) : null;
-  if (!gp) return { x: 0, y: 0 };
-  const ax = Math.abs(gp.axes[0]) > 0.18 ? gp.axes[0] : 0, ay = Math.abs(gp.axes[1]) > 0.18 ? gp.axes[1] : 0;
-  const rx = Math.abs(gp.axes[2] || 0) > 0.2 ? gp.axes[2] : 0;
-  if (rx) { camState.yaw -= rx * 0.04; camState.drag = 1.5; }
+  if (!gp) { pad.x = pad.y = pad.mag = 0; return; }
+  const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, m = Math.hypot(ax, ay);
+  if (m > DEAD) { const k = Math.min(1, (m - DEAD) / (1 - DEAD - 0.05)); pad.x = ax / m; pad.y = ay / m; pad.mag = k; } else { pad.x = pad.y = pad.mag = 0; }
+  const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0;
+  if (Math.abs(rx) > 0.16 || Math.abs(ry) > 0.16) {
+    camState.yaw -= rx * 2.4 * dt * SET.look; camState.pitch = clamp(camState.pitch + ry * (SET.invert ? -1 : 1) * 1.4 * dt * SET.look, -0.15, 0.75); camState.drag = 1.5; setDev("pad");
+  }
   const btn = i => gp.buttons[i] && gp.buttons[i].pressed;
   const edge = i => btn(i) && !padPrev[i];
-  if (edge(0)) act("a"); if (edge(1)) act("b"); if (edge(9)) act("pause"); if (edge(3)) act("journal");
+  const any = m > 0.3 || gp.buttons.some(b => b.pressed);
+  if (any) { setDev("pad"); mv.idle = 0; }
+  if (edge(0)) act("a"); if (edge(1)) act("b"); if (edge(9)) act("pause"); if (edge(3) || edge(8)) act("journal");
   if (choosing) { if (edge(12)) moveChoice(-1); if (edge(13)) moveChoice(1); }
+  if (S.phase === "pause" || S.phase === "journal") { if (edge(12)) moveFocus(-1); if (edge(13)) moveFocus(1); }
   padPrev = {}; gp.buttons.forEach((b, i) => (padPrev[i] = b.pressed));
-  return { x: ax, y: ay };
 }
 function moveChoice(d) { const bs = $$(".st-ch", choicesOl); const i = bs.indexOf(document.activeElement); const n = clamp((i < 0 ? 0 : i + d), 0, bs.length - 1); if (bs[n]) { bs[n].focus({ preventScroll: true }); if (SC()) SC().tick(); } }
+function moveFocus(d) { const host = S.phase === "pause" ? pauseEl : journalEl; const bs = $$("button, input", host).filter(b => b.offsetParent); const i = bs.indexOf(document.activeElement); const n = clamp((i < 0 ? 0 : i + d), 0, bs.length - 1); if (bs[n]) bs[n].focus({ preventScroll: true }); }
 
 /* ================================================================
    INTERACTION: spots, prompts, talking
@@ -692,7 +776,7 @@ let near = null;
 const v2 = new THREE.Vector3();
 function project(p) { v2.copy(p).project(camera); return { x: (v2.x * 0.5 + 0.5) * innerWidth, y: (-v2.y * 0.5 + 0.5) * innerHeight, on: v2.z < 1 && Math.abs(v2.x) < 1.05 && Math.abs(v2.y) < 1.05 }; }
 function updatePrompts() {
-  if (S.phase !== "explore" || !me) { promptEl.hidden = true; dotsEl.innerHTML = ""; near = null; return; }
+  if (S.phase !== "explore" || !me) { promptEl.hidden = true; actEl.hidden = true; if (dotsEl.firstChild) dotsEl.innerHTML = ""; near = null; return; }
   const list = spotsHere();
   let best = null, bd = 1e9;
   for (const s of list) {
@@ -703,44 +787,51 @@ function updatePrompts() {
     const score = d + a * 0.35;
     if (d < r && score < bd) { best = s; bd = score; }
   }
+  if (best !== near && best) progress();
   near = best;
-  // faint dots on what's interactable nearby; the nearest gets the full prompt
+  // faint dots on what's interactable nearby; things you haven't looked at yet shimmer when you're close; the nearest gets the full prompt
   let html = "";
   for (const s of list) {
     if (s === best) continue;
     const d = Math.hypot(s.p.x - me.pos.x, s.p.z - me.pos.z); if (d > 11) continue;
     const q = project(s.p); if (!q.on) continue;
-    html += '<button type="button" class="st-dot" data-spot="' + s.id + '" style="transform:translate(' + q.x.toFixed(0) + "px," + q.y.toFixed(0) + 'px)" aria-label="' + E(s.o.verb + " " + s.o.label) + '"><i></i></button>';
+    const fresh = !S.looked[s.id] && !s.o.who && d < 7;
+    html += '<button type="button" class="st-dot' + (fresh ? " is-new" : "") + '" data-spot="' + s.id + '" style="transform:translate(' + q.x.toFixed(0) + "px," + q.y.toFixed(0) + 'px)" aria-label="' + E(s.o.verb + " " + s.o.label) + '"><i></i></button>';
   }
-  dotsEl.innerHTML = html;
-  if (!best) { promptEl.hidden = true; return; }
+  if (html !== dotsEl._html) { dotsEl.innerHTML = html; dotsEl._html = html; }
+  if (!best) { promptEl.hidden = true; actEl.hidden = true; return; }
   const q = project(best.p);
   // a thing above or beside the frame (the pylon sign seen up close on a phone) keeps its prompt at the edge of the screen
   if (v2.z >= 1) { q.x = innerWidth / 2 - 60; q.y = 90; }
   q.x = clamp(q.x, 24, innerWidth - 200); q.y = clamp(q.y, 84, innerHeight - 110);
   promptEl.hidden = false;
-  $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
-  $(".st-prompt__key", promptEl).hidden = COARSE.matches;
-  promptEl.dataset.spot = best.id;
+  if (promptEl.dataset.spot !== best.id) {
+    $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
+    promptEl.dataset.spot = best.id;
+    $(".st-act__verb", actEl).textContent = best.o.verb; actEl.setAttribute("aria-label", best.o.verb + " " + best.o.label);
+  }
   promptEl.style.transform = "translate(" + Math.round(q.x) + "px," + Math.round(q.y) + "px)";
+  // on a touch screen, the thing you're next to also gets a big button under your right thumb
+  actEl.hidden = dev !== "touch";
 }
 promptEl.addEventListener("click", e => { e.stopPropagation(); if (near) interact(near.id, "click"); });
 dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); goInteract(b.dataset.spot); });
 function goInteract(id) {
   const s = spotsHere().find(x => x.id === id); if (!s) return;
   const stand = s.sp.stand || (s.sp.who ? P[s.sp.who].pos.clone().add(me.pos.clone().sub(P[s.sp.who].pos).setY(0).normalize().multiplyScalar(1.2)) : s.p);
-  walkTo(stand, () => interact(id, "walk"));
+  if (!walkTo(stand, () => interact(id, "walk"))) interact(id, "walk");
 }
 async function interact(id, how) {
   if (S.phase !== "explore") return;
   const o = OBJ[id]; if (!o) return;
   const s = set.userData.spots[id] || {};
-  mv.target = null;
-  if (o.go) { FX("arrive"); T("story_object", { id, scene: S.scene }); await travel(o.go); return; }
+  mv.path = null; mv.after = null; guide.clearRing(); progress();
+  const at = s.who && P[s.who] ? headOf(P[s.who]) : s.p ? s.p.clone() : me.pos.clone();
+  if (o.go) { FX("arrive"); AU.thing(id, at); T("story_object", { id, scene: S.scene }); await travel(o.go); return; }
   const first = !S.looked[id];
   S.looked[id] = (S.looked[id] || 0) + 1;
   T("story_object", { id, scene: S.scene, first });
-  FX("arrive");
+  FX("arrive"); AU.thing(id, at);
   // face it, and let whoever it is face you
   const target = s.who ? P[s.who] : null;
   const tp = target ? target.pos : s.p;
@@ -772,6 +863,7 @@ async function runTalk(id) {
     if (T0.choices) {
       const c = await choose(T0);
       if (c.set) Object.assign(S.flags, c.set);
+      if (c.set && c.set.gate === "helped" && set.userData.gate) { const g = set.userData.gate.position; AU.gate({ x: g.x, y: 1.2, z: g.z }); }
       S.log.push({ talk: cur, choice: c.t });
       if (c.note) notice(c.note);
       if (c.hold && !FAST && !still()) await sleep(500);
@@ -807,7 +899,7 @@ async function doAct(d) {
   else if (k === "desk") { const ok = await openDesk(); if (!ok) S.flags.desk = "watched"; return ok ? "desk-filed" : "desk-watch"; }
   else if (k === "ring") { setTimeout(() => startRing(), FAST ? 50 : 3500); }
   else if (k === "close") { await closeUp(v); }
-  else if (k === "lampoff") { const l = sets.memory && sets.memory.userData.deskLamp; if (l) l.col = [0.15, 0.1, 0.06]; }
+  else if (k === "lampoff") { const l = sets.memory && sets.memory.userData.deskLamp; if (l) { l.col = [0.15, 0.1, 0.06]; AU.thing("lampoff", l.p); } }
   return null;
 }
 function afterTalk() {
@@ -850,6 +942,7 @@ async function travel(to) {
   else if (S.scene === "keys") await fade(1, 1400, "#f3ead6");
   else await fade(1, 700);
   await enter(to, { quiet: true });
+  if (to === "office") { const m = set.userData.marks.playerStart; AU.arriveOffice({ x: m.x + 0.4, y: 2.1, z: m.z + 1.1 }); }
   await sleep(200);
   await fade(0, memoryIn ? 1400 : 700);
   fadeEl.classList.remove("is-memory");
@@ -989,9 +1082,10 @@ function openJournal() {
   // after a Continue the drawings are gone; redraw the ones whose thing is in this scene
   for (const k of S.journal) if (!sketches[k] && D.journal[k] && OBJ[k] && OBJ[k].scene === S.scene) { try { sketch(k); } catch (e) {} }
   renderJournal(); journalEl.hidden = false; requestAnimationFrame(() => journalEl.classList.add("is-on"));
-  FX("arrive");
+  AU.ui("page"); hap("tap"); AU.veil(true);
+  setTimeout(() => { const b = $("[aria-selected='true']", journalEl); if (b && dev !== "touch") b.focus({ preventScroll: true }); }, 60);
 }
-function closeJournal() { journalEl.classList.remove("is-on"); setTimeout(() => (journalEl.hidden = true), 300); S.phase = S.prevPhase || "explore"; }
+function closeJournal() { journalEl.classList.remove("is-on"); setTimeout(() => (journalEl.hidden = true), 300); S.phase = S.prevPhase || "explore"; AU.veil(false); }
 function renderJournal() {
   const people = ["jason", "dell", "renata"].filter(k => (k === "jason" && S.flags.met) || (k === "dell" && S.looked.dell) || (k === "renata" && S.flags.desked));
   const things = S.journal.filter(k => !["jason", "dell", "renata"].includes(k));
@@ -1005,7 +1099,7 @@ function renderJournal() {
   journalEl.innerHTML = '<div class="jr"><header class="jr-h"><h3>' + E(UI.journal) + '</h3><nav class="jr-tabs" role="tablist">' + tabs.map(([k, l]) => '<button type="button" role="tab" aria-selected="' + (k === jTab) + '" data-tab="' + k + '">' + E(l) + "</button>").join("") + '</nav><button class="st-x" type="button" data-st="journal-close" aria-label="Close the journal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header><div class="jr-b">' + inner + "</div></div>";
 }
 journalEl.addEventListener("click", e => {
-  const t = e.target.closest("[data-tab]"); if (t) { jTab = t.dataset.tab; renderJournal(); if (SC()) SC().tick(); return; }
+  const t = e.target.closest("[data-tab]"); if (t) { jTab = t.dataset.tab; renderJournal(); AU.ui("tab"); hap("tap"); const nb = $("[data-tab='" + jTab + "']", journalEl); if (nb) nb.focus({ preventScroll: true }); return; }
   if (e.target.closest("[data-st='journal-close']") || e.target === journalEl) closeJournal();
 });
 
@@ -1078,103 +1172,222 @@ endEl.addEventListener("click", e => {
 /* ================================================================
    PAUSE
    ================================================================ */
+let pzView = "main";
 function pause() {
   if (S.phase === "end" || S.phase === "load" || S.phase === "pause") return;
   S.prevPhase = S.phase; S.phase = "pause";
   if (line && line.audio) line.audio.pause();
-  const reached = ["lot", "office", "memory", "decision"].filter(n => S.visited && S.visited[n]);
-  pauseEl.innerHTML = '<div class="pz"><h3 class="pz-h">' + E(UI.pause) + '</h3><ul class="pz-m">' +
-    '<li><button type="button" data-p="resume">' + E(UI.resume) + "</button></li>" +
-    '<li><button type="button" data-p="journal">' + E(UI.journal) + "</button></li>" +
-    '<li><button type="button" data-p="sound" aria-pressed="' + soundOn() + '">' + E(UI.sound) + ": " + (soundOn() ? "On" : "Off") + "</button></li>" +
-    (reached.length > 1 ? '<li class="pz-ch"><span>' + E(UI.chapters) + "</span>" + reached.map(n => '<button type="button" data-p="go" data-s="' + n + '">' + E(D.scenes[n].name) + "</button>").join("") + "</li>" : "") +
-    '<li><button type="button" data-p="restart">' + E(UI.restart) + "</button></li>" +
-    '<li><button type="button" data-p="library">' + E(UI.library) + "</button></li></ul>" +
-    '<p class="pz-fine">' + E(D.voices_note) + " " + E(UI.captions) + "</p></div>";
+  for (const k in keys) keys[k] = false;
+  if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
+  pauseView("main");
   pauseEl.hidden = false; requestAnimationFrame(() => pauseEl.classList.add("is-on"));
-  setTimeout(() => { const b = $("button", pauseEl); if (b) b.focus({ preventScroll: true }); }, 40);
+  AU.veil(true);
 }
-function unpause() { pauseEl.classList.remove("is-on"); setTimeout(() => (pauseEl.hidden = true), 250); S.phase = S.prevPhase || "explore"; if (line && line.audio) { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); } }
+const ACTS = [["up", "k_up"], ["down", "k_down"], ["left", "k_left"], ["right", "k_right"], ["run", "k_run"], ["act", "k_act"], ["journal", "k_journal"]];
+function pauseView(v) {
+  pzView = v;
+  const reached = ["lot", "office", "memory", "decision"].filter(n => S.visited && S.visited[n]);
+  const tog = (k, a, b) => '<button type="button" class="pz-tog" data-c="' + k + '" aria-pressed="' + !!SET[k] + '"><span>' + E(SET[k] ? b : a) + "</span></button>";
+  const sl = k => '<label class="pz-sl"><span>' + E(UI["mix_" + k]) + '</span><input type="range" min="0" max="100" step="1" data-mix="' + k + '" value="' + Math.round(AU.mix[k] * 100) + '" aria-label="' + E(UI["mix_" + k]) + '" /></label>';
+  let h = "";
+  if (v === "main") {
+    h = '<div class="pz"><h3 class="pz-h">' + E(UI.pause) + '</h3><ul class="pz-m">' +
+      '<li><button type="button" data-p="resume">' + E(UI.resume) + "</button></li>" +
+      '<li><button type="button" data-p="journal">' + E(UI.journal) + "</button></li>" +
+      '<li><button type="button" data-p="settings">' + E(UI.settings) + "</button></li>" +
+      (reached.length > 1 ? '<li class="pz-ch"><span>' + E(UI.chapters) + "</span>" + reached.map(n => '<button type="button" data-p="go" data-s="' + n + '">' + E(D.scenes[n].name) + "</button>").join("") + "</li>" : "") +
+      '<li><button type="button" data-p="restart">' + E(UI.restart) + "</button></li>" +
+      '<li><button type="button" data-p="library">' + E(UI.library) + "</button></li></ul>" +
+      '<p class="pz-fine">' + E(D.voices_note) + " " + E(UI.captions) + "</p></div>";
+  } else if (v === "settings") {
+    h = '<div class="pz pz--set"><h3 class="pz-h">' + E(UI.settings) + "</h3>" +
+      '<div class="pz-row"><span>' + E(UI.sound) + '</span><button type="button" class="pz-tog" data-p="sound" aria-pressed="' + soundOn() + '"><span>' + E(soundOn() ? UI.on : UI.off) + "</span></button></div>" +
+      '<div class="pz-mix">' + ["master", "music", "voice", "sfx"].map(sl).join("") + "</div>" +
+      '<div class="pz-row"><span>' + E(UI.c_run) + "</span>" + tog("runToggle", UI.c_run_hold, UI.c_run_toggle) + "</div>" +
+      '<div class="pz-row pz-kb"><span>' + E(UI.c_look) + "</span>" + tog("lock", UI.c_look_drag, UI.c_look_lock) + "</div>" +
+      '<div class="pz-row"><span>' + E(UI.c_invert) + "</span>" + tog("invert", UI.c_normal, UI.c_inverted) + "</div>" +
+      '<div class="pz-foot"><button type="button" class="pz-link pz-kb" data-p="keys">' + E(UI.c_keys) + '</button><button type="button" class="pz-link" data-p="back">' + E(UI.back) + "</button></div></div>";
+  } else if (v === "keys") {
+    h = '<div class="pz pz--set"><h3 class="pz-h">' + E(UI.c_keys) + '</h3><div class="pz-keys">' +
+      ACTS.map(([a, l]) => '<div class="pz-row"><span>' + E(UI[l]) + '</span><button type="button" class="pz-key" data-key="' + a + '">' + E(rebinding === a ? UI.c_press : keyLabel(SET.keys[a])) + "</button></div>").join("") +
+      '</div><p class="pz-fine">' + E(UI.c_keys_fine) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-keys">' + E(UI.c_reset) + '</button><button type="button" class="pz-link" data-p="settings">' + E(UI.back) + "</button></div></div>";
+  }
+  pauseEl.innerHTML = h;
+  setTimeout(() => { if (dev === "touch") return; const b = $(v === "main" ? "button" : "input, button", pauseEl); if (b) b.focus({ preventScroll: true }); }, 40);
+}
+function rebind(a, k) {
+  // a key already in use moves to where the old one was, so nothing ends up on two actions
+  const other = Object.keys(SET.keys).find(x => x !== a && SET.keys[x] === k);
+  if (other) SET.keys[other] = SET.keys[a];
+  SET.keys[a] = k; rebinding = null; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("keys"); glyphs();
+}
+function unpause() {
+  pauseEl.classList.remove("is-on"); setTimeout(() => { if (S.phase !== "pause") pauseEl.hidden = true; }, 250); S.phase = S.prevPhase || "explore"; rebinding = null;
+  AU.veil(false);
+  if (line && line.audio) { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); }
+  if (SET.lock && dev === "kbm" && S.phase === "explore") { try { cv.requestPointerLock(); } catch (e) {} }
+}
+let lvT = 0;
+pauseEl.addEventListener("input", e => {
+  const r = e.target.closest("[data-mix]"); if (!r) return;
+  AU.setMix(r.dataset.mix, r.value / 100);
+  // you hear the level you set, a soft tick at the new volume
+  const t = performance.now(); if (t - lvT > 110 && r.dataset.mix !== "music") { lvT = t; AU.ui("level"); }
+});
 pauseEl.addEventListener("click", async e => {
+  const c = e.target.closest("[data-c]");
+  if (c) { SET[c.dataset.c] = !SET[c.dataset.c]; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("settings"); const nb = $("[data-c='" + c.dataset.c + "']", pauseEl); if (nb) nb.focus({ preventScroll: true }); return; }
+  const kb = e.target.closest("[data-key]");
+  if (kb) { rebinding = kb.dataset.key; kb.textContent = UI.c_press; kb.classList.add("is-wait"); return; }
   const b = e.target.closest("[data-p]"); if (!b) return;
   const k = b.dataset.p;
   if (k === "resume") unpause();
   else if (k === "journal") { unpause(); openJournal(); }
-  else if (k === "sound") { if (SC()) SC().toggle("story"); FX("choice"); pause_refresh(); }
+  else if (k === "settings") { if (pzView === "main") { AU.ui("open"); hap("tap"); } pauseView("settings"); }
+  else if (k === "keys") { AU.ui("open"); hap("tap"); pauseView("keys"); }
+  else if (k === "back") pauseView("main");
+  else if (k === "reset-keys") { SET.keys = Object.assign({}, KEYS0); saveSet(); AU.ui("toggle"); hap("tap"); pauseView("keys"); glyphs(); }
+  else if (k === "sound") { if (SC()) SC().toggle("story"); AU.sound(soundOn()); FX("choice"); AU.ui("toggle"); pauseView("settings"); const nb = $("[data-p='sound']", pauseEl); if (nb) nb.focus({ preventScroll: true }); }
   else if (k === "library") { T("story_quit", { scene: S.scene }); close("quit"); }
   else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh("lot"); }
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
-function pause_refresh() { S.phase = S.prevPhase; pause(); }
 function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.ending = null; S.visited = {}; }
 async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); S.phase = "explore"; if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
-   INPUT
+   INPUT: keys (remappable), mouse, touch, pad; the glyphs follow the last one used
    ================================================================ */
+let dev = COARSE.matches ? "touch" : "kbm";
+el.dataset.dev = dev;
+const KEYNAME = { shift: "Shift", " ": "Space", enter: "Enter", arrowup: "Up", arrowdown: "Down", arrowleft: "Left", arrowright: "Right", control: "Ctrl", alt: "Alt", tab: "Tab", capslock: "Caps" };
+const keyLabel = k => KEYNAME[k] || (k && k.length === 1 ? k.toUpperCase() : String(k || "").replace(/^./, c => c.toUpperCase()));
+function setDev(d) {
+  if (dev === d) return;
+  dev = d; el.dataset.dev = d; glyphs();
+}
+function glyphs() {
+  const key = $(".st-prompt__key", promptEl);
+  key.hidden = dev === "touch"; key.textContent = dev === "pad" ? "A" : keyLabel(SET.keys.act); key.classList.toggle("is-pad", dev === "pad");
+  $$(".st-ch kbd", choicesOl).forEach((k, i) => { k.textContent = dev === "pad" ? "" : String(i + 1); });
+  if (!hintEl.hidden) hintEl.textContent = hintText();
+}
+function hintText() {
+  if (dev === "touch") return UI.walk_touch;
+  if (dev === "pad") return UI.walk_pad;
+  const K = SET.keys, wasd = [K.up, K.left, K.down, K.right].every(k => k.length === 1);
+  return UI.walk_pointer.replace("{move}", wasd ? (K.up + K.left + K.down + K.right).toUpperCase() : "The arrow keys").replace("{run}", keyLabel(K.run)).replace("{act}", keyLabel(K.act)).replace("{journal}", keyLabel(K.journal));
+}
 function act(k) {
+  if (S.skipOpen && (k === "a" || k === "pause" || k === "b")) { S.skipOpen(); return; }
   if (k === "pause") { if (S.phase === "pause") unpause(); else if (S.phase === "journal") closeJournal(); else pause(); return; }
   if (k === "journal") { if (S.phase === "journal") closeJournal(); else if (S.phase === "explore" || S.phase === "talk") openJournal(); return; }
-  if (k === "b") { if (S.phase === "journal") closeJournal(); else if (S.phase === "pause") unpause(); else if (S.phase === "close" && S.closeFinish) S.closeFinish(); return; }
+  if (k === "b") { if (S.phase === "journal") closeJournal(); else if (S.phase === "pause") { if (pzView !== "main") pauseView("main"); else unpause(); } else if (S.phase === "close" && S.closeFinish) S.closeFinish(); else if (S.phase === "sheet" && S.deskFinish) S.deskFinish(false); return; }
   if (k === "a") {
+    if (S.phase === "pause" || S.phase === "journal") { const a = document.activeElement; if (a && a.click && (pauseEl.contains(a) || journalEl.contains(a))) a.click(); return; }
     if (choosing) { const bs = $$(".st-ch", choicesOl); const i = Math.max(0, bs.indexOf(document.activeElement)); pick(i, "pad"); return; }
     if (line) { endLine(true); return; }
     if (S.phase === "explore" && near) interact(near.id, "key");
   }
 }
+let rebinding = null;
 addEventListener("keydown", e => {
   if (!S.open || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
+  if (rebinding) { e.preventDefault(); e.stopPropagation(); if (k === "escape") { rebinding = null; pauseView("keys"); } else if (!["tab", "p", "m", "1", "2", "3", "4", "enter", " ", "meta"].includes(k)) rebind(rebinding, k); return; }
+  setDev("kbm"); mv.idle = 0;
   if (S.phase === "sheet") { if (k === "escape") { e.preventDefault(); S.deskFinish && S.deskFinish(false); } return; }
   if (S.phase === "end") return;
-  if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(k)) { keys[k] = true; if (S.phase === "explore") e.preventDefault(); }
-  if (k === "escape" || k === "p") { e.preventDefault(); act(S.phase === "close" ? "b" : "pause"); return; }
-  if (k === "j") { e.preventDefault(); act("journal"); return; }
+  if (S.skipOpen && (k === "escape" || k === "enter" || k === " " || k === SET.keys.act)) { e.preventDefault(); S.skipOpen(); return; }
+  if (S.phase === "pause") { if (k === "escape" || k === "p") { e.preventDefault(); act("b"); } return; }
+  if (k === "tab") { e.preventDefault(); act("journal"); return; }
+  const moveKey = ["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || ["up", "down", "left", "right", "run"].some(a => SET.keys[a] === k);
+  if (moveKey) { keys[k] = true; if (S.phase === "explore") e.preventDefault(); if (k === SET.keys.run && SET.runToggle && !e.repeat) mv.runLatch = !mv.runLatch; }
+  if (k === "escape" || k === "p") { e.preventDefault(); act(S.phase === "close" || S.phase === "journal" ? "b" : "pause"); return; }
+  if (k === SET.keys.journal) { e.preventDefault(); act("journal"); return; }
   if (choosing && /^[1-4]$/.test(k)) { e.preventDefault(); pick(+k - 1, "key"); return; }
   if (choosing && (k === "arrowdown" || k === "arrowup")) { e.preventDefault(); moveChoice(k === "arrowdown" ? 1 : -1); return; }
-  if ((k === "e" || k === "enter" || k === " ") && !choosing) {
-    if (e.target && e.target.closest && e.target.closest("button,a") && k !== "e") return;
+  if ((k === SET.keys.act || k === "enter" || k === " ") && !choosing && !moveKey) {
+    if (e.target && e.target.closest && e.target.closest("button,a,input") && k !== SET.keys.act) return;
     e.preventDefault(); act("a");
   }
 }, true);
 addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 
-/* pointer: tap the ground to walk, tap a thing to go to it, drag to look around, a stick where the thumb lands (bottom left) */
-const ptr = { id: null, x0: 0, y0: 0, t0: 0, moved: false, stick: false };
+/* ---------- pointers: a floating stick under the left thumb, look by dragging on the right (or with two fingers),
+   tap the ground or a thing to go there; with a mouse, drag (either button) to look, click to walk ---------- */
+const ptrs = new Map();
+const STICK_R = 62;
+const stickKnob = $("i", stickEl);
+function stickAt(x, y) { stickEl.style.transform = "translate(" + Math.round(x) + "px," + Math.round(y) + "px)"; }
 cv.addEventListener("pointerdown", e => {
-  if (!S.open || S.phase !== "explore") { if (line && (S.phase === "talk")) endLine(true); return; }
-  ptr.id = e.pointerId; ptr.x0 = e.clientX; ptr.y0 = e.clientY; ptr.t0 = performance.now(); ptr.moved = false;
-  ptr.stick = COARSE.matches && e.clientX < innerWidth * 0.38 && e.clientY > innerHeight * 0.45;
-  if (ptr.stick) { stickEl.hidden = false; stickEl.style.transform = "translate(" + e.clientX + "px," + e.clientY + "px)"; }
-  cv.setPointerCapture(e.pointerId);
+  if (!S.open) return;
+  const touch = e.pointerType === "touch" || e.pointerType === "pen";
+  setDev(touch ? "touch" : "kbm"); mv.idle = 0;
+  AU.sound(soundOn()); // a suspended context wakes on the first press inside the episode
+  if (S.skipOpen) return;
+  if (S.phase === "talk" && line && !choosing) { endLine(true); return; } // a skip: silent
+  if (S.phase !== "explore") return;
+  if (!touch && SET.lock && document.pointerLockElement !== cv && e.button === 0) { try { cv.requestPointerLock(); } catch (x) {} }
+  if (document.pointerLockElement === cv) { if (e.button === 0 && near) interact(near.id, "click"); return; }
+  const hasStick = [...ptrs.values()].some(p => p.role === "stick");
+  const role = touch && !hasStick && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.3 ? "stick" : "look";
+  ptrs.set(e.pointerId, { role, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, bx: e.clientX, by: e.clientY, t0: performance.now(), moved: false, button: e.button, touch });
+  if (role === "stick") { stickEl.hidden = false; stickEl.classList.remove("is-run"); stickAt(e.clientX, e.clientY); stickKnob.style.transform = ""; }
+  try { cv.setPointerCapture(e.pointerId); } catch (x) {}
 });
 cv.addEventListener("pointermove", e => {
-  if (ptr.id !== e.pointerId) return;
-  const dx = e.clientX - ptr.x0, dy = e.clientY - ptr.y0;
-  if (Math.hypot(dx, dy) > 8) ptr.moved = true;
-  if (ptr.stick) { const m = Math.min(1, Math.hypot(dx, dy) / 60), a = Math.atan2(dx, dy); mv.x = Math.sin(a) * m; mv.z = Math.cos(a) * m; mv.run = m > 0.95; $("i", stickEl).style.transform = "translate(" + (Math.sin(a) * m * 34).toFixed(0) + "px," + (Math.cos(a) * m * 34).toFixed(0) + "px)"; }
-  else if (ptr.moved) { camState.yaw -= (e.movementX || 0) * 0.006; camState.pitch = clamp(camState.pitch + (e.movementY || 0) * 0.003, 0.02, 0.6); camState.drag = 2; }
+  if (document.pointerLockElement === cv && S.phase === "explore") { look(e.movementX || 0, e.movementY || 0, 1); return; }
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  const dx0 = e.clientX - p.x0, dy0 = e.clientY - p.y0;
+  if (Math.hypot(dx0, dy0) > 9) p.moved = true;
+  if (p.role === "stick") {
+    let dx = e.clientX - p.bx, dy = e.clientY - p.by, d = Math.hypot(dx, dy);
+    // the base follows a thumb that runs past the rim, so the stick is never lost
+    if (d > STICK_R) { p.bx = e.clientX - dx / d * STICK_R; p.by = e.clientY - dy / d * STICK_R; stickAt(p.bx, p.by); dx = e.clientX - p.bx; dy = e.clientY - p.by; d = STICK_R; }
+    const raw = d / STICK_R, m = raw < DEAD ? 0 : Math.min(1, (raw - DEAD) / (0.97 - DEAD));
+    mv.x = d ? dx / d : 0; mv.z = d ? dy / d : 0; mv.mag = m;
+    stickKnob.style.transform = "translate(" + dx.toFixed(0) + "px," + dy.toFixed(0) + "px)";
+    stickEl.classList.toggle("is-run", m >= RUN_AT);
+  } else if (p.moved) {
+    const looks = [...ptrs.values()].filter(q => q.role === "look").length;
+    look(e.clientX - p.x, e.clientY - p.y, looks > 1 ? 0.5 : 1);
+  }
+  p.x = e.clientX; p.y = e.clientY;
 });
+function look(dx, dy, k) {
+  camState.yaw -= dx * 0.0062 * k * SET.look;
+  camState.pitch = clamp(camState.pitch + dy * 0.0032 * k * SET.look * (SET.invert ? -1 : 1), -0.15, 0.75);
+  camState.drag = 2.2; mv.idle = 0;
+}
 function endPtr(e) {
-  if (ptr.id !== e.pointerId) return;
-  const tap = !ptr.moved && performance.now() - ptr.t0 < 350;
-  if (ptr.stick) { stickEl.hidden = true; mv.x = 0; mv.z = 0; mv.run = false; }
-  if (tap && !ptr.stick && S.phase === "explore") tapAt(e.clientX, e.clientY);
-  ptr.id = null; ptr.stick = false;
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  ptrs.delete(e.pointerId);
+  const tap = !p.moved && performance.now() - p.t0 < 380 && (p.button === 0 || p.touch) && e.type === "pointerup";
+  if (p.role === "stick") { stickEl.hidden = true; mv.x = 0; mv.z = 0; mv.mag = 0; }
+  if (tap && S.phase === "explore") tapAt(e.clientX, e.clientY);
 }
 cv.addEventListener("pointerup", endPtr); cv.addEventListener("pointercancel", endPtr);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("wheel", e => { if (S.phase !== "explore") return; e.preventDefault(); camState.zoom = clamp((camState.zoom || 1) * (e.deltaY > 0 ? 1.08 : 0.93), 0.6, 1.4); }, { passive: false });
+// no page zoom, scroll or callout from a stray pinch or long press on the scene
+cv.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+for (const ev of ["gesturestart", "gesturechange"]) el.addEventListener(ev, e => e.preventDefault());
+document.addEventListener("pointerlockchange", () => { if (!document.pointerLockElement && S.open && SET.lock && S.phase === "explore") pause(); });
 function tapAt(x, y) {
   // a thing near the tap wins over the ground
-  let best = null, bd = 56;
+  let best = null, bd = dev === "touch" ? 64 : 48;
   for (const s of spotsHere()) { const q = project(s.p); if (!q.on) continue; const d = Math.hypot(q.x - x, q.y - y); if (d < bd) { bd = d; best = s; } }
   if (best) { if (near && near.id === best.id) interact(best.id, "tap"); else goInteract(best.id); return; }
   const nd = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
   ray.setFromCamera(nd, camera);
   const t = -ray.ray.origin.y / ray.ray.direction.y;
-  if (t > 0 && t < 60) { const p = ray.ray.origin.clone().addScaledVector(ray.ray.direction, t); walkTo(p); FX("key"); }
+  if (t > 0 && t < 60) { const p = ray.ray.origin.clone().addScaledVector(ray.ray.direction, t); if (walkTo(p)) FX("key"); }
 }
 capEl.addEventListener("click", () => { if (line) endLine(true); });
+actEl.addEventListener("click", e => { e.stopPropagation(); if (near && S.phase === "explore") interact(near.id, "tap"); });
+skipEl.addEventListener("click", e => { e.stopPropagation(); if (S.skipOpen) S.skipOpen(); });
 el.addEventListener("click", e => {
   const b = e.target.closest("[data-st]"); if (!b) return;
   if (b.dataset.st === "journal") act("journal");
@@ -1202,28 +1415,133 @@ function updateLamps() {
 }
 
 /* ================================================================
-   THE LOOP, WITH ADAPTIVE QUALITY
+   THE WAY: where the story wants you next. Chevrons on the ground along
+   the route (guide.js), an arrow at the edge of the screen when the place
+   is off it, both fading as you arrive and gone in conversations and
+   cinematics; and if you wander a while without getting anywhere, the
+   arrow pulses once and the objective says itself again.
    ================================================================ */
-let last = performance.now(), acc = 0, frames = 0, fpsLog = [];
+const SAFE = { t: 0, r: 0, b: 0, l: 0 };
+function readSafe() {
+  const d = document.createElement("div");
+  d.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)";
+  body.appendChild(d); const cs = getComputedStyle(d);
+  SAFE.t = parseFloat(cs.paddingTop) || 0; SAFE.r = parseFloat(cs.paddingRight) || 0; SAFE.b = parseFloat(cs.paddingBottom) || 0; SAFE.l = parseFloat(cs.paddingLeft) || 0; d.remove();
+}
+function wayTarget() {
+  if (!me) return null;
+  const here = spotsHere(), spot = id => here.find(x => x.id === id) || null;
+  const o = S.obj;
+  let s = null;
+  if (S.scene === "memory" && S.flags.packed) s = spot("mem-lamp");
+  else if (S.scene === "decision") s = spot("jason-end");
+  else if (o === "find") s = spot("jason-lot");
+  else if (o === "office") s = spot("door");
+  else if (o === "phone") s = spot("phone");
+  else if (o === "book") s = spot("book");
+  else if (o === "keys") s = spot("keys");
+  else if (o === "pack" || o === "look") {
+    // the nearest thing you haven't looked at yet
+    let bd = 1e9;
+    for (const c of here) {
+      if (S.looked[c.id] || c.o.who || c.o.go || c.id === "phone" || c.id === "book" || (o === "pack" && !c.o.pack)) continue;
+      const d = Math.hypot(c.p.x - me.pos.x, c.p.z - me.pos.z); if (d < bd) { bd = d; s = c; }
+    }
+  }
+  if (!s) return null;
+  let st = s.sp.stand || s.p;
+  if (s.sp.who) { const w = P[s.sp.who]; const d = me.pos.clone().sub(w.pos).setY(0); if (d.length() < 0.01) d.set(0, 0, 1); st = w.pos.clone().addScaledVector(d.normalize(), 1.25); }
+  return { id: s.id, stand: st, p: s.sp.who ? headOf(P[s.sp.who]) : s.p, soft: o === "look" };
+}
+let guideRoute = null, wayT = 0, wayKey = "", wayFrom = null;
+let progT = 0, progWalk = 0, lastPos = null, nudges = 0;
+const STUCK_S = FAST ? 3 : 45;
+function progress() { progT = 0; progWalk = 0; }
+const way = { show: false, x: 0, y: 0, ang: 0, k: 0, id: null, d: 0 };
+function updateWay(dt) {
+  const tgt = S.phase === "explore" && !S.skipOpen ? wayTarget() : null;
+  way.id = tgt ? tgt.id : null;
+  if (!tgt) { guide.trail(null, 0); if (way.show) { way.show = false; wayEl.classList.remove("is-on"); } lastPos = null; return; }
+  const d = Math.hypot(tgt.stand.x - me.pos.x, tgt.stand.z - me.pos.z); way.d = d;
+  wayT -= dt;
+  const key = tgt.id + ":" + S.scene;
+  if (key !== wayKey || wayT <= 0 || !wayFrom || Math.hypot(me.pos.x - wayFrom.x, me.pos.z - wayFrom.z) > 0.6) {
+    const n = navNow(); guideRoute = n ? n.path(me.pos.x, me.pos.z, tgt.stand.x, tgt.stand.z) : null;
+    if (key !== wayKey) progress();
+    wayKey = key; wayT = 0.5; wayFrom = { x: me.pos.x, z: me.pos.z };
+  }
+  const k = clamp((d - 1.6) / 3, 0, 1) * (tgt.soft ? 0.6 : 1) * (mv.path ? 0.45 : 1);
+  guide.trail(guideRoute, k); way.k = k;
+  // the edge arrow: only when the place is off screen, pointing the way to turn
+  v2.set(tgt.p.x, Math.min(tgt.p.y || 1.2, 1.7), tgt.p.z).project(camera);
+  const W = innerWidth, H = innerHeight, behind = v2.z > 1;
+  let sx = (v2.x * 0.5 + 0.5) * W, sy = (-v2.y * 0.5 + 0.5) * H;
+  const mL = 30 + SAFE.l, mR = 30 + SAFE.r, mT = 84 + SAFE.t, mB = (dev === "touch" ? 132 : 70) + SAFE.b;
+  const onScreen = !behind && sx > mL && sx < W - mR && sy > mT && sy < H - mB;
+  const cx = (mL + W - mR) / 2, cy = (mT + H - mB) / 2;
+  let dx = sx - cx, dy = sy - cy;
+  if (behind) { dx = -dx; dy = -dy; if (Math.abs(dx) < 1 && Math.abs(dy) < 1) dx = 1; dy = Math.max(dy, Math.abs(dx) * 0.2); }
+  const show = !onScreen && d > 2.6;
+  if (show) {
+    const tx = dx > 0 ? (W - mR - cx) / dx : dx < 0 ? (mL - cx) / dx : 1e9, ty = dy > 0 ? (H - mB - cy) / dy : dy < 0 ? (mT - cy) / dy : 1e9;
+    const t = Math.min(tx, ty);
+    way.x = cx + dx * t; way.y = cy + dy * t; way.ang = Math.atan2(dy, dx);
+    wayEl.style.transform = "translate(" + way.x.toFixed(0) + "px," + way.y.toFixed(0) + "px) rotate(" + way.ang.toFixed(3) + "rad)";
+    wayEl.style.opacity = clamp((d - 2.6) / 2.5, 0.35, 1).toFixed(2);
+  }
+  if (show !== way.show) { way.show = show; wayEl.classList.toggle("is-on", show); }
+  // the stuck helper
+  if (lastPos) progWalk += Math.hypot(me.pos.x - lastPos.x, me.pos.z - lastPos.z);
+  lastPos = { x: me.pos.x, z: me.pos.z };
+  progT += dt;
+  if (progT > STUCK_S && progWalk > (FAST ? 0 : 8)) nudge();
+}
+function nudge() {
+  progT = STUCK_S - 30; progWalk = 0; nudges++;
+  guide.nudge();
+  wayEl.classList.remove("is-pulse"); void wayEl.offsetWidth; wayEl.classList.add("is-pulse");
+  setTimeout(() => wayEl.classList.remove("is-pulse"), 1400);
+  if (S.obj) objective(S.obj); else if (way.id) { objEl.classList.remove("is-on"); void objEl.offsetWidth; objEl.classList.add("is-on"); }
+  T("story_nudge", { scene: S.scene, obj: S.obj || "" });
+}
+
+/* ================================================================
+   THE LOOP, WITH ADAPTIVE QUALITY, AND REST WHEN NOTHING MOVES
+   ================================================================ */
+let last = performance.now(), acc = 0, frames = 0, fpsLog = [], lastDraw = 0;
 const perf = {};
 let raf = 0;
+const camFwd = new THREE.Vector3();
 function frame(now) {
   raf = requestAnimationFrame(frame);
   if (!S.open || document.hidden || S.attract) { last = now; return; }
+  padPoll(Math.min(0.05, (now - last) / 1000));
+  // battery: behind the journal or the pause menu there's nothing to draw; standing still, thirty frames are plenty
+  const over = S.phase === "pause" || S.phase === "journal";
+  const idle = (S.phase === "explore" && mv.idle > 3 && me && me.speed < 0.05 && camState.drag <= 0 && !ptrs.size) || (S.phase === "talk" && COARSE.matches);
+  const every = over ? 500 : S.phase === "sheet" || S.phase === "end" ? 100 : idle ? 32 : 0;
+  if (every && now - lastDraw < every) return;
+  lastDraw = now;
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (S.phase === "pause" || S.phase === "journal") dt = S.phase === "journal" ? dt * 0.0 : 0;
+  if (over) dt = 0;
   S.t += dt; U.uTime.value = S.t;
   const tA = performance.now();
-  if (S.phase !== "pause") {
+  if (!over) {
     tickLine(dt); tickChoices(dt); ringTick(dt);
     moveMe(dt); movePeople(dt);
     const tP = performance.now();
     for (const p of Object.values(P)) if (p.group.visible) p.update(dt);
+    feet();
     perf.people = performance.now() - tP;
     updateCamera(dt);
     const tU = performance.now();
-    updatePrompts();
+    updatePrompts(); updateWay(dt);
+    guide.tick(dt, S.t, still());
     perf.prompts = performance.now() - tU;
+    // the ear is the camera; the lamps that buzz are the ones nearest you
+    camera.getWorldDirection(camFwd); AU.listen(camera.position, camFwd);
+    const typist = S.scene === "office" && P.jason && P.jason.group.visible && !P.jason.path && P.jason.speed < 0.1 && S.phase === "explore" && set.userData.marks && P.jason.pos.distanceTo(set.userData.marks.jason) < 0.6 ? { x: -0.7, y: 0.8, z: -1.75 } : null;
+    AU.update(dt, { ear: me ? me.pos : camera.position, day: S.scene === "keys", typist });
   }
   perf.update = performance.now() - tA;
   if (set) {
@@ -1238,8 +1556,9 @@ function frame(now) {
     post.render(scene, camera, S.t);
     if (DEBUG) { gl.finish(); perf.total = performance.now() - t0; perf.calls = renderer.info.render.calls; perf.tris = renderer.info.render.triangles; }
   }
-  // adapt: step down when frames run long, back up when there is room
+  // adapt: step down when frames run long, back up when there is room (only while drawing every frame)
   perf.frame = performance.now() - now; perf.gap = now - (frame.prev || now);
+  if (every) { acc = 0; frames = 0; frame.prev = now; return; }
   acc += (now - (frame.prev || now)); frame.prev = now; frames++;
   if (acc > 2000) {
     const ms = acc / frames; fpsLog.push(Math.round(1000 / ms)); if (fpsLog.length > 60) fpsLog.shift();
@@ -1251,29 +1570,39 @@ function frame(now) {
     acc = 0; frames = 0;
   }
 }
-document.addEventListener("visibilitychange", () => { if (document.hidden) { if (A.ctx) A.ctx.suspend(); if (line && line.audio) line.audio.pause(); } else { if (A.ctx) A.ctx.resume(); if (line && line.audio && S.phase !== "pause") line.audio.play().catch(() => {}); } });
+document.addEventListener("visibilitychange", () => { if (!S.open) return; if (document.hidden) { AU.suspend(true); if (line && line.audio) line.audio.pause(); if (S.phase === "explore") pause(); } else { AU.suspend(false); if (line && line.audio && S.phase !== "pause") line.audio.play().catch(() => {}); } });
 
 /* ================================================================
    OPEN AND CLOSE
    ================================================================ */
 async function coldOpen() {
-  // a quiet establishing sequence: low over the wet asphalt, past the lamps and the cars, to the showroom and Jason under the light
+  // a quiet establishing sequence: low over the wet asphalt, past the lamps and the cars, to the showroom and Jason under the light.
+  // Skip (or Esc, Enter, A) cuts straight to you at the gate, without a sound
   S.phase = "cinematic"; el.classList.add("is-cinema");
   post.comp.u.uBox.value = 1;
   const u = set.userData;
-  const p = rail(u.camRail, u.camLook, 13);
-  await sleep(2800);
-  $(".st-card__ep", cardEl).textContent = D.episode;
-  $(".st-card__h", cardEl).textContent = D.title; $(".st-card__sub", cardEl).textContent = D.name;
-  cardEl.classList.add("is-title"); cardEl.hidden = false; void cardEl.offsetWidth; cardEl.classList.add("is-on");
-  if (SC()) SC().sting("open");
-  await sleep(4200);
-  cardEl.classList.remove("is-on"); await sleep(600); cardEl.hidden = true; cardEl.classList.remove("is-title");
-  await p;
-  await fade(1, 600);
+  let skipped = false;
+  const skipP = new Promise(r => { S.skipOpen = () => { if (skipped) return; skipped = true; r(); }; });
+  skipEl.hidden = false; requestAnimationFrame(() => skipEl.classList.add("is-on"));
+  const seq = (async () => {
+    const p = rail(u.camRail, u.camLook, 13);
+    await sleep(2800); if (skipped) return;
+    $(".st-card__ep", cardEl).textContent = D.episode;
+    $(".st-card__h", cardEl).textContent = D.title; $(".st-card__sub", cardEl).textContent = D.name;
+    cardEl.classList.add("is-title"); cardEl.hidden = false; void cardEl.offsetWidth; cardEl.classList.add("is-on");
+    if (SC()) SC().sting("open");
+    await sleep(4200); if (skipped) return;
+    cardEl.classList.remove("is-on"); await sleep(600); if (skipped) return; cardEl.hidden = true; cardEl.classList.remove("is-title");
+    await p;
+  })();
+  await Promise.race([seq, skipP]);
+  S.skipOpen = null; skipEl.classList.remove("is-on"); setTimeout(() => (skipEl.hidden = true), 300);
+  if (skipped) T("story_skip", { what: "cold_open" });
+  await fade(1, skipped ? 250 : 600);
+  if (skipped) { camState.rail = null; cardEl.classList.remove("is-on", "is-title"); cardEl.hidden = true; }
   // you, at the gate
   place(me, set.userData.marks.playerIn, Math.PI);
-  camState.init = true; camState.yaw = Math.PI * 0 ; camState.yaw = me.yaw + Math.PI;
+  camState.init = true; camState.yaw = me.yaw + Math.PI; camState.pitch = 0.2;
   post.comp.u.uBox.value = 0; el.classList.remove("is-cinema");
   await fade(0, 800);
   showHint();
@@ -1321,15 +1650,15 @@ function closeTurn(arrived) {
 TALL.addEventListener("change", () => setTimeout(turnCheck, 60));
 function showHint() {
   turnCheck();
-  hintEl.textContent = COARSE.matches ? UI.walk_touch : UI.walk_pointer;
+  hintEl.textContent = hintText();
   hintEl.hidden = false; hintEl.classList.add("is-on");
-  setTimeout(() => { hintEl.classList.remove("is-on"); setTimeout(() => (hintEl.hidden = true), 600); }, FAST ? 100 : 6000);
+  setTimeout(() => { hintEl.classList.remove("is-on"); setTimeout(() => (hintEl.hidden = true), 600); }, FAST ? 100 : 8000);
 }
 
 let booted = false;
 async function boot() {
   if (booted) return; booted = true;
-  resize();
+  resize(); readSafe(); glyphs();
   setLoad(0.4, D.scenes.lot.card);
   cast = await loadCast("assets/story/cast/");
   setLoad(0.55);
@@ -1348,7 +1677,8 @@ async function open(sceneName, how) {
   root.classList.add("story-on"); el.hidden = false; el.classList.add("is-on");
   S.paused = []; $$("video").forEach(v => { if (!el.contains(v) && !v.paused) { v.pause(); S.paused.push(v); } });
   if (window.JG_LOCK) window.JG_LOCK(true);
-  audio();
+  // the sound is built here, inside the press of Play or Continue, never before
+  AU.build(); AU.sound(soundOn());
   const saved = loadSave();
   const fresh = !sceneName && !saved;
   if (saved && !sceneName) { Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [] }); }
@@ -1376,7 +1706,7 @@ function close(how) {
   if (!S.open) return;
   S.open = false; S.phase = "closed";
   if (line) endLine(true);
-  rainLevel(0); ringOn = false;
+  AU.stopAll(); ringOn = false; if (SC() && SC().mix) SC().mix(1, 1);
   if (arcadeV) arcadeV.pause();
   el.classList.remove("is-on"); root.classList.remove("story-on");
   setTimeout(() => { el.hidden = true; }, 500);
@@ -1399,7 +1729,7 @@ window.JG_STORY = {
       const s = spotsHere().find(x => x.id === id); if (!s) return false;
       let st = s.sp.stand || s.p;
       if (s.sp.who) { const w = P[s.sp.who]; st = w.pos.clone().add(new THREE.Vector3(Math.sin(w.yaw), 0, Math.cos(w.yaw)).multiplyScalar(1.35)); }
-      mv.target = null; mv.after = null; me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
+      mv.path = null; mv.after = null; guide.clearRing(); me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
     },
     interact: id => interact(id, "debug"),
     desk: () => S.deskFinish && S.deskFinish(true),
@@ -1428,6 +1758,33 @@ window.JG_STORY = {
       const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
       return { plain: t(() => { renderer.setRenderTarget(null); renderer.render(scene, camera); }), post: t(() => post.render(scene, camera, S.t)), refl: ground ? t(() => post.reflect(scene, camera, world, ground)) : -1, w: post.w, h: post.h, calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
     },
-    quality: (q, pr) => { quality = q; post.q = q; if (pr) pixelRatio = pr; resize(); }
+    quality: (q, pr) => { quality = q; post.q = q; if (pr) pixelRatio = pr; resize(); },
+    /* the way, the controls, the camera and the sound, for tools/verify/story.mjs */
+    guide: () => { const t = S.phase === "explore" ? wayTarget() : null; const q = t ? project(new THREE.Vector3(t.p.x, Math.min(t.p.y || 1.2, 1.7), t.p.z)) : null; return { obj: S.obj, target: t ? { id: t.id, x: t.stand.x, z: t.stand.z } : null, trail: guide.count, vis: +guide.vis.toFixed(3), route: guideRoute ? guideRoute.map(p => [+p.x.toFixed(2), +p.z.toFixed(2)]) : null, arrow: { show: way.show, x: Math.round(way.x), y: Math.round(way.y), ang: +way.ang.toFixed(3), shown: wayEl.classList.contains("is-on") }, proj: q, nudges, dev }; },
+    stuck: () => { progT = STUCK_S + 1; progWalk = 99; },
+    yawTo: (x, z, off) => { const a = Math.atan2(x - me.pos.x, z - me.pos.z); camState.yaw = a + Math.PI + (off || 0); camState.drag = 9; camState.init = true; updateCamera(0.016); camera.updateMatrixWorld(); updateWay(0.016); return way; },
+    input: () => ({ mag: +mv.mag.toFixed(3), run: mv.mag >= RUN_AT, x: +mv.x.toFixed(3), z: +mv.z.toFixed(3), want: +speedFor(mv.mag).toFixed(3), speed: me ? +me.speed.toFixed(3) : 0, running: mv.running, stick: !stickEl.hidden, stickRun: stickEl.classList.contains("is-run"), path: mv.path ? mv.path.map(p => [+p.x.toFixed(2), +p.z.toFixed(2)]) : null, dev, keys: { ...SET.keys }, runToggle: SET.runToggle }),
+    speedFor: m => speedFor(m),
+    /* step the walk with a fixed clock, so the harness doesn't depend on the frame rate */
+    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); } return me ? [me.pos.x, me.pos.z] : null; },
+    put: (x, z, yaw) => { mv.path = null; me.pos.set(x, 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
+    walk: (x, z) => { const ok = walkTo(new THREE.Vector3(x, 0, z)); return ok ? mv.path.map(p => [p.x, p.z]) : null; },
+    walls: () => (set.userData.walls || []).map(w => [w.x0, w.x1, w.z0, w.z1]),
+    blocked: (x, z) => blocked(x, z, 0.2),
+    tap: (x, z) => { const q = project(new THREE.Vector3(x, 0, z)); return q; },
+    /* put you at each point, turn the camera all the way round, and report any spot where it ends up inside something */
+    camProbe: pts => {
+      const bad = [], keep = { x: me.pos.x, z: me.pos.z, yaw: me.yaw, cy: camState.yaw, cp: camState.pitch };
+      for (const [x, z] of pts) for (let a = 0; a < 16; a++) for (const pitch of [0.05, 0.25, 0.6]) {
+        me.pos.set(x, 0, z); camState.yaw = a / 16 * Math.PI * 2; camState.pitch = pitch;
+        const { want } = followView(0.016, true);
+        if (insideAny(want.x, want.y, want.z, 0.02)) bad.push([x, z, a, pitch, +want.x.toFixed(2), +want.y.toFixed(2), +want.z.toFixed(2)]);
+      }
+      me.pos.set(keep.x, 0, keep.z); me.yaw = keep.yaw; camState.yaw = keep.cy; camState.pitch = keep.cp; camState.init = true;
+      return { n: pts.length * 48, bad };
+    },
+    audio: () => AU.debug(),
+    settings: () => ({ ...SET, keys: { ...SET.keys }, mix: { ...AU.mix } }),
+    surface: (x, z) => surfaceAt(x, z)
   }
 };

@@ -32,6 +32,8 @@ import { paint } from "./paint.js";
 
 /* the cast's version: assets/story/cast/<name>-<CAST_VER>.glb and clips-<CAST_VER>.glb */
 export const CAST_VER = "v2";
+/* switches for the cast lab (tools/story/lab.html) */
+export const DEBUG = { ik: true };
 
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -43,17 +45,17 @@ const G = 9.81;
 
 /* each character's colours. Cloth textures keep their folds and light, recoloured */
 export const LOOKS = {
-  jason: { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, pocket: true, nose: true, hair: "#19130f", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#2a4c3a", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true, walk: "walkf" },
+  jason: { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, pocket: true, nose: true, hair: "#19130f", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#2a4c3a", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
   "jason-memory": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
   player: { skin: "#8a5d40", lip: "#8a5048", eyes: "#6a4a36", wide: 0.05, hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#9b958c", hair: "#4a4640", brow: "#7d776e", wide: 0, cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true, tempo: 0.92 },
-  renata: { skin: "#b78a66", hair: "#24170f", brow: "#24170f", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd", walk: "walkf" }
+  renata: { skin: "#b78a66", hair: "#24170f", brow: "#24170f", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
 };
 
-export async function loadCast(base) {
+export async function loadCast(base, o = {}) {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const motion = new Motion(await loader.loadAsync(base + "clips-" + CAST_VER + ".glb"));
+  const motion = new Motion(await loader.loadAsync(o.clips || base + "clips-" + CAST_VER + ".glb"));
   const cache = {};
   return {
     motion,
@@ -70,7 +72,7 @@ export async function loadCast(base) {
    MOTION: the shared clips, resampled at 30 Hz on the source skeleton
    ================================================================ */
 const FPS = 30;
-const LOCO = ["walk", "walkf", "jog"];
+const LOCO = ["walk", "walkb", "jog"];
 class Motion {
   constructor(gltf) {
     const arm = gltf.scene.getObjectByName("Armature") || gltf.scene;
@@ -102,7 +104,7 @@ class Motion {
           else if (prop === "position" && i === this.pel) { p[f * 3] = v[0]; p[f * 3 + 1] = v[1]; p[f * 3 + 2] = v[2]; }
         }
       }
-      this.clips[a.name] = { name: a.name, dur, nf, q, p, loop: /^(idle|talk|phone|fold|no|walk|walkf|jog|sit|sitTalk|lantern|rail)$/.test(a.name) };
+      this.clips[a.name] = { name: a.name, dur, nf, q, p, loop: /^(idle|converse|talk|phone|fold|walk|walkb|jog|sit|sitTalk|lean)$/.test(a.name) };
     }
     // locomotion clips: how far a cycle travels (from the stance foot), and when each foot bears weight
     for (const k of LOCO) if (this.clips[k]) this.analyse(this.clips[k]);
@@ -152,7 +154,7 @@ class Motion {
     }
     // the cycle's phase origin: the left heel strike
     let h = 0; for (let f = 0; f < last; f++) if (contact.l[f] && !contact.l[(f - 1 + last) % last]) { h = f; break; }
-    c.dist = dist; c.heel = h / last; c.contact = contact; c.footY = ys;
+    c.dist = dist; c.heel = h / last; c.contact = contact; c.footY = ys; c.lo = { l: Math.min(...ys.l), r: Math.min(...ys.r) };
   }
 }
 const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion(), _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3();
@@ -217,7 +219,7 @@ class Person {
     this.lookYaw = 0; this.lookPitch = 0; this.mouth = 0; this.blinkT = 2 + Math.random() * 3; this.blink = 0;
     this.browK = 0; this.smileK = 0; this.visK = {}; this.vis = null; this.visT = 0; this.words = null;
     this.vel = new THREE.Vector3(); this.lastPos = null; this.gs = 0; this.gsF = 0; this.yawRate = 0; this.lean = 0; this.leanF = 0;
-    this.locoW = 0; this.jogW = 0; this.gPhase = Math.random(); this.idleT = Math.random() * 10; this.talkT = Math.random() * 3; this.talkW = 0;
+    this.locoW = 0; this.jogW = 0; this.lw = [1, 0, 0]; this.gPhase = Math.random(); this.idleT = Math.random() * 10; this.talkT = Math.random() * 3; this.talkW = 0;
     this.sitK = 0; this.sitT = 0; this.sitState = "out"; this.holdK = {}; this.shot = null; this.shotT = 0;
     this.eye = { x: 0, y: 0, tx: 0, ty: 0, t: 0.5 };
     this.feet = { l: this.foot("l"), r: this.foot("r") };
@@ -259,8 +261,14 @@ class Person {
     });
     // proportions: the source scaled to this body by hip height
     const sp = SW.p[M.pel];
-    this.hipS = R.pelvis.at.y / sp.y;
-    this.srcPelRest = sp.clone();
+    // the source's leg (hip joint to ankle) to this body's, and where each pelvis hangs from the middle of its hip joints
+    const sLeg = SW.p[M.ix.calf_l].distanceTo(SW.p[M.ix.thigh_l]) + SW.p[M.ix.foot_l].distanceTo(SW.p[M.ix.calf_l]);
+    const tLeg = R.calf_l.at.distanceTo(R.thigh_l.at) + R.foot_l.at.distanceTo(R.calf_l.at);
+    this.hipS = tLeg / sLeg;
+    this.sHip0 = SW.p[M.ix.thigh_l].clone().add(SW.p[M.ix.thigh_r]).multiplyScalar(0.5);
+    this.tHip0 = R.thigh_l.at.clone().add(R.thigh_r.at).multiplyScalar(0.5);
+    this.pelOff = R.pelvis.at.clone().sub(this.tHip0).applyQuaternion(R.pelvis.wi);
+    this.sHip = new THREE.Vector3();
     // the legs, for IK
     this.leg = {};
     for (const s of ["l", "r"]) {
@@ -279,6 +287,7 @@ class Person {
     this.mk = {}; for (const [k, f] of Object.entries(MASKS)) this.mk[k] = mask(M, n => f(chainOf(n)));
     this.P = { a: M.pose(), b: M.pose(), c: M.pose(), acc: M.pose(), tmp: M.pose() };
     this.SW = M.fk(M.rest);
+    this.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(M.restW.q[M.ix.head].clone().invert());
   }
 
   foot(s) { return { lock: false, w: 0, pos: new THREE.Vector3(), yaw: 0, step: 0, from: new THREE.Vector3(), fromYaw: 0, to: new THREE.Vector3(), toYaw: 0, init: false }; }
@@ -376,12 +385,14 @@ class Person {
     if (L.umbrella && this.bones.hand_r) {
       // a long umbrella, held by its hook at about chest height; the shaft runs down through the fist and the canopy rides above the head
       const u = new THREE.Group();
-      const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.26, 12, 1, true), paint({ color: "#151716", wet: 1.8, rim: 0.7, side: THREE.DoubleSide }));
-      canopy.position.y = 0.86; u.add(canopy);
-      // ribs: the canopy's edge dips between them
+      // the canopy: eight panels that sag between the ribs, a little dome
+      const cg = new THREE.ConeGeometry(0.6, 0.3, 32, 4, true), cp = cg.attributes.position;
+      for (let i = 0; i < cp.count; i++) { const x = cp.getX(i), z = cp.getZ(i), y = cp.getY(i), r = Math.hypot(x, z), a = Math.atan2(z, x); const sag = (1 - Math.abs(Math.cos(a * 4))) * 0.035 * (r / 0.6); const dome = Math.sin((r / 0.6) * Math.PI) * 0.05; cp.setY(i, y - sag + dome); }
+      cg.computeVertexNormals();
+      const canopy = new THREE.Mesh(cg, paint({ color: "#151716", wet: 1.8, rim: 0.7, side: THREE.DoubleSide }));
+      canopy.position.y = 0.74; u.add(canopy);
       const rib = paint({ color: "#2a2a28", wet: 1 });
-      for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU, r = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.62, 3), rib); r.position.set(Math.cos(a) * 0.3, 0.8, Math.sin(a) * 0.3); r.rotation.set(Math.sin(a) * 1.16, 0, -Math.cos(a) * 1.16); u.add(r); }
-      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 1.0, 6), rib); shaft.position.y = 0.42; u.add(shaft);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.86, 6), rib); shaft.position.y = 0.35; u.add(shaft);
       const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.012, 0.12, 8), paint({ color: "#3a2a1c", wet: 0.6 })); grip.position.y = -0.02; u.add(grip);
       this.umbrella = u; this.add(u);
     }
@@ -401,9 +412,11 @@ class Person {
 
   /* one-shot moves: "interact" (reach and touch), "pickup", "give" (hand something over), "yes", "no" */
   play(kind) {
-    const c = { interact: "interact", pickup: "pickup", give: "interact", yes: "yes", no: "no" }[kind];
+    if (kind === "yes") { this.nodK = { t: 0, d: 0.9, a: 1 }; return 0.9; }
+    if (kind === "no") { this.shakeK = { t: 0, d: 1.1, a: 1 }; return 1.1; }
+    const c = { interact: "interact", pickup: "pickup", give: "give", reach: "interact" }[kind];
     if (!c || !this.M.clips[c]) return 0;
-    this.shot = { c: this.M.clips[c], t: 0, kind, mask: kind === "yes" || kind === "no" ? "head" : kind === "pickup" ? null : "arms" };
+    this.shot = { c: this.M.clips[c], t: 0, kind, mask: kind === "pickup" ? null : "arms" };
     return this.shot.c.dur;
   }
   /* the voice's word timings drive the mouth: call every frame while a line plays */
@@ -443,31 +456,49 @@ class Person {
     if (this.sitState === "up" && this.sitT > (M.clips.sitOut ? M.clips.sitOut.dur * 0.9 : 0)) this.sitState = "out";
     this.sitK = damp(this.sitK, this.sitState === "out" ? 0 : 1, this.sitT < 0.05 && this.sitState === "sit" ? 50 : 8, dt);
 
-    // ---- locomotion weights and the gait phase
-    const W = M.clips[L.walk || "walk"] || M.clips.walk, J = M.clips.jog;
+    // ---- locomotion: a 1D blend over speed through the walk, the brisk walk and the jog, at their own speeds,
+    // phase locked on the heel strike; the cadence follows the speed and the stride is warped to match it exactly
+    const LC = this.locoClips || (this.locoClips = LOCO.map(k => M.clips[k]).filter(Boolean));
     const hs = this.hipS;
-    const walkD = W.dist * hs, jogD = J ? J.dist * hs : 1;
     const gs = this.gs * (1 - this.sitK);
-    this.locoW = damp(this.locoW, sstep(0.06, 0.5, gs), 12, dt);
-    this.jogW = damp(this.jogW, sstep(1.75, 2.35, gs), 6, dt);
-    // cadence: a walk's cycle rate follows the speed within what people do, the jog's likewise; the stride covers the rest
-    const fWalk = clamp(gs / walkD, 0.62, 1.02) * this.tempo, fJog = clamp(0.9 + gs * 0.16, 1.15, 1.45) * this.tempo;
-    const f = lerp(fWalk, fJog, this.jogW);
+    const nv = LC.map(c => (c.dist * hs) / c.dur), nf = LC.map(c => 1 / c.dur);
+    const w = [0, 0, 0];
+    if (gs <= nv[0]) w[0] = 1;
+    else if (gs >= nv[LC.length - 1]) w[LC.length - 1] = 1;
+    else for (let i = 0; i + 1 < LC.length; i++) if (gs >= nv[i] && gs <= nv[i + 1]) { const u = sstep(0, 1, (gs - nv[i]) / (nv[i + 1] - nv[i])); w[i] = 1 - u; w[i + 1] = u; }
+    for (let i = 0; i < LC.length; i++) this.lw[i] = damp(this.lw[i], w[i], 7, dt);
+    const ws = this.lw[0] + this.lw[1] + this.lw[2] || 1;
+    for (let i = 0; i < 3; i++) this.lw[i] /= ws;
+    this.jogW = this.lw[2] || 0;
+    this.locoW = damp(this.locoW, sstep(0.05, 0.45, gs), 12, dt);
+    // cadence: slower than the clip's below its speed (down to about 85 steps a minute), quicker above it
+    let f = 0; for (let i = 0; i < LC.length; i++) f += this.lw[i] * nf[i];
+    const v0 = nv[0], vN = nv[LC.length - 1];
+    f *= gs < v0 ? clamp(Math.sqrt(gs / v0), 0.75, 1) : gs > vN ? clamp(Math.sqrt(gs / vN), 1, 1.2) : 1;
+    f *= this.tempo;
     if (this.locoW > 0.01) this.gPhase = (this.gPhase + f * dt) % 1;
     // the phase the episode listens to for footsteps: each heel strike is a multiple of pi
     this.phase = this.gPhase * TAU;
-    // stride warp: the clip's stride scaled so that the feet travel exactly with the ground
-    const natural = lerp(walkD * fWalk, jogD * fJog, this.jogW);
-    this.stride = clamp(gs / Math.max(0.05, natural), 0, 1.25);
+    // stride warp: the blended stride scaled so that the feet travel exactly with the ground
+    let dist = 0; for (let i = 0; i < LC.length; i++) dist += this.lw[i] * LC[i].dist * hs;
+    this.stride = clamp(gs / Math.max(0.05, dist * f), 0, 1.3);
 
     // ---- sample and blend the clips into the source pose
     const P = this.P, acc0 = P.acc;
-    const idleClip = this.hold === "phone" ? "phone" : "idle";
+    // standing: the calm idle take, turning into the conversational one when engaged with someone
     this.idleT += dt * this.tempo;
-    M.sample(M.clips[idleClip] || M.clips.idle, this.idleT, acc0);
+    M.sample(this.hold === "phone" && M.clips.phone ? M.clips.phone : M.clips.idle, this.idleT, acc0);
+    this.engW = damp(this.engW || 0, this.lookAtP && this.hold !== "phone" ? 1 : 0, 1.5, dt);
+    if (this.engW > 0.01 && M.clips.converse) { this.convT = (this.convT || Math.random() * 9) + dt * this.tempo; M.sample(M.clips.converse, this.convT, P.c); blendPose(acc0, P.c, this.engW * 0.85, null); }
     if (this.locoW > 0.001) {
-      M.sample(W, (this.gPhase + W.heel) % 1 * W.dur, P.a);
-      if (this.jogW > 0.001 && J) { M.sample(J, (this.gPhase + J.heel) % 1 * J.dur, P.b); blendPose(P.a, P.b, this.jogW, null); }
+      let tot = 0, first = true;
+      for (let i = 0; i < LC.length; i++) {
+        const k = this.lw[i]; if (k < 0.002) continue;
+        const c = LC[i], dst = first ? P.a : P.b;
+        M.sample(c, ((this.gPhase + c.heel) % 1) * c.dur, dst);
+        if (!first) blendPose(P.a, P.b, k / (tot + k), null);
+        tot += k; first = false;
+      }
       blendPose(acc0, P.a, this.locoW, null);
     }
     // a phone stays at the ear when walking
@@ -478,7 +509,7 @@ class Person {
     if (this.talkW > 0.01 && M.clips.talk) {
       this.talkT += dt * (0.8 + 0.25 * this.mouth);
       M.sample(M.clips.talk, this.talkT, P.c);
-      blendPose(acc0, P.c, this.talkW * 0.85 * (1 - this.locoW), this.hold === "umbrella" ? this.mk.upperL : this.mk.upper);
+      blendPose(acc0, P.c, this.talkW * 0.55 * (1 - this.locoW), this.hold === "umbrella" ? this.mk.upperL : this.mk.arms);
     }
     // sitting: down, settled (talking when talking), and up
     if (this.sitK > 0.001 && M.clips.sit) {
@@ -511,9 +542,10 @@ class Person {
     }
     // the hips: the source's hip travel, scaled to this body
     const pi = this.bi.pelvis, sp = SW.p[M.pel];
-    const hipC = this._hip.copy(sp).sub(this.srcPelRest).multiplyScalar(hs).add(this.rest.pelvis.at);
+    const sHip = this.sHip.copy(SW.p[M.ix.thigh_l]).add(SW.p[M.ix.thigh_r]).multiplyScalar(0.5);
+    const hipC = this._hip.copy(sHip).sub(this.sHip0).multiplyScalar(hs).add(this.tHip0);
     // sitting: the seat is 0.49 high; settle the hips on it whatever this body's legs
-    if (this.sitK > 0.001) hipC.y += this.sitK * this.seatFix(sp);
+    if (this.sitK > 0.001) hipC.y += this.sitK * this.seatFix(sHip);
     this.hipC = hipC;
 
     // ---- procedural layers in character axes
@@ -542,27 +574,34 @@ class Person {
     // the head turns slower than the eyes, and less when walking
     const lk = this.lookAtP ? 4 : 2.5;
     this.lookYaw = damp(this.lookYaw, wantY * (1 - this.locoW * 0.4), lk, dt); this.lookPitch = damp(this.lookPitch, wantP, lk, dt);
-    this.nod = damp(this.nod, 0, 4, dt);
+    // a nod when a line starts (the episode sets nod to 1): down and back up, once; or a full yes / no from play()
+    if (this.nod > 0.5) { this.nodK = this.nodK && this.nodK.a > 0.5 ? this.nodK : { t: 0, d: 0.55, a: 0.45 }; this.nod = 0; }
+    let nodA = 0, shakeA = 0;
+    if (this.nodK) { const k = this.nodK; k.t += dt; const u = k.t / k.d; nodA = u < 1 ? Math.sin(u * Math.PI * (k.a > 0.5 ? 2 : 1)) * (1 - u * 0.5) * 0.12 * k.a : 0; if (u >= 1) this.nodK = null; }
+    if (this.shakeK) { const k = this.shakeK; k.t += dt; const u = k.t / k.d; shakeA = u < 1 ? Math.sin(u * Math.PI * 3) * (1 - u) * 0.16 : 0; if (u >= 1) this.shakeK = null; }
     const idleH = (Math.sin(t * 0.37) * 0.04 + Math.sin(t * 0.91) * 0.02) * (1 - this.locoW);
+    // the clips look at the floor now and then; people in a scene keep their eyes up: level the gaze (fully when looking at someone)
+    const hf = _v1.copy(this.headFwd).applyQuaternion(SW.q[M.ix.head]);
+    const level = Math.asin(clamp(hf.y, -1, 1)) * (this.lookAtP ? 1 : 0.7) * (1 - this.sitK * 0.5);
+    this.rot("neck_01", level * 0.4, 0, 0); this.rot("head", level * 0.6, 0, 0);
     this.rot("spine_03", this.lookPitch * 0.1, this.lookYaw * 0.15, 0);
     this.rot("neck_01", this.lookPitch * 0.35, this.lookYaw * 0.35 + idleH * 0.5, 0);
-    this.rot("head", this.lookPitch * 0.5 + this.nod * 0.14 + Math.sin(t * 5.3) * 0.008 * this.mouth, this.lookYaw * 0.5 + idleH * 0.5, Math.sin(t * 0.53) * 0.015 * (1 - this.locoW));
+    this.rot("head", this.lookPitch * 0.5 + Math.abs(nodA) + Math.sin(t * 5.3) * 0.008 * this.mouth, this.lookYaw * 0.5 + idleH * 0.5 + shakeA, Math.sin(t * 0.53) * 0.015 * (1 - this.locoW));
 
     // ---- forward kinematics with the hips in place, then the feet and the hands
     this.fk(hipC);
-    this.legs(dt);
-    this.arms(dt);
+    if (DEBUG.ik) { this.legs(dt); this.arms(dt); }
     // write the bones
     for (let i = 0; i < n; i++) this.order[i].quaternion.copy(lq[i]);
     const pb = this.order[pi], pp = par[pi] >= 0 ? par[pi] : -1;
-    _v1.copy(hipC); if (pp >= 0) _v1.sub(wp[pp]).applyQuaternion(_q1.copy(wq[pp]).invert()); else _v1.sub(this.baseP).applyQuaternion(_q1.copy(this.baseQ).invert());
+    _v1.copy(wp[pi]); if (pp >= 0) _v1.sub(wp[pp]).applyQuaternion(_q1.copy(wq[pp]).invert()); else _v1.sub(this.baseP).applyQuaternion(_q1.copy(this.baseQ).invert());
     pb.position.copy(_v1);
     this.eyes(dt, wantY, wantP);
     this.face(dt);
     if (this.umbrella && this.bones.hand_r) {
       const hp = this.wp[this.bi.hand_r];
       this.umbrella.position.copy(hp).applyMatrix4(this.root.matrix).add(_v1.set(0, 0.03, 0));
-      this.umbrella.rotation.set(0.1 + this.leanF, 0, -0.08 + this.lean * 0.5);
+      this.umbrella.rotation.set(-0.12 + this.leanF + this.locoW * 0.1, 0, 0.1 + this.lean * 0.5);
     }
   }
 
@@ -575,7 +614,7 @@ class Person {
     for (let i = 0; i < n; i++) {
       const p = par[i];
       if (p < 0) { wq[i].copy(this.baseQ).multiply(lq[i]); wp[i].copy(this.lp[i]).applyQuaternion(this.baseQ).add(this.baseP); }
-      else { wq[i].copy(wq[p]).multiply(lq[i]); if (i === pi) wp[i].copy(hipC); else wp[i].copy(this.lp[i]).applyQuaternion(wq[p]).add(wp[p]); }
+      else { wq[i].copy(wq[p]).multiply(lq[i]); if (i === pi) wp[i].copy(this.pelOff).applyQuaternion(wq[i]).add(hipC); else wp[i].copy(this.lp[i]).applyQuaternion(wq[p]).add(wp[p]); }
     }
   }
   /* recompute a chain below bone i (after its local changed) */
@@ -588,7 +627,7 @@ class Person {
   /* ---- the legs: stride warp, foot locks, little steps, two-bone IK ---- */
   legs(dt) {
     if (this.sitK > 0.05) { this.feet.l.init = this.feet.r.init = false; return; }
-    const M = this.M, W = M.clips[this.L.walk || "walk"] || M.clips.walk, J = M.clips.jog, SW = this.SW;
+    const M = this.M, LC = this.locoClips, SW = this.SW;
     // character space to the space the body stands in (its parent's), and back
     const toP = _m.multiplyMatrices(this.group.matrix, this.root.matrix), fromP = _m2.copy(toP).invert();
     this.loco = this.locoW > (this.loco ? 0.25 : 0.4);
@@ -597,18 +636,21 @@ class Person {
       const g = this.leg[s], F = this.feet[s], other = this.feet[s === "l" ? "r" : "l"];
       // where the clip puts this ankle, scaled to this body and warped to the real stride
       const sa = SW.p[g.sFo], sh = SW.p[g.sTh];
+      // the height over the floor the clip gives this ankle, from where the clip plants it
+      let lo = this.srcAnkle(s) * (1 - this.locoW);
+      for (let i = 0; i < LC.length; i++) lo += this.lw[i] * this.locoW * LC[i].lo[s];
       const want = _f1.set(this.wp[g.th].x + (sa.x - sh.x) * this.hipS,
-        this.rest["foot_" + s].at.y + (sa.y - this.srcAnkle(s)) * this.hipS,
-        this.hipC.z + (sa.z - SW.p[M.pel].z) * this.hipS * lerp(1, this.stride, this.locoW));
+        this.rest["foot_" + s].at.y + (sa.y - lo) * this.hipS,
+        this.wp[g.th].z + (sa.z - sh.z) * this.hipS * lerp(1, this.stride, this.locoW));
       const wantYaw = this.yaw;
       const wantW = _f2.copy(want).applyMatrix4(toP);
       if (!F.init) { F.pos.copy(wantW); F.yaw = wantYaw; F.lock = true; F.step = 0; F.init = true; F.w = 1; }
       if (this.loco) {
         // the clip says whether this foot bears weight now
-        const cw = contactAt(W, (this.gPhase + W.heel) % 1, s), cj = J ? contactAt(J, (this.gPhase + J.heel) % 1, s) : cw;
-        const contact = lerp(cw, cj, this.jogW) > 0.5;
+        let cs = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) cs += this.lw[i] * contactAt(LC[i], (this.gPhase + LC[i].heel) % 1, s);
+        const contact = cs > 0.5;
         F.step = 0;
-        if (contact && !F.lock) { F.lock = true; F.pos.copy(wantW); F.yaw = wantYaw; }
+        if (contact && !F.lock) { F.lock = true; F.pos.copy(wantW); F.yaw = wantYaw; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", clamp(0.35 + this.gs * 0.25, 0, 1)); }
         if (!contact) F.lock = false;
         // a lock that drifts too far (a sharp turn mid stride) gives way
         if (F.lock && F.pos.distanceTo(wantW) > 0.3) { F.pos.copy(wantW); F.yaw = wantYaw; }
@@ -621,7 +663,7 @@ class Person {
           const u = sstep(0, 1, F.step);
           F.pos.lerpVectors(F.from, wantW, u); F.pos.y = wantW.y + Math.sin(u * Math.PI) * 0.06;
           F.yaw = F.fromYaw + angDiff(F.fromYaw, wantYaw) * u;
-          if (F.step >= 1) { F.step = 0; F.pos.copy(wantW); F.yaw = wantYaw; }
+          if (F.step >= 1) { F.step = 0; F.pos.copy(wantW); F.yaw = wantYaw; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", 0.2); }
         } else {
           if (!F.lock) { F.lock = true; }
           const off = Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z), tw = Math.abs(angDiff(F.yaw, wantYaw));
@@ -682,7 +724,7 @@ class Person {
       // the right fist in front of the chest, the forearm up, the elbow by the ribs
       const g = this.arm.r, R = this.rest;
       const sh = this.wp[g.ua];
-      const tgt = _f1.set(R.upperarm_r.at.x * 0.45, R.upperarm_r.at.y - 0.3, R.upperarm_r.at.z + 0.24);
+      const tgt = _f1.set(R.upperarm_r.at.x * 0.7, R.upperarm_r.at.y - 0.16, R.upperarm_r.at.z + 0.27);
       tgt.y += Math.sin(this.t * 2.1) * 0.006 + this.locoW * 0.01 * Math.sin(this.phase * 2);
       const tg = _f2.copy(this.wp[g.ha]).lerp(tgt, uk);
       this.ik2(g.ua, g.la, g.ha, g.l1, g.l2, tg, 0);

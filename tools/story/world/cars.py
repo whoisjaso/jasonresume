@@ -47,36 +47,36 @@ def smooth01(a, b, x):
 #   pillars: B (and C) pillar centres on the side glass; rw: rim radius, tr: tyre radius.
 # ---------------------------------------------------------------------------------
 KINDS = {
-  "sedan": dict(L=4.82, W=1.84, tr=0.335, tw=0.225, rw=0.23, spokes=5, axles=[0.98, 3.80], arch=0.41,
-    top=[(0, 0.60), (0.04, 0.70), (0.22, 0.80), (0.7, 0.875), (1.55, 0.94), (2.0, 1.22), (2.35, 1.40), (2.75, 1.455), (3.25, 1.44), (3.65, 1.30), (4.02, 1.04), (4.45, 1.015), (4.70, 0.97), (4.80, 0.82), (4.82, 0.62)],
+  "sedan": dict(L=4.82, W=1.84, tr=0.335, tw=0.225, rw=0.23, spokes=5, axles=[0.98, 3.80], arch=0.36,
+    top=[(0, 0.64), (0.05, 0.76), (0.22, 0.835), (0.7, 0.885), (1.55, 0.94), (2.0, 1.22), (2.35, 1.40), (2.75, 1.455), (3.25, 1.44), (3.65, 1.30), (4.02, 1.04), (4.45, 1.015), (4.70, 0.97), (4.80, 0.82), (4.82, 0.62)],
     belt=[(0, 0.62), (0.5, 0.80), (1.5, 0.90), (3.0, 0.95), (4.0, 1.0), (4.82, 0.96)],
     bot=[(0, 0.33), (0.35, 0.24), (0.9, 0.19), (3.9, 0.19), (4.4, 0.25), (4.82, 0.36)],
-    hw=[(0, 0.66), (0.07, 0.80), (0.25, 0.885), (0.7, 0.915), (2.4, 0.92), (4.2, 0.915), (4.6, 0.88), (4.76, 0.80), (4.82, 0.70)],
-    gw=[(1.5, 0.80), (2.3, 0.66), (3.3, 0.66), (4.0, 0.80)], cab=[1.55, 2.38, 3.30, 4.02], pillars=[2.93], crown=0.035, hood=0.025),
-  "compact": dict(L=4.45, W=1.76, tr=0.315, tw=0.205, rw=0.215, spokes=6, axles=[0.92, 3.55], arch=0.39,
-    top=[(0, 0.58), (0.04, 0.68), (0.2, 0.77), (0.6, 0.85), (1.42, 0.92), (1.85, 1.20), (2.2, 1.40), (2.6, 1.445), (3.05, 1.425), (3.4, 1.28), (3.72, 1.04), (4.1, 1.01), (4.36, 0.96), (4.44, 0.80), (4.45, 0.60)],
+    hw=[(0, 0.74), (0.07, 0.845), (0.25, 0.895), (0.7, 0.915), (2.4, 0.92), (4.2, 0.915), (4.6, 0.88), (4.76, 0.80), (4.82, 0.70)],
+    gw=[(1.5, 0.80), (2.3, 0.66), (3.3, 0.66), (4.0, 0.80)], cab=[1.55, 2.38, 3.30, 4.02], sg=[1.72, 3.62], pillars=[2.93], crown=0.035, hood=0.025),
+  "compact": dict(L=4.45, W=1.76, tr=0.315, tw=0.205, rw=0.215, spokes=6, axles=[0.92, 3.55], arch=0.365,
+    top=[(0, 0.62), (0.05, 0.74), (0.2, 0.81), (0.6, 0.86), (1.42, 0.92), (1.85, 1.20), (2.2, 1.40), (2.6, 1.445), (3.05, 1.425), (3.4, 1.28), (3.72, 1.04), (4.1, 1.01), (4.36, 0.96), (4.44, 0.80), (4.45, 0.60)],
     belt=[(0, 0.60), (0.5, 0.79), (1.45, 0.89), (3.0, 0.95), (3.75, 0.99), (4.45, 0.95)],
     bot=[(0, 0.32), (0.3, 0.24), (0.85, 0.19), (3.6, 0.19), (4.1, 0.25), (4.45, 0.35)],
-    hw=[(0, 0.64), (0.07, 0.77), (0.25, 0.85), (0.6, 0.875), (2.2, 0.88), (3.9, 0.875), (4.25, 0.84), (4.4, 0.76), (4.45, 0.67)],
-    gw=[(1.4, 0.76), (2.2, 0.63), (3.1, 0.63), (3.72, 0.76)], cab=[1.42, 2.22, 3.10, 3.72], pillars=[2.70], crown=0.03, hood=0.022),
+    hw=[(0, 0.71), (0.07, 0.81), (0.25, 0.86), (0.6, 0.875), (2.2, 0.88), (3.9, 0.875), (4.25, 0.84), (4.4, 0.76), (4.45, 0.67)],
+    gw=[(1.4, 0.76), (2.2, 0.63), (3.1, 0.63), (3.72, 0.76)], cab=[1.42, 2.22, 3.10, 3.72], sg=[1.6, 3.38], pillars=[2.70], crown=0.03, hood=0.022),
   "hatch": dict(L=4.15, W=1.76, tr=0.31, tw=0.205, rw=0.21, spokes=5, axles=[0.86, 3.43], arch=0.385,
-    top=[(0, 0.60), (0.04, 0.70), (0.2, 0.80), (0.55, 0.88), (1.25, 0.96), (1.7, 1.24), (2.05, 1.45), (2.5, 1.50), (3.3, 1.485), (3.75, 1.43), (3.98, 1.32), (4.08, 1.10), (4.13, 0.95), (4.15, 0.62)],
+    top=[(0, 0.64), (0.05, 0.76), (0.2, 0.83), (0.55, 0.89), (1.25, 0.96), (1.7, 1.24), (2.05, 1.45), (2.5, 1.50), (3.3, 1.485), (3.75, 1.43), (3.98, 1.32), (4.08, 1.10), (4.13, 0.95), (4.15, 0.62)],
     belt=[(0, 0.62), (0.5, 0.82), (1.3, 0.92), (3.2, 0.99), (3.9, 1.02), (4.15, 0.98)],
     bot=[(0, 0.32), (0.3, 0.24), (0.8, 0.19), (3.4, 0.19), (3.85, 0.26), (4.15, 0.38)],
-    hw=[(0, 0.64), (0.07, 0.78), (0.25, 0.855), (0.6, 0.88), (2.2, 0.885), (3.7, 0.88), (4.0, 0.85), (4.12, 0.78), (4.15, 0.70)],
-    gw=[(1.25, 0.77), (2.05, 0.66), (3.6, 0.66), (4.0, 0.74)], cab=[1.27, 2.05, 3.62, 4.08], pillars=[2.62, 3.42], crown=0.03, hood=0.022),
-  "suv": dict(L=4.85, W=1.93, tr=0.37, tw=0.245, rw=0.245, spokes=6, axles=[1.0, 3.83], arch=0.455,
-    top=[(0, 0.75), (0.05, 0.88), (0.25, 0.99), (0.7, 1.06), (1.42, 1.115), (1.85, 1.48), (2.2, 1.70), (2.7, 1.75), (4.2, 1.74), (4.62, 1.70), (4.78, 1.55), (4.84, 1.20), (4.85, 0.78)],
-    belt=[(0, 0.80), (0.5, 0.99), (1.4, 1.08), (3.5, 1.12), (4.6, 1.15), (4.85, 1.12)],
+    hw=[(0, 0.71), (0.07, 0.815), (0.25, 0.865), (0.6, 0.88), (2.2, 0.885), (3.7, 0.88), (4.0, 0.85), (4.12, 0.78), (4.15, 0.70)],
+    gw=[(1.25, 0.77), (2.05, 0.66), (3.6, 0.66), (4.0, 0.74)], cab=[1.27, 2.05, 3.62, 4.08], sg=[1.44, 3.80], pillars=[2.62, 3.42], crown=0.03, hood=0.022),
+  "suv": dict(L=4.85, W=1.93, tr=0.37, tw=0.245, rw=0.245, spokes=6, axles=[1.0, 3.83], arch=0.425,
+    top=[(0, 0.86), (0.05, 0.99), (0.25, 1.06), (0.7, 1.10), (1.42, 1.14), (1.85, 1.48), (2.2, 1.70), (2.7, 1.75), (4.2, 1.74), (4.62, 1.70), (4.78, 1.55), (4.84, 1.20), (4.85, 0.78)],
+    belt=[(0, 0.88), (0.5, 1.04), (1.4, 1.10), (3.5, 1.12), (4.6, 1.15), (4.85, 1.12)],
     bot=[(0, 0.44), (0.4, 0.34), (0.95, 0.27), (3.9, 0.27), (4.4, 0.34), (4.85, 0.46)],
-    hw=[(0, 0.72), (0.08, 0.86), (0.28, 0.94), (0.7, 0.965), (2.4, 0.97), (4.3, 0.965), (4.66, 0.94), (4.80, 0.88), (4.85, 0.80)],
-    gw=[(1.4, 0.84), (2.2, 0.73), (4.5, 0.73), (4.8, 0.80)], cab=[1.45, 2.22, 4.55, 4.82], pillars=[2.95, 3.95], crown=0.03, hood=0.03),
-  "truck": dict(L=5.75, W=2.0, tr=0.39, tw=0.255, rw=0.255, spokes=6, axles=[1.05, 4.62], arch=0.475, bed=[3.35, 5.62],
-    top=[(0, 0.86), (0.05, 1.02), (0.3, 1.12), (0.9, 1.17), (1.75, 1.22), (2.15, 1.58), (2.45, 1.86), (2.75, 1.91), (3.15, 1.905), (3.28, 1.86), (3.32, 1.22), (3.4, 1.23), (5.6, 1.24), (5.72, 1.20), (5.75, 0.90)],
-    belt=[(0, 0.90), (0.5, 1.10), (1.75, 1.20), (3.3, 1.22), (5.75, 1.22)],
+    hw=[(0, 0.80), (0.08, 0.90), (0.28, 0.95), (0.7, 0.965), (2.4, 0.97), (4.3, 0.965), (4.66, 0.94), (4.80, 0.88), (4.85, 0.80)],
+    gw=[(1.4, 0.84), (2.2, 0.73), (4.5, 0.73), (4.8, 0.80)], cab=[1.45, 2.22, 4.55, 4.82], sg=[1.62, 4.55], pillars=[2.95, 3.95], crown=0.03, hood=0.03),
+  "truck": dict(L=5.75, W=2.0, tr=0.39, tw=0.255, rw=0.255, spokes=6, axles=[1.05, 4.62], arch=0.445, bed=[3.35, 5.62],
+    top=[(0, 0.98), (0.05, 1.12), (0.3, 1.19), (0.9, 1.21), (1.75, 1.245), (2.15, 1.58), (2.45, 1.86), (2.75, 1.91), (3.15, 1.905), (3.28, 1.86), (3.32, 1.22), (3.4, 1.23), (5.6, 1.24), (5.72, 1.20), (5.75, 0.90)],
+    belt=[(0, 1.0), (0.5, 1.16), (1.75, 1.22), (3.3, 1.22), (5.75, 1.22)],
     bot=[(0, 0.50), (0.45, 0.40), (1.0, 0.33), (5.2, 0.36), (5.75, 0.50)],
-    hw=[(0, 0.80), (0.08, 0.92), (0.3, 0.985), (0.8, 1.0), (5.5, 1.0), (5.70, 0.98), (5.75, 0.95)],
-    gw=[(1.75, 0.88), (2.5, 0.78), (3.2, 0.78), (3.3, 0.86)], cab=[1.78, 2.5, 3.18, 3.30], pillars=[2.90], crown=0.025, hood=0.03)
+    hw=[(0, 0.92), (0.08, 0.975), (0.3, 0.995), (0.8, 1.0), (5.5, 1.0), (5.70, 0.98), (5.75, 0.95)],
+    gw=[(1.75, 0.88), (2.5, 0.78), (3.2, 0.78), (3.3, 0.86)], cab=[1.78, 2.5, 3.18, 3.30], sg=[1.95, 3.18], pillars=[2.90], crown=0.025, hood=0.03)
 }
 
 # section roles: 0 bottom centre .. 13 roof centre (one side; mirrored for the other)
@@ -117,7 +117,7 @@ def stations(K):
     n_end = 7
     for i in range(n_end): xs.append(L * 0.06 * (1 - math.cos(i / n_end * math.pi / 2)))
     x = L * 0.06
-    while x < L * 0.94: xs.append(x); x += 0.05
+    while x < L * 0.94: xs.append(x); x += 0.075
     for i in range(n_end + 1): xs.append(L - L * 0.06 * (1 - math.cos((n_end - i) / n_end * math.pi / 2)))
     # add stations exactly on the cab marks and pillars so material borders follow edge loops
     marks = list(K["cab"]) + [p + d for p in K["pillars"] for d in (-0.05, 0.05)] + [a + d * K["arch"] for a in K["axles"] for d in (-1, 1)]
@@ -174,8 +174,9 @@ def body(K, name):
         for j in range(n):
             a, b2 = rings[i][j], rings[i][(j + 1) % n]; c, d = rings[i + 1][(j + 1) % n], rings[i + 1][j]
             f = bm.faces.new((a, d, c, b2))
-            jj = j if j < SEC else (2 * SEC - 2 - j) - 1   # mirrored index of the band's lower vertex
-            tags[f] = (i, min(j, jj) if j < SEC else jj)
+            # the band between section points k and k+1, the same index on both sides
+            band = j if j < SEC - 1 else (SEC - 2 if j == SEC - 1 else 2 * SEC - 3 - j)
+            tags[f] = (i, band)
     # caps: fan the first and last rings onto a centre
     for ring, flip in ((rings[0], False), (rings[-1], True)):
         cz = sum(v.co.z for v in ring) / n; cx = sum(v.co.x for v in ring) / n; cy = ring[0].co.y
@@ -199,11 +200,11 @@ def body(K, name):
             i, j = tg; x0, x1 = xs[i], xs[i + 1]; xm = (x0 + x1) / 2
             zc = p.center.z
             inside = c0 - 0.001 <= xm <= c3 + 0.001
-            if j in (8, 9) and inside:                       # side glass band
+            s0, s1 = K["sg"]
+            if j in (8, 9) and s0 <= xm <= s1:               # side glass band
                 mi = 1
                 for pc in K["pillars"]:
                     if abs(xm - pc) < 0.05: mi = 2           # B and C pillars, black
-                if xm < c0 + 0.03 or xm > c3 - 0.03: mi = 0
             elif j in (11, 12) and inside and (xm < c1 - 0.02 or xm > c2 + 0.02):
                 mi = 1                                       # windshield and backlight
                 if "bed" in K and xm > c2 + 0.02: mi = 1
@@ -259,20 +260,39 @@ def surface_point(ob, origin, direction):
     ok, loc, nor, idx = ob.ray_cast(Vector(origin), Vector(direction).normalized())
     return (loc, nor) if ok else None
 
-def patch(ob, name, matname, verts2d, origin_fn, direction, offset=0.004, cols=None):
-    """a flat outline (list of (u, v) points) projected onto the body along a direction, lifted off by offset"""
-    M = mats(); bm = bmesh.new(); vs = []
-    for (u, v) in verts2d:
-        o = origin_fn(u, v); hit = surface_point(ob, o, direction)
-        if not hit: continue
-        loc, nor = hit
-        vs.append(bm.verts.new(loc + nor * offset))
-    if len(vs) < 3: bm.free(); return None
-    bm.faces.new(vs)
-    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+def patch(ob, name, matname, verts2d, origin_fn, direction, offset=0.004, cols=None, rings=4):
+    """a flat outline (list of (u, v) points, star-shaped about its centre) projected onto the body along a
+    direction as a fan of rings, so it follows the curvature, lifted off by offset"""
+    M = mats(); bm = bmesh.new()
+    cu = sum(p[0] for p in verts2d) / len(verts2d); cv = sum(p[1] for p in verts2d) / len(verts2d)
+    def proj(u, v):
+        hit = surface_point(ob, origin_fn(u, v), direction)
+        return bm.verts.new(hit[0] + hit[1] * offset) if hit else None
+    ctr = proj(cu, cv)
+    if ctr is None: bm.free(); return None
+    grid = []
+    for r in range(1, rings + 1):
+        t = r / rings
+        grid.append([proj(cu + (u - cu) * t, cv + (v - cv) * t) for (u, v) in verts2d])
+    n = len(verts2d)
+    for k in range(n):
+        a, b2 = grid[0][k], grid[0][(k + 1) % n]
+        if a and b2: bm.faces.new((ctr, a, b2))
+        for r in range(rings - 1):
+            q = (grid[r][k], grid[r + 1][k], grid[r + 1][(k + 1) % n], grid[r][(k + 1) % n])
+            if all(q):
+                try: bm.faces.new(q)
+                except ValueError: pass
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    # face the way the ray came from
+    for f in bm.faces:
+        f.normal_update()
+        if f.normal.dot(Vector(direction)) > 0: f.normal_flip()
     me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
     me.materials.append(M[matname])
-    o = link(bpy.data.objects.new(name, me)); return o
+    o = link(bpy.data.objects.new(name, me))
+    bpy.context.view_layer.objects.active = o; o.select_set(True); bpy.ops.object.shade_smooth(); o.select_set(False)
+    return o
 
 def outline(cx, cy, w, h, r=0.3, n=6):
     """a rounded rectangle centred at (cx, cy)"""
@@ -287,20 +307,23 @@ def outline(cx, cy, w, h, r=0.3, n=6):
 def details(K, ob, name):
     L, W = K["L"], K["W"]; parts = []
     zbelt_f = cr(K["belt"], 0.1); zb_f = cr(K["bot"], 0.05); zbelt_r = cr(K["belt"], L - 0.1); zb_r = cr(K["bot"], L - 0.05)
-    hl_z = zb_f + (zbelt_f - zb_f) * 0.78; tl_z = zb_r + (zbelt_r - zb_r) * 0.80
+    hl_z = zb_f + (zbelt_f - zb_f) * 0.80; tl_z = zb_r + (zbelt_r - zb_r) * 0.80
     # headlights: wrap round the front corners (projected from the front, then from the side for the wrap)
     for s in (1, -1):
-        cx = s * W * 0.33
-        parts.append(patch(ob, "hl", "lamp_head", outline(cx, hl_z, W * 0.25, 0.12 if K["L"] < 5 else 0.16, 0.45), lambda u, v: (u, 5, v), (0, -1, 0), 0.006))
-        parts.append(patch(ob, "tl", "lamp_tail", outline(s * W * 0.37, tl_z, W * 0.2, 0.11 if "bed" not in K else 0.32, 0.3), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.006))
+        cx = s * W * 0.335
+        parts.append(patch(ob, "hl", "lamp_head", outline(cx, hl_z, W * 0.28, 0.15 if K["L"] < 5 else 0.19, 0.4), lambda u, v: (u, 5, v), (0, -1, 0), 0.006))
+        parts.append(patch(ob, "tl", "lamp_tail", outline(s * W * 0.36, tl_z, W * 0.25 if "bed" not in K else W * 0.1, 0.13 if "bed" not in K else 0.34, 0.3), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.006))
         # tail light wrap onto the side, and the amber marker at the front corner
         parts.append(patch(ob, "tlw", "lamp_tail", outline(-(L - 0.12), tl_z, 0.16, 0.09, 0.3), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         parts.append(patch(ob, "am", "lamp_amber", outline(-0.16, hl_z - 0.02, 0.1, 0.05, 0.45), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         # side mirror: a small rounded block on a stalk at the A-pillar base
         c0 = K["cab"][0]; zb = cr(K["belt"], c0 + 0.2)
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.08), -(c0 + 0.22), zb + 0.1))
-        mr = bpy.context.active_object; mr.scale = (0.11, 0.07, 0.07); mr.data.materials.append(mats()["paint"])
-        bpy.ops.object.shade_smooth(); parts.append(mr)
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.09), -(c0 + 0.24), zb + 0.11))
+        mr = bpy.context.active_object; mr.scale = (0.19, 0.09, 0.12); mr.data.materials.append(mats()["paint"])
+        bv = mr.modifiers.new("bv", "BEVEL"); bv.width = 0.03; bv.segments = 3
+        bpy.context.view_layer.objects.active = mr; bpy.ops.object.modifier_apply(modifier="bv"); bpy.ops.object.shade_smooth(); parts.append(mr)
+        bpy.ops.mesh.primitive_plane_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.1), -(c0 + 0.24) - 0.047, zb + 0.11), rotation=(math.pi / 2, 0, 0))
+        mg = bpy.context.active_object; mg.scale = (0.15, 0.085, 1); mg.data.materials.append(mats()["chrome"]); parts.append(mg)
         bpy.ops.mesh.primitive_cube_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.02), -(c0 + 0.22), zb + 0.06))
         st = bpy.context.active_object; st.scale = (0.08, 0.04, 0.03); st.data.materials.append(mats()["trim"]); parts.append(st)
         # door handles: one per door, on the shoulder below the belt
@@ -385,7 +408,8 @@ def build(kind):
     # the interior: a dark shell under the glass so the cabin never reads as empty sky
     c0, c1, c2, c3 = K["cab"]
     bpy.ops.mesh.primitive_cube_add(size=1, location=(0, -(c0 + c3) / 2, (cr(K["belt"], (c0 + c3) / 2) + cr(K["top"], (c1 + c2) / 2)) / 2 - 0.05))
-    inn = bpy.context.active_object; inn.scale = (K["W"] * 0.78, (c3 - c0) * 0.85, (cr(K["top"], (c1 + c2) / 2) - cr(K["belt"], (c0 + c3) / 2)) * 0.9)
+    inn = bpy.context.active_object; inn.scale = (K["W"] * 0.66, (c2 - c1) + 0.6, (cr(K["top"], (c1 + c2) / 2) - cr(K["belt"], (c0 + c3) / 2)) * 0.62)
+    inn.location.y = -(c1 + c2) / 2
     inn.data.materials.append(mats()["interior"])
     # headrests: silhouettes behind the side glass
     hz = cr(K["belt"], (c0 + c3) / 2) + 0.28
@@ -417,7 +441,7 @@ def build(kind):
     bpy.ops.mesh.primitive_plane_add(size=12, location=(0, 0, 0)); gp = bpy.context.active_object
     car.data.color_attributes.new("ao", "BYTE_COLOR", "POINT")
     car.data.color_attributes.active_color = car.data.color_attributes["ao"]
-    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.samples = 48; sc.cycles.device = "CPU"
+    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.samples = 256; sc.cycles.device = "CPU"
     sc.render.bake.target = "VERTEX_COLORS"
     bpy.ops.object.select_all(action="DESELECT"); car.select_set(True); bpy.context.view_layer.objects.active = car
     sc.world = bpy.data.worlds.new("w")
@@ -427,9 +451,13 @@ def build(kind):
         print("bake failed", e)
     bpy.data.objects.remove(gp)
     car.location = (0, 0, 0)
+    # the car's measurements ride along as glTF extras: story/world.js draws its panel lines from them
+    car["L"] = K["L"]; car["W"] = K["W"]; car["H"] = max(p[1] for p in K["top"]); car["cab"] = K["cab"]; car["sg"] = K["sg"]
+    car["pillars"] = K["pillars"]; car["axles"] = K["axles"]; car["belt"] = [cr(K["belt"], x) for x in (0.5, K["L"] / 2, K["L"] - 0.5)]
+    car["tr"] = K["tr"]; car["arch"] = K["arch"]
     out = os.path.join(OUT, kind + ".glb")
     bpy.ops.export_scene.gltf(filepath=out, export_format="GLB", use_selection=True, export_apply=True, export_vertex_color="ACTIVE", export_all_vertex_colors=False,
-                              export_normals=True, export_texcoords=False, export_materials="EXPORT", export_yup=True)
+                              export_normals=True, export_texcoords=False, export_materials="EXPORT", export_yup=True, export_extras=True)
     tris = sum(len(p.vertices) - 2 for p in car.data.polygons)
     print("CAR", kind, "tris", tris, "->", out)
 

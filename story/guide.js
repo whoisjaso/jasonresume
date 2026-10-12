@@ -14,15 +14,15 @@ const GAP = 0.95;      // metres between them
 const START = 1.1;     // the first one, ahead of your feet
 
 const chevronMat = () => new THREE.ShaderMaterial({
-  uniforms: { uCol: { value: new THREE.Color(1.0, 0.86, 0.62) } },
+  uniforms: { uCol: { value: new THREE.Color(1.0, 0.8, 0.52) } },
   vertexShader: `attribute float aK; attribute float aW; varying vec2 vUv; varying float vK; varying float vW;
     void main(){ vUv = uv; vK = aK; vW = aW; gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0); }`,
   fragmentShader: `uniform vec3 uCol; varying vec2 vUv; varying float vK; varying float vW;
     void main(){
       vec2 p = vUv * 2.0 - 1.0;            // x across, y along the way
       float arm = (p.y + abs(p.x) * 0.9 - 0.3) * 0.74;   // a shallow chevron, its point forward
-      float d = abs(arm) - 0.065;
-      float a = 1.0 - smoothstep(0.0, 0.07, d);
+      float d = abs(arm) - 0.06;
+      float a = 1.0 - smoothstep(-0.02, 0.09, d);
       a *= 1.0 - smoothstep(0.62, 0.95, abs(p.x));
       a *= smoothstep(-0.95, -0.55, p.y) * (1.0 - smoothstep(0.55, 0.95, p.y));
       float glow = exp(-abs(arm) * 6.0) * 0.28 * (1.0 - smoothstep(0.5, 1.0, length(p)));
@@ -42,7 +42,7 @@ const ringMat = () => new THREE.ShaderMaterial({
 
 export class Guide {
   constructor(world) {
-    const geo = new THREE.PlaneGeometry(0.62, 0.5); geo.rotateX(-Math.PI / 2);
+    const geo = new THREE.PlaneGeometry(0.52, 0.42); geo.rotateX(-Math.PI / 2);
     // the plane's uv runs along +z after the turn; flip so the V points the way you walk
     const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i));
     this.k = new Float32Array(N); this.w = new Float32Array(N);
@@ -87,7 +87,7 @@ export class Guide {
         const wave = still ? 0.6 : 0.5 + 0.5 * Math.sin(t * 2.4 - i * 0.9);
         const tail = 1 - i / (N + 1);
         const pulse = this.pulse > 0 ? Math.max(0, 1 - Math.abs((1 - this.pulse) * (N + 2) - i) / 1.5) * 1.6 : 0;
-        this.k[i] = this.vis * tail * (0.38 + 0.3 * wave) + pulse * this.vis;
+        this.k[i] = this.vis * tail * (0.2 + 0.2 * wave) + pulse * this.vis * 0.7;
         this.w[i] = wave;
         this.count++;
       }

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Cast lab</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1a1d1c; color: #ede7db; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #hud { position: fixed; left: 8px; top: 8px; white-space: pre; pointer-events: none; text-shadow: 0 1px 2px #000; }
+</style>
+</head>
+<body>
+<div id="hud"></div>
+<script type="module">
+/* The cast lab: one or more people on a plain floor, driven the way the episode drives
+   them (position, wantYaw, talk, lookAtP, pose, hold), for checking motion by eye and
+   for recording frame strips. Dev tool, not shipped in the episode.
+   ?who=jason,dell&run=walk|loop|stop|turn|talk|sit|jog&speed=1.45&cam=side|front|follow|face */
+import * as THREE from "../../vendor/three-0.184.0/three.module.min.js";
+import { loadCast, DEBUG } from "../../story/people.js";
+import { GLTFLoader } from "../../vendor/three-0.184.0/addons/loaders/GLTFLoader.js";
+import { U } from "../../story/paint.js";
+import { brush } from "../../story/tex.js";
+const q = new URLSearchParams(location.search);
+const who = (q.get("who") || "jason").split(",");
+const W = +(q.get("w") || innerWidth), H = +(q.get("h") || innerHeight);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(+(q.get("pr") || 1)); renderer.setSize(W, H); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#2a2f2d");
+const camera = new THREE.PerspectiveCamera(+(q.get("fov") || 35), W / H, 0.05, 200);
+U.uBrush.value = brush(); U.uSky.value.set("#8d9aa1"); U.uGround.value.set("#3a3530"); U.uMoon.value.set("#b9b2a2"); U.uMoonDir.value.set(0.4, 0.8, 0.6).normalize();
+U.uFogDen.value = 0.002; U.uWetAll.value = 0.05; U.uRim.value.set("#9fb0bb");
+U.uLampN.value = 1; U.uLampPos.value[0].set(1.5, 3.2, 2.5, 14); U.uLampCol.value[0].set(1.4, 1.2, 0.95, 0);
+// floor with a 0.5 m grid, and a chair
+const grid = new THREE.GridHelper(40, 80, "#555", "#3a3a3a"); scene.add(grid);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ color: "#26292a" })); floor.rotation.x = -Math.PI / 2; floor.position.y = -0.002; scene.add(floor);
+const chair = new THREE.Group(); const cm = new THREE.MeshBasicMaterial({ color: "#5a4a3a" });
+const bx = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cm); m.position.set(x, y, z); chair.add(m); };
+bx(0.5, 0.06, 0.5, 0, 0.46, 0); bx(0.5, 0.5, 0.06, 0, 0.74, -0.24); bx(0.06, 0.44, 0.06, 0, 0.22, 0); chair.visible = false; scene.add(chair);
+const cast = await loadCast("../../assets/story/cast/", { clips: q.get("clips") || undefined });
+const P = [];
+for (let i = 0; i < who.length; i++) { const p = await cast.make(who[i] + "-v1"); scene.add(p.group); p.pos.set((i - (who.length - 1) / 2) * 1.2, 0, 0); P.push(p); }
+if (q.get("noik")) DEBUG.ik = false;
+// a reference: the library's own mannequin playing the source clip, beside the first person
+let refMix = null, refObj = null;
+if (q.get("ref")) {
+  const [file, clip] = q.get("ref").split(":");
+  const g = await new GLTFLoader().loadAsync("/ref/" + file + ".glb");
+  refObj = g.scene; scene.add(refObj); refObj.position.set(1.1, 0, 0);
+  refObj.traverse(o => { if (o.isMesh) { o.material = new THREE.MeshNormalMaterial(); o.frustumCulled = false; } });
+  refMix = new THREE.AnimationMixer(refObj); refMix.clipAction(g.animations.find(a => a.name === clip)).play();
+}
+// a grid of the library's clips on its mannequin: ?refgrid=UAL1:Idle_Loop,Walk_Loop,...
+const refMixers = [];
+if (q.get("refgrid")) {
+  const [file, list] = q.get("refgrid").split(":");
+  const names = list.split(",");
+  const g = await new GLTFLoader().loadAsync("/ref/" + file + ".glb");
+  const { clone } = await import("../../vendor/three-0.184.0/addons/utils/SkeletonUtils.js");
+  names.forEach((nm, i) => {
+    const o = clone(g.scene); o.traverse(m => { if (m.isMesh) { m.material = new THREE.MeshNormalMaterial(); m.frustumCulled = false; } });
+    o.position.set((i % 4) * 1.3 - 2, 0, -Math.floor(i / 4) * 1.6); scene.add(o);
+    const mx = new THREE.AnimationMixer(o); const a = g.animations.find(a => a.name === nm); if (a) mx.clipAction(a).play(); refMixers.push(mx);
+  });
+  P.forEach(p => (p.group.visible = false));
+}
+// any clip, played straight on the first person: ?clip=name
+if (q.get("clip")) { const c = cast.motion.clips[q.get("clip")]; if (c) { cast.motion.clips.idle = c; c.loop = true; } }
+const run = q.get("run") || "idle", speed = +(q.get("speed") || 1.45);
+let T = 0;
+// a scripted driver, deterministic in time
+function drive(p, i, dt) {
+  const t = T;
+  if (run === "walk" || run === "jog") {
+    // straight along +z then back, with a stop and a turn at each end
+    const L = 8, v = run === "jog" ? +(q.get("speed") || 2.6) : speed;
+    const seg = L / v, cyc = 2 * seg + 3.0, u = (t + i * 0.37) % cyc;
+    let want = 0;
+    if (u < seg) want = v; else if (u < seg + 1.5) want = 0; else if (u < 2 * seg + 1.5) want = v; else want = 0;
+    const dir = u < seg + 0.6 ? 0 : (u < 2 * seg + 2.1 ? Math.PI : 0);
+    p.wantYaw = dir;
+    p.speed = damp(p.speed, want, 10, dt);
+    const turn = Math.abs(ang(p.yaw, p.wantYaw));
+    const sp = p.speed * (turn > 1.6 ? 0.25 : 1);
+    p.pos.x += Math.sin(p.yaw) * sp * dt * 0 + Math.sin(p.wantYaw) * sp * dt; p.pos.z += Math.cos(p.wantYaw) * sp * dt;
+  } else if (run === "loop") {
+    // a circle of radius r, constant speed: leaning into the turn
+    const r = +(q.get("r") || 3), v = speed, a = (t * v) / r;
+    p.pos.set(Math.sin(a) * r, 0, Math.cos(a) * r - r); p.wantYaw = a + Math.PI / 2; p.speed = v;
+  } else if (run === "turn") {
+    // standing, turning to face points around it
+    const k = Math.floor(t / 2.2), ys = [0, 1.6, 3.1, 1.2, -1.4, 0.4, 2.6]; p.wantYaw = ys[k % ys.length]; p.speed = 0;
+  } else if (run === "talk") {
+    p.talk = Math.sin(t * 7) > -0.3 && (t % 6) < 4.5 ? 1 : 0.15; if ((t % 6) > 4.5) p.talk = 0;
+    p.lookAtP = new THREE.Vector3(Math.sin(t * 0.3) * 1.5, 1.6, 2);
+  } else if (run === "sit") { chair.visible = true; chair.position.set(p.pos.x, 0, p.pos.z); p.pose = (t % 8) < 6 ? "sit" : "stand"; }
+  if (q.get("hold")) p.hold = q.get("hold");
+  if (q.get("look")) p.lookAtP = new THREE.Vector3(0, 1.6, 3);
+}
+const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
+function ang(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
+const camMode = q.get("cam") || "side";
+function placeCam() {
+  const p = P[0], c = p.pos;
+  if (camMode === "side") { camera.position.set(c.x + 5.5, 1.0, c.z); camera.lookAt(c.x, 0.85, c.z); }
+  else if (camMode === "front") { camera.position.set(c.x + 0.8, 1.2, c.z + 5); camera.lookAt(c.x, 0.9, c.z); }
+  else if (camMode === "follow") { const y = p.yaw; camera.position.set(c.x - Math.sin(y) * 4 + 1.2, 1.7, c.z - Math.cos(y) * 4); camera.lookAt(c.x, 1.0, c.z); }
+  else if (camMode === "feet") { camera.position.set(c.x + 2.2, 0.35, c.z + 0.4); camera.lookAt(c.x, 0.25, c.z); }
+  else if (camMode === "face") { const h = p.headWorld(new THREE.Vector3()); camera.position.set(h.x + Math.sin(p.yaw) * 0.75 + 0.15, h.y - 0.02, h.z + Math.cos(p.yaw) * 0.75); camera.lookAt(h.x, h.y - 0.05, h.z); }
+  else if (camMode === "grid") { camera.position.set(0, 2.2, 7.5); camera.lookAt(0, 0.6, -1.2); }
+  else if (camMode === "fixed") { camera.position.set(6, 1.3, 4); camera.lookAt(0, 0.9, 4); }
+}
+function step(dt) { T += dt; P.forEach((p, i) => { drive(p, i, dt); p.update(dt); }); if (refMix) refMix.update(dt); refMixers.forEach(m => m.update(dt)); }
+function render() { placeCam(); U.uTime.value = T; renderer.render(scene, camera); hud.textContent = q.get("hud") === "0" ? "" : `${run}  t ${T.toFixed(2)}  v ${P[0].gs.toFixed(2)}  loco ${P[0].locoW.toFixed(2)} jog ${P[0].jogW.toFixed(2)} stride ${(P[0].stride || 0).toFixed(2)}`; }
+function sheet(cols, rows, every, dt = 1 / 30) {
+  const c = document.createElement("canvas"); c.width = W * cols; c.height = H * rows; const g = c.getContext("2d");
+  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) step(dt); render(); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
+  return c.toDataURL("image/png");
+}
+window.LAB = { P, step, render, sheet, advance(n, dt = 1 / 30) { for (let i = 0; i < n; i++) step(dt); render(); return T; }, cast };
+if (q.get("auto") !== "0") { let last = performance.now(); (function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; step(dt); render(); requestAnimationFrame(loop); })(last); }
+else { step(0); render(); }
+window.LAB_READY = true;
+</script>
+</body>
+</html>

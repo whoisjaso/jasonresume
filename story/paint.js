@@ -22,7 +22,12 @@ export const U = {
   uBrush: { value: null },
   uMirror: { value: 0 },
   uWetAll: { value: 0.6 },
-  uSat: { value: 1 }
+  uSat: { value: 1 },
+  // the set's own reflections: a cube rendered from the middle of the set once it is up (world.js), and how much to trust it
+  uEnv: { value: null },
+  uEnvOn: { value: 0 },
+  uEnvMax: { value: 6 },
+  uEnvK: { value: 1 }
 };
 
 const common = /* glsl */`
@@ -238,6 +243,266 @@ export function paint(o = {}) {
   return m;
 }
 
+/* ================================================================
+   PBR: the sets' surfaces. Same lamps, moon, sky and fog as paint(), but a
+   physically based response: GGX highlights that widen with each lamp's size,
+   Schlick Fresnel, metal and dielectric, a clear coat over car paint, baked
+   ambient occlusion (a vertex channel or a map), normal and roughness maps
+   (by UV or projected from world space for tiled materials), water beading on
+   wet up-facing surfaces, and reflections from the set's cube (uEnv), falling
+   back to a sky-and-ground estimate before the cube exists.
+   ================================================================ */
+const vertPBR = /* glsl */`
+#include <common>
+varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying vec4 vC; varying vec3 vLocal; varying vec3 vLN;
+uniform mat3 uUvM;
+#ifdef USE_VAO
+attribute vec4 color;
+#endif
+void main(){
+  vUv = (uUvM * vec3(uv, 1.0)).xy;
+  vC = vec4(1.0);
+  #ifdef USE_VAO
+  vC.a = color.r;
+  #endif
+  #ifdef USE_INSTANCING_COLOR
+  vC.rgb = instanceColor;
+  #endif
+  vLocal = position; vLN = normal;
+  mat4 M = modelMatrix;
+  #ifdef USE_INSTANCING
+  M = modelMatrix * instanceMatrix;
+  #endif
+  vec4 wp = M * vec4(position, 1.0); vWP = wp.xyz;
+  vN = normalize(mat3(M) * normal);
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`;
+
+const fragPBR = /* glsl */`
+${common}
+#define PI_ 3.14159265
+uniform vec3 uColor; uniform vec3 uEmit; uniform float uRough; uniform float uMetal; uniform float uCoat; uniform float uCoatRough;
+uniform float uWet; uniform float uAoK; uniform float uAlpha; uniform float uAlphaTest; uniform float uSpecK; uniform float uTri; uniform float uNK; uniform float uDiffK;
+uniform samplerCube uEnv; uniform float uEnvOn; uniform float uEnvMax; uniform float uEnvK; uniform float uSelfEnv;
+#ifdef USE_TMAP
+uniform sampler2D uMap;
+#endif
+#ifdef USE_NMAP
+uniform sampler2D uNMap;
+#endif
+#ifdef USE_RMAP
+uniform sampler2D uRMap;
+#endif
+#ifdef USE_EMAP
+uniform sampler2D uEMap; uniform float uEK;
+#endif
+#ifdef USE_PANEL
+uniform sampler2D uPanel; uniform vec4 uPanelBox;
+#endif
+varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying vec4 vC; varying vec3 vLocal; varying vec3 vLN;
+
+// sample a map by UV, or projected from world space (three planes blended by the normal)
+vec4 tsample(sampler2D s, vec3 n){
+  #ifdef USE_TRI
+  vec3 b = pow(abs(n), vec3(6.0)); b /= (b.x + b.y + b.z);
+  vec3 p = vWP * uTri;
+  return texture2D(s, p.zy) * b.x + texture2D(s, p.xz) * b.y + texture2D(s, p.xy) * b.z;
+  #else
+  return texture2D(s, vUv);
+  #endif
+}
+vec3 envProc(vec3 r, float rough){
+  // before the cube: sky above, a warm city glow on the horizon, the ground below
+  float h = r.y * (uMirror > 0.5 ? -1.0 : 1.0);
+  vec3 c = mix(uGround * 0.6, uSky * 0.9, smoothstep(-0.25, 0.35, h));
+  c += uRim * 0.35 * exp(-abs(h) * mix(14.0, 3.0, rough));
+  return c;
+}
+vec3 envAt(vec3 r, float rough){
+  vec3 p = envProc(r, rough);
+  if (uEnvOn < 0.5) return p;
+  vec3 rr = r; if (uMirror > 0.5) rr.y = -rr.y;
+  vec3 e = textureLod(uEnv, rr, clamp(rough * uEnvMax * 1.15, 0.0, uEnvMax)).rgb;
+  return mix(p, e, uEnvOn) * uEnvK;
+}
+float D_GGX(float a, float nh){ float a2 = a * a; float d = nh * nh * (a2 - 1.0) + 1.0; return a2 / (PI_ * d * d + 1e-6); }
+float V_Smith(float a, float nv, float nl){ float a2 = a * a; float gv = nl * sqrt(nv * nv * (1.0 - a2) + a2); float gl = nv * sqrt(nl * nl * (1.0 - a2) + a2); return 0.5 / max(gv + gl, 1e-5); }
+vec3 F_Sch(vec3 f0, float c){ return f0 + (1.0 - f0) * pow(1.0 - c, 5.0); }
+vec3 envBRDF(vec3 f0, float rough, float nv){
+  const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022); const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+  vec4 r = rough * c0 + c1; float a004 = min(r.x * r.x, exp2(-9.28 * nv)) * r.x + r.y; vec2 ab = vec2(-1.04, 1.04) * a004 + r.zw;
+  return f0 * ab.x + ab.y;
+}
+float h12(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+// water beads on a wet up-facing surface: a bumped normal and a mask (static; the rain keeps them full)
+vec3 beads(vec3 p, out float m){
+  vec2 q = p.xz * 34.0; vec2 c = floor(q), f = fract(q) - 0.5;
+  vec2 o = vec2(h12(c), h12(c + 7.3)) - 0.5; float r = 0.12 + 0.22 * h12(c + 2.1);
+  vec2 d = f - o * 0.4; float l = length(d);
+  m = smoothstep(r, r * 0.6, l) * step(0.35, h12(c + 9.7));
+  return vec3(d.x, 0.0, d.y) / max(r, 1e-3) * m * 1.4;
+}
+// specular from one lamp or the moon: GGX, widened by the lamp's size at this distance
+vec3 specL(vec3 N, vec3 V, vec3 L, float a, vec3 f0, float dist){
+  float ap = clamp(a + 0.18 / max(dist * 2.0, 0.5), 0.0, 1.0);
+  vec3 H = normalize(L + V); float nl = max(dot(N, L), 0.0), nv = max(dot(N, V), 1e-3), nh = max(dot(N, H), 0.0), vh = max(dot(V, H), 0.0);
+  float norm = (a * a) / max(ap * ap, 1e-4);
+  return F_Sch(f0, vh) * D_GGX(ap, nh) * V_Smith(ap, nv, nl) * nl * norm * PI_;
+}
+void main(){
+  vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
+  vec3 V = normalize(cameraPosition - vWP);
+  vec3 alb = uColor * vC.rgb;
+  float rough = uRough, metal = uMetal, ao = mix(1.0, vC.a, uAoK), aout = uAlpha;
+  #ifdef USE_TMAP
+  vec4 tx = tsample(uMap, N); alb *= tx.rgb; aout *= tx.a;
+  if (aout < uAlphaTest) discard;
+  #endif
+  #ifdef USE_RMAP
+  vec3 arm = tsample(uRMap, N).rgb; ao *= mix(1.0, arm.r, uAoK); rough *= arm.g * 1.6; metal *= arm.b;
+  #endif
+  #ifdef USE_NMAP
+  {
+    #ifdef USE_TRI
+    // projected normal maps: each plane's tangent-space normal swizzled into world space, blended (UDN)
+    vec3 b = pow(abs(N), vec3(6.0)); b /= (b.x + b.y + b.z); vec3 p = vWP * uTri;
+    vec3 tx_ = texture2D(uNMap, p.zy).xyz * 2.0 - 1.0, ty_ = texture2D(uNMap, p.xz).xyz * 2.0 - 1.0, tz_ = texture2D(uNMap, p.xy).xyz * 2.0 - 1.0;
+    vec3 nx = vec3(0.0, tx_.y, tx_.x) * uNK, ny = vec3(ty_.x, 0.0, ty_.y) * uNK, nz = vec3(tz_.x, tz_.y, 0.0) * uNK;
+    N = normalize(N + nx * b.x + ny * b.y + nz * b.z);
+    #else
+    vec3 tn = texture2D(uNMap, vUv).xyz * 2.0 - 1.0; tn.xy *= uNK;
+    vec3 dp1 = dFdx(vWP), dp2 = dFdy(vWP); vec2 du1 = dFdx(vUv), du2 = dFdy(vUv);
+    vec3 dp2p = cross(dp2, N), dp1p = cross(N, dp1);
+    vec3 T = dp2p * du1.x + dp1p * du2.x, B = dp2p * du1.y + dp1p * du2.y;
+    float inv = inversesqrt(max(dot(T, T), dot(B, B)) + 1e-12);
+    N = normalize(mat3(T * inv, B * inv, N) * tn);
+    #endif
+  }
+  #endif
+  #ifdef USE_PANEL
+  {
+    // panel lines, handles' recesses and the fuel door: a side view and a top view of the body, projected in the car's own space
+    vec3 ln = normalize(vLN);
+    vec2 su = vec2((vLocal.z - uPanelBox.x) / uPanelBox.y, vLocal.y / uPanelBox.z);
+    float sideW = smoothstep(0.55, 0.85, abs(ln.x)), topW = smoothstep(0.6, 0.9, ln.y);
+    float s1 = texture2D(uPanel, vec2(su.x, 0.5 + su.y * 0.5)).r;
+    float s2 = texture2D(uPanel, vec2(su.x, clamp(0.5 - abs(vLocal.x) / uPanelBox.w * 0.5, 0.0, 0.499))).r;
+    float seam = 1.0 - (1.0 - s1) * sideW - (1.0 - s2) * topW * (1.0 - sideW);
+    ao *= mix(0.12, 1.0, seam); rough = mix(0.6, rough, seam);
+  }
+  #endif
+  float wet = uWet * uWetAll;
+  float up = smoothstep(0.35, 0.85, N.y * (uMirror > 0.5 ? -1.0 : 1.0));
+  #ifdef USE_DROPS
+  float bm; vec3 bn = beads(vWP, bm); bm *= wet * up;
+  N = normalize(N + bn * wet * up);
+  #endif
+  // wet: darker, glossier on what faces up
+  alb *= mix(1.0, 0.62, wet * (1.0 - metal) * (0.4 + 0.6 * up));
+  rough = mix(rough, rough * 0.35, wet * up);
+  rough = clamp(rough, 0.04, 1.0);
+  float a = rough * rough;
+  vec3 f0 = mix(vec3(0.04), alb, metal) * uSpecK;
+  vec3 diffC = alb * (1.0 - metal) * uDiffK;
+  float nv = max(dot(N, V), 1e-3);
+  // ambient: sky and ground, occluded
+  float hemi = N.y * (uMirror > 0.5 ? -1.0 : 1.0) * 0.5 + 0.5;
+  vec3 amb = mix(uGround, uSky, hemi) * ao;
+  vec3 dif = diffC * amb, spec = vec3(0.0);
+  // the moon
+  vec3 L0 = vec3(uMoonDir.x, uMoonDir.y * (uMirror > 0.5 ? -1.0 : 1.0), uMoonDir.z);
+  float nl0 = max(dot(N, L0), 0.0);
+  dif += diffC * uMoon * nl0;
+  spec += uMoon * specL(N, V, L0, a, f0, 50.0);
+  // the lamps
+  vec3 lampSum = vec3(0.0);
+  for (int i = 0; i < ${MAXL}; i++) {
+    if (i >= uLampN) break;
+    vec3 lp = uLampPos[i].xyz; if (uMirror > 0.5) lp.y = -lp.y;
+    vec3 L = lp - vWP; float d = length(L); L /= d;
+    float att = clamp(1.0 - d / uLampPos[i].w, 0.0, 1.0); att *= att;
+    float cone = 1.0;
+    if (uLampCol[i].w > 0.0) { float cd = dot(-L, vec3(0.0, uMirror > 0.5 ? 1.0 : -1.0, 0.0)); cone = smoothstep(uLampCol[i].w, uLampCol[i].w + 0.25, cd); }
+    vec3 lc = uLampCol[i].rgb * att * cone;
+    if (dot(lc, lc) < 1e-7) continue;
+    float nl = dot(N, L);
+    dif += diffC * lc * max(nl, 0.0);
+    spec += lc * specL(N, V, L, a, f0, d);
+    lampSum += lc;
+  }
+  // reflections from the set
+  vec3 R = reflect(-V, N);
+  float specAO = clamp(pow(nv + ao, exp2(-16.0 * a - 1.0)) - 1.0 + ao, 0.0, 1.0);
+  spec += envAt(R, rough) * envBRDF(f0, rough, nv) * specAO;
+  vec3 col = dif + spec * uSpecK;
+  // the clear coat: a second, glassy layer over paint
+  if (uCoat > 0.0) {
+    vec3 Nc = normalize(vN); if (!gl_FrontFacing) Nc = -Nc;
+    #ifdef USE_DROPS
+    Nc = normalize(Nc + bn * wet * up * 0.8);
+    #endif
+    float nvc = max(dot(Nc, V), 1e-3), ca = uCoatRough * uCoatRough;
+    float fc = 0.04 + 0.96 * pow(1.0 - nvc, 5.0);
+    col *= 1.0 - fc * uCoat;
+    vec3 cs = envAt(reflect(-V, Nc), uCoatRough) * fc;
+    for (int i = 0; i < ${MAXL}; i++) {
+      if (i >= uLampN) break;
+      vec3 lp = uLampPos[i].xyz; if (uMirror > 0.5) lp.y = -lp.y;
+      vec3 L = lp - vWP; float d = length(L); L /= d;
+      float att = clamp(1.0 - d / uLampPos[i].w, 0.0, 1.0); att *= att;
+      float cone = 1.0;
+      if (uLampCol[i].w > 0.0) { float cd = dot(-L, vec3(0.0, uMirror > 0.5 ? 1.0 : -1.0, 0.0)); cone = smoothstep(uLampCol[i].w, uLampCol[i].w + 0.25, cd); }
+      cs += uLampCol[i].rgb * att * cone * specL(Nc, V, L, ca, vec3(0.04), d);
+    }
+    col += cs * uCoat;
+  }
+  col += uEmit;
+  #ifdef USE_EMAP
+  col += tsample(uEMap, N).rgb * uEK;
+  #endif
+  col = sat(col, uSat);
+  col = clamp(col, 0.0, 24.0);
+  gl_FragColor = vec4(fogged(col, vWP), aout);
+  #include <colorspace_fragment>
+}`;
+
+/* one physically based material.
+   o: { color, map, nmap, rmap (AO, roughness, metal in R, G, B), emap, ek, emit, rough, metal, coat, coatRough, wet, ao (how much baked AO counts),
+        vao (AO in the vertex colour's R), tri (world-space scale for projected maps, 1 / metres), nk (normal strength), spec, diff,
+        drops (water beads), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
+export function pbr(o = {}) {
+  const defines = {};
+  const uniforms = {
+    ...U,
+    uColor: { value: new THREE.Color(o.color || "#888") },
+    uEmit: { value: new THREE.Color(o.emit || "#000") },
+    uRough: { value: o.rough != null ? o.rough : 0.6 },
+    uMetal: { value: o.metal || 0 },
+    uCoat: { value: o.coat || 0 },
+    uCoatRough: { value: o.coatRough != null ? o.coatRough : 0.06 },
+    uWet: { value: o.wet != null ? o.wet : 0.5 },
+    uAoK: { value: o.ao != null ? o.ao : 1 },
+    uAlpha: { value: o.alpha != null ? o.alpha : 1 },
+    uAlphaTest: { value: o.alphaTest || 0 },
+    uSpecK: { value: o.spec != null ? o.spec : 1 },
+    uDiffK: { value: o.diff != null ? o.diff : 1 },
+    uTri: { value: o.tri || 1 },
+    uNK: { value: o.nk != null ? o.nk : 1 },
+    uEK: { value: o.ek != null ? o.ek : 1 },
+    uUvM: { value: new THREE.Matrix3() }
+  };
+  const tx = (k, d, t) => { if (!t) return; defines[d] = ""; uniforms[k] = { value: t }; if (!o.tri && t.updateMatrix) { t.updateMatrix(); uniforms.uUvM.value.copy(t.matrix); } };
+  tx("uMap", "USE_TMAP", o.map); tx("uNMap", "USE_NMAP", o.nmap); tx("uRMap", "USE_RMAP", o.rmap); tx("uEMap", "USE_EMAP", o.emap);
+  if (o.tri) defines.USE_TRI = "";
+  if (o.vao) defines.USE_VAO = "";
+  if (o.drops) defines.USE_DROPS = "";
+  if (o.panel) { defines.USE_PANEL = ""; uniforms.uPanel = { value: o.panel.tex }; uniforms.uPanelBox = { value: new THREE.Vector4(...o.panel.box) }; }
+  const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vertPBR, fragmentShader: fragPBR, defines, side: o.side || THREE.FrontSide,
+    transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });
+  m.userData.paint = true; m.userData.pbr = true;
+  return m;
+}
+
 /* glow: unlit, for lamp heads, screens and signs; additive optional */
 export function glow(color, o = {}) {
   const m = new THREE.ShaderMaterial({
@@ -277,11 +542,22 @@ export function coneMat(color, k = 1) {
 }
 
 /* blob shade under people and cars: soft, painted, cheap */
-export function blobMat(k = 0.55) {
+export function blobMat(k = 0.55, rect = false) {
   return new THREE.ShaderMaterial({
-    uniforms: { uK: { value: k } },
-    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform float uK; varying vec2 vUv; void main(){ float d = length(vUv - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); gl_FragColor = vec4(0.0, 0.0, 0.0, a * a * uK); }`,
+    uniforms: { uK: { value: k } }, defines: rect ? { RECT: "" } : {},
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; vec4 p = vec4(position, 1.0);
+      #ifdef USE_INSTANCING
+      p = instanceMatrix * p;
+      #endif
+      gl_Position = projectionMatrix * modelViewMatrix * p; }`,
+    // a disc (people), or with rect a rounded rectangle, square-ish in the middle and soft at the edges (cars, desks)
+    fragmentShader: `uniform float uK; varying vec2 vUv; void main(){
+      #ifdef RECT
+      vec2 q = abs(vUv - 0.5) * 2.0; float d = length(max(q - 0.55, 0.0)) / 0.45; float a = smoothstep(1.0, 0.0, d) * smoothstep(1.0, 0.7, max(q.x, q.y));
+      #else
+      float d = length(vUv - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d);
+      #endif
+      gl_FragColor = vec4(0.0, 0.0, 0.0, a * a * uK); }`,
     transparent: true, depthWrite: false
   });
 }
