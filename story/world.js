@@ -41,7 +41,7 @@ function progress() {
   try { document.dispatchEvent(new CustomEvent("jg:world-load", { detail: { f: loadTotal ? Math.min(1, loadDone / loadTotal) : 1, done: loadDone, total: loadTotal } })); } catch (e) {}
 }
 function loadTex(name, o = {}) {
-  const url = BASE + name.replace("{s}", String(TIER.tex));
+  const url = BASE + "tex-v1/" + name.replace("{s}", String(TIER.tex));
   if (texCache.has(url)) return texCache.get(url);
   loadTotal++;
   // a texture that fails or stalls resolves to null after a while; the material falls back to a flat colour
@@ -861,9 +861,9 @@ export function buildOffice(o) {
   set.userData = { lamps: [], spots: {}, walls: [], sounds: {} };
   const ROOM = [-7, 7, -5, 5, 3.1];
   const M = {
-    carpet: rmat({ color: "#c9c5bb", mapK: "carpC", nmapK: "carpN", tri: 0.7, nk: 0.8, rough: 0.95, wet: 0, room: ROOM }),
+    carpet: rmat({ color: "#e6e1d6", mapK: "carpC", nmapK: "carpN", tri: 0.7, nk: 0.8, rough: 0.95, wet: 0, room: ROOM }),
     vinyl: pbr({ color: "#ffffff", map: TX.tileTex(8), tri: 0.42, rough: 0.35, wet: 0, room: ROOM }),
-    wall: rmat({ color: "#ddd3c2", mapK: "plasC", nmapK: "plasN", tri: 0.45, nk: 0.5, rough: 0.9, wet: 0, room: ROOM }),
+    wall: rmat({ color: "#efe7d8", mapK: "plasC", nmapK: "plasN", tri: 0.45, nk: 0.5, rough: 0.9, wet: 0, room: ROOM }),
     base: pbr({ color: "#2a2622", rough: 0.55, wet: 0, room: ROOM }),
     ceil: pbr({ color: "#ffffff", map: TX.ceilTex(), tri: 1 / 0.61, rough: 0.95, wet: 0, room: ROOM }),
     wood: rmat({ color: "#b89a7a", mapK: "woodC", nmapK: "woodN", rmapK: "woodR", tri: 0.9, nk: 0.5, rough: 0.5, wet: 0, room: ROOM }),
@@ -906,7 +906,7 @@ export function buildOffice(o) {
   const trof = glow("#ffffff", { map: TX.troffTex(), k: 1.7 });
   for (const [x, z] of [[-3.5, -1.5], [3.5, -1.5], [0, 2.5]]) {
     const p0 = plane(0.6, 1.2, trof, set); p0.rotation.x = Math.PI / 2; p0.position.set(x, 3.095, z);
-    set.userData.lamps.push({ p: V3(x, 2.95, z), range: 8, col: [0.95, 0.97, 0.98], cone: 0, fixed: true });
+    set.userData.lamps.push({ p: V3(x, 2.95, z), range: 9.5, col: [2.0, 2.05, 2.1], cone: 0, fixed: true });
   }
   set.userData.sounds.lamps = set.userData.lamps.map(l => ({ x: l.p.x, y: 3.05, z: l.p.z, kind: "fluorescent-hum" }));
 
@@ -1141,14 +1141,14 @@ export function buildLibrary(o) {
       cyl(0.07, 0.08, 0.02, M.brass, lx, 0.825, 0, t, 16); cyl(0.01, 0.01, 0.3, M.brass, lx, 0.97, -0.05, t, 6);
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 0.08, 20, 1, true, 0, Math.PI), shade); sh.rotation.z = Math.PI / 2; sh.rotation.y = Math.PI / 2; sh.position.set(lx, 1.13, 0.0); t.add(sh);
       const bulb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), glow("#ffe2b0", { k: 2.4 })); bulb.rotation.z = Math.PI / 2; bulb.position.set(lx, 1.1, 0.0); t.add(bulb);
-      set.userData.lamps.push({ p: V3(tx + lx, 1.05, tz), range: 3.4, col: [1.35, 1.0, 0.58], cone: 0, fixed: true });
+      set.userData.lamps.push({ p: V3(tx + lx, 1.05, tz), range: 4.2, col: [1.6, 1.15, 0.62], cone: 0, fixed: true });
     }
     const sh2 = new THREE.Mesh(BLOB_GEO, blobMat(0.5, true)); sh2.scale.set(4.6, 1, 1.8); sh2.position.y = 0.01; sh2.layers.set(2); t.add(sh2);
     set.userData.walls.push({ x0: tx - 2.2, x1: tx + 2.2, z0: tz - 0.8, z1: tz + 0.8 });
   }
   // pendants overhead, dimmed for the night
   for (const [x, z] of [[-6, 0], [6, 0], [0, -4], [0, 6]]) { cyl(0.006, 0.006, 2.4, M.brass, x, 5.3, z, set, 4); const pd = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), glow("#f6dcae", { k: 0.9 })); pd.position.set(x, 4.0, z); set.add(pd); }
-  set.userData.lamps.push({ p: V3(0, 4.0, 0), range: 14, col: [0.35, 0.27, 0.18], cone: 0, fixed: true });
+  set.userData.lamps.push({ p: V3(0, 4.0, 0), range: 16, col: [0.9, 0.68, 0.42], cone: 0, fixed: true });
   // the stacks, left and right, full of books
   const books = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), pbr({ color: "#ffffff", rough: 0.7, wet: 0, room: ROOM }), 1600);
   const col = new THREE.Color(), m4 = new THREE.Matrix4(); let n = 0;

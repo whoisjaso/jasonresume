@@ -73,7 +73,7 @@ CAST = {
     "renata": {
         "macro": {"gender": 0.0, "age": 0.52, "muscle": 0.45, "weight": 0.48, "proportions": 0.75, "height": 0.42, "cupsize": 0.5, "firmness": 0.6,
                   "race": {"african": 0.2, "asian": 0.1, "caucasian": 0.7}},
-        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "ponytail01", "brows": "eyebrow012", "lashes": "eyelashes03", "face": "RENATA", "iris": (0.27, 0.16, 0.085)
+        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "ponytail01", "brows": "eyebrow006", "lashes": "eyelashes03", "face": "RENATA", "iris": (0.27, 0.16, 0.085)
     }
 }
 

@@ -1,13 +1,13 @@
 # After Hours: the sets' tiled materials, from Poly Haven (CC0, polyhaven.com; no attribution
 # required, credited in tools/README.md anyway). Downloads each texture's 1k or 2k diffuse,
 # OpenGL normal and ARM (AO, roughness, metal) maps, and writes WebP at 1024 and 512 into
-# assets/story/world/<role>_{col,nor,arm}_<size>.webp.
+# assets/story/world/tex-v1/<role>_{col,nor,arm}_<size>.webp.
 #   python3 tools/story/world/textures.py [cache dir]
 import json, os, sys, io, urllib.request
 from PIL import Image
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-OUT = os.path.join(ROOT, "assets", "story", "world")
+OUT = os.path.join(ROOT, "assets", "story", "world", "tex-v1")  # /assets is cached for a year: a new look ships as tex-v2
 CACHE = sys.argv[1] if len(sys.argv) > 1 else "/tmp/ph-cache"
 os.makedirs(OUT, exist_ok=True); os.makedirs(CACHE, exist_ok=True)
 
