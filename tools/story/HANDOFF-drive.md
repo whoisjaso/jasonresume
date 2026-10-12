@@ -153,9 +153,15 @@ rest; the same numbers are in each file's extras on the `car` node and on `car.o
   headrest), a rear bench in the four-doors, a console, the dash with a lit cluster behind the wheel
   and a screen in the middle (material `cluster`, glows when the engine runs), the steering column, a
   floor, and the shell's inner side (dark trim). The glass is see-through.
-- A rear-view mirror high in the middle of the windshield; side mirrors ride on the front doors.
-- Phone tier: same nodes, about 72 KB a car (desktop about 146 KB). All five kinds: about 360 KB
-  phone, 730 KB desktop (v1 was 239 and 447).
+- A rear-view mirror high in the middle of the windshield; side mirrors (a rounded housing with an
+  angled glass, material `mirror`) ride on the front doors.
+- Every pane has a dark band round its edge (frit and seals, 4 cm), so the pillars read solid
+  behind the see-through glass; on the front doors it is the door's own window frame, with the
+  door's upper frame in black trim, and it swings with the door.
+- Tail lamps: a lens on the flat of the tail with a lit element inside it and the reverse lamp
+  inboard beside it; a small marker wraps round the rear corner.
+- Phone tier: same nodes, about 75 KB a car (desktop about 150 KB). All five kinds: about 370 KB
+  phone, 760 KB desktop (v1 was 239 and 447; the v1 files are deleted).
 
 ## 4. Colliders and bounds
 

@@ -95,7 +95,7 @@ if (q.get("refgrid")) {
 // any clip, played straight on the first person: ?clip=name
 if (q.get("clip")) { const c = cast.motion.clips[q.get("clip")]; if (c) { cast.motion.clips.idle = c; c.loop = true; } }
 // a voice line's word timings driving the first person's mouth: ?words=<line id in assets/voice/story>
-let WORDS = null; if (q.get("words")) WORDS = await (await fetch("../../assets/voice/" + (q.get("vdir") || "story-v2") + "/" + q.get("words") + ".json")).json();
+let WORDS = null; if (q.get("words")) WORDS = await (await fetch("../../assets/voice/" + (q.get("vdir") || "story-v3") + "/" + q.get("words") + ".json")).json();
 const run = q.get("run") || "idle", speed = +(q.get("speed") || 1.45);
 let T = 0; const REACH = {}, CARS = {};
 // a scripted driver, deterministic in time

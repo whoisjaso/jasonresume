@@ -455,7 +455,7 @@ async function sync(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   // every other recording arrives late, as on a slow phone connection; the caption must wait for it
   let nth = 0;
-  await ctx.route('**/assets/voice/story-v2/*.mp3', async r => { if (nth++ % 2 === 0) await new Promise(res => setTimeout(res, 1100)); r.continue(); });
+  await ctx.route(/assets\/voice\/story-v\d+\/.*\.mp3$/, async r => { if (nth++ % 2 === 0) await new Promise(res => setTimeout(res, 1100)); r.continue(); });
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
   await p.goto(URL0 + '?debug=story&pr=0.2&sq=0');

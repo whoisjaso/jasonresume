@@ -67,7 +67,7 @@ The sets (story/world.js; tools/story/HANDOFF-world.md has the detail):
 
 ```
 blender -b --python tools/story/world/cars.py -- /tmp/cars [sedan compact hatch suv truck]
-node tools/story/world/pack.mjs /tmp/cars v1          # assets/story/world/car-<kind>-v1.glb (about 87 KB) and -lo (about 47 KB)
+node tools/story/world/pack.mjs /tmp/cars v2          # assets/story/world/car-<kind>-v2.glb (about 150 KB, with doors, wheels, a cabin) and -lo (about 75 KB)
 python3 tools/story/world/textures.py /tmp/ph-cache    # assets/story/world/tex-v1/*.webp
 node tools/story/world/stills.mjs <tag> all            # stills of every set, desktop and phone
 ```

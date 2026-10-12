@@ -27,6 +27,8 @@
 import hashlib, json, os, re, subprocess, sys, tempfile
 from datetime import date
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "story"))
+from retime import retime_words
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -97,6 +99,8 @@ def main():
         if len(written) == len(words):
             for w, src in zip(words, written): w["w"] = src
         pcm = np.concatenate(audio)
+        # the timings fitted to the voice itself (the last word ends when the voice does): tools/story/retime.py
+        words = retime_words(words, pcm, SR)
         with tempfile.TemporaryDirectory() as tmp:
             wav = Path(tmp) / "line.wav"
             sf.write(wav, pcm, SR)

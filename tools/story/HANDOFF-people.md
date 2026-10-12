@@ -14,7 +14,7 @@ if (line.sp && line.sp.speak) line.sp.speak(line.words, now);
 ```
 
 The mouth then makes a viseme for each sound in each word, timed to the word
-timings in assets/voice/story/*.json, and the brows and head react to stressed
+timings in assets/voice/story-v3/*.json, and the brows and head react to stressed
 words. Without this call the mouth still moves with `talk`, using generic
 syllables.
 
@@ -147,13 +147,15 @@ by the end of a line. The captions light words early, and the mouth closes
 while the voice is still talking. The fictional voices are on time, but each
 line's last word runs on into the silence after it.
 
-`/root/kvenv/bin/python -I tools/story/retime.py assets/voice/story-v2 --write <dir>`
-fits each line's timings to its own audio. On the 126 story lines it takes the
-agreement between "inside a word" and "voice on" from 0.843 to 0.925, the lag
-to a median of 0 ms, and the last word's end to within 2 ms of the voice's.
-/assets is cached for a year, so ship the result as a new directory (copy the
-mp3s and manifests next to the retimed json) and point story.json's voice
-`out` at it, rather than overwriting story-v2 in place.
+`tools/story/retime.py` fits each line's timings to its own audio. On the 126
+story lines it takes the agreement between "inside a word" and "voice on" from
+0.843 to 0.926, the lag to a median of 0 ms, and the last word's end to within
+2 ms of the voice's. The retimed set ships as assets/voice/story-v3 (story.json
+points at it; /assets is cached for a year, so a new directory, never an
+in-place rewrite). Both narrators now run the same fit on every line before
+writing it (`retime_words()` in narrate_jason.py and narrate_free.py), so new
+renders come out timed. For files already rendered:
+`/root/kvenv/bin/python -I tools/story/retime.py <voice dir> [--write <dir>]`.
 
 people.js itself caps each word's mouth shapes to the time they take to say, so
 a word whose timing runs on closes the mouth. With the blend rates now used,
