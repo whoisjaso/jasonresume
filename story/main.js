@@ -143,10 +143,13 @@ const guide = new Guide(world);
 let quality = COARSE.matches ? 1 : 2;
 { const m = location.search.match(/[?&]sq=(\d)/); if (DEBUG && m) quality = +m[1]; }
 const post = new Post(renderer, { quality });
-let pixelRatio = Math.min(devicePixelRatio || 1, COARSE.matches ? 1.5 : 1.75);
+// a phone starts at a modest resolution (its screen is small and dense; the post chain hides the difference) and earns more if there's room
+const PR_MAX = COARSE.matches ? 1.25 : 1.75, PR_MIN = COARSE.matches ? 0.6 : 0.7;
+let pixelRatio = Math.min(devicePixelRatio || 1, PR_MAX);
+let VW = innerWidth, VH = innerHeight; // the viewport, read once per resize, never per frame
 { const m = location.search.match(/[?&]pr=([\d.]+)/); if (DEBUG && m) { pixelRatio = +m[1]; S.lockQ = true; } }
 function resize() {
-  const w = innerWidth, h = innerHeight;
+  const w = innerWidth, h = innerHeight; VW = w; VH = h;
   renderer.setPixelRatio(1); renderer.setSize(w, h, false);
   const pw = Math.round(w * pixelRatio), ph = Math.round(h * pixelRatio);
   post.setSize(pw, ph); renderer.setSize(pw, ph, false); cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -591,7 +594,7 @@ function lightScene(name) {
 }
 let set = null, rain = null;
 function makeRain() {
-  const n = quality >= 2 ? 800 : 420;
+  const n = quality >= 2 ? 800 : quality >= 1 ? 420 : 260;
   const g = new THREE.InstancedBufferGeometry(); g.instanceCount = n;
   g.setAttribute("position", new THREE.Float32BufferAttribute([-0.0025, 0, 0, 0.0025, 0, 0, 0.0025, 1, 0, -0.0025, 1, 0], 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
   const seed = new Float32Array(n * 4); for (let i = 0; i < n; i++) { seed[i * 4] = Math.random(); seed[i * 4 + 1] = Math.random(); seed[i * 4 + 2] = Math.random(); seed[i * 4 + 3] = 0.7 + Math.random() * 0.6; }
@@ -618,7 +621,7 @@ async function enter(name, o = {}) {
   S.scene = name; S.phase = "cinematic";
   S.visited = S.visited || {}; S.visited[name] = 1;
   Object.values(sets).forEach(s => (s.visible = false));
-  set = getSet(name); set.visible = true;
+  set = getSet(name); set.visible = true; applyTier();
   lightScene(name);
   applyGrade(post, GRADES[name]);
   ringOn = false;
@@ -805,7 +808,7 @@ function followView(dt, probe) {
     if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-(mv.path ? 1.0 : 1.6) * dt));
     camState.drag -= dt;
   }
-  const inside = S.scene === "office" || S.scene === "memory", mem = S.scene === "memory", upright = innerWidth < innerHeight;
+  const inside = S.scene === "office" || S.scene === "memory", mem = S.scene === "memory", upright = VW < VH;
   const dist = (mem ? 2.2 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
   // close to a wall, the camera rises and looks down over you rather than sit behind your head
   const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0) + (probe ? 0 : (camState.lift || 0) + (camState.close || 0));
@@ -1003,7 +1006,7 @@ function spotsHere() {
 }
 let near = null;
 const v2 = new THREE.Vector3();
-function project(p) { v2.copy(p).project(camera); return { x: (v2.x * 0.5 + 0.5) * innerWidth, y: (-v2.y * 0.5 + 0.5) * innerHeight, on: v2.z < 1 && Math.abs(v2.x) < 1.05 && Math.abs(v2.y) < 1.05 }; }
+function project(p) { v2.copy(p).project(camera); return { x: (v2.x * 0.5 + 0.5) * VW, y: (-v2.y * 0.5 + 0.5) * VH, on: v2.z < 1 && Math.abs(v2.x) < 1.05 && Math.abs(v2.y) < 1.05 }; }
 function updatePrompts() {
   if (S.phase !== "explore" || !me) { promptEl.hidden = true; actEl.hidden = true; if (dotsEl.firstChild) dotsEl.innerHTML = ""; near = null; return; }
   const list = spotsHere();
@@ -1031,8 +1034,8 @@ function updatePrompts() {
   if (!best) { promptEl.hidden = true; actEl.hidden = true; return; }
   const q = project(best.p);
   // a thing above or beside the frame (the pylon sign seen up close on a phone) keeps its prompt at the edge of the screen
-  if (v2.z >= 1) { q.x = innerWidth / 2 - 60; q.y = 90; }
-  q.x = clamp(q.x, 24, innerWidth - 200); q.y = clamp(q.y, 84, innerHeight - 110);
+  if (v2.z >= 1) { q.x = VW / 2 - 60; q.y = 90; }
+  q.x = clamp(q.x, 24, VW - 200); q.y = clamp(q.y, 84, VH - 110);
   promptEl.hidden = false;
   if (promptEl.dataset.spot !== best.id) {
     $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
@@ -1637,7 +1640,7 @@ cv.addEventListener("pointerup", endPtr); cv.addEventListener("pointercancel", e
 cv.addEventListener("contextmenu", e => e.preventDefault());
 cv.addEventListener("wheel", e => { if (S.phase !== "explore") return; e.preventDefault(); camState.zoom = clamp((camState.zoom || 1) * (e.deltaY > 0 ? 1.08 : 0.93), 0.6, 1.4); }, { passive: false });
 // no page zoom, scroll or callout from a stray pinch or long press on the scene
-cv.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+if (!(window.CSS && CSS.supports && CSS.supports("touch-action", "none"))) cv.addEventListener("touchmove", e => e.preventDefault(), { passive: false }); // elsewhere .story's touch-action: none does it without holding the compositor
 for (const ev of ["gesturestart", "gesturechange"]) el.addEventListener(ev, e => e.preventDefault());
 document.addEventListener("pointerlockchange", () => { if (!document.pointerLockElement && S.open && SET.lock && S.phase === "explore") pause(); });
 function tapAt(x, y) {
@@ -1686,7 +1689,18 @@ function carMeta(c) { const r = c.object.userData.rig; return (r && r.meta) || {
 /* the driver's door handle and where to stand for it, from the car where it is now */
 function doorPoint(c) { const vv = DRV.vehs.get(c); if (vv && vv.doors) { const h = vv.doors.handle("driver"); if (h) return h; } c.object.updateMatrixWorld(true); return c.object.localToWorld(new THREE.Vector3(carMeta(c).W / 2 + 0.04, 0.98, 0.3)); }
 function doorStand(c) { c.object.updateMatrixWorld(true); const p = c.object.localToWorld(new THREE.Vector3(carMeta(c).W / 2 + 0.62, 0, 0.1)); p.y = 0; return p; }
-function carSpots() { return drivables().map(c => ({ id: "car:" + c.id, o: { verb: UI.drive, label: UI["car_" + c.id] || UI.car, car: true, who: "car" }, sp: { r: 2.3, stand: doorStand(c) }, p: doorPoint(c), car: c })); }
+/* the cars' spots, worked out again only when a car has moved (spotsHere runs every frame) */
+const carSpotCache = new WeakMap();
+function carSpots() {
+  const out = [];
+  for (const c of drivables()) {
+    const o = c.object, key = o.position.x.toFixed(2) + "," + o.position.z.toFixed(2) + "," + o.rotation.y.toFixed(3);
+    let sp = carSpotCache.get(c);
+    if (!sp || sp.key !== key) { sp = { key, s: { id: "car:" + c.id, o: { verb: UI.drive, label: UI["car_" + c.id] || UI.car, car: true, who: "car" }, sp: { r: 2.3, stand: doorStand(c) }, p: doorPoint(c), car: c } }; carSpotCache.set(c, sp); }
+    out.push(sp.s);
+  }
+  return out;
+}
 
 /* the touch controls: a steering pad under the left thumb, the pedals under the right, the handbrake, the camera and Get out */
 const drvEl = document.createElement("div");
@@ -1889,7 +1903,7 @@ function driveView(dt) {
   if (DRV.camInit) { DRV.yawC = p.yaw; }
   // heading the camera follows: the car's yaw with a lag that tightens with speed; reversing it stays put
   DRV.yawC += angTo(DRV.yawC, p.yaw) * (1 - Math.exp(-(1.6 + as * 0.12) * dt));
-  const fovBase = innerWidth / innerHeight < 1 ? 64 : 52;
+  const fovBase = VW / VH < 1 ? 64 : 52;
   let pos, look, fov;
   if (DRV.cam === "car" && DRV.state === "drive") {
     const seat = v.seat ? v.seat.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(p.x, 0.5, p.z);
@@ -2032,7 +2046,7 @@ function updateWay(dt) {
   guide.trail(guideRoute, k); way.k = k;
   // the edge arrow: only when the place is off screen, pointing the way to turn
   v2.set(tgt.p.x, Math.min(tgt.p.y || 1.2, 1.7), tgt.p.z).project(camera);
-  const W = innerWidth, H = innerHeight, behind = v2.z > 1;
+  const W = VW, H = VH, behind = v2.z > 1;
   let sx = (v2.x * 0.5 + 0.5) * W, sy = (-v2.y * 0.5 + 0.5) * H;
   const mL = 30 + SAFE.l, mR = 30 + SAFE.r, mT = 84 + SAFE.t, mB = (dev === "touch" ? 132 : 70) + SAFE.b;
   const onScreen = !behind && sx > mL && sx < W - mR && sy > mT && sy < H - mB;
@@ -2078,7 +2092,9 @@ function frame(now) {
   // battery: behind the journal or the pause menu there's nothing to draw; standing still, thirty frames are plenty
   const over = S.phase === "pause" || S.phase === "journal";
   const idle = (S.phase === "explore" && mv.idle > 3 && me && me.speed < 0.05 && camState.drag <= 0 && !ptrs.size) || (S.phase === "talk" && COARSE.matches);
-  const every = over ? 500 : S.phase === "sheet" || S.phase === "end" ? 100 : idle ? 32 : 0;
+  // a phone draws the world at thirty: steady pacing, half the heat, and the caption ball (above) still runs at the screen's rate
+  const capped = COARSE.matches && !S.full60;
+  const every = over ? 500 : S.phase === "sheet" || S.phase === "end" ? 100 : idle ? 32 : capped ? 30 : 0;
   if (every && now - lastDraw < every) return;
   lastDraw = now;
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -2118,19 +2134,52 @@ function frame(now) {
     post.render(scene, camera, S.t);
     if (DEBUG) { gl.finish(); perf.total = performance.now() - t0; perf.calls = renderer.info.render.calls; perf.tris = renderer.info.render.triangles; }
   }
-  // adapt: step down when frames run long, back up when there is room (only while drawing every frame)
+  // adapt, with hysteresis: two slow windows in a row step the resolution (then the quality) down; four with room to
+  // spare step it back up; a change waits out a cool-down so it never hunts. Only frames drawn at the full rate (or the
+  // phone's thirty) count; resting, menus and sheets don't.
   perf.frame = performance.now() - now; perf.gap = now - (frame.prev || now);
-  if (every) { acc = 0; frames = 0; frame.prev = now; return; }
-  acc += (now - (frame.prev || now)); frame.prev = now; frames++;
-  if (acc > 2000) {
-    const ms = acc / frames; fpsLog.push(Math.round(1000 / ms)); if (fpsLog.length > 60) fpsLog.shift();
-    const target = COARSE.matches ? 33 : 17.5;
-    if (!S.lockQ && ms > target * 1.25 && (pixelRatio > 0.6 || quality > 0)) {
-      if (pixelRatio > 0.75) pixelRatio = Math.max(0.6, pixelRatio - 0.2); else quality = Math.max(0, quality - 1);
-      post.q = quality; resize();
-    } else if (ms < target * 0.7 && pixelRatio < Math.min(devicePixelRatio || 1, 1.75) - 0.01) { pixelRatio = Math.min(Math.min(devicePixelRatio || 1, 1.75), pixelRatio + 0.1); resize(); }
-    acc = 0; frames = 0;
+  if (every && every !== 30) { QA.n = 0; QA.gap = 0; QA.work = 0; QA.t0 = now; frame.prev = now; return; }
+  if (frame.prev) { QA.n++; QA.gap += now - frame.prev; QA.work += perf.frame; }
+  frame.prev = now;
+  if (now - QA.t0 > 1500 && (QA.n > 8 || (QA.n >= 3 && QA.gap / QA.n > 80))) {
+    const ms = QA.gap / QA.n, work = QA.work / QA.n;
+    fpsLog.push(Math.round(1000 / ms)); if (fpsLog.length > 60) fpsLog.shift();
+    QA.ms = +ms.toFixed(1); QA.cpu = +work.toFixed(1);
+    const target = every === 30 ? 34.5 : COARSE.matches ? 33.4 : 17.5;
+    const slow = ms > target * 1.18, roomy = every === 30 ? ms < 35.5 && work < 9 : ms < target * 0.72 && work < target * 0.5;
+    QA.slow = slow ? QA.slow + 1 : 0; QA.roomy = roomy ? QA.roomy + 1 : 0;
+    if (!S.lockQ && now > QA.cool) {
+      // far too slow steps at once; a little slow has to be slow twice
+      if (QA.slow >= 2 || (QA.slow && ms > target * 2)) { qualityStep(-1); QA.cool = now + (ms > target * 2 ? 1500 : 3000); QA.slow = 0; QA.roomy = 0; }
+      else if (QA.roomy >= 4) { qualityStep(1); QA.cool = now + 6000; QA.roomy = 0; }
+    }
+    QA.n = 0; QA.gap = 0; QA.work = 0; QA.t0 = now;
   }
+}
+const QA = { n: 0, gap: 0, work: 0, t0: 0, slow: 0, roomy: 0, cool: 0, ms: 0, cpu: 0, q0: quality, log: [] };
+/* one rung on the ladder: resolution first while it's high, then the quality (the reflections, the depth of field, the
+   world's tier), then the last of the resolution; back up in the reverse order */
+function qualityStep(dir) {
+  const was = { pr: pixelRatio, q: quality };
+  if (dir < 0) {
+    if (pixelRatio > 0.9 + 0.01) pixelRatio = Math.max(0.9, +(pixelRatio * 0.86).toFixed(3));
+    else if (quality > 0) quality--;
+    else if (pixelRatio > PR_MIN + 0.01) pixelRatio = Math.max(PR_MIN, +(pixelRatio * 0.86).toFixed(3));
+    else return;
+  } else {
+    const top = Math.min(devicePixelRatio || 1, PR_MAX);
+    if (pixelRatio < 0.9 - 0.01) pixelRatio = Math.min(0.9, +(pixelRatio * 1.12).toFixed(3));
+    else if (quality < QA.q0) quality++;
+    else if (pixelRatio < top - 0.01) pixelRatio = Math.min(top, +(pixelRatio * 1.1).toFixed(3));
+    else return;
+  }
+  post.q = quality; applyTier(); resize();
+  QA.log.push({ t: Math.round(S.t), dir, from: was, to: { pr: pixelRatio, q: quality }, ms: QA.ms }); if (QA.log.length > 20) QA.log.shift();
+}
+/* the world's own tier follows the ladder where it offers one */
+function applyTier() {
+  try { if (set && set.userData && typeof set.userData.setTier === "function") set.userData.setTier(quality); } catch (e) {}
+  try { if (typeof WORLD.setTier === "function") WORLD.setTier(quality); } catch (e) {}
 }
 document.addEventListener("visibilitychange", () => { if (!S.open) return; if (document.hidden) { AU.suspend(true); if (line && line.audio) line.audio.pause(); if (S.phase === "explore") pause(); } else { AU.suspend(false); if (S.phase !== "pause") resumeVoice(); } });
 
@@ -2326,7 +2375,8 @@ window.JG_STORY = {
       const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
       return { plain: t(() => { renderer.setRenderTarget(null); renderer.render(scene, camera); }), post: t(() => post.render(scene, camera, S.t)), refl: ground ? t(() => post.reflect(scene, camera, world, ground)) : -1, w: post.w, h: post.h, calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
     },
-    quality: (q, pr) => { quality = q; post.q = q; if (pr) pixelRatio = pr; resize(); },
+    quality: (q, pr) => { quality = q; post.q = q; if (pr) pixelRatio = pr; applyTier(); resize(); },
+    qa: () => ({ pixelRatio, quality, ms: QA.ms, cpu: QA.cpu, slow: QA.slow, roomy: QA.roomy, log: QA.log.slice(), capped: COARSE.matches && !S.full60, perf: { ...perf } }),
     /* the way, the controls, the camera and the sound, for tools/verify/story.mjs */
     guide: () => { const t = S.phase === "explore" ? wayTarget() : null; const q = t ? project(new THREE.Vector3(t.p.x, Math.min(t.p.y || 1.2, 1.7), t.p.z)) : null; return { obj: S.obj, target: t ? { id: t.id, x: t.stand.x, z: t.stand.z } : null, trail: guide.count, vis: +guide.vis.toFixed(3), route: guideRoute ? guideRoute.map(p => [+p.x.toFixed(2), +p.z.toFixed(2)]) : null, arrow: { show: way.show, x: Math.round(way.x), y: Math.round(way.y), ang: +way.ang.toFixed(3), shown: wayEl.classList.contains("is-on") }, proj: q, nudges, dev }; },
     stuck: () => { progT = STUCK_S + 1; progWalk = 99; },

@@ -295,7 +295,7 @@ function nodeParts(node) {
   const walk = o => {
     if (o !== node && MOVING.test(o.name)) return;
     if (o.isMesh) {
-      const name = (o.material && o.material.name || "trim").replace(/\.\d+$/, "");
+      const name = fam((o.material && o.material.name || "trim").replace(/\.\d+$/, ""), true);
       if (!byMat.has(name)) byMat.set(name, []);
       byMat.get(name).push(floatGeo(o));
     }
@@ -312,6 +312,11 @@ function nodeParts(node) {
   return parts;
 }
 const MOVING = /^(door_[LR]|wheel_[FR][LR]|steer)$/;
+/* the phone tier folds the car's near-black and bright-metal materials into one each (fewer draws per car kind
+   and per rig: about 10 instead of 21); a drivable car's own lamps and cluster stay apart (they light up) */
+const FAMILY = TIER.carLo ? { interior: "trim", seat: "trim", dash: "trim", well: "trim", tire: "trim", disc: "trim", cluster: "trim", chrome: "rim", mirror: "rim", lamp_rev: "lamp_head", lamp_brake: "lamp_tail" } : {};
+const OWN_KEYS = new Set(["lamp_head", "lamp_head_in", "lamp_tail", "lamp_tail_in", "lamp_brake", "lamp_rev", "cluster"]);
+const fam = (name, own) => (own && OWN_KEYS.has(name) ? name : FAMILY[name] || name);
 async function loadCars() {
   await Promise.allSettled(CAR_KINDS.map(async kind => {
     const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v2.glb";
@@ -325,7 +330,7 @@ async function loadCars() {
     const all = new Map();
     gltf.scene.traverse(o => {
       if (!o.isMesh) return;
-      const name = (o.material && o.material.name || "trim").replace(/\.\d+$/, "");
+      const name = fam((o.material && o.material.name || "trim").replace(/\.\d+$/, ""), false);
       if (!all.has(name)) all.set(name, []);
       all.get(name).push(floatGeo(o));
     });
@@ -436,9 +441,11 @@ function rockCar(c, strength, nx, nz) {
   c._shoved = (c._shoved || 0) + shove; c.x -= nx * shove; c.z -= nz * shove;
   if (c.collider) { c.collider.x = c.x; c.collider.z = c.z; }
 }
+const TK = { m4: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(0, 0, 0, "YXZ"), s1: new THREE.Vector3(1, 1, 1), p: new THREE.Vector3() };
 function tickCars(list, dt) {
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(0, 0, 0, "YXZ"), s1 = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
-  for (const c of list) {
+  const { m4, q, e, s1, p } = TK;
+  for (let ci = 0; ci < list.length; ci++) {
+    const c = list[ci];
     const r = c._rock; if (!r || !r.live) continue;
     // a damped spring on each axis (about 1.6 Hz, settles in a second or so)
     r.t += dt; const w = 10, z = 0.18;
@@ -544,13 +551,30 @@ function buildRig(set, c) {
     for (const [name, geo] of Object.entries(nodeParts(n))) inst(geo, name, pivot, p);
     doors[side] = pivot;
   }
+  // the four wheels: their pivots are empty nodes (the API's), and the wheels themselves are one instanced mesh
+  // per material with four instances, set from the pivots (syncWheels), so a rig costs 2 or 3 draws for its wheels
+  // instead of 12. The right wheels are the model's; the left ones are the same turned half round.
   const wheels = [];
   for (const nm of ["wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR"]) {
     const n = lib.nodes[nm]; if (!n) continue;
     const { p } = at(n), pivot = new THREE.Group(); pivot.name = nm; pivot.position.copy(p); pivot.rotation.order = "YXZ"; root.add(pivot);
-    for (const [name, geo] of Object.entries(nodeParts(n))) inst(geo, name, pivot, p);
-    pivot.userData.rest = p.clone(); wheels.push(pivot);
+    pivot.userData.rest = p.clone(); pivot.userData.left = nm.endsWith("L"); wheels.push(pivot);
   }
+  const wheelIM = [];
+  { const n = lib.nodes.wheel_FR || lib.nodes.wheel_RR, hub = n ? at(n).p : null;
+    if (n) for (const [name, geo] of Object.entries(nodeParts(n))) {
+      const g = geo.clone(); g.translate(-hub.x, -hub.y, -hub.z);
+      const mat = own[name] || M[name] || M.trim;
+      const im = new THREE.InstancedMesh(g, mat, wheels.length); im.name = "wheels-" + name; im.userData.keep = true; im.frustumCulled = false; root.add(im); wheelIM.push(im);
+    } }
+  const FLIP = new THREE.Matrix4().makeRotationY(Math.PI), WM = new THREE.Matrix4();
+  const syncWheels = () => {
+    for (let i = 0; i < wheels.length; i++) {
+      const w = wheels[i]; w.updateMatrix(); WM.copy(w.matrix); if (w.userData.left) WM.multiply(FLIP);
+      for (const im of wheelIM) im.setMatrixAt(i, WM);
+    }
+    for (const im of wheelIM) im.instanceMatrix.needsUpdate = true;
+  };
   let steer = null;
   if (lib.nodes.steer) {
     const { p, q } = at(lib.nodes.steer);
@@ -566,7 +590,8 @@ function buildRig(set, c) {
   const sh = new THREE.InstancedMesh(BLOB_GEO, blobMat(0.8, true), 1);
   sh.setMatrixAt(0, new THREE.Matrix4().compose(new THREE.Vector3(0, 0.012, 0), new THREE.Quaternion(), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)));
   sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; sh.computeBoundingSphere(); root.add(sh);
-  root.userData.rig = { body, doors, wheels, steer, seat, seatP, own, meta, shadow: sh, kind: kindKey };
+  root.userData.rig = { body, doors, wheels, steer, seat, seatP, own, meta, shadow: sh, kind: kindKey, syncWheels, wheelIM };
+  syncWheels();
   carLights(own, c.lights || {});
   return root.userData.rig;
 }
@@ -924,6 +949,20 @@ export function buildLot(o) {
   set.userData.camRail = [V3(-22, 1.0, 26), V3(-12, 0.7, 16), V3(-2, 1.3, 6), V3(6, 2.2, -3), V3(10, 2.0, -8.5)];
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
   set.userData.ready = lotReady;
+  /* what the wet ground's mirror can leave out on a phone (post.js reads it when post.lite): every car part but
+     the paint and the lamps (tyres, trim, glass, cabins, plates...); rebuilt when the cars land */
+  { let cache = null, n = -1;
+    set.userData.reflectSkip = () => {
+      if (cache && n === set.children.length) return cache;
+      const M = carMats(), keep = new Set(Object.values(M.paint));
+      for (const k of ["lamp_head", "lamp_head_in", "lamp_tail", "lamp_tail_in", "lamp_amber", "idleTail", "idleTailIn", "idleHeadIn", "idleHead"]) keep.add(M[k]);
+      for (const c of drivable) { const rg = c.object && c.object.userData.rig; if (rg) for (const m of Object.values(rg.own)) keep.add(m); }
+      cache = [];
+      set.traverse(o => { if (!o.isMesh || !o.material || !o.material.userData || !o.material.userData.pbr || keep.has(o.material)) return;
+        let car = o.isInstancedMesh; for (let q = o.parent; q && q !== set && !car; q = q.parent) if (q.userData.rig) car = true;
+        if (car) cache.push(o); });
+      n = set.children.length; return cache;
+    }; }
   _debug.sets[day ? "keys" : "lot"] = set;
   return set;
 }

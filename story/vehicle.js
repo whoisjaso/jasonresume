@@ -39,31 +39,40 @@ const tyre = a => Math.sin(TC * Math.atan(TB * a));
 const MU = { wet: 0.82, puddle: 0.6, "wet-concrete": 0.8, concrete: 0.98, asphalt: 1.0, tile: 0.7 };
 
 /* ---------- collision helpers (2D, in the set's xz plane) ---------- */
+/* (allocation-free: these run for every nearby collider at 120 Hz, so they write into shared buffers) */
+const CA = new Float64Array(8), CB = new Float64Array(8), AX = new Float64Array(8);
+const HIT = { depth: 0, nx: 0, nz: 0, px: 0, pz: 0 };
 function boxCorners(x, z, hw, hl, yaw, out) {
-  const c = Math.cos(yaw), s = Math.sin(yaw); let i = 0;
+  const c = Math.cos(yaw), s = Math.sin(yaw);
   // local +X is (cos, -sin), local +Z is (sin, cos) in world xz for a rotation about +Y by yaw
-  for (const [lx, lz] of [[hw, hl], [-hw, hl], [-hw, -hl], [hw, -hl]]) { out[i++] = x + lx * c + lz * s; out[i++] = z - lx * s + lz * c; }
+  out[0] = x + hw * c + hl * s; out[1] = z - hw * s + hl * c;
+  out[2] = x - hw * c + hl * s; out[3] = z + hw * s + hl * c;
+  out[4] = x - hw * c - hl * s; out[5] = z + hw * s - hl * c;
+  out[6] = x + hw * c - hl * s; out[7] = z - hw * s - hl * c;
   return out;
 }
-/* SAT between two oriented boxes; returns { depth, nx, nz } with n pointing from b to a, or null */
-function satBox(a, b) {
-  const axes = [[Math.cos(a.yaw), -Math.sin(a.yaw)], [Math.sin(a.yaw), Math.cos(a.yaw)], [Math.cos(b.yaw), -Math.sin(b.yaw)], [Math.sin(b.yaw), Math.cos(b.yaw)]];
-  const ca = boxCorners(a.x, a.z, a.hw, a.hl, a.yaw, new Float64Array(8)), cb = boxCorners(b.x, b.z, b.hw, b.hl, b.yaw, new Float64Array(8));
-  let best = 1e9, bn = null;
-  for (const [ax, az] of axes) {
+function inside(px, pz, ox, oz, hw, hl, yaw) { const c = Math.cos(yaw), s = Math.sin(yaw), dx = px - ox, dz = pz - oz; return Math.abs(dx * c - dz * s) <= hw + 1e-3 && Math.abs(dx * s + dz * c) <= hl + 1e-3; }
+/* SAT between two oriented boxes (a: x z hw hl yaw; b: the same as numbers); fills HIT with n pointing from b to a, or returns null */
+function satBox(a, bx, bz, bhw, bhl, byaw) {
+  AX[0] = Math.cos(a.yaw); AX[1] = -Math.sin(a.yaw); AX[2] = Math.sin(a.yaw); AX[3] = Math.cos(a.yaw);
+  AX[4] = Math.cos(byaw); AX[5] = -Math.sin(byaw); AX[6] = Math.sin(byaw); AX[7] = Math.cos(byaw);
+  boxCorners(a.x, a.z, a.hw, a.hl, a.yaw, CA); boxCorners(bx, bz, bhw, bhl, byaw, CB);
+  let best = 1e9, bnx = 0, bnz = 0;
+  for (let k = 0; k < 8; k += 2) {
+    const ax = AX[k], az = AX[k + 1];
     let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
-    for (let i = 0; i < 8; i += 2) { const p = ca[i] * ax + ca[i + 1] * az; a0 = Math.min(a0, p); a1 = Math.max(a1, p); const q = cb[i] * ax + cb[i + 1] * az; b0 = Math.min(b0, q); b1 = Math.max(b1, q); }
+    for (let i = 0; i < 8; i += 2) { const p = CA[i] * ax + CA[i + 1] * az; if (p < a0) a0 = p; if (p > a1) a1 = p; const q = CB[i] * ax + CB[i + 1] * az; if (q < b0) b0 = q; if (q > b1) b1 = q; }
     const o = Math.min(a1, b1) - Math.max(a0, b0);
     if (o <= 0) return null;
-    if (o < best) { best = o; const d = (a.x - b.x) * ax + (a.z - b.z) * az; bn = d >= 0 ? [ax, az] : [-ax, -az]; }
+    if (o < best) { best = o; const d = (a.x - bx) * ax + (a.z - bz) * az; bnx = d >= 0 ? ax : -ax; bnz = d >= 0 ? az : -az; }
   }
   // the contact: corners of one inside the other, averaged
-  const inside = (px, pz, o) => { const c = Math.cos(o.yaw), s = Math.sin(o.yaw), dx = px - o.x, dz = pz - o.z; return Math.abs(dx * c - dz * s) <= o.hw + 1e-3 && Math.abs(dx * s + dz * c) <= o.hl + 1e-3; };
   let cx = 0, cz = 0, n = 0;
-  for (let i = 0; i < 8; i += 2) if (inside(ca[i], ca[i + 1], b)) { cx += ca[i]; cz += ca[i + 1]; n++; }
-  for (let i = 0; i < 8; i += 2) if (inside(cb[i], cb[i + 1], a)) { cx += cb[i]; cz += cb[i + 1]; n++; }
-  if (!n) { cx = (a.x + b.x) / 2; cz = (a.z + b.z) / 2; n = 1; }
-  return { depth: best, nx: bn[0], nz: bn[1], px: cx / n, pz: cz / n };
+  for (let i = 0; i < 8; i += 2) if (inside(CA[i], CA[i + 1], bx, bz, bhw, bhl, byaw)) { cx += CA[i]; cz += CA[i + 1]; n++; }
+  for (let i = 0; i < 8; i += 2) if (inside(CB[i], CB[i + 1], a.x, a.z, a.hw, a.hl, a.yaw)) { cx += CB[i]; cz += CB[i + 1]; n++; }
+  if (!n) { cx = (a.x + bx) / 2; cz = (a.z + bz) / 2; n = 1; }
+  HIT.depth = best; HIT.nx = bnx; HIT.nz = bnz; HIT.px = cx / n; HIT.pz = cz / n;
+  return HIT;
 }
 /* an oriented box (the car) against a circle; n points from the circle to the box */
 function boxCircle(a, c) {
@@ -78,8 +87,8 @@ function boxCircle(a, c) {
     if (px < pz) { nlx = -Math.sign(lx) || 1; nlz = 0; depth = px + c.r; } else { nlx = 0; nlz = -Math.sign(lz) || 1; depth = pz + c.r; }
   }
   // local to world: local +X is (cos, -sin), +Z is (sin, cos)
-  const wx = a.x + qx * cs + qz * sn, wz = a.z - qx * sn + qz * cs;
-  return { depth, nx: nlx * cs + nlz * sn, nz: -nlx * sn + nlz * cs, px: wx, pz: wz };
+  HIT.depth = depth; HIT.nx = nlx * cs + nlz * sn; HIT.nz = -nlx * sn + nlz * cs; HIT.px = a.x + qx * cs + qz * sn; HIT.pz = a.z - qx * sn + qz * cs;
+  return HIT;
 }
 
 /* ---------- the car ---------- */
@@ -109,8 +118,12 @@ export function createVehicle(set, car, opts = {}) {
     set(o) { Object.assign(light, o); applyLights(); place(); },
     get() { return { ...light }; }
   };
+  // only when something changed (no per-frame colour parsing)
+  const lit = { head: 0, tail: 0, brake: 0, reverse: 0, cluster: 0 }, was = { head: -1, tail: -1, brake: -1, reverse: -1, cluster: -1 };
   function applyLights() {
-    carLights(rig.own, { ...light, cluster: engine.on ? (light.cluster === false ? 0 : 1) : 0 });
+    lit.head = +light.head || 0; lit.tail = +light.tail || 0; lit.brake = +light.brake || 0; lit.reverse = +light.reverse || 0;
+    lit.cluster = engine.on ? (light.cluster === false ? 0 : 1) : 0;
+    if (lit.head !== was.head || lit.tail !== was.tail || lit.brake !== was.brake || lit.reverse !== was.reverse || lit.cluster !== was.cluster) { carLights(rig.own, lit); Object.assign(was, lit); }
     const lamps = set.userData.lamps;
     if (light.head && !lamp) { lamp = { p: new THREE.Vector3(), range: 8, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true }; car.lamp = lamp; }
     if (lamp) { const i = lamps.indexOf(lamp); if (light.head && i < 0) lamps.push(lamp); if (!light.head && i >= 0) lamps.splice(i, 1); }
@@ -230,18 +243,20 @@ export function createVehicle(set, car, opts = {}) {
     return { f: MU[f(fx, fz)] || 0.85, r: MU[f(rx, rz)] || 0.85 };
   }
   /* ----- collisions ----- */
+  const me = { x: 0, z: 0, hw, hl, yaw: 0 };
   function collide() {
-    const me = { x: st.x, z: st.z, hw, hl, yaw: st.yaw };
-    for (const o of colliders) {
+    me.x = st.x; me.z = st.z; me.yaw = st.yaw;
+    for (let ci = 0; ci < colliders.length; ci++) {
+      const o = colliders[ci];
       if (o.type === "bump") continue;
       const ox = o.x, oz = o.z;
       if (Math.abs(ox - st.x) > 40 || Math.abs(oz - st.z) > 40) continue;
       let hit = null;
       if (o.type === "circle") { if (Math.abs(ox - st.x) > hl + o.r + 0.5 || Math.abs(oz - st.z) > hl + o.r + 0.5) continue; hit = boxCircle(me, o); }
-      else if (o.type === "box") { const rr = Math.hypot(o.hw, o.hl) + hl + 0.5; if (Math.abs(ox - st.x) > rr || Math.abs(oz - st.z) > rr) continue; hit = satBox(me, { x: ox, z: oz, hw: o.hw, hl: o.hl, yaw: o.yaw || 0 }); }
+      else if (o.type === "box") { const rr = Math.hypot(o.hw, o.hl) + hl + 0.5; if (Math.abs(ox - st.x) > rr || Math.abs(oz - st.z) > rr) continue; hit = satBox(me, ox, oz, o.hw, o.hl, o.yaw || 0); }
       if (!hit) continue;
       resolve(hit, o);
-      me.x = st.x; me.z = st.z;
+      me.x = st.x; me.z = st.z; me.yaw = st.yaw;
     }
   }
   function resolve(hit, o) {
@@ -298,13 +313,16 @@ export function createVehicle(set, car, opts = {}) {
     if (!st.outside) { st.outside = true; const ev = { type: "impact", strength: +Math.max(0, -vn).toFixed(2), x: st.x, y: 0.5, z: st.z, nx, nz, what: "bound", t: st.time }; events.push(ev); impacts.push(ev); if (impacts.length > 8) impacts.shift(); }
   }
   /* ----- wheel stops: each wheel's lift ----- */
+  const BUMPS = colliders.filter(o => o.type === "bump");
+  const WHEEL = ["FL", "FR", "RL", "RR"], pud = [false, false, false, false];
   function bumps(dt) {
     const c = Math.cos(st.yaw), s = Math.sin(st.yaw);
     for (let i = 0; i < 4; i++) {
       const w = wpos[i], wx = st.x + w.x * c + w.z * s, wz = st.z - w.x * s + w.z * c;
       let h = 0;
-      for (const o of colliders) {
-        if (o.type !== "bump" || Math.abs(o.x - wx) > o.hw + 0.4 || Math.abs(o.z - wz) > 0.6) continue;
+      for (let bi = 0; bi < BUMPS.length; bi++) {
+        const o = BUMPS[bi];
+        if (Math.abs(o.x - wx) > o.hw + 0.4 || Math.abs(o.z - wz) > 0.6) continue;
         // a rounded profile: the tyre rolls up and over
         const dz = Math.abs(wz - o.z), dx = Math.abs(wx - o.x) - o.hw;
         if (dx > 0.1) continue;
@@ -314,7 +332,7 @@ export function createVehicle(set, car, opts = {}) {
       const on = h > 0.02;
       if (on && !sp.onBump[i]) {
         const sv = Math.abs(st.vx);
-        events.push({ type: "bump", wheel: ["FL", "FR", "RL", "RR"][i], strength: +sv.toFixed(2) });
+        events.push({ type: "bump", wheel: WHEEL[i], strength: +sv.toFixed(2) });
         // climbing it costs speed (a lot at a crawl, a jolt at speed)
         st.vx *= sv < 1.2 ? 0.55 : 1 - Math.min(0.12, 0.25 / sv);
         sp.hv += 0.35 * Math.min(1, sv / 3); sp.pv += (i < 2 ? 1 : -1) * 0.25 * Math.min(1, sv / 3);
@@ -348,6 +366,7 @@ export function createVehicle(set, car, opts = {}) {
       w.rotation.y = i < 2 ? -st.delta : 0;
       w.rotation.x = i < 2 ? st.angF : st.angR;
     }
+    if (rig.syncWheels) rig.syncWheels();
     if (rig.steer) { rig.steer.quaternion.copy(rig.steer.userData.q0).multiply(qs.setFromAxisAngle(ZA, st.delta * STEER_RATIO)); }
     for (const k of ["L", "R"]) { const d = rig.doors[k]; if (d) d.rotation.y = (k === "L" ? -1 : 1) * DOOR_MAX * easeDoor(doorT[k]); }
     if (rig.shadow) rig.shadow.position.y = 0;
@@ -367,12 +386,13 @@ export function createVehicle(set, car, opts = {}) {
   st.angF = 0; st.angR = 0; st.time = 0;
 
   let acc = 0;
+  const IN = { throttle: 0, brake: 0, steer: 0, handbrake: 0 };
   const api = {
     spec, object: root, body: rig.body, seat: rig.seat, seatP: rig.seatP, steeringWheel: rig.steer, wheels: rig.wheels, doors, lights, engine, events, impacts,
     update(dt, inp = {}) {
       events.length = 0;
       dt = Math.min(Math.max(dt || 0, 0), 0.1);
-      const i = { throttle: clamp(+inp.throttle || 0, 0, 1), brake: clamp(+inp.brake || 0, 0, 1), steer: clamp(+inp.steer || 0, -1, 1), handbrake: clamp(+inp.handbrake || 0, 0, 1) };
+      const i = IN; i.throttle = clamp(+inp.throttle || 0, 0, 1); i.brake = clamp(+inp.brake || 0, 0, 1); i.steer = clamp(+inp.steer || 0, -1, 1); i.handbrake = clamp(+inp.handbrake || 0, 0, 1);
       acc += dt;
       while (acc >= DT) {
         acc -= DT; st.time += DT;
@@ -402,8 +422,8 @@ export function createVehicle(set, car, opts = {}) {
         for (let k = 0; k < 4; k++) {
           const w = wpos[k], wx = st.x + w.x * c + w.z * s, wz = st.z - w.x * s + w.z * c;
           const wet = set.userData.surfaceAt(wx, wz) === "puddle";
-          if (wet && !st["pud" + k]) events.push({ type: "splash", wheel: ["FL", "FR", "RL", "RR"][k], strength: +Math.abs(st.vx).toFixed(2) });
-          st["pud" + k] = wet;
+          if (wet && !pud[k]) events.push({ type: "splash", wheel: WHEEL[k], strength: +Math.abs(st.vx).toFixed(2) });
+          pud[k] = wet;
         }
       }
       return api;
