@@ -64,3 +64,19 @@ keeps the feet planted. The jog clip is natural at about 2.6 to 3.0 m/s.
 `p.idleStyle = "fold"` (arms folded) or `"lean"` (forearms resting on a rail
 or a car roof, so place the person facing the car), and `null` to clear it.
 The change blends in over about half a second.
+
+## 6. For story/paint.js (the materials owner): skin variation
+
+The face mask now carries more detail. B is warmth on the cheeks, the nose
+and a soft mottle (up to 1). The new A channel is the cooler, thinner skin
+under the eyes: 1 means none, lower means cooler. paint.js still reads only
+R, G and B. One line after `alb *= 1.0 + fm.b * ...` in the USE_MASK block
+would use the new channel:
+
+```glsl
+alb *= mix(vec3(0.9, 0.93, 1.0), vec3(1.0), fm.a);
+```
+
+Raising the warmth term from 0.12 to about 0.18 would also lift the cheeks
+and nose. A soft roughness and subsurface look for skin is paint.js's to
+add, for example a slightly broader wrap and lower specular on `uSkin`.

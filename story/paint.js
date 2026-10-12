@@ -305,7 +305,11 @@ varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying vec4 vC; varying ve
 vec4 tsample(sampler2D s, vec3 n){
   #ifdef USE_TRI
   vec3 b = pow(abs(n), vec3(6.0)); b /= (b.x + b.y + b.z);
+  #ifdef USE_LOCALTRI
+  vec3 p = vLocal * uTri; b = pow(abs(normalize(vLN)), vec3(6.0)); b /= (b.x + b.y + b.z);
+  #else
   vec3 p = vWP * uTri;
+  #endif
   return texture2D(s, p.zy) * b.x + texture2D(s, p.xz) * b.y + texture2D(s, p.xy) * b.z;
   #else
   return texture2D(s, vUv);
@@ -365,7 +369,12 @@ void main(){
   {
     #ifdef USE_TRI
     // projected normal maps: each plane's tangent-space normal swizzled into world space, blended (UDN)
-    vec3 b = pow(abs(N), vec3(6.0)); b /= (b.x + b.y + b.z); vec3 p = vWP * uTri;
+    vec3 b = pow(abs(N), vec3(6.0)); b /= (b.x + b.y + b.z);
+    #ifdef USE_LOCALTRI
+    vec3 p = vLocal * uTri; b = pow(abs(normalize(vLN)), vec3(6.0)); b /= (b.x + b.y + b.z);
+    #else
+    vec3 p = vWP * uTri;
+    #endif
     vec3 tx_ = texture2D(uNMap, p.zy).xyz * 2.0 - 1.0, ty_ = texture2D(uNMap, p.xz).xyz * 2.0 - 1.0, tz_ = texture2D(uNMap, p.xy).xyz * 2.0 - 1.0;
     vec3 nx = vec3(0.0, tx_.y, tx_.x) * uNK, ny = vec3(ty_.x, 0.0, ty_.y) * uNK, nz = vec3(tz_.x, tz_.y, 0.0) * uNK;
     N = normalize(N + nx * b.x + ny * b.y + nz * b.z);
@@ -383,10 +392,10 @@ void main(){
   {
     // panel lines, handles' recesses and the fuel door: a side view and a top view of the body, projected in the car's own space
     vec3 ln = normalize(vLN);
-    vec2 su = vec2((vLocal.z - uPanelBox.x) / uPanelBox.y, vLocal.y / uPanelBox.z);
+    vec2 su = vec2((uPanelBox.x - vLocal.z) / uPanelBox.y, vLocal.y / uPanelBox.z);
     float sideW = smoothstep(0.55, 0.85, abs(ln.x)), topW = smoothstep(0.6, 0.9, ln.y);
-    float s1 = texture2D(uPanel, vec2(su.x, 0.5 + su.y * 0.5)).r;
-    float s2 = texture2D(uPanel, vec2(su.x, clamp(0.5 - abs(vLocal.x) / uPanelBox.w * 0.5, 0.0, 0.499))).r;
+    float s1 = texture2D(uPanel, vec2(su.x, clamp(su.y * 0.5, 0.0, 0.499))).r;
+    float s2 = texture2D(uPanel, vec2(su.x, clamp(0.5 + abs(vLocal.x) / uPanelBox.w * 0.5, 0.501, 1.0))).r;
     float seam = 1.0 - (1.0 - s1) * sideW - (1.0 - s2) * topW * (1.0 - sideW);
     ao *= mix(0.12, 1.0, seam); rough = mix(0.6, rough, seam);
   }
@@ -499,6 +508,7 @@ export function pbr(o = {}) {
   const tx = (k, d, t) => { if (!t) return; defines[d] = ""; uniforms[k] = { value: t }; if (!o.tri && t.updateMatrix) { t.updateMatrix(); uniforms.uUvM.value.copy(t.matrix); } };
   tx("uMap", "USE_TMAP", o.map); tx("uNMap", "USE_NMAP", o.nmap); tx("uRMap", "USE_RMAP", o.rmap); tx("uEMap", "USE_EMAP", o.emap);
   if (o.tri) defines.USE_TRI = "";
+  if (o.tri && o.local) defines.USE_LOCALTRI = "";
   if (o.vao) defines.USE_VAO = "";
   if (o.drops) defines.USE_DROPS = "";
   if (o.glass) defines.USE_GLASS = "";

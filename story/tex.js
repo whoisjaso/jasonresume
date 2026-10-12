@@ -278,6 +278,33 @@ export function posterTex(seed = 1) {
   return tex(c);
 }
 
+/* a plate's face: an embossed rim and rows of raised marks that read as characters from a distance and as
+   nothing up close (no real plate numbers). nrm: the same as a normal map. Tiled in the car's own space. */
+let plateC = null;
+export function plateTex(nrm) {
+  if (!plateC) {
+    const c = cv(256, 256), g = c.getContext("2d"), r = rng(9);
+    g.fillStyle = "#808080"; g.fillRect(0, 0, 256, 256);
+    for (let row = 0; row < 4; row++) for (let i = 0; i < 7; i++) {
+      const x = 14 + i * 34, y = 18 + row * 62, w = 18 + r() * 8, hh = 34;
+      g.fillStyle = "#b8b8b8"; g.beginPath(); g.roundRect(x, y, w, hh, 5); g.fill();
+      g.fillStyle = "#808080"; g.beginPath(); g.roundRect(x + 5, y + 6 + r() * 8, w - 10, 6 + r() * 10, 3); g.fill();
+    }
+    plateC = c;
+  }
+  if (!nrm) { const t = tex(plateC, { repeat: true }); return t; }
+  // a normal map from the height in R
+  const s = plateC.getContext("2d").getImageData(0, 0, 256, 256).data, c2 = cv(256, 256), g2 = c2.getContext("2d"), im = g2.createImageData(256, 256);
+  const H = (x, y) => s[(((y + 256) % 256) * 256 + ((x + 256) % 256)) * 4] / 255;
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+    const dx = (H(x + 1, y) - H(x - 1, y)) * 2.0, dy = (H(x, y + 1) - H(x, y - 1)) * 2.0, i = (y * 256 + x) * 4;
+    const n = [-dx, dy, 1], l = Math.hypot(...n);
+    im.data[i] = (n[0] / l * 0.5 + 0.5) * 255; im.data[i + 1] = (n[1] / l * 0.5 + 0.5) * 255; im.data[i + 2] = (n[2] / l * 0.5 + 0.5) * 255; im.data[i + 3] = 255;
+  }
+  g2.putImageData(im, 0, 0);
+  return tex(c2, { repeat: true, linear: true });
+}
+
 /* paper with a tooth, for the journal and the memory */
 export function paper(w = 512, h = 512, tone = "#e9e1d0") {
   const c = cv(w, h), g = c.getContext("2d"), r = rng(5);

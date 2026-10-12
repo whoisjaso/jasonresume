@@ -47,7 +47,7 @@ PLAYER = {"head/head-oval": 0.3, "head/head-round": 0.15, "chin/chin-height-decr
           "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, 
           "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.2, "mouth/mouth-cupidsbow-incr": 0.35,
           "cheek/l-cheek-volume-incr": 0.2, "cheek/r-cheek-volume-incr": 0.2, "nose/nose-point-width-incr": 0.1, "eyebrows/eyebrows-trans-down": 0.05}
-RENATA = {"head/head-oval": 0.4, "mouth/mouth-upperlip-volume-incr": 0.2, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
+RENATA = {"head/head-oval": 0.4, "mouth/mouth-lowerlip-volume-decr": 0.5, "mouth/mouth-upperlip-volume-decr": 0.3, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
 
 CAST = {
     "jason": {
@@ -73,7 +73,7 @@ CAST = {
     "renata": {
         "macro": {"gender": 0.0, "age": 0.52, "muscle": 0.45, "weight": 0.48, "proportions": 0.75, "height": 0.42, "cupsize": 0.5, "firmness": 0.6,
                   "race": {"african": 0.2, "asian": 0.1, "caucasian": 0.7}},
-        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "bob02", "brows": "eyebrow009", "lashes": "eyelashes03", "face": "RENATA"
+        "clothes": ["female_elegantsuit01", "shoes03"], "hair": "ponytail01", "brows": "eyebrow012", "lashes": "eyelashes03", "face": "RENATA"
     }
 }
 
@@ -205,7 +205,7 @@ def grow_afro(body, depth_top=0.036, depth_side=0.006):
     return hair
 
 def face_mask(base, beard=None, size=512):
-    """paint the face's detail into a small texture in the body's UV space: R the beard (a goatee and a thin moustache, or stubble), G the lips, B warmth on the cheeks. Rasterized from the mesh, so edges are smooth."""
+    """paint the face's detail into a small texture in the body's UV space: R the beard (a goatee and a thin moustache, or stubble), G the lips, B warmth (cheeks, the nose, a soft mottle), A the cool, thinner skin under the eyes (1 none, lower cooler). Rasterized from the mesh, so edges are smooth."""
     import numpy as np
     top, cx, cy, mz, my = head_frame(base)
     me = base.data; me.calc_loop_triangles()
@@ -213,7 +213,7 @@ def face_mask(base, beard=None, size=512):
     img = np.zeros((size, size, 4), dtype=np.float32); img[..., 3] = 1.0
     def sm(e0, e1, x): t = min(1.0, max(0.0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t)
     def fn(p, n):
-        if n.y > -0.05 or p.z < mz - 0.09 or p.z > mz + 0.08: return (0, 0, 0)
+        if n.y > -0.05 or p.z < mz - 0.09 or p.z > mz + 0.13: return (0, 0, 0, 1)
         ax, dz = abs(p.x - cx), p.z - mz
         r = g = b = 0.0
         if beard == "goatee":
@@ -228,10 +228,17 @@ def face_mask(base, beard=None, size=512):
         lw, lh = 0.022, 0.012
         e = (ax / lw) ** 2 + ((dz + 0.001) / lh) ** 2
         if e < 1.6 and p.y < my + 0.018: g = (1 - sm(0.75, 1.3, e)) * (1.0 if dz < 0.0 else 0.5)
-        # cheeks
+        # warmth: the cheeks, the nose and its tip, and a soft mottle so the skin is never one flat colour
         d = ((ax - 0.042) ** 2 + (dz - 0.035) ** 2) ** 0.5
-        b = 1 - sm(0.0, 0.03, d)
-        return (r, g, b)
+        b = 1 - sm(0.0, 0.032, d)
+        nose = ((ax / 0.016) ** 2 + ((dz - 0.04) / 0.03) ** 2) ** 0.5
+        b = max(b, 0.8 * (1 - sm(0.6, 1.0, nose)))
+        b = max(b, 0.25 + 0.2 * noise.noise(p * 60.0)) if dz < 0.11 else b
+        # under the eyes: a cooler crescent
+        ue = (((ax - 0.032) / 0.02) ** 2 + ((dz - 0.062) / 0.009) ** 2) ** 0.5
+        a = 1 - 0.7 * (1 - sm(0.5, 1.0, ue))
+        if dz > 0.1: g = 0
+        return (r, g, min(1.0, b), a)
     co = me.vertices
     for tri in me.loop_triangles:
         P = [co[v].co for v in tri.vertices]
@@ -251,7 +258,8 @@ def face_mask(base, beard=None, size=512):
                 c = 1 - a - bb
                 if a < -0.02 or bb < -0.02 or c < -0.02: continue
                 p = P[0] * a + P[1] * bb + P[2] * c
-                img[py, px, :3] = np.maximum(img[py, px, :3], fn(p, n))
+                v = fn(p, n)
+                img[py, px, :3] = np.maximum(img[py, px, :3], v[:3]); img[py, px, 3] = min(img[py, px, 3], v[3])
     im = bpy.data.images.new("facemask", size, size, alpha=True)
     im.pixels.foreach_set(img.ravel())
     m = base.data.materials[0]

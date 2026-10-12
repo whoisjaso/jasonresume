@@ -33,13 +33,22 @@ const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 const texLoader = new THREE.TextureLoader();
 const texCache = new Map();
 /* a texture from assets/story/world, tiled, sRGB for colour and linear for data; resolves even when it fails (null) */
+/* progress for the loading screen: document event jg:world-load, detail { f: 0..1, done, total } */
+let loadDone = 0, loadTotal = 0;
+function progress() {
+  loadDone++;
+  try { document.dispatchEvent(new CustomEvent("jg:world-load", { detail: { f: loadTotal ? Math.min(1, loadDone / loadTotal) : 1, done: loadDone, total: loadTotal } })); } catch (e) {}
+}
 function loadTex(name, o = {}) {
   const url = BASE + name.replace("{s}", String(TIER.tex));
   if (texCache.has(url)) return texCache.get(url);
-  const p = new Promise(res => texLoader.load(url, t => {
-    t.colorSpace = o.data ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
-    res(t);
-  }, undefined, () => res(null)));
+  loadTotal++;
+  // a texture that fails or stalls resolves to null after a while; the material falls back to a flat colour
+  const p = new Promise(res => {
+    const to = setTimeout(() => { console.warn("[world] slow texture", url); res(null); }, 12000);
+    texLoader.load(url, t => { clearTimeout(to); t.colorSpace = o.data ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; res(t); },
+      undefined, () => { clearTimeout(to); console.warn("[world] texture failed", url); res(null); });
+  }).finally(progress);
   texCache.set(url, p); return p;
 }
 const T = {}; // loaded textures by key
@@ -277,9 +286,10 @@ function floatGeo(mesh) {
   return g;
 }
 async function loadCars() {
-  await Promise.all(CAR_KINDS.map(async kind => {
+  await Promise.allSettled(CAR_KINDS.map(async kind => {
     const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v1.glb";
-    const gltf = await loader.loadAsync(url);
+    let gltf;
+    try { gltf = await Promise.race([loader.loadAsync(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 12000))]); } catch (e) { console.warn("[world] car " + kind, e && e.message); return; } finally { progress(); }
     const byMat = new Map(); let meta = null;
     gltf.scene.updateMatrixWorld(true);
     gltf.scene.traverse(o => {
@@ -343,12 +353,16 @@ function carMats() {
     disc: pbr({ ...v, color: "#4c4946", metal: 1, rough: 0.55, wet: 0.3 }),
     well: pbr({ ...v, color: "#060606", rough: 0.9, wet: 0.3, spec: 0.5 }),
     lamp_head: pbr({ ...v, color: "#b9bdc0", metal: 0.85, rough: 0.07, wet: 1, drops: true }),
-    lamp_tail: pbr({ ...v, color: "#5a0806", rough: 0.08, wet: 1, drops: true, emit: "#120100" }),
+    lamp_tail: pbr({ ...v, color: "#3a0605", rough: 0.05, wet: 1, drops: true, spec: 1.2, diff: 0.6 }),
+    lamp_tail_in: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#1c0201" }),
+    lamp_head_in: pbr({ ...v, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 }),
     lamp_amber: pbr({ ...v, color: "#7a3c06", rough: 0.08, wet: 1, emit: "#0a0400" }),
-    plate: pbr({ ...v, color: "#d9d3c6", rough: 0.45, wet: 0.6 }),
+    plate: pbr({ ...v, color: "#9a968c", map: TX.plateTex(), nmap: TX.plateTex(true), tri: 4, local: true, nk: 0.8, rough: 0.5, wet: 0.6 }),
     interior: pbr({ ...v, color: "#0b0b0b", rough: 0.85, wet: 0, spec: 0.4 }),
     sticker: pbr({ color: "#ece5d4", rough: 0.6, wet: 0, ao: 0, emit: "#0c0a07" }),
-    idleTail: pbr({ ...v, color: "#7a0a06", rough: 0.08, wet: 1, drops: true, emit: "#ff1408" }),
+    idleTail: pbr({ ...v, color: "#5a0806", rough: 0.05, wet: 1, drops: true, emit: "#3a0302" }),
+    idleTailIn: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#ff1a0a" }),
+    idleHeadIn: pbr({ ...v, color: "#ffffff", rough: 0.1, wet: 0.3, emit: "#fff6e6" }),
     idleHead: pbr({ ...v, color: "#e8ecf0", rough: 0.07, wet: 1, emit: "#fff4e0" }),
     paint: {}
   };
@@ -359,7 +373,7 @@ function paintMat(kind, metallic) {
   if (!M.paint[key]) {
     const meta = carLib[kind].meta;
     M.paint[key] = pbr({ vao: true, color: "#ffffff", rough: metallic ? 0.38 : 0.5, metal: metallic ? 0.55 : 0.0, coat: 1, coatRough: 0.045, wet: 1, drops: true, ao: 1,
-      panel: { tex: panelTex(meta), box: [-meta.L / 2, meta.L, meta.H, meta.W / 2] } });
+      panel: { tex: panelTex(meta), box: [meta.L / 2, meta.L, meta.H, meta.W / 2] } });
   }
   return M.paint[key];
 }
@@ -375,18 +389,19 @@ function parkCars(set, list) {
   for (const c of list) (byKind[c.kind] = byKind[c.kind] || []).push(c);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s1 = new THREE.Vector3(1, 1, 1), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0);
   for (const [kind, cars] of Object.entries(byKind)) {
-    const lib = carLib[kind]; if (!lib) continue;
+    // a kind whose file failed falls back to one that loaded, so a slow line never leaves a lot of wheels
+    const lib = carLib[kind] || carLib[Object.keys(carLib)[0]]; if (!lib) continue;
     for (const [name, geo] of Object.entries(lib.parts)) {
       if (name === "paint") {
         for (const metallic of [false, true]) {
           const sub = cars.filter(c => !!c.metal === metallic); if (!sub.length) continue;
-          const im = new THREE.InstancedMesh(geo, paintMat(kind, metallic), sub.length);
+          const im = new THREE.InstancedMesh(geo, paintMat(carLib[kind] ? kind : Object.keys(carLib)[0], metallic), sub.length);
           sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(c.color).convertSRGBToLinear()); });
           im.userData.keep = true; set.add(im); out.push(im);
         }
         continue;
       }
-      const idleSwap = name === "lamp_tail" ? M.idleTail : name === "lamp_head" ? M.idleHead : null;
+      const idleSwap = { lamp_tail: M.idleTail, lamp_head: M.idleHead, lamp_tail_in: M.idleTailIn, lamp_head_in: M.idleHeadIn }[name] || null;
       const groups = idleSwap ? [cars.filter(c => !c.idle), cars.filter(c => c.idle)] : [cars];
       groups.forEach((sub, gi) => {
         if (!sub.length) return;
@@ -990,7 +1005,8 @@ export function addKeys(set) {
   set.userData.spots.keys = { p: V3(13.8, 1.2, -17.8), r: 2.2, stand: V3(13.6, 0, -16.3) };
 }
 /* the loads, last so everything above exists. The lot is the first scene: its cars and ground arrive before the module finishes (a slow line gives up after a while and the lot builds with what it has) */
+loadTotal += CAR_KINDS.length;
 export const lotReady = Promise.all([loadCars().catch(e => console.warn("[world] cars", e)), loadSetTex(LOT_TEX)]);
 export const roomsReady = lotReady.then(() => loadSetTex(ROOM_TEX));
-await Promise.race([lotReady, new Promise(r => setTimeout(r, 15000))]);
+await Promise.race([lotReady, new Promise(r => setTimeout(r, 14000))]);
 export const _debug = { carLib, T, TIER };
