@@ -146,6 +146,7 @@ def mats():
         "tire": mat("tire", (0.025, 0.025, 0.025, 1), 0.0, 0.85), "rim": mat("rim", (0.55, 0.56, 0.58, 1), 1.0, 0.3),
         "disc": mat("disc", (0.25, 0.24, 0.23, 1), 1.0, 0.55), "well": mat("well", (0.01, 0.01, 0.01, 1), 0.0, 0.9),
         "lamp_head": mat("lamp_head", (0.8, 0.82, 0.85, 1), 0.0, 0.05), "lamp_tail": mat("lamp_tail", (0.5, 0.02, 0.02, 1), 0.0, 0.1),
+        "lamp_tail_in": mat("lamp_tail_in", (0.9, 0.08, 0.05, 1), 0.0, 0.2), "lamp_head_in": mat("lamp_head_in", (0.95, 0.95, 0.9, 1), 0.0, 0.2),
         "lamp_amber": mat("lamp_amber", (0.8, 0.35, 0.02, 1), 0.0, 0.1), "plate": mat("plate", (0.85, 0.83, 0.78, 1), 0.0, 0.5),
         "interior": mat("interior", (0.02, 0.02, 0.02, 1), 0.0, 0.8),
     }
@@ -185,6 +186,16 @@ def body(K, name):
             vs = (ring[j], ring[(j + 1) % n], ctr)
             f = bm.faces.new(vs if not flip else tuple(reversed(vs))); tags[f] = ("cap", 0)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    # crease: the first and last rings (the bumpers' faces) and the shoulder line keep an edge through the smoothing
+    cl = bm.edges.layers.float.get("crease_edge") or bm.edges.layers.float.new("crease_edge")
+    ringset = [set(rings[0]), set(rings[1]), set(rings[-1]), set(rings[-2])]
+    for e in bm.edges:
+        a, b2 = e.verts
+        if any(a in rs and b2 in rs for rs in ringset): e[cl] = 0.55
+    for i in range(len(rings) - 1):
+        for j in (6, 7, 2 * SEC - 3 - 6 + 1, 2 * SEC - 3 - 7 + 1):
+            for e in rings[i][j].link_edges:
+                if e.other_vert(rings[i][j]) is rings[i + 1][j]: e[cl] = 0.45
     me = bpy.data.meshes.new(name); bm.to_mesh(me)
     # material slots and per-face assignment from the loft tags
     order = ["paint", "glass", "trim", "interior"]
@@ -314,6 +325,9 @@ def details(K, ob, name):
         parts.append(patch(ob, "hl", "lamp_head", outline(cx, hl_z, W * 0.28, 0.15 if K["L"] < 5 else 0.19, 0.4), lambda u, v: (u, 5, v), (0, -1, 0), 0.006))
         parts.append(patch(ob, "tl", "lamp_tail", outline(s * W * 0.36, tl_z, W * 0.25 if "bed" not in K else W * 0.1, 0.13 if "bed" not in K else 0.34, 0.3), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.006))
         # tail light wrap onto the side, and the amber marker at the front corner
+        # the lens's inner element: a smaller bar a hair proud of the lens, the part that lights
+        parts.append(patch(ob, "tli", "lamp_tail_in", outline(s * W * 0.36, tl_z, (W * 0.25 if "bed" not in K else W * 0.1) * 0.7, (0.13 if "bed" not in K else 0.34) * 0.35, 0.5), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.009))
+        parts.append(patch(ob, "hli", "lamp_head_in", outline(cx + s * W * 0.03, hl_z, W * 0.09, 0.06, 0.5), lambda u, v: (u, 5, v), (0, -1, 0), 0.009))
         parts.append(patch(ob, "tlw", "lamp_tail", outline(-(L - 0.12), tl_z, 0.16, 0.09, 0.3), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         parts.append(patch(ob, "am", "lamp_amber", outline(-0.16, hl_z - 0.02, 0.1, 0.05, 0.45), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         # side mirror: a small rounded block on a stalk at the A-pillar base

@@ -58,3 +58,9 @@ The walk speed is measured from how far `pos` actually moves each frame. If
 the body is blocked, it stands instead of walking on the spot. The stride and
 cadence follow the measured speed, so any walk or run speed main.js chooses
 keeps the feet planted. The jog clip is natural at about 2.6 to 3.0 m/s.
+
+## 5. Standing styles (optional)
+
+`p.idleStyle = "fold"` (arms folded) or `"lean"` (forearms resting on a rail
+or a car roof, so place the person facing the car), and `null` to clear it.
+The change blends in over about half a second.

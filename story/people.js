@@ -305,7 +305,9 @@ class Person {
       // cards are drawn solid with the painted strand grain on them instead
       else if (name === "hair") mat = paint({ color: L.hair, curl: true, curlK: 700 * (m.scale.x || 1), rim: 0.3, wet: 0.12, side: THREE.DoubleSide });
       else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
-      else if (name === "brow" || name === "lash") mat = paint({ color: L.brow, map, alphaTest: name === "brow" ? 0.28 : 0.5, rim: 0.2, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
+      else if (name === "brow") mat = paint({ color: L.brow, map, alphaTest: 0.28, rim: 0, wet: 0, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
+      // lashes: drawn before the brows and without writing depth (drawn after them, the lash cards wash the brows out pale)
+      else if (name === "lash") { mat = paint({ color: L.brow, map, alphaTest: 0.5, rim: 0, wet: 0, side: THREE.DoubleSide, recolor: true, keep: L.brow, depthWrite: false }); m.renderOrder = -1; }
       else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
       // the eye texture carries its own white and brown iris: a near-white tint keeps the whites white
       else if (name === "eyes") mat = paint({ color: "#d9dadb", map, wet: 2.6, rim: 0.1 });
@@ -492,6 +494,9 @@ class Person {
     this.idleT += dt * this.tempo;
     M.sample(this.hold === "phone" && M.clips.phone ? M.clips.phone : M.clips.idle, this.idleT, acc0);
     this.engW = damp(this.engW || 0, this.lookAtP && this.hold !== "phone" ? 1 : 0, 1.5, dt);
+    // a standing style the episode can set: "fold" (arms folded) or "lean" (forearms on a rail or a car roof)
+    this.styleW = damp(this.styleW || 0, this.idleStyle && M.clips[this.idleStyle] ? 1 : 0, 2, dt);
+    if (this.styleW > 0.01) { const c = M.clips[this.idleStyle || this.lastStyle]; if (c) { this.lastStyle = c.name; M.sample(c, this.idleT, P.b); blendPose(acc0, P.b, this.styleW, c.name === "fold" ? this.mk.upper : null); } }
     if (this.engW > 0.01 && M.clips.converse) { this.convT = (this.convT || Math.random() * 9) + dt * this.tempo; M.sample(M.clips.converse, this.convT, P.c); blendPose(acc0, P.c, this.engW * 0.85, null); }
     if (this.locoW > 0.001) {
       let tot = 0, first = true;

@@ -119,7 +119,7 @@ function step(dt) { T += dt; P.forEach((p, i) => { drive(p, i, dt); p.update(dt)
 function render() { placeCam(); U.uTime.value = T; renderer.render(scene, camera); hud.textContent = q.get("hud") === "0" ? "" : `${run}  t ${T.toFixed(2)}  v ${P[0].gs.toFixed(2)}  loco ${P[0].locoW.toFixed(2)} jog ${P[0].jogW.toFixed(2)} stride ${(P[0].stride || 0).toFixed(2)}`; }
 function sheet(cols, rows, every, dt = 1 / 30) {
   const c = document.createElement("canvas"); c.width = W * cols; c.height = H * rows; const g = c.getContext("2d");
-  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) step(dt); render(); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
+  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) step(dt); render(); g.fillStyle = "#2a2f2d"; g.fillRect((k % cols) * W, Math.floor(k / cols) * H, W, H); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
   return c.toDataURL("image/png");
 }
 window.LAB = { P, step, render, sheet, advance(n, dt = 1 / 30) { for (let i = 0; i < n; i++) step(dt); render(); return T; }, cast };
