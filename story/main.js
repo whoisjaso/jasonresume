@@ -85,7 +85,7 @@ function cond(c) {
 }
 function save() {
   if (!S.scene || S.ending) return;
-  store.set("jg_story", JSON.stringify({ v: 1, scene: S.scene, flags: S.flags, looked: S.looked, log: S.log, trophies: S.trophies, journal: S.journal, t: Date.now() }));
+  store.set("jg_story", JSON.stringify({ v: 1, scene: S.scene, flags: S.flags, looked: S.looked, log: S.log, trophies: S.trophies, journal: S.journal, obj: S.obj || null, hint: S.hint || null, pos: me && S.phase === "explore" ? [+me.pos.x.toFixed(2), +me.pos.z.toFixed(2), +me.yaw.toFixed(2)] : null, t: Date.now() }));
 }
 function loadSave() { try { const s = JSON.parse(store.get("jg_story") || "null"); return s && s.v === 1 && s.scene ? s : null; } catch (e) { return null; } }
 
@@ -630,7 +630,8 @@ async function enter(name, o = {}) {
   const M = set.userData.marks;
   if (name === "lot") {
     await person("you", "player"); await person("jason", "jason"); await person("dell", "dell");
-    place(P.you, M.playerStart, Math.PI); place(P.jason, M.jason, M.jasonYaw); place(P.dell, M.dell, M.dellYaw);
+    // outside the gate is only for the cold open (which walks you in); any other way in starts you on the lot
+    place(P.you, o.cold ? M.playerStart : (M.playerIn || M.playerStart), Math.PI); place(P.jason, M.jason, M.jasonYaw); place(P.dell, M.dell, M.dellYaw);
     P.dell.hold = "umbrella"; if (P.dell.umbrella) P.dell.umbrella.visible = true;
     if (S.flags.met) { place(P.you, set.userData.spots.door.stand.clone().add(new THREE.Vector3(-1.5, 0, 2.5)), Math.PI); }
     set.userData.gate.position.x = -3.2;
@@ -653,6 +654,9 @@ async function enter(name, o = {}) {
   }
   for (const p of Object.values(P)) if (p.shadow) p.shadow.visible = p.group.visible;
   me = name === "memory" ? P.memory : name === "keys" ? P.jason : P.you;
+  // come in through an exit: you arrive at the way back to where you were
+  if (me && o.from) { const ex = Object.values(set.userData.spots || {}).find(x => x && x.kind === "exit" && (x.to === o.from || (o.from === "decision" && x.to === "lot") || (o.from === "lot" && x.to === "decision"))); if (ex) { const q = ex.stand || ex.p || ex.at; if (q) { me.pos.set(q.x, 0, q.z); const f = ex.p || ex.at; if (f && f !== q) me.yaw = me.wantYaw = Math.atan2(q.x - f.x, q.z - f.z); } } }
+  if (me && !o.cold) unstick(me);
   if (name === "decision" && S.obj === "keys") objective(null);
   // the rain: hard on the lot, gentler at the end, none inside or in the morning
   if (!rain) { rain = makeRain(); scene.add(rain); }
@@ -877,6 +881,16 @@ const mv = { x: 0, z: 0, mag: 0, runLatch: false, path: null, pi: 1, after: null
 const pad = { x: 0, y: 0, mag: 0 };
 let nav = null, navFor = null;
 function navNow() { if (!set) return null; if (navFor !== set) { nav = buildNav(set); navFor = set; } return nav; }
+/* if a placement (a restore, a scene change, getting out of a car) left you inside something or outside the set,
+   step to the nearest clear ground, on a widening ring */
+function unstick(p) {
+  if (!set || !blocked(p.pos.x, p.pos.z)) return false;
+  for (let r = 0.4; r <= 8; r += 0.4) for (let a = 0; a < 16; a++) {
+    const x = p.pos.x + Math.sin(a / 16 * Math.PI * 2) * r, z = p.pos.z + Math.cos(a / 16 * Math.PI * 2) * r;
+    if (!blocked(x, z)) { p.pos.x = x; p.pos.z = z; return true; }
+  }
+  return false;
+}
 function blocked(x, z, r = 0.28) {
   for (const w of set.userData.walls) if (x > w.x0 - r && x < w.x1 + r && z > w.z0 - r && z < w.z1 + r) return true;
   const b = set.userData.bounds; if (b && (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1)) return true;
@@ -923,7 +937,7 @@ function moveMe(dt) {
     const sp = speed * (turn > 1.6 ? 0.25 : 1);
     let nx = me.pos.x + dir.x * sp * dt, nz = me.pos.z + dir.z * sp * dt;
     let moved = true;
-    if (!blocked(nx, nz)) { me.pos.x = nx; me.pos.z = nz; }
+    if (!blocked(nx, nz) || blocked(me.pos.x, me.pos.z)) { me.pos.x = nx; me.pos.z = nz; } // stuck inside something: let them walk out
     else if (!blocked(nx, me.pos.z)) me.pos.x = nx;
     else if (!blocked(me.pos.x, nz)) me.pos.z = nz;
     else {
@@ -1001,8 +1015,65 @@ function spotsHere() {
     if (sp.who) { const who = P[sp.who]; if (!who || !who.group.visible) continue; p = headOf(who).add(new THREE.Vector3(0, -0.15, 0)); }
     out.push({ id, o, sp, p });
   }
-  if (S.scene === "decision") return out.filter(s => s.id === "jason-end");
-  return out.concat(carSpots());
+  return (S.scene === "decision" ? out.filter(s => s.id === "jason-end") : out).concat(worldSpots(), carSpots());
+}
+/* the world's own spots (tools/story/HANDOFF-explore.md): { kind, label, p | at, stand, to } that aren't story
+   objects. Exits take you to another set; the rest are things to use: switch, open, sit, press, pick up, read,
+   splash, knock. No story text: a reach, a sound, a haptic, and what the world does with it. */
+const WORLD_KINDS = ["exit", "toggle", "open", "sit", "press", "pickup", "read", "splash", "knock"];
+const worldSpotCache = new WeakMap();
+function worldSpots() {
+  const sp = set && set.userData.spots; if (!sp) return [];
+  let c = worldSpotCache.get(set);
+  if (!c) {
+    c = [];
+    for (const [id, x] of Object.entries(sp)) {
+      if (!x || !x.kind || OBJ[id] || !WORLD_KINDS.includes(x.kind)) continue;
+      const p = x.p || x.at; if (!p) continue;
+      const pv = p.isVector3 ? p : new THREE.Vector3(p.x, p.y || 1, p.z);
+      c.push({ id, o: { verb: UI["v_" + x.kind] || UI.act, label: x.label || (x.kind === "exit" ? (UI["to_" + x.to] || x.to) : ""), world: x.kind }, sp: Object.assign(x, { r: x.r || 1.8 }), p: pv });
+    }
+    worldSpotCache.set(set, c);
+  }
+  return c;
+}
+async function useWorld(s, how) {
+  const x = s.sp, kind = x.kind, at = s.p;
+  mv.path = null; mv.after = null; guide.clearRing(); progress();
+  T("story_use", { id: s.id, kind, scene: S.scene, how: how || "" });
+  if (kind === "exit") { FX("arrive"); AU.use("exit", at); hap("tap"); await roam(x.to); return; }
+  S.looked[s.id] = (S.looked[s.id] || 0) + 1;
+  me.wantYaw = Math.atan2(at.x - me.pos.x, at.z - me.pos.z);
+  let fired = false;
+  const feel = () => {
+    if (fired) return; fired = true;
+    x.on = !x.on;
+    FX("arrive"); AU.use(kind, at, x.on); hap("tap");
+    try { if (typeof x.use === "function") x.use({ kind, on: x.on, who: me }); } catch (e) {}
+    document.dispatchEvent(new CustomEvent("jg:story-use", { detail: { id: s.id, kind, on: x.on } }));
+  };
+  if (kind === "sit" && me.sitAt) { try { await me.sitAt(x.seat || at, x.yaw); } catch (e) {} feel(); return; }
+  if (kind === "splash") { feel(); return; }
+  if (me.reachTo && kind !== "sit") {
+    try { const r = me.reachTo(at.clone ? at.clone() : at, { hold: kind === "pickup" ? "pinch" : kind === "open" ? "grip" : kind === "press" || kind === "toggle" ? "press" : "touch", onContact: feel }); if (r && r.catch) r.catch(feel); } catch (e) { feel(); }
+    setTimeout(feel, FAST ? 0 : 1200);
+  } else feel();
+}
+/* free roam between sets: the story's arrival talk plays only the first time; the way keeps pointing at the next step */
+async function roam(to) {
+  if (!to || !D.scenes[to] && to !== "lot") return;
+  if (to === "lot" && S.visited && S.visited.decision) to = "decision";
+  if (to === S.scene) return;
+  const first = !(S.visited && S.visited[to]);
+  S.phase = "cinematic"; hideWorldUI();
+  await fade(1, 600);
+  await enter(to, { quiet: true, from: S.scene });
+  await sleep(150);
+  await fade(0, 600);
+  FX("arrive"); if (first) await sceneCard(to);
+  S.phase = "explore";
+  const st = D.scenes[to] && D.scenes[to].start;
+  if (st && TALK[st] && !S.flags["done-" + to]) { S.partner = to === "office" || to === "decision" ? P.jason : null; await startTalk(to); }
 }
 let near = null;
 const v2 = new THREE.Vector3();
@@ -1056,6 +1127,7 @@ function goInteract(id) {
 async function interact(id, how) {
   if (S.phase !== "explore") return;
   if (id.startsWith("car:")) { const c = drivables().find(x => "car:" + x.id === id); if (c) enterCar(c, how); return; }
+  { const w = worldSpots().find(x => x.id === id); if (w) { await useWorld(w, how); return; } }
   const o = OBJ[id]; if (!o) return;
   const s = set.userData.spots[id] || {};
   mv.path = null; mv.after = null; guide.clearRing(); progress();
@@ -1063,6 +1135,7 @@ async function interact(id, how) {
   if (o.go) { FX("arrive"); AU.thing(id, at); T("story_object", { id, scene: S.scene }); await travel(o.go); return; }
   const first = !S.looked[id];
   S.looked[id] = (S.looked[id] || 0) + 1;
+  if (S.hint && S.hint.id === id) S.hint = null;
   T("story_object", { id, scene: S.scene, first });
   // reach for the things you can touch: the sound, the haptic and the motion land when the hand does
   let fired = false;
@@ -1099,7 +1172,7 @@ async function runTalk(id) {
   let guard = 0;
   while (cur && guard++ < 40) {
     const T0 = TALK[cur]; if (!T0) break;
-    S.talking = cur;
+    S.talking = cur; hintFrom(cur);
     if (T0.branch) { const b = T0.branch.find(x => cond(x.if)); cur = b ? b.go : null; continue; }
     if (T0.set) Object.assign(S.flags, T0.set);
     const lines = (T0.lines || []).filter(L => cond(L.if));
@@ -1429,6 +1502,7 @@ let pzView = "main";
 function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; dotsEl.innerHTML = ""; dotsEl._html = ""; wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
 function pause() {
   if (S.phase === "end" || S.phase === "load" || S.phase === "pause") return;
+  if (S.phase === "explore") save();
   S.prevPhase = S.phase; S.phase = "pause";
   if (line && line.audio) line.audio.pause();
   for (const k in keys) keys[k] = false;
@@ -1506,7 +1580,7 @@ pauseEl.addEventListener("click", async e => {
   else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh("lot"); }
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
-function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.ending = null; S.visited = {}; }
+function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
 async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); S.phase = "explore"; if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
@@ -2000,30 +2074,57 @@ function readSafe() {
   body.appendChild(d); const cs = getComputedStyle(d);
   SAFE.t = parseFloat(cs.paddingTop) || 0; SAFE.r = parseFloat(cs.paddingRight) || 0; SAFE.b = parseFloat(cs.paddingBottom) || 0; SAFE.l = parseFloat(cs.paddingLeft) || 0; d.remove();
 }
+/* where the way leads. In order: what the episode needs from you now (an objective that names a place); then the
+   place the last thing said pointed you to (Jason's "find the whiteboard", "open the filing cabinet"), until you've
+   been there; then the nearest thing you haven't looked at; and if nothing names a place, the next step of the story.
+   A place in another set routes to the way into it (the office door from the lot, an exit back out). */
+const HINTS = { "hire-build": "board", "hire-ai": "phone", "hire-ops": "cabinet", "hire-sales": "renata", "lot-calls": "phone", "lot-paperwork": "cabinet", "lot-leads": "laptop", "lot-notebook": "renata", "lot-come-in": "renata", "why-curious": "renata", "why-deflect": "door", "book-hint": "book" };
+function hintFrom(talk) {
+  const id = HINTS[talk]; if (!id) return;
+  const o = OBJ[id]; S.hint = { id, scene: o ? o.scene : S.scene, from: talk };
+}
+/* the way out of this set toward another: the world's exits first, then the doors we know */
+function exitToward(scene) {
+  const sp = set && set.userData.spots; if (!sp) return null;
+  for (const [id, x] of Object.entries(sp)) if (x && x.kind === "exit" && (x.to === scene || (scene === "decision" && x.to === "lot"))) return { id, sp: x, p: x.p || x.at || x.stand };
+  if (S.scene === "lot" && scene === "office" && sp.door) return { id: "door", sp: sp.door, p: sp.door.p };
+  return null;
+}
 function wayTarget() {
   if (!me) return null;
   const here = spotsHere(), spot = id => here.find(x => x.id === id) || null;
-  const o = S.obj;
-  let s = null;
-  if (S.scene === "memory" && S.flags.packed) s = spot("mem-lamp");
+  const o = S.obj, F = S.flags;
+  let s = null, soft = false;
+  // 1. what the episode needs now
+  if (S.scene === "memory" && F.packed) s = spot("mem-lamp");
   else if (S.scene === "decision") s = spot("jason-end");
   else if (o === "find") s = spot("jason-lot");
   else if (o === "office") s = spot("door");
   else if (o === "phone") s = spot("phone");
   else if (o === "book") s = spot("book");
   else if (o === "keys") s = spot("keys");
-  else if (o === "pack" || o === "look") {
-    // the nearest thing you haven't looked at yet
-    let bd = 1e9;
+  // 2. the place the last thing said pointed to
+  if (!s && S.hint && !S.looked[S.hint.id]) {
+    if (S.hint.scene === S.scene) s = spot(S.hint.id);
+    else { const x = exitToward(S.hint.scene); if (x) s = here.find(h => h.id === x.id) || { id: x.id, sp: x.sp, p: x.p, o: {} }; }
+  }
+  // 3. the nearest thing you haven't looked at
+  if (!s && (o === "pack" || o === "look")) {
+    let bd = 1e9; soft = o === "look";
     for (const c of here) {
-      if (S.looked[c.id] || c.o.who || c.o.go || c.id === "phone" || c.id === "book" || (o === "pack" && !c.o.pack)) continue;
+      if (S.looked[c.id] || c.o.who || c.o.go || c.o.car || c.o.world || c.id === "phone" || c.id === "book" || (o === "pack" && !c.o.pack)) continue;
       const d = Math.hypot(c.p.x - me.pos.x, c.p.z - me.pos.z); if (d < bd) { bd = d; s = c; }
     }
   }
-  if (!s) return null;
-  let st = s.sp.stand || s.p;
-  if (s.sp.who) { const w = P[s.sp.who]; const d = me.pos.clone().sub(w.pos).setY(0); if (d.length() < 0.01) d.set(0, 0, 1); st = w.pos.clone().addScaledVector(d.normalize(), 1.25); }
-  return { id: s.id, stand: st, p: s.sp.who ? headOf(P[s.sp.who]) : s.p, soft: o === "look" };
+  // 4. nothing named a place: the next step of the story
+  if (!s) {
+    if (S.scene === "lot") s = F.met ? spot("door") : spot("jason-lot");
+    else if (S.scene === "office") s = !F.desked ? spot("renata") : F.ringing && !F.called ? spot("phone") : F.hinted && !S.looked.book ? spot("book") : null;
+  }
+  if (!s || !s.p) return null;
+  let st = (s.sp && s.sp.stand) || s.p;
+  if (s.sp && s.sp.who) { const w = P[s.sp.who]; const d = me.pos.clone().sub(w.pos).setY(0); if (d.length() < 0.01) d.set(0, 0, 1); st = w.pos.clone().addScaledVector(d.normalize(), 1.25); }
+  return { id: s.id, stand: st, p: s.sp && s.sp.who ? headOf(P[s.sp.who]) : s.p, soft };
 }
 let guideRoute = null, wayT = 0, wayKey = "", wayFrom = null;
 let progT = 0, progWalk = 0, lastPos = null, nudges = 0;
@@ -2295,16 +2396,23 @@ async function open(sceneName, how) {
   if (window.JG_LOCK) window.JG_LOCK(true);
   // the sound is built here, inside the press of Play or Continue, never before
   AU.build(); AU.sound(soundOn());
+  // a reopen in the same page starts clean: no held keys or fingers, no half-made choice, no ending, no skip waiting
+  for (const k in keys) keys[k] = false;
+  ptrs.clear(); stickEl.hidden = true; mv.x = mv.z = mv.mag = 0; mv.path = null; mv.after = null; mv.runLatch = false;
+  choosing = null; choicesEl.hidden = true; el.classList.remove("has-choices", "is-talking", "is-paused", "is-cinema", "is-driving");
+  S.ending = null; S.skipOpen = null; S.talking = null; S.partner = null; S.holdLines = S.holdLines && DEBUG;
+  pauseEl.hidden = true; journalEl.hidden = true; endEl.hidden = true; endEl.classList.remove("is-on");
   const saved = loadSave();
   const fresh = !sceneName && !saved;
-  if (saved && !sceneName) { Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [] }); }
+  if (fresh || sceneName) resetState();
+  if (saved && !sceneName) { Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [], obj: saved.obj || null, hint: saved.hint || null }); }
   T("story_started", { how: how || "", scene: sceneName || (saved ? saved.scene : "lot"), cont: !!(saved && !sceneName) });
   await boot();
   setLoad(1);
   const target = sceneName || (saved ? saved.scene : "lot");
   // the address keeps whatever brought you here; a deep link is consumed, so a reload meets the start screen (and Continue)
   if (/^#story/.test(location.hash) && history.replaceState) history.replaceState(null, "", location.pathname + location.search);
-  await enter(target, { quiet: true });
+  await enter(target, { quiet: true, cold: target === "lot" && fresh });
   S.visited[target] = 1;
   await sleep(300);
   el.classList.remove("is-loading"); loadEl.classList.add("is-gone");
@@ -2312,6 +2420,7 @@ async function open(sceneName, how) {
   if (target === "lot" && fresh) { await coldOpen(); return; }
   await fade(0, 10);
   FX("arrive"); await sceneCard(target);
+  if (saved && !sceneName && saved.scene === target && saved.pos && me && target !== "memory" && target !== "keys") { me.pos.set(saved.pos[0], 0, saved.pos[1]); me.yaw = me.wantYaw = saved.pos[2] || 0; unstick(me); camState.yaw = me.yaw + Math.PI; camState.init = true; }
   S.phase = "explore";
   if (S.obj) objective(S.obj);
   const st = D.scenes[target].start;
@@ -2429,6 +2538,10 @@ window.JG_STORY = {
       return null;
     },
     carPut: (x, z, yaw) => { if (!DRV.veh) return false; DRV.veh.reset(x, z, yaw); DRV.camInit = true; return true; },
+    hint: talk => { if (talk == null) { S.hint = null; return null; } hintFrom(talk); return S.hint; },
+    hints: () => ({ ...HINTS }),
+    obj: k => { objective(k || null); return S.obj; },
+    unlook: id => { delete S.looked[id]; },
     skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; }
   }
 };

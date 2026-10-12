@@ -637,6 +637,20 @@
     "drive_steer": "Steer",
     "drive_pointer": "{gas} to drive, {brake} to brake and reverse, {left} and {right} to steer. Space for the handbrake, C for the camera, {act} to get out.",
     "drive_pad": "RT to drive, LT to brake and reverse, the left stick steers. A for the handbrake, X for the camera, B to get out.",
-    "drive_touch": "Steer with your left thumb. Gas and brake are on the right; hold brake to reverse."
+    "drive_touch": "Steer with your left thumb. Gas and brake are on the right; hold brake to reverse.",
+    "v_exit": "Go",
+    "v_toggle": "Switch",
+    "v_open": "Open",
+    "v_sit": "Sit",
+    "v_press": "Press",
+    "v_pickup": "Pick up",
+    "v_read": "Read",
+    "v_splash": "Splash",
+    "v_knock": "Knock",
+    "to_lot": "Out to the lot",
+    "to_office": "Into the office",
+    "to_memory": "Into the library",
+    "to_decision": "Out to the lot",
+    "to_keys": "Out to the lot"
   }
 }

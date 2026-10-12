@@ -620,6 +620,24 @@ export function createAudio(o) {
     return api;
   }
 
+  /* ---------- the things you can use anywhere: a sound for each kind ---------- */
+  function use(kind, at, on) {
+    if (!A.ctx) return;
+    const v = { at, ref: 2.2, verb: A.verbAmt };
+    switch (kind) {
+      case "toggle": sprite("click-metal", { ...v, gain: 0.32, rate: on ? 1.25 : 1.05 }); break;
+      case "press": sprite("ui-click", { ...v, gain: 0.3, rate: 0.85, lp: 3500 }); tone({ f: 880, decay: 0.08, gain: 0.012, at }); break;
+      case "open": sprite("latch", { ...v, gain: 0.32, rate: 0.95 }); sprite("creak-0", { ...v, gain: 0.18, rate: 0.9, delay: 0.12, lp: 3000 }); break;
+      case "sit": cloth(at, 0.9); sprite("creak-1", { ...v, gain: 0.14, rate: 1.4, delay: 0.25, lp: 2500 }); break;
+      case "pickup": sprite("keys-0", { ...v, gain: 0.25, rate: 1.2 }); cloth(at, 0.5); break;
+      case "read": sprite(pick(["page-0", "page-1", "page-2"]), { ...v, gain: 0.4 }); break;
+      case "splash": step("puddle", { at, gain: 1.5, ref: 3 }); burst({ f: 3000, q: 0.6, gain: 0.18, decay: 0.3, at }); break;
+      case "knock": for (let i = 0; i < 3; i++) { tone({ f: 140, to: 90, glide: 0.04, decay: 0.07, gain: 0.12, delay: i * 0.17, at, ref: 2 }); burst({ type: "lowpass", f: 900, gain: 0.08, decay: 0.04, delay: i * 0.17, at, buf: A.brown }); } break;
+      case "exit": sprite("door-open", { ...v, gain: 0.4, rate: 1.0 }); break;
+    }
+    log("use", kind);
+  }
+
   /* ---------- the interface ---------- */
   function ui(kind) {
     if (!A.ctx) return false;
@@ -641,7 +659,7 @@ export function createAudio(o) {
   function stopAll() { if (!A.ctx) return; clearAmb(0.6); A.clockOn = false; }
 
   return {
-    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive,
+    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive, use,
     debug: () => {
       const N = A.nodes;
       return {

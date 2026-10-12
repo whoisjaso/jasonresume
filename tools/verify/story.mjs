@@ -678,6 +678,117 @@ async function ballCheck(vname, w, h, mobile) {
   notes.push(`${label}: on ${r.line} the ball flew in ${r.air} and rested in ${r.landed} of ${r.n} samples, on the letters in ${r.over}; stills caption-ball-${vname}{,-flight,-landed}.png`);
   await ctx.close();
 }
+/* ---------- resume: save at several points, reload, Continue, and you can still walk (keys, or the touch stick) ---------- */
+const RESUME = process.argv.includes('--resume');
+async function resume(vname, w, h, mobile) {
+  const label = `${vname} resume`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  const go = async () => { await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3'); await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); };
+  const press = async () => { if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); };
+  // to explore: skip lines; at choices take the first
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); return s.phase === 'explore'; }, null, 300000);
+  let cdp = null;
+  const canMove = async tag => {
+    if (!(await toExplore())) { errs.push(`${label} ${tag}: never got back to exploring ${JSON.stringify(await st(p))}`); return; }
+    await turnAway(p);
+    const a = (await st(p)).me;
+    if (mobile) {
+      cdp = cdp || await ctx.newCDPSession(p);
+      const bx = Math.round(w * 0.18), by = Math.round(h * 0.75), T0 = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+      await T0('touchStart', bx, by); await T0('touchMove', bx, by - 10); await T0('touchMove', bx, by - 40);
+      await until(p, a => { const m = window.JG_STORY.debug.state().me; return Math.hypot(m[0] - a[0], m[1] - a[1]) > 0.05; }, a, 20000);
+      await p.evaluate(() => window.JG_STORY.debug.sim(30, 1 / 30));
+      await T0('touchEnd');
+    } else {
+      await p.keyboard.down('w');
+      await until(p, a => { const m = window.JG_STORY.debug.state().me; return Math.hypot(m[0] - a[0], m[1] - a[1]) > 0.05; }, a, 20000);
+      await p.evaluate(() => window.JG_STORY.debug.sim(30, 1 / 30));
+      await p.keyboard.up('w');
+    }
+    const b2 = (await st(p)).me, d = Math.hypot(b2[0] - a[0], b2[1] - a[1]);
+    if (d < 0.4) errs.push(`${label} ${tag}: can't move after resuming (moved ${d.toFixed(2)} m from ${a.map(n => n.toFixed(1))}, ${JSON.stringify(await p.evaluate(() => window.JG_STORY.debug.input()))})`);
+    else notes.push(`${label} ${tag}: walks ${d.toFixed(2)} m with ${mobile ? 'the touch stick' : 'W'} after resuming`);
+  };
+  const reload = async () => { await go(); const lab = (await p.textContent('[data-title-play]')).trim(); if (lab !== 'Continue') errs.push(`${label}: the start screen says "${lab}" after a save`); await press(); };
+  await p.addInitScript(() => { if (!sessionStorage.getItem('__cleared')) { localStorage.removeItem('jg_story'); sessionStorage.setItem('__cleared', '1'); } });
+  await go(); await press();
+  // 1: saved on the lot, before meeting anyone
+  await toExplore(); await reload(); await canMove('lot, before Jason');
+  // 2: mid-talk with Dell
+  await p.evaluate(() => window.JG_STORY.debug.hold(true));
+  await use(p, mobile, 'dell', label);
+  await until(p, () => !!window.JG_STORY.debug.state().line, null, 20000);
+  await reload(); await canMove('mid-talk');
+  // 3: after a choice
+  await use(p, mobile, 'dell', label);
+  await until(p, () => { const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); return !!s.choices; }, null, 60000);
+  await p.evaluate(() => window.JG_STORY.debug.choose(0)); await p.waitForTimeout(500);
+  await reload(); await canMove('after a choice');
+  // 4: in a car
+  const cars = await p.evaluate(() => window.JG_STORY.debug.cars());
+  if (cars.length) {
+    const c = cars.find(x => x.id !== 'idle') || cars[0];
+    await p.evaluate(([x, z, cx, cz]) => window.JG_STORY.debug.put(x, z, Math.atan2(cx - x, cz - z)), [c.stand[0], c.stand[1], c.x, c.z]);
+    await until(p, id => window.JG_STORY.debug.state().near === id, 'car:' + c.id, 15000);
+    await p.evaluate(id => window.JG_STORY.debug.interact(id), 'car:' + c.id);
+    await until(p, () => window.JG_STORY.debug.drive().state, null, 10000); await p.evaluate(() => window.JG_STORY.debug.skipCar());
+    await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 60000);
+    await reload(); await canMove('saved in a car');
+  }
+  // 5: close and open again in the same page
+  await p.evaluate(() => window.JG_STORY.close('test')); await p.waitForTimeout(800);
+  await p.evaluate(() => window.JG_STORY.open(null, 'test'));
+  await canMove('closed and reopened');
+  // 6: the office, by its link, then Continue
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
+  await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
+  await p.click('#intro [data-intro-skip]').catch(() => {});
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
+  await canMove('office by its link');
+  await reload(); await canMove('office, continued');
+  await ctx.close();
+}
+/* ---------- the way: every hint's trail ends at the thing it names (or the way into its room) ---------- */
+const WAY = process.argv.includes('--way');
+async function wayCheck(vname, w, h, mobile) {
+  const label = `${vname} way`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); return s.phase === 'explore'; }, null, 300000);
+  const check = async (talk, want, where) => {
+    // the thing has to be there to be pointed at: the phone rings, the book is mentioned, the desk is open
+    const need = (STORY.objects[want] || {}).if;
+    await p.evaluate(([t, id, f]) => { const d = window.JG_STORY.debug; if (f && /^\w+$/.test(f)) d.flag(f, 1); d.unlook(id); d.obj(null); d.hint(t); }, [talk, want, need || null]);
+    const ok = await until(p, want => { const g = window.JG_STORY.debug.guide(); return g.target && g.target.id === want && g.route && g.route.length > 1; }, want, 20000);
+    const g = await p.evaluate(() => window.JG_STORY.debug.guide());
+    if (!ok) { errs.push(`${label}: after "${talk}" the way leads to ${g.target ? g.target.id : 'nothing'}, not ${want}`); return; }
+    const end = g.route[g.route.length - 1], miss = Math.hypot(end[0] - g.target.x, end[1] - g.target.z);
+    if (miss > 0.6) errs.push(`${label}: the trail for "${talk}" stops ${miss.toFixed(2)} m short of ${want}`);
+    return true;
+  };
+  // the lot: after meeting Jason, an office hint leads to the door
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  await toExplore(); await turnAway(p);
+  let n = 0;
+  await p.evaluate(() => window.JG_STORY.debug.flag('met', 1));
+  for (const t of ['hire-build', 'lot-paperwork', 'lot-come-in']) if (await check(t, 'door', 'lot')) n++;
+  // the office: each hint leads to its own thing
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
+  await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
+  await p.click('#intro [data-intro-skip]').catch(() => {});
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
+  await toExplore(); await turnAway(p);
+  const H = await p.evaluate(() => window.JG_STORY.debug.hints());
+  for (const [t, id] of Object.entries(H)) { if (STORY.objects[id] && STORY.objects[id].scene === 'office' && await check(t, id, 'office')) n++; }
+  await shot0(p, `way-${vname}`);
+  notes.push(`${label}: ${n} hints checked; each trail ends at the thing named (or the office door from the lot)`);
+  await ctx.close();
+}
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
@@ -694,6 +805,8 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (WAY) { try { await wayCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} way: ${e.message.split('\n')[0]}`); } continue; }
+  if (RESUME) { try { await resume(vname, w, h, mobile); } catch (e) { errs.push(`${vname} resume: ${e.message.split('\n')[0]}`); } continue; }
   if (BALL) { try { await ballCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} ball: ${e.message.split('\n')[0]}`); } continue; }
   if (DRIVE) { try { await drive(vname, w, h, mobile); } catch (e) { errs.push(`${vname} drive: ${e.message.split('\n')[0]}`); } continue; }
   if (SYNC) { try { await sync(vname, w, h, mobile); } catch (e) { errs.push(`${vname} sync: ${e.message.split('\n')[0]}`); } continue; }

@@ -745,7 +745,7 @@ export function buildLot(o) {
     box(0.13, 2.42, 0.13, casing, dx - 0.615, 1.21, fz + 0.06, sh); box(0.13, 2.42, 0.13, casing, dx + 0.615, 1.21, fz + 0.06, sh);
     box(1.36, 0.14, 0.13, casing, dx, 2.35, fz + 0.06, sh);
     // the lit room behind the leaf (seen through its glass, and all of it when the door opens)
-    const inner = plane(1.1, 2.26, glow("#f1cf98", { k: day ? 0.35 : 1.0 }), sh); inner.position.set(dx, 1.15, fz + 0.004);
+    const inner = plane(1.1, 2.26, glow("#f1cf98", { k: day ? 0.3 : 0.62 }), sh); inner.position.set(dx, 1.15, fz + 0.004);
     box(1.7, 0.1, 0.55, rmat({ color: "#9b968c", rough: 0.85, wet: 0.8, mapK: "concC", tri: 1.2 }), dx, 0.05, fz + 0.27, sh);
     const mat = plane(1.1, 0.62, pbr({ color: "#1d1c1a", rough: 0.95, wet: 0.4 }), sh); mat.rotation.x = -Math.PI / 2; mat.position.set(dx, 0.012, fz + 0.9);
     // the leaf, hinged on its left edge (as you face it)
@@ -760,8 +760,10 @@ export function buildLot(o) {
     for (const bx of [W0 / 2 - 0.35, W0 / 2 + 0.43]) box(0.04, 0.05, 0.06, steel, bx, 1.02, 0.055, leaf);
     for (const hy of [0.3, 1.1, 1.9]) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.11, 8), steel); h.position.set(-0.005, hy, 0.03); leaf.add(h); }
     // OFFICE, lit, and the sconce under it
-    const sign = plane(1.05, 0.3, glow("#ffffff", { map: TX.officeSignTex(), k: day ? 0.8 : 1.2 }), sh); sign.position.set(dx, 3.02, fz + 0.012);
-    box(1.13, 0.38, 0.03, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.4, wet: 0.9 }), dx, 3.02, fz - 0.005, sh);
+    const sign = plane(1.4, 0.4, glow("#ffffff", { map: TX.officeSignTex(), k: day ? 0.8 : 1.35 }), sh); sign.position.set(dx, 3.08, fz + 0.012);
+    box(1.48, 0.48, 0.03, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.4, wet: 0.9 }), dx, 3.08, fz - 0.005, sh);
+    // the sconce's light in the rain, a pool you can see from across the lot
+    if (!day) { const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 1.5, 2.45, 24, 1, true), coneMat0("#ffc98a", 0.6)); cone.position.set(dx, 2.56 - 1.225, fz + 0.55); cone.layers.set(3); cone.userData.keep = true; sh.add(cone); }
     box(0.34, 0.1, 0.16, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.5, wet: 0.9 }), dx, 2.62, fz + 0.08, sh);
     const lens = plane(0.3, 0.12, glow("#ffe0b0", { k: day ? 0.3 : 3.0 }), sh); lens.rotation.x = Math.PI / 2; lens.position.set(dx, 2.565, fz + 0.08);
     set.userData.officeDoor = {

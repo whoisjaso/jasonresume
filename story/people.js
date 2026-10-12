@@ -128,7 +128,7 @@ class Motion {
       let x1 = q[o1 + i], y1 = q[o1 + i + 1], z1 = q[o1 + i + 2], w1 = q[o1 + i + 3];
       const x0 = q[o0 + i], y0 = q[o0 + i + 1], z0 = q[o0 + i + 2], w0 = q[o0 + i + 3];
       if (x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1 < 0) { x1 = -x1; y1 = -y1; z1 = -z1; w1 = -w1; }
-      const x = x0 + (x1 - x0) * a, y = y0 + (y1 - y0) * a, z = z0 + (z1 - z0) * a, w = w0 + (w1 - w0) * a, L = 1 / (Math.hypot(x, y, z, w) || 1);
+      const x = x0 + (x1 - x0) * a, y = y0 + (y1 - y0) * a, z = z0 + (z1 - z0) * a, w = w0 + (w1 - w0) * a, L = 1 / (Math.sqrt(x * x + y * y + z * z + w * w) || 1);
       oq[i] = x * L; oq[i + 1] = y * L; oq[i + 2] = z * L; oq[i + 3] = w * L;
     }
     const p = c.p; for (let k = 0; k < 3; k++) out.p[k] = p[f0 * 3 + k] + (p[f1 * 3 + k] - p[f0 * 3 + k]) * a;
@@ -476,7 +476,13 @@ class Person {
   }
   headWorld(v = new THREE.Vector3()) { const h = this.bones.head; if (h) { h.getWorldPosition(v); v.y += 0.08; } else v.copy(this.pos).setY(1.6); return v; }
   eyeLevel() { return this.height - 0.1; }
-  setFx(k, v) { for (const m of this.morphs) { const i = m.morphTargetDictionary[k]; if (i != null) m.morphTargetInfluences[i] = v; } }
+  setFx(k, v) {
+    // the morph slots for each shape, looked up once
+    const fx = this.fxIx || (this.fxIx = {});
+    let ix = fx[k];
+    if (!ix) { ix = fx[k] = []; for (const m of this.morphs) { const i = m.morphTargetDictionary[k]; if (i != null) ix.push(m.morphTargetInfluences, i); } }
+    for (let j = 0; j < ix.length; j += 2) ix[j][ix[j + 1]] = v;
+  }
 
   /* one-shot moves: "interact" (reach and touch), "pickup", "give" (hand something over), "yes", "no" */
   play(kind) {
@@ -777,34 +783,40 @@ class Person {
         let cs = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) cs += this.lw[i] * contactAt(LC[i], (this.gPhase + LC[i].heel) % 1, s);
         const contact = cs > 0.5;
         F.step = 0;
-        if (contact && !F.lock) { F.lock = true; F.pos.copy(wantW); F.yaw = wantYaw; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", clamp(0.35 + this.gs * 0.25, 0, 1)); }
+        // planting: where the foot is now (the stride's place, or partway back from a lock it was letting go of)
+        if (contact && !F.lock) { F.pos.lerpVectors(wantW, F.pos, F.w); F.yaw = wantYaw; F.lock = true; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", clamp(0.35 + this.gs * 0.25, 0, 1)); }
         if (!contact) F.lock = false;
-        // a lock that drifts too far (a sharp turn mid stride) gives way
-        if (F.lock && F.pos.distanceTo(wantW) > 0.3) { F.pos.copy(wantW); F.yaw = wantYaw; }
-        F.w = damp(F.w, F.lock ? 1 : 0, F.lock ? 40 : 12, dt);
+        // a lock that drifts too far (a sharp turn mid stride, a start from standing) lets go and the foot blends over
+        // to where the stride wants it (never a jump, at any frame rate)
+        if (F.lock && F.pos.distanceTo(wantW) > 0.3) F.lock = false;
+        // planting is instant (at heel strike the lock is where the foot already is); lifting blends out
+        F.w = F.lock ? 1 : damp(F.w, 0, 12, dt);
       } else {
         // standing: feet stay put until one is out of place, then it steps; one foot at a time
+        // stopping: a foot that was in the air plants where it is, not where it was last planted
+        if (!F.lock && F.step === 0) { F.pos.lerpVectors(wantW, F.pos, F.w); F.lock = true; F.w = 1; }
         F.w = damp(F.w, 1, 12, dt);
         if (F.step > 0) {
-          F.step = Math.min(1, F.step + dt / 0.28);
+          F.step = Math.min(1, F.step + dt / (F.dur || 0.28));
           const u = sstep(0, 1, F.step);
           F.pos.lerpVectors(F.from, wantW, u); F.pos.y = wantW.y + Math.sin(u * Math.PI) * 0.06;
           F.yaw = F.fromYaw + angDiff(F.fromYaw, wantYaw) * u;
           if (F.step >= 1) { F.step = 0; F.pos.copy(wantW); F.yaw = wantYaw; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", 0.2); }
         } else {
-          if (!F.lock) { F.lock = true; }
-          const off = Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z), tw = Math.abs(angDiff(F.yaw, wantYaw));
+            const off = Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z), tw = Math.abs(angDiff(F.yaw, wantYaw));
           const free = other.step === 0 || other.step > 0.65;
           if ((off > 0.09 || tw > 0.45) && free && t - (this.lastStep || -9) > 0.1) {
             // the foot that is furthest out goes first
             const oOff = Math.hypot(other.pos.x - wantW.x, other.pos.z - wantW.z);
             if (other.step === 0 && oOff > off * 1.5 && Math.abs(angDiff(other.yaw, wantYaw)) > tw) { /* wait for the other */ }
-            else { F.step = 0.001; F.from.copy(F.pos); F.fromYaw = F.yaw; this.lastStep = t; }
+            else { F.step = 0.001; F.from.copy(F.pos); F.fromYaw = F.yaw; F.dur = clamp(Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z) / 0.9, 0.28, 0.6); this.lastStep = t; }
           }
         }
       }
       // the target in character space
       const lockC = _f3.copy(F.pos).applyMatrix4(fromP);
+      // a planted foot the leg can no longer reach (pulling away hard from a start) peels off rather than dragging
+      if (this.loco && F.lock && lockC.distanceTo(this.wp[g.th]) > (g.l1 + g.l2) * 0.995) F.lock = false;
       const tgt = _f4.copy(want).lerp(lockC, F.w);
       // never through the floor
       tgt.y = Math.max(tgt.y, this.rest["foot_" + s].at.y * 0.9);
@@ -960,8 +972,8 @@ class Person {
   }
 
   /* world point to character space (and back) */
-  toChar(v, out) { this.group.updateMatrixWorld(); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert(); return out.copy(v).applyMatrix4(_m); }
-  toWorld(v, out) { this.group.updateMatrixWorld(); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix); return out.copy(v).applyMatrix4(_m); }
+  toChar(v, out) { this.group.updateWorldMatrix(true, false); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert(); return out.copy(v).applyMatrix4(_m); }
+  toWorld(v, out) { this.group.updateWorldMatrix(true, false); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix); return out.copy(v).applyMatrix4(_m); }
 
   /* reach for a point in the world with one hand, by IK: the hand travels to it (approach), stays on it (contact), and
      comes back (retract). point: a THREE.Vector3 (read live, so it can move with a door) or a function returning one.
@@ -1258,7 +1270,7 @@ class Person {
     _m.makeRotationY(c.yaw).setPosition(c.root); _m.premultiply(B.matrixWorld);
     if (this.group.parent) { this.group.parent.updateWorldMatrix(true, false); _m.premultiply(_m2.copy(this.group.parent.matrixWorld).invert()); }
     _m.decompose(this.group.position, this.group.quaternion, _v1);
-    this.group.updateMatrix(); this.group.updateMatrixWorld(true);
+    this.group.updateMatrix(); this.group.updateWorldMatrix(true, false);
     this.pos.copy(this.group.position); this.yaw = this.carYaw() + c.yaw; this.wantYaw = this.yaw;
   }
   carHip(hipC) {
@@ -1466,10 +1478,15 @@ class Person {
       // what is still missed (out of reach): the body leans further next frame (reachBody)
       if (r && ct === r.tc) r.miss = _v4.copy(ccl).applyQuaternion(wq[ha]).add(wp[ha]).distanceTo(ct);
       // 3. the fingers
+      // (each joint's rotation is kept and only rebuilt when its curl or the spread moves)
       for (const F of H.fingers) {
-        const c = cur[F.f][F.j - 1] + (F.f !== "t" ? life * (F.j === 1 ? 1 : 0.5) : 0);
-        lq[F.i].copy(F.q).multiply(_q1.setFromAxisAngle(F.fx, c));
-        if (F.j === 1) lq[F.i].multiply(_q2.setFromAxisAngle(F.sx, cur.s * F.sgn));
+        const c = cur[F.f][F.j - 1] + (F.f !== "t" ? life * (F.j === 1 ? 1 : 0.5) : 0), sp = F.j === 1 ? cur.s * F.sgn : 0;
+        if (!F.cq || Math.abs(c - F.cc) > 0.003 || Math.abs(sp - F.cs) > 0.003) {
+          F.cq = F.cq || new THREE.Quaternion(); F.cc = c; F.cs = sp;
+          F.cq.copy(F.q).multiply(_q1.setFromAxisAngle(F.fx, c));
+          if (F.j === 1) F.cq.multiply(_q2.setFromAxisAngle(F.sx, sp));
+        }
+        lq[F.i].copy(F.cq);
       }
       this.fkFrom(ha);
     }
@@ -1578,7 +1595,7 @@ function blendPose(a, b, w, m) {
     const o = i * 4;
     let x = qb[o], y = qb[o + 1], z = qb[o + 2], ww = qb[o + 3];
     if (qa[o] * x + qa[o + 1] * y + qa[o + 2] * z + qa[o + 3] * ww < 0) { x = -x; y = -y; z = -z; ww = -ww; }
-    const X = qa[o] + (x - qa[o]) * k, Y = qa[o + 1] + (y - qa[o + 1]) * k, Z = qa[o + 2] + (z - qa[o + 2]) * k, W = qa[o + 3] + (ww - qa[o + 3]) * k, L = 1 / (Math.hypot(X, Y, Z, W) || 1);
+    const X = qa[o] + (x - qa[o]) * k, Y = qa[o + 1] + (y - qa[o + 1]) * k, Z = qa[o + 2] + (z - qa[o + 2]) * k, W = qa[o + 3] + (ww - qa[o + 3]) * k, L = 1 / (Math.sqrt(X * X + Y * Y + Z * Z + W * W) || 1);
     qa[o] = X * L; qa[o + 1] = Y * L; qa[o + 2] = Z * L; qa[o + 3] = W * L;
   }
   const k = m ? 0 : w;
