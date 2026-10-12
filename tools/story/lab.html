@@ -25,6 +25,8 @@ import { MeshoptDecoder } from "../../vendor/meshopt-0.22.0/meshopt_decoder.modu
 import { U } from "../../story/paint.js";
 import { brush } from "../../story/tex.js";
 const q = new URLSearchParams(location.search);
+// the same run every time: a seeded random (the cast's blinks, glances, beats and tempo), ?seed= to vary it
+{ let a = +(q.get("seed") || 1) >>> 0; Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const who = (q.get("who") || "jason").split(",");
 const W = +(q.get("w") || innerWidth), H = +(q.get("h") || innerHeight);
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -97,7 +99,7 @@ if (q.get("clip")) { const c = cast.motion.clips[q.get("clip")]; if (c) { cast.m
 // a voice line's word timings driving the first person's mouth: ?words=<line id in assets/voice/story>
 let WORDS = null; if (q.get("words")) WORDS = await (await fetch("../../assets/voice/" + (q.get("vdir") || "story-v3") + "/" + q.get("words") + ".json")).json();
 const run = q.get("run") || "idle", speed = +(q.get("speed") || 1.45);
-let T = 0; const REACH = {}, CARS = {};
+let T = 0; const REACH = {}, CARS = {}, IX = {};
 // a scripted driver, deterministic in time
 function drive(p, i, dt) {
   const t = T;
@@ -139,6 +141,11 @@ function drive(p, i, dt) {
       CAR.wheelAngle = w; CAR.steerAngle = w / 14; { const W = CAR.steeringWheel; W.userData.q0 = W.userData.q0 || W.quaternion.clone(); const ax = W.userData.rimAxis || "z"; const a = new THREE.Vector3(); a[ax] = 1; W.quaternion.copy(W.userData.q0).multiply(new THREE.Quaternion().setFromAxisAngle(a, w)); } CAR.speed = 6; CAR.throttle = 0.4 + 0.3 * Math.sin(t);
       if (q.get("move")) { CARS.yaw = (CARS.yaw || 0) - CAR.steerAngle * 6 / 2.8 * dt; CAR.object.rotation.y = CARS.yaw; CAR.object.position.x += Math.sin(CARS.yaw) * 6 * dt; CAR.object.position.z += Math.cos(CARS.yaw) * 6 * dt; }
     }
+  } else if (run === "ix" && i === 0) {
+    // things to do: ?run=ix&seq=sit|cup|knock|switch|lid|read|all
+    if (!IX.made) { IX.made = true; ixScene(p); }
+    if (IX.drive) IX.drive(dt);
+    if (IX.waits) for (let k = IX.waits.length - 1; k >= 0; k--) if (T >= IX.waits[k].t1) { IX.waits[k].r(); IX.waits.splice(k, 1); }
   } else if (run === "reach" && i === 0) {
     // reaching for things: a door handle, a book on a shelf, keys on the floor; a red dot marks each contact point
     if (!REACH.made) {
@@ -167,6 +174,58 @@ function drive(p, i, dt) {
   if (q.get("hold")) p.hold = q.get("hold");
   if (q.get("look")) p.lookAtP = new THREE.Vector3(0, 1.6, 3);
 }
+
+// the things-to-do scene: a chair, a table with a cup and a book, a door, a switch and a button, a lid, a sign
+function ixScene(p) {
+  const seq = q.get("seq") || "all";
+  const M = c => new THREE.MeshBasicMaterial({ color: c });
+  const box = (c, w, h, d, x, y, z, par = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); par.add(m); return m; };
+  const dot = new THREE.MeshBasicMaterial({ color: "#ff2a2a", depthTest: false });
+  const mark = v => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), dot); d.position.copy(v); d.renderOrder = 9; scene.add(d); return d; };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // a chair facing +z at (0, 0, 1.6): seat top 0.46
+  const chair = new THREE.Group(); scene.add(chair); chair.position.set(0, 0, 1.6);
+  box("#5a4a3a", 0.46, 0.05, 0.44, 0, 0.435, 0, chair); box("#5a4a3a", 0.46, 0.5, 0.05, 0, 0.71, -0.22, chair);
+  for (const [x, z] of [[-0.2, -0.19], [0.2, -0.19], [-0.2, 0.19], [0.2, 0.19]]) box("#4a3a2c", 0.04, 0.42, 0.04, x, 0.21, z, chair);
+  // a table at z 2.6 (top 0.75) with a cup and a book; a second table to the side to put them on
+  box("#4a3a2c", 0.9, 0.04, 0.6, 0.0, 0.73, 3.0); box("#4a3a2c", 0.6, 0.04, 0.5, 1.4, 0.73, 1.0);
+  const cup = new THREE.Group(); scene.add(cup); cup.position.set(0.12, 0.75, 2.78);
+  const cm = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.036, 0.1, 16), M("#e9e4da")); cm.position.y = 0.05; cup.add(cm);
+  const book = new THREE.Group(); scene.add(book); book.position.set(-0.18, 0.75, 2.8); book.rotation.y = 0.3;
+  const bm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.23), M("#7a2e26")); bm.position.y = 0.015; book.add(bm);
+  // a door at z -2 (facing +z), a switch and a button beside it; a lid (a trunk) at x -2; a sign at x 2
+  box("#3b3631", 0.9, 2.1, 0.05, 0, 1.05, -2.0);
+  box("#d8d2c6", 0.07, 0.11, 0.015, 0.7, 1.25, -1.98); box("#9a9a9a", 0.03, 0.03, 0.012, 0.7, 1.05, -1.98);
+  const lidP = new THREE.Group(); lidP.position.set(-2.0, 1.0, -0.35); scene.add(lidP); // the hinge at the back, lid toward +z
+  const lid = box("#4a5866", 1.2, 0.03, 0.75, 0, 0, 0.375, lidP);
+  box("#3a4652", 1.2, 0.95, 0.9, -2.0, 0.47, 0.05);
+  const sign = box("#ece6d8", 0.6, 0.4, 0.02, 2.2, 1.55, 0.2); sign.rotation.y = -Math.PI / 2;
+  IX.parts = { chair, cup, book, lidP };
+  // waits end on the lab's own clock, checked as it steps, so a run is the same every time
+  IX.waits = [];
+  const wait = s => new Promise(r => IX.waits.push({ t1: T + s, r }));
+  const walkTo = (x, z, sp = 1.3) => new Promise(r => { IX.walk = { x, z, sp, r }; });
+  IX.drive = (dt) => { const w = IX.walk; if (!w) return; const dx = w.x - p.pos.x, dz = w.z - p.pos.z, d = Math.hypot(dx, dz); if (d < 0.04) { IX.walk = null; p.speed = 0; w.r(); return; } const k = Math.min(1, w.sp * dt / d); p.pos.x += dx * k; p.pos.z += dz * k; p.wantYaw = Math.atan2(dx, dz); p.speed = w.sp; };
+  const face = y => { p.wantYaw = y; return wait(0.7); };
+  const lidEdge = side => () => { lidP.updateMatrixWorld(true); return lidP.localToWorld(V(side * 0.35, 0.03, 0.75)); };
+  (async () => {
+    p.pos.set(0, 0, 0); p.yaw = p.wantYaw = 0;
+    await wait(0.3);
+    if (seq === "sit" || seq === "all") { IX.stage = "sit"; await walkTo(0.9, 2.6); await p.sitDown(V(0, 0.46, 1.6), 0); await wait(seq === "sit" ? 2.5 : 1.2); if (q.get("talk")) { p.talk = 1; await wait(2.5); p.talk = 0; } await p.standUp(); await walkTo(0, 0.6); }
+    if (seq === "cup" || seq === "all") { IX.stage = "cup";
+      await walkTo(0.15, 2.3); await face(0); await wait(0.2);
+      await p.pickUp(cup); await wait(0.3);
+      await walkTo(1.4, 0.6, 1.2); await face(Math.atan2(0, 0.4)); await wait(0.2);
+      await p.putDown(V(1.38, 0.75, 1.02)); await wait(0.3);
+      if (seq === "cup") { await walkTo(-0.1, 2.3); await face(0); await p.pickUp(book); await wait(0.6); await p.putDown(V(-0.2, 0.75, 2.85)); }
+    }
+    if (seq === "knock" || seq === "all") { IX.stage = "knock"; await walkTo(0.1, -1.45); await face(Math.PI); await p.knock(V(0.12, 1.35, -1.97)); await wait(0.3); }
+    if (seq === "switch" || seq === "all") { IX.stage = "switch"; await walkTo(0.62, -1.5); await face(Math.PI); await p.flip(V(0.7, 1.25, -1.97)); await wait(0.3); await p.press(V(0.7, 1.05, -1.975)); await wait(0.3); }
+    if (seq === "lid" || seq === "all") { IX.stage = "lid"; await walkTo(-2.0, 0.95); await face(Math.PI); await p.openLid(() => ({ l: lidEdge(-1)(), r: lidEdge(1)() }), { dur: 1.3, onProgress: t => { lidP.rotation.x = -t * 1.25; } }); await wait(0.5); }
+    if (seq === "read" || seq === "all") { IX.stage = "read"; await walkTo(1.3, 0.2); await face(Math.PI / 2); await p.lookAt(V(2.18, 1.58, 0.2), { read: true, dur: 4 }); }
+    IX.done = T;
+  })();
+}
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 function ang(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
 const camMode = q.get("cam") || "side";
@@ -190,6 +249,7 @@ function placeCam() {
   else if (camMode === "carin") { const o = CAR.object; const v = new THREE.Vector3(-0.15, 1.2, 1.05); o.localToWorld(v); camera.position.copy(v); camera.lookAt(o.localToWorld(new THREE.Vector3(0.42, 0.95, -0.05))); }
   else if (camMode === "carpass") { const o = CAR.object; const v = new THREE.Vector3(-0.42, 1.12, -0.22); o.localToWorld(v); camera.position.copy(v); camera.lookAt(o.localToWorld(new THREE.Vector3(0.36, 0.98, 0.12))); }
   else if (camMode === "carside") { const o = CAR.object; const v = new THREE.Vector3(2.4, 1.15, -0.05); o.localToWorld(v); camera.position.copy(v); camera.lookAt(o.localToWorld(new THREE.Vector3(0.4, 0.85, 0.1))); }
+  else if (camMode === "ix") { const y = p.yaw + (+(q.get("ca") || 0.9)), d = +(q.get("cd") || 2.3); camera.position.set(c.x + Math.sin(y) * d, 1.35, c.z + Math.cos(y) * d); camera.lookAt(c.x, +(q.get("cy") || 0.9), c.z); }
   else if (camMode === "reachl" || camMode === "reachr") { const sd = camMode === "reachl" ? 1 : -1; camera.position.set(c.x + sd * 2.2, 1.15, c.z + 1.3); camera.lookAt(c.x + sd * 0.1, 0.85, c.z + 0.3); }
   else if (camMode === "reach") { camera.position.set(c.x - 1.0, 1.15, c.z + 2.4); camera.lookAt(c.x, 0.85, c.z + 0.2); }
   else if (camMode === "grid") { camera.position.set(0, 2.2, 7.5); camera.lookAt(0, 0.6, -1.2); }
@@ -197,12 +257,14 @@ function placeCam() {
 }
 function step(dt) { T += dt; P.forEach((p, i) => { drive(p, i, dt); p.update(dt); }); if (refMix) refMix.update(dt); refMixers.forEach(m => m.update(dt)); }
 function render() { placeCam(); U.uTime.value = T; renderer.render(scene, camera); hud.textContent = q.get("hud") === "0" ? "" : `${run}  t ${T.toFixed(2)}  v ${P[0].gs.toFixed(2)}  loco ${P[0].locoW.toFixed(2)} jog ${P[0].jogW.toFixed(2)} stride ${(P[0].stride || 0).toFixed(2)}`; }
-function sheet(cols, rows, every, dt = 1 / 30) {
+// a frame at a time with the page's promises let through between frames (the cast's moves are async: pick up, sit...)
+const tick = () => new Promise(r => { const ch = new MessageChannel(); ch.port1.onmessage = () => r(); ch.port2.postMessage(0); });
+async function sheet(cols, rows, every, dt = 1 / 30) {
   const c = document.createElement("canvas"); c.width = W * cols; c.height = H * rows; const g = c.getContext("2d");
-  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) step(dt); render(); g.fillStyle = "#2a2f2d"; g.fillRect((k % cols) * W, Math.floor(k / cols) * H, W, H); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
+  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) { step(dt); await tick(); } render(); g.fillStyle = "#2a2f2d"; g.fillRect((k % cols) * W, Math.floor(k / cols) * H, W, H); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
   return c.toDataURL("image/png");
 }
-window.LAB = { P, step, render, sheet, advance(n, dt = 1 / 30) { for (let i = 0; i < n; i++) step(dt); render(); return T; }, cast };
+window.LAB = { P, step, render, sheet, tick, get IX() { return IX; }, async advance(n, dt = 1 / 30) { for (let i = 0; i < n; i++) { step(dt); await tick(); } render(); return T; }, cast };
 if (q.get("auto") !== "0") { let last = performance.now(); (function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; step(dt); render(); requestAnimationFrame(loop); })(last); }
 else { step(0); render(); }
 window.LAB_READY = true;

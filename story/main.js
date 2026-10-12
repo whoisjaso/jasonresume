@@ -72,6 +72,12 @@ const S = {
   open: false, scene: null, phase: "load", flags: {}, looked: {}, log: [], trophies: [], journal: [], obj: null,
   talking: null, ending: null, t: 0, started: 0
 };
+/* the phase, kept honest under the menus: whatever finishes while the pause menu or the journal is open (a scene card,
+   a cinematic, a talk) lands in the phase they return to, so Resume never brings back something that already ended */
+function setPhase(p) {
+  if ((S.phase === "pause" || S.phase === "journal") && p !== "pause" && p !== "journal") { S.prevPhase = p; return; }
+  S.phase = p;
+}
 function cond(c) {
   if (!c) return true;
   return c.split(",").every(term => {
@@ -144,7 +150,7 @@ let quality = COARSE.matches ? 1 : 2;
 { const m = location.search.match(/[?&]sq=(\d)/); if (DEBUG && m) quality = +m[1]; }
 const post = new Post(renderer, { quality });
 // a phone starts at a modest resolution (its screen is small and dense; the post chain hides the difference) and earns more if there's room
-const PR_MAX = COARSE.matches ? 1.25 : 1.75, PR_MIN = COARSE.matches ? 0.6 : 0.7;
+const PR_MAX = COARSE.matches ? 1.25 : 1.75, PR_MIN = COARSE.matches ? 0.75 : 0.7;
 let pixelRatio = Math.min(devicePixelRatio || 1, PR_MAX);
 let VW = innerWidth, VH = innerHeight; // the viewport, read once per resize, never per frame
 { const m = location.search.match(/[?&]pr=([\d.]+)/); if (DEBUG && m) { pixelRatio = +m[1]; S.lockQ = true; } }
@@ -618,7 +624,7 @@ function makeRain() {
 async function enter(name, o = {}) {
   if (DRV.state) exitCar("scene", true); // on your feet before anything moves you
   const prev = S.scene;
-  S.scene = name; S.phase = "cinematic";
+  S.scene = name; setPhase("cinematic");
   S.visited = S.visited || {}; S.visited[name] = 1;
   Object.values(sets).forEach(s => (s.visible = false));
   set = getSet(name); set.visible = true; applyTier();
@@ -797,16 +803,19 @@ function updateCamera(dt) {
 // outside, a car is as good as a wall (a camera skimming a roof sees nothing but paint); in a room the desks and tables are low enough to look over
 const camWalls = () => (set.userData.walls || []).map(w => ({ ...w, src: w, h: w.h != null ? w.h : (set.userData.bounds && (w.x1 - w.x0) > 1.2 && (w.z1 - w.z0) > 1.0 && (w.x1 - w.x0) * (w.z1 - w.z0) < 14 ? 1.1 : 99) }));
 let camWallsFor = null, camWallList = [];
-function insideAny(x, y, z, pad) {
+function insideAny(x, y, z, pad, list) {
   if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
-  for (const w of camWallList) if (y < w.h + pad && x > w.x0 - pad && x < w.x1 + pad && z > w.z0 - pad && z < w.z1 + pad) return true;
+  for (const w of list || camWallList) if (y < w.h + pad && x > w.x0 - pad && x < w.x1 + pad && z > w.z0 - pad && z < w.z1 + pad) return true;
   // people, and Dell's umbrella, are solid too
   for (const k in P) { const q = P[k]; if (q === me || !q.group.visible) continue; const r = (q.hold === "umbrella" ? 0.72 : 0.42) + pad * 0.5; if (y < 2.35 && (x - q.pos.x) ** 2 + (z - q.pos.z) ** 2 < r * r) return true; }
   const b = set.userData.bounds; if (b && (x < b.x0 + pad * 0.5 || x > b.x1 - pad * 0.5 || z < b.z0 + pad * 0.5 || z > b.z1 - pad * 0.5 || y > (set.userData.ceilingY || (S.scene === "memory" ? 6.2 : 2.95)) - pad * 0.5)) return true;
   return y < 0.15;
 }
+/* scratch vectors for the cameras: nothing allocated per frame */
+const _head = new THREE.Vector3(), _off = new THREE.Vector3(), _right = new THREE.Vector3(), _aim = new THREE.Vector3(), _pivot = new THREE.Vector3(), _o2 = new THREE.Vector3(), _want = new THREE.Vector3(), _look = new THREE.Vector3(), _tmp = new THREE.Vector3();
+const _fv = { want: _want, look: _look }, _near = [];
 function followView(dt, probe) {
-  const head = me.pos.clone().add(new THREE.Vector3(0, me.height * 0.86, 0));
+  const head = _head.copy(me.pos); head.y += me.height * 0.86;
   // drift behind the walker unless the visitor is steering the camera
   if (!probe) {
     if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-(mv.path ? 1.0 : 1.6) * dt));
@@ -816,20 +825,24 @@ function followView(dt, probe) {
   const dist = (mem ? 2.2 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
   // close to a wall, the camera rises and looks down over you rather than sit behind your head
   const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0) + (probe ? 0 : (camState.lift || 0) + (camState.close || 0));
-  const off = new THREE.Vector3(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
-  const right = new THREE.Vector3(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw));
+  const off = _off.set(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
+  const right = _right.set(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw));
   const sh = (mem ? 0.55 : inside ? 0.45 : 0.38) * (upright ? 0.45 : 1);
   if (inside) head.y += 0.12; // indoors a little higher, looking over the shoulder
   // look ahead the way you're going, more at a run
   const ahead = camState.ahead || (camState.ahead = new THREE.Vector3());
   const lead = probe ? 0 : Math.min(1, me.speed / RUN) * (inside ? 0.45 : 0.9);
-  const aim = new THREE.Vector3(Math.sin(me.yaw), 0, Math.cos(me.yaw)).multiplyScalar(lead);
+  const aim = _aim.set(Math.sin(me.yaw) * lead, 0, Math.cos(me.yaw) * lead);
   if (probe) ahead.set(0, 0, 0); else ahead.lerp(aim, 1 - Math.exp(-2.2 * dt));
   // the pivot: the shoulder, pulled toward the head if the shoulder itself would be inside something
-  const pivot = head.clone().addScaledVector(right, sh);
-  if (insideAny(pivot.x, pivot.y, pivot.z, 0.18)) pivot.copy(head);
+  const pivot = _pivot.copy(head).addScaledVector(right, sh);
+  // only the walls within reach of the camera this frame (the march below asks many times)
+  if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
+  _near.length = 0; const rr = dist + 0.6;
+  for (const w of camWallList) if (pivot.x > w.x0 - rr && pivot.x < w.x1 + rr && pivot.z > w.z0 - rr && pivot.z < w.z1 + rr) _near.push(w);
+  if (insideAny(pivot.x, pivot.y, pivot.z, 0.18, _near)) pivot.copy(head);
   // march out from the pivot; stop short of the first thing in the way
-  const reach = o => { for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + o.x * t, y = pivot.y + o.y * t, z = pivot.z + o.z * t; if (insideAny(x, y, z, 0.24)) return Math.max(0.1, t - 0.22); } return dist; };
+  const reach = o => { for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + o.x * t, y = pivot.y + o.y * t, z = pivot.z + o.z * t; if (insideAny(x, y, z, 0.24, _near)) return Math.max(0.1, t - 0.22); } return dist; };
   let free = reach(off);
   // how much room there is to see the way the camera looks (a view into the room beats a view of the wall)
   const view = (dx, dz) => { const l = Math.hypot(dx, dz) || 1; for (let i = 1; i <= 16; i++) { const t = i * 0.5; if (insideAny(head.x + dx / l * t, 1.2, head.z + dz / l * t, 0.05)) return t; } return 8; };
@@ -844,7 +857,7 @@ function followView(dt, probe) {
       const das = re ? [...Array(16)].map((_, i) => ((i + 1) >> 1) * (i % 2 ? 1 : -1) * Math.PI / 8) : [0, 0.3, -0.3, 0.6, -0.6];
       for (const da of das) for (const pe of re ? [0, 0.2] : [0, 0.15, 0.3]) {
         if (!da && !pe) continue;
-        const a = camState.yaw + da, pt = Math.min(0.95, pitch + pe), o2 = new THREE.Vector3(Math.sin(a) * Math.cos(pt), Math.sin(pt), Math.cos(a) * Math.cos(pt));
+        const a = camState.yaw + da, pt = Math.min(0.95, pitch + pe), o2 = _o2.set(Math.sin(a) * Math.cos(pt), Math.sin(pt), Math.cos(a) * Math.cos(pt));
         const f = reach(o2), sc = Math.min(f, dist) + (re ? 0.35 * view(-o2.x, -o2.z) : 0) - Math.abs(da) * (re ? 0.12 : 0.5) - pe * 0.6;
         if (sc > bs + 0.25) { bs = sc; best = da; lift = pe; }
       }
@@ -856,14 +869,14 @@ function followView(dt, probe) {
   // in fast, out slow, so a pole sliding past doesn't make the camera pump
   if (probe || camState.cd == null || camState.init) camState.cd = free;
   else camState.cd = free < camState.cd ? damp(camState.cd, free, 18, dt) : damp(camState.cd, free, 2.2, dt);
-  const want = pivot.clone().addScaledVector(off, Math.min(camState.cd, free + 0.05));
+  const want = _want.copy(pivot).addScaledVector(off, Math.min(camState.cd, free + 0.05));
   if (!probe) camState.close = damp(camState.close || 0, clamp((1.6 - Math.min(camState.cd, free)) / 1.1, 0, 1) * 0.3, 3, dt);
   // forced right up against you, you step out of the frame rather than fill it
   if (!probe && S.phase === "explore") me.group.visible = Math.min(camState.cd, free) > 0.45;
-  const look = head.clone().addScaledVector(right, sh * 0.7).add(ahead).add(new THREE.Vector3(0, mem ? -0.25 : -0.1, 0));
+  const look = _look.copy(head).addScaledVector(right, sh * 0.7).add(ahead); look.y += mem ? -0.25 : -0.1;
   // risen close over you, it looks out past you into the room, not down at the floor
-  if (!probe && camState.close > 0.01) look.add(new THREE.Vector3(-off.x, 0, -off.z).normalize().multiplyScalar(camState.close * 5)).add(new THREE.Vector3(0, camState.close * 0.8, 0));
-  return { want, look };
+  if (!probe && camState.close > 0.01) { look.add(_tmp.set(-off.x, 0, -off.z).normalize().multiplyScalar(camState.close * 5)); look.y += camState.close * 0.8; }
+  return _fv;
 }
 function rail(points, looks, dur) {
   return new Promise(res => {
@@ -1003,7 +1016,13 @@ function moveFocus(d) { const host = S.phase === "pause" ? pauseEl : journalEl; 
 /* ================================================================
    INTERACTION: spots, prompts, talking
    ================================================================ */
+let spotsMemo = null, spotsFrame = -1, frameNo = 0;
 function spotsHere() {
+  if (spotsFrame === frameNo && spotsMemo) return spotsMemo;
+  spotsFrame = frameNo; spotsMemo = spotsHere0();
+  return spotsMemo;
+}
+function spotsHere0() {
   const out = [];
   for (const [id, o] of Object.entries(OBJ)) {
     const sceneOk = o.scene === S.scene || (o.scene === "lot" && S.scene === "lot");
@@ -1065,13 +1084,16 @@ async function roam(to) {
   if (to === "lot" && S.visited && S.visited.decision) to = "decision";
   if (to === S.scene) return;
   const first = !(S.visited && S.visited[to]);
-  S.phase = "cinematic"; hideWorldUI();
+  setPhase("cinematic"); hideWorldUI();
+  if (S.scene === "lot" && to === "office") officeDoor(1, 520);
   await fade(1, 600);
+  const back = S.scene === "office" && (to === "lot" || to === "decision");
   await enter(to, { quiet: true, from: S.scene });
+  officeDoor(back ? 0.9 : 0, 10); if (back) setTimeout(() => officeDoor(0, 700), 900);
   await sleep(150);
   await fade(0, 600);
   FX("arrive"); if (first) await sceneCard(to);
-  S.phase = "explore";
+  setPhase("explore");
   const st = D.scenes[to] && D.scenes[to].start;
   if (st && TALK[st] && !S.flags["done-" + to]) { S.partner = to === "office" || to === "decision" ? P.jason : null; await startTalk(to); }
 }
@@ -1164,7 +1186,7 @@ async function interact(id, how) {
 async function runTalk(id) {
   if (DRV.state) exitCar("talk", true); // nobody talks to you through the glass: out first
   if (me) me.group.visible = true;
-  S.phase = "talk"; promptEl.hidden = true; dotsEl.innerHTML = ""; objEl.classList.add("is-dim");
+  setPhase("talk"); promptEl.hidden = true; dotsEl.innerHTML = ""; objEl.classList.add("is-dim");
   el.classList.add("is-talking");
   const partner = S.partner;
   if (partner && me) { partner.lookAtP = headOf(me); me.lookAtP = headOf(partner); partner.wantYaw = Math.atan2(me.pos.x - partner.pos.x, me.pos.z - partner.pos.z); me.wantYaw = Math.atan2(partner.pos.x - me.pos.x, partner.pos.z - me.pos.z); }
@@ -1207,7 +1229,7 @@ function endTalk() {
   for (const p of Object.values(P)) { if (p !== me) p.lookAtP = null; }
   if (me) me.lookAtP = null;
   camState.shot = null; S.partner = null; S.focusPoint = null;
-  S.phase = "explore";
+  setPhase("explore");
   camState.yaw = me ? me.yaw + Math.PI : camState.yaw; camState.reframe = true; setTimeout(() => (camState.reframe = false), 80);
   save();
   afterTalk();
@@ -1259,21 +1281,29 @@ function movePeople(dt) {
 }
 
 /* ---------- travel between scenes ---------- */
+/* the office door swings out toward the lot as you go through, and shuts behind you */
+function officeDoor(to, ms) {
+  const d = sets.lot && sets.lot.userData.officeDoor; if (!d || typeof d.open !== "function") return Promise.resolve();
+  const from = d.t || 0, t0 = performance.now(), dur = FAST ? 20 : still() ? Math.min(ms, 150) : ms;
+  return new Promise(res => { const step = () => { const u = Math.min(1, (performance.now() - t0) / dur); d.t = from + (to - from) * EZ(u); try { d.open(d.t); } catch (e) {} if (u < 1) requestAnimationFrame(step); else res(); }; step(); });
+}
 async function travel(to) {
-  S.phase = "cinematic"; promptEl.hidden = true; dotsEl.innerHTML = "";
+  setPhase("cinematic"); promptEl.hidden = true; dotsEl.innerHTML = "";
+  if (S.scene === "lot" && to === "office") officeDoor(1, 520);
   const memoryIn = to === "memory" || to === "keys";
   if (to === "memory") { fadeEl.classList.add("is-memory"); await fade(1, 1400, "#e9dfc8"); }
   else if (to === "keys") await fade(1, 1200, "#f3ead6");
   else if (S.scene === "keys") await fade(1, 1400, "#f3ead6");
   else await fade(1, 700);
   await enter(to, { quiet: true });
+  officeDoor(0, 10);
   if (to === "office") { const m = set.userData.marks.playerStart; AU.arriveOffice({ x: m.x + 0.4, y: 2.1, z: m.z + 1.1 }); }
   await sleep(200);
   await fade(0, memoryIn ? 1400 : 700);
   fadeEl.classList.remove("is-memory");
   FX("arrive"); await sceneCard(to);
   const st = D.scenes[to].start;
-  S.phase = "explore";
+  setPhase("explore");
   if (st && TALK[st]) {
     S.partner = to === "office" ? P.jason : to === "decision" ? P.jason : null;
     await startTalk(to);
@@ -1290,7 +1320,7 @@ async function startTalk(name) {
 /* ---------- the close-up: the whiteboard's three notes ---------- */
 function closeUp(which) {
   return new Promise(resolve => {
-    S.phase = "close"; el.classList.add("is-close");
+    setPhase("close"); el.classList.add("is-close");
     const sp = set.userData.spots[which];
     // on a narrow screen the camera steps back until the whole board fits across
     const half = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.aspect), d0 = sp.cam.p.distanceTo(sp.cam.t), dist = Math.max(d0, 1.3 / Math.tan(half));
@@ -1321,7 +1351,7 @@ function closeUp(which) {
       }
       if (e.target.closest("[data-st='back']")) finish();
     };
-    const finish = () => { clearInterval(follow); closeEl.removeEventListener("click", onClick); removeEventListener("resize", onResize); if (me) me.group.visible = true; closeEl.classList.remove("is-on"); setTimeout(() => (closeEl.hidden = true), 300); el.classList.remove("is-close"); S.phase = "talk"; resolve(); };
+    const finish = () => { clearInterval(follow); closeEl.removeEventListener("click", onClick); removeEventListener("resize", onResize); if (me) me.group.visible = true; closeEl.classList.remove("is-on"); setTimeout(() => (closeEl.hidden = true), 300); el.classList.remove("is-close"); setPhase("talk"); resolve(); };
     closeEl.addEventListener("click", onClick);
     S.closeFinish = finish;
   });
@@ -1330,7 +1360,7 @@ function closeUp(which) {
 /* ---------- the desk: Handle a Sale on a phone, fictional buyer, example figures ---------- */
 function openDesk() {
   return new Promise(resolve => {
-    S.phase = "sheet"; sheetEl.hidden = false; requestAnimationFrame(() => sheetEl.classList.add("is-on"));
+    setPhase("sheet"); sheetEl.hidden = false; requestAnimationFrame(() => sheetEl.classList.add("is-on"));
     const host = $("[data-desk-app]", sheetEl);
     if (!host.firstChild && window.JG_DESK) window.JG_DESK.build(host);
     let done = false;
@@ -1338,7 +1368,7 @@ function openDesk() {
       const on = $(".app-screen.is-on", host);
       if (on && /Filed/.test(on.getAttribute("aria-label") || on.textContent)) { done = true; finish(true); }
     }, 250);
-    const finish = ok => { clearInterval(iv); sheetEl.classList.remove("is-on"); setTimeout(() => { sheetEl.hidden = true; }, 350); S.phase = "talk"; if (ok) FX("send"); resolve(ok); };
+    const finish = ok => { clearInterval(iv); sheetEl.classList.remove("is-on"); setTimeout(() => { sheetEl.hidden = true; }, 350); setPhase("talk"); if (ok) FX("send"); resolve(ok); };
     $("[data-st='sheet-back']", sheetEl).onclick = () => { if (!done) finish(false); };
     S.deskFinish = finish;
   });
@@ -1457,7 +1487,7 @@ function readOf() {
   return order.find(seen) || "";
 }
 async function ending(kind) {
-  S.ending = kind; S.phase = "end";
+  S.ending = kind; setPhase("end");
   promptEl.hidden = true; dotsEl.innerHTML = ""; objective(null);
   T("story_ending", { ending: kind, role: S.flags.role || "", lot: S.flags.lot || "", why: S.flags.why || "" });
   // the ending's build: the card and the page for a role, the lot's card for a dealer
@@ -1581,7 +1611,7 @@ pauseEl.addEventListener("click", async e => {
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
 function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
-async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); S.phase = "explore"; if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
+async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); setPhase("explore"); if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
    INPUT: keys (remappable), mouse, touch, pad; the glyphs follow the last one used
@@ -1836,7 +1866,7 @@ async function enterCar(c, how) {
   if (v) { const cols = set.userData.colliders || [], i = c.collider ? cols.indexOf(c.collider) : -1; if (i >= 0) cols.splice(i, 1); }
   else { try { v = mod.createVehicle(set, c, { quality }); } catch (e) { return; } v.entry = c; DRV.vehs.set(c, v); }
   DRV.veh = v;
-  S.phase = "drive"; DRV.state = "enter"; DRV.entry = c; DRV.hits = 0; DRV.skip = null;
+  setPhase("drive"); DRV.state = "enter"; DRV.entry = c; DRV.hits = 0; DRV.skip = null;
   el.classList.add("is-driving"); hideWorldUI();
   FX("arrive"); hap("tap");
   T("story_drive", { car: c.id, scene: S.scene, how: how || "" });
@@ -1913,7 +1943,7 @@ async function exitCar(how, instant) {
   DRV.state = null; DRV.entry = null; DRV.touch = { steer: 0, gas: 0, brake: 0, hb: 0 };
   el.classList.remove("is-driving");
   post.comp.u.uDofK.value = 0;
-  if (S.phase === "drive") S.phase = "explore";
+  if (S.phase === "drive") setPhase("explore");
   else if (S.prevPhase === "drive") S.prevPhase = "explore";
   DRV.doorOpen = null;
   camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true; setTimeout(() => { camState.reframe = false; }, 1200);
@@ -2181,24 +2211,29 @@ function nudge() {
 /* ================================================================
    THE LOOP, WITH ADAPTIVE QUALITY, AND REST WHEN NOTHING MOVES
    ================================================================ */
-let last = performance.now(), acc = 0, frames = 0, fpsLog = [], lastDraw = 0;
+let last = performance.now(), acc = 0, frames = 0, fpsLog = [], lastDraw = 0, dtS = 0;
+const drawLog = [];
 const perf = {};
 let raf = 0;
 const camFwd = new THREE.Vector3();
 function frame(now) {
   raf = requestAnimationFrame(frame);
+  frameNo++;
   if (!S.open || document.hidden || S.attract) { last = now; return; }
   if (line) ball.draw(line, now); // the caption ball keeps the full frame rate even when the scene rests
   padPoll(Math.min(0.05, (now - last) / 1000));
   // battery: behind the journal or the pause menu there's nothing to draw; standing still, thirty frames are plenty
   const over = S.phase === "pause" || S.phase === "journal";
   const idle = (S.phase === "explore" && mv.idle > 3 && me && me.speed < 0.05 && camState.drag <= 0 && !ptrs.size) || (S.phase === "talk" && COARSE.matches);
-  // a phone draws the world at thirty: steady pacing, half the heat, and the caption ball (above) still runs at the screen's rate
-  const capped = COARSE.matches && !S.full60;
-  const every = over ? 500 : S.phase === "sheet" || S.phase === "end" ? 100 : idle ? 32 : capped ? 30 : 0;
+  // full rate whenever anything moves (you, the camera, a car, a talk on a desktop); thirty only when nothing does
+  const every = over ? 500 : S.phase === "sheet" || S.phase === "end" ? 100 : idle && !DRV.state ? 32 : 0;
   if (every && now - lastDraw < every) return;
   lastDraw = now;
-  let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (DEBUG) { drawLog.push(now); if (drawLog.length > 4000) drawLog.splice(0, 2000); }
+  // even pacing: the step follows a smoothed frame time, so one late frame doesn't throw everything forward at once
+  const raw = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+  dtS = dtS ? (raw > dtS * 2.2 ? Math.min(raw, dtS * 1.6) : dtS + (raw - dtS) * 0.3) : raw;
+  let dt = every ? raw : Math.min(0.05, dtS);
   if (over) dt = 0;
   S.t += dt; U.uTime.value = S.t;
   const tA = performance.now();
@@ -2239,15 +2274,15 @@ function frame(now) {
   // spare step it back up; a change waits out a cool-down so it never hunts. Only frames drawn at the full rate (or the
   // phone's thirty) count; resting, menus and sheets don't.
   perf.frame = performance.now() - now; perf.gap = now - (frame.prev || now);
-  if (every && every !== 30) { QA.n = 0; QA.gap = 0; QA.work = 0; QA.t0 = now; frame.prev = now; return; }
+  if (every) { QA.n = 0; QA.gap = 0; QA.work = 0; QA.t0 = now; frame.prev = now; return; }
   if (frame.prev) { QA.n++; QA.gap += now - frame.prev; QA.work += perf.frame; }
   frame.prev = now;
   if (now - QA.t0 > 1500 && (QA.n > 8 || (QA.n >= 3 && QA.gap / QA.n > 80))) {
     const ms = QA.gap / QA.n, work = QA.work / QA.n;
     fpsLog.push(Math.round(1000 / ms)); if (fpsLog.length > 60) fpsLog.shift();
     QA.ms = +ms.toFixed(1); QA.cpu = +work.toFixed(1);
-    const target = every === 30 ? 34.5 : COARSE.matches ? 33.4 : 17.5;
-    const slow = ms > target * 1.18, roomy = every === 30 ? ms < 35.5 && work < 9 : ms < target * 0.72 && work < target * 0.5;
+    const target = 17.5; // sixty, on a phone too: the ladder spends resolution and effects to get there
+    const slow = ms > target * 1.18, roomy = ms < target * 1.04 && work < target * 0.45;
     QA.slow = slow ? QA.slow + 1 : 0; QA.roomy = roomy ? QA.roomy + 1 : 0;
     if (!S.lockQ && now > QA.cool) {
       // far too slow steps at once; a little slow has to be slow twice
@@ -2290,7 +2325,7 @@ document.addEventListener("visibilitychange", () => { if (!S.open) return; if (d
 async function coldOpen() {
   // a quiet establishing sequence: low over the wet asphalt, past the lamps and the cars, to the showroom and Jason under the light.
   // Skip (or Esc, Enter, A) cuts straight to you at the gate, without a sound
-  S.phase = "cinematic"; el.classList.add("is-cinema");
+  setPhase("cinematic"); el.classList.add("is-cinema");
   post.comp.u.uBox.value = 1;
   const u = set.userData;
   let skipped = false;
@@ -2318,7 +2353,7 @@ async function coldOpen() {
   post.comp.u.uBox.value = 0; el.classList.remove("is-cinema");
   await fade(0, 800);
   showHint();
-  S.phase = "explore";
+  setPhase("explore");
   await runTalk("lot-arrive");
 }
 /* ---------- turn sideways: on a phone held upright, a phone that turns itself,
@@ -2384,10 +2419,22 @@ async function boot() {
   // warm the shaders on the first frames, behind the loading screen
   await person("you", "player"); setLoad(0.8); await person("jason", "jason"); await person("dell", "dell"); setLoad(0.92);
   raf = requestAnimationFrame(frame);
-  // build the rest while you play
-  setTimeout(() => { try { getSet("office"); } catch (e) {} }, 2500);
+  // build the rest while you play, and compile its shaders off the main path (parallel where the GPU allows), so the
+  // first step into the office or the library never hitches on a shader
+  setTimeout(() => warmSets(["office", "memory"]), FAST ? 400 : 2500);
 }
 
+async function warmSets(names) {
+  for (const n of names) {
+    try {
+      // visible only while the compile walks the scene (synchronously), so it never shows in a frame
+      const st = getSet(n), was = st.visible; st.visible = true;
+      let pr = null; try { pr = renderer.compileAsync ? renderer.compileAsync(scene, camera) : (renderer.compile(scene, camera), null); } finally { if (set !== st) st.visible = was; }
+      if (pr) await pr;
+    } catch (e) {}
+    await new Promise(r => setTimeout(r, 300));
+  }
+}
 async function open(sceneName, how) {
   if (S.open) return;
   S.open = true; S.visited = S.visited || {};
@@ -2421,7 +2468,7 @@ async function open(sceneName, how) {
   await fade(0, 10);
   FX("arrive"); await sceneCard(target);
   if (saved && !sceneName && saved.scene === target && saved.pos && me && target !== "memory" && target !== "keys") { me.pos.set(saved.pos[0], 0, saved.pos[1]); me.yaw = me.wantYaw = saved.pos[2] || 0; unstick(me); camState.yaw = me.yaw + Math.PI; camState.init = true; }
-  S.phase = "explore";
+  setPhase("explore");
   if (S.obj) objective(S.obj);
   const st = D.scenes[target].start;
   if (target === "lot" && !S.flags.met) runTalk("lot-arrive");
@@ -2467,7 +2514,7 @@ window.JG_STORY = {
     place: (who, x, z, yaw) => { const p = P[who]; if (!p) return false; p.pos.set(x, 0, z); p.yaw = p.wantYaw = yaw; return true; },
     look: (who, x, y, z) => { const p = P[who]; if (p) p.lookAtP = x == null ? null : new THREE.Vector3(x, y, z); },
     /* the attract loop: a slow move across the lot at night toward Jason under the lamp, rendered frame by frame */
-    attract: async () => { S.phase = "cinematic"; S.attract = true; el.classList.add("is-cinema"); post.comp.u.uBox.value = 0; objEl.hidden = true; $(".st-hud", el).style.display = "none";
+    attract: async () => { setPhase("cinematic"); S.attract = true; el.classList.add("is-cinema"); post.comp.u.uBox.value = 0; objEl.hidden = true; $(".st-hud", el).style.display = "none";
       place(P.you, new THREE.Vector3(60, 0, 60), 0); hide(P.you); place(P.jason, new THREE.Vector3(9.4, 0, -11.9), -0.95); P.jason.hold = null; place(P.dell, new THREE.Vector3(3.6, 0, 19.2), Math.PI * 0.85);
       return true; },
     renderAt: t => {
@@ -2485,6 +2532,7 @@ window.JG_STORY = {
       return { plain: t(() => { renderer.setRenderTarget(null); renderer.render(scene, camera); }), post: t(() => post.render(scene, camera, S.t)), refl: ground ? t(() => post.reflect(scene, camera, world, ground)) : -1, w: post.w, h: post.h, calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
     },
     quality: (q, pr) => { quality = q; post.q = q; if (pr) pixelRatio = pr; applyTier(); resize(); },
+    draws: since => drawLog.filter(t => t >= (since || 0)),
     qa: () => ({ pixelRatio, quality, ms: QA.ms, cpu: QA.cpu, slow: QA.slow, roomy: QA.roomy, log: QA.log.slice(), capped: COARSE.matches && !S.full60, perf: { ...perf } }),
     /* the way, the controls, the camera and the sound, for tools/verify/story.mjs */
     guide: () => { const t = S.phase === "explore" ? wayTarget() : null; const q = t ? project(new THREE.Vector3(t.p.x, Math.min(t.p.y || 1.2, 1.7), t.p.z)) : null; return { obj: S.obj, target: t ? { id: t.id, x: t.stand.x, z: t.stand.z } : null, trail: guide.count, vis: +guide.vis.toFixed(3), route: guideRoute ? guideRoute.map(p => [+p.x.toFixed(2), +p.z.toFixed(2)]) : null, arrow: { show: way.show, x: Math.round(way.x), y: Math.round(way.y), ang: +way.ang.toFixed(3), shown: wayEl.classList.contains("is-on") }, proj: q, nudges, dev }; },

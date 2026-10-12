@@ -737,11 +737,21 @@ async function resume(vname, w, h, mobile) {
     await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 60000);
     await reload(); await canMove('saved in a car');
   }
-  // 5: close and open again in the same page
+  // 5: paused while arriving (the scene card), then Resume: you can walk
+  await go(); await press();
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().phase === 'cinematic', null, 120000);
+  await p.waitForTimeout(150);
+  if (mobile) await p.tap('[data-st="pause"]', { force: true }).catch(() => p.evaluate(() => document.querySelector('[data-st="pause"]').click())); else await p.keyboard.press('Escape');
+  await until(p, () => window.JG_STORY.debug.state().phase === 'pause', null, 15000);
+  await p.waitForTimeout(4000);
+  if (mobile) await p.tap('[data-p="resume"]', { force: true }); else await p.keyboard.press('Escape');
+  await canMove('paused while arriving, then resumed');
+  // 6: close and open again in the same page
   await p.evaluate(() => window.JG_STORY.close('test')); await p.waitForTimeout(800);
   await p.evaluate(() => window.JG_STORY.open(null, 'test'));
   await canMove('closed and reopened');
-  // 6: the office, by its link, then Continue
+  // 7: the office, by its link, then Continue
+  await p.goto('about:blank');
   await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
   await p.click('#intro [data-intro-skip]').catch(() => {});
@@ -789,6 +799,84 @@ async function wayCheck(vname, w, h, mobile) {
   notes.push(`${label}: ${n} hints checked; each trail ends at the thing named (or the office door from the lot)`);
   await ctx.close();
 }
+/* ---------- the sound: no missing files, one voice at a time, beds that change with the room, feet on every
+   surface, car sounds that stop when you get out, nothing stuck after a scene change, nothing clipping ---------- */
+const AUDIO = process.argv.includes('--audio');
+async function audioCheck(vname, w, h, mobile) {
+  const label = `${vname} audio`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  const missing = [];
+  p.on('response', r => { if (r.status() >= 400 && /\/assets\//.test(r.url())) missing.push(r.status() + ' ' + r.url().replace(/^https?:\/\/[^/]+/, '')); });
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await p.goto(URL0 + '?debug=story&pr=0.2&sq=0');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  await until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line && s.line.startsWith('lot-you')) d.skip(); return s.phase === 'explore'; }, null, 400000);
+  await turnAway(p);
+  if (!(await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn()))) { errs.push(`${label}: the score is off after Play`); await ctx.close(); return; }
+  const A = () => p.evaluate(() => window.JG_STORY.debug.audio());
+  const lotAmb = (await A()).amb;
+  // voices: Dell's lines, each played once, never two at a time, the world ducked under them
+  await p.evaluate(() => { window.__vmax = 0; window.__duck = 1; const f = () => { const d = window.JG_STORY.debug, s = d.sync(), a = d.audio(); window.__vmax = Math.max(window.__vmax, s.voices); if (s.line && s.mode === 'voice' && a.buses) window.__duck = Math.min(window.__duck, a.buses.ambDuck); window.__vr = requestAnimationFrame(f); }; f(); });
+  await use(p, mobile, 'dell', label);
+  await choose(p, mobile, 'Rough night to be out.', label);
+  await until(p, () => window.JG_STORY.debug.state().phase === 'explore' && !window.JG_STORY.debug.state().line, null, 120000);
+  const v = await p.evaluate(() => { cancelAnimationFrame(window.__vr); const log = window.JG_STORY.debug.sync().log, ev = window.JG_STORY.debug.audio().events.filter(e => e.kind === 'voice').map(e => e.name); return { log, ev, vmax: window.__vmax, duck: window.__duck }; });
+  const voiced = v.log.filter(l => l.voiced);
+  const twice = Object.entries(v.ev.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {})).filter(([, n]) => n > 1);
+  if (!voiced.length) errs.push(`${label}: no voiced lines played`);
+  if (v.vmax > 1) errs.push(`${label}: ${v.vmax} voices at once`);
+  if (twice.length) errs.push(`${label}: voices routed twice: ${twice.map(t => t[0]).join(' ')}`);
+  if (!(v.duck < 0.95)) errs.push(`${label}: the world didn't step back under the voices (amb duck ${v.duck})`);
+  for (const l of voiced) if (l.mode !== 'voice' || !l.ended) errs.push(`${label}: ${l.id} ${l.mode !== 'voice' ? 'fell back to ' + l.mode : 'never finished its voice'}`);
+  // feet: on the lot's wet and dry ground
+  const surf = new Set();
+  for (const [x, z] of [[-6, 9], [2, -18.2]]) {
+    await p.evaluate(([x, z]) => window.JG_STORY.debug.put(x, z, 0), [x, z]);
+    const n0 = (await A()).events.length;
+    if (mobile) await p.evaluate(() => window.JG_STORY.debug.sim(40, 1 / 30)); else { await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(40, 1 / 30)); await p.keyboard.up('w'); }
+    await p.waitForTimeout(300);
+    const evs = (await A()).events.slice(n0).filter(e => e.kind === 'step');
+    if (evs.length) surf.add(await p.evaluate(([x, z]) => window.JG_STORY.debug.surface(x, z), [x, z]));
+  }
+  if (!surf.size) errs.push(`${label}: no footsteps on the lot`);
+  // a car: its sounds start, and stop when you get out
+  const cars = await p.evaluate(() => window.JG_STORY.debug.cars());
+  let carNote = 'no car';
+  if (cars.length) {
+    const c = cars.find(x => x.id !== 'idle') || cars[0];
+    await p.evaluate(([x, z, cx, cz]) => window.JG_STORY.debug.put(x, z, Math.atan2(cx - x, cz - z)), [c.stand[0], c.stand[1], c.x, c.z]);
+    await until(p, id => window.JG_STORY.debug.state().near === id, 'car:' + c.id, 15000);
+    await p.evaluate(id => window.JG_STORY.debug.interact(id), 'car:' + c.id);
+    await until(p, () => window.JG_STORY.debug.drive().state, null, 10000); await p.waitForTimeout(500); await p.evaluate(() => window.JG_STORY.debug.skipCar());
+    await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 60000);
+    await p.waitForTimeout(1500);
+    const inCar = (await A()).car;
+    if (!inCar || !inCar.on) errs.push(`${label}: no engine in the car (${JSON.stringify(inCar)})`);
+    if (mobile) { await p.tap('[data-drv="out"]', { force: true }); await p.waitForTimeout(600); await p.evaluate(() => window.JG_STORY.debug.skipCar()); } else await p.keyboard.press('e');
+    await until(p, () => !window.JG_STORY.debug.drive().state, null, 120000);
+    await p.waitForTimeout(1600);
+    const out = await A();
+    if (out.car) errs.push(`${label}: car sounds still going after getting out`);
+    carNote = `engine ${inCar ? Math.round(inCar.rpm) + ' rpm' : 'none'}, silent after getting out`;
+  }
+  // the office: the lot's bed stops, the office's starts
+  await p.evaluate(() => { const d = window.JG_STORY.debug; d.flag('met', 1); d.warp('door'); });
+  await p.waitForTimeout(500);
+  await p.evaluate(() => window.JG_STORY.debug.interact('door'));
+  await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000);
+  await until(p, () => { const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); return s.phase === 'explore'; }, null, 300000);
+  await p.waitForTimeout(2500);
+  const off = await A();
+  if (off.scene !== 'office') errs.push(`${label}: the sound still thinks it's on the ${off.scene}`);
+  const stuck = off.amb.filter(n => lotAmb.includes(n) && /traffic|rain-hiss|lamp/.test(n));
+  if (stuck.length) errs.push(`${label}: the lot's sounds kept going in the office: ${stuck.join(' ')}`);
+  if (off.peakMax >= 1) errs.push(`${label}: the mix clipped (peak ${off.peakMax})`);
+  if (missing.length) errs.push(`${label}: missing files: ${[...new Set(missing)].slice(0, 6).join(', ')}`);
+  notes.push(`${label}: ${voiced.length} voiced lines, each once, max ${v.vmax} at a time, beds ducked to ${(+v.duck).toFixed(2)} under them; feet on ${[...surf].join(' and ')}; car: ${carNote}; lot bed [${lotAmb.join(' ')}] gave way to the office's [${off.amb.join(' ')}]; peak ${off.peakMax}; ${missing.length} missing files`);
+  await ctx.close();
+}
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
@@ -805,6 +893,7 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (AUDIO) { try { await audioCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} audio: ${e.message.split('\n')[0]}`); } continue; }
   if (WAY) { try { await wayCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} way: ${e.message.split('\n')[0]}`); } continue; }
   if (RESUME) { try { await resume(vname, w, h, mobile); } catch (e) { errs.push(`${vname} resume: ${e.message.split('\n')[0]}`); } continue; }
   if (BALL) { try { await ballCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} ball: ${e.message.split('\n')[0]}`); } continue; }

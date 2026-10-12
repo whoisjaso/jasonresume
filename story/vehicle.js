@@ -446,6 +446,8 @@ export function createVehicle(set, car, opts = {}) {
       if (!car.collider) { car.collider = { type: "box", x: st.x, z: st.z, hw, hl, yaw: st.yaw, h: 1.4, what: "car" }; }
       Object.assign(car.collider, { x: st.x, z: st.z, yaw: st.yaw });
       if (!colliders.includes(car.collider)) colliders.push(car.collider);
+      // and drawn with the parked rows again, where it stands
+      if (set.userData.showRig) set.userData.showRig(car, false);
     },
     get speed() { return st.vx; },
     get kmh() { return Math.abs(st.vx) * 3.6; },
@@ -467,6 +469,8 @@ export function createVehicle(set, car, opts = {}) {
   const lastInp = { t: 0 };
   const upd = api.update;
   api.update = (dt, inp = {}) => { lastInp.t = clamp(st.gear === -1 ? +inp.brake || 0 : +inp.throttle || 0, 0, 1); return upd(dt, inp); };
+  // the rig takes over from the parked rows' copy of this car
+  if (set.userData.showRig) set.userData.showRig(car, true);
   // this car is no longer something it can hit
   if (car.collider) { const i = colliders.indexOf(car.collider); if (i >= 0) colliders.splice(i, 1); }
   applyLights(); place();

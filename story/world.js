@@ -498,7 +498,8 @@ function parkCars(set, list) {
     st.userData.keep = true; set.add(st); out.push(st);
     // the soft dark under each car (the ground bakes its own too; this one sits on anything)
     const sh = new THREE.InstancedMesh(BLOB_GEO, blobMat(0.8, true), cars.length);
-    cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); });
+    const blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, 0.012, 0), new THREE.Quaternion(), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5));
+    cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); slotOf(c, sh, i, blobLocal); });
     sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; set.add(sh); out.push(sh);
   }
   for (const im of out) { im.computeBoundingSphere(); im.frustumCulled = true; }
@@ -778,7 +779,7 @@ export function buildLot(o) {
   // the sold board by the door; it fills from June 2025, so on the morning of the keys (August 2024) it is not up yet
   if (!day) { const sold = plane(1.6, 1.2, pbr({ map: TX.soldTex(), color: "#fff", rough: 0.5, wet: 0.3 }), sh); sold.position.set(8.6, 1.55, 0.16); }
   set.userData.spots.sold = { p: V3(2 + 8.6, 1.5, -18 + 0.3), r: 2.4, stand: V3(10.6, 0, -16.2) };
-  set.userData.spots.door = { p: V3(13, 1.3, -17.6), r: 2.4, stand: V3(13, 0, -16.3) };
+  set.userData.spots.door = { p: V3(13, 1.3, -17.6), r: 2.4, stand: V3(13, 0, -16.3), kind: "exit", label: "Office", to: "office", at: "lot-door" };
   set.userData.walls.push({ x0: -11.3, x1: 15.3, z0: -26.3, z1: -17.7 });
   // a trash can and a bench by the door
   { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.24, 0.85, 16, 1, true), pbr({ color: "#2a2c2b", metal: 0.6, rough: 0.4, wet: 1, side: THREE.DoubleSide })); can.position.set(14.6, 0.425, -17.2); set.add(can);
@@ -837,7 +838,19 @@ export function buildLot(o) {
   set.userData.rockCar = rockCar;
   set.userData.tickCars = dt => tickCars(parked, dt);
   // the cars, now or when they land
-  const land = () => { parkCars(set, parked.concat(showCars)); for (const c of drivable) buildRig(set, c); for (const c of parked) if (c.collider) { const [w, l] = carSize(c.kind); c.collider.hw = w / 2; c.collider.hl = l / 2; } };
+  /* a drivable car standing still is drawn with the parked rows (one instance slot per part, no extra draws);
+     its rig (the moving parts) shows only while story/vehicle.js has it: showRig(car, true | false) */
+  const ZERO = new THREE.Matrix4().makeScale(0, 0, 0), RM = new THREE.Matrix4(), RQ = new THREE.Quaternion(), RP = new THREE.Vector3(), RS = new THREE.Vector3(1, 1, 1), UP = new THREE.Vector3(0, 1, 0);
+  set.userData.showRig = (c, on) => {
+    if (c.object) c.object.visible = !!on;
+    if (!c._slots) return;
+    RP.set(c.x, 0, c.z); RQ.setFromAxisAngle(UP, c.yaw);
+    for (const [im, i, local] of c._slots) {
+      if (on) im.setMatrixAt(i, ZERO); else { RM.compose(RP, RQ, RS); if (local) RM.multiply(local); im.setMatrixAt(i, RM); }
+      im.instanceMatrix.needsUpdate = true; if (!on) im.computeBoundingSphere();
+    }
+  };
+  const land = () => { parkCars(set, parked.concat(showCars, drivable)); for (const c of drivable) { buildRig(set, c); c.object.visible = false; } for (const c of parked) if (c.collider) { const [w, l] = carSize(c.kind); c.collider.hw = w / 2; c.collider.hl = l / 2; } };
   if (Object.keys(carLib).length) land();
   else lotReady.then(() => { land(); set.userData.envTex = null; });
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
@@ -889,10 +902,10 @@ export function buildLot(o) {
     Object.defineProperty(gc, "x", { get: () => gate.position.x - 1.7, enumerable: true }); Object.defineProperty(gc, "z", { get: () => gate.position.z, enumerable: true }); CO.push(gc); }
   set.userData.sounds.gate = { x: -3.2, y: 1.0, z: 21.9, kind: "chain-link" };
   set.userData.spots.gate = { p: V3(-3.4, 1.2, 21.9), r: 2.4, stand: V3(-2.6, 0, 20.4) };
-  set.userData.walls.push({ x0: -35, x1: 35, z0: -27, z1: -26.4 }, { x0: -35, x1: -34.4, z0: -27, z1: 22 }, { x0: 34.4, x1: 35, z0: -27, z1: 22 }, { x0: -4, x1: 4, z0: 23.6, z1: 24.2 });
+  set.userData.walls.push({ x0: -35, x1: 35, z0: -27, z1: -26.4 }, { x0: -35, x1: -34.4, z0: -27, z1: 22 }, { x0: 34.4, x1: 35, z0: -27, z1: 22 });
   CO.push({ type: "box", x: 0, z: -26.7, hw: 35, hl: 0.3, yaw: 0, h: 3, what: "wall" }, { type: "box", x: -34.7, z: -2.5, hw: 0.3, hl: 24.5, yaw: 0, h: 3, what: "fence" }, { type: "box", x: 34.7, z: -2.5, hw: 0.3, hl: 24.5, yaw: 0, h: 3, what: "fence" });
   // where a car may be: the lot inside the fence, the gate's opening, and Almeda Genoa Road; past the road's ends a soft wall turns you round
-  set.userData.driveBounds = { rects: [{ x0: -34.4, x1: 34.4, z0: -26.4, z1: 21.5, name: "lot" }, { x0: -3.2, x1: 3.2, z0: 21.0, z1: 24.6, name: "gate" }, { x0: -60, x1: 60, z0: 22.4, z1: 37.6, name: "road" }] };
+  set.userData.driveBounds = { rects: [{ x0: -34.4, x1: 34.4, z0: -26.4, z1: 21.5, name: "lot" }, { x0: -3.2, x1: 3.2, z0: 21.0, z1: 24.6, name: "gate" }, { x0: -76, x1: 76, z0: 22.4, z1: 37.6, name: "road" }, { x0: 24, x1: 44, z0: 37, z1: 51, name: "gas" }, { x0: -38, x1: -22, z0: 37, z1: 50, name: "empty lot" }] };
   set.userData.inDriveBounds = (x, z) => set.userData.driveBounds.rects.some(b => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
 
   /* --- beyond the fence: Almeda Genoa Road, its street lights and power poles, palms, the buildings across it, the sky --- */
@@ -925,11 +938,14 @@ export function buildLot(o) {
     // across the road: a strip of low buildings, dark at this hour, a few signs and windows still lit
     const bldg = rmat({ color: "#3a3936", rough: 0.9, wet: 0.6, mapK: "concC", tri: 0.25 });
     const rb = rng(77);
+    // (the places you can walk or drive to across the road keep their ground: the empty lot, the shop, the gas station)
+    const RESERVED = [[-40, -22], [6, 22], [24, 46]];
     for (let x = -70; x < 70;) {
-      const w = 9 + rb() * 14, h = 4 + rb() * 4.5, d = 10;
-      box(w - 0.6, h, d, bldg, x + w / 2, h / 2, 46 + rb() * 3, set);
-      if (!day && rb() < 0.6) { const s = plane(w * 0.5, 0.7, glow(["#e8d9b8", "#b8d0e8", "#f0b878"][(rb() * 3) | 0], { k: 0.5 + rb() * 0.6 }), set); s.rotation.y = Math.PI; s.position.set(x + w / 2, h - 0.9, 46 - 5.05); }
-      if (!day && rb() < 0.5) { const s = plane(1.4, 1.1, glow("#f1d6a0", { k: 0.35 }), set); s.rotation.y = Math.PI; s.position.set(x + w * (0.25 + rb() * 0.5), 1.4, 46 - 5.05); }
+      const w = 9 + rb() * 14, h = 4 + rb() * 4.5, d = 10, zc = 46 + rb() * 3;
+      const keep = !RESERVED.some(([a, b2]) => x + w > a && x < b2);
+      if (keep) { box(w - 0.6, h, d, bldg, x + w / 2, h / 2, zc, set); set.userData.walls.push({ x0: x, x1: x + w - 0.6, z0: zc - 5, z1: zc + 5 }); CO.push({ type: "box", x: x + w / 2 - 0.3, z: zc, hw: (w - 0.6) / 2, hl: 5, yaw: 0, h, what: "wall" }); }
+      if (!day && rb() < 0.6) { const c = ["#e8d9b8", "#b8d0e8", "#f0b878"][(rb() * 3) | 0], k = 0.5 + rb() * 0.6; if (keep) { const s = plane(w * 0.5, 0.7, glow(c, { k }), set); s.rotation.y = Math.PI; s.position.set(x + w / 2, h - 0.9, 46 - 5.05); } }
+      if (!day && rb() < 0.5) { const fx = x + w * (0.25 + rb() * 0.5); if (keep) { const s = plane(1.4, 1.1, glow("#f1d6a0", { k: 0.35 }), set); s.rotation.y = Math.PI; s.position.set(fx, 1.4, 46 - 5.05); } }
       x += w;
     }
     // palms along the road and the lot's west side
@@ -937,6 +953,7 @@ export function buildLot(o) {
     for (let i = 0; i < 4; i++) palm(-38 - r() * 4, -20 + i * 11, 7 + r() * 4, set, r);
     const sky = skyDome(o); sky.renderOrder = -1; set.add(sky);
     set.userData.sounds.road = { x: 0, y: 0.5, z: 31, kind: "traffic" };
+    placesAcross(set, o, day, CO);
   }
 
   /* --- the ground, now that everything standing on it is known --- */
@@ -985,11 +1002,11 @@ export function buildLot(o) {
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
   set.userData.ready = lotReady;
   /* what the wet ground's mirror can leave out on a phone (post.js reads it when post.lite): every car part but
-     the paint and the lamps (tyres, trim, glass, cabins, plates...); rebuilt when the cars land */
+     its lamps (bodies, tyres, trim, glass, cabins, plates...); rebuilt when the cars land */
   { let cache = null, n = -1;
     set.userData.reflectSkip = () => {
       if (cache && n === set.children.length) return cache;
-      const M = carMats(), keep = new Set(Object.values(M.paint));
+      const M = carMats(), keep = new Set();   // (the paint too: in the mirror the lot's cars read by their lamps)
       for (const k of ["lamp_head", "lamp_head_in", "lamp_tail", "lamp_tail_in", "lamp_amber", "idleTail", "idleTailIn", "idleHeadIn", "idleHead"]) keep.add(M[k]);
       for (const c of drivable) { const rg = c.object && c.object.userData.rig; if (rg) for (const m of Object.values(rg.own)) keep.add(m); }
       cache = [];
@@ -1209,7 +1226,7 @@ export function buildOffice(o) {
     const a1 = cyl(0.009, 0.009, 0.42, M.steel, 0, 0.2, 0.05, L, 6); a1.rotation.x = 0.25;
     const a2 = cyl(0.009, 0.009, 0.36, M.steel, 0, 0.44, 0.18, L, 6); a2.rotation.x = -1.0;
     const dsh = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.1, 0.14, 16, 1, true), pbr({ color: "#1c3229", rough: 0.4, metal: 0.4, wet: 0, side: THREE.DoubleSide })); dsh.position.set(0, 0.42, 0.36); dsh.rotation.x = 0.35; L.add(dsh);
-    const dbulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glow("#ffd9a0", { k: 2.6 })); dbulb.position.set(0, 0.39, 0.37); L.add(dbulb); }
+    const dbulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glow("#ffd9a0", { k: 2.6 })); dbulb.position.set(0, 0.39, 0.37); L.add(dbulb); set.userData._deskBulb = dbulb; }
   set.userData.lamps.push({ p: V3(-2.1, 1.12, -1.72), range: 3.8, col: [1.6, 1.0, 0.52], cone: 0, fixed: true });
   // the monitor's cable along the floor to the wall
   box(0.012, 0.012, 1.4, M.plastic, 0.2, 0.006, -2.9, set);
@@ -1223,12 +1240,15 @@ export function buildOffice(o) {
   // the filing cabinet on the left wall: four drawers, label holders, handles
   const cab = new THREE.Group(); cab.position.set(-6.6, 0, -2.6); cab.rotation.y = Math.PI / 2; set.add(cab);
   rbox(0.46, 1.36, 0.62, 0.01, M.putty, 0, 0.68, 0, cab);
+  let drawer = null;
   ["Form 130-U", "webDEALER", "Liens", "Temp tags"].forEach((t, i) => {
     const y = 1.18 - i * 0.32;
-    box(0.43, 0.3, 0.012, M.putty, 0, y - 0.04, 0.312, cab);
-    const lb = plane(0.11, 0.035, pbr({ map: TX.labelTex(t, { w: 256, h: 80 }), color: "#fff", rough: 0.7, wet: 0, ao: 0 }), cab); lb.position.set(0, y + 0.06, 0.32);
-    box(0.13, 0.05, 0.004, M.chrome, 0, y + 0.06, 0.319, cab);
-    rbox(0.16, 0.025, 0.03, 0.01, M.chrome, 0, y - 0.03, 0.33, cab);
+    // the top drawer is its own piece, so it can slide out (a box behind its front, hidden while shut)
+    const dg = i === 0 ? (drawer = new THREE.Group()) : cab; if (i === 0) { drawer.userData.keep = true; cab.add(drawer); box(0.4, 0.24, 0.5, M.putty, 0, y - 0.05, 0.05, drawer); for (let k = 0; k < 6; k++) box(0.36, 0.22, 0.004, M.paper, 0, y - 0.05, -0.15 + k * 0.06, drawer); }
+    box(0.43, 0.3, 0.012, M.putty, 0, y - 0.04, 0.312, dg);
+    const lb = plane(0.11, 0.035, pbr({ map: TX.labelTex(t, { w: 256, h: 80 }), color: "#fff", rough: 0.7, wet: 0, ao: 0 }), dg); lb.position.set(0, y + 0.06, 0.32);
+    box(0.13, 0.05, 0.004, M.chrome, 0, y + 0.06, 0.319, dg);
+    rbox(0.16, 0.025, 0.03, 0.01, M.chrome, 0, y - 0.03, 0.33, dg);
   });
   // a scale model's worth of clutter on top: a tray of folders
   box(0.32, 0.08, 0.26, M.plastic, 0, 1.4, 0, cab); for (let i = 0; i < 4; i++) box(0.3, 0.004, 0.23, M.paper, 0, 1.38 + i * 0.012, 0.01, cab);
@@ -1282,13 +1302,19 @@ export function buildOffice(o) {
   rbox(0.8, 0.88, 0.6, 0.01, M.wood, 0, 0.44, 0, cof); rbox(0.84, 0.04, 0.64, 0.01, pbr({ color: "#2a2928", rough: 0.3, wet: 0 }), 0, 0.9, 0, cof);
   rbox(0.32, 0.42, 0.3, 0.02, M.plastic, 0, 1.13, -0.05, cof); box(0.16, 0.02, 0.12, M.chrome, 0, 0.94, 0.08, cof); cyl(0.06, 0.05, 0.14, pbr({ color: "#202224", rough: 0.08, wet: 0 }), 0, 1.0, 0.06, cof, 16);
   box(0.06, 0.03, 0.02, glow("#c94a2a", { k: 1.2 }), 0.1, 1.25, 0.11, cof);
-  for (let i = 0; i < 3; i++) cyl(0.04, 0.036, 0.09, pbr({ color: ["#ece8de", "#1c3229", "#ece8de"][i], rough: 0.25, wet: 0 }), -0.28 + i * 0.1, 0.965, 0.18, cof, 14);
+  let mug2 = null;
+  for (let i = 0; i < 3; i++) { const mm = cyl(0.04, 0.036, 0.09, pbr({ color: ["#ece8de", "#1c3229", "#ece8de"][i], rough: 0.25, wet: 0 }), -0.28 + i * 0.1, 0.965, 0.18, cof, 14); if (i === 1) { mm.userData.keep = true; mug2 = mm; } }
   set.userData.spots.coffee = { p: V3(-6.3, 1.1, 2.6), r: 1.7, stand: V3(-5.4, 0, 2.6) };
   // the fridge beside it
+  let fridgeDoor = null;
   { const fr = new THREE.Group(); fr.position.set(-6.62, 0, 1.45); fr.rotation.y = Math.PI / 2; set.add(fr);
-    const enamel = pbr({ color: "#e4e2dc", rough: 0.25, wet: 0, room: ROOM }); rbox(0.7, 1.72, 0.66, 0.03, enamel, 0, 0.86, 0, fr);
-    box(0.68, 0.006, 0.01, M.plastic, 0, 1.2, 0.335, fr); rbox(0.03, 0.42, 0.04, 0.012, M.chrome, -0.28, 1.45, 0.35, fr); rbox(0.03, 0.3, 0.04, 0.012, M.chrome, -0.28, 0.95, 0.35, fr);
-    for (let i = 0; i < 3; i++) box(0.06, 0.06, 0.004, pbr({ color: ["#c9a96a", "#1c3229", "#a85a3a"][i], rough: 0.5, wet: 0 }), 0.1 + i * 0.08, 1.5 - i * 0.05, 0.336, fr);
+    const enamel = pbr({ color: "#e4e2dc", rough: 0.25, wet: 0, room: ROOM }); rbox(0.7, 1.72, 0.6, 0.03, enamel, 0, 0.86, -0.03, fr);
+    // the door, hinged on its right edge (as you face it), with the handles and magnets on it; inside, a lit box and a shelf
+    const inside = plane(0.6, 1.5, glow("#f4f2ea", { k: 0.55 }), fr); inside.position.set(0, 0.86, 0.272);
+    fridgeDoor = new THREE.Group(); fridgeDoor.position.set(0.35, 0, 0.3); fridgeDoor.userData.keep = true; fr.add(fridgeDoor);
+    rbox(0.7, 1.72, 0.06, 0.02, enamel, -0.35, 0.86, 0.03, fridgeDoor);
+    box(0.68, 0.006, 0.01, M.plastic, -0.35, 1.2, 0.062, fridgeDoor); rbox(0.03, 0.42, 0.04, 0.012, M.chrome, -0.63, 1.45, 0.08, fridgeDoor); rbox(0.03, 0.3, 0.04, 0.012, M.chrome, -0.63, 0.95, 0.08, fridgeDoor);
+    for (let i = 0; i < 3; i++) box(0.06, 0.06, 0.004, pbr({ color: ["#c9a96a", "#1c3229", "#a85a3a"][i], rough: 0.5, wet: 0 }), -0.25 + i * 0.08, 1.5 - i * 0.05, 0.063, fridgeDoor);
     set.userData.walls.push({ x0: -7, x1: -6.25, z0: 1.05, z1: 1.85 }); set.userData.sounds.fridge = { x: -6.62, y: 0.9, z: 1.45, kind: "fridge-hum" }; }
   set.userData.sounds.coffee = { x: -6.4, y: 1.1, z: 2.6, kind: "coffee-machine" };
   set.userData.walls.push({ x0: -7, x1: -5.9, z0: 2.2, z1: 3.0 });
@@ -1364,9 +1390,12 @@ export function buildOffice(o) {
   { const wbk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.32, 16, 1, true), pbr({ color: "#2a2b2c", rough: 0.5, wet: 0, side: THREE.DoubleSide })); wbk.position.set(0.55, 0.16, -2.3); set.add(wbk); }
   { const d = new THREE.Group(); d.position.set(-6.98, 0, 4.2); d.rotation.y = Math.PI / 2; set.add(d); box(1.0, 2.1, 0.04, rmat({ color: "#6b5440", mapK: "woodC", tri: 1.2, rough: 0.5, wet: 0 }), 0, 1.05, 0.02, d); box(1.1, 2.18, 0.03, M.steel, 0, 1.09, 0.0, d); rbox(0.12, 0.03, 0.05, 0.01, M.chrome, 0.38, 1.0, 0.07, d); }
   box(0.08, 0.12, 0.025, pbr({ color: "#e9e6de", rough: 0.4, wet: 0 }), -6.98, 1.5, 1.3, set).rotation.y = Math.PI / 2;
+  set.userData.marks = {};
+  officeThings(set, { deskBulb: set.userData._deskBulb, trof, drawer, fridgeDoor, mug: mug2 });
   mergeStatic(set);
   envHook(set, V3(0, 1.6, 0.5));
   set.userData.marks = {
+    ...set.userData.marks,
     playerStart: V3(4.5, 0, 3.6), playerYaw: Math.PI,
     jason: V3(-1.3, 0, -0.55), jasonYaw: 0.4, jasonPhone: V3(-1.95, 0, -0.85),
     renata: V3(-0.2, 0, -2.75), renataYaw: 0
@@ -1413,7 +1442,7 @@ export function buildLibrary(o) {
     box(0.08, 3.7, 0.1, M.dark, x - 0.84, 3.4, -8.94, set); box(0.08, 3.7, 0.1, M.dark, x + 0.84, 3.4, -8.94, set); box(1.6, 0.05, 0.06, M.dark, x, 4.3, -8.94, set); box(0.04, 3.6, 0.06, M.dark, x, 3.4, -8.94, set);
   }
   set.userData.sounds.windows = { x: 0, y: 3.4, z: -8.9, kind: "rain-glass", w: 18 };
-  const shade = glow("#2f6a46", { k: 0.9 });
+  const shade = glow("#2f6a46", { k: 0.9 }), bulbM = glow("#ffe2b0", { k: 2.4 }), chairs = [];
   // long tables with green banker's lamps; one of them is the desk
   const r = rng(11);
   for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3], [0, 3]]) {
@@ -1423,7 +1452,7 @@ export function buildLibrary(o) {
     for (const lx of [-1.1, 1.1]) {
       cyl(0.07, 0.08, 0.02, M.brass, lx, 0.825, 0, t, 16); cyl(0.01, 0.01, 0.3, M.brass, lx, 0.97, -0.05, t, 6);
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 0.08, 20, 1, true, 0, Math.PI), shade); sh.rotation.z = Math.PI / 2; sh.rotation.y = Math.PI / 2; sh.position.set(lx, 1.13, 0.0); t.add(sh);
-      const bulb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), glow("#ffe2b0", { k: 2.4 })); bulb.rotation.z = Math.PI / 2; bulb.position.set(lx, 1.1, 0.0); t.add(bulb);
+      const bulb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), bulbM); bulb.rotation.z = Math.PI / 2; bulb.position.set(lx, 1.1, 0.0); t.add(bulb);
       set.userData.lamps.push({ p: V3(tx + lx, 1.08, tz), range: 3.6, col: [2.4, 1.75, 0.9], cone: 0, fixed: true });
     }
     const sh2 = new THREE.Mesh(BLOB_GEO, blobMat(0.5, true)); sh2.scale.set(4.6, 1, 1.8); sh2.position.y = 0.01; sh2.layers.set(2); t.add(sh2);
@@ -1467,6 +1496,7 @@ export function buildLibrary(o) {
   for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3], [0, 3]]) for (const side of [-1, 1]) for (const cx of [-1.2, 0, 1.2]) {
     if (tx === 0 && side > 0) continue; // your side of the desk stays open
     const c = new THREE.Group(); c.position.set(tx + cx + (rr() - 0.5) * 0.2, 0, tz + side * (0.95 + rr() * 0.25)); c.rotation.y = (side > 0 ? Math.PI : 0) + (rr() - 0.5) * 0.4; set.add(c);
+    if (tz > 0 && Math.abs(tx) > 1 && side > 0 && Math.abs(cx) < 0.1) chairs.push({ x: c.position.x, z: c.position.z, yaw: c.rotation.y + Math.PI });
     rbox(0.44, 0.045, 0.42, 0.012, chairM, 0, 0.46, 0, c);
     for (const [lx, lz] of [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]]) cyl(0.018, 0.015, 0.46, chairM, lx, 0.23, lz, c, 8);
     for (const lx of [-0.19, 0.19]) cyl(0.015, 0.015, 0.5, chairM, lx, 0.72, 0.19, c, 8);
@@ -1477,10 +1507,23 @@ export function buildLibrary(o) {
     for (let b = 0; b < 2 + ((rr() * 3) | 0); b++) { const h = 0.03 + rr() * 0.03; const m = rbox(0.22 + rr() * 0.08, h, 0.3, 0.004, pbr({ color: bc[(rr() * bc.length) | 0], rough: 0.6, wet: 0 }), x, y + h / 2, z, set); m.rotation.y = (rr() - 0.5) * 0.5; y += h; }
     if (rr() < 0.6) { const pg = plane(0.42, 0.3, M.paper, set); pg.rotation.set(-Math.PI / 2, 0, (rr() - 0.5) * 0.6); pg.position.set(x + 0.4, 0.817, z + 0.1); }
   }
+  let cartBook = null;
   { const c = new THREE.Group(); c.position.set(-2.6, 0, 6.2); c.rotation.y = 0.3; set.add(c); rbox(1.0, 0.04, 0.45, 0.01, M.wood, 0, 0.3, 0, c); rbox(1.0, 0.04, 0.45, 0.01, M.wood, 0, 0.75, 0, c); for (const lx of [-0.48, 0.48]) box(0.04, 0.8, 0.45, M.wood, lx, 0.4, 0, c);
     for (const [wx, wz] of [[-0.42, -0.18], [0.42, -0.18], [-0.42, 0.18], [0.42, 0.18]]) { const wh = cyl(0.04, 0.04, 0.03, pbr({ color: "#1a1a1a", rough: 0.7, wet: 0 }), wx, 0.04, wz, c, 12); wh.rotation.z = Math.PI / 2; }
     let x = -0.44; while (x < 0.44) { const w = 0.04 + rr() * 0.04, h = 0.24 + rr() * 0.1; rbox(w, h, 0.2, 0.004, pbr({ color: bc[(rr() * bc.length) | 0], rough: 0.6, wet: 0 }), x, 0.77 + h / 2, 0, c); x += w + 0.01; }
+    // one lying on the top shelf of the cart, to pick up
+    cartBook = rbox(0.24, 0.05, 0.32, 0.006, pbr({ color: "#6a2f2a", rough: 0.6, wet: 0 }), 0.15, 0.345, 0, c); cartBook.rotation.y = 0.3; cartBook.userData.keep = true;
     set.userData.walls.push({ x0: -3.3, x1: -1.9, z0: 5.8, z1: 6.6 }); }
+  /* the way out: double doors at the end of the runner, lit over the top */
+  { const dk = M.dark, wd = M.wood;
+    box(2.6, 0.22, 0.2, dk, 0, 3.0, 8.9, set); box(0.2, 3.0, 0.2, dk, -1.2, 1.5, 8.9, set); box(0.2, 3.0, 0.2, dk, 1.2, 1.5, 8.9, set);
+    for (const s of [-1, 1]) {
+      box(1.08, 2.86, 0.06, wd, s * 0.55, 1.43, 8.94, set);
+      for (const py of [0.75, 2.05]) box(0.8, py > 1 ? 1.0 : 0.9, 0.02, dk, s * 0.55, py, 8.905, set);
+      box(0.04, 0.42, 0.05, M.brass, s * 0.1, 1.1, 8.88, set);
+    }
+    const tr = plane(2.2, 0.5, glow("#f3dcae", { k: 0.6 }), set); tr.position.set(0, 3.4, 8.96); tr.rotation.y = Math.PI;
+    set.userData.lamps.push({ p: V3(0, 3.0, 8.3), range: 5, col: [0.9, 0.7, 0.45], cone: 0, fixed: true }); }
   const runner = plane(3, 14, M.runner, set); runner.rotation.x = -Math.PI / 2; runner.position.set(0, 0.008, 0);
   { const clk = new THREE.Group(); clk.position.set(0, 5.6, -8.95); set.add(clk); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.03, 8, 40), M.brass); clk.add(rim); const face = new THREE.Mesh(new THREE.CircleGeometry(0.35, 40), pbr({ map: TX.clockTex(11, 40), color: "#fff", rough: 0.4, wet: 0, ao: 0 })); face.position.z = 0.01; clk.add(face); set.userData.sounds.clock = { x: 0, y: 5.6, z: -8.9, kind: "clock-tick" }; }
   mergeStatic(set);
@@ -1508,4 +1551,26 @@ loadTotal += CAR_KINDS.length;
 export const lotReady = Promise.all([loadCars().catch(e => console.warn("[world] cars", e)), loadSetTex(LOT_TEX)]);
 lotReady.then(patchLate);
 export const roomsReady = lotReady.then(() => loadSetTex(ROOM_TEX)).then(patchLate);
+/* warm-up: compile every material in a set (the hidden ones too: the drivable rigs, the open door's room) and
+   upload its textures to the GPU, so entering a scene or getting into a car never stutters on a shader compile or
+   a texture upload. main.js calls it during loading for each set it builds (lot, office, memory, keys), after
+   set.userData.ready. Returns a promise; safe to call twice. */
+export async function warmSet(renderer, camera, set) {
+  if (!renderer || !set) return;
+  const texs = new Set(), hidden = [];
+  set.traverse(o => {
+    if (o.visible === false) { hidden.push(o); o.visible = true; }
+    if (!o.material) return;
+    for (const m of [].concat(o.material)) {
+      if (m.uniforms) { for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) texs.add(v); } }
+      if (m.map) texs.add(m.map);
+    }
+  });
+  for (const t of texs) { const im = t.image; if (!t.isRenderTargetTexture && im && (im.width || (im.data && im.data.length) || im.length)) { try { renderer.initTexture(t); } catch (e) {} } }
+  // everything at once while the hidden parts are shown (synchronously, so nothing hidden is ever drawn), then wait
+  // for the programs to finish linking where the browser can do that in the background
+  try { renderer.compile(set, camera); } catch (e) { console.warn("[world] warm", e && e.message); }
+  finally { for (const o of hidden) o.visible = false; }
+  try { if (renderer.compileAsync) await renderer.compileAsync(set, camera); } catch (e) {}
+}
 export const _debug = { carLib, T, TIER, sets: {} };
