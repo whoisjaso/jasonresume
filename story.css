@@ -219,3 +219,12 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
   .jr { max-height: calc(100dvh - 20px); }
 }
 .story.is-upright .st-choices { width: calc(100% - 24px); }
+/* the journal on a narrow phone: the title and close on one line, the tabs in one row under them */
+@media (max-width: 520px) {
+  .jr-h { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; padding: 16px 16px 8px 26px; }
+  .jr-h h3 { grid-column: 1; grid-row: 1; }
+  .jr-h > button:last-child { grid-column: 2; grid-row: 1; }
+  .jr-tabs { grid-column: 1 / -1; grid-row: 2; flex-wrap: nowrap; overflow-x: auto; gap: 2px; scrollbar-width: none; }
+  .jr-tabs button { font-size: 17px !important; padding: 8px 8px; white-space: nowrap; }
+  .jr-b { padding: 6px 18px 22px 26px; }
+}
