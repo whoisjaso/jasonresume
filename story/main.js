@@ -344,7 +344,8 @@ function endLine(skipped) {
 function lineNow(l, pnow) {
   if (S.ballPin != null) return S.ballPin; // a still, for the harness
   if (l.mode === "voice") {
-    const a = l.audio;
+    const a = l.audio, ct = a.currentTime;
+    if (ct !== l.lastCT && !a.ended) { l.lastCT = ct; l.vt = ct; l.ctAt = pnow; l.stall = false; l.stallT = 0; }
     if (a.paused || l.stall || a.ended) return l.vt;
     return Math.min(l.vt + Math.max(0, (pnow - l.ctAt) / 1000), l.vt + 0.25);
   }
