@@ -66,7 +66,7 @@ def main():
         w = os.path.join(tmp, name + ".wav")
         # mono, trim leading silence, normalize, a 15 ms fade out so nothing clicks
         run("sox", os.path.join(SRC, src), "-r", str(SR), "-c", "1", "-b", "16", w,
-            "silence", "1", "0.002", "0.4%", "norm", "-1", "fade", "t", "0", "-0", "0.015")
+            "silence", "1", "0.002", "0.4%", "norm", "-1", "reverse", "fade", "t", "0.015", "reverse")
         d = dur(w)
         sprites[name] = [round(t, 4), round(d, 4)]
         parts += [w, gap]
