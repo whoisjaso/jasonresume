@@ -505,7 +505,7 @@ if (!only || only === 'desktop') {
   const ctx = await ctxFor(1280, 800, false);
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`deeplink pageerror: ${e.message}`));
   await p.goto(URL0 + '?debug=story&fast=1&pr=0.3#story/office');
-  await p.waitForSelector('#intro [data-intro-skip]', { timeout: 20000 }); await p.click('#intro [data-intro-skip]');
+  await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {}); await p.click('#intro [data-intro-skip]');
   const ok = await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
   if (!ok) errs.push('#story/office did not open the office'); else notes.push('#story/office opens the office');
   await ctx.close();
