@@ -861,7 +861,7 @@ export function buildOffice(o) {
   set.userData = { lamps: [], spots: {}, walls: [], sounds: {} };
   const ROOM = [-7, 7, -5, 5, 3.1];
   const M = {
-    carpet: rmat({ color: "#e6e1d6", mapK: "carpC", nmapK: "carpN", tri: 0.7, nk: 0.8, rough: 0.95, wet: 0, room: ROOM }),
+    carpet: rmat({ color: "#ffffff", mapK: "carpC", nmapK: "carpN", tri: 0.7, nk: 0.8, rough: 0.95, wet: 0, room: ROOM }),
     vinyl: pbr({ color: "#ffffff", map: TX.tileTex(8), tri: 0.42, rough: 0.35, wet: 0, room: ROOM }),
     wall: rmat({ color: "#efe7d8", mapK: "plasC", nmapK: "plasN", tri: 0.45, nk: 0.5, rough: 0.9, wet: 0, room: ROOM }),
     base: pbr({ color: "#2a2622", rough: 0.55, wet: 0, room: ROOM }),

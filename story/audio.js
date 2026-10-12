@@ -228,7 +228,7 @@ export function createAudio(o) {
   function clearAmb(secs = 1.2) {
     const old = A.amb; A.amb = [];
     for (const n of old) { try { ramp(n.g.gain, 0, secs); n.s.stop(now() + secs + 0.1); } catch (e) {} }
-    A.lamps = []; A.roof = null; A.window = null; A.typingAt = null;
+    A.lamps = []; A.roof = null; A.window = null; A.typingAt = null; A.lines = []; A.arcade = null;
     if (A.car) { try { A.car.stop(); } catch (e) {} A.car = null; }
   }
   /* a scene's soundscape: called on every arrival */
@@ -248,17 +248,28 @@ export function createAudio(o) {
       loop(A.drops, { name: "rain-patter", bus: N.out, filters: [["highpass", 900]], gain: 0.34 * rain });
       loop(A.brown, { name: "rain-body", bus: N.out, filters: [["lowpass", 260]], gain: 0.28 * rain });
     }
+    const SN = set.userData.sounds || {};
+    A.lines = [];
+    const rainSrc = kind => (SN.rain || []).find(r => r.kind === kind);
     if (name === "lot" || name === "decision") {
-      // the showroom's awning: rain drumming on metal, loud under it, gone across the lot
-      A.roof = loop(A.drops, { name: "roof", rate: 0.55, filters: [["bandpass", 820, 1.3], ["peaking", 220, 3, 6]], gain: 0.55 * rain, at: { x: 2, y: 4.4, z: -16.8 }, ref: 2.2, roll: 1.6, bus: N.out });
-      // a car idling at the curb past the gate, and the street beyond
-      const idle = osc("sawtooth", 27, { name: "idle", filters: [["lowpass", 140, 1.2]], gain: 0.06, at: { x: -9, y: 0.5, z: 31 }, ref: 3, roll: 1.2, bus: N.out });
-      const lfo = A.ctx.createOscillator(), lg = A.ctx.createGain(); lfo.frequency.value = 13.5; lg.gain.value = 0.025; lfo.connect(lg); lg.connect(idle.g.gain); lfo.start(); A.amb.push({ s: lfo, g: lg, level: 0.025 });
+      // the showroom's canopy: rain drumming on metal, loud under it, gone across the lot (a long source: heard from its nearest point)
+      const can = rainSrc("rain-canopy") || { x: 2, y: 4.4, z: -16.8, w: 25 };
+      A.roof = loop(A.drops, { name: "roof", rate: 0.55, filters: [["bandpass", 820, 1.3], ["peaking", 220, 3, 6]], gain: 0.55 * rain, at: can, ref: 2.2, roll: 1.6, bus: N.out }); A.lines.push({ n: A.roof, src: can });
+      // rain ticking on the parked cars' roofs and on the storefront glass
+      const cars = rainSrc("rain-cars"); if (cars) { const n = loop(A.drops, { name: "rain-cars", rate: 1.3, filters: [["bandpass", 3200, 1.1]], gain: 0.2 * rain, at: cars, ref: 3, roll: 1, bus: N.out }); A.lines.push({ n, src: cars, zSpan: 12 }); }
+      const glass = rainSrc("rain-glass"); if (glass) { const n = loop(A.drops, { name: "rain-glass", rate: 0.9, filters: [["bandpass", 2300, 0.8]], gain: 0.16 * rain, at: glass, ref: 1.5, roll: 1.4, bus: N.out }); A.lines.push({ n, src: glass }); }
+      // an engine idling: the black sedan by the showroom with its lights on (the world's), else a car at the curb
+      const ip = SN.idle || { x: -9, y: 0.5, z: 31 };
+      const idle = osc("sawtooth", 27, { name: "idle", filters: [["lowpass", 140, 1.2]], gain: SN.idle ? 0.09 : 0.06, at: ip, ref: 2.5, roll: 1.3, bus: N.out });
+      const lfo = A.ctx.createOscillator(), lg = A.ctx.createGain(); lfo.frequency.value = 13.5; lg.gain.value = 0.03; lfo.connect(lg); lg.connect(idle.g.gain); lfo.start(); A.amb.push({ s: lfo, g: lg, level: 0.03 });
+      if (SN.idle) loop(A.brown, { name: "idle-body", filters: [["lowpass", 90]], gain: 0.12, at: ip, ref: 2, roll: 1.5, bus: N.out });
       lamps(set, "sodium");
       A.nextCar = t + rnd(6, 14);
     }
     if (outside) {
-      A.traffic = loop(A.brown, { name: "traffic", bus: N.out, filters: [["lowpass", 380], ["highpass", 40]], gain: name === "keys" ? 0.5 : 0.3, at: { x: -40, y: 2, z: 45 }, ref: 40, roll: 0.5 });
+      const road = SN.road || { x: 0, y: 0.5, z: 38 };
+      A.traffic = loop(A.brown, { name: "traffic", bus: N.out, filters: [["lowpass", 380], ["highpass", 40]], gain: name === "keys" ? 0.5 : 0.3, at: road, ref: 12, roll: 0.6 }); A.lines.push({ n: A.traffic, src: { ...road, w: 120 } });
+      A.roadZ = road.z;
       A.hiss = loop(A.pink, { name: "tires", bus: N.out, filters: [["bandpass", name === "keys" ? 900 : 1600, 0.6]], gain: name === "keys" ? 0.025 : 0.05, at: { x: 30, y: 1, z: 45 }, ref: 40, roll: 0.5 });
     }
     if (name === "keys") { A.nextBird = t + 1; A.nextCar = t + rnd(3, 8); }
@@ -269,23 +280,31 @@ export function createAudio(o) {
       osc("sine", 60, { name: "mains", gain: 0.012 });
       lamps(set, "tube");
       // the window, with the rain on it
-      const win = (set.userData.spots && set.userData.spots.window) ? set.userData.spots.window.p : { x: 0, y: 1.6, z: 4.8 };
-      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2400, 0.6]], gain: 0.22, at: { x: win.x, y: win.y, z: win.z + 0.1 }, ref: 1.6, roll: 1.2 });
-      A.clock = (set.userData.sounds && set.userData.sounds.clock) || { x: -4.2, y: 2.3, z: -4.9 };
+      const win = SN.window || ((set.userData.spots && set.userData.spots.window) ? set.userData.spots.window.p : { x: 0, y: 1.6, z: 4.8 });
+      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2400, 0.6]], gain: 0.22, at: { x: win.x, y: win.y, z: win.z + 0.1 }, ref: 1.6, roll: 1.2 }); if (win.w) A.lines.push({ n: A.window, src: win });
+      // the laptop's fan, the fridge under the coffee counter
+      if (SN.laptop) loop(A.pink, { name: "laptop-fan", filters: [["bandpass", 1100, 1.2]], gain: 0.012, at: SN.laptop, ref: 0.6, roll: 1.6 });
+      if (SN.coffee) { osc("sine", 120, { name: "fridge", gain: 0.01, at: SN.coffee, ref: 0.8, roll: 1.5 }); loop(A.brown, { name: "fridge-body", filters: [["lowpass", 160]], gain: 0.05, at: SN.coffee, ref: 0.8, roll: 1.5 }); }
+      A.arcade = SN.arcade || null; A.nextArcade = t + rnd(3, 8);
+      A.clock = SN.clock || { x: -4.2, y: 2.3, z: -4.9 };
       A.clockOn = true; A.tickT = t + 0.5;
       A.nextType = t + rnd(1, 3);
-    } else A.clockOn = false;
+    } else if (name !== "memory") A.clockOn = false;
     if (name === "memory") {
       // the library: the hush of a big room, far air, now and then a page somewhere
       loop(A.pink, { name: "hush", filters: [["lowpass", 900], ["highpass", 90]], gain: 0.07 });
       loop(A.brown, { name: "far-air", filters: [["lowpass", 160]], gain: 0.1 });
+      // rain on the tall windows, and a slow clock high on the wall
+      if (SN.windows) { const n = loop(A.drops, { name: "rain-glass", rate: 0.8, filters: [["bandpass", 2000, 0.7]], gain: 0.14, at: SN.windows, ref: 3, roll: 1 }); A.lines.push({ n, src: SN.windows }); }
+      if (SN.clock) { A.clock = SN.clock; A.clockOn = true; A.tickT = t + 0.7; }
       A.nextHush = t + rnd(4, 9);
     }
     log("scene", name);
   }
   /* the lamps nearest you buzz: sodium on the lot (a gritty 120 Hz), the office's tubes cleaner and higher */
   function lamps(set, kind) {
-    const C = A.ctx, list = (set.userData.lamps || []).filter(l => (kind === "tube" ? l.fixed : !l.fixed));
+    const SN = set.userData.sounds || {};
+    const C = A.ctx, list = SN.lamps && SN.lamps.length ? SN.lamps.map(q => ({ p: q })) : (set.userData.lamps || []).filter(l => !l.car && (kind === "tube" ? l.fixed : !l.fixed));
     if (!list.length) return;
     for (let i = 0; i < Math.min(3, list.length); i++) {
       const os = C.createOscillator(); os.type = "sawtooth"; os.frequency.value = 120 + rnd(-0.4, 0.4);
@@ -317,8 +336,14 @@ export function createAudio(o) {
         if (v.lamp !== l) { v.lamp = l; setPos(v.p, l.p.x, l.p.y, l.p.z); ramp(v.g.gain, w.day ? 0 : v.level, 0.6); }
       });
     }
-    // the roof is a long line; its sound comes from the nearest point on it
-    if (A.roof && w.ear) setPos(A.roof.p, Math.max(-10.5, Math.min(14.5, w.ear.x)), 4.4, -16.8);
+    // long sources (the canopy, the rows of cars, the glass, the road) are heard from their nearest point
+    if (A.lines && w.ear) for (const L of A.lines) { const s0 = L.src, h = (s0.w || 0) / 2; if (!L.n.p) continue; setPos(L.n.p, Math.max(s0.x - h, Math.min(s0.x + h, w.ear.x)), s0.y, L.zSpan ? Math.max(s0.z - L.zSpan, Math.min(s0.z + L.zSpan, w.ear.z)) : s0.z); }
+    // the arcade cabinet in attract mode: now and then a few quiet notes
+    if (A.scene === "office" && A.arcade && t >= A.nextArcade) {
+      const root = pick([261.6, 293.7, 329.6, 392]), steps = [1, 1.25, 1.5, 2, 1.5, 1.25];
+      steps.forEach((m, i) => tone({ f: root * m, wave: "square", decay: 0.09, gain: 0.006, delay: i * 0.11, at: A.arcade, ref: 0.9, roll: 1.6, bus: A.nodes.amb }));
+      A.nextArcade = t + rnd(7, 14);
+    }
     // the office clock
     if (A.clockOn && t >= A.tickT) {
       const tock = (A.tickN = (A.tickN || 0) + 1) % 2;
@@ -355,7 +380,7 @@ export function createAudio(o) {
     if ((A.mt = (A.mt || 0) + dt) > 0.25) { A.mt = 0; const d = new Float32Array(A.nodes.meter.fftSize); A.nodes.meter.getFloatTimeDomainData(d); let m = 0; for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); A.peak = Math.max(A.peak * 0.9, m); A.peakMax = Math.max(A.peakMax || 0, m); }
   }
   function passCar(wet) {
-    const C = A.ctx, dir = Math.random() < 0.5 ? 1 : -1, z = 31 + rnd(-1, 2.5), v = rnd(11, 17) * dir;
+    const C = A.ctx, dir = Math.random() < 0.5 ? 1 : -1, z = (A.roadZ || 31) + rnd(-1, 2.5), v = rnd(11, 17) * dir;
     let x = -95 * dir;
     const eng = C.createOscillator(); eng.type = "sawtooth"; const f0 = rnd(34, 52); eng.frequency.value = f0;
     const el = C.createBiquadFilter(); el.type = "lowpass"; el.frequency.value = 520; el.Q.value = 0.9;

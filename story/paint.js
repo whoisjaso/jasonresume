@@ -471,6 +471,7 @@ void main(){
     float fc = 0.04 + 0.96 * pow(1.0 - nvc, 5.0);
     col *= 1.0 - fc * uCoat;
     vec3 cs = envAt(reflect(-V, Nc), uCoatRough) * fc;
+    #ifndef LOWQ
     for (int i = 0; i < ${MAXL}; i++) {
       if (i >= uLampN) break;
       vec3 lp = uLampPos[i].xyz; if (uMirror > 0.5) lp.y = -lp.y;
@@ -480,6 +481,7 @@ void main(){
       if (uLampCol[i].w > 0.0) { float cd = dot(-L, vec3(0.0, uMirror > 0.5 ? 1.0 : -1.0, 0.0)); cone = smoothstep(uLampCol[i].w, uLampCol[i].w + 0.25, cd); }
       cs += uLampCol[i].rgb * att * cone * specL(Nc, V, L, ca, vec3(0.04), d);
     }
+    #endif
     col += cs * uCoat;
   }
   col += uEmit;
@@ -501,8 +503,10 @@ void main(){
    o: { color, map, nmap, rmap (AO, roughness, metal in R, G, B), emap, ek, emit, rough, metal, coat, coatRough, wet, ao (how much baked AO counts),
         vao (AO in the vertex colour's R), tri (world-space scale for projected maps, 1 / metres), nk (normal strength), spec, diff,
         drops (water beads), glass (Fresnel opacity), room ([x0, x1, z0, z1, height]: a box room's corner occlusion), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
+/* phones (and ?wq=lo) skip the clear coat's own lamp highlights; the coat still reflects the set */
+const LOWQ = typeof location !== "undefined" && /[?&]wq=lo/.test(location.search) || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && !/[?&]wq=hi/.test(location.search));
 export function pbr(o = {}) {
-  const defines = {};
+  const defines = LOWQ ? { LOWQ: "" } : {};
   const uniforms = {
     ...U,
     uColor: { value: new THREE.Color(o.color || "#888") },

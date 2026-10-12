@@ -26,7 +26,8 @@ import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { U, MAXL, blobMat } from "./paint.js";
 import * as TX from "./tex.js";
 import { loadCast, CAST_VER } from "./people.js";
-import { buildLot, buildOffice, buildLibrary, addKeys } from "./world.js";
+import * as WORLD from "./world.js";
+const { buildLot, buildOffice, buildLibrary, addKeys } = WORLD;
 import { Post, GRADES, applyGrade } from "./post.js";
 import { createAudio } from "./audio.js";
 import { buildNav, pathLen } from "./nav.js";
@@ -410,10 +411,10 @@ function makeRain() {
     vertexShader: `attribute vec4 seed; uniform vec3 uCam; uniform float uTime; uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; varying float vL; varying float vA;
       void main(){ vec3 box = vec3(22.0, 12.0, 22.0); vec3 p = vec3(seed.x, fract(seed.y - uTime * 0.85 * seed.w), seed.z) * box - box * 0.5; p.y += 4.0;
         p.xz = uCam.xz + mod(p.xz - uCam.xz + box.xz * 0.5, box.xz) - box.xz * 0.5; p.x += position.y * 0.05;
-        float len = 0.35 * seed.w; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z);
-        vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + side * position.x * 3.0;
+        float len = 0.25 * seed.w; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z);
+        vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + side * position.x * 1.2;
         float l = 0.05; for (int i = 0; i < 8; i++) { if (i >= uLampN) break; float d = length(uLampPos[i].xyz - wp); l += max(0.0, 1.0 - d / (uLampPos[i].w * 0.6)) * length(uLampCol[i].rgb) * 0.6; }
-        vL = l; vA = smoothstep(2.5, 6.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
+        vL = l; vA = smoothstep(4.0, 7.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
     fragmentShader: `uniform float uK; varying float vL; varying float vA; void main(){ gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * vL * 0.34 * uK * vA, 1.0); }`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
@@ -585,7 +586,7 @@ function updateCamera(dt) {
     return;
   }
   if (!me) return;
-  post.comp.u.uDofK.value = quality >= 2 ? 0.45 : 0; post.comp.u.uRange.value = 9;
+  post.comp.u.uDofK.value = 0; post.comp.u.uRange.value = 9; // depth of field is for conversations; walking, the lot stays sharp
   const { want, look } = followView(dt, false);
   if (camState.init) { camera.position.copy(want); camState.look.copy(look); camState.init = false; }
   camera.position.lerp(want, k); camState.look.lerp(look, k);
@@ -1668,6 +1669,11 @@ async function boot() {
   setLoad(0.4, D.scenes.lot.card);
   cast = await loadCast("assets/story/cast/");
   setLoad(0.55);
+  // the lot's cars and textures: world.js streams them and says how far it has got; it never waits past 14 s
+  const onWorld = e => { const f = e.detail && e.detail.f; if (f != null) setLoad(0.55 + 0.15 * f); };
+  document.addEventListener("jg:world-load", onWorld);
+  try { if (WORLD.lotReady) await Promise.race([WORLD.lotReady, new Promise(r => setTimeout(r, 15000))]); } catch (e) {}
+  document.removeEventListener("jg:world-load", onWorld);
   getSet("lot");
   setLoad(0.7);
   // warm the shaders on the first frames, behind the loading screen

@@ -5,7 +5,7 @@
    adds a vignette and a moving film grain, and draws the letterbox for
    cinematics. A planar mirror pass gives the wet lot its reflections.
    Quality steps down (resolution, bloom, depth of field, reflections) when the
-   frame rate does. */
+   frame rate does. Tone mapping is ACES, or AgX blended in per scene (tone). */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { U } from "./paint.js";
 
@@ -46,10 +46,18 @@ export class Post {
       uniform sampler2D tCol; uniform sampler2D tBloom; uniform sampler2D tDof; uniform sampler2D tDepth;
       uniform float uExp; uniform vec3 uLift; uniform vec3 uGamma; uniform vec3 uGain; uniform float uSat; uniform float uVig; uniform float uGrain; uniform float uTime;
       uniform float uBloom; uniform float uBox; uniform float uMem; uniform float uFocus; uniform float uRange; uniform float uDofK; uniform float uNear; uniform float uFar;
-      uniform float uFade; uniform vec3 uFadeCol; uniform float uAspect; uniform vec3 uShadowTint; uniform vec3 uHiTint;
+      uniform float uFade; uniform vec3 uFadeCol; uniform float uAspect; uniform float uTone; uniform vec3 uShadowTint; uniform vec3 uHiTint;
       varying vec2 vUv;
       float lin(float d){ float z = d * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
       vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
+      // AgX (Troy Sobotka's, as three.js writes it): highlights roll toward white instead of clipping to a hue
+      vec3 agxC(vec3 x){ vec3 x2 = x * x, x4 = x2 * x2; return 15.5 * x4 * x2 - 40.14 * x4 * x + 31.96 * x4 - 6.868 * x2 * x + 0.4298 * x2 + 0.1191 * x - 0.00232; }
+      vec3 agx(vec3 c){
+        const mat3 I = mat3(vec3(0.856627153315983, 0.137318972929847, 0.11189821299995), vec3(0.0951212405381588, 0.761241990602591, 0.0767994186031903), vec3(0.0482516061458583, 0.101439036467562, 0.811302368396859));
+        const mat3 O = mat3(vec3(1.1271005818144368, -0.1413297634984383, -0.14132976349843826), vec3(-0.11060664309660323, 1.157823702216272, -0.11060664309660294), vec3(-0.016493938717834573, -0.016493938717834257, 1.2519364065950405));
+        c = I * c; c = max(c, 1e-10); c = log2(c); c = clamp((c + 12.47393) / 16.5, 0.0, 1.0); c = agxC(c); c = O * c;
+        return clamp(pow(max(c, 0.0), vec3(2.2)), 0.0, 1.0);
+      }
       float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
       void main(){
@@ -62,7 +70,7 @@ export class Post {
         if (uMem > 0.0) c = mix(c, texture2D(tDof, uv).rgb, smoothstep(0.25, 0.75, rr) * uMem);
         c += texture2D(tBloom, uv).rgb * uBloom;
         c *= uExp;
-        c = aces(c);
+        c = mix(aces(c), agx(c * 1.35), uTone);
         // grade: lift, gamma, gain; split toning; saturation
         c = pow(max(c * uGain + uLift * (1.0 - c), 0.0), 1.0 / uGamma);
         float l = dot(c, vec3(0.299, 0.587, 0.114));
@@ -81,7 +89,7 @@ export class Post {
       uExp: { value: 1.0 }, uLift: { value: new THREE.Vector3(0.01, 0.012, 0.014) }, uGamma: { value: new THREE.Vector3(1, 1, 1) }, uGain: { value: new THREE.Vector3(1, 1, 1) },
       uSat: { value: 0.92 }, uVig: { value: 0.75 }, uGrain: { value: 0.035 }, uTime: { value: 0 }, uBloom: { value: 0.9 }, uBox: { value: 0 }, uMem: { value: 0 },
       uFocus: { value: 4 }, uRange: { value: 8 }, uDofK: { value: 0.0 }, uNear: { value: 0.1 }, uFar: { value: 200 }, uFade: { value: 0 }, uFadeCol: { value: new THREE.Vector3(0, 0, 0) },
-      uAspect: { value: 1.6 }, uShadowTint: { value: new THREE.Vector3(-0.2, 0.0, 0.25) }, uHiTint: { value: new THREE.Vector3(0.25, 0.08, -0.15) }
+      uAspect: { value: 1.6 }, uTone: { value: 0 }, uShadowTint: { value: new THREE.Vector3(-0.2, 0.0, 0.25) }, uHiTint: { value: new THREE.Vector3(0.25, 0.08, -0.15) }
     });
     this.copy = pass(`uniform sampler2D t; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(t, vUv).rgb, 1.0); }`, { t: { value: null } });
     this.w = 4; this.h = 4;
@@ -141,14 +149,15 @@ export class Post {
 
 /* the looks, per scene: exposure, lift/gamma/gain, saturation, tints, bloom, vignette, grain, memory */
 export const GRADES = {
-  lot: { exp: 1.15, lift: [0.012, 0.016, 0.015], gamma: [1.0, 1.0, 1.0], gain: [1.04, 1.0, 0.96], sat: 0.9, bloom: 0.95, vig: 0.8, grain: 0.03, mem: 0, sh: [-0.2, 0.12, 0.12], hi: [0.3, 0.12, -0.2] },
-  office: { exp: 1.05, lift: [0.02, 0.018, 0.016], gamma: [1.02, 1.0, 0.98], gain: [1.03, 1.0, 0.95], sat: 0.9, bloom: 0.6, vig: 0.65, grain: 0.025, mem: 0, sh: [-0.1, 0.05, 0.15], hi: [0.25, 0.1, -0.1] },
+  lot: { tone: 0.5, exp: 1.15, lift: [0.012, 0.016, 0.015], gamma: [1.0, 1.0, 1.0], gain: [1.04, 1.0, 0.96], sat: 0.9, bloom: 0.95, vig: 0.8, grain: 0.03, mem: 0, sh: [-0.2, 0.12, 0.12], hi: [0.3, 0.12, -0.2] },
+  office: { tone: 0.7, exp: 1.08, lift: [0.02, 0.018, 0.016], gamma: [1.02, 1.0, 0.98], gain: [1.03, 1.0, 0.95], sat: 0.9, bloom: 0.6, vig: 0.65, grain: 0.025, mem: 0, sh: [-0.1, 0.05, 0.15], hi: [0.25, 0.1, -0.1] },
   memory: { exp: 1.3, lift: [0.02, 0.016, 0.01], gamma: [1.0, 0.98, 0.94], gain: [1.08, 1.0, 0.9], sat: 0.75, bloom: 0.8, vig: 0.9, grain: 0.05, mem: 0.75, sh: [0.1, 0.05, -0.05], hi: [0.3, 0.15, -0.1] },
   keys: { exp: 1.0, lift: [0.025, 0.022, 0.018], gamma: [1.0, 1.0, 0.97], gain: [1.05, 1.02, 0.95], sat: 0.75, bloom: 0.5, vig: 0.85, grain: 0.05, mem: 0.8, sh: [0.05, 0.02, -0.05], hi: [0.3, 0.2, 0.0] },
-  decision: { exp: 1.2, lift: [0.014, 0.017, 0.016], gamma: [1.0, 1.0, 1.0], gain: [1.05, 1.0, 0.95], sat: 0.92, bloom: 1.0, vig: 0.78, grain: 0.03, mem: 0, sh: [-0.18, 0.12, 0.1], hi: [0.32, 0.14, -0.18] }
+  decision: { tone: 0.5, exp: 1.2, lift: [0.014, 0.017, 0.016], gamma: [1.0, 1.0, 1.0], gain: [1.05, 1.0, 0.95], sat: 0.92, bloom: 1.0, vig: 0.78, grain: 0.03, mem: 0, sh: [-0.18, 0.12, 0.1], hi: [0.32, 0.14, -0.18] }
 };
 export function applyGrade(post, g) {
   const u = post.comp.u;
   u.uExp.value = g.exp; u.uLift.value.set(...g.lift); u.uGamma.value.set(...g.gamma); u.uGain.value.set(...g.gain); u.uSat.value = g.sat;
+  u.uTone.value = g.tone || 0;
   u.uBloom.value = g.bloom; u.uVig.value = g.vig; u.uGrain.value = g.grain; u.uMem.value = g.mem; u.uShadowTint.value.set(...g.sh); u.uHiTint.value.set(...g.hi);
 }

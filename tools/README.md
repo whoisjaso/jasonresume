@@ -12,6 +12,7 @@ Everything that produced the site's media and proved it works, moved out of the 
 | `sfx/` | Rebuilds `assets/sfx` from the raw Mixkit recordings. | `pip install soundfile numpy imageio-ffmpeg`; raw files in `tools/sfx/raw/` (see `assets/sfx/CREDITS.md`). |
 | `verify/` | Playwright harnesses that play the home page, the Obavia page, overflow, and the resume PDFs against a local server; `match.test.mjs` checks the listing match. | `npm install playwright` at the repo root, a local server on port 8765, poppler-utils for the resume gates. |
 | `story/` | After Hours, the episode's cast. `mh_cast.py` builds the five people in headless Blender 4.2 LTS with the MPFB2 extension from MakeHuman's CC0 assets (bodies, eyes, brows, lashes, teeth, clothes, hair, the game_engine rig, face shape keys), grows Jason's short afro and goatee as geometry, bakes a face mask and marks the tie; `pack_cast.mjs` compresses each GLB with gltfpack (meshoptimizer, MIT) into `assets/story/cast/`. `cast.mjs` is the earlier signed-distance cast, kept for reference; its output is no longer shipped. `clips.mjs` (with `cmu.mjs`) builds the shared motion file `assets/story/cast/clips-v2.glb`. It holds CMU motion capture (mocap.cs.cmu.edu, free to copy, modify and redistribute, NSF EIA-0196217): walk 35_01, brisk walk 16_21, jog 16_35, idle 77_02, conversation 18_08 and hand out 141_23. It also holds clips from Quaternius's Universal Animation Library 1 and 2 (CC0, quaternius.com): talking, phone, fold arms, sitting in, sitting, sitting talking, sitting out, interact, pick up and lean. Each clip is retargeted onto that library's skeleton; story/people.js then retargets onto each body at runtime. `lab.html` and `lab-shots.mjs` are the cast lab, which records contact sheets of walks, runs, turns, idles, sitting and lip-sync. `HANDOFF-people.md` lists the one-line hooks main.js can call. See "After Hours, the episode" below. | Blender 4.2 LTS (download.blender.org), MPFB2 (static.makehumancommunity.org/mpfb), the MakeHuman system assets, glasses01, hats01, visemes01 and faceunits01 packs (CC0); `npm install` inside `tools/story` (meshoptimizer 0.22.0, gltfpack 0.22.0). |
+| `story/world/` | After Hours, the sets' assets. `cars.py` models the lot's five cars (sedan, compact, hatch, SUV, pickup) in headless Blender 4.2 LTS from side, plan and section profiles and bakes their ambient occlusion; `pack.mjs` compresses them with gltfpack into `assets/story/world/car-<kind>[-lo]-v1.glb`; `textures.py` fetches the tiled materials from Poly Haven (CC0) into `assets/story/world/tex-v1/`; `stills.mjs` renders stills of every set (desktop and phone) to `tools/verify/out/real-world-*.png`; `probe.mjs` evaluates an expression against the world module in a page. See tools/story/HANDOFF-world.md. | Blender 4.2 LTS (no extensions), `npm install` inside `tools/story`, Python 3 with Pillow, network for the first texture fetch. |
 | `fonts/` | `cut_static.py` cuts the static resume fonts in assets/fonts (Hanken Grotesk 400 and 600, Cormorant Garamond 600) from the variable OFL sources; a variable font prints as Type 3. The woff2 files beside it are Google Fonts copies for offline harness runs. | `pip install fonttools brotli`. |
 
 ## Run the site locally
@@ -56,6 +57,20 @@ Third-party code it loads, all vendored, pinned and self-hosted, nothing from a 
 
 - three.js 0.184.0 (MIT, Copyright 2010-2026 three.js authors): `vendor/three-0.184.0/three.module.min.js` and `three.core.min.js`, and from its examples `addons/loaders/GLTFLoader.js`, `addons/utils/BufferGeometryUtils.js`, `addons/utils/SkeletonUtils.js` (their `from 'three'` import rewritten to the pinned file). Licence in `vendor/three-0.184.0/LICENSE`. three.js is the approved exception to the site's first-party rule.
 - meshoptimizer 0.22.0 decoder (MIT, Arseny Kapoulkine): `vendor/meshopt-0.22.0/meshopt_decoder.module.js`, licence beside it.
+- From three.js 0.184.0's examples (MIT, same copyright, fetched from the npm tarball three-0.184.0.tgz): `addons/geometries/RoundedBoxGeometry.js`, its `from 'three'` import rewritten to the vendored module like the others.
+
+The sets (story/world.js; tools/story/HANDOFF-world.md has the detail):
+
+- The cars are first-party: modelled by `tools/story/world/cars.py` in Blender, no third-party mesh. Compressed with gltfpack 0.22.0 (MIT).
+- Tiled materials from Poly Haven (polyhaven.com), all CC0 (public domain, no attribution required; credited here anyway), downloaded at 1k and re-encoded as WebP by `tools/story/world/textures.py`: asphalt `asphalt_02`, concrete `concrete_floor_worn_001`, plaster `painted_plaster_wall`, wood `oak_veneer_01`, carpet `dirty_carpet`, parquet `herringbone_parquet`, fabric `caban` (greyed). Files: `assets/story/world/tex-v1/<role>_{col,nor,arm}_<size>.webp`.
+- Everything else in the sets (signs, posters, the plates' emboss, the ceiling tiles, the clocks, the sky, the ground's patches, oil, puddles, cracks and lamp shadows) is drawn in code in story/tex.js and story/world.js.
+
+```
+blender -b --python tools/story/world/cars.py -- /tmp/cars [sedan compact hatch suv truck]
+node tools/story/world/pack.mjs /tmp/cars v1          # assets/story/world/car-<kind>-v1.glb (about 87 KB) and -lo (about 47 KB)
+python3 tools/story/world/textures.py /tmp/ph-cache    # assets/story/world/tex-v1/*.webp
+node tools/story/world/stills.mjs <tag> all            # stills of every set, desktop and phone
+```
 
 The cast (MakeHuman system assets, CC0; MPFB2 is GPL but only runs offline in Blender, nothing of it ships):
 
