@@ -49,7 +49,7 @@ export const LOOKS = {
   "jason-memory": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
   player: { skin: "#8a5d40", lip: "#7f4c3c", eyes: "#6a4a36", wide: 0.05, hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#6f6a62", hair: "#4a4640", brow: "#7d776e", wide: 0, cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true, tempo: 0.92 },
-  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#b58a6a", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
+  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#8a6248", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
 };
 
 export async function loadCast(base, o = {}) {
@@ -311,8 +311,7 @@ class Person {
       else if (name === "hair") mat = paint({ color: L.hair, curl: true, curlK: 700 * (m.scale.x || 1), rim: 0.3, wet: 0.12, side: THREE.DoubleSide });
       else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
       // brows: the strand texture tinted (not recoloured) so a lighter brow keeps its hairs and tapers where the texture thins
-      else if (name === "brow") mat = L.browTint ? paint({ color: L.browTint, map, alphaTest: 0.2, rim: 0, wet: 0, side: THREE.DoubleSide, transparent: false })
-        : paint({ color: L.brow, map, alphaTest: 0.28, rim: 0, wet: 0, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
+      else if (name === "brow") mat = paint({ color: L.browTint || L.brow, map, alphaTest: 0.22, rim: 0, wet: 0, side: THREE.DoubleSide, transparent: false });
       // lashes: drawn before the brows and without writing depth (drawn after them, the lash cards wash the brows out pale)
       else if (name === "lash") { mat = paint({ color: L.brow, map, alphaTest: 0.5, rim: 0, wet: 0, side: THREE.DoubleSide, recolor: true, keep: L.brow, depthWrite: false }); m.renderOrder = -1; }
       else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
@@ -320,7 +319,8 @@ class Person {
       else if (name === "eyes") mat = paint({ color: "#e8e6e2", map, wet: 2.6, rim: 0.1 });
       else if (name.startsWith("cloth")) {
         const key = Object.keys(L.cloth).find(k => name.includes(k)) || Object.keys(L.cloth)[0];
-        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: 0.4, wet: key === "shoes" ? 0.35 : 0.12 });
+        // wool and cotton are matte: no wet sheen, a soft rim at grazing angles only; shoes keep a little polish
+        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: key === "shoes" ? 0.4 : 0.22, wet: key === "shoes" ? 0.35 : 0.0 });
       } else mat = paint({ color: "#777" });
       m.material = mat; m.userData.role = name;
     }

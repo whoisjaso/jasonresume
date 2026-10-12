@@ -96,6 +96,14 @@ def role_material(obj, role, color=(0.5, 0.5, 0.5, 1), image=None):
     nt = mat.node_tree
     bsdf = nt.nodes.get("Principled BSDF")
     bsdf.inputs["Base Color"].default_value = color
+    if img is not None and role == "brow":
+        # brows carry only their shape (alpha); their colour comes from the runtime tint, so a light brown brow can be light
+        import numpy as np
+        img = img.copy(); W, H = img.size
+        px = np.array(img.pixels[:], dtype=np.float32).reshape(H, W, 4)
+        lum = px[..., :3].mean(-1, keepdims=True)
+        px[..., :3] = 0.55 + 0.35 * (lum / max(1e-3, float(lum.max())))
+        img.pixels.foreach_set(px.ravel())
     if img is not None:
         lim = 256 if role in ("eyes", "brow", "lash") else 512
         if max(img.size) > lim:
@@ -306,6 +314,36 @@ def paint_tie(base, size=None):
                     px[py, pxx, :3] = (0.25 + 0.5 * min(1.0, l * 1.6), 0.0, 0.0)
     im.pixels.foreach_set(px.ravel())
 
+def tailor(body):
+    """take in the jacket's shoulders: MakeHuman's suits stand well off the body over the shoulders and upper arms (padded,
+    rounded, like sports pads once the arms move). Over the shoulders and arms, any cloth more than a little off the skin is
+    pulled back to it, so the shoulder line ends just past the deltoid and the sleeve follows the arm."""
+    from mathutils.bvhtree import BVHTree
+    dg = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new(); bm.from_mesh(body.data); bm.transform(body.matrix_world)
+    tree = BVHTree.FromBMesh(bm)
+    top = max(v.co.z for v in body.data.vertices)
+    sh_z = top * 0.80  # about the shoulder line on a standing figure
+    for o in [o for o in bpy.data.objects if o.type == "MESH" and o is not body and o.parent in (body, body.parent)]:
+        n = o.name.lower()
+        if not any(k in n for k in ("suit", "worksuit", "casualsuit", "elegant")): continue
+        mw, mi = o.matrix_world, o.matrix_world.inverted()
+        moved = 0
+        for v in o.data.vertices:
+            w = mw @ v.co
+            # the shoulders and the upper arms: above the chest, out past the neck
+            if w.z < sh_z - 0.16 or abs(w.x) < 0.09: continue
+            hit = tree.find_nearest(w)
+            if not hit or hit[0] is None: continue
+            loc, nrm, idx, dist = hit
+            k = min(1.0, max(0.0, (w.z - (sh_z - 0.16)) / 0.08))
+            keep = 0.012
+            if dist > keep:
+                nd = keep + (dist - keep) * (1 - 0.8 * k)
+                v.co = mi @ (loc + (w - loc).normalized() * nd); moved += 1
+        print("TAILOR", o.name, moved)
+    bm.free()
+
 def add_eye_bones(rig):
     """two bones in the head, one at the centre of each eye, and each eye weighted wholly to its own, so the runtime can aim the eyes (saccades, looking at whoever speaks) independently of the head"""
     eyes = [o for o in bpy.data.objects if o.type == "MESH" and o.data.materials and o.data.materials[0].name == "eyes"]
@@ -389,6 +427,7 @@ def build(name, spec):
         HumanService.add_mhclo_asset(asset("hair", spec["hair"]), base, asset_type="hair", subdiv_levels=0)
     for c in spec["clothes"]:
         HumanService.add_mhclo_asset(asset("clothes", c), base, asset_type="clothes", subdiv_levels=0)
+    tailor(base)
     # the face, as shape keys on the body
     for t in FACE:
         TargetService.load_target(base, os.path.join(UD, "targets", "faceunits", t + ".target"), weight=0.0, name=t)
