@@ -333,6 +333,14 @@ export function signTex(img) {
   else { g.fillStyle = BONE; g.font = "600 120px " + SERIF; tracked(g, "TRIPLE J", 512, 150, 14); }
   return tex(c);
 }
+/* the office's door sign: one word, lit from behind */
+export function officeSignTex() {
+  const c = cv(512, 144), g = c.getContext("2d");
+  g.fillStyle = "#0d1411"; g.fillRect(0, 0, 512, 144);
+  g.strokeStyle = "rgba(237,231,219,0.55)"; g.lineWidth = 3; g.strokeRect(10, 10, 492, 124);
+  g.fillStyle = BONE; g.font = "600 76px " + SANS; tracked(g, "OFFICE", 256, 100, 16);
+  return tex(c);
+}
 export function bannerTex() {
   const c = cv(1024, 160), g = c.getContext("2d");
   g.fillStyle = "#e6dfd0"; g.fillRect(0, 0, 1024, 160);

@@ -734,10 +734,42 @@ export function buildLot(o) {
   const pane = plane(22.0, 3.75, glassM, sh); pane.position.set(-1, 1.92, 0.02); pane.renderOrder = 2; pane.userData.keep = true;
   for (let i = 0; i <= 8; i++) box(0.1, 3.85, 0.18, alu, -12 + i * 2.75, 1.92, 0.05, sh);
   box(22.4, 0.12, 0.2, alu, -1, 3.86, 0.05, sh); box(22.4, 0.14, 0.2, alu, -1, 0.07, 0.05, sh);
-  // the office door at the right end, lit from inside
-  box(1.5, 2.5, 0.14, alu, 11, 1.25, 0.05, sh);
-  const doorGlow = plane(1.1, 2.0, glow("#f3d2a0", { k: day ? 0.3 : 1.1 }), sh); doorGlow.position.set(11, 1.2, 0.13);
-  box(0.04, 0.5, 0.06, pbr({ color: "#c9ccd0", metal: 1, rough: 0.2 }), 10.55, 1.15, 0.19, sh);
+  /* the office door at the right end, on the wall beside the storefront: a pale casing round a green door with
+     a glass panel, a push bar, a kick plate and three hinges, a concrete step and a mat, a lit OFFICE sign and a
+     sconce over it throwing warm light on the walk. It opens outward: set.userData.officeDoor.open(t), t 0..1. */
+  {
+    const casing = pbr({ color: "#d8d0c0", rough: 0.55, wet: 0.7 });
+    const leafM = pbr({ color: "#1f3a2e", rough: 0.4, metal: 0.25, wet: 0.9, coat: 0.6 });
+    const steel = pbr({ color: "#b9bcbf", metal: 1, rough: 0.32, wet: 0.6 });
+    const dx = 11, fz = 0.2;                       // the door's centre on the wall, the wall's face
+    box(0.13, 2.42, 0.13, casing, dx - 0.615, 1.21, fz + 0.06, sh); box(0.13, 2.42, 0.13, casing, dx + 0.615, 1.21, fz + 0.06, sh);
+    box(1.36, 0.14, 0.13, casing, dx, 2.35, fz + 0.06, sh);
+    // the lit room behind the leaf (seen through its glass, and all of it when the door opens)
+    const inner = plane(1.1, 2.26, glow("#f1cf98", { k: day ? 0.35 : 1.0 }), sh); inner.position.set(dx, 1.15, fz + 0.004);
+    box(1.7, 0.1, 0.55, rmat({ color: "#9b968c", rough: 0.85, wet: 0.8, mapK: "concC", tri: 1.2 }), dx, 0.05, fz + 0.27, sh);
+    const mat = plane(1.1, 0.62, pbr({ color: "#1d1c1a", rough: 0.95, wet: 0.4 }), sh); mat.rotation.x = -Math.PI / 2; mat.position.set(dx, 0.012, fz + 0.9);
+    // the leaf, hinged on its left edge (as you face it)
+    const leaf = new THREE.Group(); leaf.position.set(dx - 0.55, 0.1, fz + 0.04); leaf.userData.keep = true; sh.add(leaf);
+    const W0 = 1.1, H0 = 2.18;
+    box(0.1, H0, 0.05, leafM, 0.05, H0 / 2, 0, leaf); box(0.1, H0, 0.05, leafM, W0 - 0.05, H0 / 2, 0, leaf);
+    box(W0, 0.12, 0.05, leafM, W0 / 2, H0 - 0.06, 0, leaf); box(W0, 0.42, 0.05, leafM, W0 / 2, 0.21, 0, leaf);
+    const gl = plane(W0 - 0.2, H0 - 0.56, pbr({ color: "#0b0f10", rough: 0.03, wet: 0.6, alpha: 0.18, glass: true, depthWrite: false, spec: 1, diff: 0.2 }), leaf);
+    gl.position.set(W0 / 2, 0.42 + (H0 - 0.56) / 2, 0.005); gl.renderOrder = 2;
+    box(W0 - 0.1, 0.26, 0.008, steel, W0 / 2, 0.15, 0.029, leaf);                       // kick plate
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.78, 10), steel); bar.rotation.z = Math.PI / 2; bar.position.set(W0 / 2 + 0.04, 1.02, 0.085); leaf.add(bar);
+    for (const bx of [W0 / 2 - 0.35, W0 / 2 + 0.43]) box(0.04, 0.05, 0.06, steel, bx, 1.02, 0.055, leaf);
+    for (const hy of [0.3, 1.1, 1.9]) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.11, 8), steel); h.position.set(-0.005, hy, 0.03); leaf.add(h); }
+    // OFFICE, lit, and the sconce under it
+    const sign = plane(1.05, 0.3, glow("#ffffff", { map: TX.officeSignTex(), k: day ? 0.8 : 1.2 }), sh); sign.position.set(dx, 3.02, fz + 0.012);
+    box(1.13, 0.38, 0.03, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.4, wet: 0.9 }), dx, 3.02, fz - 0.005, sh);
+    box(0.34, 0.1, 0.16, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.5, wet: 0.9 }), dx, 2.62, fz + 0.08, sh);
+    const lens = plane(0.3, 0.12, glow("#ffe0b0", { k: day ? 0.3 : 3.0 }), sh); lens.rotation.x = Math.PI / 2; lens.position.set(dx, 2.565, fz + 0.08);
+    set.userData.officeDoor = {
+      leaf, t: 0,
+      // swings out toward the lot, up to about 80 degrees
+      open(t) { this.t = Math.max(0, Math.min(1, t)); leaf.rotation.y = -1.4 * this.t * this.t * (3 - 2 * this.t); }
+    };
+  }
   // the wordmark over the canopy, lit
   const signT = TX.signTex(o.wordmark);
   const sign = plane(7.2, 1.8, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 5.0, 0.51);
@@ -822,7 +854,8 @@ export function buildLot(o) {
   // the showroom's own light: spilling out through the glass, and the room inside it
   set.userData.lamps.push({ p: V3(2, 2.4, -16.4), range: 15, col: [1.6, 1.15, 0.7], cone: 0, fixed: true });
   set.userData.lamps.push({ p: V3(1, 3.3, -21.0), range: 13, col: [2.2, 1.9, 1.5], cone: 0, fixed: true });
-  set.userData.lamps.push({ p: V3(13, 2.2, -16.4), range: 6, col: [1.0, 0.75, 0.45], cone: 0, fixed: true });
+  // the office door's sconce: warm light on the step, the mat and the walk in front of it
+  set.userData.lamps.push({ p: V3(13, 2.5, -17.3), range: 7.5, col: [1.9, 1.3, 0.68], cone: 0, fixed: true });
   set.userData.sounds.lamps = set.userData.lamps.filter(l => l.coneMesh).map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, kind: "sodium-hum" }));
   // the puddle by the middle lamp
   set.userData.spots.puddle = { p: V3(-1.5, 0.05, 11.2), r: 2.2, stand: V3(-1.5, 0, 12.6) };
