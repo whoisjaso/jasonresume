@@ -1,0 +1,52 @@
+{
+ "id": "jason-dec-jason-39",
+ "text": "You went through every folder in that cabinet, though.",
+ "duration": 2.68,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.0,
+   "e": 0.18
+  },
+  {
+   "w": "went",
+   "s": 0.18,
+   "e": 0.34
+  },
+  {
+   "w": "through",
+   "s": 0.34,
+   "e": 0.54
+  },
+  {
+   "w": "every",
+   "s": 0.54,
+   "e": 0.94
+  },
+  {
+   "w": "folder",
+   "s": 0.94,
+   "e": 1.38
+  },
+  {
+   "w": "in",
+   "s": 1.38,
+   "e": 1.64
+  },
+  {
+   "w": "that",
+   "s": 1.64,
+   "e": 1.82
+  },
+  {
+   "w": "cabinet,",
+   "s": 1.82,
+   "e": 2.2
+  },
+  {
+   "w": "though.",
+   "s": 2.2,
+   "e": 2.52
+  }
+ ]
+}

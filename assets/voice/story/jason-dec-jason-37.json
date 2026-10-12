@@ -1,0 +1,52 @@
+{
+ "id": "jason-dec-jason-37",
+ "text": "You spent a long time at the whiteboard, though.",
+ "duration": 2.08,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.0,
+   "e": 0.14
+  },
+  {
+   "w": "spent",
+   "s": 0.14,
+   "e": 0.34
+  },
+  {
+   "w": "a",
+   "s": 0.34,
+   "e": 0.48
+  },
+  {
+   "w": "long",
+   "s": 0.48,
+   "e": 0.64
+  },
+  {
+   "w": "time",
+   "s": 0.64,
+   "e": 0.94
+  },
+  {
+   "w": "at",
+   "s": 0.94,
+   "e": 1.1
+  },
+  {
+   "w": "the",
+   "s": 1.1,
+   "e": 1.22
+  },
+  {
+   "w": "whiteboard,",
+   "s": 1.22,
+   "e": 1.62
+  },
+  {
+   "w": "though.",
+   "s": 1.62,
+   "e": 1.9
+  }
+ ]
+}

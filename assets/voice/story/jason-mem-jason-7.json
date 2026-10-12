@@ -1,0 +1,27 @@
+{
+ "id": "jason-mem-jason-7",
+ "text": "That's enough for tonight.",
+ "duration": 1.48,
+ "words": [
+  {
+   "w": "That's",
+   "s": 0.0,
+   "e": 0.42
+  },
+  {
+   "w": "enough",
+   "s": 0.42,
+   "e": 0.64
+  },
+  {
+   "w": "for",
+   "s": 0.64,
+   "e": 0.88
+  },
+  {
+   "w": "tonight.",
+   "s": 0.88,
+   "e": 1.2
+  }
+ ]
+}

@@ -43,6 +43,10 @@ JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-h
          "eyes/l-eye-scale-incr": 0.15, "eyes/r-eye-scale-incr": 0.15, "eyebrows/eyebrows-trans-down": 0.1,
          "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
 DELL = {"head/head-square": 0.4, "nose/nose-scale-horiz-incr": 0.3, "chin/chin-width-incr": 0.3, "neck/neck-double-incr": 0.3}
+PLAYER = {"head/head-oval": 0.3, "head/head-round": 0.15, "chin/chin-height-decr": 0.15, "chin/chin-width-incr": 0.1,
+          "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, "eyes/l-eye-scale-incr": 0.12, "eyes/r-eye-scale-incr": 0.12,
+          "mouth/mouth-lowerlip-volume-incr": 0.3, "mouth/mouth-upperlip-volume-incr": 0.2, "mouth/mouth-cupidsbow-incr": 0.35,
+          "cheek/l-cheek-volume-incr": 0.2, "cheek/r-cheek-volume-incr": 0.2, "nose/nose-point-width-incr": 0.1, "eyebrows/eyebrows-trans-down": 0.05}
 RENATA = {"head/head-oval": 0.4, "mouth/mouth-upperlip-volume-incr": 0.2, "nose/nose-scale-horiz-decr": 0.2, "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2}
 
 CAST = {
@@ -59,7 +63,7 @@ CAST = {
     "player": {
         "macro": {"gender": 0.62, "age": 0.45, "muscle": 0.5, "weight": 0.5, "proportions": 0.7, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.35, "asian": 0.3, "caucasian": 0.35}},
-        "clothes": ["male_casualsuit05", "shoes01"], "hair": "short02", "brows": "eyebrow002", "lashes": "eyelashes01"
+        "clothes": ["male_casualsuit05", "shoes01"], "hair": "short02", "brows": "eyebrow002", "lashes": "eyelashes01", "face": "PLAYER"
     },
     "dell": {
         "macro": {"gender": 1.0, "age": 0.85, "muscle": 0.5, "weight": 0.68, "proportions": 0.55, "height": 0.48, "cupsize": 0.5, "firmness": 0.5,
@@ -179,12 +183,15 @@ def grow_afro(body, depth_top=0.036, depth_side=0.006):
         return 0.07 + 0.01 * ss(0.3, 0.65, th) + 0.022 * ss(0.8, 1.5, th) + 0.06 * ss(1.8, 2.7, th)
     def pick(f): return all(v.co.z > top - hl_depth(v.co) - 0.035 for v in f.verts)
     def off(v):
-        # tight over the ears and temples, full on the crown and over the forehead: a rounded, slightly squared top
+        # tight over the ears and temples, full on the crown and over the forehead: a rounded, slightly squared top;
+        # the thickness grows from nothing at the hairline, so the front rises from the skin instead of overhanging it
         th = abs(math.atan2(v.co.x - cx, cy - v.co.y))
         up = ss(top - 0.095, top - 0.035, v.co.z)
         front = 1.0 - ss(0.4, 1.3, th) * 0.35
-        d = depth_side + (depth_top - depth_side) * up * front
-        return d + noise.noise(v.co * 90.0) * 0.0016 * up + noise.noise(v.co * 35.0) * 0.002 * up
+        above = v.co.z - (top - hl_depth(v.co))
+        rise = 0.12 + 0.88 * ss(-0.004, 0.032, above)
+        d = (depth_side + (depth_top - depth_side) * up * front) * rise
+        return d + (noise.noise(v.co * 140.0) * 0.0022 + noise.noise(v.co * 40.0) * 0.0022) * (0.3 + 0.7 * up) * rise
     hair = grow_shell(body, pick, off, "hair", (0.012, 0.01, 0.01, 1), rim=0.0, close=False)
     me = hair.data
     bm = bmesh.new(); bm.from_mesh(me)

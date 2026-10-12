@@ -1,0 +1,37 @@
+{
+ "id": "jason-dec-jason-40",
+ "text": "You read that laptop closely, though.",
+ "duration": 1.96,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.0,
+   "e": 0.22
+  },
+  {
+   "w": "read",
+   "s": 0.22,
+   "e": 0.42
+  },
+  {
+   "w": "that",
+   "s": 0.42,
+   "e": 0.64
+  },
+  {
+   "w": "laptop",
+   "s": 0.64,
+   "e": 1.06
+  },
+  {
+   "w": "closely,",
+   "s": 1.06,
+   "e": 1.46
+  },
+  {
+   "w": "though.",
+   "s": 1.46,
+   "e": 1.78
+  }
+ ]
+}

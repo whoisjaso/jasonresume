@@ -68,7 +68,7 @@ export class Post {
         float l = dot(c, vec3(0.299, 0.587, 0.114));
         c += uShadowTint * (1.0 - l) * 0.06 + uHiTint * l * 0.05;
         c = mix(vec3(l), c, uSat);
-        if (uMem > 0.0) { vec3 sep = vec3(l) * vec3(1.08, 0.97, 0.82) + vec3(0.04, 0.03, 0.0); c = mix(c, sep, 0.55 * uMem); c = mix(c, vec3(0.93, 0.88, 0.78), 0.06 * uMem); }
+        if (uMem > 0.0) { vec3 sep = vec3(l) * vec3(1.08, 0.97, 0.82) + vec3(0.012, 0.008, 0.0); c = mix(c, sep, 0.5 * uMem); c = mix(c, vec3(0.93, 0.88, 0.78), 0.025 * uMem); }
         c *= mix(1.0, smoothstep(1.05, 0.25, rr), uVig);
         c = toSRGB(c);
         c += (h(uv * vec2(1931.0, 1173.0) + fract(uTime * 7.13)) - 0.5) * uGrain;
@@ -141,11 +141,11 @@ export class Post {
 
 /* the looks, per scene: exposure, lift/gamma/gain, saturation, tints, bloom, vignette, grain, memory */
 export const GRADES = {
-  lot: { exp: 1.15, lift: [0.012, 0.016, 0.02], gamma: [1.0, 1.0, 1.02], gain: [1.04, 1.0, 0.96], sat: 0.9, bloom: 0.95, vig: 0.8, grain: 0.03, mem: 0, sh: [-0.25, 0.05, 0.3], hi: [0.3, 0.12, -0.2] },
+  lot: { exp: 1.15, lift: [0.012, 0.016, 0.015], gamma: [1.0, 1.0, 1.0], gain: [1.04, 1.0, 0.96], sat: 0.9, bloom: 0.95, vig: 0.8, grain: 0.03, mem: 0, sh: [-0.2, 0.12, 0.12], hi: [0.3, 0.12, -0.2] },
   office: { exp: 1.05, lift: [0.02, 0.018, 0.016], gamma: [1.02, 1.0, 0.98], gain: [1.03, 1.0, 0.95], sat: 0.9, bloom: 0.6, vig: 0.65, grain: 0.025, mem: 0, sh: [-0.1, 0.05, 0.15], hi: [0.25, 0.1, -0.1] },
-  memory: { exp: 1.2, lift: [0.05, 0.04, 0.03], gamma: [1.05, 1.0, 0.94], gain: [1.05, 1.0, 0.9], sat: 0.7, bloom: 1.2, vig: 0.9, grain: 0.05, mem: 1, sh: [0.1, 0.05, -0.05], hi: [0.3, 0.15, -0.1] },
-  keys: { exp: 1.0, lift: [0.04, 0.035, 0.03], gamma: [1.0, 1.0, 0.97], gain: [1.05, 1.02, 0.95], sat: 0.75, bloom: 0.5, vig: 0.85, grain: 0.05, mem: 0.8, sh: [0.05, 0.02, -0.05], hi: [0.3, 0.2, 0.0] },
-  decision: { exp: 1.2, lift: [0.014, 0.017, 0.02], gamma: [1.0, 1.0, 1.01], gain: [1.05, 1.0, 0.95], sat: 0.92, bloom: 1.0, vig: 0.78, grain: 0.03, mem: 0, sh: [-0.2, 0.05, 0.25], hi: [0.32, 0.14, -0.18] }
+  memory: { exp: 1.3, lift: [0.02, 0.016, 0.01], gamma: [1.0, 0.98, 0.94], gain: [1.08, 1.0, 0.9], sat: 0.75, bloom: 0.8, vig: 0.9, grain: 0.05, mem: 0.75, sh: [0.1, 0.05, -0.05], hi: [0.3, 0.15, -0.1] },
+  keys: { exp: 1.0, lift: [0.025, 0.022, 0.018], gamma: [1.0, 1.0, 0.97], gain: [1.05, 1.02, 0.95], sat: 0.75, bloom: 0.5, vig: 0.85, grain: 0.05, mem: 0.8, sh: [0.05, 0.02, -0.05], hi: [0.3, 0.2, 0.0] },
+  decision: { exp: 1.2, lift: [0.014, 0.017, 0.016], gamma: [1.0, 1.0, 1.0], gain: [1.05, 1.0, 0.95], sat: 0.92, bloom: 1.0, vig: 0.78, grain: 0.03, mem: 0, sh: [-0.18, 0.12, 0.1], hi: [0.32, 0.14, -0.18] }
 };
 export function applyGrade(post, g) {
   const u = post.comp.u;

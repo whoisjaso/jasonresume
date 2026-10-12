@@ -78,7 +78,7 @@ html.story-on body > *:not(#story):not(script):not(dialog) { visibility: hidden 
 .st-prompt__label { font: italic 500 21px/1 var(--serif); text-shadow: 0 1px 8px rgba(0, 0, 0, .95); }
 .st-prompt__key { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border: 1px solid rgba(237, 231, 219, .55); border-radius: 4px; font: 600 11px/1 var(--sans); }
 .st-prompt__key[hidden] { display: none; }
-@keyframes st-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes st-in { from { opacity: 0; translate: 0 4px; } }
 .st-dots { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 .st-dot { position: absolute; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; display: grid; place-items: center; pointer-events: auto; }
 .st-dot i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid rgba(237, 231, 219, .75); animation: st-pulse 2.6s var(--ease) infinite; }
@@ -87,7 +87,7 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
 
 /* ---------- objective, notice, toasts, trophy ---------- */
 .st-obj { position: absolute; left: max(22px, env(safe-area-inset-left)); top: 22px; z-index: 7; margin: 0; max-width: min(420px, 70vw); display: flex; gap: 12px; align-items: center; font: italic 500 19px/1.3 var(--serif); color: var(--bone-2); text-shadow: 0 1px 10px rgba(0, 0, 0, .9); opacity: 0; transform: translateX(-6px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
-.st-obj::before { content: ""; width: 22px; height: 1px; background: var(--bone-2); flex: none; }
+.st-obj::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--bone-2); flex: none; }
 .st-obj.is-on { opacity: 1; transform: none; }
 .st-obj.is-dim { opacity: .35; }
 .st-note { position: absolute; left: max(22px, env(safe-area-inset-left)); top: 62px; z-index: 7; display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 12px; color: var(--bone); opacity: 0; transform: translateX(-10px); transition: opacity .5s var(--ease), transform .7s var(--ease); }

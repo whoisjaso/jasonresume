@@ -141,6 +141,11 @@ void main(){
   #ifdef USE_HAIRLINE
   // R: above the hairline (0.5 is the line); G: the crown, where the curls are full
   if (vCol.r < 0.5) discard;
+  #ifdef USE_CURL
+  // the crown's silhouette breaks up into curls: where the shell turns away from the eye, small-scale noise cuts it
+  float ndv = abs(dot(normalize(vN), V)), edge = smoothstep(0.2, 0.6, vCol.g);
+  if (edge > 0.0 && ndv < 0.4 && vnoise(cp * 0.9) * edge > 0.12 + ndv * 1.6) discard;
+  #endif
   vec3 alb = mix(uKeep, uColor, smoothstep(0.5, 0.75, vCol.r) * mix(0.75, 1.0, vCol.g));
   #else
   vec3 alb = uColor * vCol;

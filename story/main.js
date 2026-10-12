@@ -283,8 +283,10 @@ function tickLine(dt) {
 
 /* ---------- choices ---------- */
 let choosing = null;
+let chHide = [];
 function choose(T0) {
   const list = (T0.choices || []).filter(c => cond(c.if));
+  chHide.forEach(clearTimeout); chHide = [];
   return new Promise(resolve => {
     choicesOl.innerHTML = list.map((c, i) => '<li><button type="button" class="st-ch" data-i="' + i + '"><kbd aria-hidden="true">' + (i + 1) + "</kbd><span>" + E(c.t) + "</span></button></li>").join("");
     choicesEl.hidden = false; requestAnimationFrame(() => choicesEl.classList.add("is-on")); el.classList.add("has-choices");
@@ -303,7 +305,8 @@ function pick(i, how) {
   const b = $$(".st-ch", choicesOl)[i]; if (b) b.classList.add("is-picked");
   FX("choice");
   T("story_choice", { scene: S.scene, talk: S.talking, choice: i, text: c.t, how: how || "" });
-  setTimeout(() => { choicesEl.classList.remove("is-on"); el.classList.remove("has-choices"); setTimeout(() => { choicesEl.hidden = true; }, 260); }, 180);
+  // a choice that leads straight to more choices cancels these, so the new ones never vanish under it
+  chHide.push(setTimeout(() => { choicesEl.classList.remove("is-on"); el.classList.remove("has-choices"); chHide.push(setTimeout(() => { choicesEl.hidden = true; }, 260)); }, 180));
   res(c);
 }
 choicesEl.addEventListener("click", e => { const b = e.target.closest(".st-ch"); if (b) pick(+b.dataset.i, "click"); });
@@ -326,7 +329,7 @@ let toastT = null;
 function toast(text) { toastEl.textContent = text; toastEl.hidden = false; toastEl.classList.add("is-on"); clearTimeout(toastT); toastT = setTimeout(() => { toastEl.classList.remove("is-on"); setTimeout(() => (toastEl.hidden = true), 400); }, FAST ? 200 : 2200); }
 function objective(k) {
   S.obj = k; const t = k && D.objectives[k];
-  if (!t) { objEl.classList.remove("is-on"); setTimeout(() => (objEl.hidden = true), 400); return; }
+  if (!t) { objEl.classList.remove("is-on"); setTimeout(() => { if (!S.obj) objEl.hidden = true; }, 400); return; }
   objEl.textContent = t; objEl.hidden = false; objEl.classList.remove("is-on"); void objEl.offsetWidth; objEl.classList.add("is-on");
 }
 const trophyQ = [];
@@ -367,11 +370,11 @@ function hide(p) { if (p) { p.group.visible = false; if (p.shadow) p.shadow.visi
    SCENES
    ================================================================ */
 const SCENE_LIGHT = {
-  lot: { sky: "#1d2529", ground: "#0b0c0b", moon: "#262c33", rim: "#66737d", fog: "#0b1115", den: 0.028, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
-  decision: { sky: "#212a30", ground: "#0c0d0c", moon: "#2a323c", rim: "#6c7c88", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
-  office: { sky: "#33363a", ground: "#1c1a17", moon: "#262a2e", rim: "#56677a", fog: "#141618", den: 0.01, wetAll: 0.25, sat: 1, moonDir: [0.3, 0.8, 0.5] },
-  memory: { sky: "#2a2a30", ground: "#1d1712", moon: "#20242c", rim: "#7c6a58", fog: "#1a1612", den: 0.03, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
-  keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.012, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] }
+  lot: { sky: "#1f2724", ground: "#0c0c0b", moon: "#2e2c27", rim: "#7d7565", fog: "#0b1115", den: 0.028, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
+  decision: { sky: "#222a27", ground: "#0d0d0c", moon: "#302e29", rim: "#817968", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
+  office: { sky: "#33363a", ground: "#1c1a17", moon: "#2a2927", rim: "#6b6a62", fog: "#141618", den: 0.01, wetAll: 0.25, sat: 1, moonDir: [0.3, 0.8, 0.5] },
+  memory: { sky: "#463c34", ground: "#1d1712", moon: "#20242c", rim: "#7c6a58", fog: "#1a1612", den: 0.014, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
+  keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] }
 };
 function lightScene(name) {
   const L = SCENE_LIGHT[name];
@@ -381,7 +384,7 @@ function lightScene(name) {
 }
 let set = null, rain = null;
 function makeRain() {
-  const n = quality >= 2 ? 1400 : 600;
+  const n = quality >= 2 ? 800 : 420;
   const g = new THREE.InstancedBufferGeometry(); g.instanceCount = n;
   g.setAttribute("position", new THREE.Float32BufferAttribute([-0.0025, 0, 0, 0.0025, 0, 0, 0.0025, 1, 0, -0.0025, 1, 0], 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
   const seed = new Float32Array(n * 4); for (let i = 0; i < n; i++) { seed[i * 4] = Math.random(); seed[i * 4 + 1] = Math.random(); seed[i * 4 + 2] = Math.random(); seed[i * 4 + 3] = 0.7 + Math.random() * 0.6; }
@@ -396,7 +399,7 @@ function makeRain() {
         float l = 0.05; for (int i = 0; i < 8; i++) { if (i >= uLampN) break; float d = length(uLampPos[i].xyz - wp); l += max(0.0, 1.0 - d / (uLampPos[i].w * 0.6)) * length(uLampCol[i].rgb) * 0.6; }
         vL = l; vA = smoothstep(2.5, 6.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
-    fragmentShader: `uniform float uK; varying float vL; varying float vA; void main(){ gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * vL * 0.55 * uK * vA, 1.0); }`,
+    fragmentShader: `uniform float uK; varying float vL; varying float vA; void main(){ gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * vL * 0.34 * uK * vA, 1.0); }`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
   });
   const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.layers.set(3); return mesh;
@@ -430,7 +433,7 @@ async function enter(name, o = {}) {
     place(P.memory, M.playerStart, M.playerYaw);
   } else if (name === "keys") {
     await person("jason", "jason");
-    place(P.jason, new THREE.Vector3(10.5, 0, -10), Math.PI * 0.9);
+    place(P.jason, new THREE.Vector3(10.2, 0, -12.6), Math.PI * 0.9);
   } else if (name === "decision") {
     await person("you", "player"); await person("jason", "jason"); await person("dell", "dell");
     place(P.you, M.decisionPlayer, Math.PI * 0.9); place(P.jason, M.decisionJason, Math.PI * 0.2); place(P.dell, M.dellGate, Math.PI);
@@ -439,6 +442,7 @@ async function enter(name, o = {}) {
   }
   for (const p of Object.values(P)) if (p.shadow) p.shadow.visible = p.group.visible;
   me = name === "memory" ? P.memory : name === "keys" ? P.jason : P.you;
+  if (name === "decision" && S.obj === "keys") objective(null);
   // the rain: hard on the lot, gentler at the end, none inside or in the morning
   if (!rain) { rain = makeRain(); scene.add(rain); }
   rain.visible = name === "lot" || name === "decision";
@@ -471,6 +475,7 @@ let me = null;
 const camState = { yaw: 0, pitch: 0.2, dist: 3.4, init: true, pos: new THREE.Vector3(), look: new THREE.Vector3(), mode: "follow", shot: null, rail: null, drag: 0 };
 function headOf(p) { return p ? p.headWorld(new THREE.Vector3()) : new THREE.Vector3(); }
 function shotFor(L) {
+  if (S.phase === "close") return; // the close-up holds its frame while the notes are read
   if (S.phase !== "talk") return;
   const sp = speakerOf(L.who);
   const other = S.partner;
@@ -504,9 +509,42 @@ function shotChoices() {
   if (!you) return;
   const a = headOf(you), b = other ? headOf(other) : (S.focusPoint || a.clone().add(new THREE.Vector3(0, 0, -1)));
   const mid = a.clone().lerp(b, 0.5), dir = b.clone().sub(a).setY(0).normalize(), side = new THREE.Vector3(dir.z, 0, -dir.x);
-  const span = Math.max(1.2, a.distanceTo(b));
-  camState.shot = { pos: mid.clone().addScaledVector(side, span * 1.25 + 0.8).add(new THREE.Vector3(0, 0.15, 0)), look: mid.clone().add(new THREE.Vector3(0, -0.12, 0)), push: still() ? 0 : 0.05, focus: span * 1.25 + 0.8 };
+  const span = Math.max(1.2, a.distanceTo(b)), dist = span * 1.25 + 0.8;
+  // try both sides and a few angles; keep the frame whose sight lines miss the lamp poles and the walls
+  let best = null, bestScore = Infinity;
+  for (const sg of [1, -1]) for (const ang of [0, 0.3, -0.3, 0.6, -0.6]) {
+    const c = Math.cos(ang), s = Math.sin(ang), d = new THREE.Vector3(side.x * c - side.z * s, 0, side.x * s + side.z * c).multiplyScalar(sg);
+    const pos = mid.clone().addScaledVector(d, dist);
+    const score = Math.abs(ang) * 2 + (sg < 0 ? 0.4 : 0) + framePenalty(pos, [a, b, mid]);
+    if (score < bestScore) { bestScore = score; best = pos; }
+  }
+  camState.shot = { pos: best.add(new THREE.Vector3(0, 0.15, 0)), look: mid.clone().add(new THREE.Vector3(0, -0.12, 0)), push: still() ? 0 : 0.05, focus: dist };
   camState.shotT = 0; camState.cut = true;
+}
+/* how badly a camera at pos would be blocked looking at the points: a pole near a sight line, a wall across it, a camera inside one */
+function segDist(px, pz, ax, az, bx, bz) { const vx = bx - ax, vz = bz - az, l = vx * vx + vz * vz || 1, t = clamp(((px - ax) * vx + (pz - az) * vz) / l, 0, 1); return Math.hypot(ax + vx * t - px, az + vz * t - pz); }
+function framePenalty(pos, pts) {
+  let pen = 0;
+  const lamps = set.userData.lamps || [], walls = set.userData.walls || [];
+  for (const l of lamps) {
+    if (l.fixed) continue;
+    const px = l.p.x - 0.7, pz = l.p.z;
+    for (const q of pts) { const d = segDist(px, pz, pos.x, pos.z, q.x, q.z); if (d < 0.7) pen += (0.7 - d) * 12; }
+    // a pole standing in the gap between the two people, even far behind them, splits the frame
+    const ang = (x, z) => Math.atan2(x - pos.x, z - pos.z), wrap = v => Math.atan2(Math.sin(v), Math.cos(v));
+    const ga = ang(pts[0].x, pts[0].z), gb = wrap(ang(pts[1].x, pts[1].z) - ga), gp = wrap(ang(px, pz) - ga);
+    const far = Math.hypot(px - pos.x, pz - pos.z);
+    if (far < 30 && Math.abs(gb) > 0.01 && gp / gb > -0.15 && gp / gb < 1.15) pen += 3;
+  }
+  for (const w of walls) {
+    if (pos.x > w.x0 - 0.3 && pos.x < w.x1 + 0.3 && pos.z > w.z0 - 0.3 && pos.z < w.z1 + 0.3) pen += 20;
+    for (const q of pts) {
+      if (q.x > w.x0 && q.x < w.x1 && q.z > w.z0 && q.z < w.z1) continue;
+      for (let i = 1; i < 8; i++) { const t = i / 8, x = pos.x + (q.x - pos.x) * t, z = pos.z + (q.z - pos.z) * t; if (x > w.x0 && x < w.x1 && z > w.z0 && z < w.z1) { pen += 4; break; } }
+    }
+  }
+  const bd = set.userData.bounds; if (bd && (pos.x < bd.x0 || pos.x > bd.x1 || pos.z < bd.z0 || pos.z > bd.z1)) pen += 6;
+  return pen;
 }
 const ray = new THREE.Raycaster();
 function updateCamera(dt) {
@@ -542,6 +580,14 @@ function updateCamera(dt) {
   const want = head.clone().addScaledVector(off, dist);
   const b = set.userData.bounds;
   if (b) { want.x = clamp(want.x, b.x0 + 0.2, b.x1 - 0.2); want.z = clamp(want.z, b.z0 + 0.2, b.z1 - 0.2); want.y = Math.min(want.y, 2.85); }
+  else {
+    // outside, the camera never ends up inside a parked car or a wall: it comes in along the line to your head
+    const walls = set.userData.walls || [];
+    for (let i = 1; i <= 12; i++) {
+      const t = i / 12, x = head.x + (want.x - head.x) * t, y = head.y + (want.y - head.y) * t, z = head.z + (want.z - head.z) * t;
+      if (y < 1.8 && walls.some(w => x > w.x0 - 0.25 && x < w.x1 + 0.25 && z > w.z0 - 0.25 && z < w.z1 + 0.25)) { const tt = Math.max(0.3, t - 0.12); want.copy(head).lerp(want, tt); want.y = Math.max(want.y, head.y + 0.25); break; }
+    }
+  }
   if (camState.init) { camera.position.copy(want); camState.look.copy(head); camState.init = false; }
   camera.position.lerp(want, k); camState.look.lerp(head.add(new THREE.Vector3(0, -0.1, 0)), k);
   camera.lookAt(camState.look);
@@ -665,7 +711,9 @@ function updatePrompts() {
   dotsEl.innerHTML = html;
   if (!best) { promptEl.hidden = true; return; }
   const q = project(best.p);
-  if (!q.on) { promptEl.hidden = true; return; }
+  // a thing above or beside the frame (the pylon sign seen up close on a phone) keeps its prompt at the edge of the screen
+  if (v2.z >= 1) { promptEl.hidden = true; return; }
+  q.x = clamp(q.x, 24, innerWidth - 200); q.y = clamp(q.y, 84, innerHeight - 110);
   promptEl.hidden = false;
   $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
   $(".st-prompt__key", promptEl).hidden = COARSE.matches;
@@ -806,21 +854,35 @@ async function travel(to) {
   S.phase = "explore";
   if (st && TALK[st]) {
     S.partner = to === "office" ? P.jason : to === "decision" ? P.jason : null;
-    await runTalk(st);
+    await startTalk(to);
   }
+}
+
+/* a scene's opening talk; once it has run to its end, a Continue into that scene does not replay it */
+async function startTalk(name) {
+  const st = D.scenes[name].start; if (!st || !TALK[st]) return;
+  await runTalk(st);
+  if (S.open && S.scene === name) { S.flags["done-" + name] = 1; save(); }
 }
 
 /* ---------- the close-up: the whiteboard's three notes ---------- */
 function closeUp(which) {
   return new Promise(resolve => {
     S.phase = "close"; el.classList.add("is-close");
-    const sp = set.userData.spots[which]; camState.shot = { pos: sp.cam.p.clone(), look: sp.cam.t.clone(), push: 0, focus: sp.cam.p.distanceTo(sp.cam.t) }; camState.cut = false; camState.shotT = 0;
+    const sp = set.userData.spots[which];
+    // on a narrow screen the camera steps back until the whole board fits across
+    const half = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.aspect), d0 = sp.cam.p.distanceTo(sp.cam.t), dist = Math.max(d0, 1.3 / Math.tan(half));
+    const cpos = sp.cam.t.clone().add(sp.cam.p.clone().sub(sp.cam.t).normalize().multiplyScalar(dist));
+    camState.shot = { pos: cpos, look: sp.cam.t.clone(), push: 0, focus: dist }; camState.cut = true; camState.shotT = 0;
+    // you step out of your own way: the close-up is what you see
+    if (me) me.group.visible = false;
     capEl.classList.remove("is-on");
     const ids = Object.keys(D.board_notes);
     const draw = () => {
-      $(".st-close__spots", closeEl).innerHTML = ids.map(id => { const q = project(set.userData.spots[id].p); return '<button type="button" class="st-note-spot' + (S.looked[id] ? " is-read" : "") + '" data-note="' + id + '" style="left:' + q.x.toFixed(0) + "px;top:" + q.y.toFixed(0) + 'px"><span>' + E(D.board_notes[id]) + "</span></button>"; }).join("");
+      $(".st-close__spots", closeEl).innerHTML = ids.map(id => { const q = project(set.userData.spots[id].p), x = clamp(q.x, 84, innerWidth - 84); return '<button type="button" class="st-note-spot' + (S.looked[id] ? " is-read" : "") + '" data-note="' + id + '" style="left:' + x.toFixed(0) + "px;top:" + q.y.toFixed(0) + 'px"><span>' + E(D.board_notes[id]) + "</span></button>"; }).join("");
     };
-    closeEl.hidden = false; setTimeout(draw, FAST ? 10 : 700); setTimeout(() => closeEl.classList.add("is-on"), 20);
+    closeEl.hidden = false; setTimeout(draw, FAST ? 300 : 700);
+    const onResize = () => draw(); addEventListener("resize", onResize); setTimeout(() => closeEl.classList.add("is-on"), 20);
     const onClick = async e => {
       const b = e.target.closest("[data-note]");
       if (b) {
@@ -834,7 +896,7 @@ function closeUp(which) {
       }
       if (e.target.closest("[data-st='back']")) finish();
     };
-    const finish = () => { closeEl.removeEventListener("click", onClick); closeEl.classList.remove("is-on"); setTimeout(() => (closeEl.hidden = true), 300); el.classList.remove("is-close"); S.phase = "talk"; resolve(); };
+    const finish = () => { closeEl.removeEventListener("click", onClick); removeEventListener("resize", onResize); if (me) me.group.visible = true; closeEl.classList.remove("is-on"); setTimeout(() => (closeEl.hidden = true), 300); el.classList.remove("is-close"); S.phase = "talk"; resolve(); };
     closeEl.addEventListener("click", onClick);
     S.closeFinish = finish;
   });
@@ -881,20 +943,32 @@ function sketch(key) {
   const dir = from.clone().sub(p); dir.y = Math.max(dir.y, 0.2); dir.normalize();
   cam.position.copy(p).addScaledVector(dir, r / Math.tan(15 * Math.PI / 180)); cam.lookAt(p);
   cam.layers.set(0); cam.layers.enable(1);
+  // only the subject: you and the others step out of the drawing
+  const shown = Object.values(P).filter(q => q.group.visible && q !== who);
+  shown.forEach(q => { q.group.visible = false; });
+  const read = () => { const b = new Uint8Array(size * size * 4); renderer.readRenderTargetPixels(rt, 0, 0, size, size, b); return b; };
+  // pass one, the forms: normals, on a clear background
   const was = scene.overrideMaterial; scene.overrideMaterial = new THREE.MeshNormalMaterial();
-  renderer.setRenderTarget(rt); renderer.setClearColor(0x8080ff, 1); renderer.clear(); renderer.render(scene, cam);
-  scene.overrideMaterial = was; renderer.setRenderTarget(null); renderer.setClearColor(0x05070a, 1);
-  const px = new Uint8Array(size * size * 4); renderer.readRenderTargetPixels(rt, 0, 0, size, size, px); rt.dispose();
-  // pencil: edges where the normal turns, hatching where it faces away from a light up and to the left
+  renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(scene, cam);
+  scene.overrideMaterial = was; const px = read();
+  // pass two, the marks: the lit scene, for lettering and the edges of printed things
+  renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(scene, cam); const lit = read();
+  renderer.setRenderTarget(null); renderer.setClearColor(0x05070a, 1); rt.dispose();
+  shown.forEach(q => { q.group.visible = true; });
+  // pencil: edges where the normal turns or the tone steps, hatching where it faces away from a light up and to the left
   const c = document.createElement("canvas"); c.width = c.height = size; const g = c.getContext("2d"); const img = g.createImageData(size, size), d = img.data;
-  const N = (x, y) => { const i = ((size - 1 - y) * size + x) * 4; return [px[i] / 127.5 - 1, px[i + 1] / 127.5 - 1, px[i + 2] / 127.5 - 1]; };
+  const at = (x, y) => ((size - 1 - y) * size + x) * 4;
+  const N = (x, y) => { const i = at(x, y); return [px[i] / 127.5 - 1, px[i + 1] / 127.5 - 1, px[i + 2] / 127.5 - 1]; };
+  const Lm = (x, y) => { const i = at(x, y); return Math.log(1 + (lit[i] * 0.3 + lit[i + 1] * 0.59 + lit[i + 2] * 0.11)); };
   for (let y = 1; y < size - 1; y++) for (let x = 1; x < size - 1; x++) {
+    const bg = px[at(x, y) + 3] < 8;
     const n = N(x, y), a = N(x + 1, y), b = N(x, y + 1), e = Math.abs(n[0] - a[0]) + Math.abs(n[1] - a[1]) + Math.abs(n[0] - b[0]) + Math.abs(n[1] - b[1]) + Math.abs(n[2] - a[2]) + Math.abs(n[2] - b[2]);
-    const bg = Math.abs(n[0]) < 0.02 && Math.abs(n[1]) < 0.02 && n[2] > 0.95;
+    const l0 = Lm(x, y), te = Math.abs(l0 - Lm(x + 1, y)) + Math.abs(l0 - Lm(x, y + 1));
     const lam = clamp(-n[0] * 0.5 + n[1] * 0.6 + n[2] * 0.6, 0, 1);
     const hatch = !bg && lam < 0.55 && ((x + y) % 5 === 0 || (lam < 0.3 && (x - y + 400) % 6 === 0));
-    let ink = clamp(e * 1.6, 0, 1) * 0.9 + (hatch ? 0.32 : 0);
+    let ink = clamp(e * 1.6, 0, 1) * 0.9 + clamp((te - 0.12) * 1.4, 0, 0.75) + (hatch ? 0.32 : 0);
     if (bg) ink = 0;
+    ink = Math.min(ink, 1);
     const i = (y * size + x) * 4; const v = 233 - ink * 190;
     d[i] = v; d[i + 1] = v - 4; d[i + 2] = v - 14; d[i + 3] = ink > 0.06 ? Math.min(255, ink * 340) : 0;
   }
@@ -938,7 +1012,7 @@ function recapLines() {
   if (f.desk) out.push(R.desk[f.desk]);
   if (f.phone) out.push(R.phone[f.phone]);
   if (f.lamp) out.push(R.lamp[f.lamp]);
-  const things = Object.keys(S.looked).filter(k => OBJ[k] && !OBJ[k].who && !OBJ[k].go && !k.startsWith("note-")).map(k => OBJ[k].label.toLowerCase().replace(/^the /, "the "));
+  const things = Object.keys(S.looked).filter(k => OBJ[k] && !OBJ[k].who && !OBJ[k].go && !k.startsWith("note-")).map(k => OBJ[k].label.toLowerCase()).filter((t, i, a) => a.indexOf(t) === i);
   if (things.length) out.push(R.looked + " " + listOf(things.map(t => (/^(dell|jason|renata)$/i.test(t) ? t : (t.startsWith("the ") ? t : "the " + t)))) + ".");
   else out.push(R.none);
   return out.filter(Boolean);
@@ -956,7 +1030,7 @@ function readOf() {
 }
 async function ending(kind) {
   S.ending = kind; S.phase = "end";
-  promptEl.hidden = true; dotsEl.innerHTML = "";
+  promptEl.hidden = true; dotsEl.innerHTML = ""; objective(null);
   T("story_ending", { ending: kind, role: S.flags.role || "", lot: S.flags.lot || "", why: S.flags.why || "" });
   // the ending's build: the card and the page for a role, the lot's card for a dealer
   let b = null;
@@ -972,8 +1046,8 @@ async function ending(kind) {
   const E0 = D.endings[kind];
   const rec = recapLines();
   let acts = "";
-  if (kind === "hiring" && b) acts += window.JG_BUILD.resumeLink(b, "btn btn--primary") + '<button class="btn" type="button" data-st="save-card"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>Save the card</button>';
-  if (kind === "dealer") acts += '<a class="btn btn--primary" href="/obavia.html#early" data-st="early">' + E(UI.early) + "</a>" + (b ? window.JG_BUILD.lotCta(b, "btn", "story").replace("Ask for Obavia early access", "Early access") : "");
+  if (kind === "hiring" && b) acts += window.JG_BUILD.resume(b, "btn btn--primary") + '<button class="btn" type="button" data-st="save-card"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(UI.save_card || "Save the card") + "</button>";
+  if (kind === "dealer") acts += '<a class="btn btn--primary" href="/obavia.html#early" data-st="early">' + E(UI.early) + "</a>" + (b ? ((c => (/data-build-obavia/.test(c) ? "" : c))(window.JG_BUILD.lotCta(b, "btn", "story"))) : "");
   if (kind === "curious") acts += '<button class="btn btn--primary" type="button" data-st="run"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg>' + E(UI.run) + "</button>";
   if (kind === "passing") acts += '<a class="btn btn--primary" href="' + E((LIB && LIB.pdf) || "assets/Jason_Obawemimo_Resume_2026.pdf") + '" download data-st="resume">' + E(UI.resume_pdf) + "</a>";
   acts += '<button class="btn ' + (acts ? "btn--ghost" : "btn--primary") + '" type="button" data-st="library">' + E(UI.enter) + "</button>";
@@ -1024,7 +1098,7 @@ pauseEl.addEventListener("click", async e => {
 });
 function pause_refresh() { S.phase = S.prevPhase; pause(); }
 function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.ending = null; S.visited = {}; }
-async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); S.phase = "explore"; if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else { const st = D.scenes[name].start; if (st && name !== "lot") { S.partner = P.jason; runTalk(st); } } }
+async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); S.phase = "explore"; if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
    INPUT
@@ -1126,7 +1200,7 @@ const perf = {};
 let raf = 0;
 function frame(now) {
   raf = requestAnimationFrame(frame);
-  if (!S.open || document.hidden) { last = now; return; }
+  if (!S.open || document.hidden || S.attract) { last = now; return; }
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (S.phase === "pause" || S.phase === "journal") dt = S.phase === "journal" ? dt * 0.0 : 0;
   S.t += dt; U.uTime.value = S.t;
@@ -1145,7 +1219,7 @@ function frame(now) {
   perf.update = performance.now() - tA;
   if (set) {
     updateLamps();
-    if (rain && rain.visible) rain.material.uniforms.uCam.value.copy(camera.position);
+    if (rain && rain.visible) { rain.material.uniforms.uCam.value.copy(camera.position); const base = S.scene === "decision" ? 0.55 : 1; rain.material.uniforms.uK.value = damp(rain.material.uniforms.uK.value, S.phase === "talk" || S.phase === "close" ? base * 0.45 : base, 2, dt); }
     camera.updateMatrixWorld();
     const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
     const t0 = DEBUG ? performance.now() : 0, gl = DEBUG ? renderer.getContext() : null;
@@ -1234,7 +1308,8 @@ async function open(sceneName, how) {
   await boot();
   setLoad(1);
   const target = sceneName || (saved ? saved.scene : "lot");
-  if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#story" + (target !== "lot" ? "/" + target : ""));
+  // the address keeps whatever brought you here; a deep link is consumed, so a reload meets the start screen (and Continue)
+  if (/^#story/.test(location.hash) && history.replaceState) history.replaceState(null, "", location.pathname + location.search);
   await enter(target, { quiet: true });
   S.visited[target] = 1;
   await sleep(300);
@@ -1247,7 +1322,7 @@ async function open(sceneName, how) {
   if (S.obj) objective(S.obj);
   const st = D.scenes[target].start;
   if (target === "lot" && !S.flags.met) runTalk("lot-arrive");
-  else if (target !== "lot" && st && !(saved && saved.scene === target && !sceneName && target !== "decision")) { S.partner = P.jason; runTalk(st); }
+  else if (target !== "lot" && st && !(saved && saved.scene === target && !sceneName && target !== "decision" && S.flags["done-" + target])) { S.partner = P.jason; startTalk(target); }
 }
 function close(how) {
   if (!S.open) return;
@@ -1269,13 +1344,14 @@ window.JG_STORY = {
   debug: {
     state: () => ({ open: S.open, scene: S.scene, phase: S.phase, flags: { ...S.flags }, looked: { ...S.looked }, trophies: S.trophies.slice(), journal: S.journal.slice(), talking: S.talking, line: line ? line.L.id : null, choices: choosing ? choosing.list.map(c => c.t) : null, ending: S.ending, near: near ? near.id : null, me: me ? [me.pos.x, me.pos.z] : null, quality, pixelRatio, fps: fpsLog.slice(-5), obj: S.obj }),
     skip: () => { if (line) endLine(true); },
+    flag: (k, v) => { S.flags[k] = v; },
     choose: i => pick(i, "debug"),
     spots: () => spotsHere().map(s => s.id),
     warp: id => {
       const s = spotsHere().find(x => x.id === id); if (!s) return false;
       let st = s.sp.stand || s.p;
       if (s.sp.who) { const w = P[s.sp.who]; st = w.pos.clone().add(new THREE.Vector3(Math.sin(w.yaw), 0, Math.cos(w.yaw)).multiplyScalar(1.35)); }
-      me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
+      mv.target = null; mv.after = null; me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
     },
     interact: id => interact(id, "debug"),
     desk: () => S.deskFinish && S.deskFinish(true),
@@ -1286,6 +1362,18 @@ window.JG_STORY = {
     box: v => { post.comp.u.uBox.value = v; },
     place: (who, x, z, yaw) => { const p = P[who]; if (!p) return false; p.pos.set(x, 0, z); p.yaw = p.wantYaw = yaw; return true; },
     look: (who, x, y, z) => { const p = P[who]; if (p) p.lookAtP = x == null ? null : new THREE.Vector3(x, y, z); },
+    /* the attract loop: a slow move across the lot at night toward Jason under the lamp, rendered frame by frame */
+    attract: async () => { S.phase = "cinematic"; S.attract = true; el.classList.add("is-cinema"); post.comp.u.uBox.value = 0; objEl.hidden = true; $(".st-hud", el).style.display = "none";
+      place(P.you, new THREE.Vector3(60, 0, 60), 0); hide(P.you); place(P.jason, new THREE.Vector3(9.4, 0, -11.9), -0.95); P.jason.hold = null; place(P.dell, new THREE.Vector3(3.6, 0, 19.2), Math.PI * 0.85);
+      return true; },
+    renderAt: t => {
+      const dur = 12, u = (t % dur) / dur, e = 0.5 - 0.5 * Math.cos(u * Math.PI * 2);
+      const pos = new THREE.Vector3(lerp(-4.5, 6.4, e), lerp(1.55, 1.45, e), lerp(-7.9, -9.3, e)), look = new THREE.Vector3(lerp(5.5, 9.4, e), lerp(1.45, 1.45, e), lerp(-12.8, -12.0, e));
+      S.t = t; U.uTime.value = t; camera.position.copy(pos); camera.lookAt(look); camState.view = { p: pos, t: look, r: 9 };
+      for (const p of Object.values(P)) if (p.group.visible) { p.lookAtP = p === P.jason ? new THREE.Vector3(pos.x, 1.6, pos.z) : null; p.update(1 / 30); }
+      updateLamps(); if (rain) { rain.visible = true; rain.material.uniforms.uCam.value.copy(pos); rain.material.uniforms.uK.value = 0.8; }
+      const ground = set.children.find(m => m.material === set.userData.groundMat); post.reflect(scene, camera, world, ground); post.render(scene, camera, t); return true;
+    },
     perf: () => ({ ...perf, prog: renderer.info.programs ? renderer.info.programs.length : 0 }),
     bench: () => {
       const gl = renderer.getContext(), t = f => { const a = performance.now(); for (let i = 0; i < 3; i++) { f(); gl.finish(); } return +((performance.now() - a) / 3).toFixed(1); };

@@ -14,7 +14,7 @@
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { paint as paint0, glow as glow0, coneMat as coneMat0, blobMat as blobMat0, U } from "./paint.js";
 import * as TX from "./tex.js";
-import { mergeGeometries } from "../vendor/three-0.184.0/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "../vendor/three-0.184.0/addons/utils/BufferGeometryUtils.js";
 
 /* one material per look, shared, so the static merge can fold meshes together */
 const memo = new Map();
@@ -121,36 +121,66 @@ export function groundMat(color, mask, o = {}) {
   });
 }
 
-/* ---------- a car, from an extruded side profile ---------- */
+/* ---------- a car: a smooth side profile, extruded, then rounded in plan and pulled in at the top ---------- */
 const PROFILES = {
-  sedan: { L: 4.7, W: 1.82, body: [[0, 0.32], [0.05, 0.62], [0.9, 0.78], [1.6, 0.82], [3.3, 0.86], [4.55, 0.8], [4.7, 0.6], [4.66, 0.32]], cab: [[1.25, 0.82], [1.95, 1.36], [3.25, 1.38], [3.95, 0.86]] },
-  suv: { L: 4.8, W: 1.92, body: [[0, 0.4], [0.05, 0.8], [0.8, 0.98], [1.4, 1.02], [4.6, 1.04], [4.8, 0.86], [4.8, 0.4]], cab: [[1.3, 1.0], [1.85, 1.66], [4.5, 1.68], [4.68, 1.04]] },
-  truck: { L: 5.6, W: 1.98, body: [[0, 0.45], [0.05, 0.92], [0.9, 1.06], [2.1, 1.08], [5.6, 1.08], [5.6, 0.45]], cab: [[2.0, 1.06], [2.5, 1.72], [3.6, 1.74], [3.75, 1.08]] }
+  // [length, width, body key points (x along the car from the front, y up), cabin key points, beltline]
+  sedan: { L: 4.7, W: 1.82, belt: 0.86, body: [[0.02, 0.34], [0.0, 0.55], [0.12, 0.7], [0.55, 0.78], [1.3, 0.84], [3.4, 0.88], [4.35, 0.86], [4.66, 0.74], [4.7, 0.5], [4.62, 0.34]], cab: [[1.25, 0.84], [1.75, 1.18], [2.25, 1.38], [3.05, 1.38], [3.6, 1.2], [4.0, 0.88]] },
+  suv: { L: 4.8, W: 1.92, belt: 1.04, body: [[0.02, 0.42], [0.0, 0.72], [0.15, 0.9], [0.7, 0.99], [1.3, 1.03], [4.5, 1.06], [4.78, 0.98], [4.8, 0.6], [4.74, 0.42]], cab: [[1.3, 1.02], [1.75, 1.42], [2.15, 1.66], [4.45, 1.68], [4.68, 1.5], [4.72, 1.05]] },
+  truck: { L: 5.6, W: 1.98, belt: 1.08, body: [[0.02, 0.46], [0.0, 0.8], [0.15, 1.0], [0.8, 1.07], [2.1, 1.09], [5.55, 1.1], [5.6, 0.9], [5.58, 0.46]], cab: [[2.0, 1.08], [2.35, 1.5], [2.6, 1.72], [3.55, 1.74], [3.72, 1.5], [3.78, 1.09]] }
 };
+function smoothPts(pts, n) { const c = new THREE.CatmullRomCurve3(pts.map(p => V3(p[0], p[1], 0)), false, "centripetal"); return c.getPoints(n).map(v => [v.x, v.y]); }
+function carShell(P, pts, width, bev, inwardTop, closeBottom) {
+  const s = new THREE.Shape(); const sm = smoothPts(pts, 40);
+  sm.forEach((p, i) => (i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1])));
+  if (closeBottom) s.lineTo(sm[0][0], sm[0][1]);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: width - bev * 2, bevelEnabled: true, bevelThickness: bev, bevelSize: bev * 0.8, bevelSegments: 4, curveSegments: 6 });
+  geo.translate(-P.L / 2, 0, -(width - bev * 2) / 2); geo.rotateY(Math.PI / 2);
+  // round the corners in plan and pull the sides in toward the top (tumblehome)
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const zn = Math.abs(z) / (P.L / 2);
+    let k = 1 - 0.16 * Math.pow(zn, 6);
+    if (y > P.belt) k *= 1 - (y - P.belt) * inwardTop;
+    pos.setX(i, x * k);
+  }
+  geo.deleteAttribute("uv"); geo.deleteAttribute("normal");
+  const g2 = mergeVertices(geo, 1e-3); g2.computeVertexNormals();
+  return g2;
+}
 export function car(kind, color, r) {
   const P = PROFILES[kind], g = new THREE.Group();
-  const shape = pts => { const s = new THREE.Shape(); pts.forEach((p, i) => (i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1]))); s.closePath(); return s; };
-  const ex = (pts, w, bev) => { const geo = new THREE.ExtrudeGeometry(shape(pts), { depth: w, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 3, curveSegments: 4 }); geo.translate(-P.L / 2, 0, -w / 2); geo.rotateY(Math.PI / 2); return geo; };
-  const paintM = paint({ color, wet: 1.4, rim: 0.9, ao: 0.6 });
-  const body = new THREE.Mesh(ex(P.body, P.W - 0.16, 0.08), paintM); g.add(body);
-  const glass = paint({ color: "#0d1418", wet: 2.6, rim: 1.1 });
-  const cab = new THREE.Mesh(ex(P.cab, P.W - 0.36, 0.06), glass); g.add(cab);
-  // pillars and roof in the paint colour, so the cabin reads as glass in a frame
-  const roofPts = P.cab.map(p => [p[0], p[1]]);
-  const roof = box(P.W - 0.3, 0.05, (roofPts[2][0] - roofPts[1][0]) * 0.98, paintM, 0, roofPts[1][1] + 0.03, P.L / 2 - (roofPts[1][0] + roofPts[2][0]) / 2, g);
-  if (kind === "truck") { const bed = box(P.W - 0.2, 0.08, 1.8, paint({ color: "#141617", wet: 0.4 }), 0, 1.0, -(P.L / 2 - 1.0), g); }
-  const tire = paint({ color: "#0e0e0e", wet: 0.5, rim: 0.4 }), rim = paint({ color: "#7d8287", wet: 1.8, rim: 0.6 });
-  const wg = new THREE.CylinderGeometry(0.36, 0.36, 0.26, 14); wg.rotateZ(Math.PI / 2);
-  const hg = new THREE.CylinderGeometry(0.2, 0.2, 0.27, 10); hg.rotateZ(Math.PI / 2);
+  const paintM = paint({ color, wet: 1.6, rim: 0.7, ao: 0.6 });
+  g.add(new THREE.Mesh(carShell(P, P.body, P.W, 0.1, 0.2, true), paintM));
+  const glass = paint({ color: "#0b1216", wet: 3.0, rim: 1.0 });
+  g.add(new THREE.Mesh(carShell(P, P.cab, P.W - 0.08, 0.08, 0.5, true), glass));
+  // a roof skin and pillars in the paint colour, slightly proud of the glass, so the cabin reads as glass in a frame
+  const roofPts = P.cab.slice(1, -1).map(p => [p[0], p[1] + 0.02]);
+  const top = roofPts[Math.floor(roofPts.length / 2) - 1], top2 = roofPts[Math.floor(roofPts.length / 2)];
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(P.W * 0.62, 0.045, Math.abs(top2[0] - top[0]) + 0.5), paintM);
+  roof.position.set(0, Math.max(top[1], top2[1]) + 0.012, P.L / 2 - (top[0] + top2[0]) / 2); g.add(roof);
+  if (kind === "truck") { const bed = new THREE.Mesh(new THREE.BoxGeometry(P.W - 0.32, 0.06, 1.7), paint({ color: "#121415", wet: 0.4 })); bed.position.set(0, 1.07, -(P.L / 2 - 1.0)); g.add(bed); }
+  const tire = paint({ color: "#0d0d0d", wet: 0.5, rim: 0.3 }), rim = paint({ color: "#8a8f94", wet: 2.0, rim: 0.6 }), arch = paint({ color: "#070808", rim: 0.2 });
+  const wg = new THREE.CylinderGeometry(0.36, 0.36, 0.25, 18); wg.rotateZ(Math.PI / 2);
+  const hg = new THREE.CylinderGeometry(0.22, 0.22, 0.26, 12); hg.rotateZ(Math.PI / 2);
+  const ag = new THREE.TorusGeometry(0.43, 0.06, 6, 14, Math.PI); ag.rotateY(Math.PI / 2);
   const ax = [P.L / 2 - 1.05, -(P.L / 2 - 1.15)];
-  for (const z of ax) for (const s of [1, -1]) { const w = new THREE.Mesh(wg, tire); w.position.set(s * (P.W / 2 - 0.12), 0.36, z); g.add(w); const h = new THREE.Mesh(hg, rim); h.position.copy(w.position); h.position.x += s * 0.01; g.add(h); }
-  // lamps: headlights off and faintly cold, tail lights a dim red
-  const head = glow("#d8dde0", { k: 0.25 }), tail = glow("#7a1612", { k: 0.6 });
-  for (const s of [1, -1]) { box(0.36, 0.1, 0.05, head, s * (P.W / 2 - 0.3), P.body[1][1] - 0.05, P.L / 2 + 0.06, g); box(0.3, 0.1, 0.05, tail, s * (P.W / 2 - 0.25), P.body[P.body.length - 2][1] - 0.12, -P.L / 2 - 0.06, g); }
+  for (const z of ax) for (const s of [1, -1]) {
+    const w = new THREE.Mesh(wg, tire); w.position.set(s * (P.W / 2 - 0.13), 0.36, z); g.add(w);
+    const h = new THREE.Mesh(hg, rim); h.position.copy(w.position); h.position.x += s * 0.012; g.add(h);
+    const a = new THREE.Mesh(ag, arch); a.position.set(s * (P.W / 2 - 0.02), 0.38, z); g.add(a);
+  }
+  // lamps: headlights off and faintly cold, tail lights glowing red
+  const head = glow("#d8dde0", { k: 0.35 }), tail = glow("#b3241c", { k: 1.4 });
+  const fy = P.body[2][1] - 0.06, ry = P.body[P.body.length - 3][1] - 0.1;
+  for (const s of [1, -1]) {
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.09, 0.05), head); hl.position.set(s * (P.W / 2 - 0.34), fy, P.L / 2 - 0.03); g.add(hl);
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 0.05), tail); tl.position.set(s * (P.W / 2 - 0.3), ry, -P.L / 2 + 0.02); g.add(tl);
+  }
   // a sticker on the windshield: Triple J's name, no price
-  const st = plane(0.34, 0.16, paint({ color: "#e8e1d0", rim: 0.2 }), g);
-  st.position.set(P.W / 2 - 0.6, P.cab[0][1] + 0.18, P.L / 2 - P.cab[0][0] - 0.22); st.rotation.x = -0.75;
-  const sh = plane(P.W + 0.7, P.L + 0.6, blobMat(0.7), g); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.012; sh.renderOrder = 1; sh.layers.set(2);
+  const st = plane(0.3, 0.14, paint({ color: "#e8e1d0", rim: 0.2 }), g);
+  st.position.set(P.W / 2 - 0.62, P.cab[1][1] + 0.02, P.L / 2 - P.cab[1][0] - 0.05); st.rotation.x = -0.9;
+  const sh = plane(P.W + 0.7, P.L + 0.6, blobMat(0.75), g); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.012; sh.renderOrder = 1; sh.layers.set(2);
   g.userData.size = [P.W, P.L];
   return g;
 }
@@ -204,13 +234,20 @@ export function buildLot(o) {
   // the showroom: a glass front glowing warm, the wordmark over it
   const wall = paint({ color: "#2b2f2c", wet: 0.3, rim: 0.4, ao: 0.6 }), trim = paint({ color: "#141716", wet: 0.6, rim: 0.6 });
   const sh = new THREE.Group(); sh.position.set(2, 0, -18); set.add(sh);
-  box(26, 5.2, 8, wall, 0, 2.6, -4, sh); // body
+  // the body, hollow behind the glass: a lit room 3.6 m deep with cars in it, so the front has depth from every angle
+  box(26, 5.2, 4.4, wall, 0, 2.6, -5.8, sh);
+  box(26, 1.3, 3.6, wall, 0, 4.55, -1.8, sh);
+  box(1, 5.2, 3.6, wall, -12.5, 2.6, -1.8, sh); box(3, 5.2, 3.6, wall, 11.5, 2.6, -1.8, sh);
+  const roomFloor = plane(22, 3.6, paint({ color: "#6b5640", wet: 0.9, rim: 0.1, emit: "#3a2a1a" }), sh); roomFloor.rotation.x = -Math.PI / 2; roomFloor.position.set(-1, 0.02, -1.8);
+  const roomCeil = plane(22, 3.6, glow("#f6e3c4", { k: o.day ? 0.25 : 0.55 }), sh); roomCeil.rotation.x = Math.PI / 2; roomCeil.position.set(-1, 3.88, -1.8);
+  for (const [x, yaw, kind, col] of [[-7.5, 0.5, "sedan", "#9b2a22"], [-2.2, -0.35, "suv", "#d8d4ca"], [3.6, 0.42, "sedan", "#3b4a55"]]) { const c = car(kind, col, rng(99)); c.position.set(x, 0, -1.9); c.rotation.y = yaw; sh.add(c); }
   box(26.6, 0.5, 8.6, trim, 0, 5.4, -4, sh); // roof edge
   const glassIn = TX.cv(1024, 256); { const g = glassIn.getContext("2d"); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, "#f2c98d"); gr.addColorStop(1, "#b07a42"); g.fillStyle = gr; g.fillRect(0, 0, 1024, 256);
     g.fillStyle = "rgba(40,28,18,0.55)"; for (let i = 0; i < 5; i++) { const x = 80 + i * 200; g.beginPath(); g.ellipse(x, 210, 80, 24, 0, 0, 7); g.fill(); g.fillRect(x - 70, 170, 140, 40); }
     g.fillStyle = "rgba(255,240,210,0.6)"; for (let i = 0; i < 8; i++) g.fillRect(40 + i * 125, 10, 70, 6); }
   const gtex = new THREE.CanvasTexture(glassIn); gtex.colorSpace = THREE.SRGBColorSpace;
-  const front = plane(22, 3.6, glow("#ffffff", { map: gtex, k: o.day ? 0.35 : 1.35 }), sh); front.position.set(-1, 1.95, 0.02);
+  const front = plane(22, 3.6, glow("#ffffff", { map: gtex, k: o.day ? 0.35 : 1.35 }), sh); front.position.set(-1, 1.95, -3.58);
+  const pane = plane(22, 3.7, paint({ color: "#7d8c88", alpha: 0.1, wet: 2.2, rim: 0.8, depthWrite: false }), sh); pane.position.set(-1, 1.95, 0.03);
   for (let i = 0; i <= 8; i++) box(0.12, 3.8, 0.14, trim, -12 + i * 2.75, 1.95, 0.08, sh);
   box(22.4, 0.14, 0.16, trim, -1, 3.85, 0.08, sh); box(22.4, 0.14, 0.16, trim, -1, 0.06, 0.08, sh);
   // the office door, at the right end of the glass
@@ -220,7 +257,8 @@ export function buildLot(o) {
   const signT = TX.signTex(o.wordmark);
   const sign = plane(10, 2.5, glow("#ffffff", { map: signT, k: o.day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 4.65, 0.32);
   // the sold board by the door
-  const sold = plane(1.6, 1.2, paint({ map: TX.soldTex(), color: "#fff", rim: 0.2, wet: 0.2 }), sh); sold.position.set(8.6, 1.55, 0.16);
+  // the sold board fills from June 2025; on the morning of the keys, August 2024, it is not up yet
+  if (!o.day) { const sold = plane(1.6, 1.2, paint({ map: TX.soldTex(), color: "#fff", rim: 0.2, wet: 0.2 }), sh); sold.position.set(8.6, 1.55, 0.16); }
   set.userData.spots.sold = { p: V3(2 + 8.6, 1.5, -18 + 0.3), r: 2.4, stand: V3(10.6, 0, -16.2) };
   set.userData.spots.door = { p: V3(13, 1.3, -17.6), r: 2.4, stand: V3(13, 0, -16.3) };
   set.userData.walls.push({ x0: -11.3, x1: 15.3, z0: -26.3, z1: -17.7 });

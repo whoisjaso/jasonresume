@@ -20,9 +20,9 @@ function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= TAU; while (d <
 
 /* each character's colours. Cloth textures keep their folds and light, recoloured */
 export const LOOKS = {
-  jason: { skin: "#56331f", lip: "#8c4f4a", eyes: "#7a5a48", wide: 0.55, pocket: true, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#1e3a2d", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
-  "jason-memory": { skin: "#56331f", lip: "#8c4f4a", eyes: "#7a5a48", wide: 0.55, nose: true, hair: "#0d0b0b", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
-  player: { skin: "#9a6d4c", hair: "#2a1d16", brow: "#2a1d16", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
+  jason: { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.55, pocket: true, nose: true, hair: "#19130f", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#2a4c3a", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
+  "jason-memory": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.55, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
+  player: { skin: "#8a5d40", lip: "#8a5048", eyes: "#6a4a36", hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#9b958c", hair: "#4a4640", brow: "#7d776e", cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true },
   renata: { skin: "#b78a66", hair: "#24170f", brow: "#24170f", cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
 };
@@ -92,14 +92,14 @@ class Person {
       let mat;
       if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, rim: 0.55, wet: 0.015, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
       else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 1100 * (m.scale.x || 1), rim: 0.15, wet: 0.0, hairline: !!m.geometry.attributes.color, keep: L.skin });
-      else if (name === "hair") mat = paint({ color: L.hair, map, alphaTest: 0.4, rim: 0.5, wet: 0.25, side: THREE.DoubleSide, recolor: true, keep: L.hair });
+      else if (name === "hair") mat = paint({ color: L.hair, map, alphaTest: 0.5, rim: 0.25, wet: 0.1, side: THREE.DoubleSide, recolor: true, keep: L.hair });
       else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
       else if (name === "brow" || name === "lash") mat = paint({ color: L.brow, map, alphaTest: name === "brow" ? 0.28 : 0.5, rim: 0.2, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
       else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
       else if (name === "eyes") mat = paint({ color: L.eyes || "#9a8a7a", map, wet: 2.6, rim: 0.15 });
       else if (name.startsWith("cloth")) {
         const key = Object.keys(L.cloth).find(k => name.includes(k)) || Object.keys(L.cloth)[0];
-        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: L.keep, tie: L.tie, rim: 0.75, wet: key === "shoes" ? 0.9 : 0.12 });
+        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: 0.4, wet: key === "shoes" ? 0.35 : 0.12 });
       } else mat = paint({ color: "#777" });
       m.material = mat; m.userData.role = name;
     }
@@ -156,8 +156,8 @@ class Person {
     }
     if (this.eyeR) {
       // a catchlight in each eye: a tiny bright point up and to one side of the pupil, so the eyes read awake
-      const cl = new THREE.MeshBasicMaterial({ color: "#fff6e8", transparent: true, opacity: 0.85, depthWrite: false });
-      for (const side of [1, -1]) { const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.13, 6, 4), cl); d.position.copy(at(this.eyeX * side - this.eyeR * 0.22, this.eyeY + this.eyeR * 0.28, this.eyeZ + 0.0008)); head.add(d); }
+      const cl = new THREE.MeshBasicMaterial({ color: "#f3e9d8", transparent: true, opacity: 0.55, depthWrite: false });
+      for (const side of [1, -1]) { const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.09, 6, 4), cl); d.position.copy(at(this.eyeX * side - this.eyeR * 0.22, this.eyeY + this.eyeR * 0.28, this.eyeZ + 0.0008)); head.add(d); }
     }
     if (L.nose && this.eyeR) {
       const ns = new THREE.Mesh(new THREE.SphereGeometry(0.0013, 6, 5), paint({ color: "#eef3f6", wet: 3, emit: "#30343a" }));
@@ -224,8 +224,10 @@ class Person {
     for (const side of [1, -1]) {
       const s = side > 0 ? "l" : "r", f = side;
       const sw = -A * sn * f, swing = Math.max(0, cs * f);
-      const knee = 0.05 + step * (0.1 + 0.62 * Math.pow(swing, 1.4));
-      this.rot("thigh_" + s, lerp(sw, -1.5, sitK), 0, side * 0.015);
+      // standing, the weight sits on one leg and the other knee eases, feet under the hips
+      const rest = (1 - step) * (1 - sitK), easy = side < 0 ? 0.16 * rest : 0;
+      const knee = 0.05 + easy + step * (0.1 + 0.62 * Math.pow(swing, 1.4));
+      this.rot("thigh_" + s, lerp(sw - easy * 0.4, -1.5, sitK), 0, side * (0.015 - 0.075 * rest));
       this.rot("calf_" + s, lerp(knee, 1.48, sitK), 0, 0);
       this.rot("foot_" + s, lerp(-sw * 0.25 - knee * 0.3 + 0.1 * step * Math.max(0, -cs * f), 0.05, sitK), 0, 0);
     }
@@ -275,7 +277,7 @@ class Person {
     }
     this.setFx("browInnerUp", clamp(this.browK, 0, 1) * 0.8 + this.mouth * 0.08);
     this.setFx("browDownLeft", clamp(-this.browK, 0, 1) * 0.6); this.setFx("browDownRight", clamp(-this.browK, 0, 1) * 0.6);
-    this.setFx("eyeWideLeft", this.L.wide || 0); this.setFx("eyeWideRight", this.L.wide || 0);
+    this.setFx("eyeWideLeft", this.L.wide != null ? this.L.wide : 0.4); this.setFx("eyeWideRight", this.L.wide != null ? this.L.wide : 0.4);
     this.setFx("mouthSmileLeft", this.smileK * 0.55); this.setFx("mouthSmileRight", this.smileK * 0.55);
   }
 }

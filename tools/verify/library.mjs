@@ -617,10 +617,11 @@ for (const [vw, vh, mob] of [[1440, 900, false], [844, 390, true], [390, 844, tr
   if (st.foot) errs.push(`start ${vw}: links along the bottom are back`);
   if (!st.skip) errs.push(`start ${vw}: no Skip`);
   await p.click('[data-title-play]');
-  await p.waitForSelector('.run canvas, canvas.run__cv, .run', { timeout: 8000 }).catch(() => errs.push(`start ${vw}: Play did not open the run`));
+  // Play opens After Hours, the episode (the run stays on the cabinet, key G and #play)
+  await p.waitForFunction(() => window.JG_STORY && window.JG_STORY.isOpen() && document.documentElement.classList.contains('story-on'), null, { timeout: 30000 }).catch(() => errs.push(`start ${vw}: Play did not open the episode`));
   await ctx.close();
 }
-notes.push('start screen: one Play, nothing else, and Play opens the run');
+notes.push('start screen: one Play, nothing else, and Play opens the episode');
 
 // No JavaScript: the whole record is a readable document
 {

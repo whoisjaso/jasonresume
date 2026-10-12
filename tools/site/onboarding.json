@@ -16,7 +16,7 @@
     "play": "Play",
     "library": "Enter the library",
     "play_note": "An episode on my lot after hours. What you say and look at changes how it ends.",
-    "attract": "assets/game/loops/run-attract",
+    "attract": "assets/game/loops/story-attract",
     "muted_library": "Library, muted",
     "continue": "Continue"
   },

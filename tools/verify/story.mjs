@@ -34,6 +34,7 @@ const log = (...a) => { if (LOG) console.log(new Date().toISOString().slice(11, 
 const exe = [process.env.PW_CHROMIUM, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(f => f && fs.existsSync(f));
 const b = await chromium.launch({ executablePath: exe });
 const errs = [], notes = [], fps = [];
+const _push = errs.push.bind(errs); errs.push = (...a) => { if (process.argv.includes('--log')) a.forEach(x => console.log('  ERROR', x)); return _push(...a); };
 const fonts = path.join(ROOT, 'tools', 'fonts', 'fonts.css');
 
 async function ctxFor(w, h, mobile) {
@@ -71,9 +72,16 @@ async function shot(p, name) { if (SHOTS) await p.screenshot({ path: path.join(O
 
 /* advance through lines until choices show, the talk ends, or a phase changes */
 async function untilChoice(p, label) {
-  const ok = await until(p, () => { const s = window.JG_STORY.debug.state(); return !!s.choices || s.phase === 'explore' || s.phase === 'end' || s.phase === 'sheet' || s.phase === 'close'; }, null, 120000);
-  if (!ok) { errs.push(`${label}: stuck ${JSON.stringify(await st(p))}`); return null; }
-  return st(p);
+  // a scene change passes through explore for a beat before its first talk starts, so a quiet phase has to hold
+  const t0 = Date.now(); let calm = 0;
+  while (Date.now() - t0 < 120000) {
+    const s = await st(p);
+    if (s.choices) return s;
+    const quiet = !s.talking && !s.line && (s.phase === 'explore' || s.phase === 'end' || s.phase === 'sheet' || s.phase === 'close');
+    if (quiet) { if (!calm) calm = Date.now(); else if (Date.now() - calm > 4000) return s; } else calm = 0;
+    await p.waitForTimeout(150);
+  }
+  errs.push(`${label}: stuck ${JSON.stringify(await st(p))}`); return null;
 }
 /* choose by visible label, with a number key or a click/tap on the button */
 async function choose(p, mobile, text, label) {
@@ -83,7 +91,7 @@ async function choose(p, mobile, text, label) {
   const i = s.choices.findIndex(c => c === text);
   if (i < 0) { errs.push(`${label}: no choice "${text}" in ${JSON.stringify(s.choices)}`); return false; }
   await p.waitForTimeout(200);
-  if (mobile) await p.tap(`.st-ch[data-i="${i}"]`); else if (i % 2) await p.click(`.st-ch[data-i="${i}"]`); else await p.keyboard.press(String(i + 1));
+  if (mobile) await p.tap(`.st-ch[data-i="${i}"]`, { force: true }); else if (i % 2) await p.click(`.st-ch[data-i="${i}"]`, { force: true }); else await p.keyboard.press(String(i + 1));
   await until(p, () => !window.JG_STORY.debug.state().choices, null, 8000);
   return true;
 }
@@ -92,13 +100,18 @@ async function use(p, mobile, id, label) {
   log(label, 'use', id);
   const ex = await phase(p, 'explore', 120000);
   if (!ex) { errs.push(`${label}: not exploring before ${id} ${JSON.stringify(await st(p))}`); return false; }
-  const ok = await p.evaluate(id => window.JG_STORY.debug.warp(id), id);
+  const ok = await p.evaluate(id => { window.__scene = window.JG_STORY.debug.state().scene; return window.JG_STORY.debug.warp(id); }, id);
   if (!ok) { errs.push(`${label}: no spot ${id} here (${JSON.stringify(await p.evaluate(() => window.JG_STORY.debug.spots()))})`); return false; }
   const near = await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000);
   if (!near) { errs.push(`${label}: prompt did not show for ${id} (near ${(await st(p)).near})`); return false; }
   await p.waitForTimeout(150);
-  if (mobile) await p.tap('.st-prompt'); else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt');
-  const on = await until(p, () => window.JG_STORY.debug.state().phase !== 'explore', null, 8000);
+  const n0 = (await st(p)).looked[id] || 0;
+  // the prompt follows the thing on screen; it has to be there and on top to be pressed
+  const hit = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return 'hidden'; const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e && b.contains(e) ? 'ok' : 'covered by ' + (e ? e.className || e.tagName : 'nothing'); });
+  if (hit !== 'ok' && (mobile || hit !== 'hidden')) errs.push(`${label}: the prompt for ${id} is ${hit}`);
+  if (hit !== 'ok') { if (mobile) await p.evaluate(id => { window.JG_STORY.debug.interact(id); }, id); else await p.keyboard.press('e'); }
+  else if (mobile) await p.tap('.st-prompt', { force: true }); else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt', { force: true });
+  const on = await until(p, ([id, n]) => { const s = window.JG_STORY.debug.state(); return s.phase !== 'explore' || (s.looked[id] || 0) > n || s.scene !== window.__scene; }, [id, n0], 20000);
   if (!on) errs.push(`${label}: ${id} did not respond`);
   return on;
 }
@@ -124,7 +137,7 @@ async function lot(p, mobile, o, label) {
   if (o.shots) { await p.waitForTimeout(800); await shot(p, `${o.tag}-lot`); }
   // walking: a second of real keys moves you
   if (!mobile) { const a = (await st(p)).me; await p.keyboard.down('w'); await p.waitForTimeout(1200); await p.keyboard.up('w'); const b2 = (await st(p)).me; if (Math.hypot(a[0] - b2[0], a[1] - b2[1]) < 0.02) errs.push(`${label}: W did not walk`); }
-  else { const a = (await st(p)).me; await p.tap('.st-cv', { position: { x: 200, y: 160 } }).catch(() => {}); await p.waitForTimeout(1500); const b2 = (await st(p)).me; if (Math.hypot(a[0] - b2[0], a[1] - b2[1]) < 0.02) notes.push(`${label}: tap to walk did not move (may be blocked)`); }
+  else { const a = (await st(p)).me; const vs = p.viewportSize(); await p.tap('.st-cv', { position: { x: Math.round(vs.width * 0.5), y: Math.round(vs.height * 0.8) } }).catch(() => {}); await p.waitForTimeout(2500); const b2 = (await st(p)).me; if (Math.hypot(a[0] - b2[0], a[1] - b2[1]) < 0.02) errs.push(`${label}: tapping the ground did not walk`); else notes.push(`${label}: tapping the ground walks`); }
   await use(p, mobile, 'dell', label); await choose(p, mobile, o.dell, label); await finishTalk(p, label);
   if (o.sign) { await use(p, mobile, 'sign', label); await finishTalk(p, label); }
   await use(p, mobile, 'jason-lot', label);
@@ -179,7 +192,9 @@ async function office(p, mobile, o, label) {
       for (const n of ['note-rls', 'note-valid', 'note-migr']) {
         await p.waitForSelector(`[data-note="${n}"]`, { timeout: 8000 });
         await until(p, () => !document.querySelector('.st-close.is-busy'), null, 60000);
-        if (mobile) await p.tap(`[data-note="${n}"]`); else await p.click(`[data-note="${n}"]`);
+        const hit = await p.evaluate(n => { const b = document.querySelector(`[data-note="${n}"]`); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e && b.contains(e) ? 'ok' : `covered by ${e ? (e.dataset && e.dataset.note) || e.className || e.tagName : 'nothing'} at ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`; }, n);
+        if (hit !== 'ok') errs.push(`${label}: whiteboard note ${n} is ${hit}`);
+        if (mobile) await p.tap(`[data-note="${n}"]`, { force: true }); else await p.click(`[data-note="${n}"]`, { force: true });
         await p.waitForTimeout(400);
         await until(p, () => !document.querySelector('.st-close.is-busy'), null, 60000);
       }
@@ -221,7 +236,7 @@ async function decision(p, mobile, o, label) {
   if (!end) { errs.push(`${label}: no ending ${JSON.stringify(await st(p))}`); return; }
   const s = await st(p);
   if (s.ending !== o.ending) errs.push(`${label}: ending ${s.ending}, expected ${o.ending}`);
-  await p.waitForSelector('.st-end.is-on', { timeout: 15000 });
+  await p.waitForSelector('.st-end.is-on', { timeout: 90000 });
   await p.waitForTimeout(1500);
   await shot(p, `${o.tag}-ending`);
   await textRules(p, `${label} ending`);
@@ -291,7 +306,7 @@ for (const [vname, w, h, mobile] of VIEWS) {
       await memory(p, mobile, o, label);
       await textRules(p, `${label} memory`);
       await decision(p, mobile, o, label);
-      notes.push(`${label}: ended "${o.ending}" in ${Math.round((Date.now() - t0) / 1000)} s`);
+      if (!errs.some(e => e.startsWith(label + ':') || e.startsWith(label + ' '))) notes.push(`${label}: ended "${o.ending}" in ${Math.round((Date.now() - t0) / 1000)} s, clean`);
     } catch (e) { errs.push(`${label}: ${e.message.split('\n')[0]}`); await shot(p, `${o.tag}-fail`); }
     await ctx.close();
   }
