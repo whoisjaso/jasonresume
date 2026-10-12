@@ -289,7 +289,7 @@ function sayLine(L) {
     const sp = speakerOf(L.who);
     const textDur = S.holdLines ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052;
     const base = { L, t: 0, mode: "text", clock: 0, vt: 0, dur: textDur, endAt: null, audio: null, v: null, words: null, est: null, resolve, sp, offs: [], k: -2, stallT: 0, waitT: 0, perf: performance.now() };
-    base.est = estWords(L.t, 0.12, Math.max(0.5, textDur - 0.55));
+    base.est = estWords(L.t, 0.12, Math.max(0.5, Math.min(textDur, 1.1 + L.t.length * 0.052) - 0.55));
     if (curV) stopVoice();
     line = base;
     if (sp) { sp.talk = 0; sp.nod = 1; sp.brow = /\?$/.test(L.t) ? 1 : 0; }

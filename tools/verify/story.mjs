@@ -458,11 +458,11 @@ async function sync(vname, w, h, mobile) {
   await ctx.route('**/assets/voice/story-v2/*.mp3', async r => { if (nth++ % 2 === 0) await new Promise(res => setTimeout(res, 1100)); r.continue(); });
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
-  await p.goto(URL0 + '?debug=story&pr=0.3');
+  await p.goto(URL0 + '?debug=story&pr=0.2&sq=0');
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   await p.click('[data-title-play]');
-  await phase(p, 'explore', 120000);
+  if (!(await phase(p, 'explore', 400000))) { errs.push(`${label}: never got to explore ${JSON.stringify(await st(p))}`); await ctx.close(); return; }
   await until(p, () => !window.JG_STORY.debug.state().line, null, 60000);
   const on = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
   if (!on) { errs.push(`${label}: the score is off after Play, so nothing is voiced`); await ctx.close(); return; }
@@ -517,7 +517,7 @@ async function drive(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
-  await p.goto(URL0 + '?debug=story&fast=1&pr=' + (SHOTS ? '0.8' : '0.4'));
+  await p.goto(URL0 + '?debug=story&fast=1&sq=' + (SHOTS ? '1' : '0') + '&pr=' + (SHOTS ? '0.8' : '0.3'));
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
@@ -625,6 +625,51 @@ async function drive(vname, w, h, mobile) {
   else notes.push(`${label}: got out on your feet; the walk is back`);
   await ctx.close();
 }
+/* ---------- the caption ball: stills in flight and landed, and it never sits on the words ---------- */
+const BALL = process.argv.includes('--ball');
+async function ballCheck(vname, w, h, mobile) {
+  const label = `${vname} ball`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.5');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  if (!(await phase(p, 'explore', 300000))) { errs.push(`${label}: never got to explore`); await ctx.close(); return; }
+  await until(p, () => !window.JG_STORY.debug.state().line, null, 30000);
+  await p.evaluate(() => window.JG_STORY.debug.hold(true));
+  await use(p, mobile, 'jason-lot', label);
+  if (!(await until(p, () => { const s = window.JG_STORY.debug.sync(); return s.line && s.words.length >= 6; }, null, 30000))) { errs.push(`${label}: no line long enough to watch`); await ctx.close(); return; }
+  await p.waitForTimeout(600);
+  const r = await p.evaluate(() => {
+    const D = window.JG_STORY.debug, s = D.sync(), W = s.words, cap = document.querySelector('.st-cap').getBoundingClientRect();
+    const spans = [...document.querySelectorAll('.st-cap__said i')].map(e => { const q = e.getBoundingClientRect(); return { x0: q.left - cap.left, x1: q.right - cap.left, y0: q.top - cap.top + (q.height - parseFloat(getComputedStyle(e).fontSize)) * 0.5, y1: q.bottom - cap.top - (q.height - parseFloat(getComputedStyle(e).fontSize)) * 0.5 }; });
+    let over = 0, n = 0, landed = 0, air = 0, R = D.ball(0).R;
+    const end = W[W.length - 1][1] + 0.5;
+    for (let t = 0; t < end; t += 0.01) {
+      const b = D.ball(t).b; if (!b || b.o < 0.3) continue; n++;
+      if (b.air) air++; else landed++;
+      if (b.wrap) continue;
+      // the glyphs proper (not the line box): the ball may pass over the gap, never over a word's letters
+      if (spans.some(q => b.x + R > q.x0 + 1 && b.x - R < q.x1 - 1 && b.y + R > q.y0 + 2 && b.y - R < q.y1 - 2)) over++;
+    }
+    // a mid-flight moment and a landed one
+    let fly = null; for (let i = 1; i < W.length && !fly; i++) { const t = W[i][0] - Math.min(0.12, (W[i][0] - W[i - 1][0]) * 0.3); const b = D.ball(t).b; if (b && b.air && !b.wrap && W[i][0] - W[i - 1][0] > 0.2) fly = t; }
+    return { over, n, landed, air, fly: fly || W[2][0] - 0.06, land: W[2][0] + 0.08, rest: W[Math.min(4, W.length - 1)][0] + 0.12, line: s.line };
+  });
+  if (r.over) errs.push(`${label}: the ball sat on the letters in ${r.over} of ${r.n} samples`);
+  if (!r.air || !r.landed) errs.push(`${label}: the ball never ${r.air ? 'landed' : 'flew'}`);
+  await p.evaluate(t => window.JG_STORY.debug.pin(t), r.fly); await p.waitForTimeout(500);
+  await shot0(p, `caption-ball-${vname}-flight`);
+  await p.evaluate(t => window.JG_STORY.debug.pin(t), r.land); await p.waitForTimeout(500);
+  await shot0(p, `caption-ball-${vname}-landed`);
+  const cap = await p.$('.st-cap'); const bb = await cap.boundingBox();
+  await p.screenshot({ path: path.join(OUT, `caption-ball-${vname}.png`), clip: { x: Math.max(0, bb.x - 20), y: Math.max(0, bb.y - 30), width: Math.min(w, bb.width + 40), height: Math.min(h - Math.max(0, bb.y - 30), bb.height + 50) } });
+  await p.evaluate(() => { window.JG_STORY.debug.pin(null); window.JG_STORY.debug.hold(false); });
+  notes.push(`${label}: on ${r.line} the ball flew in ${r.air} and rested in ${r.landed} of ${r.n} samples, on the letters in ${r.over}; stills caption-ball-${vname}{,-flight,-landed}.png`);
+  await ctx.close();
+}
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
@@ -641,6 +686,7 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (BALL) { try { await ballCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} ball: ${e.message.split('\n')[0]}`); } continue; }
   if (DRIVE) { try { await drive(vname, w, h, mobile); } catch (e) { errs.push(`${vname} drive: ${e.message.split('\n')[0]}`); } continue; }
   if (SYNC) { try { await sync(vname, w, h, mobile); } catch (e) { errs.push(`${vname} sync: ${e.message.split('\n')[0]}`); } continue; }
   if (!NOFEEL && !ONLY_PATH) { try { await feel(vname, w, h, mobile); } catch (e) { errs.push(`${vname} feel: ${e.message.split('\n')[0]}`); } }
