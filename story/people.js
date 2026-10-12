@@ -180,7 +180,8 @@ function chainOf(name) {
   return "other";
 }
 const MASKS = {
-  calm: c => ({ armL: 0.4, armR: 0.4 })[c] || 1,
+  calm: c => ({ armL: 0.15, armR: 0.15 })[c] ?? 1,
+  talkBody: c => ({ spine1: 0.25, spine: 0.4, head: 0.45, armL: 0.05, armR: 0.05 })[c] ?? 0,
   upper: c => ({ spine1: 0.35, spine: 1, head: 1, armL: 1, armR: 1 })[c] || 0,
   upperL: c => ({ spine1: 0.3, spine: 0.8, head: 1, armL: 1 })[c] || 0,
   arms: c => ({ spine: 0.4, head: 0.6, armL: 1, armR: 1 })[c] || 0,
@@ -435,6 +436,13 @@ class Person {
       const w = this.chestPocket || new THREE.Vector3(0.1, 0.12, 0.125);
       ps.position.copy(w.clone().applyQuaternion(sp.wi)); ps.quaternion.copy(sp.wi); this.bones.spine_03.add(ps);
     }
+    if (this.bones.hand_r && this.handRig && this.handRig.r) {
+      // a phone, in the right hand when hold is "phone": its long side across the knuckles, its back to the fingers
+      const H = this.handRig.r, ph = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.148, 0.008), paint({ color: "#111214", wet: 1.4, rim: 0.4 }));
+      _m.makeBasis(H.dL, new THREE.Vector3().crossVectors(H.nL, H.dL), H.nL); ph.quaternion.setFromRotationMatrix(_m);
+      ph.position.copy(H.palmL).addScaledVector(H.nL, 0.014).addScaledVector(H.dL, 0.01);
+      ph.visible = false; this.bones.hand_r.add(ph); this.phoneProp = ph;
+    }
     if (L.umbrella && this.bones.hand_r) {
       // a long umbrella, held by its hook at about chest height; the shaft runs down through the fist and the canopy rides above the head
       const u = new THREE.Group();
@@ -563,7 +571,7 @@ class Person {
     const talking = this.talk > 0.05 && this.sitK < 0.5;
     this.talkW = damp(this.talkW, talking ? 1 : 0, talking ? 2.2 : 1.2, dt);
     // speaking: the captured conversation's hands come through more strongly (they stay inside the arm limits below)
-    if (this.talkW > 0.01 && M.clips.converse) { M.sample(M.clips.converse, this.convT || 0, P.c); blendPose(acc0, P.c, this.talkW * 0.6 * (1 - this.locoW), this.hold === "umbrella" ? this.mk.armL : this.mk.arms); }
+    if (this.talkW > 0.01 && M.clips.converse) { M.sample(M.clips.converse, this.convT || 0, P.c); blendPose(acc0, P.c, this.talkW * 0.6 * (1 - this.locoW), this.mk.talkBody); }
     // sitting: down, settled (talking when talking), and up
     if (this.sitK > 0.001 && M.clips.sit) {
       const st = this.sitState;
@@ -619,6 +627,7 @@ class Person {
     // ---- procedural layers in character axes
     const breathe = Math.sin(t * TAU * 0.24 + this.tempo * 5);
     const still = (1 - this.locoW) * (1 - this.sitK);
+    this.stillK = still;
     // lean into the turn (centripetal) and into the start (acceleration); never more than a few degrees
     this.lean = damp(this.lean, clamp(Math.atan(this.gs * this.yawRate / G) * 0.9, -0.22, 0.22), 6, dt);
     this.leanF = damp(this.leanF, clamp(this.gsF / G * 0.7, -0.08, 0.12), 5, dt);
@@ -646,12 +655,10 @@ class Person {
     for (const sd of ["l", "r"]) { if (this.hold === "umbrella" && sd === "r") continue; const k = sd === "l" ? 1 : 0.85; this.rot("upperarm_" + sd, -0.07 * elb, 0, 0); this.rot("lowerarm_" + sd, -0.3 * k * elb, 0, 0); }
     // running: the shoulders counter the hips (the arms themselves are driven by IK in arms())
     const jw = this.jogW * this.locoW;
-    this.armSwing = 0;
-    if (jw > 0.01) {
-      const jc = LC[2], u = jc && jc.swing ? Math.cos(((this.gPhase + jc.heel) % 1) * TAU - jc.swing) : Math.cos(this.gPhase * TAU);
-      this.armSwing = u;
-      this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0);
-    }
+    // the arms' swing, from the clips' own feet: +1 when the left arm is furthest forward
+    let u = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) u += this.lw[i] * Math.cos(((this.gPhase + LC[i].heel) % 1) * TAU - (LC[i].swing || 0));
+    this.armSwing = u;
+    if (jw > 0.01) { this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0); }
     // reaching: lean and turn toward what the hand goes for, and bend at the knees for something low
     this.reachBody(hipC, dt);
 
@@ -689,7 +696,7 @@ class Person {
     // ---- forward kinematics with the hips in place, then the feet and the hands
     this.fk(hipC);
     if (DEBUG.ik) { this.legs(dt); this.arms(dt); }
-    this.hands(dt);
+    if (DEBUG.hands !== false) this.hands(dt);
     // write the bones
     for (let i = 0; i < n; i++) this.order[i].quaternion.copy(lq[i]);
     const pb = this.order[pi], pp = par[pi] >= 0 ? par[pi] : -1;
@@ -697,6 +704,7 @@ class Person {
     pb.position.copy(_v1);
     this.eyes(dt, wantY, wantP);
     this.face(dt);
+    if (this.phoneProp) this.phoneProp.visible = this.holdK.phone > 0.6 && this.showPhone !== false;
     if (this.umbrella && this.bones.hand_r) {
       const hp = this.wp[this.bi.hand_r];
       this.umbrella.position.copy(hp).applyMatrix4(this.root.matrix).add(_v1.set(0, 0.03, 0));
@@ -815,27 +823,305 @@ class Person {
     this.fkFrom(c);
   }
 
-  /* ---- the arms: props and holds, by IK on top of the clip ---- */
+  /* ---- the arms: props, holds, the running arms, reaches and the wheel, by IK on top of the clip ---- */
   arms(dt) {
     const want = { umbrella: this.hold === "umbrella" ? 1 : 0, phone: this.hold === "phone" ? 1 : 0 };
-    for (const k of ["umbrella", "phone"]) this.holdK[k] = damp(this.holdK[k] || 0, want[k] * (1 - this.sitK), 5, dt);
+    for (const k of ["umbrella", "phone"]) this.holdK[k] = damp(this.holdK[k] || 0, want[k] * (1 - this.sitK) * (1 - (this.carK || 0)), 5, dt);
+    const R = this.rest;
+    // walking and running: the capture's arms carry the hands in front of the hips, palms up; instead the arms swing
+    // from the shoulder by IK, opposite the legs. Walking: nearly straight, the hands passing the thighs, further at
+    // speed. Running: loose fists from the hip to the chest, elbows held near a right angle and pointing back
+    const lk = this.locoW * (1 - (this.carK || 0)) * (1 - this.sitK);
+    if (lk > 0.01) for (const s of ["l", "r"]) {
+      const g = this.arm[s]; if (!g || (s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5))) continue;
+      if (this.reaches && this.reaches[s]) continue;
+      const side = s === "l" ? 1 : -1, u = this.armSwing * side, f = 0.5 + 0.5 * u, S = this.wp[g.ua], L = g.l1 + g.l2;
+      const amp = clamp(this.gs / 1.45, 0.4, 1.3), jr = this.jogW;
+      const walk = _f3.set(S.x + side * lerp(0.06, 0.035, f), S.y - L * lerp(0.95, 0.9, f * amp), S.z + 0.03 + lerp(-0.15, 0.17, f) * amp);
+      const runT = _f4.set(S.x - side * lerp(0.0, 0.07, f), S.y - lerp(0.4, 0.27, f) + Math.abs(Math.sin(this.gPhase * TAU * 2)) * 0.01, S.z + lerp(-0.16, 0.2, f));
+      const tgt = _f1.copy(walk).lerp(runT, jr);
+      const pole = _f2.set(S.x + side * lerp(0.25, 0.3, jr), S.y - lerp(0.3, 0.35, jr), S.z - 0.6);
+      this.ikArm(s, tgt, pole, lk);
+    }
+    // standing: the capture clasps its hands in front, where the fingers pass through each other; the arms hang instead,
+    // relaxed at the sides, elbows soft, the hands by the thighs and swaying a little with the breath and the weight
+    const hang = (this.stillK || 0) * (1 - this.talkW) * (1 - (this.styleW || 0)) * (this.shot ? 0 : 1) * (1 - (this.carK || 0));
+    if (hang > 0.01) for (const s of ["l", "r"]) {
+      const g = this.arm[s]; if (!g) continue;
+      const k = hang * (s === "r" ? (1 - this.holdK.umbrella) * (1 - this.holdK.phone) : 1) * (1 - this.engW * 0.25);
+      if (k < 0.01) continue;
+      const side = s === "l" ? 1 : -1, S = this.wp[g.ua], L = g.l1 + g.l2;
+      const sw = Math.sin(this.t * 0.9 + side) * 0.008 + (this.wK || 0) * side * 0.01;
+      const tgt = _f1.set(S.x + side * 0.05, S.y - L * 0.96, S.z + 0.035 + sw);
+      this.ikArm(s, tgt, _f2.set(S.x + side * 0.25, S.y - 0.3, S.z - 0.6), k);
+    }
+    // talking: beats. On a stressed word (or every second or so without the voice's words) a hand comes up to an open
+    // palm in front of the waist, holds the thought, and settles back; the captured talker's arms cross and his
+    // fingers go through each other, so these replace them
+    this.gestures(dt);
+    // the phone at the ear: the hand cupped round it, the palm to the cheek, the elbow down and out
+    const pk = this.holdK.phone;
+    if (pk > 0.01 && this.arm.r && this.handRig.r) {
+      const hb = this.bi.head, hr = this.rest.head, H = this.handRig.r;
+      const ear = _f1.set(-0.075, 0.06, 0.0).applyQuaternion(hr.wi).applyQuaternion(this.wq[hb]).add(this.wp[hb]);
+      // the phone runs from the ear to the mouth; the fingers wrap its back, pointing back along the head
+      ear.y -= 0.055; ear.z += 0.035;
+      const n = _f3.set(1, 0, 0.25).normalize(), d = _f4.set(0.2, 0.3, -0.93).normalize();
+      (this.phoneAim || (this.phoneAim = { n: new THREE.Vector3(), d: new THREE.Vector3() })).n.copy(n); this.phoneAim.d.copy(d);
+      const off = this.handOffset(H, H.palmL, d, n, _v3);
+      const S = this.wp[this.arm.r.ua];
+      this.ikArm("r", _f2.copy(ear).sub(off).addScaledVector(n, -0.03), _v4.set(S.x - 0.35, S.y - 0.4, S.z - 0.1), pk);
+    }
     const uk = this.holdK.umbrella;
     if (uk > 0.01 && this.arm.r) {
       // the right fist in front of the chest, the forearm up, the elbow by the ribs
-      const g = this.arm.r, R = this.rest;
-      const sh = this.wp[g.ua];
-      const tgt = _f1.set(R.upperarm_r.at.x * 0.7, R.upperarm_r.at.y - 0.16, R.upperarm_r.at.z + 0.27);
+      const tgt = _f1.set(R.upperarm_r.at.x * 0.55, R.upperarm_r.at.y - 0.2, R.upperarm_r.at.z + 0.26);
       tgt.y += Math.sin(this.t * 2.1) * 0.006 + this.locoW * 0.01 * Math.sin(this.phase * 2);
-      const tg = _f2.copy(this.wp[g.ha]).lerp(tgt, uk);
-      this.ik2(g.ua, g.la, g.ha, g.l1, g.l2, tg, 0);
-      // the fist closes round the handle
-      this.curl("r", 0.9 * uk);
+      this.ikArm("r", tgt, _f2.set(R.upperarm_r.at.x - 0.25, R.upperarm_r.at.y - 0.5, R.upperarm_r.at.z - 0.1), uk);
+    }
+    // reaches: to a point in the world, approach, contact, retract
+    for (const s of ["l", "r"]) { const r = this.reaches && this.reaches[s]; if (r) this.reachArm(r, dt); }
+    // the wheel
+    if (this.carK > 0.001) this.wheelArms(dt);
+  }
+
+  gestures(dt) {
+    const G = this.gest || (this.gest = { l: { k: 0, t: 0, d: 0, x: 0, y: 0 }, r: { k: 0, t: 0, d: 0, x: 0, y: 0 }, next: 0.4, lastW: null });
+    const can = this.talkW * (1 - this.locoW * 0.7) * (1 - this.sitK) * (1 - (this.styleW || 0)) * (1 - (this.carK || 0));
+    // a beat: on a new long or stressed word, or on a timer when there are no word timings
+    let beat = false;
+    if (this.talk > 0.05) {
+      if (this.lastWord && this.lastWord !== G.lastW) { G.lastW = this.lastWord; const w = this.lastWord.w.replace(/[^a-z]/gi, ""); if ((w.length >= 5 || /[!?,.]$/.test(this.lastWord.w)) && this.t - (G.at || -9) > 0.7) beat = true; }
+      if (!(this.words && this.t - this.wordsAt < 0.25)) { G.next -= dt; if (G.next <= 0) { beat = true; G.next = 0.9 + Math.random() * 1.1; } }
+    }
+    if (beat && can > 0.2) {
+      G.at = this.t;
+      const free = s => !(this.reaches && this.reaches[s]) && !(s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5));
+      let hs = Math.random() < 0.3 ? ["l", "r"] : [Math.random() < 0.62 ? "r" : "l"];
+      hs = hs.filter(free); if (!hs.length && free("l")) hs = ["l"];
+      for (const s of hs) { const g = G[s]; g.t = 0; g.d = 0.7 + Math.random() * 0.6; g.x = Math.random(); g.y = Math.random(); }
+    }
+    for (const s of ["l", "r"]) {
+      const g = G[s]; g.t += dt;
+      const want = g.t < g.d ? 1 : 0;
+      g.k = damp(g.k, want, want ? 7 : 3.2, dt);
+      // between beats, the hands rest a little forward and up (ready to talk), not hanging straight
+      const ready = can * 0.3, k = Math.max(ready, g.k * can);
+      this.gestK = this.gestK || { l: 0, r: 0 }; this.gestK[s] = g.k * can;
+      const arm = this.arm[s]; if (!arm || k < 0.01) continue;
+      if (this.reaches && this.reaches[s]) continue;
+      if (s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5)) continue;
+      const side = s === "l" ? 1 : -1, S = this.wp[arm.ua];
+      const up = g.k * can / Math.max(k, 1e-3);
+      const tgt = _f1.set(S.x + side * lerp(0.04, -0.03 + g.x * 0.07, up), S.y - lerp(0.52, 0.32 - g.y * 0.07, up), S.z + lerp(0.1, 0.34 + g.y * 0.05, up));
+      this.ikArm(s, tgt, _f2.set(S.x + side * 0.35, S.y - 0.45, S.z - 0.3), k);
     }
   }
-  curl(s, k) {
-    for (const fg of ["index", "middle", "ring", "pinky"]) for (let j = 1; j <= 3; j++) {
-      const n = fg + "_0" + j + "_" + s, i = this.bi[n]; if (i == null) continue;
-      this.lq[i].multiply(_q1.setFromAxisAngle(_v1.set(0, 0, s === "l" ? 1 : -1), k * (j === 1 ? 0.9 : 1.1)));
+
+  /* two-bone arm IK with a pole: the elbow bends toward pole (character space). k blends from the arm as it was */
+  ikArm(s, tgt, pole, k) {
+    const g = this.arm[s]; if (!g || k <= 0) return;
+    const wq = this.wq, wp = this.wp, lq = this.lq, par = this.par;
+    const q0a = _kq.copy(lq[g.ua]), q0b = _kq2.copy(lq[g.la]);
+    const A = wp[g.ua], l1 = g.l1, l2 = g.l2;
+    const at = _k1.copy(tgt).sub(A); let d = at.length(); at.divideScalar(d || 1);
+    d = clamp(d, Math.abs(l1 - l2) + 0.01, l1 + l2 - 0.003);
+    // the elbow: along the shoulder-to-target line, out toward the pole
+    const x = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - x * x));
+    const pp = _k2.copy(pole).sub(A); pp.addScaledVector(at, -pp.dot(at)); if (pp.lengthSq() < 1e-8) pp.set(0, -1, 0); pp.normalize();
+    const E = _k3.copy(A).addScaledVector(at, x).addScaledVector(pp, h);
+    const T = _k4.copy(A).addScaledVector(at, d);
+    // swing the upper arm onto the elbow, then the forearm onto the wrist (shortest arcs, so the clip's twist stays)
+    _v1.copy(wp[g.la]).sub(A).normalize(); _v2.copy(E).sub(A).normalize();
+    _q3.setFromUnitVectors(_v1, _v2); wq[g.ua].premultiply(_q3); lq[g.ua].copy(wq[par[g.ua]]).invert().multiply(wq[g.ua]); this.fkFrom(g.ua);
+    _v1.copy(wp[g.ha]).sub(wp[g.la]).normalize(); _v2.copy(T).sub(wp[g.la]).normalize();
+    _q3.setFromUnitVectors(_v1, _v2); wq[g.la].premultiply(_q3); lq[g.la].copy(wq[g.ua]).invert().multiply(wq[g.la]);
+    if (k < 1) { lq[g.ua].copy(q0a.slerp(lq[g.ua], k)); lq[g.la].copy(q0b.slerp(lq[g.la], k)); }
+    this.fkFrom(g.ua);
+  }
+
+  /* world point to character space (and back) */
+  toChar(v, out) { this.group.updateMatrixWorld(); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert(); return out.copy(v).applyMatrix4(_m); }
+  toWorld(v, out) { this.group.updateMatrixWorld(); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix); return out.copy(v).applyMatrix4(_m); }
+
+  /* reach for a point in the world with one hand, by IK: the hand travels to it (approach), stays on it (contact), and
+     comes back (retract). point: a THREE.Vector3 (read live, so it can move with a door) or a function returning one.
+     o.hand "l" | "r" (default: the side the point is on), o.hold "grip" | "pinch" | "touch" | "press" (what the hand does
+     there, default "touch"), o.stay true to keep the hand there until release(hand), o.palm a world direction the palm
+     should face at contact, o.dur the approach in seconds, o.onContact called at contact. Resolves when the hand is back
+     (or at contact with stay). */
+  reachTo(point, o = {}) {
+    const P = typeof point === "function" ? point : () => point;
+    let s = o.hand;
+    if (s !== "l" && s !== "r") { const c = this.toChar(P(), _v4); s = c.x >= 0 ? "l" : "r"; if (this.hold === "umbrella" || this.holdK.umbrella > 0.5) s = "l"; }
+    const old = this.reaches && this.reaches[s]; if (old && old.resolve) old.resolve(false);
+    const c = this.toChar(P(), new THREE.Vector3()), g = this.arm[s];
+    const far = g ? c.distanceTo(this.wp[g.ua]) : 0.6;
+    const dIn = o.dur || clamp(0.38 + far * 0.32, 0.45, 0.85);
+    return new Promise(res => {
+      (this.reaches || (this.reaches = {}))[s] = { s, P, hold: o.hold || "touch", stay: !!o.stay, palm: o.palm || null, t: 0, dIn, dOn: o.hold === "press" ? 0.18 : o.contact != null ? o.contact : 0.32, dOut: 0.5, k: 0, phase: "in", onContact: o.onContact, resolve: res, from: null, tc: new THREE.Vector3() };
+    });
+  }
+  /* bring a hand back from a reach that stayed (or cut one short) */
+  release(hand) {
+    const rs = this.reaches || {}; const list = hand ? [rs[hand]] : [rs.l, rs.r];
+    return Promise.all(list.filter(Boolean).map(r => new Promise(res => { if (r.resolve) r.resolve(true); r.resolve = res; r.phase = "out"; r.t = 0; })));
+  }
+  reachArm(r, dt) {
+    const g = this.arm[r.s], H = this.handRig[r.s]; if (!g || !H) { if (r.resolve) r.resolve(false); this.reaches[r.s] = null; return; }
+    r.t += dt;
+    const tc = this.toChar(r.P(), r.tc);
+    if (r.phase === "in") { r.k = sstep(0, 1, r.t / r.dIn); if (r.t >= r.dIn) { r.phase = "on"; r.t = 0; if (r.onContact) try { r.onContact(); } catch (e) {} if (r.stay && r.resolve) { r.resolve(true); r.resolve = null; } } }
+    else if (r.phase === "on") { r.k = 1; if (!r.stay && r.t >= r.dOn) { r.phase = "out"; r.t = 0; } }
+    else { r.k = 1 - sstep(0, 1, r.t / r.dOut); if (r.t >= r.dOut) { this.reaches[r.s] = null; this.taskLook = null; if (r.resolve) r.resolve(true); return; } }
+    // where the hand goes: the palm faces the target from the shoulder's side (or as asked); the contact point of the hand
+    // (the grip's centre, the pads of the fingers, or the fingertip) lands on the target
+    const S = this.wp[g.ua], side = r.s === "l" ? 1 : -1;
+    const app = _f3.copy(tc).sub(S); app.y *= 0.6; app.normalize();
+    // the hand's frame at contact: d along the fingers, n out of the palm (character space)
+    const N = r.aimN || (r.aimN = new THREE.Vector3()), D = r.aimD || (r.aimD = new THREE.Vector3());
+    if (r.hold === "press") { D.copy(app); N.set(-side * 0.3, -1, 0); }                 // a fingertip on a button: fingers to it, palm down
+    else if (r.hold === "pinch") { D.copy(app); N.set(-side * 0.35, -1, 0.1); }          // picking up: palm down over it
+    else if (r.hold === "grip") { D.copy(app); N.set(-side, -0.3, 0.05); }               // a handle: fingers round it, knuckles out
+    else { N.copy(app); D.set(0, 1, 0.2); if (tc.y < S.y - 0.45) { N.set(0, -1, 0.2); D.copy(app); } } // a flat hand on it: fingers up, or palm down on a low surface
+    if (r.palm) N.copy(r.palm).transformDirection(_m.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert());
+    N.normalize();
+    if (r.hold === "touch" && !(tc.y < S.y - 0.45)) D.addScaledVector(N, -D.dot(N)).normalize();
+    else { N.addScaledVector(D.normalize(), -N.dot(D)).normalize(); }
+    if (D.lengthSq() < 0.5) D.set(0, 0, 1);
+    // the wrist goes where the hand's contact point, in that orientation, puts the target
+    const cl = r.hold === "grip" ? H.gripL : r.hold === "press" ? H.tipL : r.hold === "pinch" ? _v1.copy(H.dL).multiplyScalar(0.13).addScaledVector(H.nL, 0.03) : H.palmL;
+    const off = this.handOffset(H, cl, r.aimD, r.aimN, _v3);
+    const wrist = _f1.copy(tc).sub(off);
+    // eased from where the hand is now, along a small arc (up and out a little at mid-approach)
+    if (!r.from) r.from = this.wp[g.ha].clone();
+    const lift = Math.sin(r.k * Math.PI) * 0.05 * (r.phase === "in" ? 1 : 0.5);
+    const tgt = _f2.copy(r.from).lerp(wrist, r.k); tgt.y += lift; tgt.x += side * lift * 0.6;
+    if (r.phase !== "in") r.from.copy(this.wp[g.ha]);
+    const pole = _v4.set(S.x + side * 0.35, S.y - 0.45, S.z - 0.2);
+    this.ikArm(r.s, tgt, pole, 1);
+    r.k2 = r.k; // used by hands() for the aim and the pose
+    this.taskLook = r.k > 0.2 ? this.toWorld(tc, this._look || (this._look = new THREE.Vector3())) : this.taskLook;
+  }
+  /* the offset from the wrist to a point given in the hand's own frame (cl), once the hand is aimed d, n (character space) */
+  handOffset(H, cl, d, n, out) {
+    const bL = _k1.crossVectors(H.nL, H.dL), x = cl.dot(H.dL), y = cl.dot(bL), z = cl.dot(H.nL);
+    return out.copy(d).multiplyScalar(x).addScaledVector(n, z).addScaledVector(_k2.crossVectors(n, d), y);
+  }
+  /* reaching: the body helps. Lean toward a far target, turn toward one off to the side, bend the knees for a low one */
+  reachBody(hipC, dt) {
+    let lean = 0, twist = 0, drop = 0, fx = 0, fz = 0;
+    for (const s of ["l", "r"]) {
+      const r = this.reaches && this.reaches[s]; if (!r || !r.tc || !this.arm[s]) continue;
+      const g = this.arm[s], c = r.tc, k = r.k || 0;
+      // from the shoulder at rest (the live one moves with the lean this sets)
+      const S = this.rest[s === "l" ? "upperarm_l" : "upperarm_r"].at;
+      const reach = g.l1 + g.l2 + 0.05;
+      const low = clamp(0.95 - c.y, 0, 0.95);
+      const ex = Math.max(0, Math.hypot(c.x - S.x, c.z - S.z, (c.y + low * 0.6) - S.y) - reach);
+      lean = Math.max(lean, clamp(ex * 2.2, 0, 0.5) * k);
+      const h = Math.hypot(c.x, c.z) || 1; fx += (c.x / h) * ex * 0.35 * k; fz += (c.z / h) * ex * 0.35 * k;
+      twist += clamp(Math.atan2(c.x, Math.max(0.15, c.z)) * 0.35, -0.35, 0.35) * k;
+      drop = Math.max(drop, low * k);
+    }
+    this.rLean = damp(this.rLean || 0, lean, 10, dt); this.rTwist = damp(this.rTwist || 0, twist, 10, dt); this.rDrop = damp(this.rDrop || 0, drop, 10, dt);
+    this.rFx = damp(this.rFx || 0, fx, 10, dt); this.rFz = damp(this.rFz || 0, fz, 10, dt);
+    if (this.rLean + Math.abs(this.rTwist) + this.rDrop + Math.abs(this.rFz) < 0.002) return;
+    // low: a squat, hips back, back bent forward (the knees follow from the feet staying planted)
+    const d = this.rDrop;
+    hipC.y -= d * 0.6; hipC.z -= d * 0.18; hipC.x += this.rFx; hipC.z += this.rFz * (1 - d);
+    this.rot("pelvis", d * 0.3, 0, 0);
+    this.rot("spine_01", this.rLean * 0.4 + d * 0.18, this.rTwist * 0.3, 0);
+    this.rot("spine_02", this.rLean * 0.35 + d * 0.14, this.rTwist * 0.35, 0);
+    this.rot("spine_03", this.rLean * 0.25 + d * 0.05, this.rTwist * 0.35, 0);
+    this.rot("neck_01", -d * 0.35, 0, 0);
+  }
+
+  /* ---- the hands: a pose for each (fingers, thumb, spread), the forearm turned so the palm faces the right way, the
+     wrist kept natural (the capture's wrists bend back and its palms face forward), all blended by what the body does ---- */
+  hands(dt) {
+    const st = this.handSt || (this.handSt = { l: { w: { relaxed: 1 } }, r: { w: { relaxed: 1 } } });
+    const run = sstep(1.9, 2.6, this.gs) * this.locoW * (1 - this.sitK);
+    const talkAll = this.talkW * (1 - this.locoW) * (1 - this.sitK);
+    const clipHands = Math.max(this.styleW || 0, this.sitK, this.shot ? 1 : 0);
+    for (const s of ["l", "r"]) {
+      const H = this.handRig[s], g = this.arm[s]; if (!H || !g) continue;
+      const S = st[s], side = s === "l" ? 1 : -1;
+      const talk = Math.max(talkAll * 0.3, this.gestK ? this.gestK[s] : 0);
+      // the pose this hand wants
+      const W = {};
+      W.relaxed = 1;
+      W.fist = run * 1.6;
+      W.open = talk * (s === "r" && this.holdK.umbrella > 0.5 ? 0 : 1.3);
+      if (s === "r") { W.grip = (this.holdK.umbrella || 0) * 4; W.phone = (this.holdK.phone || 0) * 4; }
+      const r = this.reaches && this.reaches[s];
+      if (r) W[{ grip: "grip", pinch: "pinch", press: "point", touch: "flat" }[r.hold] || "flat"] = 5 * sstep(0.2, 0.8, r.k);
+      if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s]) W.grip = (W.grip || 0) + 6 * this.wheelHands[s].k;
+      if (this.handPose && this.handPose[s]) W[this.handPose[s]] = (W[this.handPose[s]] || 0) + 6;
+      for (const k of Object.keys(S.w)) if (!(k in W)) W[k] = 0;
+      let tot = 0;
+      for (const k in W) { S.w[k] = damp(S.w[k] || 0, W[k], r || this.carK ? 14 : 8, dt); tot += S.w[k]; }
+      // mix the curls
+      const cur = S.cur || (S.cur = { i: [0, 0, 0], m: [0, 0, 0], r: [0, 0, 0], p: [0, 0, 0], t: [0, 0, 0], s: 0 });
+      for (const f of "imrpt") for (let j = 0; j < 3; j++) cur[f][j] = 0;
+      cur.s = 0;
+      for (const k in S.w) { const w = S.w[k] / (tot || 1), P = HANDS[k]; if (!P || w < 1e-4) continue; for (const f of "imrpt") for (let j = 0; j < 3; j++) cur[f][j] += P[f][j] * w; cur.s += P.s * w; }
+      // a little life: the fingers of a hanging hand drift
+      const life = Math.sin(this.t * 0.7 + side * 1.3) * 0.04 * (1 - run);
+      // 1. turn the forearm so the palm faces where it should (about the forearm's own axis; the wrist stays put)
+      const la = g.la, ha = g.ha, wq = this.wq, wp = this.wp, lq = this.lq;
+      const fa = _v1.copy(wp[ha]).sub(wp[la]).normalize();
+      let aimK = 0, nT = null, dT = null;
+      if (r && r.aimN && r.k2 > 0) { aimK = r.k2; nT = r.aimN; dT = r.aimD; }
+      if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s] && this.wheelHands[s].k > 0) { aimK = this.wheelHands[s].k; nT = this.wheelHands[s].n; dT = this.wheelHands[s].d; }
+      if (s === "r" && this.holdK.phone > 0.01 && this.phoneAim && aimK < this.holdK.phone) { aimK = this.holdK.phone; nT = this.phoneAim.n; dT = this.phoneAim.d; }
+      if (s === "r" && this.holdK.umbrella > 0.01 && aimK < this.holdK.umbrella) { aimK = this.holdK.umbrella; nT = _f3.set(0.3, 0, -1).normalize(); dT = _f4.set(1, 0, 0.3).normalize(); }
+      // the palm's resting direction: toward the thigh hanging, inward running, inward and up while explaining
+      const pal = _v2.set(-side, 0, -0.3).normalize();
+      pal.lerp(_v3.set(-side, 0.15, 0.05).normalize(), run).lerp(_v3.set(-side * 0.75, 0.65, 0.1).normalize(), talk * 0.7).normalize();
+      if (aimK > 0) pal.lerp(nT, aimK).normalize();
+      const twistK = (1 - clipHands * 0.7) * 0.9 + aimK * 0.1;
+      if (twistK > 0.01) {
+        const n = _v3.copy(H.nL).applyQuaternion(wq[ha]);
+        const a = n.addScaledVector(fa, -n.dot(fa)), b = _v4.copy(pal).addScaledVector(fa, -pal.dot(fa));
+        if (a.lengthSq() > 1e-6 && b.lengthSq() > 1e-6) {
+          a.normalize(); b.normalize();
+          let ang = Math.atan2(_k1.crossVectors(a, b).dot(fa), a.dot(b));
+          ang = clamp(ang, -1.6, 1.6) * twistK;
+          // most of the turn in the forearm, the rest at the wrist
+          _q3.setFromAxisAngle(fa, ang * 0.8); wq[la].premultiply(_q3); lq[la].copy(wq[g.ua]).invert().multiply(wq[la]); this.fkFrom(la);
+        }
+      }
+      // 2. the wrist: in line with the forearm, flexed a touch toward the palm (more hanging, a little running, slightly
+      //    back while explaining); or, holding something, the hand set exactly to the grip
+      const flex = lerp(lerp(0.07, 0.05, run), -0.12, talk * 0.8) + life * 0.4;
+      const dev = DEBUG.dev == null ? -0.08 * (1 - run) : DEBUG.dev;
+      _q1.copy(this.rest[this.order[ha].name].q).multiply(_q2.setFromAxisAngle(_k2.crossVectors(H.dL, H.nL).normalize(), flex)).multiply(_kq.setFromAxisAngle(H.nL, dev * side));
+      const wristK = clamp(1 - clipHands * 0.75, 0, 1);
+      lq[ha].slerp(_q1, wristK);
+      if (aimK > 0.001) {
+        // the hand's full frame: fingers along d, palm facing n (character space)
+        const n = _k3.copy(nT).addScaledVector(dT, -nT.dot(dT)).normalize(), d = _k4.copy(dT);
+        _m.makeBasis(d, _k1.crossVectors(n, d), n);
+        _kq.setFromRotationMatrix(_m);
+        _m2.makeBasis(H.dL, _k1.crossVectors(H.nL, H.dL), H.nL);
+        _kq2.setFromRotationMatrix(_m2).invert();
+        const want = _kq.multiply(_kq2); // world: takes the hand's own axes to (d, n)
+        // never bend the wrist past what a wrist does: limit the angle between the forearm and the fingers
+        const lim = 1.05;
+        const dw = _v4.copy(H.dL).applyQuaternion(want), ang = Math.acos(clamp(dw.dot(fa), -1, 1));
+        if (ang > lim) { _q3.setFromUnitVectors(dw, _v3.copy(dw).lerp(fa, 1 - lim / ang).normalize()); want.premultiply(_q3); }
+        _q2.copy(wq[la]).invert().multiply(want);
+        lq[ha].slerp(_q2, aimK);
+      }
+      wq[ha].copy(wq[la]).multiply(lq[ha]);
+      // 3. the fingers
+      for (const F of H.fingers) {
+        const c = cur[F.f][F.j - 1] + (F.f !== "t" ? life * (F.j === 1 ? 1 : 0.5) : 0);
+        lq[F.i].copy(F.q).multiply(_q1.setFromAxisAngle(F.fx, c));
+        if (F.j === 1) lq[F.i].multiply(_q2.setFromAxisAngle(F.sx, cur.s * F.sgn));
+      }
+      this.fkFrom(ha);
     }
   }
 
@@ -907,6 +1193,19 @@ class Person {
   }
 }
 function t0(p) { return p.t; }
+
+/* the hand poses: per finger (i index, m middle, r ring, p little, t thumb) the curl at each joint from the knuckle out,
+   in radians toward the palm, and s the spread of the fingers. hands() blends them per hand by what the body does */
+const HANDS = {
+  relaxed: { i: [0.2, 0.3, 0.18], m: [0.28, 0.4, 0.22], r: [0.36, 0.48, 0.26], p: [0.44, 0.52, 0.3], t: [0.22, 0.12, 0.18], s: 0.02 },
+  flat:    { i: [0.06, 0.08, 0.04], m: [0.06, 0.08, 0.04], r: [0.08, 0.1, 0.05], p: [0.1, 0.12, 0.06], t: [0.05, 0.05, 0.08], s: 0.03 },
+  open:    { i: [0.1, 0.14, 0.08], m: [0.14, 0.2, 0.1], r: [0.2, 0.26, 0.14], p: [0.26, 0.3, 0.16], t: [0.0, 0.08, 0.12], s: 0.1 },
+  fist:    { i: [1.0, 1.35, 0.75], m: [1.1, 1.4, 0.75], r: [1.15, 1.4, 0.75], p: [1.2, 1.35, 0.7], t: [0.7, 0.35, 0.45], s: -0.04 },
+  grip:    { i: [0.85, 1.05, 0.55], m: [0.92, 1.1, 0.55], r: [0.98, 1.1, 0.55], p: [1.05, 1.05, 0.5], t: [0.75, 0.3, 0.3], s: -0.03 },
+  pinch:   { i: [0.55, 0.7, 0.35], m: [0.7, 0.9, 0.5], r: [0.85, 1.05, 0.55], p: [0.95, 1.05, 0.55], t: [0.65, 0.3, 0.3], s: 0 },
+  point:   { i: [0.04, 0.05, 0.03], m: [1.15, 1.4, 0.75], r: [1.2, 1.4, 0.75], p: [1.25, 1.35, 0.7], t: [0.6, 0.35, 0.4], s: 0 },
+  phone:   { i: [0.3, 0.35, 0.2], m: [0.36, 0.42, 0.22], r: [0.44, 0.46, 0.25], p: [0.52, 0.5, 0.3], t: [0.55, 0.1, 0.1], s: 0.02 }
+};
 
 /* blend pose b into a with weight w (per bone mask m), all in local quaternions */
 function blendPose(a, b, w, m) {

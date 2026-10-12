@@ -289,28 +289,57 @@ function floatGeo(mesh) {
   if (g.attributes.normal) g.attributes.normal.needsUpdate = true;
   return g;
 }
-async function loadCars() {
-  await Promise.allSettled(CAR_KINDS.map(async kind => {
-    const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v1.glb";
-    let gltf;
-    try { gltf = await Promise.race([loader.loadAsync(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 12000))]); } catch (e) { console.warn("[world] car " + kind, e && e.message); return; } finally { progress(); }
-    const byMat = new Map(); let meta = null;
-    gltf.scene.updateMatrixWorld(true);
-    gltf.scene.traverse(o => {
-      if (o.userData && o.userData.L) meta = o.userData;
-      if (!o.isMesh) return;
+/* a node's own meshes (not those of the moving parts hung from it), merged by material, in the car's space */
+function nodeParts(node) {
+  const byMat = new Map();
+  const walk = o => {
+    if (o !== node && MOVING.test(o.name)) return;
+    if (o.isMesh) {
       const name = (o.material && o.material.name || "trim").replace(/\.\d+$/, "");
       if (!byMat.has(name)) byMat.set(name, []);
       byMat.get(name).push(floatGeo(o));
-    });
+    }
+    for (const c of o.children) walk(c);
+  };
+  walk(node);
+  const parts = {};
+  for (const [name, list] of byMat) {
+    for (const g of list) for (const k of Object.keys(g.attributes)) if (!["position", "normal", "color"].includes(k)) g.deleteAttribute(k);
+    for (const g of list) if (!g.attributes.color) { const c = new Float32Array(g.attributes.position.count * 4).fill(1); g.setAttribute("color", new THREE.BufferAttribute(c, 4)); }
+    const m = list.length > 1 ? mergeGeometries(list, false) : list[0];
+    if (m) { m.computeBoundingSphere(); parts[name] = m; }
+  }
+  return parts;
+}
+const MOVING = /^(door_[LR]|wheel_[FR][LR]|steer)$/;
+async function loadCars() {
+  await Promise.allSettled(CAR_KINDS.map(async kind => {
+    const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v2.glb";
+    let gltf;
+    try { gltf = await Promise.race([loader.loadAsync(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 12000))]); } catch (e) { console.warn("[world] car " + kind, e && e.message); return; } finally { progress(); }
+    let meta = null;
+    gltf.scene.updateMatrixWorld(true);
+    gltf.scene.traverse(o => { if (o.userData && o.userData.L) meta = o.userData; });
+    // parked: every part in place, merged by material (doors shut, wheels straight), for instancing
     const parts = {};
-    for (const [name, list] of byMat) {
+    const all = new Map();
+    gltf.scene.traverse(o => {
+      if (!o.isMesh) return;
+      const name = (o.material && o.material.name || "trim").replace(/\.\d+$/, "");
+      if (!all.has(name)) all.set(name, []);
+      all.get(name).push(floatGeo(o));
+    });
+    for (const [name, list] of all) {
       for (const g of list) for (const k of Object.keys(g.attributes)) if (!["position", "normal", "color"].includes(k)) g.deleteAttribute(k);
       for (const g of list) if (!g.attributes.color) { const c = new Float32Array(g.attributes.position.count * 4).fill(1); g.setAttribute("color", new THREE.BufferAttribute(c, 4)); }
       const m = list.length > 1 ? mergeGeometries(list.map(g => (g.index ? g : g)), false) : list[0];
+      if (!m) { console.warn("[world] car " + kind + " " + name + " did not merge"); continue; }
       m.computeBoundingSphere(); parts[name] = m;
     }
-    carLib[kind] = { parts, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
+    // drivable: each moving node on its own (its meshes in the car's space, so the paint's panel lines stay put)
+    const nodes = {};
+    gltf.scene.traverse(o => { if (MOVING.test(o.name) || o.name === "body" || /^seat_[DP]$/.test(o.name)) nodes[o.name] = o; });
+    carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
   }));
 }
 /* panel lines, door handle recesses and the fuel door, drawn from the car's own measurements */
@@ -349,7 +378,8 @@ function carMats() {
   if (CARM) return CARM;
   const v = { vao: true };
   CARM = {
-    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6 }),
+    // tinted and see-through, so the cabin reads: the seats, the dash, the wheel
+    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6, alpha: 0.42, glass: true, depthWrite: false, ao: 0 }),
     trim: pbr({ ...v, color: "#141516", rough: 0.55, wet: 0.8 }),
     chrome: pbr({ ...v, color: "#c9ccd0", metal: 1, rough: 0.14, wet: 0.6 }),
     tire: pbr({ ...v, color: "#141414", rough: 0.82, wet: 0.7 }),
@@ -362,7 +392,12 @@ function carMats() {
     lamp_head_in: pbr({ ...v, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 }),
     lamp_amber: pbr({ ...v, color: "#7a3c06", rough: 0.08, wet: 1, emit: "#0a0400" }),
     plate: pbr({ ...v, color: "#9a968c", map: TX.plateTex(), nmap: TX.plateTex(true), tri: 4, local: true, nk: 0.8, rough: 0.5, wet: 0.6 }),
-    interior: pbr({ ...v, color: "#0b0b0b", rough: 0.85, wet: 0, spec: 0.4 }),
+    interior: pbr({ ...v, color: "#141414", rough: 0.85, wet: 0, spec: 0.4 }),
+    seat: pbr({ ...v, color: "#1c1c1d", rough: 0.92, wet: 0, spec: 0.3 }),
+    dash: pbr({ ...v, color: "#111213", rough: 0.6, wet: 0, spec: 0.6 }),
+    cluster: pbr({ ...v, color: "#08090a", rough: 0.2, wet: 0, spec: 0.8 }),
+    lamp_rev: pbr({ ...v, color: "#c8c8c4", metal: 0.6, rough: 0.12, wet: 0.6, drops: true }),
+    lamp_brake: pbr({ ...v, color: "#3a0605", rough: 0.08, wet: 0.8, spec: 1.1 }),
     sticker: pbr({ color: "#ece5d4", rough: 0.6, wet: 0, ao: 0, emit: "#0c0a07" }),
     idleTail: pbr({ ...v, color: "#5a0806", rough: 0.05, wet: 1, drops: true, emit: "#3a0302" }),
     idleTailIn: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#ff1a0a" }),
@@ -386,6 +421,36 @@ export const CAR_COLORS = [
   ["#d9d8d2", 0], ["#aeb2b5", 1], ["#6f7478", 1], ["#16181a", 0], ["#f0eee8", 0], ["#3a3f44", 1], ["#1d2b40", 1], ["#5b1416", 1],
   ["#8d8270", 1], ["#2c3a30", 0], ["#9b1b14", 0], ["#c5c7c9", 1], ["#4a5560", 1], ["#2a2a2c", 1], ["#e6e3dc", 0], ["#7d8b97", 1]
 ];
+/* where each parked car lives in the instanced meshes, so a knock can rock it (rockCar / tickCars below) */
+function slotOf(c, im, i, local) { Object.defineProperty(c, "_slots", { value: c._slots || [], enumerable: false, writable: true }); c._slots.push([im, i, local]); }
+/* a parked car that was hit rocks on its springs and creeps a few centimetres; it never drives off */
+function rockCar(c, strength, nx, nz) {
+  if (!c._slots) return;
+  const r = c._rock || (c._rock = { t: 0, ax: 0, az: 0, live: false });
+  const k = Math.min(1, strength / 6);
+  // in the car's frame: a push along its length pitches it, across it rolls it
+  const cs = Math.cos(c.yaw), sn = Math.sin(c.yaw), along = nx * sn + nz * cs, across = nx * cs - nz * sn;
+  r.ax += -along * 0.05 * k; r.az += across * 0.06 * k; r.live = true;
+  const shove = Math.min(0.04 * k, Math.max(0, 0.25 - (c._shoved || 0)));
+  c._shoved = (c._shoved || 0) + shove; c.x -= nx * shove; c.z -= nz * shove;
+  if (c.collider) { c.collider.x = c.x; c.collider.z = c.z; }
+}
+function tickCars(list, dt) {
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(0, 0, 0, "YXZ"), s1 = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
+  for (const c of list) {
+    const r = c._rock; if (!r || !r.live) continue;
+    // a damped spring on each axis (about 1.6 Hz, settles in a second or so)
+    r.t += dt; const w = 10, z = 0.18;
+    r.vx = (r.vx || 0) + (-w * w * r.ax - 2 * z * w * (r.vx || 0)) * dt; r.ax += r.vx * dt;
+    r.vz = (r.vz || 0) + (-w * w * r.az - 2 * z * w * (r.vz || 0)) * dt; r.az += r.vz * dt;
+    if (Math.abs(r.ax) + Math.abs(r.az) + Math.abs(r.vx) + Math.abs(r.vz) < 1e-4) { r.ax = r.az = r.vx = r.vz = 0; r.live = false; }
+    e.set(r.ax, c.yaw, r.az); q.setFromEuler(e); p.set(c.x, (c.y || 0) + Math.abs(r.az) * 0.4, c.z);
+    for (const [im, i, local] of c._slots) {
+      m4.compose(p, q, s1); if (local) m4.multiply(local);
+      im.setMatrixAt(i, m4); im.instanceMatrix.needsUpdate = true;
+    }
+  }
+}
 /* place cars: list of { kind, x, z, yaw, color, metal, idle } in the set's space; returns the instanced meshes */
 function parkCars(set, list) {
   const M = carMats(), out = [];
@@ -400,7 +465,7 @@ function parkCars(set, list) {
         for (const metallic of [false, true]) {
           const sub = cars.filter(c => !!c.metal === metallic); if (!sub.length) continue;
           const im = new THREE.InstancedMesh(geo, paintMat(carLib[kind] ? kind : Object.keys(carLib)[0], metallic), sub.length);
-          sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(c.color).convertSRGBToLinear()); });
+          sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(c.color).convertSRGBToLinear()); slotOf(c, im, i, null); });
           im.userData.keep = true; set.add(im); out.push(im);
         }
         continue;
@@ -410,7 +475,7 @@ function parkCars(set, list) {
       groups.forEach((sub, gi) => {
         if (!sub.length) return;
         const im = new THREE.InstancedMesh(geo, gi === 1 ? idleSwap : (M[name] || M.trim), sub.length);
-        sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); });
+        sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); slotOf(c, im, i, null); });
         im.userData.keep = true; set.add(im); out.push(im);
       });
     }
@@ -420,7 +485,7 @@ function parkCars(set, list) {
     const st = new THREE.InstancedMesh(STICKER_GEO, M.sticker, cars.length);
     cars.forEach((c, i) => {
       const local = new THREE.Matrix4().compose(new THREE.Vector3(-0.42, belt + 0.1, meta.L / 2 - c0 - (c1 - c0) * 0.18 - 0.03), new THREE.Quaternion().setFromEuler(new THREE.Euler(-sl, 0, 0)), s1);
-      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local); st.setMatrixAt(i, m4);
+      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local); st.setMatrixAt(i, m4); slotOf(c, st, i, local);
     });
     st.userData.keep = true; set.add(st); out.push(st);
     // the soft dark under each car (the ground bakes its own too; this one sits on anything)
@@ -430,6 +495,79 @@ function parkCars(set, list) {
   }
   for (const im of out) { im.computeBoundingSphere(); im.frustumCulled = true; }
   return out;
+}
+/* ---------- a car you can drive: the same model as a rig (body, doors on hinges, wheels on hubs, the steering
+   wheel on its column, the seats), each part an instance of one so it paints exactly like the parked rows.
+   story/vehicle.js moves it; tools/story/HANDOFF-drive.md is the contract. ---------- */
+/* each drivable car owns its lamps and its cluster, so one car's brake lights are its own */
+const OWN = {
+  lamp_head: { vao: true, color: "#b9bdc0", metal: 0.85, rough: 0.07, wet: 1, drops: true },
+  lamp_head_in: { vao: true, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 },
+  lamp_tail: { vao: true, color: "#3a0605", rough: 0.05, wet: 1, drops: true, spec: 1.2, diff: 0.6 },
+  lamp_tail_in: { vao: true, color: "#8a1410", rough: 0.3, wet: 0.3 },
+  lamp_brake: { vao: true, color: "#3a0605", rough: 0.08, wet: 0.8, spec: 1.1 },
+  lamp_rev: { vao: true, color: "#c8c8c4", metal: 0.6, rough: 0.12, wet: 0.6, drops: true },
+  cluster: { vao: true, color: "#08090a", rough: 0.2, wet: 0, spec: 0.8 }
+};
+/* the lamps' glow by state, linear colours times a strength (vehicle.js and the idle car use this) */
+export function carLights(own, o) {
+  const k = (v) => (v === true ? 1 : v ? +v : 0);
+  const head = k(o.head), tail = Math.max(k(o.tail), head * 0.6), brake = k(o.brake), rev = k(o.reverse), cl = k(o.cluster);
+  const set = (m, hex, f) => { if (m) m.uniforms.uEmit.value.set(hex).multiplyScalar(f); };
+  set(own.lamp_head_in, "#fff6e6", head * 1.4); set(own.lamp_head, "#fff4e0", head * 0.55);
+  set(own.lamp_tail_in, "#ff1a0a", Math.max(tail * 0.45, brake * 1.6)); set(own.lamp_tail, "#5a0604", Math.max(tail * 0.35, brake * 1.0));
+  set(own.lamp_brake, "#ff1a0a", brake * 1.5); set(own.lamp_rev, "#fff4ea", rev * 1.3);
+  set(own.cluster, "#8fb4c8", cl * 0.22);
+}
+function buildRig(set, c) {
+  const lib = carLib[c.kind] || carLib[Object.keys(carLib)[0]]; if (!lib || !lib.nodes || !lib.nodes.body) return null;
+  const meta = lib.meta, M = carMats(), root = c.object;
+  const col = new THREE.Color().set(c.color).convertSRGBToLinear(), I = new THREE.Matrix4();
+  const own = {}; for (const [k, o] of Object.entries(OWN)) own[k] = pbr0(o);
+  const kindKey = carLib[c.kind] ? c.kind : Object.keys(carLib)[0];
+  const inst = (geo, name, parent, offset) => {
+    const mat = name === "paint" ? paintMat(kindKey, !!c.metal) : own[name] || M[name] || M.trim;
+    const im = new THREE.InstancedMesh(geo, mat, 1); im.setMatrixAt(0, I);
+    if (name === "paint") im.setColorAt(0, col);
+    im.computeBoundingSphere(); im.userData.keep = true; im.name = name;
+    if (offset) im.position.copy(offset).negate();
+    parent.add(im); return im;
+  };
+  const body = new THREE.Group(); body.name = "body"; root.add(body);
+  for (const [name, geo] of Object.entries(nodeParts(lib.nodes.body))) inst(geo, name, body);
+  const at = n => { const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(); n.matrixWorld.decompose(p, q, sc); return { p, q }; };
+  const doors = {};
+  for (const side of ["L", "R"]) {
+    const n = lib.nodes["door_" + side]; if (!n) continue;
+    const { p } = at(n), pivot = new THREE.Group(); pivot.name = "door_" + side; pivot.position.copy(p); body.add(pivot);
+    for (const [name, geo] of Object.entries(nodeParts(n))) inst(geo, name, pivot, p);
+    doors[side] = pivot;
+  }
+  const wheels = [];
+  for (const nm of ["wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR"]) {
+    const n = lib.nodes[nm]; if (!n) continue;
+    const { p } = at(n), pivot = new THREE.Group(); pivot.name = nm; pivot.position.copy(p); pivot.rotation.order = "YXZ"; root.add(pivot);
+    for (const [name, geo] of Object.entries(nodeParts(n))) inst(geo, name, pivot, p);
+    pivot.userData.rest = p.clone(); wheels.push(pivot);
+  }
+  let steer = null;
+  if (lib.nodes.steer) {
+    const { p, q } = at(lib.nodes.steer);
+    steer = new THREE.Group(); steer.name = "steer"; steer.position.copy(p); steer.quaternion.copy(q); body.add(steer);
+    const inv = new THREE.Matrix4().compose(p, q, new THREE.Vector3(1, 1, 1)).invert();
+    for (const [name, geo] of Object.entries(nodeParts(lib.nodes.steer))) { const g = geo.clone().applyMatrix4(inv); inst(g, name, steer); }
+    steer.userData.rimR = meta.rimR || 0.185; steer.userData.q0 = q.clone();
+  }
+  const seat = new THREE.Object3D(); seat.name = "seat_D"; const seatP = new THREE.Object3D(); seatP.name = "seat_P";
+  if (lib.nodes.seat_D) seat.position.copy(at(lib.nodes.seat_D).p); if (lib.nodes.seat_P) seatP.position.copy(at(lib.nodes.seat_P).p);
+  body.add(seat, seatP);
+  // the soft dark under it, which goes where it goes
+  const sh = new THREE.InstancedMesh(BLOB_GEO, blobMat(0.8, true), 1);
+  sh.setMatrixAt(0, new THREE.Matrix4().compose(new THREE.Vector3(0, 0.012, 0), new THREE.Quaternion(), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)));
+  sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; sh.computeBoundingSphere(); root.add(sh);
+  root.userData.rig = { body, doors, wheels, steer, seat, seatP, own, meta, shadow: sh, kind: kindKey };
+  carLights(own, c.lights || {});
+  return root.userData.rig;
 }
 const STICKER_GEO = new THREE.PlaneGeometry(0.2, 0.14);
 const BLOB_GEO = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -461,11 +599,13 @@ function lampPost(x, z, h, set, o = {}) {
   }
   set.add(g);
   set.userData.walls.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
+  if (set.userData.colliders) set.userData.colliders.push({ type: "circle", x, z, r: 0.34, what: "pole" });
   return lamps;
 }
 
 function palm(x, z, h, set, r) {
   const g = new THREE.Group(); g.position.set(x, 0, z);
+  if (set.userData.colliders) set.userData.colliders.push({ type: "circle", x, z, r: 0.24, what: "pole" });
   const pts = []; const lean = (r() - 0.5) * 0.8;
   for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(lean * t * t, t * h, lean * 0.3 * t * t)); }
   const trunk = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.17, 7), pbr({ color: "#2b2620", rough: 0.9, wet: 0.6 }));
@@ -515,8 +655,9 @@ function skyDome(o) {
    ================================================================ */
 export function buildLot(o) {
   const set = new THREE.Group(); set.name = "lot";
-  set.userData = { lamps: [], spots: {}, walls: [], frond: TX.frondTex(), sounds: {} };
+  set.userData = { lamps: [], spots: {}, walls: [], frond: TX.frondTex(), sounds: {}, colliders: [] };
   const r = rng(53), day = !!o.day;
+  const CO = set.userData.colliders;
   const W = 70, H = 52;
   // parking lines: two rows of stalls back to back across the drive lane, and a third along the fence
   const lines = [];
@@ -605,7 +746,7 @@ export function buildLot(o) {
     const c = { kind, x, z, yaw, color, metal: !!metal }; lotCars.push(c);
     const [w, l] = carSize(kind); const ca = Math.abs(Math.cos(yaw)), sa = Math.abs(Math.sin(yaw));
     const hw = (w * ca + l * sa) / 2 + 0.2, hl = (w * sa + l * ca) / 2 + 0.2;
-    set.userData.walls.push({ x0: x - hw, x1: x + hw, z0: z - hl, z1: z + hl });
+    c.wall = { x0: x - hw, x1: x + hw, z0: z - hl, z1: z + hl }; set.userData.walls.push(c.wall);
     return c;
   };
   let k = 0;
@@ -613,20 +754,42 @@ export function buildLot(o) {
   for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; addCar(x + (r() - 0.5) * 0.12, 4.5 + (r() - 0.5) * 0.25, (r() - 0.5) * 0.05, kd, x > 4 && x < 6 ? 2 : k * 3 + 1); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.9), r: 3, stand: V3(x, 0, 8.8) }; k++; }
   for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x + (r() - 0.5) * 0.12, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
   // one car by the showroom with its engine running and its lights on: someone's ride, waiting (not in the morning)
-  if (!day) { const idle = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true }; lotCars.push(idle); set.userData.walls.push({ x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 });
+  let idleCar = null;
+  if (!day) { const idle = idleCar = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true }; lotCars.push(idle); idle.wall = { x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 }; set.userData.walls.push(idle.wall);
     set.userData.sounds.idle = { x: 16.6 + 2.2, y: 0.4, z: -11.5, kind: "engine-idle" };
     // its lights on the wet ground ahead of it and the tail lights' red behind
-    set.userData.lamps.push({ p: V3(13.6, 0.75, -10.8), range: 7, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true });
+    idle.lamp = { p: V3(13.6, 0.75, -10.8), range: 7, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true };
+    set.userData.lamps.push(idle.lamp);
   }
+  /* the cars you can drive (story/vehicle.js, tools/story/HANDOFF-drive.md): the idling sedan, a car by the
+     entrance aisle and the pickup at the truck spot; drawn as rigs, not in the instanced rows */
+  const drivable = [];
+  { const pick = (id, f) => { let best = null, bd = 1e9; for (const c of lotCars) { if (c.drivable) continue; const d = f(c); if (d < bd) { bd = d; best = c; } } if (best) { best.drivable = true; best.id = id; drivable.push(best); } };
+    if (idleCar) { idleCar.drivable = true; idleCar.id = "idle"; idleCar.engine = true; idleCar.lights = { head: true, tail: true, cluster: true }; drivable.push(idleCar); }
+    pick("car", c => (Math.abs(c.z - 4.5) < 1 && c.kind !== "truck" && c.kind !== "suv" ? Math.abs(c.x + 1.6) : 1e9));
+    pick("truck", c => (c.kind === "truck" && Math.abs(c.z - 4.5) < 1 ? Math.abs(c.x - 4.8) : 1e9));
+    for (const c of drivable) { const g = new THREE.Group(); g.name = "car-" + c.id; g.position.set(c.x, 0, c.z); g.rotation.y = c.yaw; g.userData.keep = true; set.add(g); c.object = g; }
+  }
+  set.userData.drivable = drivable;
+  const parked = lotCars.filter(c => !c.drivable);
+  set.userData.parked = parked;
+  set.userData.rockCar = rockCar;
+  set.userData.tickCars = dt => tickCars(parked, dt);
   // the cars, now or when they land
-  if (Object.keys(carLib).length) parkCars(set, lotCars.concat(showCars));
-  else lotReady.then(() => { parkCars(set, lotCars.concat(showCars)); set.userData.envTex = null; });
+  const land = () => { parkCars(set, parked.concat(showCars)); for (const c of drivable) buildRig(set, c); for (const c of parked) { const [w, l] = carSize(c.kind); c.collider.hw = w / 2; c.collider.hl = l / 2; } };
+  if (Object.keys(carLib).length) land();
+  else lotReady.then(() => { land(); set.userData.envTex = null; });
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
   // wheel stops at the head of each stall, concrete
   { const ws = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.13, 0.16), rmat({ color: "#9b968c", rough: 0.85, wet: 0.8, mapK: "concC", tri: 1.2 }), 40); let n = 0; const m4 = new THREE.Matrix4();
     for (let x = -17.6; x <= 17.6; x += 3.2) { m4.makeTranslation(x, 0.065, -7.75); ws.setMatrixAt(n++, m4); m4.makeTranslation(x, 0.065, 6.75); ws.setMatrixAt(n++, m4); }
     ws.count = n; ws.userData.keep = true; set.add(ws); }
 
+  /* --- what a car you drive can hit (story/vehicle.js): parked cars, the showroom, the pylon's legs, the can, wheel stops --- */
+  for (const c of parked) { const [w, l] = carSize(c.kind); c.collider = { type: "box", x: c.x, z: c.z, hw: w / 2, hl: l / 2, yaw: c.yaw, h: 1.4, what: "car", car: c }; CO.push(c.collider); }
+  CO.push({ type: "box", x: 2, z: -22.0, hw: 13.3, hl: 4.3, yaw: 0, h: 5.6, what: "wall" });
+  CO.push({ type: "circle", x: -16.6, z: -9, r: 0.45, what: "pole" }, { type: "circle", x: -13.4, z: -9, r: 0.45, what: "pole" }, { type: "circle", x: 14.6, z: -17.2, r: 0.3, what: "wall" });
+  for (let x = -17.6; x <= 17.6; x += 3.2) for (const zz of [-7.75, 6.75]) CO.push({ type: "bump", x, z: zz, hw: 0.9, hl: 0.08, h: 0.13 });
   /* --- lamps --- */
   [[-9, -1.2, 8.5, 1], [8, -1.2, 8.5, 1], [-1, 9.4, 8.5, 1], [13, 9.4, 8.5, 0], [-17, 12, 8, 0], [11.6, -13.4, 7, 0], [6.2, 18.6, 7.5, 0]].forEach(([x, z, h, twin]) => lampPost(x, z, h, set, { day, twin: false }));
   // the showroom's own light: spilling out through the glass, and the room inside it
@@ -649,6 +812,7 @@ export function buildLot(o) {
     const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, len, 8), galv); rail.rotation.z = Math.PI / 2; rail.position.set((x0 + x1) / 2, 1.95, 21.5); set.add(rail);
     for (let s = 0; s < 3; s++) { const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, len, 4), galv); wire.rotation.z = Math.PI / 2; wire.position.set((x0 + x1) / 2, 2.07 + s * 0.11, 21.55 + s * 0.09); set.add(wire); }
     set.userData.walls.push({ x0, x1, z0: 21.2, z1: 21.8 });
+    CO.push({ type: "box", x: (x0 + x1) / 2, z: 21.5, hw: (x1 - x0) / 2, hl: 0.08, yaw: 0, h: 2, what: "fence" });
   }
   const gate = new THREE.Group(); gate.position.set(-3.2, 0, 21.9); set.add(gate); gate.userData.keep = true;
   { const t = ct.clone(); t.needsUpdate = true; t.repeat.set(3.4 / 0.11, 1.8 / 0.11);
@@ -658,9 +822,16 @@ export function buildLot(o) {
     const brace = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 3.85, 6), galv); brace.rotation.z = Math.atan2(1.8, 3.4) + Math.PI / 2; brace.position.set(-1.7, 1.0, 0.02); gate.add(brace);
     for (const x of [-0.4, -3.0]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.05, 12), pbr({ color: "#202020", rough: 0.8 })); w.rotation.x = Math.PI / 2; w.position.set(x, 0.08, 0); gate.add(w); } }
   set.userData.gate = gate;
+  // the gate is live: its box follows the gate wherever main.js rolls it (it spans gate.x - 3.4 to gate.x)
+  { const gc = { type: "box", x: -4.9, z: 21.9, hw: 1.7, hl: 0.08, yaw: 0, h: 2, what: "gate" };
+    Object.defineProperty(gc, "x", { get: () => gate.position.x - 1.7, enumerable: true }); Object.defineProperty(gc, "z", { get: () => gate.position.z, enumerable: true }); CO.push(gc); }
   set.userData.sounds.gate = { x: -3.2, y: 1.0, z: 21.9, kind: "chain-link" };
   set.userData.spots.gate = { p: V3(-3.4, 1.2, 21.9), r: 2.4, stand: V3(-2.6, 0, 20.4) };
   set.userData.walls.push({ x0: -35, x1: 35, z0: -27, z1: -26.4 }, { x0: -35, x1: -34.4, z0: -27, z1: 22 }, { x0: 34.4, x1: 35, z0: -27, z1: 22 }, { x0: -4, x1: 4, z0: 23.6, z1: 24.2 });
+  CO.push({ type: "box", x: 0, z: -26.7, hw: 35, hl: 0.3, yaw: 0, h: 3, what: "wall" }, { type: "box", x: -34.7, z: -2.5, hw: 0.3, hl: 24.5, yaw: 0, h: 3, what: "fence" }, { type: "box", x: 34.7, z: -2.5, hw: 0.3, hl: 24.5, yaw: 0, h: 3, what: "fence" });
+  // where a car may be: the lot inside the fence, the gate's opening, and Almeda Genoa Road; past the road's ends a soft wall turns you round
+  set.userData.driveBounds = { rects: [{ x0: -34.4, x1: 34.4, z0: -26.4, z1: 21.5, name: "lot" }, { x0: -3.2, x1: 3.2, z0: 21.0, z1: 24.6, name: "gate" }, { x0: -60, x1: 60, z0: 22.4, z1: 37.6, name: "road" }] };
+  set.userData.inDriveBounds = (x, z) => set.userData.driveBounds.rects.some(b => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
 
   /* --- beyond the fence: Almeda Genoa Road, its street lights and power poles, palms, the buildings across it, the sky --- */
   {
@@ -674,14 +845,14 @@ export function buildLot(o) {
     const pole = pbr({ color: "#6f7376", metal: 0.8, rough: 0.5, wet: 1 });
     const lensM = glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 4.0 });
     for (let x = -60; x <= 60; x += 30) {
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 9, 8), pole); p.position.set(x, 4.5, 38.6); set.add(p);
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 9, 8), pole); p.position.set(x, 4.5, 38.6); set.add(p); CO.push({ type: "circle", x, z: 38.6, r: 0.16, what: "pole" });
       const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), pole); a.rotation.x = Math.PI / 2; a.position.set(x, 8.9, 37.4); set.add(a);
       const hd = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.8), pole); hd.position.set(x, 8.85, 36.1); set.add(hd);
       const ln = plane(0.3, 0.6, lensM, set); ln.rotation.x = Math.PI / 2; ln.position.set(x, 8.76, 36.1); ln.userData.keep = true;
     }
     // power poles and their wires, along the lot's side of the road
     const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
-    for (let x = -66; x <= 66; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); }
+    for (let x = -66; x <= 66; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); CO.push({ type: "circle", x, z: 25.4, r: 0.2, what: "pole" }); }
     for (const [dx, y] of [[-1.0, 10.3], [1.0, 10.3], [0, 9.2]]) {
       for (let x = -66; x < 66; x += 22) {
         const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(x + t * 22, y - Math.sin(t * Math.PI) * 0.45, 25.4 + dx * 0.05)); }
@@ -708,10 +879,10 @@ export function buildLot(o) {
   /* --- the ground, now that everything standing on it is known --- */
   {
     const px = o.lowres ? 14 : 24;
-    const carsG = lotCars.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
+    const carsG = parked.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
     const conc = [[-12.4, -17.9, 16.4, -15.6]];
     const g = TX.lotGround(W, H, px, { puddles: [[-1.5, 11.2, 1.9, 1.3], [-0.6, 10.2, 0.8, 0.6]], lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25], [-34, 21.4, 34, 21.6, 0.3, 0.3]].concat(set.userData.lamps.filter(l => l.coneMesh).map(l => [l.p.x - 0.82 - 0.3, l.p.z - 0.3, l.p.x - 0.82 + 0.3, l.p.z + 0.3, 0.6, 0.45])) });
-    const shBoxes = lotCars.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
+    const shBoxes = parked.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
       .concat([{ x: 2, z: -22.6, hw: 13.3, hl: 3.7, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }, { x: 2, z: -16.9, hw: 13.6, hl: 0.95, h: 4.1, y0: 3.87, yaw: 0 }]);
     const shL = set.userData.lamps.filter(l => !l.car).slice(0, 8);
     const sh = day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, shL.map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range })), shBoxes);

@@ -149,6 +149,9 @@ def mats():
         "lamp_tail_in": mat("lamp_tail_in", (0.9, 0.08, 0.05, 1), 0.0, 0.2), "lamp_head_in": mat("lamp_head_in", (0.95, 0.95, 0.9, 1), 0.0, 0.2),
         "lamp_amber": mat("lamp_amber", (0.8, 0.35, 0.02, 1), 0.0, 0.1), "plate": mat("plate", (0.85, 0.83, 0.78, 1), 0.0, 0.5),
         "interior": mat("interior", (0.02, 0.02, 0.02, 1), 0.0, 0.8),
+        "seat": mat("seat", (0.05, 0.05, 0.05, 1), 0.0, 0.9), "dash": mat("dash", (0.03, 0.03, 0.03, 1), 0.0, 0.6),
+        "cluster": mat("cluster", (0.02, 0.03, 0.04, 1), 0.0, 0.3), "lamp_rev": mat("lamp_rev", (0.9, 0.9, 0.9, 1), 0.0, 0.2),
+        "lamp_brake": mat("lamp_brake", (0.6, 0.03, 0.02, 1), 0.0, 0.2), "jamb": mat("jamb", (0.6, 0.6, 0.6, 1), 0.0, 0.3),
     }
     return MATS
 
@@ -327,6 +330,8 @@ def details(K, ob, name):
         # tail light wrap onto the side, and the amber marker at the front corner
         # the lens's inner element: a smaller bar a hair proud of the lens, the part that lights
         parts.append(patch(ob, "tli", "lamp_tail_in", outline(s * W * 0.36, tl_z, (W * 0.25 if "bed" not in K else W * 0.1) * 0.7, (0.13 if "bed" not in K else 0.34) * 0.35, 0.5), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.009))
+        rv = (s * W * 0.36, tl_z - 0.10, 0.09, 0.05) if "bed" in K else (s * W * 0.27, tl_z - 0.005, 0.075, 0.04)
+        parts.append(patch(ob, "rev", "lamp_rev", outline(rv[0], rv[1], rv[2], rv[3], 0.4), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.0105))
         parts.append(patch(ob, "hli", "lamp_head_in", outline(cx + s * W * 0.03, hl_z, W * 0.09, 0.06, 0.5), lambda u, v: (u, 5, v), (0, -1, 0), 0.009))
         parts.append(patch(ob, "tlw", "lamp_tail", outline(-(L - 0.12), tl_z, 0.16, 0.09, 0.3), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
         parts.append(patch(ob, "am", "lamp_amber", outline(-0.16, hl_z - 0.02, 0.1, 0.05, 0.45), lambda u, v, s=s: (s * 5, u, v), (-s, 0, 0), 0.005))
@@ -353,7 +358,14 @@ def details(K, ob, name):
     parts.append(patch(ob, "pf", "plate", outline(0, zb_f + 0.21, 0.52, 0.12, 0.08), lambda u, v: (u, 5, v), (0, -1, 0), 0.011))
     parts.append(patch(ob, "pr", "plate", outline(0, zb_r + (tl_z - zb_r) * 0.55, 0.31, 0.155, 0.08), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.011))
     parts.append(patch(ob, "rb", "trim", outline(0, zb_r + 0.09, W * 0.7, 0.07, 0.4), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.006))
-    # a third brake light on the roof's trailing edge and the wipers' dark line under the windshield
+    # the third brake light: under the rear window (sedans), the roof's trailing edge (hatches and SUVs), the cab's back (pickups)
+    c0_, c1_, c2_, c3_ = K["cab"]
+    zc = cr(K["top"], c2_) - 0.03 if c3_ > L - 0.2 else (cr(K["top"], c3_) - 0.08 if "bed" in K else cr(K["top"], c3_) - 0.02)
+    if c3_ > L - 0.2 or "bed" in K:
+        parts.append(patch(ob, "chmsl", "lamp_brake", outline(0, zc, 0.30, 0.035, 0.45), lambda u, v: (u, -L - 5, v), (0, 1, 0), 0.008))
+    else:
+        parts.append(patch(ob, "chmsl", "lamp_brake", outline(0, -(c3_ + 0.06), 0.30, 0.035, 0.45), lambda u, v: (u, v, 5), (0, 0, -1), 0.008))
+    # the wipers' dark line under the windshield
     c0 = K["cab"][0]
     for s in (1, -1):
         parts.append(patch(ob, "wp", "trim", [(s * 0.05, -(c0 + 0.02)), (s * 0.62, -(c0 + 0.10)), (s * 0.62, -(c0 + 0.13)), (s * 0.05, -(c0 + 0.05))], lambda u, v: (u, v, 5), (0, 0, -1), 0.012))
@@ -415,64 +427,271 @@ def wheel(K):
     w = bpy.context.active_object; w.name = "wheel"
     return w
 
+# ---------------------------------------------------------------------------------
+# v2: a car you can drive. The same body, then cut into parts that move: the front doors
+# (hinged on their front edge), four wheels (pivot at the hub), the steering wheel (pivot at
+# its hub), a real cabin behind see-through glass (seats, dash with a cluster, console, floor,
+# the shell's inner side), and empties for the driver's and passenger's hip points.
+# Built in the loft's frame (O: along from the nose, lateral, height), then turned into the
+# final frame (F: lateral, along - L/2, height; front at -Y, which is +Z in three.js) and
+# exported as a hierarchy:  car > body > (door_L, door_R, steer, seat_D, seat_P), car > wheel_*.
+# Lateral + is the driver's side (three.js +X, the car's left).
+# ---------------------------------------------------------------------------------
+def O(a, l, h): return Vector((-l, -a, h))
+
+def mkbox(name, mname, M4, size, bevel=0.0):
+    """a box of size (lateral, along, height) centred at the local origin, placed by M4 (in the O frame)"""
+    bpy.ops.mesh.primitive_cube_add(size=1); o = bpy.context.active_object; o.name = name
+    o.scale = size; bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    if bevel > 0:
+        bv = o.modifiers.new("bv", "BEVEL"); bv.width = bevel; bv.segments = 2
+        bpy.ops.object.modifier_apply(modifier="bv")
+    o.data.transform(M4); o.data.materials.append(mats()[mname])
+    return o
+
+def at(a, l, h, rx=0.0):
+    """placement in the O frame: centre at (a, l, h), tilted about the lateral axis by rx (top toward the rear for rx > 0)"""
+    return Matrix.Translation(O(a, l, h)) @ Matrix.Rotation(rx, 4, "X")
+
+def door_cutter(K, side):
+    """an L-shaped prism over the front door on one side: the lower door from the rocker to the belt, and
+    the glass above it up to just under the roof rail; inner faces become the door card"""
+    xa = max(K["axles"][0] + K["arch"] + 0.02, K["sg"][0] - 0.05); xb = K["pillars"][0] - 0.045
+    n = 10; bm = bmesh.new(); rings = []
+    for i in range(n + 1):
+        a = xa + (xb - xa) * i / n
+        sec = section(K, a); hw = cr(K["hw"], a); zb = cr(K["bot"], a); zbelt = cr(K["belt"], a); zt = cr(K["top"], a)
+        zbot = zb + 0.09; zstep = zbelt - 0.02; ztop = max(zt - 0.045, zbelt + 0.05)
+        far = hw + 0.4; low = hw - 0.16; up = min(sec[10][0] - 0.04, low - 0.02)
+        prof = [(far, zbot), (low, zbot), (low, zstep), (up, zstep), (up, ztop), (far, ztop)]
+        rings.append([bm.verts.new(O(a, side * l, h)) for (l, h) in prof])
+    m = len(rings[0])
+    for i in range(n):
+        for j in range(m):
+            bm.faces.new((rings[i][j], rings[i][(j + 1) % m], rings[i + 1][(j + 1) % m], rings[i + 1][j]))
+    bm.faces.new(rings[0]); bm.faces.new(list(reversed(rings[-1])))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new("cut"); bm.to_mesh(me); bm.free(); me.materials.append(mats()["jamb"])
+    return link(bpy.data.objects.new("cut", me)), xa, xb
+
+def boolean(ob, cutter, op):
+    bpy.context.view_layer.objects.active = ob
+    mod = ob.modifiers.new("b", "BOOLEAN"); mod.operation = op; mod.object = cutter; mod.solver = "EXACT"; mod.material_mode = "TRANSFER"
+    bpy.ops.object.modifier_apply(modifier="b")
+
+def slot(ob, name):
+    i = ob.data.materials.find(name)
+    if i < 0: ob.data.materials.append(mats()[name]); i = len(ob.data.materials) - 1
+    return i
+
+def cut_doors(K, ob):
+    """cut both front doors out of the body; returns {side: (door object, xa, xb)}"""
+    out = {}
+    for side in (1, -1):
+        cut, xa, xb = door_cutter(K, side)
+        door = ob.copy(); door.data = ob.data.copy(); link(door); door.name = "door"
+        boolean(door, cut, "INTERSECT"); boolean(ob, cut, "DIFFERENCE")
+        bpy.data.objects.remove(cut)
+        zbelt = cr(K["belt"], (xa + xb) / 2)
+        # the door: the card inside (below the belt), a ledge on top, nothing inside the glass (it stays see-through)
+        bm = bmesh.new(); bm.from_mesh(door.data); bm.faces.ensure_lookup_table()
+        jd = door.data.materials.find("jamb"); kill = []
+        for f in bm.faces:
+            if f.material_index != jd: continue
+            c = f.calc_center_median(); nn = f.normal
+            if c.z > zbelt - 0.005 and abs(nn.z) < 0.9: kill.append(f)
+            elif abs(nn.z) > 0.9 and c.z > zbelt + 0.02: kill.append(f)
+            elif abs(nn.x) > 0.9: f.material_index = slot(door, "interior")
+            elif abs(nn.z) > 0.9 and abs(c.z - (zbelt - 0.02)) < 0.04: f.material_index = slot(door, "trim")
+            else: f.material_index = slot(door, "paint")
+        bmesh.ops.delete(bm, geom=kill, context="FACES"); bm.to_mesh(door.data); bm.free()
+        # the body: the walls that closed the opening go (you see into the cabin); the jambs stay, painted
+        bm = bmesh.new(); bm.from_mesh(ob.data); bm.faces.ensure_lookup_table()
+        jb = ob.data.materials.find("jamb"); kill = []; pi = slot(ob, "paint")
+        for f in bm.faces:
+            if f.material_index != jb: continue
+            c = f.calc_center_median(); nn = f.normal
+            if abs(nn.x) > 0.9: kill.append(f)
+            elif abs(nn.z) > 0.9 and abs(c.z - (zbelt - 0.02)) < 0.04: kill.append(f)
+            else: f.material_index = pi
+        bmesh.ops.delete(bm, geom=kill, context="FACES"); bm.to_mesh(ob.data); bm.free()
+        out[side] = (door, xa, xb)
+    return out
+
+def solidify_shell(ob, K=None):
+    """give the open shell an inner side (dark trim) so the cabin reads as a cabin; the glass stays one sheet"""
+    gi = ob.data.materials.find("glass")
+    bpy.ops.object.select_all(action="DESELECT"); ob.select_set(True); bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.select_all(action="DESELECT"); bpy.ops.object.mode_set(mode="OBJECT")
+    for p in ob.data.polygons: p.select = p.material_index == gi
+    bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.separate(type="SELECTED"); bpy.ops.object.mode_set(mode="OBJECT")
+    glass = [o for o in bpy.context.selected_objects if o is not ob][0]
+    n0 = len(ob.data.materials)
+    for i in range(n0):
+        nm = ob.data.materials[i].name.split(".")[0]
+        ob.data.materials.append(mats()["well" if nm == "well" else "interior"])
+    bpy.context.view_layer.objects.active = ob
+    sd = ob.modifiers.new("sd", "SOLIDIFY"); sd.thickness = 0.018; sd.offset = -1; sd.use_rim = True; sd.material_offset = n0; sd.use_even_offset = True
+    bpy.ops.object.modifier_apply(modifier="sd")
+    # the inner side only where you can see it: the cabin (not under the hood, the trunk or the bed)
+    if K is not None:
+        a0, a1 = K["cab"][0] - 0.25, K["cab"][3] + 0.1
+        bm = bmesh.new(); bm.from_mesh(ob.data)
+        kill = [f for f in bm.faces if f.material_index >= n0 and not (a0 <= -f.calc_center_median().y <= a1)]
+        bmesh.ops.delete(bm, geom=kill, context="FACES"); bm.to_mesh(ob.data); bm.free()
+    bpy.ops.object.select_all(action="DESELECT"); ob.select_set(True); glass.select_set(True); bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.join()
+    return ob
+
+def cabin(K):
+    """seats, dash, cluster, console, floor; returns (objects, the driver's H-point (a, l, h), the wheel hub (a, l, h))"""
+    L, W = K["L"], K["W"]; c0, c1, c2, c3 = K["cab"]; pB = K["pillars"][0]
+    hwm = cr(K["hw"], (c0 + c3) / 2)
+    aH = min(c0 + 1.05, pB - 0.25)
+    floor = cr(K["bot"], aH) + 0.12
+    hH = floor + 0.26; ls = hwm * 0.42
+    belt = cr(K["belt"], c0 + 0.3)
+    parts = []
+    # the floor, front to the rear seat
+    rear = c3 - c0 > 2.0 and "bed" not in K
+    aEnd = min(c3 - 0.1, aH + (1.3 if rear else 0.45))
+    parts.append(mkbox("floor", "interior", at((c0 - 0.15 + aEnd) / 2, 0, floor - 0.02), (2 * (hwm - 0.1), aEnd - c0 + 0.15, 0.04)))
+    # the front seats: cushion, a reclined back, a headrest
+    for s in (1, -1):
+        parts.append(mkbox("cush", "seat", at(aH - 0.17, s * ls, hH - 0.13), (0.5, 0.52, 0.12), 0.03))
+        parts.append(mkbox("base", "trim", at(aH - 0.17, s * ls, (floor + hH - 0.19) / 2), (0.4, 0.42, hH - 0.19 - floor)))
+        bk = Matrix.Translation(O(aH + 0.1, s * ls, hH - 0.1)) @ Matrix.Rotation(0.32, 4, "X") @ Matrix.Translation(Vector((0, 0, 0.32)))
+        parts.append(mkbox("back", "seat", bk, (0.5, 0.11, 0.64), 0.035))
+        hr = Matrix.Translation(O(aH + 0.1, s * ls, hH - 0.1)) @ Matrix.Rotation(0.32, 4, "X") @ Matrix.Translation(Vector((0, -0.01, 0.72)))
+        parts.append(mkbox("head", "seat", hr, (0.26, 0.09, 0.18), 0.03))
+    if rear:
+        aR = min(aH + 0.92, c3 - 0.5)
+        parts.append(mkbox("rcush", "seat", at(aR - 0.12, 0, hH - 0.08), (2 * (hwm - 0.2), 0.5, 0.14), 0.03))
+        rb = Matrix.Translation(O(aR + 0.15, 0, hH - 0.05)) @ Matrix.Rotation(0.38, 4, "X") @ Matrix.Translation(Vector((0, 0, 0.3)))
+        parts.append(mkbox("rback", "seat", rb, (2 * (hwm - 0.2), 0.12, 0.6), 0.035))
+    # the console between the front seats
+    parts.append(mkbox("console", "dash", at(aH - 0.3, 0, floor + 0.18), (0.2, 0.75, 0.36), 0.03))
+    # the dash: under the windshield, a binnacle over the cluster on the driver's side, a screen in the middle
+    dA0, dA1 = c0 - 0.12, c0 + 0.42
+    parts.append(mkbox("dash", "dash", at((dA0 + dA1) / 2, 0, belt - 0.12), (2 * (hwm - 0.13), dA1 - dA0, 0.3), 0.04))
+    parts.append(mkbox("lower", "dash", at(dA1 + 0.02, 0, belt - 0.33), (2 * (hwm - 0.16), 0.12, 0.16), 0.03))
+    parts.append(mkbox("bin", "dash", at(dA1 - 0.06, ls, belt + 0.05), (0.38, 0.16, 0.06), 0.02))
+    parts.append(mkbox("cluster", "cluster", at(dA1 + 0.005, ls, belt - 0.03), (0.32, 0.004, 0.1)))
+    parts.append(mkbox("screen", "cluster", at(dA1 + 0.005, 0, belt - 0.1), (0.2, 0.004, 0.12)))
+    # the steering column, from the dash to the hub
+    hub = (aH - 0.5, ls, hH + 0.36)
+    col = mkbox("column", "dash", Matrix.Translation(O((hub[0] + dA1) / 2 - 0.03, ls, hub[2] - 0.08)) @ Matrix.Rotation(-1.15, 4, "X"), (0.07, 0.07, 0.34), 0.015)
+    parts.append(col)
+    return parts, (aH, ls, hH), hub
+
+def steering_wheel(rimR=0.185):
+    """built at the origin, the wheel's face normal along local +Y (toward the driver once placed)"""
+    M = mats(); objs = []
+    bpy.ops.mesh.primitive_torus_add(major_radius=rimR, minor_radius=0.016, major_segments=40, minor_segments=8, rotation=(math.pi / 2, 0, 0))
+    rim = bpy.context.active_object; rim.data.materials.append(M["dash"]); objs.append(rim)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=20, radius=0.055, depth=0.05, rotation=(math.pi / 2, 0, 0), location=(0, -0.01, 0))
+    boss = bpy.context.active_object; boss.data.materials.append(M["dash"]); objs.append(boss)
+    for ang in (0, math.pi, -math.pi / 2):   # 3, 9 and 6 o'clock
+        bpy.ops.mesh.primitive_cube_add(size=1); sp = bpy.context.active_object
+        sp.scale = (rimR, 0.02, 0.035); bpy.ops.object.transform_apply(scale=True)
+        sp.data.transform(Matrix.Rotation(ang, 4, "Y") @ Matrix.Translation(Vector((rimR / 2, -0.005, 0))))
+        sp.data.materials.append(M["dash"]); objs.append(sp)
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs: o.select_set(True)
+    bpy.context.view_layer.objects.active = rim; bpy.ops.object.join()
+    w = bpy.context.active_object; w.name = "steer"
+    bpy.ops.object.shade_smooth()
+    return w
+
+def join(objs, name):
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs: o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]; bpy.ops.object.join()
+    o = bpy.context.active_object; o.name = name; o.data.name = name
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    return o
+
+def set_pivot(o, p):
+    o.data.transform(Matrix.Translation(-p)); o.location = p
+
+def three(v): return [round(v.x, 4), round(v.z, 4), round(-v.y, 4)]
+
 def build(kind):
-    clear(); K = KINDS[kind]
+    clear(); K = KINDS[kind]; L, W = K["L"], K["W"]
     ob = body(K, kind)
     parts = details(K, ob, kind)
-    # the interior: a dark shell under the glass so the cabin never reads as empty sky
-    c0, c1, c2, c3 = K["cab"]
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, -(c0 + c3) / 2, (cr(K["belt"], (c0 + c3) / 2) + cr(K["top"], (c1 + c2) / 2)) / 2 - 0.05))
-    inn = bpy.context.active_object; inn.scale = (K["W"] * 0.66, (c2 - c1) + 0.6, (cr(K["top"], (c1 + c2) / 2) - cr(K["belt"], (c0 + c3) / 2)) * 0.62)
-    inn.location.y = -(c1 + c2) / 2
-    inn.data.materials.append(mats()["interior"])
-    # headrests: silhouettes behind the side glass
-    hz = cr(K["belt"], (c0 + c3) / 2) + 0.28
-    for s in (1, -1):
-        for dx in ([c0 + 0.95] + ([c0 + 1.85] if c3 - c0 > 2.0 else [])):
-            bpy.ops.mesh.primitive_cube_add(size=1, location=(s * 0.38, -dx, hz)); hr = bpy.context.active_object; hr.scale = (0.24, 0.1, 0.2); hr.data.materials.append(mats()["interior"]); parts.append(hr)
-    parts.append(inn)
-    # wheels at each corner (mirrored on the left)
-    wl = wheel(K)
-    ws = []
-    for ax in K["axles"]:
-        for s in (1, -1):
+    for p in parts:
+        bpy.context.view_layer.objects.active = p; p.select_set(True); bpy.ops.object.transform_apply(location=True, rotation=True, scale=True); p.select_set(False)
+    doors = cut_doors(K, ob)
+    # the patches that ride on a front door (mirror, handle) go with it
+    body_parts = []; door_parts = {1: [], -1: []}
+    for p in parts:
+        c = sum((Vector(b) for b in p.bound_box), Vector()) / 8; c = p.matrix_world @ c
+        a, l, h = -c.y, -c.x, c.z
+        took = False
+        for side, (d, xa, xb) in doors.items():
+            if xa - 0.02 <= a <= xb + 0.02 and l * side > cr(K["hw"], a) * 0.7 and h > cr(K["bot"], a) + 0.1:
+                door_parts[side].append(p); took = True; break
+        if not took: body_parts.append(p)
+    solidify_shell(ob, K)
+    inner, H, hub = cabin(K)
+    G = Matrix.Rotation(math.pi, 4, "Z") @ Matrix.Translation(Vector((0, L / 2, 0)))
+    def F(a, l, h): return G @ O(a, l, h)
+    bodyo = join([ob] + body_parts + inner, "body")
+    dobs = {}
+    for side, (d, xa, xb) in doors.items():
+        dd = join([d] + door_parts[side], "door_L" if side > 0 else "door_R")
+        hz = (cr(K["bot"], xa) + cr(K["belt"], xa)) / 2
+        dobs[side] = (dd, F(xa, side * cr(K["hw"], xa) * 0.97, hz))
+    # wheels at each corner, mirrored on the far side
+    wl = wheel(K); wheels = {}
+    for ai, ax in enumerate(K["axles"]):
+        for side in (1, -1):
             c = wl.copy(); c.data = wl.data.copy(); link(c)
-            c.location = (s * (K["W"] / 2 - K["tw"] / 2 - 0.02), -ax, K["tr"])
-            if s < 0: c.rotation_euler = (0, 0, math.pi)
-            ws.append(c)
+            c.location = O(ax, side * (W / 2 - K["tw"] / 2 - 0.02), K["tr"])
+            if side > 0: c.rotation_euler = (0, 0, math.pi)
+            nm = "wheel_" + ("F" if ai == 0 else "R") + ("L" if side > 0 else "R")
+            bpy.ops.object.select_all(action="DESELECT"); c.select_set(True); bpy.context.view_layer.objects.active = c
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            c.name = nm; c.data.name = nm; wheels[nm] = (c, F(ax, side * (W / 2 - K["tw"] / 2 - 0.02), K["tr"]))
     bpy.data.objects.remove(wl)
-    # join everything into one object (materials stay separate primitives on export)
-    bpy.ops.object.select_all(action="DESELECT")
-    for o in [ob] + parts + ws: o.select_set(True)
-    bpy.context.view_layer.objects.active = ob
-    bpy.ops.object.join()
-    car = bpy.context.active_object; car.name = kind
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    # centre it and turn it so the front faces -Y in Blender (+Z in three.js after the Y-up export)
-    car.location = (0, K["L"] / 2, 0); bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
-    car.rotation_euler = (0, 0, math.pi); bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
-    # ambient occlusion into a colour attribute (Cycles), plus a ground plane so the underside darkens
-    bpy.ops.mesh.primitive_plane_add(size=12, location=(0, 0, 0)); gp = bpy.context.active_object
-    car.data.color_attributes.new("ao", "BYTE_COLOR", "POINT")
-    car.data.color_attributes.active_color = car.data.color_attributes["ao"]
-    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.samples = 256; sc.cycles.device = "CPU"
-    sc.render.bake.target = "VERTEX_COLORS"
-    bpy.ops.object.select_all(action="DESELECT"); car.select_set(True); bpy.context.view_layer.objects.active = car
-    sc.world = bpy.data.worlds.new("w")
-    try:
-        bpy.ops.object.bake(type="AO", target="VERTEX_COLORS")
-    except Exception as e:
-        print("bake failed", e)
+    # into the final frame (front at -Y in Blender, +Z in three.js), then each moving part pivots where it should
+    allm = [bodyo] + [d for d, _ in dobs.values()] + [w for w, _ in wheels.values()]
+    for o in allm: o.data.transform(G); o.matrix_world = Matrix.Identity(4)
+    for d, hp in dobs.values(): set_pivot(d, hp)
+    for w, hp in wheels.values(): set_pivot(w, hp)
+    tilt = math.radians(24); rimR = 0.185
+    st = steering_wheel(rimR); st.location = F(*hub); st.rotation_euler = (tilt, 0, 0)
+    seatD = bpy.data.objects.new("seat_D", None); link(seatD); seatD.location = F(*H)
+    seatP = bpy.data.objects.new("seat_P", None); link(seatP); seatP.location = F(H[0], -H[1], H[2])
+    # ambient occlusion into a colour attribute (Cycles), every part in place, a ground plane under it
+    bpy.ops.mesh.primitive_plane_add(size=14, location=(0, 0, 0)); gp = bpy.context.active_object
+    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.samples = 128; sc.cycles.device = "CPU"
+    sc.render.bake.target = "VERTEX_COLORS"; sc.world = bpy.data.worlds.new("w"); sc.world.light_settings.distance = 1.6
+    for o in allm + [st]:
+        o.data.color_attributes.new("ao", "BYTE_COLOR", "POINT"); o.data.color_attributes.active_color = o.data.color_attributes["ao"]
+        bpy.ops.object.select_all(action="DESELECT"); o.select_set(True); bpy.context.view_layer.objects.active = o
+        try: bpy.ops.object.bake(type="AO", target="VERTEX_COLORS")
+        except Exception as e: print("bake failed", o.name, e)
     bpy.data.objects.remove(gp)
-    car.location = (0, 0, 0)
-    # the car's measurements ride along as glTF extras: story/world.js draws its panel lines from them
-    car["L"] = K["L"]; car["W"] = K["W"]; car["H"] = max(p[1] for p in K["top"]); car["cab"] = K["cab"]; car["sg"] = K["sg"]
-    car["pillars"] = K["pillars"]; car["axles"] = K["axles"]; car["belt"] = [cr(K["belt"], x) for x in (0.5, K["L"] / 2, K["L"] - 0.5)]
-    car["tr"] = K["tr"]; car["arch"] = K["arch"]
+    # the hierarchy: car > body > (doors, steering wheel, seats), car > wheels
+    root = bpy.data.objects.new("car", None); link(root)
+    for o in [bodyo] + [w for w, _ in wheels.values()]: o.parent = root
+    for o in [d for d, _ in dobs.values()] + [st, seatD, seatP]:
+        mw = o.matrix_world.copy(); o.parent = bodyo; o.matrix_world = mw
+    # the car's measurements ride along as glTF extras (story/world.js and story/vehicle.js read them)
+    root["L"] = L; root["W"] = W; root["H"] = max(p[1] for p in K["top"]); root["cab"] = K["cab"]; root["sg"] = K["sg"]
+    root["pillars"] = K["pillars"]; root["axles"] = K["axles"]; root["belt"] = [cr(K["belt"], x) for x in (0.5, L / 2, L - 0.5)]
+    root["tr"] = K["tr"]; root["arch"] = K["arch"]; root["tw"] = K["tw"]
+    root["seat"] = three(F(*H)); root["hub"] = three(F(*hub)); root["rimR"] = rimR; root["column"] = round(tilt, 4)
+    root["hingeL"] = three(dobs[1][1]); root["hingeR"] = three(dobs[-1][1])
+    root["wheels"] = [three(wheels[n][1]) for n in ("wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR")]
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in [root, bodyo, st, seatD, seatP] + [d for d, _ in dobs.values()] + [w for w, _ in wheels.values()]: o.select_set(True)
     out = os.path.join(OUT, kind + ".glb")
     bpy.ops.export_scene.gltf(filepath=out, export_format="GLB", use_selection=True, export_apply=True, export_vertex_color="ACTIVE", export_all_vertex_colors=False,
                               export_normals=True, export_texcoords=False, export_materials="EXPORT", export_yup=True, export_extras=True)
-    tris = sum(len(p.vertices) - 2 for p in car.data.polygons)
+    tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in allm + [st])
     print("CAR", kind, "tris", tris, "->", out)
 
 for k in KINDS:
