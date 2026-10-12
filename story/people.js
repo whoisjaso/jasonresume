@@ -1002,7 +1002,7 @@ class Person {
     else { N.addScaledVector(D.normalize(), -N.dot(D)).normalize(); }
     if (D.lengthSq() < 0.5) D.set(0, 0, 1);
     // the wrist goes where the hand's contact point, in that orientation, puts the target
-    const cl = r.hold === "grip" ? H.gripL : r.hold === "press" ? H.tipL : r.hold === "pinch" ? _v1.copy(H.dL).multiplyScalar(0.13).addScaledVector(H.nL, 0.03) : H.palmL;
+    const cl = r.cl || (r.cl = (r.hold === "grip" ? H.gripL : r.hold === "press" ? H.tipL : r.hold === "pinch" ? H.dL.clone().multiplyScalar(0.13).addScaledVector(H.nL, 0.03) : H.palmL).clone());
     const off = this.handOffset(H, cl, r.aimD, r.aimN, _v3);
     const wrist = _f1.copy(tc).sub(off);
     // eased from where the hand is now, along a small arc (up and out a little at mid-approach)
@@ -1012,7 +1012,7 @@ class Person {
     if (r.phase !== "in") r.from.copy(this.wp[g.ha]);
     const pole = _v4.set(S.x + side * 0.35, S.y - 0.45, S.z - 0.2);
     this.ikArm(r.s, tgt, pole, 1);
-    (r.pole || (r.pole = new THREE.Vector3())).copy(pole); r.cl = cl.clone ? cl.clone() : cl;
+    (r.pole || (r.pole = new THREE.Vector3())).copy(pole);
     r.k2 = r.k; // used by hands() for the aim and the pose
     this.taskLook = r.k > 0.2 ? this.toWorld(tc, this._look || (this._look = new THREE.Vector3())) : this.taskLook;
   }
@@ -1032,7 +1032,10 @@ class Person {
       const reach = g.l1 + g.l2 + 0.05;
       const low = clamp(0.95 - c.y, 0, 0.95);
       const ex = Math.max(0, Math.hypot(c.x - S.x, c.z - S.z, (c.y + low * 0.6) - S.y) - reach);
-      lean = Math.max(lean, clamp(ex * 2.2, 0, 0.5) * k);
+      // and more if the hand still falls short of it
+      r.boost = clamp((r.boost || 0) + ((r.miss || 0) > 0.004 && k > 0.6 ? dt * 1.2 : -dt * 0.15), 0, 0.5);
+      lean = Math.max(lean, clamp(ex * 2.2 + r.boost * (low > 0.3 ? 0.4 : 1), 0, 0.65) * k);
+      if (low > 0.3) drop = Math.max(drop, (low + r.boost * 0.5) * k);
       const h = Math.hypot(c.x, c.z) || 1; fx += (c.x / h) * ex * 0.35 * k; fz += (c.z / h) * ex * 0.35 * k;
       twist += clamp(Math.atan2(c.x, Math.max(0.15, c.z)) * 0.35, -0.35, 0.35) * k;
       drop = Math.max(drop, low * k);
@@ -1260,8 +1263,9 @@ class Person {
     const c = this.car, v = c.v, k = c.sitW;
     // seated back in the seat, the head up; ducking under the roof getting in and out
     if (k > 0.001) {
-      this.rot("pelvis", -0.12 * k * c.wheelK - 0.02 * k, 0, 0);
-      this.rot("spine_03", 0.06 * k * c.wheelK, 0, 0);
+      const rc = DEBUG.recline == null ? 0.32 : DEBUG.recline;
+      this.rot("pelvis", -rc * k * c.wheelK - 0.02 * k, 0, 0);
+      this.rot("spine_03", rc * 0.3 * k * c.wheelK, 0, 0); this.rot("neck_01", rc * 0.35 * k * c.wheelK, 0, 0);
     }
     if (c.duck > 0.001) { this.rot("spine_01", 0.28 * c.duck, 0, 0); this.rot("spine_02", 0.22 * c.duck, 0, 0); this.rot("neck_01", 0.15 * c.duck, 0, 0); }
     // driving: thrown a little outward in the corners, back under acceleration and forward under braking; the head
@@ -1272,6 +1276,9 @@ class Person {
       const acc = dt > 0 ? (sp - c.lastSpeed) / dt : 0; c.lastSpeed = sp;
       c.lean = damp(c.lean, clamp(sp * yr / G * 0.32, -0.16, 0.16), 5, dt);
       c.pitch = damp(c.pitch, clamp(-acc / G * 0.35, -0.1, 0.12), 4, dt);
+      // the shoulders turn a little with the wheel
+      c.tw = damp(c.tw || 0, clamp((c.drift || 0) * (DEBUG.twSign || 0) * 0.12, -0.2, 0.2), 6, dt);
+      this.rot("spine_02", 0, c.tw * 0.5, 0); this.rot("spine_03", 0, c.tw * 0.5, 0);
       this.rot("spine_01", c.pitch * 0.5, 0, c.lean * 0.45); this.rot("spine_02", c.pitch * 0.4, 0, c.lean * 0.35);
       this.rot("neck_01", -c.pitch * 0.4, 0, -c.lean * 0.5); this.rot("head", 0, 0, -c.lean * 0.3);
       // the look: ahead, turned into the bend
@@ -1303,16 +1310,19 @@ class Person {
   wheelArms(dt) {
     const c = this.car; if (!c || !c.G.steer || c.wheelK < 0.001) { this.wheelHands = null; return; }
     const W = c.G.steer, R = c.G.rimR;
-    W.updateWorldMatrix(true, false);
-    if (!W.userData.restQ) { W.userData.restQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(W.rotation.x, W.rotation.y, 0, W.rotation.order)); }
-    const alpha = W.rotation.z;
-    // the wheel's frame at rest, in its own axes: which way is up and which way is the driver's left
+    W.updateWorldMatrix(true, true);
+    // the axis the wheel turns about: local Z by the handoff; found from the rim's mesh (its thin axis) to be sure
+    const ax = W.userData.rimAxis || (W.userData.rimAxis = rimAxisOf(W));
+    const e1 = { z: "x", y: "z", x: "y" }[ax], e2 = { z: "y", y: "x", x: "z" }[ax];
+    if (!W.userData.restQ) { const r = W.rotation; W.userData.restQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(ax === "x" ? 0 : r.x, ax === "y" ? 0 : r.y, ax === "z" ? 0 : r.z, r.order)); }
+    const alpha = W.rotation[ax];
+    // the wheel's frame at rest, in its own axes (e1, e2 across the rim): which way is up and which way the driver's left
     const qi = _kq.copy(W.userData.restQ).invert();
-    const up = _f1.set(0, 1, 0).applyQuaternion(qi); up.z = 0; up.normalize();
-    const left = _f2.set(1, 0, 0).applyQuaternion(qi); left.z = 0; left.normalize();
-    const home = { l: Math.atan2(up.y * 0.5 + left.y * 0.866, up.x * 0.5 + left.x * 0.866), r: Math.atan2(up.y * 0.5 - left.y * 0.866, up.x * 0.5 - left.x * 0.866) };
+    const up = _f1.set(0, 1, 0).applyQuaternion(qi), left = _f2.set(1, 0, 0).applyQuaternion(qi);
+    const u1 = up[e1], u2 = up[e2], l1 = left[e1], l2 = left[e2];
+    const home = { l: Math.atan2(u2 * 0.5 + l2 * 0.866, u1 * 0.5 + l1 * 0.866), r: Math.atan2(u2 * 0.5 - l2 * 0.866, u1 * 0.5 - l1 * 0.866) };
     const hub = W.getWorldPosition(_f3);
-    const N = _f4.set(0, 0, 1).transformDirection(W.matrixWorld);
+    const N = _f4.set(0, 0, 0); N[ax] = 1; N.transformDirection(W.matrixWorld);
     const seatW = this.carW(c.G.S, _v1); if (N.dot(_v2.copy(seatW).sub(hub)) < 0) N.negate();
     const toC = _m2.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert();
     this.wheelHands = this.wheelHands || { l: { k: 0, n: new THREE.Vector3(), d: new THREE.Vector3() }, r: { k: 0, n: new THREE.Vector3(), d: new THREE.Vector3() } };
@@ -1321,14 +1331,14 @@ class Person {
       if (!g || !H) continue;
       if (h.th == null) h.th = home[s] - alpha;
       const drift = angDiff(home[s], h.th + alpha);
-      if (!h.sw && !o.sw && Math.abs(drift) > 1.75) h.sw = { t: 0, a0: h.th + alpha };
+      if (!h.sw && !o.sw && Math.abs(drift) > (DEBUG.swap || 1.3)) h.sw = { t: 0, a0: h.th + alpha };
       let ang = h.th, lift = 0;
       if (h.sw) {
-        h.sw.t += dt; const u = sstep(0, 1, h.sw.t / 0.34);
+        h.sw.t += dt; const u = sstep(0, 1, h.sw.t / 0.28);
         ang = h.sw.a0 + angDiff(h.sw.a0, home[s]) * u - alpha; lift = Math.sin(u * Math.PI);
-        if (h.sw.t >= 0.34) { h.th = home[s] - alpha; h.sw = null; }
+        if (h.sw.t >= 0.28) { h.th = home[s] - alpha; h.sw = null; }
       }
-      const P = _v3.set(R * Math.cos(ang), R * Math.sin(ang), 0).applyMatrix4(W.matrixWorld);
+      const P = _v3.set(0, 0, 0); P[e1] = R * Math.cos(ang); P[e2] = R * Math.sin(ang); P.applyMatrix4(W.matrixWorld);
       const r = _v4.copy(P).sub(hub).normalize();
       // the rim runs across the knuckles (its tangent), the fingers go round it continuing the line of the arm, the
       // palm on its outside toward the hub; lifted toward the driver while changing grip
@@ -1339,6 +1349,11 @@ class Person {
       const n = _k2.crossVectors(tg, d).normalize(); if (n.dot(rc) > 0) n.negate();
       const off = this.handOffset(H, H.gripL, d, n, _f1);
       const wrist = _f3.copy(Pc).sub(off);
+      // a hand that would have to straighten its arm to stay on lets go and takes the rim again (hand over hand)
+      if (!h.sw && !o.sw && Math.abs(drift) > 0.6 && wrist.distanceTo(S) > (g.l1 + g.l2) * 0.96) h.sw = { t: 0, a0: h.th + alpha };
+      // still out of reach (the other hand is changing grip and the wheel is spinning): this one slides round the rim
+      if (!h.sw && wrist.distanceTo(S) > (g.l1 + g.l2) * 0.97) h.th += angDiff(h.th + alpha, home[s]) * Math.min(1, dt * 14);
+      c.drift = (c.drift || 0) * 0.5 + drift * 0.25;
       const pole = _f2.set(S.x + side * 0.3, S.y - 0.5, S.z - 0.05);
       this.ikArm(s, wrist, pole, c.wheelK);
       const wh = this.wheelHands[s]; wh.k = c.wheelK * (1 - lift * 0.8); wh.n.copy(n); wh.d.copy(d);
@@ -1429,13 +1444,15 @@ class Person {
       let ct = null, ccl = null, cpole = null, ck = 0;
       if (r && r.cl && r.k2 > 0) { ct = r.tc; ccl = r.cl; cpole = r.pole; ck = r.k2; }
       if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s] && this.wheelHands[s].at && this.car.wheelK > 0.01) { const wh = this.wheelHands[s]; ct = wh.at; ccl = H.gripL; cpole = wh.pole; ck = this.car.wheelK; }
-      if (ct && ck > 0.5) for (let it = 0; it < 3; it++) {
+      if (ct && ck > 0.5) for (let it = 0; it < 5; it++) {
         const cur = _v4.copy(ccl).applyQuaternion(wq[ha]).add(wp[ha]), e = _v3.copy(ct).sub(cur);
         if (e.lengthSq() < 4e-6) break;
         const hw = _kq.copy(wq[ha]);
         this.ikArm(s, _f3.copy(wp[ha]).add(e), cpole, 1);
         lq[ha].copy(wq[la]).invert().multiply(hw); wq[ha].copy(hw);
       }
+      // what is still missed (out of reach): the body leans further next frame (reachBody)
+      if (r && ct === r.tc) r.miss = _v4.copy(ccl).applyQuaternion(wq[ha]).add(wp[ha]).distanceTo(ct);
       // 3. the fingers
       for (const F of H.fingers) {
         const c = cur[F.f][F.j - 1] + (F.f !== "t" ? life * (F.j === 1 ? 1 : 0.5) : 0);
@@ -1514,6 +1531,14 @@ class Person {
   }
 }
 function t0(p) { return p.t; }
+/* a steering wheel's turning axis: the thinnest axis of its meshes in its own frame */
+function rimAxisOf(W) {
+  const inv = new THREE.Matrix4().copy(W.matrixWorld).invert(), bb = new THREE.Box3(), v = new THREE.Vector3();
+  W.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i += 3) bb.expandByPoint(v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld).applyMatrix4(inv)); });
+  if (bb.isEmpty()) return "z";
+  const sz = bb.getSize(v);
+  return sz.z <= sz.x && sz.z <= sz.y ? "z" : sz.y <= sz.x ? "y" : "x";
+}
 
 /* the hand poses: per finger (i index, m middle, r ring, p little, t thumb) the curl at each joint from the knuckle out,
    in radians toward the palm, and s the spread of the fingers. hands() blends them per hand by what the body does */

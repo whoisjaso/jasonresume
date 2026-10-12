@@ -338,11 +338,15 @@ def details(K, ob, name):
         # side mirror: a small rounded block on a stalk at the A-pillar base
         c0 = K["cab"][0]; zb = cr(K["belt"], c0 + 0.2)
         bpy.ops.mesh.primitive_cube_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.09), -(c0 + 0.24), zb + 0.11))
-        mr = bpy.context.active_object; mr.scale = (0.19, 0.09, 0.12); mr.data.materials.append(mats()["paint"])
-        bv = mr.modifiers.new("bv", "BEVEL"); bv.width = 0.03; bv.segments = 3
+        mr = bpy.context.active_object; mr.scale = (0.2, 0.1, 0.125); mr.data.materials.append(mats()["paint"])
+        bpy.ops.object.transform_apply(scale=True)
+        for v in mr.data.vertices:   # a housing, not a box: the tip narrower, the face toward the rear flat
+            t = (v.co.x * s + 0.1) / 0.2
+            v.co.z *= 1 - 0.25 * t; v.co.y = v.co.y * (1 - 0.35 * t) if v.co.y > 0 else v.co.y
+        bv = mr.modifiers.new("bv", "BEVEL"); bv.width = 0.035; bv.segments = 4
         bpy.context.view_layer.objects.active = mr; bpy.ops.object.modifier_apply(modifier="bv"); bpy.ops.object.shade_smooth(); parts.append(mr)
         bpy.ops.mesh.primitive_plane_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.1), -(c0 + 0.24) - 0.047, zb + 0.11), rotation=(math.pi / 2, 0, 0))
-        mg = bpy.context.active_object; mg.scale = (0.15, 0.085, 1); mg.data.materials.append(mats()["chrome"]); parts.append(mg)
+        mg = bpy.context.active_object; mg.scale = (0.16, 0.095, 1); mg.data.materials.append(mats()["chrome"]); parts.append(mg)
         bpy.ops.mesh.primitive_cube_add(size=1, location=(s * (cr(K["hw"], c0 + 0.2) + 0.02), -(c0 + 0.22), zb + 0.06))
         st = bpy.context.active_object; st.scale = (0.08, 0.04, 0.03); st.data.materials.append(mats()["trim"]); parts.append(st)
         # door handles: one per door, on the shoulder below the belt
@@ -499,8 +503,11 @@ def cut_doors(K, ob):
         for f in bm.faces:
             if f.material_index != jd: continue
             c = f.calc_center_median(); nn = f.normal
-            if c.z > zbelt - 0.005 and abs(nn.z) < 0.9: kill.append(f)
-            elif abs(nn.z) > 0.9 and c.z > zbelt + 0.02: kill.append(f)
+            if c.z > zbelt - 0.005:
+                # above the belt: the inner wall goes (the glass stays see-through); the cut's edges are the
+                # door's own window frame, black, and swing with it
+                if abs(nn.x) > 0.9: kill.append(f)
+                else: f.material_index = slot(door, "trim")
             elif abs(nn.x) > 0.9: f.material_index = slot(door, "interior")
             elif abs(nn.z) > 0.9 and abs(c.z - (zbelt - 0.02)) < 0.04: f.material_index = slot(door, "trim")
             else: f.material_index = slot(door, "paint")
@@ -578,6 +585,11 @@ def cabin(K):
     parts.append(mkbox("bin", "dash", at(dA1 - 0.06, ls, belt + 0.05), (0.38, 0.16, 0.06), 0.02))
     parts.append(mkbox("cluster", "cluster", at(dA1 + 0.005, ls, belt - 0.03), (0.32, 0.004, 0.1)))
     parts.append(mkbox("screen", "cluster", at(dA1 + 0.005, 0, belt - 0.1), (0.2, 0.004, 0.12)))
+    # the rear-view mirror, high in the middle of the windshield
+    rz = cr(K["top"], c1) - 0.1
+    parts.append(mkbox("rvm", "trim", at(c1 + 0.04, 0, rz), (0.25, 0.035, 0.075), 0.012))
+    parts.append(mkbox("rvmg", "chrome", at(c1 + 0.059, 0, rz), (0.22, 0.003, 0.058)))
+    parts.append(mkbox("rvms", "trim", at(c1 - 0.0, 0, rz + 0.06), (0.03, 0.03, 0.09)))
     # the steering column, from the dash to the hub
     hub = (aH - 0.5, ls, hH + 0.36)
     col = mkbox("column", "dash", Matrix.Translation(O((hub[0] + dA1) / 2 - 0.03, ls, hub[2] - 0.08)) @ Matrix.Rotation(-1.15, 4, "X"), (0.07, 0.07, 0.34), 0.015)

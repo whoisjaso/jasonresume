@@ -59,6 +59,9 @@ if (q.get("car")) {
       handle(s) { return dn(s).localToWorld(new V3(sxOf(s) * 0.03, 0.36, -1.08)); },
       inner(s) { return dn(s).localToWorld(new V3(-sxOf(s) * 0.08, 0.27, -0.72)); } } };
   CAR.steeringWheel.userData.rimR = 0.185;
+  // the handoff's wheel turns about its local Z with the rim in local XY; a model whose rim lies in XZ is stood up here
+  // (?wheelfix=0 keeps the model as it is)
+  { const W = CAR.steeringWheel, m = W.children.find(o => o.isMesh); if (m && q.get("wheelfix") !== "0") { m.geometry.computeBoundingBox(); const s = new THREE.Vector3(); m.geometry.boundingBox.getSize(s); if (s.y < s.z && s.y < s.x) { const pv = new THREE.Group(); pv.rotation.x = -Math.PI / 2; W.add(pv); pv.add(m); } } }
 }
 const cast = await loadCast("../../assets/story/cast/", { clips: q.get("clips") || undefined });
 const P = [];
@@ -133,7 +136,7 @@ function drive(p, i, dt) {
     if (seq === "drive") {
       // the wheel a full turn each way (hand over hand), the car on a gentle curve
       const w = +(q.get("wheel") || 0) || Math.sin(t * 0.55) * 4.2;
-      CAR.wheelAngle = w; CAR.steerAngle = w / 14; CAR.steeringWheel.rotation.z = w; CAR.speed = 6; CAR.throttle = 0.4 + 0.3 * Math.sin(t);
+      CAR.wheelAngle = w; CAR.steerAngle = w / 14; CAR.steeringWheel.rotation[CAR.steeringWheel.userData.rimAxis || "z"] = w; CAR.speed = 6; CAR.throttle = 0.4 + 0.3 * Math.sin(t);
       if (q.get("move")) { CARS.yaw = (CARS.yaw || 0) - CAR.steerAngle * 6 / 2.8 * dt; CAR.object.rotation.y = CARS.yaw; CAR.object.position.x += Math.sin(CARS.yaw) * 6 * dt; CAR.object.position.z += Math.cos(CARS.yaw) * 6 * dt; }
     }
   } else if (run === "reach" && i === 0) {

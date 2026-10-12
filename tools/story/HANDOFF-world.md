@@ -113,7 +113,7 @@ shelf and fence is in `walls`, which nav.js already reads.
 ```
 # Blender 4.2 LTS headless (no extensions needed)
 blender -b --python tools/story/world/cars.py -- /tmp/cars          # 5 raw GLBs
-node tools/story/world/pack.mjs /tmp/cars v1                          # assets/story/world/car-<kind>[-lo]-v1.glb
+node tools/story/world/pack.mjs /tmp/cars v2                          # assets/story/world/car-<kind>[-lo]-v2.glb
 python3 tools/story/world/textures.py /tmp/ph-cache                   # assets/story/world/tex-v1/*.webp from Poly Haven (CC0)
 node tools/story/world/stills.mjs <tag> [desktop|phone|all] [lot office memory keys]   # tools/verify/out/real-world-*.png
 node tools/story/world/probe.mjs "<expression>"                       # evaluate against /story/world.js in a blank page
@@ -131,3 +131,14 @@ new version (`v2`, `tex-v2`) and story/world.js moves with it.
   passed in the other portrait branches. Worth a rerun on a quiet machine.
 - The harness URL (`?debug=story&fast=1`) gets the light world tier (`-lo` cars, 512 textures,
   no clear-coat lamp loop) so the game clock keeps up on SwiftShader; stills.mjs pins `wq`.
+
+## 7. Driving (this pass)
+
+The cars are v2 (`car-<kind>[-lo]-v2.glb`): the same bodies cut into parts that move (front doors on
+hinges, wheels on hubs, the steering wheel on its column), a cabin behind see-through glass, reverse
+and third brake lamps. Three of them on the lot are drivable rigs (`set.userData.drivable`), driven by
+story/vehicle.js against `set.userData.colliders` and `set.userData.driveBounds`. The contract for
+main.js and people.js is tools/story/HANDOFF-drive.md. Build: `cars.py` then `pack.mjs <dir> v2`
+(the phone tier is simplified aggressively, `-sa`). Tests: `drive-test.mjs`, `drive-stills.mjs`.
+The fence row leaves the stalls in front of the gate empty and the road has no pole or palm in
+front of the gate, so a car can drive out onto Almeda Genoa Road.
