@@ -379,7 +379,7 @@ function carMats() {
   const v = { vao: true };
   CARM = {
     // tinted and see-through, so the cabin reads: the seats, the dash, the wheel
-    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6, alpha: 0.42, glass: true, depthWrite: false, ao: 0 }),
+    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6, alpha: 0.58, glass: true, depthWrite: false, ao: 0 }),
     trim: pbr({ ...v, color: "#141516", rough: 0.55, wet: 0.8 }),
     chrome: pbr({ ...v, color: "#c9ccd0", metal: 1, rough: 0.14, wet: 0.6 }),
     tire: pbr({ ...v, color: "#141414", rough: 0.82, wet: 0.7 }),

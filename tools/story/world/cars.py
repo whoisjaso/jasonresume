@@ -511,7 +511,12 @@ def cut_doors(K, ob):
             elif abs(nn.x) > 0.9: f.material_index = slot(door, "interior")
             elif abs(nn.z) > 0.9 and abs(c.z - (zbelt - 0.02)) < 0.04: f.material_index = slot(door, "trim")
             else: f.material_index = slot(door, "paint")
-        bmesh.ops.delete(bm, geom=kill, context="FACES"); bm.to_mesh(door.data); bm.free()
+        bmesh.ops.delete(bm, geom=kill, context="FACES")
+        # the door's window surround above the belt is black trim, so the frame reads as a frame round its glass
+        pd, td = door.data.materials.find("paint"), slot(door, "trim")
+        for f in bm.faces:
+            if f.material_index == pd and f.calc_center_median().z > zbelt + 0.03: f.material_index = td
+        bm.to_mesh(door.data); bm.free()
         # the body: the walls that closed the opening go (you see into the cabin); the jambs stay, painted
         bm = bmesh.new(); bm.from_mesh(ob.data); bm.faces.ensure_lookup_table()
         jb = ob.data.materials.find("jamb"); kill = []; pi = slot(ob, "paint")
@@ -612,6 +617,9 @@ def steering_wheel(rimR=0.185):
     for o in objs: o.select_set(True)
     bpy.context.view_layer.objects.active = rim; bpy.ops.object.join()
     w = bpy.context.active_object; w.name = "steer"
+    # bake the rim's quarter turn into the mesh, so the node's own rotation is only the column's tilt
+    # (in three.js the wheel then lies in the node's XY plane and turns about its local Z)
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bpy.ops.object.shade_smooth()
     return w
 

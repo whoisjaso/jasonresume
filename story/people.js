@@ -1498,7 +1498,8 @@ class Person {
     const K = ["visAA", "visOW", "visEE", "visPBM", "visFV", "jawOpen"], tgt = { visAA: 0, visOW: 0, visEE: 0, visPBM: 0, visFV: 0, jawOpen: 0 };
     const words = this.words && this.t - this.wordsAt < 0.25 ? this.words : null;
     if (words) {
-      const now = this.wordsNow + (this.t - this.wordsAt);
+      // the audio clock (measured: with the blend rates below the mouth leads the sound by 10 to 60 ms, as lips do)
+      const now = this.wordsNow + (this.t - this.wordsAt) + (DEBUG.lipLead || 0);
       const w = words.find(x => now >= x.s - 0.02 && now <= x.e);
       if (w && w !== this.lastWord) {
         // a long or stressed word lifts the brows a touch, and the head marks the beat
@@ -1506,7 +1507,10 @@ class Person {
         if (w.w.replace(/[^a-z]/gi, "").length >= 6 || /[!?]$/.test(w.w)) { this.browPulse = 0.35 + Math.random() * 0.25; if (Math.random() < 0.4 && !this.nodK) this.nodK = { t: 0, d: 0.4, a: 0.25 }; }
       }
       if (w) {
-        const seq = visemes(w.w), u = clamp((now - w.s) / Math.max(0.05, w.e - w.s), 0, 0.999), k = seq[Math.floor(u * seq.length)];
+        // a word's shapes over the time it takes to say them (a word whose timing runs on into a pause, often the last
+        // one of a line, closes the mouth when it's said instead of drawing the shapes out over the silence)
+        const seq = visemes(w.w), span = Math.min(Math.max(0.05, w.e - w.s), 0.075 * seq.length + 0.1);
+        const u = (now - w.s) / span, k = u < 1 ? seq[Math.floor(clamp(u, 0, 0.999) * seq.length)] : null;
         if (k) { tgt[k[0]] = k[1]; tgt.jawOpen = k[2]; }
       }
     } else if (this.mouth > 0.05) {
@@ -1515,7 +1519,7 @@ class Person {
       if (this.vis && this.vis[0]) { tgt[this.vis[0]] = this.vis[1] * this.mouth; }
       if (this.vis) tgt.jawOpen = this.vis[2] * this.mouth;
     }
-    for (const k of K) { this.visK[k] = damp(this.visK[k] || 0, tgt[k], k === "visPBM" ? 30 : 20, dt); this.setFx(k, this.visK[k]); }
+    for (const k of K) { this.visK[k] = damp(this.visK[k] || 0, tgt[k], k === "visPBM" ? 40 : 28, dt); this.setFx(k, this.visK[k]); }
     // at rest the lips meet: the base face sits a little parted
     this.restLip = damp(this.restLip || 0, this.mouth < 0.05 && !words ? 1 : 0, 6, dt);
     this.setFx("mouthClose", 0); this.setFx("mouthPressLeft", this.restLip * 0.3); this.setFx("mouthPressRight", this.restLip * 0.3);

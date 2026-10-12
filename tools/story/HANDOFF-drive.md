@@ -136,7 +136,8 @@ rest; the same numbers are in each file's extras on the `car` node and on `car.o
 - The passenger's seat (`seat_P`) is the driver's mirrored (x negated).
 - **The steering wheel**: rim centre-line radius **0.185 m** (`rimR`), rim tube 0.016 m; the hub is
   0.50 m ahead of the H-point and 0.36 m above it; the column tilts the wheel's face **24 degrees** back
-  from vertical (`column`, 0.419 rad). In the `steer` node's own frame the wheel lies in its XY plane:
+  from vertical (`column`, 0.419 rad; the node's only rotation is that tilt about X, the rim's own
+  quarter turn is baked into the mesh since the v2 rebuild of this pass). In the `steer` node's own frame the wheel lies in its XY plane:
   **local +Y is 12 o'clock, local +X the driver's left (9 o'clock side), local -Z points at the driver's
   chest**. Hands at 10 and 2: local `(+0.160, +0.0925, 0)` and `(-0.160, +0.0925, 0)` (that is
   `rimR * (±sin 60, cos 60, 0)`), which `grips()` gives you in world space as it turns. Turning right
@@ -152,8 +153,9 @@ rest; the same numbers are in each file's extras on the `car` node and on `car.o
   headrest), a rear bench in the four-doors, a console, the dash with a lit cluster behind the wheel
   and a screen in the middle (material `cluster`, glows when the engine runs), the steering column, a
   floor, and the shell's inner side (dark trim). The glass is see-through.
-- Phone tier: same nodes, about 70 KB a car (desktop about 145 KB). All five kinds: 364 KB phone,
-  728 KB desktop (v1 was 239 and 447).
+- A rear-view mirror high in the middle of the windshield; side mirrors ride on the front doors.
+- Phone tier: same nodes, about 72 KB a car (desktop about 146 KB). All five kinds: about 360 KB
+  phone, 730 KB desktop (v1 was 239 and 447).
 
 ## 4. Colliders and bounds
 
