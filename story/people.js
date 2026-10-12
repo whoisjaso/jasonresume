@@ -161,7 +161,7 @@ const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THRE
 const _e = new THREE.Euler(0, 0, 0, "ZXY"), _m = new THREE.Matrix4(), _m2 = new THREE.Matrix4();
 const _k1 = new THREE.Vector3(), _k2 = new THREE.Vector3(), _k3 = new THREE.Vector3(), _k4 = new THREE.Vector3(), _kq = new THREE.Quaternion(), _kq2 = new THREE.Quaternion();
 const _f1 = new THREE.Vector3(), _f2 = new THREE.Vector3(), _f3 = new THREE.Vector3(), _f4 = new THREE.Vector3();
-const UP = new THREE.Vector3(0, 1, 0);
+const UP = new THREE.Vector3(0, 1, 0), AXX = new THREE.Vector3(1, 0, 0);
 
 /* which bones a layer moves: masks over the source skeleton */
 function mask(motion, fn) { const m = new Float32Array(motion.n); motion.names.forEach((n, i) => (m[i] = fn(n.toLowerCase()))); return m; }
@@ -564,9 +564,13 @@ class Person {
       const pq = par[i] >= 0 ? wq[par[i]] : this.baseQ;
       lq[i].copy(pq).invert().multiply(wq[i]);
     }
-    // relaxed hands: the library's idle hand is half a fist; open it toward a resting curl
+    // relaxed hands: index and middle nearly straight, the curl growing toward the little finger, the thumb lying alongside
     if (!this.fingers) this.fingers = this.order.map((b, i) => (/^(index|middle|ring|pinky|thumb)_0[123]_[lr]$/.test(b.name) ? i : -1)).filter(i => i >= 0);
-    for (const i of this.fingers) lq[i].slerp(this.rest[this.order[i].name].q, /thumb/.test(this.order[i].name) ? 0.25 : 0.45);
+    for (const i of this.fingers) {
+      const nm = this.order[i].name, f = nm.split("_")[0], j = +nm.split("_")[1];
+      const c = ({ index: 0.1, middle: 0.16, ring: 0.26, pinky: 0.36, thumb: 0.06 })[f] * (j === 1 ? 0.8 : j === 2 ? 1.2 : 0.9);
+      lq[i].copy(this.rest[nm].q).multiply(_q1.setFromAxisAngle(AXX, c));
+    }
     // the collarbones: captured shoulders shrug and roll more than these jackets can take; keep most of their rest
     for (const sd of ["l", "r"]) { const i = this.bi["clavicle_" + sd]; if (i != null && DEBUG.clav !== 0) lq[i].slerp(this.rest["clavicle_" + sd].q, DEBUG.clav == null ? 0.65 : DEBUG.clav); }
     // the hips: the source's hip travel, scaled to this body

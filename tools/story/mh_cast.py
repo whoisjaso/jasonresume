@@ -41,7 +41,9 @@ JASON = {"head/head-round": 0.45, "head/head-scale-vert-decr": 0.3, "chin/chin-h
          "mouth/mouth-lowerlip-volume-incr": 0.45, "mouth/mouth-upperlip-volume-incr": 0.3, "mouth/mouth-scale-horiz-decr": 0.25, "mouth/mouth-cupidsbow-incr": 0.5, "cheek/l-cheek-volume-incr": 0.35, "cheek/r-cheek-volume-incr": 0.35,
          "cheek/l-cheek-bones-incr": 0.2, "cheek/r-cheek-bones-incr": 0.2, "eyes/l-eye-height2-incr": 0.35, "eyes/r-eye-height2-incr": 0.35,
          "eyebrows/eyebrows-trans-down": 0.1,
-         "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2}
+         "ears/l-ear-flap-incr": 0.2, "ears/r-ear-flap-incr": 0.2,
+         # a lean frame with a natural shoulder: about 2.8 head widths across the suit's shoulder seams
+         "torso/measure-shoulder-dist-decr": 1.0, "torso/torso-vshape-decr": 0.5, "torso/torso-muscle-dorsi-decr": 0.7, "torso/torso-scale-horiz-decr": 0.3}
 DELL = {"head/head-square": 0.4, "nose/nose-scale-horiz-incr": 0.3, "chin/chin-width-incr": 0.3, "neck/neck-double-incr": 0.3}
 PLAYER = {"head/head-oval": 0.3, "head/head-round": 0.15, "chin/chin-height-decr": 0.15, "chin/chin-width-incr": 0.1,
           "eyes/l-eye-height2-incr": 0.3, "eyes/r-eye-height2-incr": 0.3, 
@@ -51,12 +53,12 @@ RENATA = {"head/head-oval": 0.4, "mouth/mouth-lowerlip-volume-decr": 0.6, "mouth
 
 CAST = {
     "jason": {
-        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
+        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.45, "weight": 0.42, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
         "clothes": ["male_elegantsuit01", "shoes02"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": True, "goatee": True, "face": "JASON", "iris": (0.11, 0.065, 0.045)
     },
     "jason-memory": {
-        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.55, "weight": 0.45, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
+        "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.45, "weight": 0.42, "proportions": 0.75, "height": 0.5, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0}},
         "clothes": ["male_casualsuit03", "shoes01"], "brows": "eyebrow001", "lashes": "eyelashes02", "afro": {"depth_top": 0.047, "depth_side": 0.008}, "goatee": True, "face": "JASON", "iris": (0.11, 0.065, 0.045)
     },

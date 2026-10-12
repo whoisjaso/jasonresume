@@ -81,7 +81,7 @@ unzip makehuman_system_assets_cc0.zip glasses01_cc0.zip hats01_cc0.zip  -> ~/.co
 unzip visemes01.zip faceunits01.zip -> .../mpfb/data/targets/{visemes,faceunits}/
 cd tools/story && npm install
 # each time
-blender -b --python tools/story/mh_cast.py -- /tmp/cast [jason jason-memory player dell renata]   # adds eye bones; grows Jason's, the memory's and the visitor's hair
+blender -b --python tools/story/mh_cast.py -- /tmp/cast [jason jason-memory player dell renata]   # adds eye bones, repaints the irises brown with a limbal ring, tailors the jackets' shoulders to the body and smooths the shoulder weights, grows Jason's, the memory's and the visitor's hair
 node tools/story/pack_cast.mjs /tmp/cast v2      # assets/story/cast/<name>-v2.glb, 435 to 605 KB each
 # the motion: UAL1/UAL2 Standard GLBs from quaternius.itch.io (free download), CMU .asf/.amc from mocap.cs.cmu.edu/subjects/<NN>/
 node tools/story/clips.mjs UAL1_Standard.glb UAL2_Standard.glb <cmu dir> v2   # assets/story/cast/clips-v2.glb

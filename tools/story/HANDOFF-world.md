@@ -23,12 +23,13 @@ assets are built.
   after the lot's. A set built before they land renders with flat colours and
   patches itself in when they arrive. Every set has `set.userData.ready`
   (a promise) if you would rather wait.
-- Budget (gzip-free sizes, they are already compressed):
-  desktop lot: cars 436 KB + asphalt (1024 colour, 512 normal and ARM) 452 KB +
-  concrete 27 KB = about 0.92 MB; phone lot: cars 234 KB + 512 textures 237 KB
-  = about 0.47 MB. Rooms afterwards: desktop about 0.75 MB, phone about 0.3 MB.
-  With three.js (0.74 MB), the story scripts and the three lot people
-  (about 1.5 MB), the first scene is about 3.5 MB on desktop, 3.0 MB on a phone.
+- Budget (files are already compressed): desktop lot: cars 447 KB +
+  asphalt (1024 colour, 512 normal and ARM) and concrete 494 KB = 0.94 MB;
+  phone lot: cars 239 KB + 512 textures 251 KB = 0.49 MB. Rooms afterwards:
+  desktop 0.74 MB, phone 0.30 MB. With three.js and the story scripts
+  (1.35 MB raw, about 0.4 MB gzipped) and the lot's people and clips (about
+  1.75 MB), the first scene is about 3.1 MB transferred on desktop and
+  2.6 MB on a phone.
 
 ## 2. Hooks on `set.userData`
 
@@ -38,9 +39,10 @@ assets are built.
 | `puddles` | `[{ x, z, r }]`, the larger standing water on the lot (empty in the morning) | lot |
 | `sounds` | where things make noise (all `{ x, y, z, kind }`, some with `w`, the width of a long source): | |
 | | lot: `idle` (the black sedan by the showroom, engine running, lights on, kind `engine-idle`), `lamps` (each pole's head, `sodium-hum`), `gate` (`chain-link`), `road` (Almeda Genoa Rd beyond the fence, `traffic`), `rain` (`rain-canopy` along the showroom canopy, `rain-cars` over the rows, `rain-glass` on the storefront) | lot (keys: no idle, no rain) |
-| | office: `window` (`rain-glass`), `lamps` (`fluorescent-hum`), `phone` (`desk-phone`), `laptop` (`laptop-fan`), `coffee` (`fridge-hum`), `arcade` (`arcade-attract`), `clock` (`clock-tick`, the wall clock above the break room door) | office |
+| | office: `fridge` (`fridge-hum`), `window` (`rain-glass`), `lamps` (`fluorescent-hum`), `phone` (`desk-phone`), `laptop` (`laptop-fan`), `coffee` (`fridge-hum`), `arcade` (`arcade-attract`), `clock` (`clock-tick`, the wall clock above the break room door) | office |
 | | memory: `windows` (`rain-glass`, w 18), `clock` | memory |
 | `ready` | promise: the set's streamed textures are in | all |
+| `fogDen` | the room's own fog density, applied every frame while the set is up (office 0.006, memory 0.006); the lot leaves main.js's value alone | office, memory |
 | `lamps[i].car` | true for the idle car's headlight spill (not a pole; leave its cone alone) | lot |
 | `cars` | `[{ kind, x, z, yaw, color, metal, idle }]` | lot |
 
