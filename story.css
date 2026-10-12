@@ -365,8 +365,8 @@ html[data-still] .st-dot.is-new::after { animation: none; opacity: .5; transform
 .st-drive.is-on .st-drive__steer, .st-drive.is-on button { pointer-events: auto; }
 .st-drive button { -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; -webkit-user-select: none; color: var(--bone); font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; }
 .st-drive__top { position: absolute; left: max(16px, calc(env(safe-area-inset-left) + 12px)); top: max(16px, env(safe-area-inset-top)); display: flex; gap: 8px; }
-.st-drive__btn { height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 9px; border-radius: 22px; border: 1px solid var(--hair-2); background: rgba(5, 7, 10, .42); transition: transform .2s var(--ease), background-color .2s var(--ease); }
-.st-drive__btn:active, .st-drive__btn.is-on { transform: scale(.96); background: rgba(237, 231, 219, .16); }
+.st-drive__btn { height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 9px; border-radius: 22px; border: 1px solid rgba(237, 231, 219, .3) !important; background: rgba(5, 7, 10, .46) !important; transition: transform .2s var(--ease), background-color .2s var(--ease); }
+.st-drive__btn:active, .st-drive__btn.is-on { transform: scale(.96); background: rgba(237, 231, 219, .18) !important; }
 .st-drive__btn kbd { font: 600 11px/1 var(--sans); letter-spacing: 0.04em; color: var(--ink); background: var(--bone); border-radius: 5px; padding: 4px 6px; min-width: 9px; text-align: center; }
 .st-drive__btn kbd[hidden] { display: none; }
 .st-drive [data-drv="hb"] { display: none; }
@@ -382,11 +382,11 @@ html[data-still] .st-dot.is-new::after { animation: none; opacity: .5; transform
 .st-drive__wheel { width: 64px; height: 64px; display: block; transition: transform .08s linear; }
 .st-drive__wheel svg { width: 100%; height: 100%; fill: none; stroke: var(--bone); stroke-width: 2.6; stroke-linecap: round; }
 .st-drive[data-dev="touch"] .st-drive__pedals { display: flex; align-items: flex-end; gap: 12px; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px)); }
-.st-drive__pedal { width: 78px; height: 96px; border-radius: 18px; border: 1px solid rgba(237, 231, 219, .34); background: rgba(5, 7, 10, .42); display: grid; place-items: end center; padding-bottom: 14px; transition: transform .12s var(--ease), background-color .12s var(--ease); }
+.st-drive__pedal { width: 78px; height: 96px; border-radius: 18px; border: 1px solid rgba(237, 231, 219, .38) !important; background: rgba(5, 7, 10, .46) !important; display: grid; place-items: end center; padding-bottom: 14px; transition: transform .12s var(--ease), background-color .12s var(--ease); }
 .st-drive__pedal.is-gas { width: 84px; height: 132px; }
-.st-drive__pedal.is-on { transform: scale(.95) translateY(2px); background: rgba(237, 231, 219, .2); border-color: rgba(237, 231, 219, .7); }
+.st-drive__pedal.is-on { transform: scale(.95) translateY(2px); background: rgba(237, 231, 219, .22) !important; border-color: rgba(237, 231, 219, .75) !important; }
 .st-drive[data-dev="touch"] [data-drv="hb"] { display: inline-flex; position: absolute; right: max(18px, calc(env(safe-area-inset-right) + 14px)); bottom: calc(max(18px, calc(env(safe-area-inset-bottom) + 14px)) + 146px); }
-.st-drive[data-dev="touch"] [data-drv="hb"].is-on { background: rgba(237, 231, 219, .2); }
+.st-drive[data-dev="touch"] [data-drv="hb"].is-on { background: rgba(237, 231, 219, .22) !important; }
 @media (max-height: 480px) {
   .st-drive[data-dev="touch"] .st-drive__steer { width: 164px; height: 96px; }
   .st-drive__pedal { width: 70px; height: 84px; }

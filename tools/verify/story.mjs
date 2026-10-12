@@ -550,9 +550,14 @@ async function drive(vname, w, h, mobile) {
   const pressGas = async on => { if (mobile) { const b = await p.$('[data-drv="gas"]'); const bb = await b.boundingBox(); await touch(on ? 'touchStart' : 'touchEnd', bb.x + bb.width / 2, bb.y + bb.height / 2, 2); } else if (on) await p.keyboard.down('w'); else await p.keyboard.up('w'); };
   let cdp = null;
   const touch = async (type, x, y, id) => { cdp = cdp || await ctx.newCDPSession(p); touch.pts = touch.pts || {}; if (type === 'touchEnd') delete touch.pts[id]; else touch.pts[id] = { x: Math.round(x), y: Math.round(y), id }; await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: Object.values(touch.pts) }); };
-  const p0 = (await D()).pose;
+  // a clear run on the lot to drive and turn in
+  const lane = await p.evaluate(() => window.JG_STORY.debug.lane(14));
+  if (!lane) errs.push(`${label}: no clear lane on the lot to drive in`);
+  else await p.evaluate(l => window.JG_STORY.debug.carPut(l[0], l[1], l[2]), lane);
+  await p.waitForTimeout(400);
   await pressGas(true);
   await until(p, () => window.JG_STORY.debug.drive().speed > 3, null, 40000);
+  await p.waitForTimeout(300);
   const fast = await D();
   if (!(fast.speed > 3)) errs.push(`${label}: the gas didn't get it moving (${JSON.stringify(fast)})`);
   if (!(fast.rpm > 1000)) errs.push(`${label}: the engine didn't rev (${fast.rpm})`);
@@ -620,6 +625,8 @@ async function drive(vname, w, h, mobile) {
   if (mobile) await p.tap('[data-drv="out"]', { force: true }); else await p.keyboard.press('e');
   if (mobile) { await p.waitForTimeout(1200); await p.evaluate(() => window.JG_STORY.debug.skipCar()); }
   const out = await until(p, () => window.JG_STORY.debug.state().phase === 'explore' && !window.JG_STORY.debug.drive().state, null, 120000);
+  // on your feet: the walk camera finds its room again (a few frames, which is a while on software GL)
+  await until(p, () => window.JG_STORY.debug.drive().visible, null, 30000);
   const dOut = await D();
   if (!out) errs.push(`${label}: never got out (${JSON.stringify(dOut)})`);
   else if (!dOut.visible || dOut.inCar) errs.push(`${label}: out of the car but not on your feet (${JSON.stringify(dOut)})`);

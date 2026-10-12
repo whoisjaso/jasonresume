@@ -413,7 +413,7 @@ const ball = (() => {
     const c = capEl.getBoundingClientRect(), fs = parseFloat(getComputedStyle(host).fontSize) || 18;
     R = Math.max(2.6, Math.min(4, fs * 0.19));
     els.forEach(b => { b.style.width = b.style.height = (2 * R).toFixed(1) + "px"; });
-    pos = [].map.call(host.children, s => { const r = s.getBoundingClientRect(); return { x: r.left - c.left + r.width / 2, y: r.top - c.top + (r.height - fs) * 0.5 - R - 2.5, row: Math.round(r.top) }; });
+    pos = [].map.call(host.children, s => { const r = s.getBoundingClientRect(); return { x: r.left - c.left + r.width / 2, y: r.top - c.top + (r.height - fs) * 0.5 + fs * 0.1 - R - 2, row: Math.round(r.top) }; });
   }
   function start(h, rm) {
     host = h; on = !rm; lastK = -1;
@@ -457,17 +457,17 @@ const ball = (() => {
     let vx = (b.x - b1.x) * 120, vy = (b.y - b1.y) * 120; if (b.wrap) { vx = 0; vy = Math.max(-400, Math.min(400, vy)); }
     const sp = Math.hypot(vx, vy);
     let sx = 1, sy = 1, ang = 0, dy = 0;
-    if (b.air && sp > 30) { const s = 1 + Math.min(0.85, sp / 700); sx = s; sy = 1 / Math.sqrt(s); ang = Math.atan2(vy, vx); }
+    if (b.air && sp > 30) { const s = 1 + Math.min(1.1, sp / 420); sx = s; sy = 1 / Math.sqrt(s); ang = Math.atan2(vy, vx); }
     else if (!b.air && b.land < 0.24) { const k = Math.exp(-b.land * 15) * Math.cos(b.land * 32); sx = 1 + 0.34 * k; sy = 1 - 0.4 * k; dy = (1 - sy) * R; }
     else if (!b.air && b.rest > 0.2) { const k = 1 + 0.07 * Math.sin(t * Math.PI * 1.6) * Math.min(1, (b.rest - 0.2) * 3); sx = sy = k; }
     const tf = (x, y, a, X, Y) => "translate3d(" + (x - R).toFixed(1) + "px," + (y - R).toFixed(1) + "px,0) rotate(" + a.toFixed(3) + "rad) scale(" + X.toFixed(3) + "," + Y.toFixed(3) + ")";
     els[0].style.transform = tf(b.x, b.y + dy, ang, sx, sy); els[0].style.opacity = b.o.toFixed(2);
     // the blur: ghosts a beat behind along the same arc, fading, only while it's really moving
-    const blur = b.air && !b.wrap ? Math.min(1, sp / 380) : 0;
+    const blur = b.air && !b.wrap ? Math.min(1, sp / 260) : 0;
     for (let i = 1; i < 4; i++) {
-      const g = blur > 0.05 ? at(W, t - i * 0.016) : null;
+      const g = blur > 0.05 ? at(W, t - i * 0.024) : null;
       if (!g || !g.air || g.wrap) { els[i].style.opacity = "0"; continue; }
-      els[i].style.transform = tf(g.x, g.y, ang, sx * (1 + i * 0.12), sy * (1 - i * 0.12)); els[i].style.opacity = (blur * [0, 0.34, 0.18, 0.08][i] * g.o).toFixed(2);
+      els[i].style.transform = tf(g.x, g.y, ang, sx * (1 + i * 0.12), sy * (1 - i * 0.12)); els[i].style.opacity = (blur * [0, 0.42, 0.24, 0.11][i] * g.o).toFixed(2);
     }
   }
   return { start, stop, draw, measure, at: (t) => { const l = line; if (!l) return null; return at(lineWords(l), t); }, get pos() { return pos; }, get on() { return on; }, get R() { return R; } };
@@ -1072,6 +1072,7 @@ async function interact(id, how) {
   await runTalk(talk);
 }
 async function runTalk(id) {
+  if (DRV.state) exitCar("talk", true); // nobody talks to you through the glass: out first
   if (me) me.group.visible = true;
   S.phase = "talk"; promptEl.hidden = true; dotsEl.innerHTML = ""; objEl.classList.add("is-dim");
   el.classList.add("is-talking");
@@ -1810,7 +1811,8 @@ async function exitCar(how, instant) {
   post.comp.u.uDofK.value = 0;
   if (S.phase === "drive") S.phase = "explore";
   else if (S.prevPhase === "drive") S.prevPhase = "explore";
-  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true; setTimeout(() => { camState.reframe = false; }, 400);
+  DRV.doorOpen = null;
+  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true; setTimeout(() => { camState.reframe = false; }, 1200);
   camera.fov = innerWidth / innerHeight < 1 ? 62 : 48; camera.updateProjectionMatrix();
 }
 function driveCam() {
@@ -1836,7 +1838,7 @@ function driveInput(dt) {
 }
 function tickDrive(dt) {
   const v = DRV.veh; if (!v || !DRV.state) return;
-  const inp = DRV.state === "drive" ? driveInput(dt) : { throttle: 0, brake: DRV.state === "exit" ? 1 : 0, steer: 0, handbrake: DRV.state === "exit" ? 0.3 : 1 };
+  const inp = DRV.state === "drive" && S.phase === "drive" ? driveInput(dt) : { throttle: 0, brake: DRV.state === "exit" ? 1 : 0, steer: 0, handbrake: DRV.state === "exit" ? 0.3 : 1 };
   v.update(dt, inp);
   const p = v.pose || { x: v.object.position.x, z: v.object.position.z, yaw: v.object.rotation.y };
   // with no seated driver to show, you ride along unseen; a seated one is people.js's to place
@@ -1850,10 +1852,11 @@ function tickDrive(dt) {
       if (e.strength > 0.8) hap(e.strength > 5 ? "success" : e.strength > 2 ? "unlock" : "tap");
       DRV.log.push({ t: S.t, what: e.what, k: +e.strength.toFixed(2) }); if (DRV.log.length > 20) DRV.log.shift();
     } else if (e.type === "shift") { if (DRV.state === "drive" && e.gear > 0 && DRV.lastGear > 0) hap("tap"); DRV.lastGear = e.gear; }
-    else if (e.type === "door") { if (DRV.au) DRV.au.door(!!e.open, doorPoint(DRV.entry)); if (!e.open) hap("tap"); }
     else if (e.type === "splash" && DRV.au) AU.step("puddle", { at: { x: p.x, y: 0.1, z: p.z }, gain: Math.min(1.6, e.strength / 6), ref: 4 });
     else if (e.type === "bump") DRV.shake = Math.max(DRV.shake, 0.04 * Math.min(1, e.strength || 1));
   }
+  // the door: its sound when it leaves the latch and when it shuts (whoever moved it)
+  if (v.doors && v.doors.get) { const d = v.doors.get("driver") || 0, o = d > 0.03; if (DRV.doorOpen == null) DRV.doorOpen = o; else if (o !== DRV.doorOpen) { DRV.doorOpen = o; if (DRV.au) DRV.au.door(o, doorPoint(DRV.entry)); if (!o) hap("tap"); } }
   if (!DRV.au && DRV.state === "drive" && AU.ctx && soundOn()) { DRV.au = AU.drive({ running: true, start: false, rain: S.scene === "keys" ? 0 : 1 }); if (DRV.au) DRV.au.inside(DRV.cam === "car"); } // the sound came on mid-drive
   if (DRV.au) DRV.au.update({ rpm: v.rpm, load: v.load, speed: v.speed, slip: v.slip, gear: v.gear, surface: v.surface, engine: v.engine ? v.engine.on : true });
   if (set.userData.navDirty) { navFor = null; camWallsFor = null; set.userData.navDirty = false; }
@@ -1875,7 +1878,7 @@ function driveView(dt) {
   if (DRV.cam === "car" && DRV.state === "drive") {
     const seat = v.seat ? v.seat.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(p.x, 0.5, p.z);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(v.body ? v.body.getWorldQuaternion(new THREE.Quaternion()) : new THREE.Quaternion());
-    pos = seat.clone().addScaledVector(up, 0.64).addScaledVector(fwd, 0.04);
+    pos = seat.clone().addScaledVector(up, 0.68).addScaledVector(fwd, 0.08);
     const ly = p.yaw + DRV.look * 0.8 + (v.steerAngle || 0) * 0.35;
     look = pos.clone().add(new THREE.Vector3(Math.sin(ly) * 10, -0.6, Math.cos(ly) * 10));
     fov = fovBase + 6 + Math.min(8, as * 0.25);
@@ -2329,6 +2332,18 @@ window.JG_STORY = {
     /* driving */
     cars: () => drivables().map(c => { const st = doorStand(c); return { id: c.id, x: +c.object.position.x.toFixed(2), z: +c.object.position.z.toFixed(2), yaw: +c.object.rotation.y.toFixed(3), stand: [+st.x.toFixed(2), +st.z.toFixed(2)], W: carMeta(c).W, L: carMeta(c).L }; }),
     drive: () => { const v = DRV.veh; return { state: DRV.state, phase: S.phase, cam: DRV.cam, car: DRV.entry ? DRV.entry.id : null, inCar: !!(me && me.inCar), visible: !!(me && me.group.visible), speed: v ? +v.speed.toFixed(2) : 0, rpm: v ? v.rpm : 0, gear: v ? v.gear : 0, slip: v ? +v.slip.toFixed(2) : 0, pose: v && v.pose ? [+v.pose.x.toFixed(2), +v.pose.z.toFixed(2), +v.pose.yaw.toFixed(3)] : null, hits: DRV.hits, log: DRV.log.slice(-6), inp: { thr: +DRV.thr.toFixed(2), brk: +DRV.brk.toFixed(2), steer: +DRV.steer.toFixed(2) }, touch: { ...DRV.touch }, shake: +DRV.shake.toFixed(3), fov: +camera.fov.toFixed(1), camPos: [camera.position.x, camera.position.y, camera.position.z].map(n => +n.toFixed(2)), ui: drvEl.classList.contains("is-on") && !drvEl.hidden, dev, au: AU.debug().car, skip: !!DRV.skip, near: near ? near.id : null }; },
+    /* a start with a clear run ahead (for the harness): nothing to hit for len metres, inside the drive bounds */
+    lane: (len = 16) => {
+      const cols = set.userData.colliders || [], inB = set.userData.inDriveBounds || (() => true), own = DRV.entry && DRV.entry.collider;
+      const hitAt = (x, z) => cols.some(o => o !== own && (o.type === "circle" ? Math.hypot(x - o.x, z - o.z) < o.r + 1.6 : o.type === "box" ? (() => { const c = Math.cos(o.yaw || 0), s2 = Math.sin(o.yaw || 0), dx = x - o.x, dz = z - o.z, lx = dx * c - dz * s2, lz = dx * s2 + dz * c; return Math.abs(lx) < o.hw + 1.4 && Math.abs(lz) < o.hl + 1.4; })() : false));
+      for (let x = -14; x <= 16; x += 2) for (let z = -12; z <= 20; z += 2) for (let a = 0; a < 8; a++) {
+        const yaw = a * Math.PI / 4; let ok = true;
+        for (let d = 0; d <= len && ok; d += 1) { const px = x + Math.sin(yaw) * d, pz = z + Math.cos(yaw) * d; if (!inB(px, pz) || hitAt(px, pz)) ok = false; }
+        // and room to turn right at the end of it
+        if (ok) return [x, z, yaw];
+      }
+      return null;
+    },
     carPut: (x, z, yaw) => { if (!DRV.veh) return false; DRV.veh.reset(x, z, yaw); DRV.camInit = true; return true; },
     skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; }
   }
