@@ -1280,9 +1280,48 @@ async function coldOpen() {
   S.phase = "explore";
   await runTalk("lot-arrive");
 }
+/* ---------- turn sideways: on a phone held upright, a phone that turns itself,
+   follows your tilt where the browser shares it, and lets go the moment you turn ---------- */
+const TALL = matchMedia("(orientation: portrait)");
+const esc = v => String(v == null ? "" : v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+let turnEl = null, turnStayed = false;
+function turnTilt(e) {
+  if (!turnEl || e.gamma == null) return;
+  const g = Math.max(-90, Math.min(90, e.gamma));
+  turnEl.style.setProperty("--tilt", g.toFixed(1) + "deg");
+  turnEl.classList.toggle("is-tilting", Math.abs(g) > 8);
+}
+function turnCheck() {
+  const need = COARSE.matches && TALL.matches && !turnStayed && S.phase !== "ending";
+  if (need && !turnEl) {
+    turnEl = document.createElement("div");
+    turnEl.className = "st-turn";
+    turnEl.setAttribute("role", "dialog"); turnEl.setAttribute("aria-live", "polite");
+    turnEl.innerHTML =
+      '<div class="st-turn__stage" aria-hidden="true"><div class="st-turn__arc"></div><div class="st-turn__phone"><div class="st-turn__screen"><i></i><i></i><i></i></div></div></div>' +
+      '<p class="st-turn__h">' + esc(UI.turn_h) + "</p>" +
+      '<p class="st-turn__p">' + esc(UI.turn_p) + "</p>" +
+      '<button class="st-turn__stay" type="button">' + esc(UI.turn_stay) + "</button>";
+    el.appendChild(turnEl);
+    requestAnimationFrame(() => turnEl && turnEl.classList.add("is-on"));
+    $(".st-turn__stay", turnEl).addEventListener("click", () => { turnStayed = true; closeTurn(false); });
+    addEventListener("deviceorientation", turnTilt);
+  } else if (!need && turnEl) {
+    closeTurn(!turnStayed && !TALL.matches);
+  }
+}
+function closeTurn(arrived) {
+  const t = turnEl; if (!t) return; turnEl = null;
+  removeEventListener("deviceorientation", turnTilt);
+  /* turning the phone is an arrival: light, sound and a tap together; staying upright is a skip, silent */
+  if (arrived) { FX("arrive"); hap("success"); t.classList.add("is-turned"); }
+  t.classList.remove("is-on");
+  setTimeout(() => t.remove(), arrived ? 900 : 450);
+}
+TALL.addEventListener("change", () => setTimeout(turnCheck, 60));
 function showHint() {
+  turnCheck();
   hintEl.textContent = COARSE.matches ? UI.walk_touch : UI.walk_pointer;
-  if (COARSE.matches && innerWidth < innerHeight) hintEl.textContent += " " + UI.turn;
   hintEl.hidden = false; hintEl.classList.add("is-on");
   setTimeout(() => { hintEl.classList.remove("is-on"); setTimeout(() => (hintEl.hidden = true), 600); }, FAST ? 100 : 6000);
 }

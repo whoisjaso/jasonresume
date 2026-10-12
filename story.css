@@ -231,3 +231,23 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
 /* the ending's buttons are the site's buttons; the reset on .story button must not wash out the primary one */
 .story .en-acts .btn--primary { background: var(--bone); color: var(--ink); border: 1px solid var(--bone); }
 .story .en-acts .btn--primary:hover { background: #fff8ec; border-color: #fff8ec; }
+
+/* turn sideways: a phone that turns itself on a loop, follows your tilt when the browser shares it, and lets go when you turn */
+.st-turn { position: absolute; inset: 0; z-index: 30; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 32px 24px; text-align: center; background: rgba(10, 15, 13, .78); backdrop-filter: none; opacity: 0; transition: opacity .45s var(--ease); }
+.st-turn.is-on { opacity: 1; }
+.st-turn.is-turned { transition-duration: .9s; }
+.st-turn__stage { position: relative; width: 168px; height: 168px; margin-bottom: 10px; display: grid; place-items: center; }
+.st-turn__arc { position: absolute; inset: 6px; border-radius: 50%; border: 1.5px solid transparent; border-top-color: rgba(237, 231, 219, .55); border-right-color: rgba(237, 231, 219, .55); transform: rotate(-20deg); animation: st-arc 3.2s var(--ease) infinite; }
+.st-turn__arc::after { content: ""; position: absolute; top: 14%; right: 6%; width: 9px; height: 9px; border-top: 1.5px solid rgba(237, 231, 219, .8); border-right: 1.5px solid rgba(237, 231, 219, .8); transform: rotate(118deg); }
+.st-turn__phone { width: 58px; height: 108px; border-radius: 12px; border: 2px solid var(--bone); box-shadow: 0 0 0 6px rgba(237, 231, 219, .05), 0 18px 40px -12px rgba(0, 0, 0, .8); display: grid; padding: 7px 5px; transform: rotate(0deg); animation: st-phone 3.2s var(--ease) infinite; }
+.st-turn.is-tilting .st-turn__phone { animation: none; transform: rotate(var(--tilt, 0deg)); transition: transform .12s linear; }
+.st-turn__screen { border-radius: 5px; background: linear-gradient(180deg, #1c3229, #0e1714); display: grid; align-content: end; gap: 3px; padding: 6px; overflow: hidden; }
+.st-turn__screen i { display: block; height: 3px; border-radius: 2px; background: rgba(237, 231, 219, .5); }
+.st-turn__screen i:nth-child(2) { width: 70%; } .st-turn__screen i:nth-child(3) { width: 45%; }
+.st-turn__h { margin: 0; font: 600 clamp(26px, 7vw, 32px)/1.1 var(--serif); letter-spacing: .02em; color: var(--bone); }
+.st-turn__p { margin: 0; max-width: 28ch; font: 400 15px/1.5 var(--sans); color: var(--bone-2); }
+.st-turn__stay { margin-top: 18px; min-height: 44px; padding: 0 16px; background: none; border: 0; color: var(--ash); font: 500 14px/1 var(--sans); letter-spacing: .02em; text-decoration: underline; text-decoration-color: rgba(154, 152, 144, .4); text-underline-offset: .35em; cursor: pointer; }
+.st-turn.is-turned .st-turn__phone { animation: none; transform: rotate(90deg) scale(1.08); box-shadow: 0 0 0 10px rgba(237, 231, 219, .1), 0 0 60px rgba(237, 231, 219, .25); transition: transform .5s var(--ease), box-shadow .5s var(--ease); }
+@keyframes st-phone { 0%, 18% { transform: rotate(0deg); } 48%, 70% { transform: rotate(90deg); } 92%, 100% { transform: rotate(0deg); } }
+@keyframes st-arc { 0%, 18% { opacity: 0; transform: rotate(-60deg); } 40% { opacity: 1; } 55%, 100% { opacity: 0; transform: rotate(40deg); } }
+@media (prefers-reduced-motion: reduce) { .st-turn__phone { animation: none; transform: rotate(90deg); } .st-turn__arc { animation: none; opacity: .6; } }

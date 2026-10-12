@@ -67,7 +67,17 @@ async function textRules(p, label) {
 
 const st = p => p.evaluate(() => window.JG_STORY && window.JG_STORY.debug.state());
 async function until(p, fn, arg, ms = 90000) { return p.waitForFunction(fn, arg, { timeout: ms, polling: 120 }).then(() => true, () => false); }
-async function phase(p, ph, ms) { return until(p, ph => window.JG_STORY && window.JG_STORY.debug.state().phase === ph, ph, ms); }
+/* an upright phone meets the turn-sideways prompt first; it must show, and "Keep playing upright" lets the run go on (silently) */
+let turnSeen = false;
+async function turnAway(p) {
+  const t = await p.$('.st-turn.is-on .st-turn__stay');
+  if (!t) return;
+  turnSeen = true;
+  const vs = p.viewportSize(); if (vs.width > vs.height) errs.push('the turn-sideways prompt showed on a sideways screen');
+  await p.tap('.st-turn__stay').catch(() => p.click('.st-turn__stay'));
+  await p.waitForTimeout(500);
+}
+async function phase(p, ph, ms) { const r = await until(p, ph => window.JG_STORY && window.JG_STORY.debug.state().phase === ph, ph, ms); await turnAway(p); return r; }
 async function shot(p, name) { if (SHOTS) await p.screenshot({ path: path.join(OUT, `story-${name}.png`) }); }
 
 /* advance through lines until choices show, the talk ends, or a phase changes */
@@ -267,6 +277,7 @@ async function decision(p, mobile, o, label) {
 }
 
 const VIEWS = [['desktop', 1440, 900, false], ['landscape', 844, 390, true], ['portrait', 390, 844, true]];
+let RAN_PORTRAIT = false;
 const ALL_MEDALS = Object.keys(LIB.trophies).filter(s => s !== LIB.platinum);
 const PATHS = [
   { tag: 'hire', dell: 'Rough night to be out.', why: "I'm hiring.", cluster: 'Operations or the back office', sign: true, sold: true, gate: 'Give him a hand.', desk: 'Let me close her deal.', phone: 'Hand Jason the phone.', looks: ['cabinet', 'board', 'laptop', 'ledger', 'arcade'], journal: true, lamp: 'One more chapter.', final: ['Title and Back Office'], ending: 'hiring', resume: 'Title_and_Back_Office', recap: ["You told Jason you're hiring.", 'You helped Dell with the gate.', "You closed Renata's deal yourself.", 'You handed Jason the phone.', 'In the memory, you kept the lamp on.'], trophies: ALL_MEDALS.concat([LIB.platinum]) },
@@ -278,6 +289,7 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (vname === 'portrait') RAN_PORTRAIT = true;
   const paths = vname === 'desktop' ? PATHS : vname === 'landscape' ? [PATHS[0], PATHS[1], PATHS[2]] : [PATHS[3], PATHS[4]];
   for (const P0 of paths) {
     if (ONLY_PATH && P0.tag !== ONLY_PATH) continue;
@@ -338,6 +350,8 @@ if (SHOTS) {
   }
 }
 
+if (RAN_PORTRAIT && !turnSeen) errs.push('an upright phone never saw the turn-sideways prompt');
+else if (turnSeen) notes.push('an upright phone meets the turn-sideways prompt, and Keep playing upright lets it go');
 await b.close();
 console.log(notes.map(n => 'ok  ' + n).join('\n'));
 if (fps.length) console.log('fps (headless, software GL; the debug pixel ratio is ' + (SHOTS ? '1' : '0.3') + '):\n' + fps.join('\n'));
