@@ -318,6 +318,8 @@ async function feel(vname, w, h, mobile) {
     notes.push(`${label}: audio graph built on Play (${au.state}), buses ${Object.entries(au.buses).filter(([k]) => ['master', 'voice', 'sfx', 'amb', 'ui'].includes(k)).map(([k, v]) => k + ' ' + (+v).toFixed(2)).join(', ')}; lot bed: ${au.amb.join(' ')}`);
   }
   // the way: a trail toward Jason; turn the camera and the arrow moves to the side he's on
+  // the trail fades in over a few frames; at software-GL frame rates give it time to land
+  await until(p, () => window.JG_STORY.debug.guide().trail > 0, null, 15000);
   const g0 = await p.evaluate(() => window.JG_STORY.debug.guide());
   if (!g0.target || g0.target.id !== 'jason-lot') errs.push(`${label}: the way doesn't lead to Jason (${JSON.stringify(g0.target)})`);
   if (!(g0.trail > 0) || !g0.route || g0.route.length < 2) errs.push(`${label}: no trail on the ground (${g0.trail})`);
