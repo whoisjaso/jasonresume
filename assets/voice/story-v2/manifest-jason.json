@@ -110,19 +110,70 @@
   },
   "jason-lot-jason-7": {
    "hash": "063dcf2e1a73",
-   "duration": 7.96,
+   "duration": 7.36,
    "picked": {
-    "take": 0,
+    "take": 1,
     "heard": 1.0,
-    "like_me": 0.914,
-    "words_per_s": 2.76
+    "extra": 0.0,
+    "like_me": 0.922,
+    "words_per_s": 2.99
    },
    "takes": [
     {
      "take": 0,
      "heard": 1.0,
+     "extra": 0.091,
      "like_me": 0.914,
      "words_per_s": 2.76
+    },
+    {
+     "take": 1,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.922,
+     "words_per_s": 2.99
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.136,
+     "like_me": 0.935,
+     "words_per_s": 2.58
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.898,
+     "words_per_s": 2.48
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.894,
+     "words_per_s": 2.57
+    },
+    {
+     "take": 5,
+     "heard": 0.955,
+     "extra": 0.045,
+     "like_me": 0.912,
+     "words_per_s": 2.97
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.182,
+     "like_me": 0.91,
+     "words_per_s": 2.85
+    },
+    {
+     "take": 7,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.907,
+     "words_per_s": 2.57
     }
    ]
   },
@@ -146,19 +197,70 @@
   },
   "jason-lot-jason-9": {
    "hash": "134c2f66f33d",
-   "duration": 6.96,
+   "duration": 7.76,
    "picked": {
-    "take": 0,
-    "heard": 0.733,
-    "like_me": 0.918,
-    "words_per_s": 2.16
+    "take": 7,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.9,
+    "words_per_s": 1.93
    },
    "takes": [
     {
      "take": 0,
-     "heard": 0.733,
+     "heard": 0.929,
+     "extra": 0.2,
      "like_me": 0.918,
      "words_per_s": 2.16
+    },
+    {
+     "take": 1,
+     "heard": 0.929,
+     "extra": 0.133,
+     "like_me": 0.886,
+     "words_per_s": 2.16
+    },
+    {
+     "take": 2,
+     "heard": 0.929,
+     "extra": 0.133,
+     "like_me": 0.87,
+     "words_per_s": 2.18
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.133,
+     "like_me": 0.9,
+     "words_per_s": 2.12
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.067,
+     "like_me": 0.908,
+     "words_per_s": 2.29
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.893,
+     "words_per_s": 2.16
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.888,
+     "words_per_s": 2.03
+    },
+    {
+     "take": 7,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.9,
+     "words_per_s": 1.93
     }
    ]
   },
@@ -236,19 +338,70 @@
   },
   "jason-lot-jason-14": {
    "hash": "447faf71d673",
-   "duration": 6.16,
+   "duration": 7.04,
    "picked": {
-    "take": 0,
-    "heard": 0.857,
-    "like_me": 0.913,
-    "words_per_s": 2.27
+    "take": 7,
+    "heard": 0.929,
+    "extra": 0.143,
+    "like_me": 0.894,
+    "words_per_s": 1.99
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.857,
+     "extra": 0.214,
      "like_me": 0.913,
      "words_per_s": 2.27
+    },
+    {
+     "take": 1,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.871,
+     "words_per_s": 2.24
+    },
+    {
+     "take": 2,
+     "heard": 0.857,
+     "extra": 0.214,
+     "like_me": 0.893,
+     "words_per_s": 2.35
+    },
+    {
+     "take": 3,
+     "heard": 0.786,
+     "extra": 0.5,
+     "like_me": 0.884,
+     "words_per_s": 1.72
+    },
+    {
+     "take": 4,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.872,
+     "words_per_s": 2.22
+    },
+    {
+     "take": 5,
+     "heard": 0.857,
+     "extra": 0.286,
+     "like_me": 0.892,
+     "words_per_s": 1.72
+    },
+    {
+     "take": 6,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.85,
+     "words_per_s": 1.7
+    },
+    {
+     "take": 7,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.894,
+     "words_per_s": 1.99
     }
    ]
   },
@@ -272,19 +425,70 @@
   },
   "jason-lot-jason-16": {
    "hash": "9ecbe0a8ee6a",
-   "duration": 7.36,
+   "duration": 7.44,
    "picked": {
-    "take": 0,
-    "heard": 0.864,
-    "like_me": 0.884,
-    "words_per_s": 2.99
+    "take": 3,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.912,
+    "words_per_s": 2.96
    },
    "takes": [
     {
      "take": 0,
-     "heard": 0.864,
+     "heard": 1.0,
+     "extra": 0.136,
      "like_me": 0.884,
      "words_per_s": 2.99
+    },
+    {
+     "take": 1,
+     "heard": 0.9,
+     "extra": 0.182,
+     "like_me": 0.905,
+     "words_per_s": 2.93
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.895,
+     "words_per_s": 3.46
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.912,
+     "words_per_s": 2.96
+    },
+    {
+     "take": 4,
+     "heard": 0.9,
+     "extra": 0.045,
+     "like_me": 0.892,
+     "words_per_s": 2.63
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.091,
+     "like_me": 0.905,
+     "words_per_s": 2.66
+    },
+    {
+     "take": 6,
+     "heard": 0.9,
+     "extra": 0.182,
+     "like_me": 0.906,
+     "words_per_s": 2.82
+    },
+    {
+     "take": 7,
+     "heard": 0.9,
+     "extra": 0.045,
+     "like_me": 0.902,
+     "words_per_s": 3.12
     }
    ]
   },
@@ -380,19 +584,70 @@
   },
   "jason-lot-jason-22": {
    "hash": "a260bed3653c",
-   "duration": 2.32,
+   "duration": 2.4,
    "picked": {
-    "take": 0,
-    "heard": 0.5,
-    "like_me": 0.813,
-    "words_per_s": 2.59
+    "take": 6,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.894,
+    "words_per_s": 2.5
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.5,
+     "extra": 0.0,
      "like_me": 0.813,
      "words_per_s": 2.59
+    },
+    {
+     "take": 1,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.878,
+     "words_per_s": 2.42
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.833,
+     "words_per_s": 2.59
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.167,
+     "like_me": 0.826,
+     "words_per_s": 2.54
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.833,
+     "words_per_s": 1.88
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.854,
+     "words_per_s": 2.59
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.894,
+     "words_per_s": 2.5
+    },
+    {
+     "take": 7,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.868,
+     "words_per_s": 2.54
     }
    ]
   },
@@ -780,6 +1035,7 @@
    "picked": {
     "take": 0,
     "heard": 0.929,
+    "extra": 0.143,
     "like_me": 0.904,
     "words_per_s": 2.27
    },
@@ -787,8 +1043,58 @@
     {
      "take": 0,
      "heard": 0.929,
+     "extra": 0.143,
      "like_me": 0.904,
      "words_per_s": 2.27
+    },
+    {
+     "take": 1,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.89,
+     "words_per_s": 2.33
+    },
+    {
+     "take": 2,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.885,
+     "words_per_s": 2.55
+    },
+    {
+     "take": 3,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.859,
+     "words_per_s": 2.52
+    },
+    {
+     "take": 4,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.884,
+     "words_per_s": 2.45
+    },
+    {
+     "take": 5,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.868,
+     "words_per_s": 2.45
+    },
+    {
+     "take": 6,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.88,
+     "words_per_s": 2.32
+    },
+    {
+     "take": 7,
+     "heard": 0.929,
+     "extra": 0.143,
+     "like_me": 0.886,
+     "words_per_s": 2.52
     }
    ]
   },
@@ -812,37 +1118,139 @@
   },
   "jason-off-jason-21": {
    "hash": "8b14cdb6e42a",
-   "duration": 5.8,
+   "duration": 5.6,
    "picked": {
-    "take": 0,
-    "heard": 0.733,
-    "like_me": 0.893,
-    "words_per_s": 2.59
+    "take": 5,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.919,
+    "words_per_s": 2.68
    },
    "takes": [
     {
      "take": 0,
-     "heard": 0.733,
+     "heard": 0.923,
+     "extra": 0.067,
      "like_me": 0.893,
      "words_per_s": 2.59
+    },
+    {
+     "take": 1,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.908,
+     "words_per_s": 2.7
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.892,
+     "words_per_s": 2.76
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.907,
+     "words_per_s": 3.07
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.916,
+     "words_per_s": 2.42
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.919,
+     "words_per_s": 2.68
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.887,
+     "words_per_s": 2.74
+    },
+    {
+     "take": 7,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.914,
+     "words_per_s": 2.82
     }
    ]
   },
   "jason-off-jason-22": {
    "hash": "5e04e114e184",
-   "duration": 7.92,
+   "duration": 5.28,
    "picked": {
-    "take": 0,
-    "heard": 0.533,
-    "like_me": 0.919,
-    "words_per_s": 1.89
+    "take": 4,
+    "heard": 0.923,
+    "extra": 0.133,
+    "like_me": 0.899,
+    "words_per_s": 2.84
    },
    "takes": [
     {
      "take": 0,
-     "heard": 0.533,
+     "heard": 0.692,
+     "extra": 0.333,
      "like_me": 0.919,
      "words_per_s": 1.89
+    },
+    {
+     "take": 1,
+     "heard": 0.923,
+     "extra": 0.267,
+     "like_me": 0.905,
+     "words_per_s": 2.21
+    },
+    {
+     "take": 2,
+     "heard": 0.692,
+     "extra": 0.4,
+     "like_me": 0.945,
+     "words_per_s": 2.39
+    },
+    {
+     "take": 3,
+     "heard": 0.615,
+     "extra": 0.0,
+     "like_me": 0.896,
+     "words_per_s": 2.34
+    },
+    {
+     "take": 4,
+     "heard": 0.923,
+     "extra": 0.133,
+     "like_me": 0.899,
+     "words_per_s": 2.84
+    },
+    {
+     "take": 5,
+     "heard": 0.923,
+     "extra": 0.267,
+     "like_me": 0.922,
+     "words_per_s": 2.22
+    },
+    {
+     "take": 6,
+     "heard": 0.615,
+     "extra": 0.0,
+     "like_me": 0.911,
+     "words_per_s": 2.01
+    },
+    {
+     "take": 7,
+     "heard": 0.923,
+     "extra": 0.267,
+     "like_me": 0.914,
+     "words_per_s": 2.45
     }
    ]
   },
@@ -1208,19 +1616,70 @@
   },
   "jason-dec-jason-9": {
    "hash": "4df9ec534562",
-   "duration": 1.72,
+   "duration": 2.56,
    "picked": {
-    "take": 0,
-    "heard": 0.833,
-    "like_me": 0.789,
-    "words_per_s": 3.49
+    "take": 1,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.872,
+    "words_per_s": 2.34
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.833,
+     "extra": 0.167,
      "like_me": 0.789,
      "words_per_s": 3.49
+    },
+    {
+     "take": 1,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.872,
+     "words_per_s": 2.34
+    },
+    {
+     "take": 2,
+     "heard": 0.833,
+     "extra": 0.167,
+     "like_me": 0.831,
+     "words_per_s": 3.49
+    },
+    {
+     "take": 3,
+     "heard": 0.833,
+     "extra": 0.167,
+     "like_me": 0.823,
+     "words_per_s": 3.66
+    },
+    {
+     "take": 4,
+     "heard": 0.833,
+     "extra": 0.167,
+     "like_me": 0.84,
+     "words_per_s": 3.41
+    },
+    {
+     "take": 5,
+     "heard": 0.833,
+     "extra": 0.167,
+     "like_me": 0.867,
+     "words_per_s": 3.19
+    },
+    {
+     "take": 6,
+     "heard": 0.833,
+     "extra": 0.333,
+     "like_me": 0.842,
+     "words_per_s": 3.66
+    },
+    {
+     "take": 7,
+     "heard": 0.833,
+     "extra": 0.167,
+     "like_me": 0.827,
+     "words_per_s": 2.88
     }
    ]
   },
@@ -1586,19 +2045,70 @@
   },
   "jason-dec-jason-30": {
    "hash": "c72f9d096d5a",
-   "duration": 9.56,
+   "duration": 8.72,
    "picked": {
-    "take": 0,
+    "take": 2,
     "heard": 0.95,
-    "like_me": 0.854,
-    "words_per_s": 2.09
+    "extra": 0.05,
+    "like_me": 0.919,
+    "words_per_s": 2.29
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.95,
+     "extra": 0.1,
      "like_me": 0.854,
      "words_per_s": 2.09
+    },
+    {
+     "take": 1,
+     "heard": 0.95,
+     "extra": 0.1,
+     "like_me": 0.931,
+     "words_per_s": 2.11
+    },
+    {
+     "take": 2,
+     "heard": 0.95,
+     "extra": 0.05,
+     "like_me": 0.919,
+     "words_per_s": 2.29
+    },
+    {
+     "take": 3,
+     "heard": 0.95,
+     "extra": 0.05,
+     "like_me": 0.916,
+     "words_per_s": 2.24
+    },
+    {
+     "take": 4,
+     "heard": 0.95,
+     "extra": 0.05,
+     "like_me": 0.912,
+     "words_per_s": 1.89
+    },
+    {
+     "take": 5,
+     "heard": 0.95,
+     "extra": 0.1,
+     "like_me": 0.93,
+     "words_per_s": 2.39
+    },
+    {
+     "take": 6,
+     "heard": 0.95,
+     "extra": 0.1,
+     "like_me": 0.933,
+     "words_per_s": 2.06
+    },
+    {
+     "take": 7,
+     "heard": 0.95,
+     "extra": 0.1,
+     "like_me": 0.897,
+     "words_per_s": 2.05
     }
    ]
   },
@@ -1676,19 +2186,70 @@
   },
   "jason-dec-jason-35": {
    "hash": "a556e243d814",
-   "duration": 5.92,
+   "duration": 6.2,
    "picked": {
-    "take": 0,
-    "heard": 0.909,
-    "like_me": 0.905,
-    "words_per_s": 3.72
+    "take": 2,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.902,
+    "words_per_s": 3.55
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.909,
+     "extra": 0.045,
      "like_me": 0.905,
      "words_per_s": 3.72
+    },
+    {
+     "take": 1,
+     "heard": 0.955,
+     "extra": 0.045,
+     "like_me": 0.906,
+     "words_per_s": 3.57
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.902,
+     "words_per_s": 3.55
+    },
+    {
+     "take": 3,
+     "heard": 0.955,
+     "extra": 0.045,
+     "like_me": 0.868,
+     "words_per_s": 3.48
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.902,
+     "words_per_s": 3.29
+    },
+    {
+     "take": 5,
+     "heard": 0.955,
+     "extra": 0.045,
+     "like_me": 0.881,
+     "words_per_s": 3.67
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.884,
+     "words_per_s": 3.74
+    },
+    {
+     "take": 7,
+     "heard": 0.955,
+     "extra": 0.045,
+     "like_me": 0.9,
+     "words_per_s": 3.59
     }
    ]
   },
@@ -1712,37 +2273,139 @@
   },
   "jason-dec-jason-37": {
    "hash": "68878c12e660",
-   "duration": 2.08,
+   "duration": 2.56,
    "picked": {
-    "take": 0,
-    "heard": 0.889,
-    "like_me": 0.839,
-    "words_per_s": 4.33
+    "take": 2,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.874,
+    "words_per_s": 3.52
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.889,
+     "extra": 0.111,
      "like_me": 0.839,
      "words_per_s": 4.33
+    },
+    {
+     "take": 1,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.835,
+     "words_per_s": 4.02
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.874,
+     "words_per_s": 3.52
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.786,
+     "words_per_s": 4.41
+    },
+    {
+     "take": 4,
+     "heard": 0.889,
+     "extra": 0.111,
+     "like_me": 0.874,
+     "words_per_s": 3.52
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.852,
+     "words_per_s": 3.85
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.881,
+     "words_per_s": 3.95
+    },
+    {
+     "take": 7,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.816,
+     "words_per_s": 4.41
     }
    ]
   },
   "jason-dec-jason-38": {
    "hash": "31607836e368",
-   "duration": 1.84,
+   "duration": 2.0,
    "picked": {
-    "take": 0,
-    "heard": 0.857,
-    "like_me": 0.839,
-    "words_per_s": 3.8
+    "take": 4,
+    "heard": 1.0,
+    "extra": 0.0,
+    "like_me": 0.821,
+    "words_per_s": 3.5
    },
    "takes": [
     {
      "take": 0,
      "heard": 0.857,
+     "extra": 0.143,
      "like_me": 0.839,
      "words_per_s": 3.8
+    },
+    {
+     "take": 1,
+     "heard": 0.857,
+     "extra": 0.143,
+     "like_me": 0.841,
+     "words_per_s": 3.02
+    },
+    {
+     "take": 2,
+     "heard": 0.857,
+     "extra": 0.143,
+     "like_me": 0.817,
+     "words_per_s": 3.8
+    },
+    {
+     "take": 3,
+     "heard": 0.857,
+     "extra": 0.143,
+     "like_me": 0.855,
+     "words_per_s": 3.56
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.821,
+     "words_per_s": 3.5
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.804,
+     "words_per_s": 3.37
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.799,
+     "words_per_s": 3.5
+    },
+    {
+     "take": 7,
+     "heard": 0.857,
+     "extra": 0.143,
+     "like_me": 0.871,
+     "words_per_s": 3.72
     }
    ]
   },
@@ -1859,5 +2522,5 @@
   "source": "Chatterbox (open source), cloned from Jason's own recording with his permission",
   "checked_with": "faster-whisper small.en, resemblyzer"
  },
- "updated": "2026-10-11"
+ "updated": "2026-10-12"
 }
