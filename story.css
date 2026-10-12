@@ -228,3 +228,6 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
   .jr-tabs button { font-size: 17px !important; padding: 8px 8px; white-space: nowrap; }
   .jr-b { padding: 6px 18px 22px 26px; }
 }
+/* the ending's buttons are the site's buttons; the reset on .story button must not wash out the primary one */
+.story .en-acts .btn--primary { background: var(--bone); color: var(--ink); border: 1px solid var(--bone); }
+.story .en-acts .btn--primary:hover { background: #fff8ec; border-color: #fff8ec; }

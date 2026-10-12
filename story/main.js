@@ -716,7 +716,7 @@ function updatePrompts() {
   if (!best) { promptEl.hidden = true; return; }
   const q = project(best.p);
   // a thing above or beside the frame (the pylon sign seen up close on a phone) keeps its prompt at the edge of the screen
-  if (v2.z >= 1) { promptEl.hidden = true; return; }
+  if (v2.z >= 1) { q.x = innerWidth / 2 - 60; q.y = 90; }
   q.x = clamp(q.x, 24, innerWidth - 200); q.y = clamp(q.y, 84, innerHeight - 110);
   promptEl.hidden = false;
   $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
@@ -983,6 +983,8 @@ let jTab = "things";
 function openJournal() {
   if (S.phase === "end" || S.phase === "load") return;
   S.prevPhase = S.phase === "journal" ? S.prevPhase : S.phase; S.phase = "journal";
+  // after a Continue the drawings are gone; redraw the ones whose thing is in this scene
+  for (const k of S.journal) if (!sketches[k] && D.journal[k] && OBJ[k] && OBJ[k].scene === S.scene) { try { sketch(k); } catch (e) {} }
   renderJournal(); journalEl.hidden = false; requestAnimationFrame(() => journalEl.classList.add("is-on"));
   FX("arrive");
 }

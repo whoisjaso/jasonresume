@@ -107,6 +107,7 @@ async function use(p, mobile, id, label) {
   await p.waitForTimeout(150);
   const n0 = (await st(p)).looked[id] || 0;
   // the prompt follows the thing on screen; it has to be there and on top to be pressed
+  await until(p, () => { const b = document.querySelector('.st-prompt'); return b && !b.hidden; }, null, 4000);
   const hit = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return 'hidden'; const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e && b.contains(e) ? 'ok' : 'covered by ' + (e ? e.className || e.tagName : 'nothing'); });
   if (hit !== 'ok' && (mobile || hit !== 'hidden')) errs.push(`${label}: the prompt for ${id} is ${hit}`);
   if (hit !== 'ok') { if (mobile) await p.evaluate(id => { window.JG_STORY.debug.interact(id); }, id); else await p.keyboard.press('e'); }
@@ -137,7 +138,7 @@ async function lot(p, mobile, o, label) {
   if (o.shots) { await p.waitForTimeout(800); await shot(p, `${o.tag}-lot`); }
   // walking: a second of real keys moves you
   if (!mobile) { const a = (await st(p)).me; await p.keyboard.down('w'); await p.waitForTimeout(1200); await p.keyboard.up('w'); const b2 = (await st(p)).me; if (Math.hypot(a[0] - b2[0], a[1] - b2[1]) < 0.02) errs.push(`${label}: W did not walk`); }
-  else { const a = (await st(p)).me; const vs = p.viewportSize(); await p.tap('.st-cv', { position: { x: Math.round(vs.width * 0.5), y: Math.round(vs.height * 0.8) } }).catch(() => {}); await p.waitForTimeout(2500); const b2 = (await st(p)).me; if (Math.hypot(a[0] - b2[0], a[1] - b2[1]) < 0.02) errs.push(`${label}: tapping the ground did not walk`); else notes.push(`${label}: tapping the ground walks`); }
+  else { const a = (await st(p)).me; const vs = p.viewportSize(); await p.tap('.st-cv', { position: { x: Math.round(vs.width * 0.68), y: Math.round(vs.height * 0.62) } }).catch(() => {}); await p.waitForTimeout(2500); const b2 = (await st(p)).me; if (Math.hypot(a[0] - b2[0], a[1] - b2[1]) < 0.02) errs.push(`${label}: tapping the ground did not walk`); else notes.push(`${label}: tapping the ground walks`); }
   await use(p, mobile, 'dell', label); await choose(p, mobile, o.dell, label); await finishTalk(p, label);
   if (o.sign) { await use(p, mobile, 'sign', label); await finishTalk(p, label); }
   await use(p, mobile, 'jason-lot', label);
@@ -217,14 +218,14 @@ async function office(p, mobile, o, label) {
 /* ---------- the memory, the keys ---------- */
 async function memory(p, mobile, o, label) {
   await phase(p, 'explore', 60000);
-  if (o.shots) { await p.waitForTimeout(800); await shot(p, `${o.tag}-memory`); }
+  if (o.shots) { await p.waitForTimeout(4000); await shot(p, `${o.tag}-memory`); }
   for (const id of ['mem-laptop', 'mem-cert', 'mem-folder', 'mem-letter', 'mem-brain']) { await use(p, mobile, id, label); await finishTalk(p, label); }
   await use(p, mobile, 'mem-lamp', label);
   await choose(p, mobile, o.lamp, label);
   const keys = await until(p, () => window.JG_STORY.debug.state().scene === 'keys', null, 60000);
   if (!keys) { errs.push(`${label}: the memory did not lead to the keys`); return; }
   await phase(p, 'explore', 60000);
-  if (o.shots) { await p.waitForTimeout(800); await shot(p, `${o.tag}-keys`); }
+  if (o.shots) { await p.waitForTimeout(4000); await shot(p, `${o.tag}-keys`); }
   await use(p, mobile, 'keys', label);
   const dec = await until(p, () => window.JG_STORY.debug.state().scene === 'decision', null, 60000);
   if (!dec) errs.push(`${label}: the keys did not lead back to the lot`);
