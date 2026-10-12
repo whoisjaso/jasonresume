@@ -51,8 +51,18 @@ html.story-on body > *:not(#story):not(script):not(dialog) { visibility: hidden 
 .st-cap__said { margin: 0; font: 400 clamp(17px, 1.6vw, 21px)/1.45 var(--sans); text-wrap: balance; text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 18px rgba(0, 0, 0, .55); }
 .st-cap__said i { font-style: normal; opacity: .42; transition: opacity .18s linear; }
 .st-cap__said i.is-said { opacity: 1; }
+.st-cap:not(.is-voiced) .st-cap__said i { opacity: .62; }
+.st-cap:not(.is-voiced) .st-cap__said i.is-said { opacity: 1; }
 .st-cap.is-thought .st-cap__said { font: italic 500 clamp(20px, 2vw, 25px)/1.35 var(--serif); color: var(--bone-2); }
 .st-cap.is-me .st-cap__who b { color: var(--bone); }
+/* the caption ball: hops word to word with the voice; transforms and opacity only */
+.st-cap.has-ball .st-cap__said { line-height: 1.78; }
+.st-cap.has-ball.is-thought .st-cap__said { line-height: 1.62; }
+.st-cap__said i.is-now { text-shadow: 0 0 14px rgba(237, 231, 219, .38), 0 1px 2px rgba(0, 0, 0, .9); }
+.st-ball { position: absolute; inset: 0; pointer-events: none; }
+.st-ball i { position: absolute; left: 0; top: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--bone); opacity: 0; will-change: transform, opacity; box-shadow: 0 0 0 1px rgba(10, 15, 13, .28), 0 1px 3px rgba(0, 0, 0, .55), 0 0 9px rgba(237, 231, 219, .4); transform-origin: 50% 50%; }
+.st-ball i.is-ghost { box-shadow: 0 0 6px rgba(237, 231, 219, .5); }
+.st-cap:not(.has-ball) .st-ball { display: none; }
 
 /* ---------- choices ---------- */
 .st-choices { position: absolute; left: 50%; bottom: max(26px, calc(env(safe-area-inset-bottom) + 14px)); transform: translate(-50%, 10px); z-index: 9; width: min(640px, calc(100% - 32px)); opacity: 0; transition: opacity .35s var(--ease), transform .5s var(--ease); }

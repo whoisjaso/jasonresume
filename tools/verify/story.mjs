@@ -448,6 +448,68 @@ async function feel(vname, w, h, mobile) {
   else notes.push(`${label}: Master, Music${mobile ? '' : ' and the run toggle'} kept across a reload`);
   await ctx.close();
 }
+/* ---------- the voice clock: real voices, some arriving late; captions, the ball and the mouth follow the recording ---------- */
+const SYNC = process.argv.includes('--sync');
+async function sync(vname, w, h, mobile) {
+  const label = `${vname} sync`;
+  const ctx = await ctxFor(w, h, mobile);
+  // every other recording arrives late, as on a slow phone connection; the caption must wait for it
+  let nth = 0;
+  await ctx.route('**/assets/voice/story-v2/*.mp3', async r => { if (nth++ % 2 === 0) await new Promise(res => setTimeout(res, 1100)); r.continue(); });
+  const p = await ctx.newPage();
+  p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
+  await p.goto(URL0 + '?debug=story&pr=0.3');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  await p.click('[data-title-play]');
+  await phase(p, 'explore', 120000);
+  await until(p, () => !window.JG_STORY.debug.state().line, null, 60000);
+  const on = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
+  if (!on) { errs.push(`${label}: the score is off after Play, so nothing is voiced`); await ctx.close(); return; }
+  // sample every frame: the caption's clock against the recording's, the lit words, the ball, how many voices sound
+  await p.evaluate(() => {
+    window.__sync = []; const D = window.JG_STORY.debug;
+    const f = () => { const s = D.sync(); if (s.line) { const b = D.ball(); window.__sync.push({ line: s.line, mode: s.mode, now: s.now, ct: s.ct, paused: s.paused, stall: s.stall, said: s.said, words: s.words, voices: s.voices, ball: b && b.b ? { x: b.b.x, y: b.b.y, air: b.b.air, o: b.b.o } : null }); } else window.__sync.push({ line: null, voices: s.voices }); window.__syncRaf = requestAnimationFrame(f); };
+    f();
+  });
+  await use(p, mobile, 'dell', label);
+  await choose(p, mobile, 'Rough night to be out.', label);
+  await phase(p, 'explore', 120000);
+  await until(p, () => !window.JG_STORY.debug.state().line, null, 60000);
+  const r = await p.evaluate(() => { cancelAnimationFrame(window.__syncRaf); return { s: window.__sync, log: window.JG_STORY.debug.sync().log }; });
+  const voiced = r.log.filter(l => l.voiced);
+  if (voiced.length < 3) errs.push(`${label}: only ${voiced.length} voiced lines played (${JSON.stringify(r.log.map(l => l.id + ':' + l.mode))})`);
+  // drift: the lit words against the words the recording has reached; the caption clock against currentTime
+  let n = 0, wordOff = 0, maxDrift = 0, sumDrift = 0, maxVoices = 0, early = 0;
+  for (const x of r.s) {
+    maxVoices = Math.max(maxVoices, x.voices || 0);
+    if (!x.line || x.mode !== 'voice' || x.paused || x.ct == null) { if (x.line && x.mode === 'wait' && x.said > 0) early++; continue; }
+    const d = Math.abs(x.now - x.ct); maxDrift = Math.max(maxDrift, d); sumDrift += d; n++;
+    const want = x.words.filter(w => x.ct >= w[0] - 0.02).length;
+    if (Math.abs(want - x.said) > 1) wordOff++;
+  }
+  if (!n) errs.push(`${label}: never saw a voice playing`);
+  if (maxVoices > 1) errs.push(`${label}: ${maxVoices} voices sounded at once`);
+  if (early) errs.push(`${label}: words lit before their voice started (${early} frames)`);
+  if (n && maxDrift > 0.3) errs.push(`${label}: the caption clock drifted ${maxDrift.toFixed(3)} s from the recording`);
+  if (n && wordOff > n * 0.02) errs.push(`${label}: the lit words were more than a word off the voice in ${wordOff} of ${n} frames`);
+  // each voiced line ends after its recording ends (a short hold), and the next line starts after that
+  const ends = [];
+  for (const l of voiced) {
+    if (l.skipped) continue;
+    if (l.mode !== 'voice') { errs.push(`${label}: ${l.id} fell back to ${l.mode}`); continue; }
+    if (!l.ended) { errs.push(`${label}: ${l.id} ended before its voice did`); continue; }
+    ends.push(l.end - l.ended);
+    if (l.end < l.ended - 5) errs.push(`${label}: ${l.id} ended ${(l.ended - l.end).toFixed(0)} ms before its voice`);
+  }
+  for (let i = 1; i < r.log.length; i++) if (r.log[i].at < r.log[i - 1].end - 5) errs.push(`${label}: ${r.log[i].id} started before ${r.log[i - 1].id} finished`);
+  const waits = voiced.filter(l => l.playing).map(l => Math.round(l.playing - l.at));
+  // the ball lands on each word: at the word's start it sits on that word
+  const landed = r.s.filter(x => x.ball && x.mode === 'voice' && !x.ball.air).length, air = r.s.filter(x => x.ball && x.ball.air && x.ball.o > 0.5).length;
+  if (!landed || !air) errs.push(`${label}: the caption ball never ${landed ? 'flew' : 'landed'}`);
+  notes.push(`${label}: ${voiced.length} voiced lines (half their files held back 1.1 s), caption clock vs recording drift mean ${(sumDrift / Math.max(1, n) * 1000).toFixed(1)} ms, max ${(maxDrift * 1000).toFixed(0)} ms over ${n} frames; lit words off by more than one word in ${wordOff} frames; voices at once: max ${maxVoices}; caption waited for its voice ${waits.join(', ')} ms; line ends ${ends.map(e => Math.round(e)).join(', ')} ms after the voice; ball landed ${landed} frames, in flight ${air}`);
+  await ctx.close();
+}
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
@@ -464,6 +526,7 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (SYNC) { try { await sync(vname, w, h, mobile); } catch (e) { errs.push(`${vname} sync: ${e.message.split('\n')[0]}`); } continue; }
   if (!NOFEEL && !ONLY_PATH) { try { await feel(vname, w, h, mobile); } catch (e) { errs.push(`${vname} feel: ${e.message.split('\n')[0]}`); } }
   if (FEEL) continue;
   if (vname === 'portrait') RAN_PORTRAIT = true;

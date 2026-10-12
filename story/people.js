@@ -154,6 +154,10 @@ class Motion {
     }
     // the cycle's phase origin: the left heel strike
     let h = 0; for (let f = 0; f < last; f++) if (contact.l[f] && !contact.l[(f - 1 + last) % last]) { h = f; break; }
+    // the arms' swing: in phase with the opposite foot's reach; u = cos(2 pi phase - swing) is +1 when the right foot
+    // is furthest ahead (the left arm forward)
+    let fa = 0, fb = 0; for (let f = 0; f < last; f++) { const zd = zs.r[f] - zs.l[f], ph = f / last * TAU; fa += zd * Math.cos(ph); fb += zd * Math.sin(ph); }
+    c.swing = Math.atan2(fb, fa);
     c.dist = dist; c.heel = h / last; c.contact = contact; c.footY = ys; c.lo = { l: Math.min(...ys.l), r: Math.min(...ys.r) };
   }
 }
@@ -285,13 +289,50 @@ class Person {
       this.arm[s] = { ua, la, ha, l1: R["lowerarm_" + s].at.distanceTo(R["upperarm_" + s].at), l2: R["hand_" + s].at.distanceTo(R["lowerarm_" + s].at),
         dir: R["lowerarm_" + s].at.clone().sub(R["upperarm_" + s].at).normalize().applyQuaternion(R["upperarm_" + s].wi) };
     }
+    this.handRig = {};
+    for (const s of ["l", "r"]) if (this.arm[s] && R["middle_01_" + s] && R["index_01_" + s] && R["pinky_01_" + s]) this.handRig[s] = this.rigHand(s);
     // eyes, when the body has eye bones
-    this.eyeB = ["eye_l", "eye_r"].map(n => this.bones[n]).filter(Boolean);
+    this.eyeB =["eye_l", "eye_r"].map(n => this.bones[n]).filter(Boolean);
     // layer masks and pose buffers
     this.mk = {}; for (const [k, f] of Object.entries(MASKS)) this.mk[k] = mask(M, n => f(chainOf(n)));
     this.P = { a: M.pose(), b: M.pose(), c: M.pose(), acc: M.pose(), tmp: M.pose() };
     this.SW = M.fk(M.rest);
     this.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(M.restW.q[M.ix.head].clone().invert());
+  }
+
+  /* a hand's frame at rest, in character space and in the hand bone's own: d along the fingers, n out of the palm,
+     a across the knuckles toward the little finger; and for each finger joint the axis it curls about (toward the
+     palm) and the axis it spreads about, in that joint's own frame */
+  rigHand(s) {
+    const R = this.rest, h = R["hand_" + s].at;
+    const d = R["middle_01_" + s].at.clone().sub(h).normalize();
+    const a0 = R["pinky_01_" + s].at.clone().sub(R["index_01_" + s].at).normalize();
+    const n = new THREE.Vector3().crossVectors(d, a0).normalize(); if (s === "l") n.negate();
+    const a = new THREE.Vector3().crossVectors(n, d).normalize(); if (a.dot(a0) < 0) a.negate();
+    const hw = R["hand_" + s].wi;
+    const fingers = [];
+    for (const f of ["index", "middle", "ring", "pinky", "thumb"]) {
+      let prev = null;
+      for (let j = 1; j <= 3; j++) {
+        const nm = f + "_0" + j + "_" + s, i = this.bi[nm]; if (i == null) continue;
+        const nx = R[f + "_0" + (j + 1) + "_" + s];
+        const fd = nx ? nx.at.clone().sub(R[nm].at).normalize() : prev ? prev.clone() : d.clone();
+        prev = fd;
+        let to;
+        // the thumb closes across the palm toward the little finger; the fingers straight into the palm
+        if (f === "thumb") to = j === 1 ? n.clone().multiplyScalar(0.8).addScaledVector(a, 0.6).normalize() : n.clone().multiplyScalar(0.55).addScaledVector(a, 0.85).normalize();
+        else to = n;
+        const fx = new THREE.Vector3().crossVectors(fd, to).normalize();
+        // spread: about the palm normal; + moves toward the little finger
+        const sx = n.clone(); if (new THREE.Vector3().crossVectors(sx, fd).dot(a) < 0) sx.negate();
+        const sgn = { index: -1, middle: -0.15, ring: 0.6, pinky: 1.2, thumb: -1 }[f];
+        fingers.push({ i, f: f[0], j, q: R[nm].q.clone(), fx: fx.applyQuaternion(R[nm].wi), sx: sx.applyQuaternion(R[nm].wi), sgn });
+      }
+    }
+    // the grip's centre (where a held bar runs through the closed fist) and the fingertips, from the wrist, in the hand's frame
+    const grip = d.clone().multiplyScalar(0.085).addScaledVector(n, 0.03).addScaledVector(a, 0.008);
+    const tip = d.clone().multiplyScalar(0.18);
+    return { d, n, a, dL: d.clone().applyQuaternion(hw), nL: n.clone().applyQuaternion(hw), aL: a.clone().applyQuaternion(hw), fingers, gripL: grip.applyQuaternion(hw), tipL: tip.applyQuaternion(hw), palmL: d.clone().multiplyScalar(0.06).addScaledVector(n, 0.025).applyQuaternion(hw) };
   }
 
   under(k, a) { for (let p = this.par[k]; p >= 0; p = this.par[p]) if (p === a) return true; return false; }
@@ -564,13 +605,7 @@ class Person {
       const pq = par[i] >= 0 ? wq[par[i]] : this.baseQ;
       lq[i].copy(pq).invert().multiply(wq[i]);
     }
-    // relaxed hands: index and middle nearly straight, the curl growing toward the little finger, the thumb lying alongside
-    if (!this.fingers) this.fingers = this.order.map((b, i) => (/^(index|middle|ring|pinky|thumb)_0[123]_[lr]$/.test(b.name) ? i : -1)).filter(i => i >= 0);
-    for (const i of this.fingers) {
-      const nm = this.order[i].name, f = nm.split("_")[0], j = +nm.split("_")[1];
-      const c = ({ index: 0.1, middle: 0.16, ring: 0.26, pinky: 0.36, thumb: 0.06 })[f] * (j === 1 ? 0.8 : j === 2 ? 1.2 : 0.9);
-      lq[i].copy(this.rest[nm].q).multiply(_q1.setFromAxisAngle(AXX, c));
-    }
+    // (the fingers and the wrists are set after the arms, in hands())
     // the collarbones: captured shoulders shrug and roll more than these jackets can take; keep most of their rest
     for (const sd of ["l", "r"]) { const i = this.bi["clavicle_" + sd]; if (i != null && DEBUG.clav !== 0) lq[i].slerp(this.rest["clavicle_" + sd].q, DEBUG.clav == null ? 0.65 : DEBUG.clav); }
     // the hips: the source's hip travel, scaled to this body
@@ -609,23 +644,27 @@ class Person {
     // relaxed arms: a soft bend at the elbow, the hands a little in front of the thighs
     const elb = still * (1 - this.talkW * 0.5) * (1 - this.engW * 0.3);
     for (const sd of ["l", "r"]) { if (this.hold === "umbrella" && sd === "r") continue; const k = sd === "l" ? 1 : 0.85; this.rot("upperarm_" + sd, -0.07 * elb, 0, 0); this.rot("lowerarm_" + sd, -0.3 * k * elb, 0, 0); }
-    // running: the arms drive and the shoulders counter the hips
+    // running: the shoulders counter the hips (the arms themselves are driven by IK in arms())
     const jw = this.jogW * this.locoW;
+    this.armSwing = 0;
     if (jw > 0.01) {
-      const c = Math.cos(this.gPhase * TAU);
-      this.rot("upperarm_l", 0.3 * c * jw, 0, 0); this.rot("upperarm_r", -0.3 * c * jw, 0, 0);
-      this.rot("lowerarm_l", -0.25 * jw, 0, 0); this.rot("lowerarm_r", -0.25 * jw, 0, 0);
-      this.rot("spine_03", 0, 0.12 * c * jw, 0); this.rot("pelvis", 0, -0.06 * c * jw, 0);
+      const jc = LC[2], u = jc && jc.swing ? Math.cos(((this.gPhase + jc.heel) % 1) * TAU - jc.swing) : Math.cos(this.gPhase * TAU);
+      this.armSwing = u;
+      this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0);
     }
+    // reaching: lean and turn toward what the hand goes for, and bend at the knees for something low
+    this.reachBody(hipC, dt);
 
     // ---- the head looks
     let wantY = 0, wantP = 0;
     // idle glances: now and then a look off to one side and back, when nobody holds the eye
     this.gT = (this.gT == null ? 3 + Math.random() * 5 : this.gT) - dt;
     if (this.gT <= 0) { this.glance = this.glance ? 0 : (Math.random() - 0.5) * 1.3; this.gT = this.glance ? 1 + Math.random() * 1.6 : 4 + Math.random() * 6; }
-    if (!this.lookAtP) wantY = (this.glance || 0) * still;
-    if (this.lookAtP) {
-      const hw = this.headWorld(_v4), d = _v1.copy(this.lookAtP).sub(hw);
+    // reaching or driving, the eyes go to the hand's target or the road
+    const lookP = this.taskLook || this.lookAtP;
+    if (!lookP) wantY = (this.glance || 0) * still;
+    if (lookP) {
+      const hw = this.headWorld(_v4), d = _v1.copy(lookP).sub(hw);
       const local = angDiff(0, Math.atan2(d.x, d.z) - this.yaw);
       wantY = Math.abs(local) > 2.3 ? 0 : clamp(local, -1.2, 1.2);
       wantP = clamp(-Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.45, 0.5);
@@ -650,6 +689,7 @@ class Person {
     // ---- forward kinematics with the hips in place, then the feet and the hands
     this.fk(hipC);
     if (DEBUG.ik) { this.legs(dt); this.arms(dt); }
+    this.hands(dt);
     // write the bones
     for (let i = 0; i < n; i++) this.order[i].quaternion.copy(lq[i]);
     const pb = this.order[pi], pp = par[pi] >= 0 ? par[pi] : -1;

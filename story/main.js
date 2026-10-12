@@ -235,14 +235,48 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
 
 /* ================================================================
    VOICES AND CAPTIONS
+   The voice is the clock. A caption shows at once, dim; its words light,
+   the mouth moves and the ball lands only once the recording is actually
+   playing, and all three follow audio.currentTime from there. A buffering
+   voice stops the clock; the line ends when the voice ends (and a short
+   hold), never on a guess at its length. One voice at a time: a new line
+   stops the last. If the voice can't play (an error, a refusal, a load that
+   never comes) the line falls back to a reading clock from where it was.
+   While a line plays the next one's recording is already loading.
    ================================================================ */
 const VBASE = D.out || "assets/voice/story-v2";
 const have = { fict: {}, me: {} };
 fetch(VBASE + "/manifest.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
 fetch(VBASE + "/manifest-jason.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
-let line = null; // { L, t, dur, audio, words, done }
+let line = null; // { L, t, mode: "wait"|"voice"|"text", clock, vt, dur, endAt, audio, v, words, est, sp, resolve }
 let skipLine = null;
+const HOLD = 0.35, WAIT_MAX = 3.5, STALL_MAX = 6;
+const VC = new Map(); // id -> { a, words, dur, routed, wp }
+let curV = null;
+const syncLog = []; // for tools/verify/story.mjs: how each line began and ended
 function speakerOf(who) { return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
+function voiceId(L) { return L.who === "jason" ? "jason-" + L.id : L.id; }
+function voicedLine(L) { if (!L || L.who === "you" || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
+function prepVoice(L) {
+  const id = voiceId(L); let v = VC.get(id);
+  if (v) { VC.delete(id); VC.set(id, v); return v; }
+  const a = new Audio(); a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3";
+  v = { id, a, words: null, dur: 0, routed: false };
+  v.wp = fetch(VBASE + "/" + id + ".json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.words) { v.words = j.words; v.dur = j.duration || 0; } }).catch(() => {});
+  VC.set(id, v);
+  // keep a handful; the oldest that isn't speaking lets go of its file
+  for (const [k, o] of VC) { if (VC.size <= 8) break; if (o === curV) continue; try { o.a.pause(); o.a.removeAttribute("src"); o.a.load(); } catch (e) {} VC.delete(k); }
+  return v;
+}
+function preloadLine(L) { if (voicedLine(L)) prepVoice(L); }
+function stopVoice() { if (curV) { try { curV.a.pause(); } catch (e) {} curV = null; if (SC() && SC().voice) SC().voice(false); } }
+/* a reading clock's word timings: longer words and stops after punctuation take longer */
+function estWords(text, t0, t1) {
+  const ws = text.split(" "), wt = ws.map(w => 2 + w.replace(/[^\w']/g, "").length + (/[.?!]$/.test(w) ? 5 : /[,;:]$/.test(w) ? 2.5 : 0));
+  const sum = wt.reduce((a, b) => a + b, 0) || 1, k = Math.max(0.2, t1 - t0) / sum;
+  let t = t0; return ws.map((w, i) => { const s = t; t += wt[i] * k; return { w, s, e: s + Math.max(0.08, (wt[i] - (/[.?!,;:]$/.test(w) ? 2 : 0)) * k * 0.9) }; });
+}
+function lineWords(l) { return l.words || l.est; }
 function sayLine(L) {
   return new Promise(resolve => {
     const words = L.t.split(" ");
@@ -253,49 +287,190 @@ function sayLine(L) {
     saidEl.innerHTML = words.map(w => "<i>" + E(w) + "</i>").join(" ");
     capEl.hidden = false; requestAnimationFrame(() => capEl.classList.add("is-on"));
     const sp = speakerOf(L.who);
-    const base = { L, t: 0, dur: S.holdLines ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052, audio: null, words: null, resolve, sp };
+    const textDur = S.holdLines ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052;
+    const base = { L, t: 0, mode: "text", clock: 0, vt: 0, dur: textDur, endAt: null, audio: null, v: null, words: null, est: null, resolve, sp, offs: [], k: -2, stallT: 0, waitT: 0, perf: performance.now() };
+    base.est = estWords(L.t, 0.12, Math.max(0.5, textDur - 0.55));
+    if (curV) stopVoice();
     line = base;
-    if (sp) { sp.talk = L.who === "you" ? 0 : 1; sp.nod = 1; sp.brow = /\?$/.test(L.t) ? 1 : 0; }
+    if (sp) { sp.talk = 0; sp.nod = 1; sp.brow = /\?$/.test(L.t) ? 1 : 0; }
     if (L.who === "phone" || L.who === "agent" || L.who === "caller") { if (P.jason) P.jason.lookAtP = null; }
     shotFor(L);
+    const rec = { id: L.id, who: L.who, voiced: false, at: performance.now(), playing: null, ended: null, end: null, skipped: null, mode: "text" };
+    base.rec = rec; syncLog.push(rec); if (syncLog.length > 80) syncLog.shift();
     // voices only with the score on; my lines once they exist in my voice
-    const id = L.who === "jason" ? "jason-" + L.id : L.id;
-    const voiced = L.who !== "you" && soundOn() && !FAST && (L.who === "jason" ? have.me[id] : have.fict[id]);
-    if (voiced) {
-      const a = new Audio(); a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3"; a.volume = 0.96; AU.voice(a);
-      a.addEventListener("loadedmetadata", () => { if (line === base && a.duration) base.dur = a.duration + 0.35; });
-      a.addEventListener("ended", () => { if (line === base) base.dur = Math.min(base.dur, base.t + 0.3); });
-      const p = a.play(); if (p && p.catch) p.catch(() => {});
-      base.audio = a; if (SC() && SC().voice) SC().voice(true); AU.duck(0.45);
-      fetch(VBASE + "/" + id + ".json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && line === base) base.words = j.words; }).catch(() => {});
-    } else { $$("i", saidEl).forEach(w => w.classList.add("is-said")); AU.duck(0.8); }
+    if (voicedLine(L)) {
+      const v = prepVoice(L), a = v.a;
+      curV = v; base.v = v; base.audio = a; base.mode = "wait"; rec.voiced = true; rec.mode = "wait";
+      if (!v.routed) { AU.voice(a); v.routed = true; }
+      try { if (a.currentTime) a.currentTime = 0; } catch (e) {}
+      const on = (ev, f) => { a.addEventListener(ev, f); base.offs.push(() => a.removeEventListener(ev, f)); };
+      on("playing", () => { if (line !== base || base.mode === "text") return; if (base.mode === "wait") { rec.playing = performance.now(); base.ctAt = performance.now(); base.lastCT = a.currentTime; } base.mode = "voice"; rec.mode = "voice"; base.stall = false; });
+      on("waiting", () => { if (line === base) base.stall = true; });
+      on("stalled", () => { if (line === base && base.mode === "wait") base.stall = true; });
+      on("ended", () => { if (line === base && base.mode === "voice") { rec.ended = performance.now(); base.vt = Math.max(base.vt, a.duration || base.vt); base.endAt = base.t + HOLD; } });
+      on("error", () => { if (line === base) toText(base, "error"); });
+      const p = a.play(); if (p && p.catch) p.catch(e => { if (line === base && base.mode !== "text" && !(e && e.name === "AbortError")) toText(base, "refused"); });
+      if (SC() && SC().voice) SC().voice(true); AU.duck(0.45);
+      if (v.words) base.words = v.words; else v.wp.then(() => { if (line === base && v.words) base.words = v.words; });
+    } else AU.duck(0.8);
+    capEl.classList.toggle("is-voiced", !!base.audio);
     const sr = $(".st-sr", el) || (() => { const s = document.createElement("p"); s.className = "st-sr vh"; s.setAttribute("aria-live", "polite"); el.appendChild(s); return s; })();
     sr.textContent = (c.name ? c.name + ": " : "") + L.t;
+    ball.start(saidEl, still());
   });
+}
+/* the voice couldn't play: carry on with the reading clock from where the voice had got to */
+function toText(l, why) {
+  if (l.audio) { try { l.audio.pause(); } catch (e) {} }
+  if (curV === l.v) { curV = null; if (SC() && SC().voice) SC().voice(false); }
+  l.mode = "text"; l.rec.mode = "text:" + why; l.clock = l.vt || 0;
+  if (!l.words) l.est = estWords(l.L.t, l.clock + 0.12, Math.max(l.clock + 0.5, l.dur - 0.55));
+  l.dur = Math.max(l.dur, (lineWords(l).slice(-1)[0] || { e: 0 }).e + 0.6);
+  AU.duck(0.8);
 }
 function endLine(skipped) {
   if (!line) return;
   const L = line;
-  if (L.audio) { try { L.audio.pause(); } catch (e) {} if (SC() && SC().voice) SC().voice(false); }
+  L.offs.forEach(f => f()); L.offs = [];
+  if (L.audio) { try { L.audio.pause(); } catch (e) {} }
+  if (curV === L.v) stopVoice();
   if (L.sp) { L.sp.talk = 0; L.sp.brow = 0; }
+  L.rec.end = performance.now(); L.rec.skipped = !!skipped;
   line = null; AU.duck(1);
-  capEl.classList.remove("is-on");
+  capEl.classList.remove("is-on"); ball.stop();
   L.resolve(skipped);
+}
+/* where the line is now, in the voice's own seconds; between the audio clock's ticks it runs on the frame clock */
+function lineNow(l, pnow) {
+  if (S.ballPin != null) return S.ballPin; // a still, for the harness
+  if (l.mode === "voice") {
+    const a = l.audio;
+    if (a.paused || l.stall || a.ended) return l.vt;
+    return Math.min(l.vt + Math.max(0, (pnow - l.ctAt) / 1000), l.vt + 0.25);
+  }
+  if (l.mode === "wait") return 0;
+  return l.clock + (S.phase === "pause" ? 0 : Math.min(0.05, Math.max(0, (pnow - l.perf) / 1000)));
 }
 function tickLine(dt) {
   if (!line) return;
-  line.t += dt;
-  const a = line.audio, now = a && !a.paused ? a.currentTime : line.t;
-  if (line.audio) {
-    const spans = $$("i", saidEl);
-    if (line.words) spans.forEach((s, i) => s.classList.toggle("is-said", line.words[i] && now >= line.words[i].s - 0.02));
-    else { const n = Math.floor(spans.length * Math.min(1, now / Math.max(0.5, line.dur - 0.5))); spans.forEach((s, j) => s.classList.toggle("is-said", j < n)); }
+  const l = line, pnow = performance.now();
+  l.t += dt;
+  if (l.mode === "wait") {
+    // nothing heard yet: the clock holds; too long (a slow network, a blocked file) and the line reads on its own
+    if (S.phase !== "pause") l.waitT += dt;
+    if (l.waitT > WAIT_MAX) toText(l, "late");
+  } else if (l.mode === "voice") {
+    const a = l.audio, ct = a.currentTime;
+    if (ct !== l.lastCT) { l.lastCT = ct; l.vt = ct; l.ctAt = pnow; l.stall = false; l.stallT = 0; }
+    else if (!a.paused && !a.ended && dt > 0) { l.stallT += dt; if (l.stallT > STALL_MAX) toText(l, "stalled"); }
+    if (l.endAt == null && a.ended) { l.rec.ended = l.rec.ended || pnow; l.endAt = l.t + HOLD; }
+  } else { l.clock += dt; l.perf = pnow; }
+  const now = lineNow(l, pnow);
+  l.now = now;
+  if (l.mode !== "wait") {
+    const W = lineWords(l), spans = saidEl.children;
+    let k = -1; for (let i = 0; i < W.length; i++) { if (now >= W[i].s - 0.02) k = i; else break; }
+    if (k !== l.k) {
+      for (let i = 0; i < spans.length; i++) { spans[i].classList.toggle("is-said", i <= k); spans[i].classList.toggle("is-now", i === k); }
+      l.k = k;
+    }
     // the mouth follows the voice: open on words, rest between them
-    if (line.sp && line.words) { const w = line.words.find(w => now >= w.s && now <= w.e + 0.04); line.sp.talk = w ? 1 : 0.15; }
-    if (line.sp && line.sp.speak) line.sp.speak(line.words, now);
-  } else if (line.sp && line.L.who !== "you") line.sp.talk = line.t < line.dur - 0.5 ? 1 : 0;
-  if (line.t > line.dur) endLine(false);
+    if (l.sp && l.L.who !== "you") {
+      const w = W.find(w => now >= w.s && now <= w.e + 0.04); l.sp.talk = w ? 1 : 0.15;
+      if (l.sp.speak) l.sp.speak(W, now);
+    }
+  }
+  if (l.mode === "text" && l.clock > l.dur) return endLine(false);
+  if (l.mode === "voice" && l.endAt != null && l.t >= l.endAt && !S.holdLines) return endLine(false);
 }
+/* the voice picks up again after the pause menu or a hidden tab, if it was the clock */
+function resumeVoice() { if (line && line.audio && line.mode !== "text") { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); } }
+
+/* ================================================================
+   THE CAPTION BALL
+   A small bone ball that hops from word to word as each is spoken: it
+   lands on the word's own moment (the arc is higher for a longer hop or a
+   longer wait), squashes on landing, stretches along its flight with a few
+   fading ghosts behind it, and breathes while the voice rests. Positions
+   are a pure function of the line's clock, so it is drawn every frame from
+   the voice itself with transforms only; reduced motion leaves only the
+   lit word.
+   ================================================================ */
+const EZ = (() => { // the site's one ease, cubic-bezier(0.2, 0.7, 0.1, 1), solved for x
+  const x1 = 0.2, y1 = 0.7, x2 = 0.1, y2 = 1;
+  const bx = t => 3 * x1 * t * (1 - t) * (1 - t) + 3 * x2 * t * t * (1 - t) + t * t * t;
+  const by = t => 3 * y1 * t * (1 - t) * (1 - t) + 3 * y2 * t * t * (1 - t) + t * t * t;
+  return x => { if (x <= 0) return 0; if (x >= 1) return 1; let a = 0, b = 1, t = x; for (let i = 0; i < 18; i++) { t = (a + b) / 2; if (bx(t) < x) a = t; else b = t; } return by(t); };
+})();
+const ball = (() => {
+  const layer = document.createElement("div"); layer.className = "st-ball"; layer.setAttribute("aria-hidden", "true");
+  const els = [0, 1, 2, 3].map(i => { const b = document.createElement("i"); if (i) b.className = "is-ghost"; layer.appendChild(b); return b; });
+  capEl.appendChild(layer);
+  let on = false, pos = [], R = 3.5, host = null, lastK = -1;
+  function measure() {
+    if (!host) return;
+    const c = capEl.getBoundingClientRect(), fs = parseFloat(getComputedStyle(host).fontSize) || 18;
+    R = Math.max(2.6, Math.min(4, fs * 0.19));
+    els.forEach(b => { b.style.width = b.style.height = (2 * R).toFixed(1) + "px"; });
+    pos = [].map.call(host.children, s => { const r = s.getBoundingClientRect(); return { x: r.left - c.left + r.width / 2, y: r.top - c.top + (r.height - fs) * 0.5 - R - 2.5, row: Math.round(r.top) }; });
+  }
+  function start(h, rm) {
+    host = h; on = !rm; lastK = -1;
+    capEl.classList.toggle("has-ball", on);
+    els.forEach(b => { b.style.opacity = "0"; });
+    if (on) measure();
+  }
+  function stop() { on = false; }
+  addEventListener("resize", () => { if (on) measure(); });
+  /* the ball at time t: x, y, opacity, and how long since it landed (or -1 in the air) */
+  function at(W, t) {
+    const n = Math.min(W.length, pos.length); if (!n) return null;
+    let k = -1; for (let i = 0; i < n; i++) { if (t >= W[i].s) k = i; else break; }
+    if (k < 0) { // dropping in onto the first word
+      const T = Math.min(0.32, Math.max(0.1, W[0].s)), u = 1 - (W[0].s - t) / T, p = pos[0];
+      if (u <= 0) return { x: p.x, y: p.y - 22, o: 0, land: -1, air: true };
+      return { x: p.x, y: p.y - 22 * (1 - u * u), o: Math.min(1, u * 1.6), land: -1, air: true };
+    }
+    const p = pos[k];
+    if (k < n - 1) {
+      const nx = W[k + 1].s, gap = nx - W[k].s, T = clamp(gap * 0.62, 0.1, 0.42), take = nx - T;
+      if (t >= take) {
+        const q = pos[k + 1], u = (t - take) / T;
+        const wait = Math.max(0, W[k + 1].s - W[k].e);
+        const h = clamp(5 + Math.abs(q.x - p.x) * 0.1 + wait * 16 + T * 14, 6, 30);
+        if (q.row !== p.row) { // a new row: up and out, then down onto the next word from above
+          if (u < 0.4) { const v = u / 0.4; return { x: p.x, y: p.y - h * EZ(v), o: 1 - v, land: -1, air: true, wrap: true }; }
+          const v = (u - 0.4) / 0.6; return { x: q.x, y: q.y - h * (1 - v * v), o: Math.min(1, v * 1.5), land: -1, air: true, wrap: true };
+        }
+        const xu = 0.5 * u + 0.5 * EZ(u);
+        return { x: p.x + (q.x - p.x) * xu, y: p.y + (q.y - p.y) * u - 4 * h * u * (1 - u), o: 1, land: -1, air: true };
+      }
+    }
+    return { x: p.x, y: p.y, o: 1, land: t - W[k].s, air: false, rest: t - W[k].e };
+  }
+  function draw(l, pnow) {
+    if (!on || !l || l.mode === "wait") { if (on) els.forEach(b => { b.style.opacity = "0"; }); return; }
+    const W = lineWords(l); if (!W) return;
+    const t = lineNow(l, pnow), b = at(W, t); if (!b) return;
+    const b1 = at(W, t - 1 / 120) || b;
+    let vx = (b.x - b1.x) * 120, vy = (b.y - b1.y) * 120; if (b.wrap) { vx = 0; vy = Math.max(-400, Math.min(400, vy)); }
+    const sp = Math.hypot(vx, vy);
+    let sx = 1, sy = 1, ang = 0, dy = 0;
+    if (b.air && sp > 30) { const s = 1 + Math.min(0.85, sp / 700); sx = s; sy = 1 / Math.sqrt(s); ang = Math.atan2(vy, vx); }
+    else if (!b.air && b.land < 0.24) { const k = Math.exp(-b.land * 15) * Math.cos(b.land * 32); sx = 1 + 0.34 * k; sy = 1 - 0.4 * k; dy = (1 - sy) * R; }
+    else if (!b.air && b.rest > 0.2) { const k = 1 + 0.07 * Math.sin(t * Math.PI * 1.6) * Math.min(1, (b.rest - 0.2) * 3); sx = sy = k; }
+    const tf = (x, y, a, X, Y) => "translate3d(" + (x - R).toFixed(1) + "px," + (y - R).toFixed(1) + "px,0) rotate(" + a.toFixed(3) + "rad) scale(" + X.toFixed(3) + "," + Y.toFixed(3) + ")";
+    els[0].style.transform = tf(b.x, b.y + dy, ang, sx, sy); els[0].style.opacity = b.o.toFixed(2);
+    // the blur: ghosts a beat behind along the same arc, fading, only while it's really moving
+    const blur = b.air && !b.wrap ? Math.min(1, sp / 380) : 0;
+    for (let i = 1; i < 4; i++) {
+      const g = blur > 0.05 ? at(W, t - i * 0.016) : null;
+      if (!g || !g.air || g.wrap) { els[i].style.opacity = "0"; continue; }
+      els[i].style.transform = tf(g.x, g.y, ang, sx * (1 + i * 0.12), sy * (1 - i * 0.12)); els[i].style.opacity = (blur * [0, 0.34, 0.18, 0.08][i] * g.o).toFixed(2);
+    }
+  }
+  return { start, stop, draw, measure, at: (t) => { const l = line; if (!l) return null; return at(lineWords(l), t); }, get pos() { return pos; }, get on() { return on; }, get R() { return R; } };
+})();
 
 /* ---------- choices ---------- */
 let choosing = null;
@@ -889,8 +1064,12 @@ async function runTalk(id) {
     S.talking = cur;
     if (T0.branch) { const b = T0.branch.find(x => cond(x.if)); cur = b ? b.go : null; continue; }
     if (T0.set) Object.assign(S.flags, T0.set);
-    for (const L of T0.lines || []) {
-      if (!cond(L.if)) continue;
+    const lines = (T0.lines || []).filter(L => cond(L.if));
+    for (let li = 0; li < lines.length; li++) {
+      const L = lines[li];
+      // the next recording loads while this one plays; at the last line, the first of each way on
+      if (lines[li + 1]) preloadLine(lines[li + 1]);
+      else for (const g of (T0.choices || []).filter(c => cond(c.if)).map(c => c.go).concat(T0.next || [])) { const n = TALK[g] && (TALK[g].lines || []).find(x => cond(x.if)); if (n) preloadLine(n); }
       await sayLine(L);
       if (!FAST) await sleep(120);
     }
@@ -1261,7 +1440,7 @@ function rebind(a, k) {
 function unpause() {
   pauseEl.classList.remove("is-on"); el.classList.remove("is-paused"); setTimeout(() => { if (S.phase !== "pause") pauseEl.hidden = true; }, 250); S.phase = S.prevPhase || "explore"; rebinding = null;
   AU.veil(false);
-  if (line && line.audio) { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); }
+  resumeVoice();
   if (SET.lock && dev === "kbm" && S.phase === "explore") { try { cv.requestPointerLock(); } catch (e) {} }
 }
 let lvT = 0;
@@ -1552,6 +1731,7 @@ const camFwd = new THREE.Vector3();
 function frame(now) {
   raf = requestAnimationFrame(frame);
   if (!S.open || document.hidden || S.attract) { last = now; return; }
+  if (line) ball.draw(line, now); // the caption ball keeps the full frame rate even when the scene rests
   padPoll(Math.min(0.05, (now - last) / 1000));
   // battery: behind the journal or the pause menu there's nothing to draw; standing still, thirty frames are plenty
   const over = S.phase === "pause" || S.phase === "journal";
@@ -1607,7 +1787,7 @@ function frame(now) {
     acc = 0; frames = 0;
   }
 }
-document.addEventListener("visibilitychange", () => { if (!S.open) return; if (document.hidden) { AU.suspend(true); if (line && line.audio) line.audio.pause(); if (S.phase === "explore") pause(); } else { AU.suspend(false); if (line && line.audio && S.phase !== "pause") line.audio.play().catch(() => {}); } });
+document.addEventListener("visibilitychange", () => { if (!S.open) return; if (document.hidden) { AU.suspend(true); if (line && line.audio) line.audio.pause(); if (S.phase === "explore") pause(); } else { AU.suspend(false); if (S.phase !== "pause") resumeVoice(); } });
 
 /* ================================================================
    OPEN AND CLOSE
@@ -1828,6 +2008,14 @@ window.JG_STORY = {
     audio: () => AU.debug(),
     settings: () => ({ ...SET, keys: { ...SET.keys }, mix: { ...AU.mix } }),
     surface: (x, z) => surfaceAt(x, z),
-    hold: v => { S.holdLines = !!v; }
+    hold: v => { S.holdLines = !!v; },
+    /* the voice clock: the caption's clock against the recording's own, and how many voices are sounding */
+    sync: () => {
+      const l = line, voices = [...VC.values()].filter(v => !v.a.paused && !v.a.ended).length;
+      if (!l) return { line: null, voices, log: syncLog.slice(-30) };
+      return { line: l.L.id, mode: l.mode, now: +lineNow(l, performance.now()).toFixed(3), ct: l.audio ? +l.audio.currentTime.toFixed(3) : null, paused: l.audio ? l.audio.paused : null, stall: !!l.stall, k: l.k, said: [].filter.call(saidEl.children, s => s.classList.contains("is-said")).length, words: lineWords(l).map(w => [w.s, w.e]), voices, log: syncLog.slice(-30) };
+    },
+    ball: t => { const l = line; if (!l) return null; const now = t == null ? lineNow(l, performance.now()) : t; const b = ball.at(now); return { on: ball.on, now, b, pos: ball.pos, R: ball.R }; },
+    pin: t => { const l = line; if (!l) return false; S.ballPin = t; return true; }
   }
 };
