@@ -438,7 +438,7 @@ function lampPost(x, z, h, set, o = {}) {
   const k = o.k || 1, day = !!o.day;
   const g = new THREE.Group(); g.position.set(x, 0, z);
   const steel = pbr({ color: "#3a3d3f", metal: 0.7, rough: 0.45, wet: 0.9, drops: false });
-  const conc = pbr({ color: "#8d8a82", rough: 0.85, wet: 0.8, map: T.concC, tri: 0.9, nmap: T.concN });
+  const conc = rmat({ color: "#8d8a82", rough: 0.85, wet: 0.8, mapK: "concC", tri: 0.9, nmapK: "concN" });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.75, 16), conc); base.position.y = 0.375; g.add(base);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.11, h - 0.75, 4, 1), steel); pole.rotation.y = Math.PI / 4; pole.position.y = 0.75 + (h - 0.75) / 2; g.add(pole);
   box(0.26, 0.04, 0.26, steel, 0, 0.77, 0, g);
@@ -494,7 +494,7 @@ function skyDome(o) {
         // the haze at the horizon is the scene's fog, so the ground meets the sky without a seam
         vec3 night = mix(uFog * 1.15 + vec3(0.012, 0.008, 0.004), vec3(0.006, 0.008, 0.011), smoothstep(0.0, 0.45, y));
         night += vec3(0.034, 0.021, 0.012) * cl * (1.0 - smoothstep(0.0, 0.6, y)) + vec3(0.008, 0.006, 0.005) * cl;
-        vec3 day = mix(vec3(0.82, 0.8, 0.74), vec3(0.42, 0.55, 0.68), smoothstep(0.0, 0.6, y)) * mix(1.0, 1.12, cl);
+        vec3 day = mix(vec3(0.66, 0.66, 0.62), vec3(0.3, 0.45, 0.62), smoothstep(0.0, 0.5, y)) * mix(1.0, 1.15, cl);
         vec3 c = mix(night, day, uDay);
         // the skyline on the horizon
         float az = atan(d.z, d.x) / 6.2831853 + 0.5;
@@ -524,7 +524,7 @@ export function buildLot(o) {
   const ground = plane(W, H, null, set); ground.rotation.x = -Math.PI / 2; ground.layers.set(4);
 
   /* --- the showroom: a glass front under a canopy, a real room behind it --- */
-  const stucco = pbr({ color: "#4b4d4a", rough: 0.88, wet: 0.5, map: T.concC, nmap: T.concN, tri: 0.35, nk: 0.6 });
+  const stucco = rmat({ color: "#4b4d4a", rough: 0.88, wet: 0.5, mapK: "concC", nmapK: "concN", tri: 0.35, nk: 0.6 });
   const fascia = pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.4, wet: 0.9 });
   const alu = pbr({ color: "#2b2925", rough: 0.32, metal: 0.85, wet: 0.8 });
   const sh = new THREE.Group(); sh.position.set(2, 0, -18); set.add(sh);
@@ -584,7 +584,7 @@ export function buildLot(o) {
   const py = new THREE.Group(); py.position.set(-15, 0, -9); set.add(py);
   const pylonM = pbr({ color: "#202322", metal: 0.5, rough: 0.45, wet: 1 });
   box(0.36, 6.4, 0.36, pylonM, -1.6, 3.2, 0, py); box(0.36, 6.4, 0.36, pylonM, 1.6, 3.2, 0, py);
-  box(0.8, 0.5, 0.8, pbr({ color: "#8d8a82", rough: 0.85, wet: 0.8, map: T.concC, tri: 0.9 }), -1.6, 0.25, 0, py); box(0.8, 0.5, 0.8, pbr({ color: "#8d8a82", rough: 0.85, wet: 0.8, map: T.concC, tri: 0.9 }), 1.6, 0.25, 0, py);
+  box(0.8, 0.5, 0.8, rmat({ color: "#8d8a82", rough: 0.85, wet: 0.8, mapK: "concC", tri: 0.9 }), -1.6, 0.25, 0, py); box(0.8, 0.5, 0.8, rmat({ color: "#8d8a82", rough: 0.85, wet: 0.8, mapK: "concC", tri: 0.9 }), 1.6, 0.25, 0, py);
   const ps = plane(3.6, 1.0, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.3 }), py); ps.position.set(0, 5.9, 0.2);
   const ps2 = ps.clone(); ps2.rotation.y = Math.PI; ps2.position.z = -0.2; py.add(ps2);
   box(3.9, 1.25, 0.34, pylonM, 0, 5.9, 0, py);
@@ -615,10 +615,12 @@ export function buildLot(o) {
     // its lights on the wet ground ahead of it and the tail lights' red behind
     set.userData.lamps.push({ p: V3(13.6, 0.75, -10.8), range: 7, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true });
   }
-  parkCars(set, lotCars.concat(showCars));
+  // the cars, now or when they land
+  if (Object.keys(carLib).length) parkCars(set, lotCars.concat(showCars));
+  else lotReady.then(() => { parkCars(set, lotCars.concat(showCars)); set.userData.envTex = null; });
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
   // wheel stops at the head of each stall, concrete
-  { const ws = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.13, 0.16), pbr({ color: "#9b968c", rough: 0.85, wet: 0.8, map: T.concC, tri: 1.2 }), 40); let n = 0; const m4 = new THREE.Matrix4();
+  { const ws = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.13, 0.16), rmat({ color: "#9b968c", rough: 0.85, wet: 0.8, mapK: "concC", tri: 1.2 }), 40); let n = 0; const m4 = new THREE.Matrix4();
     for (let x = -17.6; x <= 17.6; x += 3.2) { m4.makeTranslation(x, 0.065, -7.75); ws.setMatrixAt(n++, m4); m4.makeTranslation(x, 0.065, 6.75); ws.setMatrixAt(n++, m4); }
     ws.count = n; ws.userData.keep = true; set.add(ws); }
 
@@ -659,12 +661,12 @@ export function buildLot(o) {
 
   /* --- beyond the fence: Almeda Genoa Road, its street lights and power poles, palms, the buildings across it, the sky --- */
   {
-    const road = pbr({ color: "#ffffff", map: T.asphC, tri: 1 / 3.6, rough: 0.35, wet: day ? 0 : 1, spec: 1 });
+    const road = rmat({ color: "#ffffff", mapK: "asphC", tri: 1 / 3.6, rough: 0.35, wet: day ? 0 : 1, spec: 1 });
     const rd = plane(160, 14, road, set); rd.rotation.x = -Math.PI / 2; rd.position.set(0, -0.02, 31);
     const yel = pbr({ color: "#b8902e", rough: 0.5, wet: day ? 0 : 1 });
     for (const dz of [-0.08, 0.08]) { const l = plane(160, 0.1, yel, set); l.rotation.x = -Math.PI / 2; l.position.set(0, -0.005, 31 + dz); }
-    const sw = plane(160, 3.4, pbr({ color: "#a9a59c", map: T.concC, tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw.rotation.x = -Math.PI / 2; sw.position.set(0, -0.01, 23.4);
-    const sw2 = plane(160, 3, pbr({ color: "#a9a59c", map: T.concC, tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw2.rotation.x = -Math.PI / 2; sw2.position.set(0, -0.01, 39.5);
+    const sw = plane(160, 3.4, rmat({ color: "#a9a59c", mapK: "concC", tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw.rotation.x = -Math.PI / 2; sw.position.set(0, -0.01, 23.4);
+    const sw2 = plane(160, 3, rmat({ color: "#a9a59c", mapK: "concC", tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw2.rotation.x = -Math.PI / 2; sw2.position.set(0, -0.01, 39.5);
     // cobra-head street lights along the far side, glowing (their light is the lens and its halo; the lot's lamps do the lighting)
     const pole = pbr({ color: "#6f7376", metal: 0.8, rough: 0.5, wet: 1 });
     const lensM = glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 4.0 });
@@ -684,7 +686,7 @@ export function buildLot(o) {
       }
     }
     // across the road: a strip of low buildings, dark at this hour, a few signs and windows still lit
-    const bldg = pbr({ color: "#3a3936", rough: 0.9, wet: 0.6, map: T.concC, tri: 0.25 });
+    const bldg = rmat({ color: "#3a3936", rough: 0.9, wet: 0.6, mapK: "concC", tri: 0.25 });
     const rb = rng(77);
     for (let x = -70; x < 70;) {
       const w = 9 + rb() * 14, h = 4 + rb() * 4.5, d = 10;
@@ -712,6 +714,8 @@ export function buildLot(o) {
     const sh = day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, shL.map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range })), shBoxes);
     const gm = groundMat(g, { wet: day ? 0 : 1, rain: day ? 0 : 1, sh, shLamps: shL.map(l => l.p.clone()), day });
     ground.material = gm; set.userData.groundMat = gm;
+    // textures that were not in yet when the lot was built
+    lotReady.then(() => { const u = gm.uniforms; for (const [k, t] of [["uAsC", "asphC"], ["uAsN", "asphN"], ["uAsR", "asphR"], ["uCoC", "concC"], ["uCoN", "concN"], ["uCoR", "concR"]]) if (T[t] && u[k].value !== T[t]) u[k].value = T[t]; });
     // what's underfoot, for footsteps: puddle, concrete, wet asphalt (dry in the morning), tile inside the showroom
     set.userData.surfaceAt = (x, z) => {
       if (z < -17.7 && x > -11.3 && x < 15.3) return "tile";
@@ -742,7 +746,7 @@ export function buildLot(o) {
   set.userData.spots["jason-end"] = { who: "jason", r: 3.0 };
   set.userData.camRail = [V3(-22, 1.0, 26), V3(-12, 0.7, 16), V3(-2, 1.3, 6), V3(6, 2.2, -3), V3(10, 2.0, -8.5)];
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
-  set.userData.ready = Promise.resolve();
+  set.userData.ready = lotReady;
   return set;
 }
 
@@ -960,7 +964,7 @@ export function buildOffice(o) {
   set.userData.spots.desk = { p: V3(-1.0, 1.0, -1.8), r: 2.0, stand: V3(-0.6, 0, -0.4) };
   set.userData.walls.push({ x0: -2.4, x1: 0.4, z0: -2.45, z1: -1.2 });
   // a rug under the desk
-  const rug = plane(3.8, 2.6, pbr({ color: "#6a3a2e", map: T.fabC || null, tri: 2, rough: 0.95, wet: 0, room: ROOM }), set); rug.rotation.x = -Math.PI / 2; rug.position.set(-1, 0.008, -1.6);
+  const rug = plane(3.8, 2.6, rmat({ color: "#6a3a2e", mapK: "fabC", tri: 2, rough: 0.95, wet: 0, room: ROOM }), set); rug.rotation.x = -Math.PI / 2; rug.position.set(-1, 0.008, -1.6);
 
   // the filing cabinet on the left wall: four drawers, label holders, handles
   const cab = new THREE.Group(); cab.position.set(-6.6, 0, -2.6); cab.rotation.y = Math.PI / 2; set.add(cab);
@@ -1080,7 +1084,7 @@ export function buildOffice(o) {
   set.userData.walls.push({ x0: -6.6, x1: -6.0, z0: 3.9, z1: 4.5 });
   // a waste basket by the desk, the door out to the lot on the left wall, a thermostat
   { const wbk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.32, 16, 1, true), pbr({ color: "#2a2b2c", rough: 0.5, wet: 0, side: THREE.DoubleSide })); wbk.position.set(0.55, 0.16, -2.3); set.add(wbk); }
-  { const d = new THREE.Group(); d.position.set(-6.98, 0, 4.2); d.rotation.y = Math.PI / 2; set.add(d); box(1.0, 2.1, 0.04, pbr({ color: "#6b5440", map: T.woodC || null, tri: 1.2, rough: 0.5, wet: 0 }), 0, 1.05, 0.02, d); box(1.1, 2.18, 0.03, M.steel, 0, 1.09, 0.0, d); rbox(0.12, 0.03, 0.05, 0.01, M.chrome, 0.38, 1.0, 0.07, d); }
+  { const d = new THREE.Group(); d.position.set(-6.98, 0, 4.2); d.rotation.y = Math.PI / 2; set.add(d); box(1.0, 2.1, 0.04, rmat({ color: "#6b5440", mapK: "woodC", tri: 1.2, rough: 0.5, wet: 0 }), 0, 1.05, 0.02, d); box(1.1, 2.18, 0.03, M.steel, 0, 1.09, 0.0, d); rbox(0.12, 0.03, 0.05, 0.01, M.chrome, 0.38, 1.0, 0.07, d); }
   box(0.08, 0.12, 0.025, pbr({ color: "#e9e6de", rough: 0.4, wet: 0 }), -6.98, 1.5, 1.3, set).rotation.y = Math.PI / 2;
   mergeStatic(set);
   envHook(set, V3(0, 1.6, 0.5));
@@ -1218,9 +1222,10 @@ export function addKeys(set) {
   set.userData.keys = g;
   set.userData.spots.keys = { p: V3(13.8, 1.2, -17.8), r: 2.2, stand: V3(13.6, 0, -16.3) };
 }
-/* the loads, last so everything above exists. The lot is the first scene: its cars and ground arrive before the module finishes (a slow line gives up after a while and the lot builds with what it has) */
+/* the loads, last so everything above exists. main.js awaits lotReady (with its own cap) before it builds the lot; a lot built before
+   it settles parks its cars and patches its textures in when they land (buildLot never assumes they are there) */
 loadTotal += CAR_KINDS.length;
 export const lotReady = Promise.all([loadCars().catch(e => console.warn("[world] cars", e)), loadSetTex(LOT_TEX)]);
+lotReady.then(patchLate);
 export const roomsReady = lotReady.then(() => loadSetTex(ROOM_TEX)).then(patchLate);
-await Promise.race([lotReady, new Promise(r => setTimeout(r, 14000))]);
 export const _debug = { carLib, T, TIER };

@@ -7,21 +7,18 @@ assets are built.
 
 ## 1. Loading
 
-- `story/world.js` starts its downloads as soon as it is imported and
-  **top-level-awaits the lot's assets** (the five cars and the asphalt and
-  concrete textures) before it finishes evaluating, so `buildLot()` stays
-  synchronous and the cars are there on the first frame. It never hangs:
+- `story/world.js` starts its downloads as soon as it is imported and exports
+  `lotReady`, a promise that settles when the lot's assets (the five cars and
+  the asphalt and concrete textures) are in or have given up. There is no
+  top-level await: main.js awaits `lotReady` (with its own 15 s cap) before it
+  builds the lot, and drives its bar from the progress events. It never hangs:
   every texture resolves (to `null`, flat colour) after 12 s or on an error,
-  every car file rejects after 12 s and the lot uses a kind that did load,
-  and the whole await gives up at 14 s and builds with what it has.
+  every car file rejects after 12 s and the lot uses a kind that did load.
+- Nothing in world.js assumes the lot is loaded: a lot built before
+  `lotReady` settles parks its cars when they land, patches the ground's and
+  the poles' textures in, and re-renders its reflection cube.
 - Progress: each finished file fires `document` event `jg:world-load` with
-  `detail: { f (0..1), done, total }`. Because the await runs while
-  main.js is still being imported, main.js's own listeners are not up yet; the
-  loading screen game.js draws (`#story .st-load`) is what shows. If you want
-  a bar during this phase, either listen from game.js, or (better) take the
-  await out of world.js's hands: import `{ lotReady }` and `await lotReady`
-  in `getSet("lot")` with your own bar. Tell me and I'll drop the top-level
-  await; nothing else changes.
+  `detail: { f (0..1), done, total }`.
 - The office's and library's textures (`roomsReady`) load in the background
   after the lot's. A set built before they land renders with flat colours and
   patches itself in when they arrive. Every set has `set.userData.ready`
