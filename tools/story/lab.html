@@ -68,6 +68,8 @@ if (q.get("refgrid")) {
 }
 // any clip, played straight on the first person: ?clip=name
 if (q.get("clip")) { const c = cast.motion.clips[q.get("clip")]; if (c) { cast.motion.clips.idle = c; c.loop = true; } }
+// a voice line's word timings driving the first person's mouth: ?words=<line id in assets/voice/story>
+let WORDS = null; if (q.get("words")) WORDS = await (await fetch("../../assets/voice/story/" + q.get("words") + ".json")).json();
 const run = q.get("run") || "idle", speed = +(q.get("speed") || 1.45);
 let T = 0;
 // a scripted driver, deterministic in time
@@ -96,6 +98,7 @@ function drive(p, i, dt) {
     p.talk = Math.sin(t * 7) > -0.3 && (t % 6) < 4.5 ? 1 : 0.15; if ((t % 6) > 4.5) p.talk = 0;
     p.lookAtP = new THREE.Vector3(Math.sin(t * 0.3) * 1.5, 1.6, 2);
   } else if (run === "sit") { chair.visible = true; chair.position.set(p.pos.x, 0, p.pos.z); p.pose = (t % 8) < 6 ? "sit" : "stand"; }
+  if (WORDS && i === 0) { const now = t % (WORDS.duration + 0.6); const w = WORDS.words.find(w => now >= w.s && now <= w.e); p.talk = w ? 1 : 0.15; p.speak(WORDS.words, now); }
   if (q.get("hold")) p.hold = q.get("hold");
   if (q.get("look")) p.lookAtP = new THREE.Vector3(0, 1.6, 3);
 }
@@ -110,7 +113,7 @@ function placeCam() {
   else if (camMode === "feet") { camera.position.set(c.x + 2.2, 0.35, c.z + 0.4); camera.lookAt(c.x, 0.25, c.z); }
   else if (camMode === "face") { const h = p.headWorld(new THREE.Vector3()); camera.position.set(h.x + Math.sin(p.yaw) * 0.75 + 0.15, h.y - 0.02, h.z + Math.cos(p.yaw) * 0.75); camera.lookAt(h.x, h.y - 0.05, h.z); }
   else if (camMode === "grid") { camera.position.set(0, 2.2, 7.5); camera.lookAt(0, 0.6, -1.2); }
-  else if (camMode === "fixed") { camera.position.set(6, 1.3, 4); camera.lookAt(0, 0.9, 4); }
+  else if (camMode === "fixed") { const z = +(q.get("cz") || 4); camera.position.set(6, 1.3, z); camera.lookAt(0, 0.9, z); }
 }
 function step(dt) { T += dt; P.forEach((p, i) => { drive(p, i, dt); p.update(dt); }); if (refMix) refMix.update(dt); refMixers.forEach(m => m.update(dt)); }
 function render() { placeCam(); U.uTime.value = T; renderer.render(scene, camera); hud.textContent = q.get("hud") === "0" ? "" : `${run}  t ${T.toFixed(2)}  v ${P[0].gs.toFixed(2)}  loco ${P[0].locoW.toFixed(2)} jog ${P[0].jogW.toFixed(2)} stride ${(P[0].stride || 0).toFixed(2)}`; }

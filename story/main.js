@@ -25,7 +25,7 @@
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { U, MAXL, blobMat } from "./paint.js";
 import * as TX from "./tex.js";
-import { loadCast } from "./people.js";
+import { loadCast, CAST_VER } from "./people.js";
 import { buildLot, buildOffice, buildLibrary, addKeys } from "./world.js";
 import { Post, GRADES, applyGrade } from "./post.js";
 import { createAudio } from "./audio.js";
@@ -40,7 +40,7 @@ const RM = matchMedia("(prefers-reduced-motion: reduce)");
 const COARSE = matchMedia("(pointer: coarse)");
 const DEBUG = /[?&]debug=story/.test(location.search);
 const FAST = DEBUG && /[?&]fast=1/.test(location.search);
-const VER = "v1";
+const VER = CAST_VER || "v2";
 
 /* ---------- small helpers ---------- */
 const $ = (s, r) => (r || document).querySelector(s);
@@ -207,7 +207,8 @@ const footAt = p => ({ x: p.pos.x, y: 0.05, z: p.pos.z });
 function feet() {
   for (const p of Object.values(P)) {
     if (!p.group.visible) { p._ph = undefined; continue; }
-    if (!p.onFoot) p.onFoot = (side, k) => { p.footHook = true; footstep(p, k); };
+    // people.js plants each foot and tells us: about 0.7 walking, 1 running, 0.2 for a small step on the spot
+    if (!p.onFoot) p.onFoot = (side, k) => { p.footHook = true; footstep(p, Math.max(0.25, Math.min(1.3, (k == null ? 0.7 : k) / 0.72))); };
     const ph = Math.floor(p.phase / Math.PI);
     if (p._ph === undefined) { p._ph = ph; continue; }
     if (ph !== p._ph) { p._ph = ph; if (!p.footHook && (p.speed > 0.3 || (p.turnStep || 0) > 0.4)) footstep(p, p.speed > 0.3 ? 1 : 0.45); }
@@ -251,7 +252,7 @@ function sayLine(L) {
     saidEl.innerHTML = words.map(w => "<i>" + E(w) + "</i>").join(" ");
     capEl.hidden = false; requestAnimationFrame(() => capEl.classList.add("is-on"));
     const sp = speakerOf(L.who);
-    const base = { L, t: 0, dur: FAST ? 0.05 : 1.1 + L.t.length * 0.052, audio: null, words: null, resolve, sp };
+    const base = { L, t: 0, dur: S.holdLines ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052, audio: null, words: null, resolve, sp };
     line = base;
     if (sp) { sp.talk = L.who === "you" ? 0 : 1; sp.nod = 1; sp.brow = /\?$/.test(L.t) ? 1 : 0; }
     if (L.who === "phone" || L.who === "agent" || L.who === "caller") { if (P.jason) P.jason.lookAtP = null; }
@@ -290,6 +291,7 @@ function tickLine(dt) {
     else { const n = Math.floor(spans.length * Math.min(1, now / Math.max(0.5, line.dur - 0.5))); spans.forEach((s, j) => s.classList.toggle("is-said", j < n)); }
     // the mouth follows the voice: open on words, rest between them
     if (line.sp && line.words) { const w = line.words.find(w => now >= w.s && now <= w.e + 0.04); line.sp.talk = w ? 1 : 0.15; }
+    if (line.sp && line.sp.speak) line.sp.speak(line.words, now);
   } else if (line.sp && line.L.who !== "you") line.sp.talk = line.t < line.dur - 0.5 ? 1 : 0;
   if (line.t > line.dur) endLine(false);
 }
@@ -626,7 +628,7 @@ function followView(dt, probe) {
   if (insideAny(pivot.x, pivot.y, pivot.z, 0.18)) pivot.copy(head);
   // march out from the pivot; stop short of the first thing in the way
   let free = dist;
-  for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t; if (insideAny(x, y, z, 0.24)) { free = Math.max(0.35, t - 0.2); break; } }
+  for (let i = 1; i <= 24; i++) { const t = (i / 24) * dist, x = pivot.x + off.x * t, y = pivot.y + off.y * t, z = pivot.z + off.z * t; if (insideAny(x, y, z, 0.24)) { free = Math.max(0.1, t - 0.22); break; } }
   // in fast, out slow, so a pole sliding past doesn't make the camera pump
   if (probe || camState.cd == null || camState.init) camState.cd = free;
   else camState.cd = free < camState.cd ? damp(camState.cd, free, 18, dt) : damp(camState.cd, free, 2.2, dt);
@@ -832,6 +834,8 @@ async function interact(id, how) {
   S.looked[id] = (S.looked[id] || 0) + 1;
   T("story_object", { id, scene: S.scene, first });
   FX("arrive"); AU.thing(id, at);
+  // reach for the things you can touch
+  if (me && me.play && /^(ledger|phone|keys|cabinet|book|laptop|mem-(folder|letter|cert|laptop|lamp))$/.test(id)) { try { me.play("reach"); } catch (e) {} }
   // face it, and let whoever it is face you
   const target = s.who ? P[s.who] : null;
   const tp = target ? target.pos : s.p;
@@ -1082,7 +1086,7 @@ function openJournal() {
   // after a Continue the drawings are gone; redraw the ones whose thing is in this scene
   for (const k of S.journal) if (!sketches[k] && D.journal[k] && OBJ[k] && OBJ[k].scene === S.scene) { try { sketch(k); } catch (e) {} }
   renderJournal(); journalEl.hidden = false; requestAnimationFrame(() => journalEl.classList.add("is-on"));
-  AU.ui("page"); hap("tap"); AU.veil(true);
+  AU.ui("page"); hap("tap"); AU.veil(true); hideWorldUI();
   setTimeout(() => { const b = $("[aria-selected='true']", journalEl); if (b && dev !== "touch") b.focus({ preventScroll: true }); }, 60);
 }
 function closeJournal() { journalEl.classList.remove("is-on"); setTimeout(() => (journalEl.hidden = true), 300); S.phase = S.prevPhase || "explore"; AU.veil(false); }
@@ -1173,13 +1177,15 @@ endEl.addEventListener("click", e => {
    PAUSE
    ================================================================ */
 let pzView = "main";
+/* behind a menu the prompt, the dots, the big button and the arrow step out of the way */
+function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; dotsEl.innerHTML = ""; dotsEl._html = ""; wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
 function pause() {
   if (S.phase === "end" || S.phase === "load" || S.phase === "pause") return;
   S.prevPhase = S.phase; S.phase = "pause";
   if (line && line.audio) line.audio.pause();
   for (const k in keys) keys[k] = false;
   if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
-  pauseView("main");
+  pauseView("main"); hideWorldUI(); el.classList.add("is-paused");
   pauseEl.hidden = false; requestAnimationFrame(() => pauseEl.classList.add("is-on"));
   AU.veil(true);
 }
@@ -1200,15 +1206,15 @@ function pauseView(v) {
       '<li><button type="button" data-p="library">' + E(UI.library) + "</button></li></ul>" +
       '<p class="pz-fine">' + E(D.voices_note) + " " + E(UI.captions) + "</p></div>";
   } else if (v === "settings") {
-    h = '<div class="pz pz--set"><h3 class="pz-h">' + E(UI.settings) + "</h3>" +
+    h = '<div class="pz pz--set"><div class="pz-top"><h3 class="pz-h">' + E(UI.settings) + '</h3><button type="button" class="pz-done" data-p="back">' + E(UI.done) + "</button></div>" +
       '<div class="pz-row"><span>' + E(UI.sound) + '</span><button type="button" class="pz-tog" data-p="sound" aria-pressed="' + soundOn() + '"><span>' + E(soundOn() ? UI.on : UI.off) + "</span></button></div>" +
       '<div class="pz-mix">' + ["master", "music", "voice", "sfx"].map(sl).join("") + "</div>" +
-      '<div class="pz-row"><span>' + E(UI.c_run) + "</span>" + tog("runToggle", UI.c_run_hold, UI.c_run_toggle) + "</div>" +
+      '<div class="pz-row pz-kb"><span>' + E(UI.c_run) + "</span>" + tog("runToggle", UI.c_run_hold, UI.c_run_toggle) + "</div>" +
       '<div class="pz-row pz-kb"><span>' + E(UI.c_look) + "</span>" + tog("lock", UI.c_look_drag, UI.c_look_lock) + "</div>" +
       '<div class="pz-row"><span>' + E(UI.c_invert) + "</span>" + tog("invert", UI.c_normal, UI.c_inverted) + "</div>" +
       '<div class="pz-foot"><button type="button" class="pz-link pz-kb" data-p="keys">' + E(UI.c_keys) + '</button><button type="button" class="pz-link" data-p="back">' + E(UI.back) + "</button></div></div>";
   } else if (v === "keys") {
-    h = '<div class="pz pz--set"><h3 class="pz-h">' + E(UI.c_keys) + '</h3><div class="pz-keys">' +
+    h = '<div class="pz pz--set"><div class="pz-top"><h3 class="pz-h">' + E(UI.c_keys) + '</h3><button type="button" class="pz-done" data-p="settings">' + E(UI.done) + '</button></div><div class="pz-keys">' +
       ACTS.map(([a, l]) => '<div class="pz-row"><span>' + E(UI[l]) + '</span><button type="button" class="pz-key" data-key="' + a + '">' + E(rebinding === a ? UI.c_press : keyLabel(SET.keys[a])) + "</button></div>").join("") +
       '</div><p class="pz-fine">' + E(UI.c_keys_fine) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-keys">' + E(UI.c_reset) + '</button><button type="button" class="pz-link" data-p="settings">' + E(UI.back) + "</button></div></div>";
   }
@@ -1222,7 +1228,7 @@ function rebind(a, k) {
   SET.keys[a] = k; rebinding = null; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("keys"); glyphs();
 }
 function unpause() {
-  pauseEl.classList.remove("is-on"); setTimeout(() => { if (S.phase !== "pause") pauseEl.hidden = true; }, 250); S.phase = S.prevPhase || "explore"; rebinding = null;
+  pauseEl.classList.remove("is-on"); el.classList.remove("is-paused"); setTimeout(() => { if (S.phase !== "pause") pauseEl.hidden = true; }, 250); S.phase = S.prevPhase || "explore"; rebinding = null;
   AU.veil(false);
   if (line && line.audio) { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); }
   if (SET.lock && dev === "kbm" && S.phase === "explore") { try { cv.requestPointerLock(); } catch (e) {} }
@@ -1775,16 +1781,17 @@ window.JG_STORY = {
     /* put you at each point, turn the camera all the way round, and report any spot where it ends up inside something */
     camProbe: pts => {
       const bad = [], keep = { x: me.pos.x, z: me.pos.z, yaw: me.yaw, cy: camState.yaw, cp: camState.pitch };
-      for (const [x, z] of pts) for (let a = 0; a < 16; a++) for (const pitch of [0.05, 0.25, 0.6]) {
+      for (const [x, z] of pts.filter(([x, z]) => !blocked(x, z, 0.28))) for (let a = 0; a < 16; a++) for (const pitch of [0.05, 0.25, 0.6]) {
         me.pos.set(x, 0, z); camState.yaw = a / 16 * Math.PI * 2; camState.pitch = pitch;
         const { want } = followView(0.016, true);
         if (insideAny(want.x, want.y, want.z, 0.02)) bad.push([x, z, a, pitch, +want.x.toFixed(2), +want.y.toFixed(2), +want.z.toFixed(2)]);
       }
       me.pos.set(keep.x, 0, keep.z); me.yaw = keep.yaw; camState.yaw = keep.cy; camState.pitch = keep.cp; camState.init = true;
-      return { n: pts.length * 48, bad };
+      return { n: pts.filter(([x, z]) => !blocked(x, z, 0.28)).length * 48, bad };
     },
     audio: () => AU.debug(),
     settings: () => ({ ...SET, keys: { ...SET.keys }, mix: { ...AU.mix } }),
-    surface: (x, z) => surfaceAt(x, z)
+    surface: (x, z) => surfaceAt(x, z),
+    hold: v => { S.holdLines = !!v; }
   }
 };

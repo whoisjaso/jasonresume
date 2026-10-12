@@ -399,10 +399,11 @@ async function feel(vname, w, h, mobile) {
   // the camera never ends up inside a car, a pole, a fence or a person
   const pts = [[0.2, 19.5], [3, 18.5], [-6, 9], [cxOr(car, 0), 8.6], [4.8, 1], [10.6, -16.2], [13, -16.3], [-13.6, -6.4], [-1.5, 12.6], [18, -1], [-20, 0.5], [9, -12.5]];
   const pr = await p.evaluate(pts => window.JG_STORY.debug.camProbe(pts), pts);
-  if (pr.bad.length) errs.push(`${label}: camera inside geometry at ${pr.bad.length} of ${pr.n} samples, e.g. ${JSON.stringify(pr.bad.slice(0, 3))}`);
+  if (pr.bad.length) errs.push(`${label}: camera inside geometry at ${pr.bad.length} of ${pr.n} samples, e.g. ${JSON.stringify(pr.bad.filter((b, i, a) => i === a.findIndex(c => c[0] === b[0] && c[1] === b[1])).slice(0, 6))}`);
   else notes.push(`${label}: camera clear of geometry at all ${pr.n} sampled positions on the lot`);
   // skips are silent: no FX, no haptic, no interface sound when a line is cut short
   await p.evaluate(() => window.JG_STORY.debug.put(3.2, 18.2, 0));
+  await p.evaluate(() => window.JG_STORY.debug.hold(true));
   await use(p, mobile, 'dell', label);
   const lineOn = await until(p, () => !!window.JG_STORY.debug.state().line, null, 20000);
   if (lineOn) {
@@ -413,6 +414,7 @@ async function feel(vname, w, h, mobile) {
     if (r.fx || r.ev.length) errs.push(`${label}: skipping a line made sound or a haptic (${r.fx} fx, ${JSON.stringify(r.ev)})`);
     else notes.push(`${label}: skipping a line is silent`);
   } else errs.push(`${label}: Dell never spoke`);
+  await p.evaluate(() => window.JG_STORY.debug.hold(false)); await p.evaluate(() => window.JG_STORY.debug.skip());
   // finish Dell's talk with the first choice
   const sc = await untilChoice(p, label); if (sc && sc.choices) await choose(p, mobile, sc.choices[0], label);
   await finishTalk(p, label);
@@ -420,7 +422,7 @@ async function feel(vname, w, h, mobile) {
   if (mobile) await p.tap('[data-st="pause"]'); else await p.keyboard.press('Escape');
   await phase(p, 'pause', 8000);
   if (mobile) await p.tap('[data-p="settings"]'); else await p.click('[data-p="settings"]');
-  await p.waitForSelector('[data-mix="master"]', { timeout: 5000 });
+  if (!(await p.waitForSelector('[data-mix="master"]', { timeout: 8000 }).catch(() => null))) { await shot0(p, `real-feel-fail-${vname}`); throw new Error('no settings panel ' + JSON.stringify(await st(p)).slice(0, 300)); }
   await p.evaluate(() => { const r = document.querySelector('[data-mix="master"]'); r.value = 40; r.dispatchEvent(new Event('input', { bubbles: true })); const m = document.querySelector('[data-mix="music"]'); m.value = 25; m.dispatchEvent(new Event('input', { bubbles: true })); });
   if (!mobile) await p.click('[data-c="runToggle"]');
   await p.waitForTimeout(400);

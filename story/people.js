@@ -301,7 +301,9 @@ class Person {
       let mat;
       if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, rim: 0.55, wet: 0.015, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
       else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 1100 * (m.scale.x || 1), rim: 0.15, wet: 0.0, hairline: !!m.geometry.attributes.color, keep: L.skin });
-      else if (name === "hair") mat = paint({ color: L.hair, map, alphaTest: 0.5, rim: 0.25, wet: 0.1, side: THREE.DoubleSide, recolor: true, keep: L.hair });
+      // card hair, painted as one mass: the strand texture's cut-outs shimmer into a grid of cards at a distance, so the
+      // cards are drawn solid with the painted strand grain on them instead
+      else if (name === "hair") mat = paint({ color: L.hair, curl: true, curlK: 700 * (m.scale.x || 1), rim: 0.3, wet: 0.12, side: THREE.DoubleSide });
       else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
       else if (name === "brow" || name === "lash") mat = paint({ color: L.brow, map, alphaTest: name === "brow" ? 0.28 : 0.5, rim: 0.2, side: THREE.DoubleSide, recolor: true, keep: L.brow, transparent: false });
       else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
@@ -563,9 +565,33 @@ class Person {
     // a slow weight shift when standing a long time
     const sway = Math.sin(t * 0.21 + this.tempo * 9) * still;
     this.rot("pelvis", 0, sway * 0.03, sway * 0.015); hipC.x += sway * 0.012;
+    // contrapposto: the weight sits on one leg (that hip up and out, the other knee easy, the shoulders the other way),
+    // and moves to the other leg every so often, each person on their own clock
+    this.wT = (this.wT == null ? 2 + Math.random() * 6 : this.wT) - dt;
+    if (this.wT <= 0) { this.wSide = -(this.wSide || (Math.random() < 0.5 ? 1 : -1)); this.wT = 6 + Math.random() * 9; }
+    this.wK = damp(this.wK || 0, (this.wSide || 1) * (0.7 + 0.3 * Math.sin(t * 0.13 + this.tempo * 3)), 0.9, dt);
+    const cp = this.wK * still;
+    hipC.x += cp * 0.032; hipC.y -= Math.abs(cp) * 0.012;
+    this.rot("pelvis", 0, -cp * 0.04, cp * 0.055);
+    this.rot("spine_02", 0, 0, -cp * 0.035); this.rot("spine_03", 0, 0, -cp * 0.02);
+    // relaxed arms: a soft bend at the elbow, the hands a little in front of the thighs
+    const elb = still * (1 - this.talkW * 0.5) * (1 - this.engW * 0.3);
+    for (const sd of ["l", "r"]) { if (this.hold === "umbrella" && sd === "r") continue; const k = sd === "l" ? 1 : 0.85; this.rot("upperarm_" + sd, -0.07 * elb, 0, 0); this.rot("lowerarm_" + sd, -0.3 * k * elb, 0, 0); }
+    // running: the arms drive and the shoulders counter the hips
+    const jw = this.jogW * this.locoW;
+    if (jw > 0.01) {
+      const c = Math.cos(this.gPhase * TAU);
+      this.rot("upperarm_l", 0.3 * c * jw, 0, 0); this.rot("upperarm_r", -0.3 * c * jw, 0, 0);
+      this.rot("lowerarm_l", -0.25 * jw, 0, 0); this.rot("lowerarm_r", -0.25 * jw, 0, 0);
+      this.rot("spine_03", 0, 0.12 * c * jw, 0); this.rot("pelvis", 0, -0.06 * c * jw, 0);
+    }
 
     // ---- the head looks
     let wantY = 0, wantP = 0;
+    // idle glances: now and then a look off to one side and back, when nobody holds the eye
+    this.gT = (this.gT == null ? 3 + Math.random() * 5 : this.gT) - dt;
+    if (this.gT <= 0) { this.glance = this.glance ? 0 : (Math.random() - 0.5) * 1.3; this.gT = this.glance ? 1 + Math.random() * 1.6 : 4 + Math.random() * 6; }
+    if (!this.lookAtP) wantY = (this.glance || 0) * still;
     if (this.lookAtP) {
       const hw = this.headWorld(_v4), d = _v1.copy(this.lookAtP).sub(hw);
       const local = angDiff(0, Math.atan2(d.x, d.z) - this.yaw);
@@ -640,7 +666,8 @@ class Person {
       // the height over the floor the clip gives this ankle, from where the clip plants it
       let lo = this.srcAnkle(s) * (1 - this.locoW);
       for (let i = 0; i < LC.length; i++) lo += this.lw[i] * this.locoW * LC[i].lo[s];
-      const want = _f1.set(this.wp[g.th].x + (sa.x - sh.x) * this.hipS,
+      // standing, the feet come in under the hips (the capture stands a little wide for a man in a suit)
+      const want = _f1.set(this.wp[g.th].x + (sa.x - sh.x) * this.hipS * lerp(0.55, 1, this.locoW) + (s === "l" ? 0.012 : -0.012) * (1 - this.locoW),
         this.rest["foot_" + s].at.y + (sa.y - lo) * this.hipS,
         this.wp[g.th].z + (sa.z - sh.z) * this.hipS * lerp(1, this.stride, this.locoW));
       const wantYaw = this.yaw;
@@ -777,6 +804,11 @@ class Person {
     if (words) {
       const now = this.wordsNow + (this.t - this.wordsAt);
       const w = words.find(x => now >= x.s - 0.02 && now <= x.e);
+      if (w && w !== this.lastWord) {
+        // a long or stressed word lifts the brows a touch, and the head marks the beat
+        this.lastWord = w;
+        if (w.w.replace(/[^a-z]/gi, "").length >= 6 || /[!?]$/.test(w.w)) { this.browPulse = 0.35 + Math.random() * 0.25; if (Math.random() < 0.4 && !this.nodK) this.nodK = { t: 0, d: 0.4, a: 0.25 }; }
+      }
       if (w) {
         const seq = visemes(w.w), u = clamp((now - w.s) / Math.max(0.05, w.e - w.s), 0, 0.999), k = seq[Math.floor(u * seq.length)];
         if (k) { tgt[k[0]] = k[1]; tgt.jawOpen = k[2]; }
@@ -789,7 +821,8 @@ class Person {
     }
     for (const k of K) { this.visK[k] = damp(this.visK[k] || 0, tgt[k], k === "visPBM" ? 30 : 20, dt); this.setFx(k, this.visK[k]); }
     // brows: up on a question and on stressed words, a touch of a frown when listening hard
-    const stress = words ? 0 : 0;
+    this.browPulse = damp(this.browPulse || 0, 0, 3, dt);
+    const stress = this.browPulse;
     this.setFx("browInnerUp", clamp(this.browK, 0, 1) * 0.7 + this.mouth * 0.06 + stress);
     this.setFx("browOuterUpLeft", clamp(this.browK, 0, 1) * 0.35); this.setFx("browOuterUpRight", clamp(this.browK, 0, 1) * 0.35);
     this.setFx("browDownLeft", clamp(-this.browK, 0, 1) * 0.5); this.setFx("browDownRight", clamp(-this.browK, 0, 1) * 0.5);

@@ -460,6 +460,11 @@ void main(){
   #ifdef USE_EMAP
   col += tsample(uEMap, N).rgb * uEK;
   #endif
+  #ifdef USE_GLASS
+  // glass: what it reflects is opaque, what it doesn't lets the room through (Fresnel sets the mix)
+  float fg = 0.04 + 0.96 * pow(1.0 - nv, 5.0);
+  aout = clamp(aout + fg * (1.0 - aout) + dot(col, vec3(0.3)) * 0.5, 0.0, 1.0);
+  #endif
   col = sat(col, uSat);
   col = clamp(col, 0.0, 24.0);
   gl_FragColor = vec4(fogged(col, vWP), aout);
@@ -469,7 +474,7 @@ void main(){
 /* one physically based material.
    o: { color, map, nmap, rmap (AO, roughness, metal in R, G, B), emap, ek, emit, rough, metal, coat, coatRough, wet, ao (how much baked AO counts),
         vao (AO in the vertex colour's R), tri (world-space scale for projected maps, 1 / metres), nk (normal strength), spec, diff,
-        drops (water beads), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
+        drops (water beads), glass (Fresnel opacity), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
 export function pbr(o = {}) {
   const defines = {};
   const uniforms = {
@@ -496,6 +501,7 @@ export function pbr(o = {}) {
   if (o.tri) defines.USE_TRI = "";
   if (o.vao) defines.USE_VAO = "";
   if (o.drops) defines.USE_DROPS = "";
+  if (o.glass) defines.USE_GLASS = "";
   if (o.panel) { defines.USE_PANEL = ""; uniforms.uPanel = { value: o.panel.tex }; uniforms.uPanelBox = { value: new THREE.Vector4(...o.panel.box) }; }
   const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vertPBR, fragmentShader: fragPBR, defines, side: o.side || THREE.FrontSide,
     transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });

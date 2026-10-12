@@ -56,7 +56,7 @@ for (const vp of vps) {
       await p.screenshot({ path: f, timeout: 240000 });
       console.log(f);
     }
-    const perf = await p.evaluate(() => window.JG_STORY.debug.bench());
+    const perf = await p.evaluate(async () => { const P = await import('/story/paint.js'); return { ...window.JG_STORY.debug.bench(), envOn: P.U.uEnvOn.value, env: !!P.U.uEnv.value }; });
     console.log(`  ${vp} ${scene} bench`, JSON.stringify(perf), 'bytes', bytes);
     await ctx.close();
   }

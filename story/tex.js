@@ -97,11 +97,12 @@ export function asphalt(W, H, px, lines) {
   return { color: t1, mask: t2 };
 }
 
-/* the lot's ground, as data over the tiled asphalt (assets/story/world/asphalt_*): two textures, linear.
+/* the lot's ground, as data over the tiled asphalt (assets/story/world/asphalt_*): two textures, linear, opaque
+   (a canvas keeps colour premultiplied, so no channel can live in alpha).
    detail: R the albedo's multiplier (128 is 1: patched tar darker, faded areas lighter, oil under where cars stand),
-           G painted lines (worn), B ambient occlusion (cars' footprints, curbs, walls), A tar crack seal.
-   mask:   R standing water (puddles in the low spots and along the lines), G how wet (the dry strip under
-           the canopy), B concrete instead of asphalt (walks, aprons, curbs' tops).
+           G painted lines (worn), B ambient occlusion (cars' footprints, curbs, walls).
+   mask:   R standing water (puddles in the low spots), G how wet (the dry strip under the canopy),
+           B 255 concrete instead of asphalt (walks, aprons), 128 a tar-sealed crack.
    o: { lines: [[x0, z0, x1, z1]], cars: [{x, z, yaw, w, l}], conc: [[x0, z0, x1, z1]], dry: [[x0, z0, x1, z1]], ao: [[x0, z0, x1, z1, k]] }
    Returns the textures and the raw puddle and concrete grids for surfaceAt(). */
 export function lotGround(W, H, px, o = {}) {
@@ -153,7 +154,7 @@ export function lotGround(W, H, px, o = {}) {
   // read back, then do AO and crack seal per pixel
   const img = g.getImageData(0, 0, w, h), d = img.data;
   const n1 = noise2(w, h, 7 * px, r), n2 = noise2(w, h, 1.8 * px, r), n3 = noise2(w, h, 0.5 * px, r);
-  for (let i = 0; i < w * h; i++) { const x = i % w, y = (i / w) | 0; d[i * 4] = Math.max(0, Math.min(255, d[i * 4] + (n3(x, y) - 0.5) * 18)); if (d[i * 4 + 3] < 255) { d[i * 4 + 1] = Math.round(d[i * 4 + 1] * d[i * 4 + 3] / 255); d[i * 4 + 3] = 255; } d[i * 4 + 2] = 255; d[i * 4 + 3] = 0; }
+  for (let i = 0; i < w * h; i++) { const x = i % w, y = (i / w) | 0; d[i * 4] = Math.max(0, Math.min(255, d[i * 4] + (n3(x, y) - 0.5) * 18)); if (d[i * 4 + 3] < 255) { d[i * 4 + 1] = Math.round(d[i * 4 + 1] * d[i * 4 + 3] / 255); d[i * 4 + 3] = 255; } d[i * 4 + 2] = 255; d[i * 4 + 3] = 255; }
   // AO: soft rounded rectangles under each car, darker at the wheels; plus walls and curbs
   const aoAt = new Float32Array(w * h).fill(1);
   const box = (cx, cz, hw, hl, yaw, k, soft) => {
@@ -182,7 +183,7 @@ export function lotGround(W, H, px, o = {}) {
       for (let dy = -wd; dy <= wd; dy++) for (let dx = -wd; dx <= wd; dx++) { const xx = (x + dx) | 0, yy = (y + dy) | 0; if (xx >= 0 && yy >= 0 && xx < w && yy < h) seal[yy * w + xx] = 255; }
     }
   }
-  for (let i = 0; i < w * h; i++) { d[i * 4 + 2] = Math.round(255 * aoAt[i]); d[i * 4 + 3] = seal[i]; }
+  for (let i = 0; i < w * h; i++) { d[i * 4 + 2] = Math.round(255 * aoAt[i]); d[i * 4 + 3] = 255; }
   g.putImageData(img, 0, 0);
   // mask: puddles in the low spots (noise), more of them along the lines and the drive lane's crown; dry under the canopy; concrete
   const m = cv(w, h), mg = m.getContext("2d"), mi = mg.createImageData(w, h), md = mi.data;
@@ -193,10 +194,10 @@ export function lotGround(W, H, px, o = {}) {
     let v = n1(x, y) * 0.62 + n2(x, y) * 0.3 + n3(x, y) * 0.08;
     // water gathers where the asphalt dips: away from the cars' footprints, toward the lanes
     v += (1 - aoAt[i]) * -0.25;
-    const p = Math.max(0, Math.min(1, (v - 0.56) * 7));
+    const p = Math.max(0, Math.min(1, (v - 0.615) * 9));
     let wet = 1; for (const R of o.dry || []) if (inR(wx, wz, R)) wet = Math.min(wet, 0.15 + 0.85 * Math.min(1, Math.min(wz - R[1], R[3] - wz) * 0.6));
     let cc = 0; for (const R of o.conc || []) if (inR(wx, wz, R)) cc = 1;
-    md[i * 4] = Math.round(255 * p * wet * (cc ? 0.2 : 1)); md[i * 4 + 1] = Math.round(255 * wet); md[i * 4 + 2] = cc * 255; md[i * 4 + 3] = 255;
+    md[i * 4] = Math.round(255 * p * wet * (cc ? 0.2 : 1)); md[i * 4 + 1] = Math.round(255 * wet); md[i * 4 + 2] = cc ? 255 : seal[i] ? 128 : 0; md[i * 4 + 3] = 255;
     pud[i] = md[i * 4]; conc[i] = cc;
   }
   mg.putImageData(mi, 0, 0);
@@ -248,6 +249,31 @@ export function lampShadows(W, H, px, lamps, boxes) {
     return t;
   });
   return out;
+}
+
+/* chain-link: a tile of the diamond weave, wire in white on clear (alpha), two diamonds across */
+export function chainTex() {
+  const c = cv(128, 128), g = c.getContext("2d");
+  g.clearRect(0, 0, 128, 128); g.strokeStyle = "rgba(255,255,255,1)"; g.lineWidth = 5; g.lineCap = "round";
+  for (let k = -1; k <= 2; k++) { g.beginPath(); g.moveTo(k * 64 - 64, 0); g.lineTo(k * 64 + 64, 128); g.stroke(); g.beginPath(); g.moveTo(k * 64 + 64, 0); g.lineTo(k * 64 - 64, 128); g.stroke(); }
+  const t = tex(c, { repeat: true }); t.anisotropy = 8; return t;
+}
+/* the showroom's floor: large porcelain tiles with grout lines, R grout */
+export function tileTex(n = 4) {
+  const c = cv(512, 512), g = c.getContext("2d"), r = rng(31);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const v = 196 + (r() - 0.5) * 18; g.fillStyle = `rgb(${v | 0},${(v * 0.97) | 0},${(v * 0.92) | 0})`; g.fillRect(i * 512 / n, j * 512 / n, 512 / n, 512 / n); }
+  g.fillStyle = "rgba(90,84,76,1)"; for (let i = 0; i <= n; i++) { g.fillRect(i * 512 / n - 1.5, 0, 3, 512); g.fillRect(0, i * 512 / n - 1.5, 512, 3); }
+  return tex(c, { repeat: true });
+}
+/* a poster with no words: a car in profile, lit, on a dark ground (the showroom's walls) */
+export function posterTex(seed = 1) {
+  const c = cv(256, 360), g = c.getContext("2d"), r = rng(seed);
+  const gr = g.createLinearGradient(0, 0, 0, 360); gr.addColorStop(0, "#1c2420"); gr.addColorStop(1, "#0d1110"); g.fillStyle = gr; g.fillRect(0, 0, 256, 360);
+  g.fillStyle = ["#9b1b14", "#d9d8d2", "#1d2b40", "#aeb2b5"][seed % 4];
+  g.beginPath(); g.moveTo(30, 230); g.quadraticCurveTo(60, 196, 110, 192); g.quadraticCurveTo(140, 168, 180, 172); g.quadraticCurveTo(222, 190, 228, 228); g.lineTo(228, 238); g.lineTo(30, 240); g.closePath(); g.fill();
+  g.fillStyle = "#0a0a0a"; for (const x of [72, 190]) { g.beginPath(); g.arc(x, 240, 17, 0, 7); g.fill(); }
+  g.fillStyle = "rgba(237,231,219,0.8)"; g.fillRect(30, 300, 120, 6); g.fillRect(30, 316, 80, 4);
+  return tex(c);
 }
 
 /* paper with a tooth, for the journal and the memory */

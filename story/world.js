@@ -187,7 +187,7 @@ export function groundMat(g, o = {}) {
       void main(){
         vec2 wuv = vWP.xz / uTile;
         vec4 dt = texture2D(uDetail, vUv), mk = texture2D(uMask, vUv);
-        float conc = mk.b;
+        float conc = step(0.75, mk.b), seal = step(0.3, mk.b) * (1.0 - conc);
         // the asphalt, tiled at two scales against repetition; concrete where the mask says so
         vec3 asC = texture2D(uAsC, wuv).rgb * mix(0.82, 1.18, texture2D(uAsC, wuv * 0.173 + 0.37).g * 2.0 - 0.4);
         vec3 coC = texture2D(uCoC, wuv * 0.8).rgb;
@@ -200,9 +200,9 @@ export function groundMat(g, o = {}) {
         vec3 paintC = vec3(0.78, 0.74, 0.62) * mix(0.75, 1.0, texture2D(uAsC, wuv * 3.1).r * 2.0);
         float pnt = smoothstep(0.15, 0.6, dt.g);
         alb = mix(alb, paintC, pnt);
-        alb = mix(alb, vec3(0.025), dt.a * 0.85 * (1.0 - conc));
+        alb = mix(alb, vec3(0.025), seal * 0.85);
         float ao = dt.b * mix(1.0, arm.r, 0.6);
-        float rough = mix(arm.g, 0.55, pnt * 0.5); rough = mix(rough, 0.32, dt.a * 0.6);
+        float rough = mix(arm.g, 0.55, pnt * 0.5); rough = mix(rough, 0.32, seal * 0.6);
         // water: the whole lot is wet, the low spots stand in puddles
         float wet = uWet * mk.g;
         float pud = smoothstep(0.32, 0.62, mk.r) * uWet;
@@ -417,34 +417,77 @@ const BLOB_GEO = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 /* the footprint of a parked car, for walls and the ground's shade */
 function carSize(kind) { const m = carLib[kind] && carLib[kind].meta; return m ? [m.W, m.L] : [1.85, 4.7]; }
 
-/* ---------- a sodium lamp post ---------- */
-function lampPost(x, z, h, set, k = 1) {
+/* ---------- a lot light: a square steel pole on a concrete base, a shoebox head (or two, back to back) ---------- */
+function lampPost(x, z, h, set, o = {}) {
+  const k = o.k || 1, day = !!o.day;
   const g = new THREE.Group(); g.position.set(x, 0, z);
-  const pole = paint({ color: "#1b1d1c", wet: 0.9, rim: 0.8, ao: 0.4 });
-  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.11, h, 8), pole); p.position.y = h / 2; g.add(p);
-  box(0.9, 0.08, 0.08, pole, 0.35, h - 0.05, 0, g);
-  const head = box(0.62, 0.14, 0.32, pole, 0.7, h - 0.12, 0, g);
-  const lens = plane(0.54, 0.26, glow0("#ffd59a", { k: 3.0 }), g); lens.rotation.x = Math.PI / 2; lens.position.set(0.7, h - 0.2, 0); lens.userData.keep = true;
-  const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 3.4 * k, h - 0.25, 28, 1, true), coneMat0("#ffb766", 0.9)); cone.userData.keep = true;
-  cone.position.set(0.7, (h - 0.25) / 2, 0); g.add(cone); cone.layers.set(3);
+  const steel = pbr({ color: "#3a3d3f", metal: 0.7, rough: 0.45, wet: 0.9, drops: false });
+  const conc = pbr({ color: "#8d8a82", rough: 0.85, wet: 0.8, map: T.concC, tri: 0.9, nmap: T.concN });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.75, 16), conc); base.position.y = 0.375; g.add(base);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.11, h - 0.75, 4, 1), steel); pole.rotation.y = Math.PI / 4; pole.position.y = 0.75 + (h - 0.75) / 2; g.add(pole);
+  box(0.26, 0.04, 0.26, steel, 0, 0.77, 0, g);
+  const heads = o.twin ? [1, -1] : [1];
+  const lamps = [];
+  for (const s of heads) {
+    box(0.55, 0.07, 0.07, steel, s * 0.3, h - 0.06, 0, g);
+    // the head: a low box with a chamfered top, the lens flush underneath
+    const hd = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.13, 0.42), steel); hd.position.set(s * 0.82, h - 0.1, 0); g.add(hd);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.05, 0.36), steel); top.position.set(s * 0.82, h - 0.01, 0); g.add(top);
+    const lens = plane(0.6, 0.32, glow0(day ? "#c8c4b8" : "#ffd08a", { k: day ? 0.15 : 3.2 }), g); lens.rotation.x = Math.PI / 2; lens.position.set(s * 0.82, h - 0.168, 0); lens.userData.keep = true;
+    // the cone of light in the rain
+    const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 4.2 * k, h - 0.2, 32, 1, true), coneMat0("#ffb466", 0.75)); cone.userData.keep = true;
+    cone.position.set(s * 0.82, (h - 0.2) / 2, 0); g.add(cone); cone.layers.set(3); cone.visible = !day;
+    const L = { p: V3(x + s * 0.82, h - 0.2, z), range: 21 * k, col: [3.3 * k, 2.05 * k, 0.95 * k], cone: 0.28, glow: lens, coneMesh: cone };
+    set.userData.lamps.push(L); lamps.push(L);
+  }
   set.add(g);
-  set.userData.lamps.push({ p: V3(x + 0.7, h - 0.22, z), range: 15 * k, col: [3.1 * k, 1.95 * k, 0.92 * k], cone: 0.32, glow: lens, coneMesh: cone });
-  return g;
+  set.userData.walls.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
+  return lamps;
 }
 
 function palm(x, z, h, set, r) {
   const g = new THREE.Group(); g.position.set(x, 0, z);
   const pts = []; const lean = (r() - 0.5) * 0.8;
   for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(lean * t * t, t * h, lean * 0.3 * t * t)); }
-  const trunk = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.16, 6), paint({ color: "#141210", rim: 0.4 }));
+  const trunk = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.17, 7), pbr({ color: "#2b2620", rough: 0.9, wet: 0.6 }));
   g.add(trunk);
-  const fm = paint({ color: "#0d120e", map: set.userData.frond, alphaTest: 0.5, side: THREE.DoubleSide, rim: 0.3 });
+  const fm = paint({ color: "#141a14", map: set.userData.frond, alphaTest: 0.5, side: THREE.DoubleSide, rim: 0.3 });
   const top = pts[pts.length - 1];
-  for (let i = 0; i < 11; i++) {
-    const f = plane(1.4, 3.2, fm, g); f.position.copy(top); f.geometry.translate(0, 1.5, 0);
-    f.rotation.set(0, (i / 11) * Math.PI * 2 + r(), 0); f.rotateX(-1.1 - r() * 0.5);
+  for (let i = 0; i < 13; i++) {
+    const f = plane(1.4, 3.3, fm, g); f.position.copy(top); f.geometry.translate(0, 1.55, 0);
+    f.rotation.set(0, (i / 13) * Math.PI * 2 + r(), 0); f.rotateX(-1.0 - r() * 0.7);
   }
   set.add(g);
+}
+
+/* the sky over Houston on a rainy night: low cloud lit orange from below by the city, darker overhead,
+   the city's edge on the horizon (buildings, towers, a few lit windows and beacons) */
+function skyDome(o) {
+  return new THREE.Mesh(new THREE.SphereGeometry(150, 48, 24, 0, Math.PI * 2, 0, Math.PI * 0.62), new THREE.ShaderMaterial({
+    uniforms: { uTime: U.uTime, uDay: { value: o.day ? 1 : 0 }, uMap: { value: TX.skylineTex() } },
+    vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform float uTime; uniform float uDay; uniform sampler2D uMap; varying vec3 vD;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+      float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * n(p); p = p * 2.03 + 7.1; a *= 0.5; } return s; }
+      void main(){
+        vec3 d = normalize(vD); float y = max(d.y, 0.0);
+        // clouds: a slow-moving deck, projected onto a plane overhead
+        vec2 cp = d.xz / max(d.y + 0.08, 0.04) * 0.35 + vec2(uTime * 0.004, uTime * 0.002);
+        float cl = smoothstep(0.35, 0.8, fbm(cp));
+        vec3 night = mix(vec3(0.075, 0.055, 0.045), vec3(0.012, 0.016, 0.022), smoothstep(0.0, 0.5, y));
+        night += vec3(0.07, 0.045, 0.028) * cl * (1.0 - smoothstep(0.0, 0.7, y)) + vec3(0.02, 0.016, 0.014) * cl;
+        vec3 day = mix(vec3(0.82, 0.8, 0.74), vec3(0.42, 0.55, 0.68), smoothstep(0.0, 0.6, y)) * mix(1.0, 1.12, cl);
+        vec3 c = mix(night, day, uDay);
+        // the skyline on the horizon
+        float az = atan(d.z, d.x) / 6.2831853 + 0.5;
+        float sy = d.y / 0.09;
+        if (sy > 0.0 && sy < 1.0) { vec4 s = texture2D(uMap, vec2(fract(az * 3.0), sy)); c = mix(c, s.rgb * mix(1.0, 0.0, uDay) + mix(vec3(0.0), vec3(0.42, 0.45, 0.46), uDay), s.a); }
+        if (d.y < 0.0) c = mix(c, vec3(0.03, 0.025, 0.022) * (1.0 - uDay) + vec3(0.45, 0.44, 0.4) * uDay, smoothstep(0.0, -0.05, d.y));
+        gl_FragColor = vec4(c, 1.0);
+        #include <colorspace_fragment>
+      }`, side: THREE.BackSide, depthWrite: false, fog: false
+  }));
 }
 
 /* ================================================================
@@ -452,57 +495,88 @@ function palm(x, z, h, set, r) {
    ================================================================ */
 export function buildLot(o) {
   const set = new THREE.Group(); set.name = "lot";
-  set.userData = { lamps: [], spots: {}, walls: [], frond: TX.frondTex() };
-  const r = rng(53);
+  set.userData = { lamps: [], spots: {}, walls: [], frond: TX.frondTex(), sounds: {} };
+  const r = rng(53), day = !!o.day;
   const W = 70, H = 52;
-  // parking lines: two rows of stalls facing each other, and a third along the fence
+  // parking lines: two rows of stalls back to back across the drive lane, and a third along the fence
   const lines = [];
   for (const zRow of [-5.5, 4.5]) for (let x = -19.2; x <= 19.2; x += 3.2) lines.push([x, zRow - 2.6, x, zRow + 2.6]);
-  for (let x = -19.2; x <= 19.2; x += 3.2) lines.push([x, 12, x, 16.5]);
+  for (let x = -19.2; x <= 19.2; x += 3.2) lines.push([x, 12, x, 16.8]);
+  lines.push([-19.2, -8.1, 19.2, -8.1], [-19.2, 7.1, 19.2, 7.1]);
   // the ground's material waits for the cars and lamps (it bakes their shade and shadows); see the end of buildLot
   const ground = plane(W, H, null, set); ground.rotation.x = -Math.PI / 2; ground.layers.set(4);
-  // the showroom: a glass front glowing warm, the wordmark over it
-  const wall = paint({ color: "#2b2f2c", wet: 0.3, rim: 0.4, ao: 0.6 }), trim = paint({ color: "#141716", wet: 0.6, rim: 0.6 });
+
+  /* --- the showroom: a glass front under a canopy, a real room behind it --- */
+  const stucco = pbr({ color: "#4b4d4a", rough: 0.88, wet: 0.5, map: T.concC, nmap: T.concN, tri: 0.35, nk: 0.6 });
+  const fascia = pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.4, wet: 0.9 });
+  const alu = pbr({ color: "#2b2925", rough: 0.32, metal: 0.85, wet: 0.8 });
   const sh = new THREE.Group(); sh.position.set(2, 0, -18); set.add(sh);
-  // the body, hollow behind the glass: a lit room 3.6 m deep with cars in it, so the front has depth from every angle
-  box(26, 5.2, 4.4, wall, 0, 2.6, -5.8, sh);
-  box(26, 1.3, 3.6, wall, 0, 4.55, -1.8, sh);
-  box(1, 5.2, 3.6, wall, -12.5, 2.6, -1.8, sh); box(3, 5.2, 3.6, wall, 11.5, 2.6, -1.8, sh);
-  const roomFloor = plane(22, 3.6, paint({ color: "#6b5640", wet: 0.9, rim: 0.1, emit: "#3a2a1a" }), sh); roomFloor.rotation.x = -Math.PI / 2; roomFloor.position.set(-1, 0.02, -1.8);
-  const roomCeil = plane(22, 3.6, glow("#f6e3c4", { k: o.day ? 0.25 : 0.55 }), sh); roomCeil.rotation.x = Math.PI / 2; roomCeil.position.set(-1, 3.88, -1.8);
-  // three cars on the showroom floor, angled to the glass
-  const showCars = [[-7.5, 0.5, "sedan", "#9b1b14", 0], [-2.2, -0.35, "suv", "#e6e3dc", 0], [3.6, 0.42, "compact", "#3a3f44", 1]].map(([x, yaw, kind, color, metal]) => ({ kind, x: x + 2, z: -1.9 - 18, yaw, color, metal: !!metal }));
-  box(26.6, 0.5, 8.6, trim, 0, 5.4, -4, sh); // roof edge
-  const glassIn = TX.cv(1024, 256); { const g = glassIn.getContext("2d"); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, "#f2c98d"); gr.addColorStop(1, "#b07a42"); g.fillStyle = gr; g.fillRect(0, 0, 1024, 256);
-    g.fillStyle = "rgba(40,28,18,0.55)"; for (let i = 0; i < 5; i++) { const x = 80 + i * 200; g.beginPath(); g.ellipse(x, 210, 80, 24, 0, 0, 7); g.fill(); g.fillRect(x - 70, 170, 140, 40); }
-    g.fillStyle = "rgba(255,240,210,0.6)"; for (let i = 0; i < 8; i++) g.fillRect(40 + i * 125, 10, 70, 6); }
-  const gtex = new THREE.CanvasTexture(glassIn); gtex.colorSpace = THREE.SRGBColorSpace;
-  const front = plane(22, 3.6, glow("#ffffff", { map: gtex, k: o.day ? 0.35 : 1.35 }), sh); front.position.set(-1, 1.95, -3.58);
-  const pane = plane(22, 3.7, paint({ color: "#7d8c88", alpha: 0.1, wet: 2.2, rim: 0.8, depthWrite: false }), sh); pane.position.set(-1, 1.95, 0.03);
-  for (let i = 0; i <= 8; i++) box(0.12, 3.8, 0.14, trim, -12 + i * 2.75, 1.95, 0.08, sh);
-  box(22.4, 0.14, 0.16, trim, -1, 3.85, 0.08, sh); box(22.4, 0.14, 0.16, trim, -1, 0.06, 0.08, sh);
-  // the office door, at the right end of the glass
-  const door = box(1.4, 2.4, 0.1, paint({ color: "#0f1412", wet: 1.2, rim: 0.8 }), 11, 1.2, 0.06, sh);
-  const doorGlow = plane(1.0, 1.9, glow("#f3d2a0", { k: o.day ? 0.3 : 1.0 }), sh); doorGlow.position.set(11, 1.25, 0.13);
-  // the wordmark, lit
+  // shell: back block, side walls, the fascia band over the glass
+  box(26.6, 5.6, 2.4, stucco, 0, 2.8, -7.1, sh);
+  box(1.3, 5.6, 6.3, stucco, -12.65, 2.8, -2.95, sh); box(3.3, 5.6, 6.3, stucco, 11.65, 2.8, -2.95, sh);
+  box(26.6, 1.5, 6.3, stucco, 0, 4.85, -2.95, sh);
+  box(27.2, 0.9, 0.5, fascia, 0, 4.55, 0.25, sh);
+  // the canopy over the walk, with its downlights
+  box(27.2, 0.22, 1.9, fascia, 0, 3.98, 1.15, sh);
+  const dl = glow("#ffe2b8", { k: day ? 0.2 : 2.2 });
+  for (let i = 0; i < 9; i++) { const d = new THREE.Mesh(new THREE.CircleGeometry(0.09, 12), dl); d.rotation.x = Math.PI / 2; d.position.set(-12 + i * 3, 3.865, 1.25); sh.add(d); }
+  // the room: polished tile, a white ceiling with light panels, a back wall with a counter, posters and a plant
+  const floorT = TX.tileTex(4);
+  const tile = pbr({ color: "#ffffff", map: floorT, tri: 0.42, rough: 0.12, wet: 0, spec: 1 });
+  const fl = plane(22.8, 5.8, tile, sh); fl.rotation.x = -Math.PI / 2; fl.position.set(-1, 0.01, -3.0);
+  const ceilM = pbr({ color: "#d9d6cf", rough: 0.9, wet: 0 });
+  const ce = plane(22.8, 5.8, ceilM, sh); ce.rotation.x = Math.PI / 2; ce.position.set(-1, 4.0, -3.0);
+  const panelM = glow("#fff3e0", { k: day ? 0.6 : 2.0 });
+  for (let i = 0; i < 7; i++) for (const zz of [-1.6, -4.2]) { const p0 = plane(1.2, 0.6, panelM, sh); p0.rotation.x = Math.PI / 2; p0.position.set(-11 + i * 3.3, 3.98, zz); }
+  const wallIn = pbr({ color: "#e4ddd0", rough: 0.85, wet: 0 });
+  const bw = plane(22.8, 4.0, wallIn, sh); bw.position.set(-1, 2.0, -5.88);
+  // an accent wall in the brand's green behind the counter, the wordmark small on it
+  const acc = pbr({ color: "#1c3229", rough: 0.7, wet: 0 }); box(6, 3.0, 0.06, acc, 4.5, 1.9, -5.84, sh);
+  const sm = plane(3.2, 0.8, glow("#ffffff", { map: TX.signTex(o.wordmark), k: day ? 0.7 : 1.0 }), sh); sm.position.set(4.5, 2.6, -5.80);
+  // the counter: a wood top on a dark base, a monitor's glow, two chairs
+  const woodTop = pbr({ color: "#8a6a4a", rough: 0.45, wet: 0 }), dark = pbr({ color: "#1a1b1b", rough: 0.5, wet: 0 });
+  box(3.2, 1.0, 0.7, dark, 4.5, 0.5, -4.6, sh); box(3.4, 0.05, 0.8, woodTop, 4.5, 1.02, -4.6, sh);
+  const mon = box(0.55, 0.34, 0.03, dark, 4.0, 1.3, -4.75, sh); const ms = plane(0.5, 0.29, glow("#cfe0ff", { k: day ? 0.3 : 0.9 }), sh); ms.position.set(4.0, 1.3, -4.733);
+  for (const cx of [3.6, 5.4]) { const c = new THREE.Group(); c.position.set(cx, 0, -3.7); sh.add(c); box(0.48, 0.06, 0.48, dark, 0, 0.46, 0, c); box(0.48, 0.5, 0.06, dark, 0, 0.74, 0.22, c); box(0.05, 0.44, 0.05, alu, 0, 0.22, 0, c); }
+  // posters and a door to the back
+  for (let i = 0; i < 3; i++) { const pm = pbr({ color: "#ffffff", map: TX.posterTex(i + 1), rough: 0.35, wet: 0, ao: 0 }); const pp = plane(1.0, 1.4, pm, sh); pp.position.set(-10 + i * 3.4, 1.9, -5.86); box(1.06, 1.46, 0.02, alu, -10 + i * 3.4, 1.9, -5.875, sh); }
+  box(1.0, 2.2, 0.05, pbr({ color: "#5a4a3a", rough: 0.6, wet: 0 }), 9.2, 1.1, -5.86, sh);
+  plantPot(-1.2, -5.2, 1.3, sh, 7); plantPot(8.0, -5.2, 1.1, sh, 13);
+  // the glass: storefront panes between bronze mullions, the room's light behind them
+  const glassM = pbr({ color: "#0b0f10", rough: 0.03, wet: 0.6, alpha: 0.12, glass: true, depthWrite: false, spec: 1, diff: 0.2 });
+  const pane = plane(22.0, 3.75, glassM, sh); pane.position.set(-1, 1.92, 0.02); pane.renderOrder = 2; pane.userData.keep = true;
+  for (let i = 0; i <= 8; i++) box(0.1, 3.85, 0.18, alu, -12 + i * 2.75, 1.92, 0.05, sh);
+  box(22.4, 0.12, 0.2, alu, -1, 3.86, 0.05, sh); box(22.4, 0.14, 0.2, alu, -1, 0.07, 0.05, sh);
+  // the office door at the right end, lit from inside
+  box(1.5, 2.5, 0.14, alu, 11, 1.25, 0.05, sh);
+  const doorGlow = plane(1.1, 2.0, glow("#f3d2a0", { k: day ? 0.3 : 1.1 }), sh); doorGlow.position.set(11, 1.2, 0.13);
+  box(0.04, 0.5, 0.06, pbr({ color: "#c9ccd0", metal: 1, rough: 0.2 }), 10.55, 1.15, 0.19, sh);
+  // the wordmark over the canopy, lit
   const signT = TX.signTex(o.wordmark);
-  const sign = plane(10, 2.5, glow("#ffffff", { map: signT, k: o.day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 4.65, 0.32);
-  // the sold board by the door
-  // the sold board fills from June 2025; on the morning of the keys, August 2024, it is not up yet
-  if (!o.day) { const sold = plane(1.6, 1.2, paint({ map: TX.soldTex(), color: "#fff", rim: 0.2, wet: 0.2 }), sh); sold.position.set(8.6, 1.55, 0.16); }
+  const sign = plane(10, 2.5, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 4.62, 0.51);
+  // the sold board by the door; it fills from June 2025, so on the morning of the keys (August 2024) it is not up yet
+  if (!day) { const sold = plane(1.6, 1.2, pbr({ map: TX.soldTex(), color: "#fff", rough: 0.5, wet: 0.3 }), sh); sold.position.set(8.6, 1.55, 0.16); }
   set.userData.spots.sold = { p: V3(2 + 8.6, 1.5, -18 + 0.3), r: 2.4, stand: V3(10.6, 0, -16.2) };
   set.userData.spots.door = { p: V3(13, 1.3, -17.6), r: 2.4, stand: V3(13, 0, -16.3) };
   set.userData.walls.push({ x0: -11.3, x1: 15.3, z0: -26.3, z1: -17.7 });
-  // the pylon sign and its banner
+  // a trash can and a bench by the door
+  { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.24, 0.85, 16, 1, true), pbr({ color: "#2a2c2b", metal: 0.6, rough: 0.4, wet: 1, side: THREE.DoubleSide })); can.position.set(14.6, 0.425, -17.2); set.add(can);
+    box(0.54, 0.04, 0.54, pbr({ color: "#1d1f1e", rough: 0.6, wet: 1 }), 14.6, 0.86, -17.2, set); set.userData.walls.push({ x0: 14.3, x1: 14.9, z0: -17.5, z1: -16.9 }); }
+
+  /* --- the pylon sign and its banner --- */
   const py = new THREE.Group(); py.position.set(-15, 0, -9); set.add(py);
-  box(0.35, 6.4, 0.35, trim, -1.6, 3.2, 0, py); box(0.35, 6.4, 0.35, trim, 1.6, 3.2, 0, py);
-  const ps = plane(3.6, 1.0, glow("#ffffff", { map: signT, k: o.day ? 0.9 : 1.3 }), py); ps.position.set(0, 5.9, 0.2);
+  const pylonM = pbr({ color: "#202322", metal: 0.5, rough: 0.45, wet: 1 });
+  box(0.36, 6.4, 0.36, pylonM, -1.6, 3.2, 0, py); box(0.36, 6.4, 0.36, pylonM, 1.6, 3.2, 0, py);
+  box(0.8, 0.5, 0.8, pbr({ color: "#8d8a82", rough: 0.85, wet: 0.8, map: T.concC, tri: 0.9 }), -1.6, 0.25, 0, py); box(0.8, 0.5, 0.8, pbr({ color: "#8d8a82", rough: 0.85, wet: 0.8, map: T.concC, tri: 0.9 }), 1.6, 0.25, 0, py);
+  const ps = plane(3.6, 1.0, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.3 }), py); ps.position.set(0, 5.9, 0.2);
   const ps2 = ps.clone(); ps2.rotation.y = Math.PI; ps2.position.z = -0.2; py.add(ps2);
-  box(3.8, 1.2, 0.3, trim, 0, 5.9, 0, py);
-  const ban = plane(3.4, 0.55, paint({ map: TX.bannerTex(), color: "#fff", rim: 0.3, wet: 0.3 }), py); ban.position.set(0, 4.7, 0.18);
+  box(3.9, 1.25, 0.34, pylonM, 0, 5.9, 0, py);
+  const ban = plane(3.4, 0.55, pbr({ map: TX.bannerTex(), color: "#fff", rough: 0.55, wet: 0.5 }), py); ban.position.set(0, 4.7, 0.19);
   set.userData.spots.sign = { p: V3(-15, 4.7, -8.8), r: 4.5, stand: V3(-13.6, 0, -6.4) };
   set.userData.walls.push({ x0: -17, x1: -13, z0: -9.5, z1: -8.5 });
-  // cars, two rows facing each other, and some along the fence
+
+  /* --- the cars: two rows back to back across the lane, one along the fence, three in the showroom --- */
+  const showCars = [[-7.5, 0.5, "sedan", "#9b1b14", 0], [-2.2, -0.35, "suv", "#e6e3dc", 0], [3.6, 0.42, "compact", "#3a3f44", 1]].map(([x, yaw, kind, color, metal]) => ({ kind, x: x + 2, z: -21.0, yaw, color, metal: !!metal }));
   const KINDS = ["sedan", "suv", "compact", "truck", "hatch", "sedan", "suv", "compact"];
   const lotCars = [];
   set.userData.cars = lotCars;
@@ -515,81 +589,129 @@ export function buildLot(o) {
     return c;
   };
   let k = 0;
-  // nose out, the way a lot shows its stock: the front row faces the road, the back row the showroom
-  for (let x = -17.6; x <= 17.6; x += 3.2) { if (r() < 0.12) continue; addCar(x, -5.6 + (r() - 0.5) * 0.25, Math.PI + (r() - 0.5) * 0.05, KINDS[k % KINDS.length], k * 7 + 3); k++; }
-  for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; addCar(x, 4.5 + (r() - 0.5) * 0.25, (r() - 0.5) * 0.05, kd, x > 4 && x < 6 ? 2 : k * 3 + 1); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.9), r: 3, stand: V3(x, 0, 8.8) }; k++; }
-  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
-  // one car by the showroom with its engine running and its lights on: someone's ride, waiting
-  const idle = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true };
-  lotCars.push(idle); set.userData.walls.push({ x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 });
+  for (let x = -17.6; x <= 17.6; x += 3.2) { if (r() < 0.12) continue; addCar(x + (r() - 0.5) * 0.12, -5.6 + (r() - 0.5) * 0.25, Math.PI + (r() - 0.5) * 0.05, KINDS[k % KINDS.length], k * 7 + 3); k++; }
+  for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; addCar(x + (r() - 0.5) * 0.12, 4.5 + (r() - 0.5) * 0.25, (r() - 0.5) * 0.05, kd, x > 4 && x < 6 ? 2 : k * 3 + 1); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.9), r: 3, stand: V3(x, 0, 8.8) }; k++; }
+  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x + (r() - 0.5) * 0.12, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
+  // one car by the showroom with its engine running and its lights on: someone's ride, waiting (not in the morning)
+  if (!day) { const idle = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true }; lotCars.push(idle); set.userData.walls.push({ x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 });
+    set.userData.sounds.idle = { x: 16.6 + 2.2, y: 0.4, z: -11.5, kind: "engine-idle" };
+    // its lights on the wet ground ahead of it and the tail lights' red behind
+    set.userData.lamps.push({ p: V3(13.6, 0.75, -10.8), range: 7, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true });
+  }
   parkCars(set, lotCars.concat(showCars));
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
-  // lamps
-  [[-9, -1.2, 8], [8, -1.2, 8], [-1, 9.4, 8], [13, 9.4, 8], [-17, 12, 7.5], [11.6, -13.4, 6.5]].forEach(([x, z, h]) => lampPost(x, z, h, set));
-  set.userData.walls.push(...set.userData.lamps.map(l => ({ x0: l.p.x - 1.0, x1: l.p.x - 0.4, z0: l.p.z - 0.3, z1: l.p.z + 0.3 })));
-  // the showroom's own warmth spilling onto the lot
-  set.userData.lamps.push({ p: V3(2, 2.2, -15.5), range: 13, col: [1.5, 1.05, 0.6], cone: 0, fixed: true });
-  set.userData.lamps.push({ p: V3(13, 2.0, -16.2), range: 6, col: [1.0, 0.75, 0.45], cone: 0, fixed: true });
+  // wheel stops at the head of each stall, concrete
+  { const ws = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.13, 0.16), pbr({ color: "#9b968c", rough: 0.85, wet: 0.8, map: T.concC, tri: 1.2 }), 40); let n = 0; const m4 = new THREE.Matrix4();
+    for (let x = -17.6; x <= 17.6; x += 3.2) { m4.makeTranslation(x, 0.065, -7.75); ws.setMatrixAt(n++, m4); m4.makeTranslation(x, 0.065, 6.75); ws.setMatrixAt(n++, m4); }
+    ws.count = n; ws.userData.keep = true; set.add(ws); }
+
+  /* --- lamps --- */
+  [[-9, -1.2, 8.5, 1], [8, -1.2, 8.5, 1], [-1, 9.4, 8.5, 1], [13, 9.4, 8.5, 0], [-17, 12, 8, 0], [11.6, -13.4, 7, 0]].forEach(([x, z, h, twin]) => lampPost(x, z, h, set, { day, twin: false }));
+  // the showroom's own light: spilling out through the glass, and the room inside it
+  set.userData.lamps.push({ p: V3(2, 2.4, -16.4), range: 15, col: [1.6, 1.15, 0.7], cone: 0, fixed: true });
+  set.userData.lamps.push({ p: V3(1, 3.3, -21.0), range: 13, col: [2.2, 1.9, 1.5], cone: 0, fixed: true });
+  set.userData.lamps.push({ p: V3(13, 2.2, -16.4), range: 6, col: [1.0, 0.75, 0.45], cone: 0, fixed: true });
+  set.userData.sounds.lamps = set.userData.lamps.filter(l => l.coneMesh).map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, kind: "sodium-hum" }));
   // the puddle by the middle lamp
   set.userData.spots.puddle = { p: V3(-1.5, 0.05, 11.2), r: 2.2, stand: V3(-1.5, 0, 12.6) };
-  // the fence and the gate
-  const fence = paint({ color: "#25292a", wet: 0.8, rim: 0.7 });
-  const chain = TX.cv(64, 64); { const g = chain.getContext("2d"); g.strokeStyle = "rgba(160,170,175,0.75)"; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 0); g.lineTo(64, 64); g.moveTo(64, 0); g.lineTo(0, 64); g.stroke(); }
-  const ct = new THREE.CanvasTexture(chain); ct.wrapS = ct.wrapT = THREE.RepeatWrapping; ct.repeat.set(30, 1.2);
-  const cm = paint({ color: "#7a8186", map: ct, alphaTest: 0.35, side: THREE.DoubleSide, rim: 0.5 });
+
+  /* --- the fence: galvanized posts, a top rail, the chain-link, three strands of barbed wire, and the rolling gate --- */
+  const galv = pbr({ color: "#8a8f92", metal: 0.9, rough: 0.42, wet: 0.9 });
+  const ct = TX.chainTex();
   for (const [x0, x1] of [[-34, -3.2], [3.2, 34]]) {
-    const len = x1 - x0; const f = plane(len, 1.9, cm.clone(), set); f.position.set((x0 + x1) / 2, 0.95, 21.5);
-    for (let x = x0; x <= x1; x += 3) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2, 6), fence); p.position.set(x, 1, 21.5); set.add(p); }
+    const len = x1 - x0, t = ct.clone(); t.needsUpdate = true; t.repeat.set(len / 0.11, 1.9 / 0.11);
+    const mesh = pbr({ color: "#9aa0a3", map: t, metal: 0.8, rough: 0.45, wet: 0.6, side: THREE.DoubleSide, transparent: true, depthWrite: false, ao: 0 });
+    const f = plane(len, 1.9, mesh, set); f.position.set((x0 + x1) / 2, 0.97, 21.5); f.userData.keep = true; f.renderOrder = 1;
+    for (let x = x0; x <= x1 + 0.01; x += 3) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.05, 8), galv); p.position.set(x, 1.02, 21.5); set.add(p);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.42, 0.03), galv); arm.position.set(x, 2.18, 21.62); arm.rotation.x = 0.7; set.add(arm); }
+    const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, len, 8), galv); rail.rotation.z = Math.PI / 2; rail.position.set((x0 + x1) / 2, 1.95, 21.5); set.add(rail);
+    for (let s = 0; s < 3; s++) { const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, len, 4), galv); wire.rotation.z = Math.PI / 2; wire.position.set((x0 + x1) / 2, 2.07 + s * 0.11, 21.55 + s * 0.09); set.add(wire); }
     set.userData.walls.push({ x0, x1, z0: 21.2, z1: 21.8 });
   }
-  // the rolling gate: open when you arrive, Dell half closing it later
   const gate = new THREE.Group(); gate.position.set(-3.2, 0, 21.9); set.add(gate); gate.userData.keep = true;
-  for (let i = 0; i <= 6; i++) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.9, 6), fence); p.position.set(-i * 0.55, 0.95, 0); gate.add(p); }
-  box(3.4, 0.06, 0.06, fence, -1.65, 1.85, 0, gate); box(3.4, 0.06, 0.06, fence, -1.65, 0.12, 0, gate);
+  { const t = ct.clone(); t.needsUpdate = true; t.repeat.set(3.4 / 0.11, 1.8 / 0.11);
+    const gm = plane(3.4, 1.8, pbr({ color: "#9aa0a3", map: t, metal: 0.8, rough: 0.45, wet: 0.6, side: THREE.DoubleSide, transparent: true, depthWrite: false, ao: 0 }), gate); gm.position.set(-1.7, 1.0, 0); gm.renderOrder = 1;
+    for (const x of [0, -3.4]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.95, 8), galv); p.position.set(x, 1.0, 0); gate.add(p); }
+    for (const y of [0.1, 1.92]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 3.4, 8), galv); b.rotation.z = Math.PI / 2; b.position.set(-1.7, y, 0); gate.add(b); }
+    const brace = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 3.85, 6), galv); brace.rotation.z = Math.atan2(1.8, 3.4) + Math.PI / 2; brace.position.set(-1.7, 1.0, 0.02); gate.add(brace);
+    for (const x of [-0.4, -3.0]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.05, 12), pbr({ color: "#202020", rough: 0.8 })); w.rotation.x = Math.PI / 2; w.position.set(x, 0.08, 0); gate.add(w); } }
   set.userData.gate = gate;
+  set.userData.sounds.gate = { x: -3.2, y: 1.0, z: 21.9, kind: "chain-link" };
   set.userData.spots.gate = { p: V3(-3.4, 1.2, 21.9), r: 2.4, stand: V3(-2.6, 0, 20.4) };
   set.userData.walls.push({ x0: -35, x1: 35, z0: -27, z1: -26.4 }, { x0: -35, x1: -34.4, z0: -27, z1: 22 }, { x0: 34.4, x1: 35, z0: -27, z1: 22 }, { x0: -4, x1: 4, z0: 23.6, z1: 24.2 });
-  // beyond the fence: palms, poles, the city
-  for (let i = 0; i < 9; i++) palm(-30 + i * 7.5 + (r() - 0.5) * 3, 25 + r() * 4, 7 + r() * 4, set, r);
-  for (let i = 0; i < 4; i++) palm(-38 - r() * 4, -20 + i * 11, 7 + r() * 4, set, r);
-  const sky = new THREE.Mesh(new THREE.CylinderGeometry(90, 90, 40, 48, 1, true), new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color(o.day ? "#9fb6c8" : "#0b1116") }, uLow: { value: new THREE.Color(o.day ? "#e7dcc8" : "#2a2420") }, uMap: { value: TX.skylineTex() }, uDay: { value: o.day ? 1 : 0 } },
-    vertexShader: `varying vec2 vUv; varying float vY; void main(){ vUv = uv; vY = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `uniform vec3 uTop; uniform vec3 uLow; uniform sampler2D uMap; uniform float uDay; varying vec2 vUv; varying float vY;
-      void main(){ float t = smoothstep(-6.0, 14.0, vY); vec3 c = mix(uLow, uTop, t);
-      vec2 su = vec2(vUv.x * 3.0, (vY + 14.0) / 11.0); vec4 s = texture2D(uMap, fract(su));
-      if (su.y > 0.0 && su.y < 1.0) c = mix(c, s.rgb * mix(1.0, 0.6, uDay) + (uDay > 0.5 ? vec3(0.32, 0.34, 0.33) * s.a : vec3(0.0)), s.a);
-      gl_FragColor = vec4(c, 1.0);
-      #include <colorspace_fragment>
-      }`, side: THREE.BackSide, depthWrite: false }));
-  sky.position.y = 6; set.add(sky); sky.renderOrder = -1;
-  // the ground, now that everything standing on it is known: shade under the cars, the lamps' shadows, puddles, the dry strip under the canopy
+
+  /* --- beyond the fence: Almeda Genoa Road, its street lights and power poles, palms, the buildings across it, the sky --- */
+  {
+    const road = pbr({ color: "#ffffff", map: T.asphC, tri: 1 / 3.6, rough: 0.35, wet: day ? 0 : 1, spec: 1 });
+    const rd = plane(160, 14, road, set); rd.rotation.x = -Math.PI / 2; rd.position.set(0, -0.02, 31);
+    const yel = pbr({ color: "#b8902e", rough: 0.5, wet: day ? 0 : 1 });
+    for (const dz of [-0.08, 0.08]) { const l = plane(160, 0.1, yel, set); l.rotation.x = -Math.PI / 2; l.position.set(0, -0.005, 31 + dz); }
+    const sw = plane(160, 3.4, pbr({ color: "#a9a59c", map: T.concC, tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw.rotation.x = -Math.PI / 2; sw.position.set(0, -0.01, 23.4);
+    const sw2 = plane(160, 3, pbr({ color: "#a9a59c", map: T.concC, tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw2.rotation.x = -Math.PI / 2; sw2.position.set(0, -0.01, 39.5);
+    // cobra-head street lights along the far side, glowing (their light is the lens and its halo; the lot's lamps do the lighting)
+    const pole = pbr({ color: "#6f7376", metal: 0.8, rough: 0.5, wet: 1 });
+    const lensM = glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 4.0 });
+    for (let x = -60; x <= 60; x += 30) {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 9, 8), pole); p.position.set(x, 4.5, 38.6); set.add(p);
+      const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), pole); a.rotation.x = Math.PI / 2; a.position.set(x, 8.9, 37.4); set.add(a);
+      const hd = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.8), pole); hd.position.set(x, 8.85, 36.1); set.add(hd);
+      const ln = plane(0.3, 0.6, lensM, set); ln.rotation.x = Math.PI / 2; ln.position.set(x, 8.76, 36.1); ln.userData.keep = true;
+    }
+    // power poles and their wires, along the lot's side of the road
+    const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
+    for (let x = -66; x <= 66; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); }
+    for (const [dx, y] of [[-1.0, 10.3], [1.0, 10.3], [0, 9.2]]) {
+      for (let x = -66; x < 66; x += 22) {
+        const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(x + t * 22, y - Math.sin(t * Math.PI) * 0.45, 25.4 + dx * 0.05)); }
+        const wm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.012, 3), pbr({ color: "#111", rough: 0.6, wet: 0.5 })); set.add(wm);
+      }
+    }
+    // across the road: a strip of low buildings, dark at this hour, a few signs and windows still lit
+    const bldg = pbr({ color: "#3a3936", rough: 0.9, wet: 0.6, map: T.concC, tri: 0.25 });
+    const rb = rng(77);
+    for (let x = -70; x < 70;) {
+      const w = 9 + rb() * 14, h = 4 + rb() * 4.5, d = 10;
+      box(w - 0.6, h, d, bldg, x + w / 2, h / 2, 46 + rb() * 3, set);
+      if (!day && rb() < 0.6) { const s = plane(w * 0.5, 0.7, glow(["#e8d9b8", "#b8d0e8", "#f0b878"][(rb() * 3) | 0], { k: 0.5 + rb() * 0.6 }), set); s.rotation.y = Math.PI; s.position.set(x + w / 2, h - 0.9, 46 - 5.05); }
+      if (!day && rb() < 0.5) { const s = plane(1.4, 1.1, glow("#f1d6a0", { k: 0.35 }), set); s.rotation.y = Math.PI; s.position.set(x + w * (0.25 + rb() * 0.5), 1.4, 46 - 5.05); }
+      x += w;
+    }
+    // palms along the road and the lot's west side
+    for (let i = 0; i < 9; i++) palm(-30 + i * 7.5 + (r() - 0.5) * 3, 24.8 + r() * 1.0, 8 + r() * 4, set, r);
+    for (let i = 0; i < 4; i++) palm(-38 - r() * 4, -20 + i * 11, 7 + r() * 4, set, r);
+    const sky = skyDome(o); sky.renderOrder = -1; set.add(sky);
+    set.userData.sounds.road = { x: 0, y: 0.5, z: 31, kind: "traffic" };
+  }
+
+  /* --- the ground, now that everything standing on it is known --- */
   {
     const px = o.lowres ? 14 : 24;
     const carsG = lotCars.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
     const conc = [[-12.4, -17.9, 16.4, -15.6]];
-    const g = TX.lotGround(W, H, px, { lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25]] });
+    const g = TX.lotGround(W, H, px, { lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25], [-34, 21.4, 34, 21.6, 0.3, 0.3]].concat(set.userData.lamps.filter(l => l.coneMesh).map(l => [l.p.x - 0.82 - 0.3, l.p.z - 0.3, l.p.x - 0.82 + 0.3, l.p.z + 0.3, 0.6, 0.45])) });
     const shBoxes = lotCars.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
-      .concat([{ x: 2, z: -22, hw: 13.3, hl: 4.3, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }]);
-    const lampsSh = set.userData.lamps.slice(0, 8).map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range }));
-    const sh = o.day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, lampsSh, shBoxes);
-    const gm = groundMat(g, { wet: o.day ? 0 : 1, rain: o.day ? 0 : 1, sh, shLamps: set.userData.lamps.slice(0, 8).map(l => l.p.clone()), day: o.day });
+      .concat([{ x: 2, z: -22.6, hw: 13.3, hl: 3.7, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }, { x: 2, z: -16.9, hw: 13.6, hl: 0.95, h: 4.1, y0: 3.87, yaw: 0 }]);
+    const shL = set.userData.lamps.filter(l => !l.car).slice(0, 8);
+    const sh = day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, shL.map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range })), shBoxes);
+    const gm = groundMat(g, { wet: day ? 0 : 1, rain: day ? 0 : 1, sh, shLamps: shL.map(l => l.p.clone()), day });
     ground.material = gm; set.userData.groundMat = gm;
     // what's underfoot, for footsteps: puddle, concrete, wet asphalt (dry in the morning), tile inside the showroom
     set.userData.surfaceAt = (x, z) => {
       if (z < -17.7 && x > -11.3 && x < 15.3) return "tile";
       const i = Math.floor((x + W / 2) * g.px), j = Math.floor((z + H / 2) * g.px);
-      if (i < 0 || j < 0 || i >= g.w || j >= g.h) return o.day ? "asphalt" : "wet";
-      const k = j * g.w + i;
-      if (g.conc[k]) return "concrete";
-      if (!o.day && g.pud[k] > 110) return "puddle";
-      return o.day ? "asphalt" : "wet";
+      if (i < 0 || j < 0 || i >= g.w || j >= g.h) return day ? "asphalt" : "wet";
+      const kk = j * g.w + i;
+      if (g.conc[kk]) return day ? "concrete" : "wet-concrete";
+      if (!day && g.pud[kk] > 110) return "puddle";
+      return day ? "asphalt" : "wet";
     };
     // the bigger puddles, for anyone who wants them as circles
-    const pz = []; for (let z = -H / 2 + 1; z < H / 2; z += 1.2) for (let x = -W / 2 + 1; x < W / 2; x += 1.2) { const k = Math.floor((z + H / 2) * g.px) * g.w + Math.floor((x + W / 2) * g.px); if (g.pud[k] > 170) pz.push({ x: +x.toFixed(2), z: +z.toFixed(2), r: 0.7 }); }
-    set.userData.puddles = o.day ? [] : pz;
+    const pz = []; for (let z = -H / 2 + 1; z < H / 2; z += 1.2) for (let x = -W / 2 + 1; x < W / 2; x += 1.2) { const kk = Math.floor((z + H / 2) * g.px) * g.w + Math.floor((x + W / 2) * g.px); if (g.pud[kk] > 170) pz.push({ x: +x.toFixed(2), z: +z.toFixed(2), r: 0.7 }); }
+    set.userData.puddles = day ? [] : pz;
+    // rain on things: the canopy, the cars' roofs, the showroom's glass
+    set.userData.sounds.rain = day ? [] : [{ x: 2, y: 4.0, z: -16.9, kind: "rain-canopy", w: 27 }, { x: 0, y: 1.4, z: 0, kind: "rain-cars", w: 36 }, { x: 1, y: 1.9, z: -17.98, kind: "rain-glass", w: 22 }];
   }
-  envHook(set, V3(1, 1.7, 3));
+  envHook(set, V3(1, 1.7, 1));
   mergeStatic(set);
   // where people stand
   set.userData.marks = {
@@ -603,6 +725,7 @@ export function buildLot(o) {
   set.userData.spots["jason-end"] = { who: "jason", r: 3.0 };
   set.userData.camRail = [V3(-22, 1.0, 26), V3(-12, 0.7, 16), V3(-2, 1.3, 6), V3(6, 2.2, -3), V3(10, 2.0, -8.5)];
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
+  set.userData.ready = Promise.resolve();
   return set;
 }
 
@@ -624,6 +747,7 @@ function rainTex() {
   for (let i = 0; i < 120; i++) { g.fillStyle = "rgba(235,240,244," + (0.15 + r() * 0.3).toFixed(2) + ")"; g.beginPath(); g.arc(r() * 512, r() * 256, 0.8 + r() * 2.2, 0, 7); g.fill(); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
+function plantPot(x, z, h, parent, seed) { return plant(x, z, h, parent, seed); }
 function plant(x, z, h, parent, seed) {
   const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
   const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.17, 0.42, 14), paint({ color: "#8a5a3c", rim: 0.4, wet: 0.3, ao: 0.4 })); pot.position.y = 0.21; g.add(pot);

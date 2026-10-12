@@ -8,5 +8,8 @@ p.on('pageerror', e => console.log('pageerror', e.message));
 p.on('response', r => { if (r.status() >= 400) console.log('HTTP', r.status(), r.url()); });
 await p.goto('http://127.0.0.1:8765/tools/story/world/blank.html');
 const r = await p.evaluate(async (code) => { return await eval(code); }, process.argv[2]);
-console.log(JSON.stringify(r, null, 1).slice(0, 3000));
+// data URLs come back as files in tools/verify/out/probe-<i>.png
+if (Array.isArray(r) && r.every(x => typeof x === 'string' && x.startsWith('data:image/png'))) {
+  const fs = await import('node:fs'); r.forEach((u, i) => { const f = `tools/verify/out/probe-${i}.png`; fs.writeFileSync(f, Buffer.from(u.split(',')[1], 'base64')); console.log(f); });
+} else console.log(JSON.stringify(r, null, 1).slice(0, 6000));
 await b.close();
