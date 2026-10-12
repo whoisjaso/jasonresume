@@ -373,7 +373,7 @@ const SCENE_LIGHT = {
   lot: { sky: "#1f2724", ground: "#0c0c0b", moon: "#2e2c27", rim: "#7d7565", fog: "#0b1115", den: 0.028, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
   decision: { sky: "#222a27", ground: "#0d0d0c", moon: "#302e29", rim: "#817968", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
   office: { sky: "#33363a", ground: "#1c1a17", moon: "#2a2927", rim: "#6b6a62", fog: "#141618", den: 0.01, wetAll: 0.25, sat: 1, moonDir: [0.3, 0.8, 0.5] },
-  memory: { sky: "#463c34", ground: "#1d1712", moon: "#20242c", rim: "#7c6a58", fog: "#1a1612", den: 0.014, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
+  memory: { sky: "#463c34", ground: "#1d1712", moon: "#4a3826", rim: "#7c6a58", fog: "#1a1612", den: 0.014, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
   keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] }
 };
 function lightScene(name) {
@@ -574,10 +574,13 @@ function updateCamera(dt) {
   if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-1.6 * dt));
   camState.drag -= dt;
   const inside = S.scene === "office" || S.scene === "memory";
-  let dist = inside ? 2.7 : 3.6; const pitch = camState.pitch + (inside ? 0.08 : 0);
+  const mem = S.scene === "memory";
+  let dist = mem ? 1.85 : inside ? 2.7 : 3.6; const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0);
   const off = new THREE.Vector3(Math.sin(camState.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(camState.yaw) * Math.cos(pitch));
-  // keep the camera inside the room
+  // keep the camera inside the room; in the memory it sits close, over your right shoulder
   const want = head.clone().addScaledVector(off, dist);
+  const shoulder = mem ? new THREE.Vector3(Math.cos(camState.yaw), 0, -Math.sin(camState.yaw)).multiplyScalar(0.55) : null;
+  if (mem) want.add(shoulder);
   const b = set.userData.bounds;
   if (b) { want.x = clamp(want.x, b.x0 + 0.2, b.x1 - 0.2); want.z = clamp(want.z, b.z0 + 0.2, b.z1 - 0.2); want.y = Math.min(want.y, 2.85); }
   else {
@@ -589,6 +592,7 @@ function updateCamera(dt) {
     }
   }
   if (camState.init) { camera.position.copy(want); camState.look.copy(head); camState.init = false; }
+  if (shoulder) head.add(shoulder).add(new THREE.Vector3(0, -0.15, 0));
   camera.position.lerp(want, k); camState.look.lerp(head.add(new THREE.Vector3(0, -0.1, 0)), k);
   camera.lookAt(camState.look);
   post.comp.u.uFocus.value = camera.position.distanceTo(camState.look);

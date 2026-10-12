@@ -345,6 +345,29 @@ export function buildLot(o) {
 /* ================================================================
    THE OFFICE
    ================================================================ */
+/* set dressing: an abstract canvas (colour fields, no words), rain on glass, a potted plant, a lamp */
+function artTex(seed, pal) {
+  const c = TX.cv(256, 320), g = c.getContext("2d"), r = rng(seed);
+  g.fillStyle = pal[0]; g.fillRect(0, 0, 256, 320);
+  for (let i = 0; i < 5; i++) { g.globalAlpha = 0.55 + r() * 0.4; g.fillStyle = pal[1 + (i % (pal.length - 1))]; const x = r() * 180, y = r() * 240; g.fillRect(x, y, 40 + r() * 120, 30 + r() * 140); }
+  g.globalAlpha = 0.35; g.strokeStyle = "#f1ead8"; g.lineWidth = 3; g.beginPath(); g.moveTo(20, 280 * r() + 20); g.bezierCurveTo(90, 40, 160, 300, 236, 60 + r() * 200); g.stroke();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function rainTex() {
+  const c = TX.cv(512, 256), g = c.getContext("2d"), r = rng(5);
+  g.clearRect(0, 0, 512, 256);
+  for (let i = 0; i < 260; i++) { const x = r() * 512, y = r() * 256, l = 4 + r() * 26; g.strokeStyle = "rgba(230,236,240," + (0.12 + r() * 0.35).toFixed(2) + ")"; g.lineWidth = 1 + r() * 1.4; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (r() - 0.5) * 3, y + l / 2, x + (r() - 0.5) * 2, y + l); g.stroke(); }
+  for (let i = 0; i < 120; i++) { g.fillStyle = "rgba(235,240,244," + (0.15 + r() * 0.3).toFixed(2) + ")"; g.beginPath(); g.arc(r() * 512, r() * 256, 0.8 + r() * 2.2, 0, 7); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function plant(x, z, h, parent, seed) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.17, 0.42, 14), paint({ color: "#8a5a3c", rim: 0.4, wet: 0.3, ao: 0.4 })); pot.position.y = 0.21; g.add(pot);
+  const leaf = paint({ color: "#2f5a36", rim: 0.6, wet: 0.4, side: THREE.DoubleSide }), r = rng(seed);
+  for (let i = 0; i < 14; i++) { const l = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.5 + r() * h * 0.5, 4), leaf); const a = r() * Math.PI * 2, t = 0.25 + r() * 0.55; l.position.set(Math.cos(a) * 0.08, 0.42 + (0.25 + r() * h * 0.5) * 0.5, Math.sin(a) * 0.08); l.rotation.set(Math.sin(a) * t, 0, -Math.cos(a) * t); l.scale.set(1, 1, 0.25); g.add(l); }
+  return g;
+}
+
 export function buildOffice(o) {
   const set = new THREE.Group(); set.name = "office";
   set.userData = { lamps: [], spots: {}, walls: [] };
@@ -441,6 +464,46 @@ export function buildOffice(o) {
   set.userData.lamps.push({ p: V3(5.6, 1.5, -3.2), range: 3, col: [0.3, 0.4, 0.32], cone: 0, fixed: true });
   set.userData.lamps.push({ p: V3(0, 1.4, 6.5), range: 6, col: [0.5, 0.42, 0.32], cone: 0, fixed: true });
   set.userData.walls.push({ x0: -8, x1: 8, z0: -5.4, z1: -4.9 }, { x0: -7.4, x1: -6.9, z0: -6, z1: 6 }, { x0: 6.9, x1: 7.4, z0: -6, z1: 6 }, { x0: -8, x1: 8, z0: 4.85, z1: 5.4 });
+  // lived in: a rug, the desk's clutter and its lamp, plants, pictures, a clock, chairs by the window, binders, cable, rain on the glass
+  const rug = plane(3.8, 2.6, paint({ color: "#5c2e26", rim: 0.1, ao: 0.3 }), set); rug.rotation.x = -Math.PI / 2; rug.position.set(-1, 0.012, -1.6);
+  const cream = paint({ color: "#e9e4d8", rim: 0.2 }), brass = paint({ color: "#b08a4a", wet: 2.2, rim: 0.5 });
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.1, 12), cream); cup.position.set(0.85, 0.84, 0.2); desk.add(cup);
+  const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.04, 12), paint({ color: "#2a1a10", wet: 2 })); coffee.rotation.x = -Math.PI / 2; coffee.position.set(0.85, 0.885, 0.2); desk.add(coffee);
+  for (let i = 0; i < 3; i++) box(0.22, 0.012 + i * 0.01, 0.3, cream, -0.25 + i * 0.03, 0.8 + i * 0.012, 0.25 - i * 0.02, desk);
+  box(0.24, 0.03, 0.31, paint({ color: "#2d3b4f", rim: 0.3 }), -0.28, 0.83, 0.24, desk);
+  const pens = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1, 10), dark); pens.position.set(1.1, 0.84, -0.25); desk.add(pens);
+  // the desk lamp, warm, the room's practical
+  box(0.14, 0.02, 0.14, brass, -1.1, 0.8, -0.3, desk); box(0.02, 0.4, 0.02, brass, -1.1, 1.0, -0.3, desk);
+  const dsh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.13, 0.12, 12, 1, true), paint({ color: "#1c3229", rim: 0.5, wet: 0.6, side: THREE.DoubleSide })); dsh.position.set(-1.1, 1.22, -0.25); desk.add(dsh);
+  const dbulb = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), glow("#ffd9a0", { k: 2.4 })); dbulb.position.set(-1.1, 1.18, -0.25); desk.add(dbulb);
+  set.userData.lamps.push({ p: V3(-2.1, 1.15, -2.05), range: 3.6, col: [1.5, 0.95, 0.5], cone: 0, fixed: true });
+  box(0.02, 0.02, 1.4, dark, 0.2, 0.02, -2.0, set); // the monitor's cable along the floor
+  plant(6.2, 3.9, 1.2, set, 3); plant(-6.2, -4.2, 1.6, set, 9); plant(1.4, -4.5, 0.9, set, 12);
+  set.userData.walls.push({ x0: 5.8, x1: 6.6, z0: 3.5, z1: 4.3 }, { x0: -6.6, x1: -5.8, z0: -4.6, z1: -3.8 }, { x0: 1.0, x1: 1.8, z0: -4.9, z1: -4.1 });
+  // pictures: colour fields, no words
+  const frameM = paint({ color: "#151413", rim: 0.4, wet: 0.5 });
+  for (const [x, y, z, ry, w, h, seed, pal] of [[6.96, 1.75, -1.6, -Math.PI / 2, 0.9, 1.1, 21, ["#d8cfbd", "#1c3229", "#a85a3a", "#c9a96a"]], [6.96, 1.6, 2.5, -Math.PI / 2, 0.7, 0.9, 33, ["#e3dccb", "#2d3b4f", "#8a7a5a"]], [-6.96, 1.75, 0.3, Math.PI / 2, 1.2, 0.85, 47, ["#cfc6b2", "#6a2f2a", "#24402f", "#d6b98a"]], [-0.9, 1.95, -4.97, 0, 0.8, 0.6, 58, ["#ddd5c4", "#1c3229", "#b07a42"]]]) {
+    const f = new THREE.Group(); f.position.set(x, y, z); f.rotation.y = ry; set.add(f);
+    box(w + 0.08, h + 0.08, 0.04, frameM, 0, 0, 0, f); const a = plane(w, h, paint({ map: artTex(seed, pal), color: "#fff", rim: 0.1, wet: 0.3 }), f); a.position.z = 0.025;
+  }
+  // a clock over the door to the break room
+  const clk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 24), cream); clk.rotation.x = Math.PI / 2; clk.position.set(4.6, 2.5, -4.97); set.add(clk);
+  box(0.012, 0.14, 0.01, dark, 4.6, 2.54, -4.94, set).rotation.z = 0.5; box(0.012, 0.1, 0.01, dark, 4.6, 2.52, -4.935, set).rotation.z = -1.2;
+  // two armchairs by the window and a low table with a magazine
+  const fab = paint({ color: "#3d4a40", rim: 0.4, ao: 0.5 });
+  for (const [x, ry] of [[-2.2, 0.35], [2.2, -0.35]]) { const a = new THREE.Group(); a.position.set(x, 0, 3.9); a.rotation.y = Math.PI + ry; set.add(a); box(0.8, 0.4, 0.75, fab, 0, 0.22, 0, a); box(0.8, 0.5, 0.15, fab, 0, 0.62, -0.32, a); box(0.12, 0.25, 0.75, fab, -0.4, 0.5, 0, a); box(0.12, 0.25, 0.75, fab, 0.4, 0.5, 0, a); set.userData.walls.push({ x0: x - 0.5, x1: x + 0.5, z0: 3.45, z1: 4.4 }); }
+  box(0.9, 0.04, 0.5, wood, 0, 0.42, 4.0, set); box(0.06, 0.4, 0.06, wood, -0.4, 0.2, 4.0, set); box(0.06, 0.4, 0.06, wood, 0.4, 0.2, 4.0, set); box(0.26, 0.01, 0.34, paint({ color: "#a85a3a", rim: 0.2 }), 0.15, 0.445, 4.0, set);
+  set.userData.walls.push({ x0: -0.5, x1: 0.5, z0: 3.7, z1: 4.3 });
+  // binders on a low shelf under the whiteboard
+  box(1.8, 0.7, 0.36, wood, 2.6, 0.35, -4.78, set); set.userData.walls.push({ x0: 1.6, x1: 3.6, z0: -5, z1: -4.5 });
+  { const rb = rng(17), bc2 = ["#1c3229", "#2d3b4f", "#6a2f2a", "#8a7a5a", "#e9e4d8"]; let x = 1.8; while (x < 3.35) { const w = 0.05 + rb() * 0.04; box(w, 0.3, 0.26, paint({ color: bc2[(rb() * bc2.length) | 0], rim: 0.3 }), x, 0.86, -4.76, set); x += w + 0.008; } }
+  // a floor lamp in the coffee corner
+  box(0.3, 0.03, 0.3, dark, -6.3, 0.015, 4.2, set); box(0.03, 1.5, 0.03, dark, -6.3, 0.76, 4.2, set);
+  const fsh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.3, 14, 1, true), glow("#f1d6a8", { k: 1.1, side: THREE.DoubleSide })); fsh.position.set(-6.3, 1.6, 4.2); set.add(fsh);
+  set.userData.lamps.push({ p: V3(-6.3, 1.5, 4.2), range: 4.5, col: [1.2, 0.8, 0.45], cone: 0, fixed: true });
+  set.userData.walls.push({ x0: -6.6, x1: -6.0, z0: 3.9, z1: 4.5 });
+  // rain on the glass
+  const wet = plane(6, 1.95, glow("#ffffff", { map: rainTex(), k: 0.4, alpha: 0.7 }), set); wet.position.set(0, 1.85, 4.96); wet.rotation.y = Math.PI;
   mergeStatic(set);
   set.userData.marks = {
     playerStart: V3(4.5, 0, 3.6), playerYaw: Math.PI,
@@ -502,6 +565,26 @@ export function buildLibrary(o) {
   set.userData.spots["mem-brain"] = { p: V3(1.4, 0.95, 3.05), r: 1.3, stand: V3(1.4, 0, 4.1) };
   set.userData.spots["mem-lamp"] = { p: V3(1.1, 1.15, 3.0), r: 1.5, stand: V3(1.1, 0, 4.1) };
   set.userData.walls.push({ x0: -12, x1: 12, z0: -9.4, z1: -8.9 }, { x0: -12, x1: 12, z0: 8.9, z1: 9.4 }, { x0: -12.4, x1: -11.9, z0: -9, z1: 9 }, { x0: 11.9, x1: 12.4, z0: -9, z1: 9 });
+  // a reading room someone uses: chairs pulled out, stacks left open, a cart, a runner, a clock, rain on the tall windows
+  const chairM = paint({ color: "#3a2a1c", wet: 0.5, rim: 0.4, ao: 0.4 }), paper = paint({ color: "#e6dfcf", rim: 0.2 });
+  const rr = rng(23);
+  for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3], [0, 3]]) for (const side of [-1, 1]) for (const cx of [-1.2, 0, 1.2]) {
+    if (tx === 0 && side > 0) continue; // your side of the desk stays open
+    const c = new THREE.Group(); c.position.set(tx + cx + (rr() - 0.5) * 0.2, 0, tz + side * (0.95 + rr() * 0.25)); c.rotation.y = (side > 0 ? Math.PI : 0) + (rr() - 0.5) * 0.4; set.add(c);
+    box(0.44, 0.05, 0.44, chairM, 0, 0.46, 0, c); box(0.44, 0.5, 0.05, chairM, 0, 0.72, 0.21, c); for (const [lx, lz] of [[-0.19, -0.19], [0.19, -0.19], [-0.19, 0.19], [0.19, 0.19]]) box(0.04, 0.46, 0.04, chairM, lx, 0.23, lz, c);
+  }
+  for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3]]) for (let k = 0; k < 3; k++) {
+    const x = tx - 1.5 + rr() * 3, z = tz + (rr() - 0.5) * 0.8; let y = 0.82;
+    for (let b = 0; b < 2 + ((rr() * 3) | 0); b++) { const h = 0.03 + rr() * 0.03; const m = box(0.22 + rr() * 0.08, h, 0.3, paint({ color: bc[(rr() * bc.length) | 0], rim: 0.3 }), x, y + h / 2, z, set); m.rotation.y = (rr() - 0.5) * 0.5; y += h; }
+    if (rr() < 0.6) { const pg = plane(0.42, 0.3, paper, set); pg.rotation.set(-Math.PI / 2, 0, (rr() - 0.5) * 0.6); pg.position.set(x + 0.4, 0.825, z + 0.1); }
+  }
+  // the cart of returns
+  { const c = new THREE.Group(); c.position.set(-2.6, 0, 6.2); c.rotation.y = 0.3; set.add(c); box(1.0, 0.04, 0.45, wood, 0, 0.3, 0, c); box(1.0, 0.04, 0.45, wood, 0, 0.75, 0, c); for (const lx of [-0.48, 0.48]) box(0.04, 0.8, 0.45, wood, lx, 0.4, 0, c);
+    let x = -0.44; while (x < 0.44) { const w = 0.04 + rr() * 0.04, h = 0.24 + rr() * 0.1; box(w, h, 0.2, paint({ color: bc[(rr() * bc.length) | 0], rim: 0.3 }), x, 0.77 + h / 2, 0, c); x += w + 0.01; }
+    set.userData.walls.push({ x0: -3.3, x1: -1.9, z0: 5.8, z1: 6.6 }); }
+  const runner = plane(3, 14, paint({ color: "#5a2a22", rim: 0.1, ao: 0.3 }), set); runner.rotation.x = -Math.PI / 2; runner.position.set(0, 0.012, 0);
+  const clk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 28), paint({ color: "#e6dfcf", rim: 0.2 })); clk.rotation.x = Math.PI / 2; clk.position.set(0, 5.2, -8.95); set.add(clk);
+  for (let i = 0; i < 5; i++) { const w = plane(1.6, 3.6, glow("#ffffff", { map: rainTex(), k: 0.35, alpha: 0.8 }), set); w.position.set(-8 + i * 4, 3.2, -8.94); }
   mergeStatic(set);
   set.userData.marks = { playerStart: V3(0, 0, 4.4), playerYaw: Math.PI };
   set.userData.bounds = { x0: -11.5, x1: 11.5, z0: -8.5, z1: 8.5 };
