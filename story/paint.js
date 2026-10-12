@@ -336,10 +336,10 @@ vec3 envBRDF(vec3 f0, float rough, float nv){
 float h12(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 // water beads on a wet up-facing surface: a bumped normal and a mask (static; the rain keeps them full)
 vec3 beads(vec3 p, out float m){
-  vec2 q = p.xz * 34.0; vec2 c = floor(q), f = fract(q) - 0.5;
-  vec2 o = vec2(h12(c), h12(c + 7.3)) - 0.5; float r = 0.12 + 0.22 * h12(c + 2.1);
+  vec2 q = p.xz * 46.0; vec2 c = floor(q), f = fract(q) - 0.5;
+  vec2 o = vec2(h12(c), h12(c + 7.3)) - 0.5; float r = 0.08 + 0.18 * h12(c + 2.1);
   vec2 d = f - o * 0.4; float l = length(d);
-  m = smoothstep(r, r * 0.6, l) * step(0.35, h12(c + 9.7));
+  m = smoothstep(r, r * 0.6, l) * step(0.45, h12(c + 9.7));
   return vec3(d.x, 0.0, d.y) / max(r, 1e-3) * m * 1.4;
 }
 // specular from one lamp or the moon: GGX, widened by the lamp's size at this distance

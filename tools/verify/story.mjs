@@ -189,6 +189,11 @@ async function office(p, mobile, o, label) {
     }
   }
   await finishTalk(p, label);
+  if (/hire|deflect/.test(o.tag)) {
+    const pr = await p.evaluate(() => window.JG_STORY.debug.camProbe([[4.5, 3.6], [0.5, 3.6], [-5.4, -2.6], [2.6, -3.3], [5.0, 0.6], [-2.9, -3.5], [-5.4, 2.6], [0, 0.8], [6, 4], [-6, -4]]));
+    if (pr.bad.length) errs.push(`${label}: office camera inside geometry at ${pr.bad.length} of ${pr.n}, e.g. ${JSON.stringify(pr.bad.slice(0, 3))}`);
+    else notes.push(`${label}: office camera clear of geometry at all ${pr.n} samples`);
+  }
   const ringing = await until(p, () => window.JG_STORY.debug.state().flags.ringing, null, 30000);
   if (!ringing) errs.push(`${label}: the phone never rang`);
   await use(p, mobile, 'phone', label);

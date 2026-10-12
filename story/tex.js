@@ -103,7 +103,7 @@ export function asphalt(W, H, px, lines) {
            G painted lines (worn), B ambient occlusion (cars' footprints, curbs, walls).
    mask:   R standing water (puddles in the low spots), G how wet (the dry strip under the canopy),
            B 255 concrete instead of asphalt (walks, aprons), 128 a tar-sealed crack.
-   o: { lines: [[x0, z0, x1, z1]], cars: [{x, z, yaw, w, l}], conc: [[x0, z0, x1, z1]], dry: [[x0, z0, x1, z1]], ao: [[x0, z0, x1, z1, k]] }
+   o: { puddles: [[x, z, rx, rz]], lines: [[x0, z0, x1, z1]], cars: [{x, z, yaw, w, l}], conc: [[x0, z0, x1, z1]], dry: [[x0, z0, x1, z1]], ao: [[x0, z0, x1, z1, k]] }
    Returns the textures and the raw puddle and concrete grids for surfaceAt(). */
 export function lotGround(W, H, px, o = {}) {
   const w = Math.round(W * px), h = Math.round(H * px);
@@ -194,6 +194,8 @@ export function lotGround(W, H, px, o = {}) {
     let v = n1(x, y) * 0.62 + n2(x, y) * 0.3 + n3(x, y) * 0.08;
     // water gathers where the asphalt dips: away from the cars' footprints, toward the lanes
     v += (1 - aoAt[i]) * -0.25;
+    // puddles the story needs, where it needs them
+    for (const q of o.puddles || []) { const dd = Math.hypot((wx - q[0]) / q[2], (wz - q[1]) / (q[3] || q[2])); if (dd < 1.6) v = Math.max(v, 0.66 + (1 - dd) * 0.25 + (n3(x, y) - 0.5) * 0.12); }
     const p = Math.max(0, Math.min(1, (v - 0.615) * 9));
     let wet = 1; for (const R of o.dry || []) if (inR(wx, wz, R)) wet = Math.min(wet, 0.15 + 0.85 * Math.min(1, Math.min(wz - R[1], R[3] - wz) * 0.6));
     let cc = 0; for (const R of o.conc || []) if (inR(wx, wz, R)) cc = 1;

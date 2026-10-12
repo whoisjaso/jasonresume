@@ -464,9 +464,9 @@ function palm(x, z, h, set, r) {
    the city's edge on the horizon (buildings, towers, a few lit windows and beacons) */
 function skyDome(o) {
   return new THREE.Mesh(new THREE.SphereGeometry(150, 48, 24, 0, Math.PI * 2, 0, Math.PI * 0.62), new THREE.ShaderMaterial({
-    uniforms: { uTime: U.uTime, uDay: { value: o.day ? 1 : 0 }, uMap: { value: TX.skylineTex() } },
+    uniforms: { uTime: U.uTime, uFog: U.uFog, uDay: { value: o.day ? 1 : 0 }, uMap: { value: TX.skylineTex() } },
     vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `uniform float uTime; uniform float uDay; uniform sampler2D uMap; varying vec3 vD;
+    fragmentShader: `uniform float uTime; uniform float uDay; uniform vec3 uFog; uniform sampler2D uMap; varying vec3 vD;
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
       float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * n(p); p = p * 2.03 + 7.1; a *= 0.5; } return s; }
@@ -475,8 +475,9 @@ function skyDome(o) {
         // clouds: a slow-moving deck, projected onto a plane overhead
         vec2 cp = d.xz / max(d.y + 0.08, 0.04) * 0.35 + vec2(uTime * 0.004, uTime * 0.002);
         float cl = smoothstep(0.35, 0.8, fbm(cp));
-        vec3 night = mix(vec3(0.075, 0.055, 0.045), vec3(0.012, 0.016, 0.022), smoothstep(0.0, 0.5, y));
-        night += vec3(0.07, 0.045, 0.028) * cl * (1.0 - smoothstep(0.0, 0.7, y)) + vec3(0.02, 0.016, 0.014) * cl;
+        // the haze at the horizon is the scene's fog, so the ground meets the sky without a seam
+        vec3 night = mix(uFog * 1.15 + vec3(0.012, 0.008, 0.004), vec3(0.006, 0.008, 0.011), smoothstep(0.0, 0.45, y));
+        night += vec3(0.034, 0.021, 0.012) * cl * (1.0 - smoothstep(0.0, 0.6, y)) + vec3(0.008, 0.006, 0.005) * cl;
         vec3 day = mix(vec3(0.82, 0.8, 0.74), vec3(0.42, 0.55, 0.68), smoothstep(0.0, 0.6, y)) * mix(1.0, 1.12, cl);
         vec3 c = mix(night, day, uDay);
         // the skyline on the horizon
@@ -553,7 +554,7 @@ export function buildLot(o) {
   box(0.04, 0.5, 0.06, pbr({ color: "#c9ccd0", metal: 1, rough: 0.2 }), 10.55, 1.15, 0.19, sh);
   // the wordmark over the canopy, lit
   const signT = TX.signTex(o.wordmark);
-  const sign = plane(10, 2.5, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 4.62, 0.51);
+  const sign = plane(7.2, 1.8, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 5.0, 0.51);
   // the sold board by the door; it fills from June 2025, so on the morning of the keys (August 2024) it is not up yet
   if (!day) { const sold = plane(1.6, 1.2, pbr({ map: TX.soldTex(), color: "#fff", rough: 0.5, wet: 0.3 }), sh); sold.position.set(8.6, 1.55, 0.16); }
   set.userData.spots.sold = { p: V3(2 + 8.6, 1.5, -18 + 0.3), r: 2.4, stand: V3(10.6, 0, -16.2) };
@@ -606,7 +607,7 @@ export function buildLot(o) {
     ws.count = n; ws.userData.keep = true; set.add(ws); }
 
   /* --- lamps --- */
-  [[-9, -1.2, 8.5, 1], [8, -1.2, 8.5, 1], [-1, 9.4, 8.5, 1], [13, 9.4, 8.5, 0], [-17, 12, 8, 0], [11.6, -13.4, 7, 0]].forEach(([x, z, h, twin]) => lampPost(x, z, h, set, { day, twin: false }));
+  [[-9, -1.2, 8.5, 1], [8, -1.2, 8.5, 1], [-1, 9.4, 8.5, 1], [13, 9.4, 8.5, 0], [-17, 12, 8, 0], [11.6, -13.4, 7, 0], [6.2, 18.6, 7.5, 0]].forEach(([x, z, h, twin]) => lampPost(x, z, h, set, { day, twin: false }));
   // the showroom's own light: spilling out through the glass, and the room inside it
   set.userData.lamps.push({ p: V3(2, 2.4, -16.4), range: 15, col: [1.6, 1.15, 0.7], cone: 0, fixed: true });
   set.userData.lamps.push({ p: V3(1, 3.3, -21.0), range: 13, col: [2.2, 1.9, 1.5], cone: 0, fixed: true });
@@ -688,7 +689,7 @@ export function buildLot(o) {
     const px = o.lowres ? 14 : 24;
     const carsG = lotCars.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
     const conc = [[-12.4, -17.9, 16.4, -15.6]];
-    const g = TX.lotGround(W, H, px, { lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25], [-34, 21.4, 34, 21.6, 0.3, 0.3]].concat(set.userData.lamps.filter(l => l.coneMesh).map(l => [l.p.x - 0.82 - 0.3, l.p.z - 0.3, l.p.x - 0.82 + 0.3, l.p.z + 0.3, 0.6, 0.45])) });
+    const g = TX.lotGround(W, H, px, { puddles: [[-1.5, 11.2, 1.9, 1.3], [-0.6, 10.2, 0.8, 0.6]], lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25], [-34, 21.4, 34, 21.6, 0.3, 0.3]].concat(set.userData.lamps.filter(l => l.coneMesh).map(l => [l.p.x - 0.82 - 0.3, l.p.z - 0.3, l.p.x - 0.82 + 0.3, l.p.z + 0.3, 0.6, 0.45])) });
     const shBoxes = lotCars.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
       .concat([{ x: 2, z: -22.6, hw: 13.3, hl: 3.7, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }, { x: 2, z: -16.9, hw: 13.6, hl: 0.95, h: 4.1, y0: 3.87, yaw: 0 }]);
     const shL = set.userData.lamps.filter(l => !l.car).slice(0, 8);
