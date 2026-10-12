@@ -2,7 +2,7 @@
   "_about": "After Hours: The Run. Six short levels, one per title in library.json, in the order of the record: Neuroscience (school), Triple J Auto (August 2024), Lead to Title (the CRM), The Inbound (the voice AI), Prospector, and Obavia (in development, no medals). Units are tiles of 32 px; y grows down and the ground's top is usually row 12. Prefabs: g ground [x1,x2,y], b block [x,y,w,h,look], o one-way [x,y,w,look], car [x,kind], cab filing cabinet [x,top,h], mv moving one-way [x,y,w,dx,dy,period,phase,look], pad synapse [x,y], lamp checkpoint [x,y], sp sparks [x,y,n,dx,dy,arc], md medal [trophy,x,y,where], fake secret wall [x,y,w,h], trig [x,y,w,h,group,look], gh ghost platform [x,y,w,group,look] (group ~ builds as you come near), door [x,y,h,group], npc [who,x,y], talk [x,line id]. Each medal is a trophy from library.json and unlocks that same trophy. Spoken lines are fictional characters in stock Kokoro voices (tools/voice/narrate_free.py tools/site/run.json writes assets/voice/run); lines starting me- are mine, first person, every fact in them in llms.txt; they show as captions and play in my own voice from assets/voice/run/jason-<id>.mp3 once tools/voice/run_jason_lines.json has been rendered from my recording. No em dashes.",
   "v": 1,
   "tile": 32,
-  "out": "assets/voice/run",
+  "out": "assets/voice/run-v2",
   "voices_note": "Jason's lines: captions, and where voiced, his own voice, synthesized from his recording with his permission. Other voices: stock Kokoro voices (open source). Other characters are fictional.",
   "cast": {
     "prof": {

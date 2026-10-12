@@ -3,7 +3,7 @@
 //   node tools/voice/timeline.mjs
 //
 // Reads tools/voice/tour_lines.json and, where tools/voice/narrate_free.py (or eleven.mjs) has voiced
-// a line, assets/voice/tour/<id>.json (real word timings from the voice model).
+// a line, assets/voice/tour-v2/<id>.json (real word timings from the voice model).
 // Writes
 //   tools/film/src/tour/timeline.json   the film's shots, frames and captions
 //   tools/site/tour.json                the site's tour: steps, lines, word timings,
@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
 const doc = JSON.parse(fs.readFileSync(path.join(HERE, 'tour_lines.json'), 'utf8'));
-const VOICE = path.join(ROOT, 'assets', 'voice', 'tour');
+const VOICE = path.join(ROOT, 'assets', 'voice', 'tour-v2');
 let man = { lines: {} };
 try { man = JSON.parse(fs.readFileSync(path.join(VOICE, 'manifest.json'), 'utf8')); } catch {}
 
@@ -41,7 +41,7 @@ function timing(line) {
   const f = path.join(VOICE, `${line.id}.json`);
   if (m && fs.existsSync(f) && fs.existsSync(path.join(VOICE, `${line.id}.mp3`))) {
     const j = JSON.parse(fs.readFileSync(f, 'utf8'));
-    if (j.text === line.text) return { voiced: true, duration: j.duration, words: j.words, audio: `assets/voice/tour/${line.id}.mp3` };
+    if (j.text === line.text) return { voiced: true, duration: j.duration, words: j.words, audio: `assets/voice/tour-v2/${line.id}.mp3` };
     console.warn(`timeline: "${line.id}" changed since it was voiced; run tools/voice/narrate_free.py. Using the estimate.`);
   }
   return { voiced: false, ...estimate(line.text) };

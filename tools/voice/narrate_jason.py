@@ -113,13 +113,20 @@ def main():
             heard = [(w.word.strip(), w.start, w.end) for s in segs for w in (s.words or [])]
             got = [norm(w) for w, _, _ in heard]
             sm = difflib.SequenceMatcher(None, target, got)
-            match = sum(b.size for b in sm.get_matching_blocks()) / max(1, len(target))
+            hit = sum(b.size for b in sm.get_matching_blocks())
+            # numbers come back as digits ("2025"), so also score against the written words
+            wt = [norm(w) for w in re.split(r"[\s,]+", l["text"].replace("$", "")) if norm(w)]
+            wg = [w for g in got for w in [re.sub(r"[^a-z0-9]", "", g)] if w]
+            whit = sum(b.size for b in difflib.SequenceMatcher(None, wt, wg).get_matching_blocks())
+            match = max(hit / max(1, len(target)), whit / max(1, len(wt)))
+            # sounds that aren't in the line (a stray syllable before it, a word added) cost the take
+            extra = min(len(got) - hit, len(wg) - whit) / max(1, len(target))
             sim = float(np.dot(ref_emb, enc.embed_utterance(preprocess_wav(tmp))))
             dur = len(wav) / sr
             wps = len(target) / max(0.1, dur)
             pace_ok = 1.6 <= wps <= 3.6
-            score = match * 2 + sim + (0 if pace_ok else -0.5)
-            tried.append({"take": t, "heard": round(match, 3), "like_me": round(sim, 3), "words_per_s": round(wps, 2)})
+            score = match * 2 - extra * 1.5 + sim + (0 if pace_ok else -0.5)
+            tried.append({"take": t, "heard": round(match, 3), "extra": round(extra, 3), "like_me": round(sim, 3), "words_per_s": round(wps, 2)})
             if best is None or score > best[0]:
                 best = (score, wav, sr, heard, sm, dur, tried[-1])
         _, wav, sr, heard, sm, dur, pick = best

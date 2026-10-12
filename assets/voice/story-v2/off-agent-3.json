@@ -1,0 +1,42 @@
+{
+ "id": "off-agent-3",
+ "text": "You're all booked, Marcus. See you Saturday.",
+ "duration": 2.95,
+ "words": [
+  {
+   "w": "You're",
+   "s": 0.3,
+   "e": 0.412
+  },
+  {
+   "w": "all",
+   "s": 0.412,
+   "e": 0.6
+  },
+  {
+   "w": "booked,",
+   "s": 0.6,
+   "e": 0.825
+  },
+  {
+   "w": "Marcus.",
+   "s": 0.863,
+   "e": 1.475
+  },
+  {
+   "w": "See",
+   "s": 1.613,
+   "e": 1.775
+  },
+  {
+   "w": "you",
+   "s": 1.775,
+   "e": 1.9
+  },
+  {
+   "w": "Saturday.",
+   "s": 1.9,
+   "e": 2.675
+  }
+ ]
+}

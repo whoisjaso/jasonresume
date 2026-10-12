@@ -236,7 +236,7 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
 /* ================================================================
    VOICES AND CAPTIONS
    ================================================================ */
-const VBASE = D.out || "assets/voice/story";
+const VBASE = D.out || "assets/voice/story-v2";
 const have = { fict: {}, me: {} };
 fetch(VBASE + "/manifest.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
 fetch(VBASE + "/manifest-jason.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});

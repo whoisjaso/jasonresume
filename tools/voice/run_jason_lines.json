@@ -1,6 +1,6 @@
 {
  "_about": "My own lines in the run, first person, every fact already in llms.txt. Rendered with my cloned voice (from my own recording, with my permission) to assets/voice/run/jason-<id>.mp3 plus jason-<id>.json word timings, the same contract as narrate_free.py ({ id, text, duration, words: [{ w, s, e }] }). The ids carry the jason- prefix, so the file names are the ids. The text must match the me lines in tools/site/run.json (assemble_home.py checks). The reference recording is never committed. No em dashes.",
- "out": "assets/voice/run",
+ "out": "assets/voice/run-v2",
  "lines": [
   {
    "id": "jason-me-neuro-1",

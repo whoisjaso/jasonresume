@@ -1,7 +1,7 @@
 {
   "_about": "After Hours, Episode One: Lamps On. The story you walk through in 3D (story/*.js, story.css), inlined by assemble_home.py as #story-data. Talks are a branching graph: each has lines, then choices or next, and do-actions when it ends. Conditions (if) are comma-joined terms: k=v, k!=v, k, !k, seen:object. Every line Jason says that states a fact is a first-person fact already in llms.txt; fictional characters say nothing about Jason that is not there, and they are labelled fictional wherever they speak. Jason's lines are voiced in his own voice (tools/voice/story_jason_lines.json, written by tools/site/story_voice.py), the fictional cast in stock Kokoro voices (tools/voice/story_lines.json). Your thoughts (who: you) are text. No em dashes, no percent signs, no invented numbers.",
   "v": 1,
-  "out": "assets/voice/story",
+  "out": "assets/voice/story-v2",
   "title": "After Hours",
   "episode": "Episode One",
   "name": "Lamps On",
@@ -205,7 +205,7 @@
         { "id": "off-caller-1", "who": "caller", "t": "Hi. Is the gray truck on your site still there? Could I come see it Saturday?" },
         { "id": "off-agent-2", "who": "agent", "t": "It's still here. I can book you for Saturday morning. What's your name?" },
         { "id": "off-caller-2", "who": "caller", "t": "Marcus." },
-        { "id": "off-agent-3", "who": "agent", "t": "You're booked, Marcus. We'll see you Saturday." },
+        { "id": "off-agent-3", "who": "agent", "t": "You're all booked, Marcus. See you Saturday." },
         { "id": "off-jason-8", "who": "jason", "t": "That's the inbound voice AI. It books appointments into the CRM." },
         { "id": "off-jason-9", "who": "jason", "t": "Across August and September 2026 it averaged 41 inbound calls and 14 booked appointments a month." }
       ],
