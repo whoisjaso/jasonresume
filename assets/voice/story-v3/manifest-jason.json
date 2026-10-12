@@ -869,19 +869,70 @@
   },
   "jason-off-jason-10": {
    "hash": "147c6a1acd40",
-   "duration": 0.72,
+   "duration": 0.52,
    "picked": {
-    "take": 0,
+    "take": 2,
     "heard": 1.0,
-    "like_me": 0.45,
-    "words_per_s": 1.39
+    "extra": 0.0,
+    "like_me": 0.403,
+    "words_per_s": 1.92
    },
    "takes": [
     {
      "take": 0,
      "heard": 1.0,
+     "extra": 0.0,
      "like_me": 0.45,
      "words_per_s": 1.39
+    },
+    {
+     "take": 1,
+     "heard": 1.0,
+     "extra": 1.0,
+     "like_me": 0.546,
+     "words_per_s": 0.83
+    },
+    {
+     "take": 2,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.403,
+     "words_per_s": 1.92
+    },
+    {
+     "take": 3,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.489,
+     "words_per_s": 1.56
+    },
+    {
+     "take": 4,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.487,
+     "words_per_s": 1.56
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.483,
+     "words_per_s": 1.47
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.496,
+     "words_per_s": 1.47
+    },
+    {
+     "take": 7,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.51,
+     "words_per_s": 1.19
     }
    ]
   },
@@ -1103,16 +1154,67 @@
    "duration": 4.72,
    "picked": {
     "take": 0,
-    "heard": 0.75,
+    "heard": 1.0,
+    "extra": 0.0,
     "like_me": 0.895,
     "words_per_s": 2.54
    },
    "takes": [
     {
      "take": 0,
-     "heard": 0.75,
+     "heard": 1.0,
+     "extra": 0.0,
      "like_me": 0.895,
      "words_per_s": 2.54
+    },
+    {
+     "take": 1,
+     "heard": 0.9,
+     "extra": 0.083,
+     "like_me": 0.886,
+     "words_per_s": 2.5
+    },
+    {
+     "take": 2,
+     "heard": 0.9,
+     "extra": 0.083,
+     "like_me": 0.897,
+     "words_per_s": 2.36
+    },
+    {
+     "take": 3,
+     "heard": 0.9,
+     "extra": 0.083,
+     "like_me": 0.884,
+     "words_per_s": 2.42
+    },
+    {
+     "take": 4,
+     "heard": 0.9,
+     "extra": 0.083,
+     "like_me": 0.836,
+     "words_per_s": 2.19
+    },
+    {
+     "take": 5,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.894,
+     "words_per_s": 2.31
+    },
+    {
+     "take": 6,
+     "heard": 1.0,
+     "extra": 0.0,
+     "like_me": 0.88,
+     "words_per_s": 2.33
+    },
+    {
+     "take": 7,
+     "heard": 0.9,
+     "extra": 0.083,
+     "like_me": 0.871,
+     "words_per_s": 2.33
     }
    ]
   },
