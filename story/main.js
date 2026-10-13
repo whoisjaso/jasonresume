@@ -2610,7 +2610,7 @@ function holdTo(how) {
     const host = dev === "touch" && !actEl.hidden ? actEl : promptEl, r = host.getBoundingClientRect();
     holdEl.style.transform = "translate(" + Math.round(host === actEl ? r.left + r.width / 2 : r.left + 22) + "px," + Math.round(r.top + r.height / 2) + "px)";
     holdFg.style.strokeDashoffset = "176"; holdEl.hidden = false; void holdEl.offsetWidth; holdEl.classList.add("is-on");
-    HOLDG = { t: 0, beat: 0, auto: how === "debug" || how === "walk" ? true : null, dur: FAST ? 0.2 : still() ? 0.8 : 1.3, res, id: near ? near.id : null };
+    HOLDG = { t: 0, beat: 0, auto: how === "debug" || how === "walk" ? true : null, dur: FAST ? 0.9 : still() ? 0.8 : 1.3, res, id: near ? near.id : null };
   });
 }
 function holdTick(dt) {
