@@ -66,7 +66,8 @@
   if (/[?&]door=library/.test(location.search)) { try { var u2 = new URL(location.href); u2.searchParams.delete("door"); history.replaceState(null, "", u2.pathname + u2.search + u2.hash); } catch (e) {} }
   /* the start screen's Play starts After Hours (the episode, story/main.js) when the page carries it; a saved episode reads Continue */
   var STORY = !!document.getElementById("story-data");
-  var TPLAY = !!(STORY && t.play && !DOOR);
+  /* a deep link is where they're going (it opens after the title screen), so it meets the guided door, not the start screen */
+  var TPLAY = !!(STORY && t.play && !DOOR && !(location.hash && location.hash !== "#"));
   var SAVED = STORY && (function () { try { var v = JSON.parse(localStorage.getItem("jg_story") || "null"); return !!(v && v.scene); } catch (e) { return false; } })();
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");

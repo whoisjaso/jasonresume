@@ -230,6 +230,8 @@ export function createAudio(o) {
     for (const n of old) { try { ramp(n.g.gain, 0, secs); n.s.stop(now() + secs + 0.1); } catch (e) {} }
     A.lamps = []; A.roof = null; A.window = null; A.typingAt = null; A.lines = []; A.arcade = null;
     if (A.car) { try { A.car.stop(); } catch (e) {} A.car = null; }
+    if (A.radio) { A.radio.stop(); A.radio = null; }
+    A.lampAt = null;
     if (A.drv) { try { A.drv.stop(0.3); } catch (e) {} }
   }
   /* a scene's soundscape: called on every arrival */
@@ -329,8 +331,13 @@ export function createAudio(o) {
   function update(dt, w) {
     if (!A.ctx || A.ctx.state !== "running") return;
     const t = now();
+    // a radio the world switched on plays where it stands; off, it stops
+    const rs = A.set && A.set.userData && A.set.userData.sounds && A.set.userData.sounds.radio;
+    if (rs && !A.radio && soundOn()) A.radio = radio(rs); else if (!rs && A.radio) { A.radio.stop(); A.radio = null; }
+    if (A.radio) A.radio.tick(t);
     // the nearest lamps get the buzzing voices
-    if (A.lamps.length && A.lampList && w.ear) {
+    if (A.lamps.length && A.lampList && w.ear && (!A.lampAt || Math.abs(A.lampAt.x - w.ear.x) + Math.abs(A.lampAt.z - w.ear.z) > 1)) {
+      A.lampAt = { x: w.ear.x, z: w.ear.z }; // re-sorted only when you've moved a metre, not every frame
       const ear = w.ear, sorted = A.lampList.slice().sort((a, b) => (a.p.x - ear.x) ** 2 + (a.p.z - ear.z) ** 2 - (b.p.x - ear.x) ** 2 - (b.p.z - ear.z) ** 2);
       A.lamps.forEach((v, i) => {
         const l = sorted[i]; if (!l) return;
@@ -618,6 +625,31 @@ export function createAudio(o) {
     const api = { start, update, shift, inside, impact, door, stop, get on() { return D.on; }, get state() { return { on: D.on, inside: D.inside, rpm: D.rpm, eng: eng.gain.value, squeal: sg.gain.value, roof: roofG.gain.value, out: N.outLp.frequency.value }; } };
     A.drv = api;
     return api;
+  }
+
+  /* the radio: a small speaker's worth of slow chords and a picked line over a little static */
+  function radio(at) {
+    const C = A.ctx, out = C.createGain(); out.gain.value = 0;
+    const bp = C.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1100; bp.Q.value = 0.7;
+    const p = panner(at.x, at.y, at.z, 1.4, 1.3, 25); out.connect(bp); bp.connect(p); p.connect(A.nodes.sfx);
+    const v = C.createGain(); v.gain.value = 0.25; bp.connect(v); v.connect(A.nodes.verb);
+    const hiss = C.createBufferSource(); hiss.buffer = A.pink; hiss.loop = true; const hg = C.createGain(); hg.gain.value = 0.012; hiss.connect(hg); hg.connect(out); hiss.start();
+    ramp(out.gain, 1, 0.4);
+    const CH = [[220, 277.2, 329.6], [196, 246.9, 293.7], [174.6, 220, 261.6], [196, 246.9, 329.6]];
+    let next = now() + 0.05, bar = 0, step = 0;
+    log("amb", "radio");
+    return {
+      tick(t) {
+        while (next < t + 0.3) {
+          const ch = CH[bar % CH.length];
+          if (step % 8 === 0) for (const f of ch) tone({ f, decay: 2.4, gain: 0.012, attack: 0.08, wave: "triangle", bus: out, delay: Math.max(0, next - now()) });
+          const f = ch[(step * 2) % 3] * (step % 4 === 3 ? 2 : 1);
+          tone({ f: f * 2, decay: 0.35, gain: 0.01, wave: "sine", bus: out, delay: Math.max(0, next - now()) });
+          next += 0.36; step++; if (step % 8 === 0) bar++;
+        }
+      },
+      stop() { ramp(out.gain, 0, 0.3); try { hiss.stop(now() + 0.4); } catch (e) {} log("amb", "radio-off"); }
+    };
   }
 
   /* ---------- the things you can use anywhere: a sound for each kind ---------- */

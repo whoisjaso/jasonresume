@@ -2,8 +2,10 @@
 //   python3 -m http.server 8765 &   then
 //   node tools/verify/run-bot.mjs [desktop|mobile] [level ...] [--quick] [--walk]
 //
-// Each level opens at ?debug=run&run=<level> (the page's read-only hook, off
-// without the flag) on a paused clock that the bot moves one 16 ms frame at a
+// Each level opens from ?debug=run (the page's read-only hook, off without the
+// flag), arriving as a click from the site's own page so the title screen stays
+// out of the way, through window.JG_GAME.play(level), the call the episode's
+// arcade cabinet makes, on a paused clock that the bot moves one 16 ms frame at a
 // time, so every run is exact and repeatable. A planner (tools/verify/run-sim.mjs,
 // a frame-exact copy of the game's physics) searches jumps and runs over the
 // level's own geometry to each medal in turn and then the goal; the bot plays
@@ -54,7 +56,9 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
   p.on('pageerror', e => errors.push(e.message));
   await p.clock.install({ time: new Date('2026-10-10T22:00:00Z') });
   await p.clock.pauseAt(new Date('2026-10-10T22:00:01Z'));
-  await p.goto(URL0 + '?debug=run&run=' + level);
+  await p.goto(URL0 + '?debug=run', { referer: URL0 });
+  for (let i = 0; i < 200; i++) { if (await p.evaluate(() => !!(window.JG_GAME && window.JG_GAME.play))) break; await p.clock.runFor(48); }
+  await p.evaluate(l => window.JG_GAME && window.JG_GAME.play(l, 'debug'), level);
   let ready = false;
   for (let i = 0; i < 400 && !ready; i++) { await p.clock.runFor(48); ready = await p.evaluate(() => { const d = window.JG_RUN_DEBUG, s = d && d.state(); return !!(s && s.running && !s.panel); }); }
   const res = { level, mobile, finished: false, medals: [], of: 0, ms: 0, respawns: 0, tol: [], blind: [], replans: 0, missed: [], errors, planned: [] };

@@ -688,7 +688,7 @@ async function resume(vname, w, h, mobile) {
   const go = async () => { await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3'); await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); };
   const press = async () => { if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); };
   // to explore: skip lines; at choices take the first
-  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); return s.phase === 'explore'; }, null, 300000);
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
   let cdp = null;
   const canMove = async tag => {
     if (!(await toExplore())) { errs.push(`${label} ${tag}: never got back to exploring ${JSON.stringify(await st(p))}`); return; }
@@ -712,7 +712,7 @@ async function resume(vname, w, h, mobile) {
     else notes.push(`${label} ${tag}: walks ${d.toFixed(2)} m with ${mobile ? 'the touch stick' : 'W'} after resuming`);
   };
   const reload = async () => { await go(); const lab = (await p.textContent('[data-title-play]')).trim(); if (lab !== 'Continue') errs.push(`${label}: the start screen says "${lab}" after a save`); await press(); };
-  await p.addInitScript(() => { if (!sessionStorage.getItem('__cleared')) { localStorage.removeItem('jg_story'); sessionStorage.setItem('__cleared', '1'); } });
+  await p.addInitScript(() => { try { if (!sessionStorage.getItem('__cleared')) { localStorage.removeItem('jg_story'); sessionStorage.setItem('__cleared', '1'); } } catch (e) {} });
   await go(); await press();
   // 1: saved on the lot, before meeting anyone
   await toExplore(); await reload(); await canMove('lot, before Jason');
@@ -767,7 +767,7 @@ async function wayCheck(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
-  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); return s.phase === 'explore'; }, null, 300000);
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
   const check = async (talk, want, where) => {
     // the thing has to be there to be pointed at: the phone rings, the book is mentioned, the desk is open
     const need = (STORY.objects[want] || {}).if;
@@ -866,7 +866,7 @@ async function audioCheck(vname, w, h, mobile) {
   await p.waitForTimeout(500);
   await p.evaluate(() => window.JG_STORY.debug.interact('door'));
   await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000);
-  await until(p, () => { const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); return s.phase === 'explore'; }, null, 300000);
+  await until(p, () => { const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
   await p.waitForTimeout(2500);
   const off = await A();
   if (off.scene !== 'office') errs.push(`${label}: the sound still thinks it's on the ${off.scene}`);
@@ -875,6 +875,71 @@ async function audioCheck(vname, w, h, mobile) {
   if (off.peakMax >= 1) errs.push(`${label}: the mix clipped (peak ${off.peakMax})`);
   if (missing.length) errs.push(`${label}: missing files: ${[...new Set(missing)].slice(0, 6).join(', ')}`);
   notes.push(`${label}: ${voiced.length} voiced lines, each once, max ${v.vmax} at a time, beds ducked to ${(+v.duck).toFixed(2)} under them; feet on ${[...surf].join(' and ')}; car: ${carNote}; lot bed [${lotAmb.join(' ')}] gave way to the office's [${off.amb.join(' ')}]; peak ${off.peakMax}; ${missing.length} missing files`);
+  await ctx.close();
+}
+/* ---------- free roam: every set has a way out, the world's things answer, and you can sit and get up ---------- */
+const EXPLORE = process.argv.includes('--explore');
+async function exploreCheck(vname, w, h, mobile) {
+  const label = `${vname} explore`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
+  const open = async hash => {
+    await p.goto('about:blank');
+    await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3' + (hash || ''));
+    if (hash) { await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {}); await p.click('#intro [data-intro-skip]').catch(() => {}); }
+    else { await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); }
+    await toExplore(); await turnAway(p);
+  };
+  const spots = () => p.evaluate(() => window.JG_STORY.debug.spots());
+  const useIt = async id => {
+    const ok = await p.evaluate(id => window.JG_STORY.debug.warp(id), id);
+    if (!ok) { errs.push(`${label}: no ${id} here`); return false; }
+    await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000);
+    const n0 = (await p.evaluate(() => window.JG_STORY.debug.audio().events.length));
+    if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.evaluate(id => window.JG_STORY.debug.interact(id), id)); else await p.keyboard.press('e');
+    await p.waitForTimeout(1600);
+    const ev = await p.evaluate(n0 => window.JG_STORY.debug.audio().events.slice(n0).filter(e => e.kind === 'use').map(e => e.name), n0);
+    return ev;
+  };
+  const kinds = new Set(), exits = [];
+  // the lot: a switch, a machine, a lid, a puddle, a knock, a sign
+  await open('');
+  const lot = await spots();
+  for (const id of ['showroom-lights', 'vending', 'dumpster', 'puddle-0', 'showroom-glass', 'bus-sign'].filter(x => lot.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
+  // sit on the bench and get up again with a push
+  if (lot.includes('bus-bench')) {
+    await useIt('bus-bench');
+    const sat = await until(p, () => window.JG_STORY.debug.seated && window.JG_STORY.debug.seated(), null, 30000);
+    if (!sat) errs.push(`${label}: never sat on the bench`);
+    else {
+      if (mobile) await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); else { await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); }
+      const up = await until(p, () => !window.JG_STORY.debug.seated(), null, 30000);
+      if (!mobile) await p.keyboard.up('w');
+      if (!up) errs.push(`${label}: a push didn't get you up off the bench`); else kinds.add('sit');
+    }
+  }
+  // out through the office door and back through the office's own exit
+  await p.evaluate(() => window.JG_STORY.debug.flag('met', 1));
+  await useIt('door');
+  if (await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000)) exits.push('lot to office');
+  await toExplore();
+  const off = await spots();
+  for (const id of ['desk-lamp', 'radio', 'drawer', 'fridge', 'mug'].filter(x => off.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
+  const radio = await p.evaluate(() => window.JG_STORY.debug.audio().amb.includes('radio'));
+  if (off.includes('radio') && !radio && await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn())) errs.push(`${label}: the radio is on but silent`);
+  if (!off.includes('office-exit')) errs.push(`${label}: the office has no way out`);
+  else { await useIt('office-exit'); if (await until(p, () => window.JG_STORY.debug.state().scene === 'lot', null, 120000)) exits.push('office to lot'); else errs.push(`${label}: the office exit didn't lead to the lot`); }
+  await toExplore();
+  const back = await p.evaluate(() => window.JG_STORY.debug.state().me);
+  // the library: its own way out
+  await open('#story/memory');
+  const mem = await spots();
+  if (!mem.includes('memory-exit')) errs.push(`${label}: the library has no way out`);
+  else { await useIt('memory-exit'); if (await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000)) exits.push('library to office'); else errs.push(`${label}: the library exit didn't lead out`); }
+  await shot0(p, `explore-${vname}`);
+  notes.push(`${label}: ways out: ${exits.join(', ')}; things used: ${[...kinds].join(' ')}; back on the lot at ${back.map(n => n.toFixed(1))}`);
   await ctx.close();
 }
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
@@ -893,6 +958,7 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (EXPLORE) { try { await exploreCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} explore: ${e.message.split('\n')[0]}`); } continue; }
   if (AUDIO) { try { await audioCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} audio: ${e.message.split('\n')[0]}`); } continue; }
   if (WAY) { try { await wayCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} way: ${e.message.split('\n')[0]}`); } continue; }
   if (RESUME) { try { await resume(vname, w, h, mobile); } catch (e) { errs.push(`${vname} resume: ${e.message.split('\n')[0]}`); } continue; }

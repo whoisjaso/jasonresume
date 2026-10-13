@@ -40,7 +40,7 @@ Tested on a synthetic 2560x1440 night plate (a sodium light pool, a wet-floor st
 
 # Medals: trophies and proof medals
 
-`medal_glyphs.py` authors every glyph as geometry on a 48 unit grid (stroke 3, round caps and joins, no fills, under lines cut back where another line crosses over them) and writes the SVGs to `assets/game/medals/glyphs`. `medals.py` reads those SVGs back, cuts each one as a recessed V groove into the one nickel-silver base (`candidates/medal-base.png`), strikes it in its tier's metal and writes `<slug>-160.webp` and `<slug>-80.webp` to `assets/game/medals`, each with a provenance `.json` sidecar through `embed-prompt.mjs`. The 80 pixel file is cut 12 percent wider for its smaller optical size.
+`medal_glyphs.py` authors every glyph as geometry on a 48 unit grid (stroke 3, round caps and joins, no fills, under lines cut back where another line crosses over them) and writes the SVGs to `tools/art/glyphs`. `medals.py` reads those SVGs back, cuts each one as a recessed V groove into the one nickel-silver base (`candidates/medal-base.png`), strikes it in its tier's metal and writes `<slug>-160.webp` and `<slug>-80.webp` to `assets/game/medals`, each with a provenance `.json` sidecar through `embed-prompt.mjs`. The 80 pixel file is cut 12 percent wider for its smaller optical size.
 
 There are two sets. The 18 trophies (`TROPHIES` in medals.py) belong to the library. The 16 proof medals (`PROOFS`, silver except `neuron` in bronze) belong to the visitor's build card: crew, payroll, help-desk, access, network, built-not-bought, on-the-line, handshake, filed, deal-jacket, in-order, collections, data-model, shipped, every-form, neuron.
 

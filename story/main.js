@@ -186,6 +186,16 @@ function getSet(name) {
   return s;
 }
 let arcadeV = null;
+/* the cabinet's screen is a video texture, the dearest upload on a phone: it plays only while the cabinet is near and in view */
+let arcadeT = 0;
+function arcadeWatch(dt) {
+  if (!arcadeV || (arcadeT -= dt) > 0) return; arcadeT = 0.5;
+  const sp = S.scene === "office" && set && set.userData.spots && set.userData.spots.arcade;
+  let want = false;
+  if (sp && sp.p && S.phase !== "pause" && S.phase !== "journal") { const q = project(sp.p); want = q.on && camera.position.distanceTo(sp.p) < 9; }
+  if (want && arcadeV.paused) { const pr = arcadeV.play(); if (pr && pr.catch) pr.catch(() => {}); }
+  else if (!want && !arcadeV.paused) arcadeV.pause();
+}
 function arcadeVideo() {
   try {
     const v = document.createElement("video"); v.muted = true; v.loop = true; v.playsInline = true; v.preload = "auto";
@@ -927,6 +937,8 @@ let clothT = 0;
 function moveMe(dt) {
   if (!me) return;
   const inp = wantInput();
+  // seated (or sitting down, or getting up): people.js has the body; a push of the stick gets you up
+  if (me.inCar) { if (me.seated && inp && me.standUp) me.standUp(); return; }
   let speed = 0, dir = null;
   const prevSpeed = me.speed;
   if (inp) {
@@ -1043,16 +1055,19 @@ const WORLD_KINDS = ["exit", "toggle", "open", "sit", "press", "pickup", "read",
 const worldSpotCache = new WeakMap();
 function worldSpots() {
   const sp = set && set.userData.spots; if (!sp) return [];
-  let c = worldSpotCache.get(set);
+  // a story object with the same id wins where the story uses it (the lot's office door); elsewhere the world's own
+  const key = S.scene, store0 = worldSpotCache.get(set) || {};
+  let c = store0[key];
   if (!c) {
     c = [];
     for (const [id, x] of Object.entries(sp)) {
-      if (!x || !x.kind || OBJ[id] || !WORLD_KINDS.includes(x.kind)) continue;
+      if (!x || !x.kind || !WORLD_KINDS.includes(x.kind)) continue;
+      if (OBJ[id] && OBJ[id].scene === S.scene && S.scene !== "decision") continue;
       const p = x.p || x.at; if (!p) continue;
       const pv = p.isVector3 ? p : new THREE.Vector3(p.x, p.y || 1, p.z);
       c.push({ id, o: { verb: UI["v_" + x.kind] || UI.act, label: x.label || (x.kind === "exit" ? (UI["to_" + x.to] || x.to) : ""), world: x.kind }, sp: Object.assign(x, { r: x.r || 1.8 }), p: pv });
     }
-    worldSpotCache.set(set, c);
+    store0[key] = c; worldSpotCache.set(set, store0);
   }
   return c;
 }
@@ -1071,7 +1086,14 @@ async function useWorld(s, how) {
     try { if (typeof x.use === "function") x.use({ kind, on: x.on, who: me }); } catch (e) {}
     document.dispatchEvent(new CustomEvent("jg:story-use", { detail: { id: s.id, kind, on: x.on } }));
   };
-  if (kind === "sit" && me.sitAt) { try { await me.sitAt(x.seat || at, x.yaw); } catch (e) {} feel(); return; }
+  if (kind === "sit" && me.sitAt) {
+    if (me.seated) { try { await me.standUp(); } catch (e) {} return; }
+    let sat = false; feel();
+    setPhase("cinematic"); // the walk to the seat is people.js's; a press or a push of the stick gets you up again
+    try { const r = me.sitAt(x.seat || at, x.yaw); setTimeout(() => { if (!sat && S.phase === "cinematic") setPhase("explore"); }, 9000); await r; } catch (e) {}
+    sat = true; if (S.phase === "cinematic") setPhase("explore");
+    return;
+  }
   if (kind === "splash") { feel(); return; }
   if (me.reachTo && kind !== "sit") {
     try { const r = me.reachTo(at.clone ? at.clone() : at, { hold: kind === "pickup" ? "pinch" : kind === "open" ? "grip" : kind === "press" || kind === "toggle" ? "press" : "touch", onContact: feel }); if (r && r.catch) r.catch(feel); } catch (e) { feel(); }
@@ -2252,7 +2274,7 @@ function frame(now) {
     tickLine(dt); tickChoices(dt); ringTick(dt);
     if (DRV.veh) tickDrive(dt);
     drvEl.classList.toggle("is-on", S.phase === "drive" && DRV.state === "drive");
-    if (!(me && me.inCar) && !(DRV.state && me && me.enterCar)) moveMe(dt);
+    if (!DRV.state) moveMe(dt);
     movePeople(dt);
     const tP = performance.now();
     for (const p of Object.values(P)) if (p.group.visible) p.update(dt);
@@ -2260,7 +2282,7 @@ function frame(now) {
     perf.people = performance.now() - tP;
     updateCamera(dt);
     const tU = performance.now();
-    updatePrompts(); updateWay(dt);
+    updatePrompts(); updateWay(dt); arcadeWatch(dt);
     guide.tick(dt, S.t, still());
     perf.prompts = performance.now() - tU;
     // the ear is the camera; the lamps that buzz are the ones nearest you
@@ -2604,6 +2626,7 @@ window.JG_STORY = {
     carPut: (x, z, yaw) => { if (!DRV.veh) return false; DRV.veh.reset(x, z, yaw); DRV.camInit = true; return true; },
     hint: talk => { if (talk == null) { S.hint = null; return null; } hintFrom(talk); return S.hint; },
     hints: () => ({ ...HINTS }),
+    seated: () => !!(me && me.seated),
     obj: k => { objective(k || null); return S.obj; },
     unlook: id => { delete S.looked[id]; },
     skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; }

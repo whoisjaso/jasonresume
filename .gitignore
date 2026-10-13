@@ -13,13 +13,10 @@ tools/film/out/
 tools/voice/ref*.wav
 tools/voice/out_*.wav
 tools/voice/you_*.wav
-tools/vsl/out_*.wav
-tools/vsl/you_*.wav
 tools/verify/out/*
 !tools/verify/out/.gitkeep
 tools/sfx/raw/
 .impeccable/review/
-tools/film/public/vid/
 tools/art/candidates/
 *.wav
 .impeccable/mocks/
@@ -27,5 +24,3 @@ tools/film/public/library/
 __pycache__/
 *.pyc
 
-# walkthrough film: captured stills and staged audio are local render inputs
-tools/film/public/tour/

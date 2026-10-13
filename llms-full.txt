@@ -251,7 +251,7 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 
 ## The run
 
-- After Hours: The Run is a short side-scrolling game on the home page (Play, the G key, or https://jasonobawemimo.com/#play). Six levels follow Jason's record: Neuroscience, Triple J Auto, Lead to Title, The Inbound, Prospector, and Obavia (in development, with no trophies).
+- After Hours: The Run is a short side-scrolling game on the arcade cabinet in the office in After Hours, the episode on the home page. Six levels follow Jason's record: Neuroscience, Triple J Auto, Lead to Title, The Inbound, Prospector, and Obavia (in development, with no trophies).
 - Each medal found in a level unlocks one of the site's verified trophies and shows its fact. Finding all of them earns the platinum. It plays with a keyboard, a gamepad, or touch controls on a phone.
 - Jason's lines in it are captions; where they are voiced, it is his own voice, synthesized from his recording with his permission. The other characters are fictional and use stock Kokoro voices (open source).
 
@@ -262,11 +262,6 @@ Answer: Public records linked from https://jasonobawemimo.com/mentions.html incl
 - It ends with the version of the record that fits why you came: the one-page resume for the role you're hiring for, Obavia's early access for a dealer (Obavia is in development; early access is a conversation, not an account), the arcade cabinet (After Hours: The Run) for someone curious, or the record as it is if you never say. A recap lists your choices. Trophies earned in it are the site's trophies.
 - Jason's lines are his own voice, synthesized from his recording with his permission. The other characters use stock Kokoro voices (open source). Captions are always on.
 - It is drawn in real time with three.js (MIT). The people are built from MakeHuman's CC0 assets; Jason's likeness (his short afro, browline glasses, goatee and green suit) is modelled to match his headshot, with no photo on the 3D face.
-
-## The walkthrough
-
-- A narrated walkthrough of this site: After Hours, a film of about a minute and a quarter, at https://jasonobawemimo.com/walkthrough.html (wide and vertical cuts, with captions), and a guided tour inside the home page ("Take the tour" on the title screen, or https://jasonobawemimo.com/?tour=1).
-- The narration is a stock voice from Kokoro, an open-source text-to-speech model. It is not Jason's voice and not a clone of anyone.
 
 ## Stop Thinking Poor
 

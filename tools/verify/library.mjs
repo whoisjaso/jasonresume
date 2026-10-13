@@ -14,15 +14,16 @@
 // the doors (return visits, skip, deep links, legacy links, the dealer cut);
 // privacy; the score staying silent until Start; the no-JS document; the
 // loading screen (drawn while the art, the fonts and the scripts arrive, gone
-// soon after, never for crawlers or the site's own links); the guided tour
-// (every stop, its line, the vignette on its subject, Back, keys, a clean
-// silent exit) on both sizes; the walkthrough film (its dialog on the title
-// screen and its page) when it has been rendered; and the
-// text rules (no dashes, no percent signs, no phone number, every number in
-// llms.txt) over visible text, labels and attributes; and After Hours: The
-// Run (the curated Play door, #play, the canvas, keys and touch, a medal that
-// unlocks its trophy, pause, a cleared level, the phone controls, ?run= links,
-// a mocked community store, and a bot playing every level to its goal). Screenshots land in
+// soon after, never for crawlers or the site's own links); the start screen
+// (one Play, into the episode); the retired doors staying gone (no walkthrough,
+// no tour, and the run reachable only through JG_GAME.play, which the episode's
+// arcade cabinet calls: no G key, no Play in the bar or the help sheet, no
+// [data-play], no #play, no ?run=); the text rules (no dashes, no percent
+// signs, no phone number, every number in llms.txt) over visible text, labels
+// and attributes; and After Hours: The Run opened as the cabinet opens it (the
+// canvas, keys and touch, a medal that unlocks its trophy, pause, a cleared
+// level, the phone controls, a mocked community store, Back closing only the
+// run, and a bot playing every level to its goal). Screenshots land in
 // tools/verify/out/lib-*.png.
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'url';
@@ -102,7 +103,7 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   // The title screen: Press start, who's playing, the name
   await p.waitForSelector('#intro', { timeout: 4000 }).catch(() => errs.push(`${name} title screen did not appear`));
   await p.waitForTimeout(1200); await shot('00a-title');
-  if (!(await p.$('#intro [data-intro-tour]'))) errs.push(`${name} the title screen offers no tour`);
+  if (await p.$('#intro [data-intro-tour], #intro [data-watch], #boot [data-watch]')) errs.push(`${name} the guided door still offers the tour or the walkthrough`);
   if (scoreFetches.length) errs.push(`${name} the score loaded before Start`);
   await p.click('[data-start="on"]');
   await p.waitForSelector('[data-scene="seat"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name} no seat menu after Start`));
@@ -169,18 +170,19 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   if (moved.tile !== 'lead-to-title' || moved.plate !== 'lead-to-title' || !/Lead to Title/i.test(moved.logo || '')) errs.push(`${name} focus did not move ${JSON.stringify(moved)}`);
   await shot('02-focus-crm');
 
-  // Opening a title: its own page, the sections, the desk demo. Trophies are earned in the run,
-  // never by opening a title; every one still reads in full here, with a way into its level.
+  // Opening a title: its own page, the sections, the desk demo. Trophies are earned in the run
+  // (the episode's arcade cabinet), never by opening a title; every one still reads in full here.
   if (mobile) await p.click('article.title.is-focus [data-open-title]'); else await p.keyboard.press('Enter');
   await p.waitForSelector('article.title.is-open', { timeout: 4000 }).catch(() => {}); await p.waitForTimeout(600);
   const opened = await p.evaluate(() => ({ open: !!document.querySelector('article.title.is-open'), hash: location.hash, toast: !!document.querySelector('.toast--trophy'), earned: JSON.parse(localStorage.getItem('jg_trophies') || '[]').length }));
   if (!opened.open || opened.hash !== '#title/lead-to-title') errs.push(`${name} title did not open ${JSON.stringify(opened)}`);
   if (opened.toast || opened.earned) errs.push(`${name} opening a title should not award trophies ${JSON.stringify(opened)}`);
-  const tsec = await p.evaluate(() => [...document.querySelectorAll('article.title.is-open #lead-to-title-trophies .trophy')].map(li => { const f = li.querySelector('.trophy__find'), cs = f && getComputedStyle(f); return { slug: li.dataset.trophy, fact: li.querySelector('p').innerText, find: f && cs.display !== 'none' && f.getBoundingClientRect().width > 0 ? f.getAttribute('href') + ' ' + f.textContent : '' }; }));
+  const tsec = await p.evaluate(() => [...document.querySelectorAll('article.title.is-open #lead-to-title-trophies .trophy')].map(li => ({ slug: li.dataset.trophy, fact: li.querySelector('p').innerText, link: !!li.querySelector('[data-play], a[href^="#play"]') })));
   const want = LIB.titles.find(t => t.id === 'lead-to-title').trophies;
-  const badT = want.filter(sl => { const r = tsec.find(x => x.slug === sl); return !r || !r.fact.includes(LIB.trophies[sl].desc) || r.find !== '#play/lead-to-title Find it in the run'; });
-  if (badT.length) errs.push(`${name} the title's locked trophies should show their facts and Find it in the run: ${JSON.stringify(tsec)}`);
-  else notes.push(`${name} a title's trophies, not yet earned, show every fact and Find it in the run (#play/lead-to-title)`);
+  const badT = want.filter(sl => { const r = tsec.find(x => x.slug === sl); return !r || !r.fact.includes(LIB.trophies[sl].desc) || r.link; });
+  if (badT.length) errs.push(`${name} the title's locked trophies should show their facts and no way into the run: ${JSON.stringify(tsec)}`);
+  else notes.push(`${name} a title's trophies, not yet earned, show every fact (no Find it in the run)`);
+  if (await p.$('article.title [data-play], article.title [data-where="title"][data-play]')) errs.push(`${name} a title still offers Play the level`);
   await shot('03-title-open');
   if (!mobile) { await p.keyboard.press('e'); await p.waitForTimeout(900); await shot('04-title-tab'); }
   await p.evaluate(() => document.querySelector('article.title.is-open [data-desk-app]').scrollIntoView({ block: 'center' })); await p.waitForTimeout(900);
@@ -208,8 +210,8 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
     await p.evaluate(() => window.JG_GAME.back()); await p.waitForTimeout(500);
   }
   await p.waitForTimeout(2800);
-  const afterAll = await p.evaluate(() => ({ clear: !!document.querySelector('.clear.is-on'), earned: JSON.parse(localStorage.getItem('jg_trophies') || '[]').length, plat: localStorage.getItem('jg_platinum') }));
-  if (afterAll.clear || afterAll.earned || afterAll.plat) errs.push(`${name} opening every career title should earn nothing ${JSON.stringify(afterAll)}`);
+  const afterAll = await p.evaluate(() => ({ earned: JSON.parse(localStorage.getItem('jg_trophies') || '[]').length, plat: localStorage.getItem('jg_platinum') }));
+  if (afterAll.earned || afterAll.plat) errs.push(`${name} opening every career title should earn nothing ${JSON.stringify(afterAll)}`);
   else notes.push(`${name} opening every career title earns no trophy and no Platinum`);
 
   // Screens: trophies, profile. Every fact readable before anything is earned; trophies
@@ -218,12 +220,12 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   const readTrophies = () => p.evaluate(() => {
     const lis = [...document.querySelectorAll('#trophies .trophy')];
     return { n: lis.length, seen: document.querySelector('[data-trophy-seen]').textContent, facts: lis.filter(li => li.querySelector('p').getBoundingClientRect().height > 0).length,
-      find: lis.filter(li => { const f = li.querySelector('.trophy__find'); return f && getComputedStyle(f).display !== 'none'; }).map(li => li.dataset.trophy), earned: lis.filter(li => li.classList.contains('is-seen')).map(li => li.dataset.trophy) };
+      find: lis.filter(li => !li.classList.contains('is-seen')).map(li => li.dataset.trophy), links: lis.filter(li => li.querySelector('[data-play], a[href^="#play"]')).length, earned: lis.filter(li => li.classList.contains('is-seen')).map(li => li.dataset.trophy) };
   });
   await p.keyboard.press('t'); await p.waitForTimeout(900);
   const t0s = await readTrophies();
-  if (t0s.seen !== '0' || t0s.facts !== Object.keys(LIB.trophies).length || t0s.find.length !== Object.keys(LIB.trophies).length) errs.push(`${name} trophies screen before any medal ${JSON.stringify(t0s)}`);
-  else notes.push(`${name} trophies screen, nothing earned: all ${t0s.n} facts readable, each with Find it in the run`);
+  if (t0s.seen !== '0' || t0s.facts !== Object.keys(LIB.trophies).length || t0s.find.length !== Object.keys(LIB.trophies).length || t0s.links) errs.push(`${name} trophies screen before any medal ${JSON.stringify(t0s)}`);
+  else notes.push(`${name} trophies screen, nothing earned: all ${t0s.n} facts readable, no links into the run`);
   // a mix: six earned (silver on the card), the rest still readable and findable
   const six = ['title-run', 'keys-to-the-lot', 'essentials', 'associate', 'hand-off', 'by-the-book'];
   const got = await p.evaluate(list => list.map(s => window.JG_GAME.unlock(s, 'run')), six);
@@ -237,13 +239,6 @@ for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 39
   const fins = async () => { await p.evaluate(() => window.JG_GAME.screen('build', 'test')); await p.waitForTimeout(900); const f = await p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#build [data-fin]')].map(b => [b.dataset.fin, b.getAttribute('aria-disabled') !== 'true']))); await p.evaluate(() => window.JG_GAME.back()); await p.waitForTimeout(400); return f; };
   const f6 = await fins();
   if (!f6.silver || f6.gold || f6.platinum) errs.push(`${name} Player 2 finishes after six trophies ${JSON.stringify(f6)}`); else notes.push(`${name} six trophies open the silver finish, not gold or platinum`);
-  await p.keyboard.press('t'); await p.waitForTimeout(700);
-  // a locked trophy's link goes straight into its level
-  await p.evaluate(() => { const a = document.querySelector('#trophies .trophy[data-trophy="booked"] .trophy__find'); a.scrollIntoView({ block: 'center' }); });
-  await p.click('#trophies .trophy[data-trophy="booked"] .trophy__find');
-  const into = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen() && window.JG_RUN.debug.state().level, null, { timeout: 8000 }).then(() => p.evaluate(() => window.JG_RUN.debug.state().level), () => '');
-  if (into !== 'the-inbound') errs.push(`${name} Find it in the run on Booked opened ${into || 'nothing'}`); else notes.push(`${name} Find it in the run on a locked trophy opens its level (the-inbound)`);
-  if (into) { await p.evaluate(() => window.JG_RUN.close('test')); await p.waitForTimeout(800); }
   // every medal: every trophy, then the Platinum
   await p.evaluate(list => list.forEach(s => window.JG_GAME.unlock(s, 'run')), medalSlugs);
   const plat = await p.evaluate(pl => window.JG_GAME.unlock(pl, 'run'), LIB.platinum);
@@ -343,8 +338,9 @@ if (!only || only === 'mobile') {
   await p.goto(URL0 + '?door=library'); await p.waitForTimeout(1000);
   if (!(await p.$('#intro'))) errs.push('title screen did not show to a return visitor');
   await p.click('[data-start="off"]'); await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
-  await p.waitForSelector('[data-scene="play"].is-on'); await p.waitForTimeout(400); await p.click('[data-play-alt]');
-  await p.waitForSelector('[data-scene="build"].is-on'); await p.waitForTimeout(400); await p.keyboard.press('Escape');
+  // someone just looking goes straight to the class menu: the run's own step is gone
+  await p.waitForSelector('[data-scene="build"].is-on', { timeout: 4000 }).catch(() => errs.push('just looking did not go straight to the class menu'));
+  if (await p.$('#intro [data-scene="play"], #intro [data-play-go], #intro [data-play-alt]')) errs.push('the guided door still offers the run'); await p.waitForTimeout(400); await p.keyboard.press('Escape');
   await p.waitForSelector('[data-scene="name"].is-on'); await p.waitForTimeout(400);
   const pre = await p.inputValue('#intro-name'); if (pre !== 'Pat') errs.push(`return visit name not prefilled: "${pre}"`);
   await p.keyboard.press('Enter'); await p.waitForTimeout(400);
@@ -359,7 +355,6 @@ if (!only || only === 'mobile') {
   for (const [u, test, label] of [
     ['#present/2', () => !!document.querySelector('#deck[open]'), 'the deck'],
     ['#title/obavia', () => location.hash === '#title/obavia' && !!document.querySelector('#title-obavia.is-open'), 'the Obavia title'],
-    ['#story-obavia', () => !!document.querySelector('#title-obavia.is-open'), 'a legacy story link'],
     ['#trophies', () => !!document.querySelector('#trophies.is-open'), 'the trophies screen'],
   ]) {
     await q.goto('about:blank'); await q.goto(URL0 + '?from=test' + u); await q.waitForSelector('#intro');
@@ -401,8 +396,12 @@ if (!only || only === 'mobile') {
   else notes.push('?for=it Player 2: the reading as sent, the resume and the line, then Make it yours');
   await c3.close();
   await q.goto('about:blank');
-  await q.goto(URL0 + '?cut=dealer'); await q.waitForSelector('#intro'); await q.click('[data-intro-skip]');
-  await q.waitForURL(/obavia\.html/, { timeout: 6000 }).then(() => notes.push('?cut=dealer: on to /obavia.html')).catch(() => errs.push('?cut=dealer did not go to /obavia.html'));
+  // a legacy ?cut= link meets the guided door, and skipping it stays on the library (the dash-era redirects are retired)
+  await q.goto(URL0 + '?cut=dealer'); await q.waitForSelector('#intro');
+  const cut = await q.evaluate(() => ({ guided: !!document.querySelector('#intro [data-start="on"]'), play: !!document.querySelector('#intro.intro--play') }));
+  await q.click('[data-intro-skip]'); await q.waitForTimeout(1500);
+  const cutAt = await q.evaluate(() => location.pathname);
+  if (!cut.guided || cut.play || cutAt !== '/') errs.push(`?cut=dealer ${JSON.stringify({ ...cut, at: cutAt })}`); else notes.push('?cut=dealer: the guided door, then the library');
   await c2.close();
 
   // The dealer: the lot answer and its call to action, then one quiet line for a dealer who is hiring
@@ -435,7 +434,7 @@ if (!only || only === 'mobile') {
   const ev6 = []; await c6.route('**/api/track', r => { try { ev6.push(...JSON.parse(r.request().postData() || '{}').events); } catch {} r.fulfill({ status: 204, body: '' }); });
   const l6 = await c6.newPage(); l6.on('pageerror', e => errs.push(`lurker funnel pageerror: ${e.message}`));
   await l6.goto(URL0 + '?door=library'); await l6.waitForSelector('#intro'); await l6.click('[data-start="off"]'); await l6.waitForSelector('[data-scene="seat"].is-on');
-  await l6.click('[data-role="lurker"]'); await l6.waitForSelector('[data-scene="play"].is-on'); await l6.waitForTimeout(400); await l6.click('[data-play-alt]');
+  await l6.click('[data-role="lurker"]');
   await l6.waitForSelector('[data-scene="build"].is-on'); await l6.waitForTimeout(500);
   await l6.click('[data-build-menu] [data-id="sales"]'); await l6.waitForSelector('[data-scene="name"].is-on'); await l6.fill('#intro-name', 'Lou'); await l6.keyboard.press('Enter');
   await l6.waitForSelector('[data-scene="card"].is-on [data-built]:not([hidden])'); await l6.waitForTimeout(600);
@@ -527,72 +526,43 @@ if (!only || only === 'desktop') {
   }
 }
 
-// The guided tour: from the title screen, every stop on both sizes, then a clean, silent exit
-{
-  const TOURD = JSON.parse(fs.readFileSync(path.join(TOOLS, 'site', 'tour.json'), 'utf8'));
-  for (const [name, w, h, mobile] of [['desktop', 1440, 900, false], ['mobile', 390, 844, true]]) {
-    if (only && only !== name) continue;
-    const ctx = await ctxFor(w, h, mobile);
-    await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
-    const p = await ctx.newPage();
-    const voice = []; p.on('request', r => { if (/assets\/voice\//.test(r.url())) voice.push(r.url()); });
-    p.on('pageerror', e => errs.push(`tour ${name} pageerror: ${e.message}`));
-    p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`tour ${name} console: ${m.text().slice(0, 160)}`); });
-    await p.goto(URL0 + '?door=library'); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
-    await p.click('[data-intro-tour]');
-    await p.waitForSelector('.tour:not([hidden])', { timeout: 6000 }).catch(() => errs.push(`tour ${name}: Take the tour did not start it`));
-    const n = TOURD.steps.length;
-    for (let i = 0; i < n; i++) {
-      await p.waitForTimeout(1300);
-      const st = await p.evaluate(() => { const v = document.querySelector('.tour__veil path'); const c = document.querySelector('.tour__cap').getBoundingClientRect(); return { line: document.querySelector('.tour__line').textContent.replace(/\s+/g, ' ').trim(), hole: (v.getAttribute('d') || '').split('Z').length > 2, cap: c.left >= 0 && c.right <= innerWidth + 1 && c.bottom <= innerHeight + 1 && c.top >= 0, deck: !!document.querySelector('#deck[open]') }; });
-      const want = TOURD.lines[TOURD.steps[i].line].text;
-      if (st.line !== want) errs.push(`tour ${name} stop ${i + 1} says "${st.line.slice(0, 50)}"`);
-      if (!st.hole || !st.cap) errs.push(`tour ${name} stop ${i + 1}: vignette ${st.hole}, caption on screen ${st.cap}`);
-      if (TOURD.steps[i].do === 'deck' && !st.deck) errs.push(`tour ${name}: the resume stop did not present the deck`);
-      if (i === 4 || i === 9) { await textRules(p, `tour ${name} stop ${i + 1}`); }
-      await overflow(p, `tour ${name} stop ${i + 1}`);
-      if ([1, 5, 9].includes(i)) await p.screenshot({ path: path.join(OUT, `lib-${name}-tour-${i + 1}.png`) });
-      if (i < n - 1) { if (mobile) await p.click('[data-tour-next]'); else await p.keyboard.press('ArrowRight'); }
-    }
-    await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(700);
-    const back = await p.evaluate(() => document.querySelector('.tour__line').textContent.replace(/\s+/g, ' ').trim());
-    if (back !== TOURD.lines[TOURD.steps[n - 2].line].text) errs.push(`tour ${name}: Back did not return a stop`);
-    await p.keyboard.press('Escape'); await p.waitForTimeout(1200);
-    const end = await p.evaluate(() => ({ on: window.JG_TOUR.on(), shown: !!document.querySelector('.tour:not([hidden])'), open: !!document.querySelector('article.title.is-open, .screen.is-open, dialog[open]'), locked: document.documentElement.classList.contains('is-locked'), inert: document.querySelectorAll('[inert]').length }));
-    if (end.on || end.shown || end.open || end.locked || end.inert) errs.push(`tour ${name}: exit left ${JSON.stringify(end)}`);
-    else notes.push(`tour ${name}: ${n} stops, Back, Escape leaves the library as it was`);
-    if (!TOURD.voiced && voice.length) errs.push(`tour ${name}: fetched narration that does not exist`);
-    // the help sheet starts it too
-    await p.keyboard.press('?'); await p.waitForTimeout(500);
-    if (!(await p.$('#help[open] [data-tour-start]'))) errs.push(`tour ${name}: the help sheet has no Take the tour`);
-    else { await p.click('#help [data-tour-start]'); await p.waitForTimeout(900); if (!(await p.evaluate(() => window.JG_TOUR.on()))) errs.push(`tour ${name}: help sheet did not start it`); await p.keyboard.press('Escape'); }
-    await ctx.close();
-  }
-}
-
-// The walkthrough film: offered on the title screen in a dialog (closing is silent), and on its own page
-if (fs.existsSync(path.join(ROOT, 'assets', 'film', 'after-hours.mp4')) && (!only || only === 'desktop')) {
+// The retired doors stay gone: no walkthrough or tour anywhere, and the run has no
+// way in but JG_GAME.play (the episode's arcade cabinet): no Play in the bar or the
+// help sheet, no G, no [data-play], no Find it in the run, no #play, no ?run=
+if (!only || only === 'desktop') {
   const ctx = await ctxFor(1440, 900, false);
   await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
-  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`film pageerror: ${e.message}`));
+  const fetched = [];
+  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`doors pageerror: ${e.message}`));
+  p.on('request', r => { if (/tour\.js|walkthrough|after-hours\.|assets\/voice\/tour|game-run\.js/.test(r.url())) fetched.push(r.url().replace(URL0, '')); });
   await p.goto(URL0 + '?door=library'); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 9000 }).catch(() => {});
-  await p.click('#intro [data-watch]');
-  await p.waitForSelector('dialog.film-sheet[open] video', { timeout: 4000 }).catch(() => errs.push('film: Watch the walkthrough opened nothing'));
-  await p.waitForTimeout(1500);
-  const fv = await p.evaluate(() => { const v = document.querySelector('dialog.film-sheet video'); return { d: v.duration, t: v.currentTime, src: v.currentSrc }; });
-  if (!(fv.d >= 60 && fv.d <= 95)) errs.push(`film: duration ${fv.d}`);
-  if (!(fv.t > 0)) errs.push('film: did not play after the press');
-  await p.screenshot({ path: path.join(OUT, 'lib-film-dialog.png') });
-  await p.keyboard.press('Escape'); await p.waitForTimeout(500);
-  const after = await p.evaluate(() => ({ open: !!document.querySelector('dialog.film-sheet[open]'), title: !!document.querySelector('#intro [data-scene="title"].is-on') }));
-  if (after.open || !after.title) errs.push(`film: closing left ${JSON.stringify(after)}`);
-  await p.goto(URL0 + 'walkthrough.html'); await p.waitForTimeout(1200);
-  const pg = await p.evaluate(() => ({ v: !!document.querySelector('.walk__film video'), lines: document.querySelectorAll('.walk__lines li').length }));
-  if (!pg.v || pg.lines < 8) errs.push(`film page: ${JSON.stringify(pg)}`);
-  await textRules(p, 'film page'); await overflow(p, 'film page');
-  await p.screenshot({ path: path.join(OUT, 'lib-film-page.png') });
-  const m = await ctx.newPage(); await m.setViewportSize({ width: 390, height: 844 }); await m.goto(URL0 + 'walkthrough.html'); await m.waitForTimeout(800); await overflow(m, 'film page mobile');
-  notes.push(`film: ${Math.round(fv.d)} s, plays from Watch the walkthrough, closes silently, page reads`);
+  const page = await p.evaluate(() => ({
+    tour: !!document.querySelector('script[src^="tour.js"], #tour-data, [data-tour-start], [data-intro-tour], [data-watch]') || 'JG_TOUR' in window || 'JG_FILM' in window,
+    walk: /walkthrough/i.test(document.documentElement.innerHTML),
+    play: document.querySelectorAll('[data-play], .sys__play, .trophy__find, a[href^="#play"]').length,
+    legend: [...document.querySelectorAll('.legend .key')].some(k => k.textContent.trim() === 'G'),
+    help: [...document.querySelectorAll('#help dt')].some(d => d.textContent.trim() === 'G'),
+    run: !!window.JG_RUN, api: typeof (window.JG_GAME && window.JG_GAME.play) === 'function',
+  }));
+  if (page.tour || page.walk) errs.push(`doors: the walkthrough or the tour is still on the page ${JSON.stringify(page)}`);
+  if (page.play || page.legend || page.help) errs.push(`doors: a way into the run outside the cabinet ${JSON.stringify(page)}`);
+  if (page.run || !page.api) errs.push(`doors: the run should load only when asked, and JG_GAME.play should stay ${JSON.stringify(page)}`);
+  await p.click('[data-intro-skip]'); await p.waitForTimeout(1000);
+  await p.keyboard.press('g'); await p.waitForTimeout(1200);
+  if (await p.evaluate(() => !!window.JG_RUN || document.documentElement.classList.contains('run-on'))) errs.push('doors: G still opens the run');
+  for (const u of ['#play', '#play/the-inbound', '?tour=1']) {
+    await p.goto('about:blank'); await p.goto(URL0 + (u[0] === '#' ? '?from=test' : '') + u); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(1600);
+    const r = await p.evaluate(() => ({ run: !!window.JG_RUN, on: document.documentElement.classList.contains('run-on') || document.documentElement.classList.contains('tour-on') }));
+    if (r.run || r.on) errs.push(`doors: ${u} still opens ${JSON.stringify(r)}`);
+  }
+  // ?run= no longer skips the title screen or drops into a level
+  await p.goto('about:blank'); await p.goto(URL0 + '?run=triple-j'); await p.waitForTimeout(2500);
+  const rq = await p.evaluate(() => ({ intro: !!document.getElementById('intro'), run: !!window.JG_RUN }));
+  if (!rq.intro || rq.run) errs.push(`doors: ?run= still skips the title screen or opens the run ${JSON.stringify(rq)}`);
+  const wk = await p.goto(URL0 + 'walkthrough.html').then(r => r.status(), () => 0);
+  if (wk === 200) errs.push('doors: walkthrough.html is still served');
+  if (fetched.length) errs.push(`doors: fetched ${fetched.join(' ')}`);
+  if (!errs.some(e => /^doors/.test(e))) notes.push('retired doors: no walkthrough, no tour, no G, no Play in the bar or help, no Find it in the run, no #play, no ?run=; JG_GAME.play stays for the cabinet');
   await ctx.close();
 }
 
@@ -617,8 +587,9 @@ for (const [vw, vh, mob] of [[1440, 900, false], [844, 390, true], [390, 844, tr
   if (st.foot) errs.push(`start ${vw}: links along the bottom are back`);
   if (!st.skip) errs.push(`start ${vw}: no Skip`);
   await p.click('[data-title-play]');
-  // Play opens After Hours, the episode (the run stays on the cabinet, key G and #play)
+  // Play opens After Hours, the episode (the run lives only on its arcade cabinet)
   await p.waitForFunction(() => window.JG_STORY && window.JG_STORY.isOpen() && document.documentElement.classList.contains('story-on'), null, { timeout: 30000 }).catch(() => errs.push(`start ${vw}: Play did not open the episode`));
+  if (await p.evaluate(() => !!window.JG_RUN || document.documentElement.classList.contains('run-on'))) errs.push(`start ${vw}: Play loaded the run, not just the episode`);
   await ctx.close();
 }
 notes.push('start screen: one Play, nothing else, and Play opens the episode');
@@ -637,10 +608,11 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
 }
 
 
-// After Hours: The Run. The curated door for someone just looking, #play, the
-// canvas drawing, keys that move and jump, a medal that unlocks its trophy, the
-// pause menu, a level cleared, the phone controls sideways and the turn card
-// upright, ?run= links, a mocked community store, and the text rules over it all.
+// After Hours: The Run, opened the way the episode's arcade cabinet opens it
+// (JG_GAME.play): the canvas drawing, keys that move and jump, a medal that
+// unlocks its trophy, the pause menu, a level cleared, the phone controls sideways
+// and the turn card upright, a mocked community store, Back closing only the run,
+// and the text rules over it all.
 {
   const pixels = p => p.evaluate(() => {
     const c = document.querySelector('.run__cv'); if (!c || !c.width) return { w: 0, var: 0 };
@@ -657,23 +629,21 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
     const p = await ctx.newPage();
     p.on('pageerror', e => errs.push(`${name} pageerror: ${e.message}`));
     p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(`${name} console: ${m.text().slice(0, 160)}`); });
-    // the curated door: just looking meets Play, one press into level 1
-    await p.goto(URL0 + '?door=library'); await p.waitForSelector('[data-start="off"]'); await p.click('[data-start="off"]');
-    await p.waitForSelector('[data-scene="seat"].is-on'); await p.click('[data-role="lurker"]');
-    await p.waitForSelector('[data-scene="play"].is-on', { timeout: 4000 }).catch(() => errs.push(`${name}: just looking did not meet Play`));
-    await p.waitForTimeout(500); await textRules(p, `${name} play scene`); await overflow(p, `${name} play scene`);
-    await p.screenshot({ path: path.join(OUT, `run-${mobile ? 'phone' : 'desktop'}-door.png`) });
+    // the cabinet's door: JG_GAME.play with no level starts the first one not yet cleared (level 1 on a first visit)
+    await p.goto(URL0); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(1000);
+    const hash0 = await p.evaluate(() => location.hash);
     const t0 = Date.now();
-    await p.click('[data-scene="play"] [data-play-go]');
+    await p.evaluate(() => window.JG_GAME.play('', 'cabinet'));
     const opened = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen() && window.JG_RUN.debug.state().level, null, { timeout: 6000 }).then(() => true, () => false);
-    if (!opened) { errs.push(`${name}: Play did not open the run`); await ctx.close(); continue; }
+    if (!opened) { errs.push(`${name}: JG_GAME.play did not open the run`); await ctx.close(); continue; }
     const lv = (await st(p)).level;
-    if (lv !== 'neuroscience') errs.push(`${name}: Play should start level 1 (neuroscience), started ${lv}`);
-    notes.push(`${name}: Play to the first level in ${Date.now() - t0} ms`);
+    if (lv !== 'neuroscience') errs.push(`${name}: the cabinet should start level 1 (neuroscience), started ${lv}`);
+    notes.push(`${name}: the cabinet to the first level in ${Date.now() - t0} ms`);
     await p.waitForTimeout(1200);
     const px = await pixels(p);
     if (!px.w || px.var < 40) errs.push(`${name}: the canvas looks blank ${JSON.stringify(px)}`);
-    if (!/^#play\//.test(await p.evaluate(() => location.hash))) errs.push(`${name}: the address does not carry #play/<level>`);
+    const addr = await p.evaluate(() => ({ hash: location.hash, search: location.search, state: history.state }));
+    if (addr.hash !== hash0 || /run=/.test(addr.search) || !(addr.state && addr.state.run)) errs.push(`${name}: the run should keep the address and push one history entry ${JSON.stringify(addr)}`);
     const s0 = await st(p);
     if (mobile) {
       const vis = await p.evaluate(() => { const v = sel => { const e = document.querySelector(sel); if (!e) return false; const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 30 && r.height > 30 && cs.display !== 'none' && +cs.opacity > 0.3 && r.right <= innerWidth && r.bottom <= innerHeight; }; return { stick: v('.run__stick'), jump: v('.run__jump'), turn: !document.querySelector('[data-run-turn]').hidden }; });
@@ -730,7 +700,7 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
     const lib = await p.evaluate(() => ({ run: document.documentElement.classList.contains('run-on'), open: !!document.querySelector('#title-neuroscience.is-open'), cleared: !!document.querySelector('.tile[data-title="neuroscience"].is-cleared') }));
     if (lib.run || !lib.open || !lib.cleared) errs.push(`${name}: Open the title ${JSON.stringify(lib)}`); else notes.push(`${name}: Open the title lands on its page, its tile marked cleared`);
     await p.evaluate(() => dispatchEvent(new Event('pagehide'))); await p.waitForTimeout(700);
-    for (const e of ['intro_play', 'game_started', 'game_medal', 'game_level_finished']) if (!ev.includes(e)) errs.push(`${name}: never sent ${e}`);
+    for (const e of ['game_started', 'game_medal', 'game_level_finished']) if (!ev.includes(e)) errs.push(`${name}: never sent ${e}`);
     await ctx.close();
   }
 
@@ -738,12 +708,13 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
     // upright: the game plays at once, the turn card suggests sideways, the controls sit under it
     const ctx = await ctxFor(390, 844, true); await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
     const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`run upright pageerror: ${e.message}`));
-    await p.goto(URL0 + '?run=triple-j');
+    await p.goto(URL0); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(1000);
+    await p.evaluate(() => window.JG_GAME.play('triple-j', 'cabinet'));
     const ok = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 8000 }).then(() => true, () => false);
-    if (!ok) errs.push('?run=triple-j did not drop into the run');
+    if (!ok) errs.push('upright phone: JG_GAME.play(triple-j) did not open the run');
     await p.waitForTimeout(1200);
-    const up = await p.evaluate(() => ({ intro: !!document.getElementById('intro'), level: window.JG_RUN.debug.state().level, turn: !document.querySelector('[data-run-turn]').hidden, upright: document.getElementById('run').classList.contains('is-upright'), jump: document.querySelector('.run__jump').getBoundingClientRect().bottom <= innerHeight }));
-    if (up.intro || up.level !== 'triple-j') errs.push(`?run= should skip the title screen and open its level ${JSON.stringify(up)}`); else notes.push('?run=triple-j: straight into Triple J Auto, no title screen');
+    const up = await p.evaluate(() => ({ level: window.JG_RUN.debug.state().level, turn: !document.querySelector('[data-run-turn]').hidden, upright: document.getElementById('run').classList.contains('is-upright'), jump: document.querySelector('.run__jump').getBoundingClientRect().bottom <= innerHeight }));
+    if (up.level !== 'triple-j') errs.push(`JG_GAME.play(level) should open that level ${JSON.stringify(up)}`); else notes.push('JG_GAME.play(triple-j): straight into Triple J Auto');
     if (!up.turn || !up.upright || !up.jump) errs.push(`upright phone: turn card and controls ${JSON.stringify(up)}`); else notes.push('upright phone: the turn card shows, play continues upright with the controls underneath');
     await p.screenshot({ path: path.join(OUT, 'run-upright.png') });
     await textRules(p, 'run upright'); await overflow(p, 'run upright');
@@ -751,7 +722,7 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
   }
 
   if (!only || only === 'desktop') {
-    // a community store answering: the crew line, the board, ghosts drawn, a run posted; #play/<level> after the title screen
+    // a community store answering: the crew line, the board, ghosts drawn, a run posted
     const ctx = await ctxFor(1440, 900, false); await ctx.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
     let posted = 0;
     await ctx.route('**/api/run**', r => {
@@ -760,9 +731,10 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ on: true, crew: 7, board: [{ pid: 'abcd', name: 'Night Shift', ms: 41000, medals: 3, c: { me: 1 } }, { pid: 'efgh', name: 'Player', ms: 52000, medals: 1, c: { me: 0, skin: 3, hair: 2, outfit: 3, glasses: 0 } }], ghosts: [{ pid: 'abcd', c: { me: 1 }, s }] }) });
     });
     const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`run community pageerror: ${e.message}`));
-    await p.goto(URL0 + '?from=test#play/the-inbound'); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]');
+    await p.goto(URL0); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(1000);
+    await p.evaluate(() => window.JG_GAME.play('the-inbound', 'cabinet'));
     const ok = await p.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 8000 }).then(() => true, () => false);
-    if (!ok || (await st(p)).level !== 'the-inbound') errs.push('#play/the-inbound did not open that level after the title screen'); else notes.push('#play/the-inbound: the title screen first, then that level');
+    if (!ok || (await st(p)).level !== 'the-inbound') errs.push('JG_GAME.play(the-inbound) did not open that level');
     await p.waitForTimeout(800); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(500); await p.keyboard.up('ArrowRight'); await p.waitForTimeout(400);
     const crew = await p.evaluate(() => { const c = document.querySelector('[data-run-crew]'); return c && !c.hidden ? c.textContent : ''; });
     if (!/7 players have walked the lot tonight/.test(crew)) errs.push(`community: the crew line did not show "${crew}"`);
@@ -773,15 +745,19 @@ notes.push('start screen: one Play, nothing else, and Play opens the episode');
     await textRules(p, 'run community'); await overflow(p, 'run community');
     await p.screenshot({ path: path.join(OUT, 'run-community.png') });
     await ctx.close();
-    // G from the library, and Quit back to it
+    // Back closes only the run; Quit closes it and steps its history entry back, quietly
     const c2 = await ctxFor(1440, 900, false); await c2.route('**/api/track', r => r.fulfill({ status: 204, body: '' }));
-    const q = await c2.newPage(); q.on('pageerror', e => errs.push(`run G pageerror: ${e.message}`));
+    const q = await c2.newPage(); q.on('pageerror', e => errs.push(`run back pageerror: ${e.message}`));
     await q.goto(URL0); await q.waitForSelector('#intro'); await q.click('[data-intro-skip]'); await q.waitForTimeout(1000);
-    await q.keyboard.press('g');
-    const g = await q.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 6000 }).then(() => true, () => false);
-    if (!g) errs.push('G did not open the run'); else notes.push('G opens the run from the library');
-    await q.waitForTimeout(600); await q.keyboard.press('Escape'); await q.waitForTimeout(400); await q.click('[data-act="quit"]'); await q.waitForTimeout(700);
-    if (await q.evaluate(() => document.documentElement.classList.contains('run-on') || document.documentElement.classList.contains('is-locked'))) errs.push('Quit to the library left the run on or the page locked'); else notes.push('Quit to the library: closed, unlocked');
+    await q.evaluate(() => window.JG_GAME.play('', 'cabinet'));
+    await q.waitForFunction(() => window.JG_RUN && window.JG_RUN.isOpen(), null, { timeout: 6000 }).catch(() => errs.push('JG_GAME.play did not open the run'));
+    await q.waitForTimeout(600); await q.goBack(); await q.waitForTimeout(800);
+    const bk = await q.evaluate(() => ({ run: document.documentElement.classList.contains('run-on'), locked: document.documentElement.classList.contains('is-locked'), url: location.href }));
+    if (bk.run || bk.locked || !/127\.0\.0\.1:8765\/$/.test(bk.url)) errs.push(`Back from the run ${JSON.stringify(bk)}`); else notes.push('Back closes the run and stays on the page');
+    await q.evaluate(() => window.JG_GAME.play('', 'cabinet')); await q.waitForTimeout(900);
+    await q.keyboard.press('Escape'); await q.waitForTimeout(400); await q.click('[data-act="quit"]'); await q.waitForTimeout(900);
+    const qt = await q.evaluate(() => ({ run: document.documentElement.classList.contains('run-on'), locked: document.documentElement.classList.contains('is-locked'), state: history.state, len: history.length }));
+    if (qt.run || qt.locked || (qt.state && qt.state.run)) errs.push(`Quit to the library left ${JSON.stringify(qt)}`); else notes.push('Quit to the library: closed, unlocked, its history entry stepped back');
     await c2.close();
   }
 }
