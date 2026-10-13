@@ -402,3 +402,30 @@ html[data-still] .st-dot.is-new::after { animation: none; opacity: .5; transform
   .st-drive__top { gap: 6px; }
   .st-drive__btn { padding: 0 12px; }
 }
+
+/* ---------- the jump, and the pad ---------- */
+/* the Jump button: beside the big button, under the right thumb, only while you're on your feet exploring */
+.st-jump { position: absolute; right: calc(max(22px, calc(env(safe-area-inset-right) + 14px)) + 98px); bottom: calc(max(26px, calc(env(safe-area-inset-bottom) + 18px)) + 8px); z-index: 7; width: 68px; height: 68px; border-radius: 50%; border: 1.5px solid rgba(237, 231, 219, .55) !important; background: rgba(5, 7, 10, .42) !important; display: grid; place-items: center; align-content: center; gap: 2px; animation: st-in .3s var(--ease); touch-action: manipulation; }
+.st-jump svg { width: 18px; height: 18px; }
+.st-jump__verb { font: 600 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; }
+.st-jump:active { transform: scale(.94); background: rgba(237, 231, 219, .14) !important; }
+.story:not([data-dev="touch"]) .st-jump, .story.is-paused .st-jump, .story.is-driving .st-jump { display: none; }
+@media (max-height: 480px) and (orientation: landscape) { .st-jump { width: 60px; height: 60px; right: calc(max(22px, calc(env(safe-area-inset-right) + 14px)) + 88px); } }
+/* the pad's buttons as the pad prints them: a letter in a filled circle, shown only when the pad was the last thing used */
+.st-glyph { display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--bone); color: var(--ink); font: 700 11px/1 var(--sans); letter-spacing: 0; text-transform: none; padding: 0; }
+.story:not([data-dev="pad"]) .st-glyph { display: none; }
+.st-back .st-glyph, .st-skip .st-glyph { margin-left: 4px; width: 20px; height: 20px; font-size: 10px; }
+.st-skip { display: inline-flex; align-items: center; gap: 8px; }
+.st-ico { position: relative; }
+.st-ico .st-glyph { position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; font-size: 10px; }
+/* what the pad does here, in the corner */
+.st-legend { position: absolute; right: max(20px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); z-index: 20; display: flex; gap: 18px; align-items: center; pointer-events: none; font: 500 12px/1 var(--sans); letter-spacing: .08em; color: var(--bone-2); text-shadow: 0 1px 8px rgba(0, 0, 0, .9); }
+.st-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.story:not([data-dev="pad"]) .st-legend { display: none; }
+.story.is-driving .st-legend { display: none; }
+/* with a pad the focus always shows, however it got there (a focus moved by the pad doesn't count as visible to the browser) */
+.story[data-dev="pad"] :focus { outline: 2px solid var(--bone); outline-offset: 4px; border-radius: 4px; }
+.story[data-dev="pad"] .st-ch:focus { outline: none; background: rgba(237, 231, 219, .06); }
+.story[data-dev="pad"] .st-ch:focus span::after { transform: scaleX(1); }
+.story[data-dev="pad"] .pz-m button:focus { color: var(--bone); transform: translateX(6px); }
+.story[data-dev="pad"] .st-sheet .iphone :focus { outline-color: #111; outline-offset: 2px; }

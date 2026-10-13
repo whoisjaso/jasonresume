@@ -1,5 +1,7 @@
 // After Hours, the episode, played end to end through real input.
 //   python3 -m http.server 8765 &   then   node tools/verify/story.mjs [desktop|landscape|portrait] [--shots]
+//   --jump: the jump (Space, the Jump button, the arc on a fixed clock, walls, puddles; tools/verify/out/jump-sheet.png)
+//   --pad: the whole episode's controls from a standard-mapping pad injected through navigator.getGamepads
 //
 // For each viewport (desktop 1440x900, a phone sideways 844x390 and upright 390x844) it
 // plays every major branch with the keyboard, clicks or taps: hiring (and the role's
@@ -928,6 +930,22 @@ async function exploreCheck(vname, w, h, mobile) {
   await open('');
   const lot = await spots();
   for (const id of ['showroom-lights', 'vending', 'dumpster', 'puddle-0', 'showroom-glass', 'bus-sign'].filter(x => lot.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
+  // more of the street: the laundromat by the crosswalk, a payphone, a newspaper box, a bike, the curb puddle, the
+  // taco truck in the empty lot, the gas station's ice chest, the crosswalk button that turns the signal over the road
+  const STREET = ['crosswalk-0', 'laundry-door', 'laundry-sign', 'payphone', 'news-box', 'bike', 'curb-puddle', 'truck-bell', 'taco-menu', 'ice'];
+  const missingSt = STREET.filter(x => !lot.includes(x)); if (missingSt.length) errs.push(`${label}: the street is missing ${missingSt.join(' ')}`);
+  const streetUsed = [];
+  for (const id of STREET.filter(x => lot.includes(x))) {
+    const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k));
+    if (!ev || !ev.length) errs.push(`${label}: ${id} made no sound`); else streetUsed.push(id);
+    if (id === 'payphone' && await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn()) && !(await p.evaluate(() => window.JG_STORY.debug.audio().amb.includes('dial')))) errs.push(`${label}: the payphone is off its hook but there's no dial tone`);
+  }
+  if (lot.includes('payphone')) await useIt('payphone'); // hang it up
+  // and you can walk to each of them from the gate
+  const far = [['laundromat', -5.7, 40.1], ['payphone', 2.4, 39.6], ['taco truck', -33.5, 46.7], ['ice chest', 29.7, 49.3], ['bus stop', -18, 39.3]];
+  const reach = [];
+  for (const [n, x, z] of far) { await p.evaluate(() => window.JG_STORY.debug.put(0.2, 19.5, 0)); const path = await p.evaluate(([x, z]) => window.JG_STORY.debug.walk(x, z), [x, z]); if (!path) errs.push(`${label}: no way to walk to the ${n}`); else reach.push(n); await p.evaluate(() => window.JG_STORY.debug.put(0.2, 19.5, 0)); }
+  notes.push(`${label}: the street: used ${streetUsed.join(' ')}; walked to ${reach.join(', ')}`);
   // sit on the bench and get up again with a push
   if (lot.includes('bus-bench')) {
     await useIt('bus-bench');
@@ -962,6 +980,373 @@ async function exploreCheck(vname, w, h, mobile) {
   notes.push(`${label}: ways out: ${exits.join(', ')}; things used: ${[...kinds].join(' ')}; back on the lot at ${back.map(n => n.toFixed(1))}`);
   await ctx.close();
 }
+/* ---------- the jump: Space, the Jump button on a phone; a standing and a running jump on a fixed clock; never through
+   a wall, never while talking or paused; the landing's sound, haptic and camera dip in one frame; a splash in a puddle;
+   and a contact sheet of stills at fixed times (tools/verify/out/jump-sheet.png) ---------- */
+const JUMPC = process.argv.includes('--jump');
+const PADC = process.argv.includes('--pad');
+async function storyCtx(w, h, mobile, pad) {
+  const ctx = await ctxFor(w, h, mobile);
+  // every haptic call is logged with its time (the Vibration API is what haptics.js uses off iOS)
+  await ctx.addInitScript(() => {
+    window.__vib = [];
+    const v = navigator.vibrate ? navigator.vibrate.bind(navigator) : null;
+    navigator.vibrate = p => { window.__vib.push(performance.now()); try { return v ? v(p) : true; } catch (e) { return true; } };
+  });
+  if (pad) await ctx.addInitScript(() => {
+    // a standard-mapping pad that the page polls like a real one; it logs every rumble
+    window.__rumble = [];
+    const B = () => ({ pressed: false, touched: false, value: 0 });
+    window.__pad = { id: 'Verify pad (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, B),
+      vibrationActuator: { type: 'dual-rumble', effects: ['dual-rumble'], playEffect(type, o) { window.__rumble.push({ t: performance.now(), type, ...o }); return Promise.resolve('complete'); }, reset() { return Promise.resolve('complete'); } } };
+    navigator.getGamepads = () => [window.__pad, null, null, null];
+  });
+  return ctx;
+}
+async function openStory(p, mobile) {
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 });
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+}
+/* lines and choices until you're on your feet; whether a jump was refused while a talk was on */
+async function toExploreJ(p) {
+  let refusedInTalk = null;
+  const t0 = Date.now();
+  while (Date.now() - t0 < 300000) {
+    const r = await p.evaluate(() => {
+      if (!window.JG_STORY) return { ph: null };
+      const d = window.JG_STORY.debug, s = d.state();
+      let tried = null;
+      if (s.phase === 'talk' && d.jump) tried = d.jump('test');
+      if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll();
+      return { ph: s.phase, line: s.line, tried };
+    });
+    if (r.tried !== null && r.tried !== undefined && refusedInTalk !== false) refusedInTalk = !r.tried;
+    if (r.ph === 'explore' && !r.line) return { ok: true, refusedInTalk };
+    await p.waitForTimeout(150);
+  }
+  return { ok: false, refusedInTalk };
+}
+/* a clear straight run on this set, off the puddles: [x, z, yaw] */
+const findLane = (p, len) => p.evaluate(len => {
+  const d = window.JG_STORY.debug, me = d.state().me;
+  for (let r = 0; r <= 14; r += 1) for (let a = 0; a < 16; a++) {
+    const x = me[0] + Math.sin(a / 16 * Math.PI * 2) * r, z = me[1] + Math.cos(a / 16 * Math.PI * 2) * r;
+    for (let k = 0; k < 8; k++) {
+      const yaw = k * Math.PI / 4; let ok = true;
+      for (let t = -0.6; t <= len && ok; t += 0.2) { const px = x + Math.sin(yaw) * t, pz = z + Math.cos(yaw) * t; if (d.blocked(px, pz) || d.blocked(px + 0.5, pz) || d.blocked(px - 0.5, pz) || d.surface(px, pz) === 'puddle') ok = false; }
+      if (ok) return [x, z, yaw];
+    }
+  }
+  return null;
+}, len);
+/* a jump stepped on a fixed clock (keys held for the run): the arc, frame by frame */
+const simJump = (p, o) => p.evaluate(o => {
+  const d = window.JG_STORY.debug, me = d.you ? d.you() : null;
+  d.put(o.x, o.z, o.yaw);
+  for (let i = 0; i < (o.pre || 0); i++) d.sim(1, 1 / 60);
+  const before = d.jumpState(), x0 = before.x, z0 = before.z;
+  const ok = d.jump('test');
+  const tr = []; let air0 = null, air1 = null, inWall = 0;
+  for (let i = 0; i < 150; i++) {
+    d.sim(1, 1 / 60);
+    const j = d.jumpState(); tr.push([+(j.x - x0).toFixed(3), +(j.z - z0).toFixed(3), j.y, j.st]);
+    if (j.air && air0 === null) air0 = [j.x, j.z];
+    if (!j.air && air0 && !air1 && j.st !== 'pre') air1 = [j.x, j.z];
+    if (d.blocked(j.x, j.z)) inWall++;
+    if (!j.jumping && i > 5) break;
+  }
+  const end = d.jumpState();
+  return { ok, speed0: before.speed, peak: Math.max(...tr.map(t => t[2])), airDist: air0 && air1 ? Math.hypot(air1[0] - air0[0], air1[1] - air0[1]) : 0, total: Math.hypot(end.x - x0, end.z - z0), frames: tr.length, end, inWall, last: end.last, onFloor: end.y === 0 };
+}, o);
+async function jumpCheck(vname, w, h, mobile) {
+  const label = `${vname} jump`;
+  const ctx = await storyCtx(w, h, mobile, false);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await openStory(p, mobile);
+  const ex = await toExploreJ(p); await turnAway(p);
+  if (!ex.ok) { errs.push(`${label}: never got to explore`); await ctx.close(); return; }
+  if (ex.refusedInTalk === false) errs.push(`${label}: a jump started during a talk`);
+  const J = () => p.evaluate(() => window.JG_STORY.debug.jumpState());
+  const lane = await findLane(p, 4.5);
+  if (!lane) { errs.push(`${label}: no clear run on the lot`); await ctx.close(); return; }
+  // 1. real input: Space on a keyboard, the Jump button on a phone
+  await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
+  await p.waitForTimeout(400);
+  const n0 = (await J()).n;
+  if (mobile) {
+    const vis = await until(p, () => { const b = document.querySelector('.st-jump'); return b && !b.hidden && b.getBoundingClientRect().width > 0; }, null, 10000);
+    if (!vis) errs.push(`${label}: no Jump button on a touch screen while exploring`);
+    else {
+      const bb = await (await p.$('.st-jump')).boundingBox();
+      if (bb.x + bb.width > w || bb.y + bb.height > h || bb.x < w * 0.45) errs.push(`${label}: the Jump button is not under the right thumb (${JSON.stringify(bb)})`);
+      await p.tap('.st-jump', { force: true });
+    }
+  } else {
+    if (await p.evaluate(() => { const b = document.querySelector('.st-jump'); return b && !b.hidden && getComputedStyle(b).display !== 'none'; })) errs.push(`${label}: the touch Jump button shows on a desktop`);
+    await p.keyboard.press('Space');
+  }
+  const went = await until(p, n0 => window.JG_STORY.debug.jumpState().n > n0 && !window.JG_STORY.debug.jumpState().jumping, n0, 60000);
+  const j1 = await J();
+  if (!went) errs.push(`${label}: ${mobile ? 'the Jump button' : 'Space'} didn't jump (${JSON.stringify(j1).slice(0, 200)})`);
+  else {
+    const L = j1.last;
+    const vib = await p.evaluate(t => window.__vib.filter(v => Math.abs(v - t) < 4).length, L.t);
+    if (!(L.dip > 0)) errs.push(`${label}: the camera didn't dip on the landing`);
+    if (!(L.crouch > 0)) errs.push(`${label}: the knees didn't take the landing in its frame`);
+    if (!vib) errs.push(`${label}: no haptic in the landing's frame`);
+    const sound = await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn());
+    if (sound && !L.heard) errs.push(`${label}: the landing made no sound on ${L.surf}`);
+    notes.push(`${label}: ${mobile ? 'the Jump button' : 'Space'} jumps; the landing on ${L.surf}: ${L.heard ? 'a step' : 'silent (sound off)'}, a haptic, the camera's dip ${L.dip} m and the knees ${L.crouch} in the same frame`);
+  }
+  // 2. on a fixed clock: standing, then running (W and Shift held)
+  const free = await p.evaluate(() => !!window.JG_STORY.debug.freeze);
+  if (free) await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+  const stand = await simJump(p, { x: lane[0], z: lane[1], yaw: lane[2], pre: 10 });
+  await p.keyboard.down('w'); await p.keyboard.down('Shift');
+  const runJ = await simJump(p, { x: lane[0], z: lane[1], yaw: lane[2], pre: 75 });
+  await p.keyboard.up('Shift'); await p.keyboard.up('w');
+  if (!stand.ok || !runJ.ok) errs.push(`${label}: a jump was refused on clear ground (${stand.ok} ${runJ.ok})`);
+  if (stand.peak < 0.3 || stand.peak > 0.7) errs.push(`${label}: a standing jump peaked at ${stand.peak} m`);
+  if (stand.total > 0.3) errs.push(`${label}: a standing jump travelled ${stand.total.toFixed(2)} m`);
+  if (runJ.airDist < 0.9) errs.push(`${label}: a running jump (from ${runJ.speed0} m/s) carried only ${runJ.airDist.toFixed(2)} m in the air`);
+  if (!stand.onFloor || !runJ.onFloor || stand.end.jumping || runJ.end.jumping) errs.push(`${label}: a jump didn't come back down to the floor (${JSON.stringify([stand.end, runJ.end]).slice(0, 200)})`);
+  notes.push(`${label}: standing jump peaks ${stand.peak.toFixed(2)} m and stays put (${stand.total.toFixed(2)} m); a running jump from ${runJ.speed0} m/s peaks ${runJ.peak.toFixed(2)} m and carries ${runJ.airDist.toFixed(2)} m in the air (${runJ.frames} frames at 60 per second, start to standing)`);
+  // 3. at a wall: a running jump straight into it never ends up inside or past it
+  const wallRun = await p.evaluate(() => {
+    const d = window.JG_STORY.debug, me = d.state().me;
+    const ws = d.walls().map(r => ({ r, cx: (r[0] + r[1]) / 2, cz: (r[2] + r[3]) / 2 })).filter(o => o.r[1] - o.r[0] > 1 && o.r[3] - o.r[2] > 1).sort((a, b) => Math.hypot(a.cx - me[0], a.cz - me[1]) - Math.hypot(b.cx - me[0], b.cz - me[1]));
+    for (const o of ws) for (const [nx, nz] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+      const ex = nx ? (nx < 0 ? o.r[0] : o.r[1]) : o.cx, ez = nz ? (nz < 0 ? o.r[2] : o.r[3]) : o.cz;
+      const x = ex + nx * 3.2, z = ez + nz * 3.2;
+      let ok = true; for (let t = 0.6; t <= 3.2 && ok; t += 0.2) if (d.blocked(ex + nx * t, ez + nz * t)) ok = false;
+      if (ok) return { x, z, yaw: Math.atan2(-nx, -nz), wall: o.r };
+    }
+    return null;
+  });
+  if (!wallRun) notes.push(`${label}: no wall with a clear run up here; the wall check was skipped`);
+  else {
+    await p.keyboard.down('w'); await p.keyboard.down('Shift');
+    const r = await simJump(p, { x: wallRun.x, z: wallRun.z, yaw: wallRun.yaw, pre: 55 });
+    await p.keyboard.up('Shift'); await p.keyboard.up('w');
+    const [x0, x1, z0, z1] = wallRun.wall, ex = r.end.x, ez = r.end.z;
+    if (r.inWall || (ex > x0 && ex < x1 && ez > z0 && ez < z1)) errs.push(`${label}: a running jump at a wall ended inside it (${ex}, ${ez} in ${JSON.stringify(wallRun.wall)}; ${r.inWall} frames)`);
+    else notes.push(`${label}: a running jump at a wall stops at it (${r.inWall} frames inside, ${r.total.toFixed(2)} m covered from 3.2 m off)`);
+  }
+  // 4. a puddle: the landing splashes
+  const pud = await p.evaluate(() => {
+    const d = window.JG_STORY.debug;
+    for (let x = -34; x <= 34; x += 0.5) for (let z = -26; z <= 27; z += 0.5) if (d.surface(x, z) === 'puddle' && !d.blocked(x, z) && !d.blocked(x + 0.4, z) && !d.blocked(x - 0.4, z)) return [x, z];
+    return null;
+  });
+  if (!pud) notes.push(`${label}: no puddle on this set (the morning is dry)`);
+  else {
+    const e0 = await p.evaluate(() => window.JG_STORY.debug.audio().events.length);
+    const r = await simJump(p, { x: pud[0], z: pud[1], yaw: 0, pre: 5 });
+    const ev = await p.evaluate(() => window.JG_STORY.debug.audio().events.slice(-20).filter(e => e.kind === 'use').map(e => e.name));
+    if (!r.last || r.last.surf !== 'puddle') errs.push(`${label}: the puddle landing read ${r.last && r.last.surf}`);
+    const sound = await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn());
+    if (sound && !ev.includes('splash')) errs.push(`${label}: no splash landing in a puddle (${ev.join(' ')})`);
+    notes.push(`${label}: landing in a puddle at ${pud.map(n => n.toFixed(1))}: ${sound ? (ev.includes('splash') ? 'a splash' : 'no splash') : 'sound off'}`);
+  }
+  // 5. never while paused or seated in a menu
+  if (free) await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+  await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+  const ph = (await st(p)).phase;
+  const inPause = await p.evaluate(() => window.JG_STORY.debug.jump('test'));
+  if (ph === 'pause' && inPause) errs.push(`${label}: a jump started with the pause menu open`);
+  await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+  notes.push(`${label}: no jump in a talk (${ex.refusedInTalk === null ? 'no talk seen' : 'refused'}) or paused (${ph === 'pause' ? (inPause ? 'allowed' : 'refused') : 'not paused: ' + ph})`);
+  // 6. the stills (desktop): a running jump and a standing one, seen side on from a fixed camera, at fixed times
+  if (!mobile && free && await p.evaluate(() => !!window.JG_STORY.debug.step)) await jumpSheet(p, lane, label);
+  await textRules(p, label);
+  await ctx.close();
+}
+async function jumpSheet(p, lane, label) {
+  const files = [];
+  const cv = await p.$('.st-cv');
+  const snap = async name => { const f = path.join(OUT, `jump-${name}.png`); await cv.screenshot({ path: f }); files.push([f, name]); };
+  await p.evaluate(() => { window.JG_STORY.debug.freeze(true); const h = document.querySelector('.st-hud'); if (h) h.style.visibility = 'hidden'; for (const s of ['.st-obj', '.st-way', '.st-dots', '.st-prompt', '.st-hint', '.st-legend']) { const e = document.querySelector(s); if (e) e.style.visibility = 'hidden'; } });
+  for (const kind of ['run', 'stand']) {
+    if (kind === 'run') { await p.keyboard.down('w'); await p.keyboard.down('Shift'); }
+    await p.evaluate(([l, kind]) => {
+      const d = window.JG_STORY.debug;
+      d.put(l[0], l[1], l[2]); d.sim(kind === 'run' ? 70 : 20, 1 / 60);
+      // the camera side on, level with the hips, framing the arc ahead
+      const j = d.jumpState(), fx = Math.sin(l[2]), fz = Math.cos(l[2]), ahead = kind === 'run' ? 0.9 : 0;
+      const cx = j.x + fx * ahead, cz = j.z + fz * ahead;
+      d.view([cx + fz * 4.2, 1.15, cz - fx * 4.2], [cx, 0.85, cz], 6);
+      d.jump('test');
+    }, [lane, kind]);
+    // the clock from the press: the crouch, the push, rising, the top, falling, the touch down, the knees, standing
+    const times = kind === 'run' ? [0, 4, 8, 16, 24, 32, 38, 42, 50] : [0, 6, 10, 16, 24, 32, 40, 45, 54];
+    let f = 0;
+    for (const t of times) {
+      if (t > f) { await p.evaluate(n => window.JG_STORY.debug.step(n, 1 / 60), t - f); f = t; }
+      else await p.evaluate(() => window.JG_STORY.debug.step(0, 1 / 60));
+      const j = await p.evaluate(() => window.JG_STORY.debug.jumpState());
+      await snap(`${kind}-${String(t).padStart(2, '0')}-${j.st || 'done'}-y${j.y.toFixed(2)}`);
+    }
+    if (kind === 'run') { await p.keyboard.up('Shift'); await p.keyboard.up('w'); }
+    await p.evaluate(() => { const d = window.JG_STORY.debug; d.view(null); for (let i = 0; i < 40; i++) d.sim(1, 1 / 60); });
+  }
+  await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+  const sp = await (await b.newContext({ viewport: { width: 1800, height: 900 } })).newPage();
+  const html = '<body style="margin:0;background:#0a0f0d;display:grid;grid-template-columns:repeat(9,1fr);gap:6px;padding:6px;font:11px sans-serif;color:#9a9890">' + files.map(([f, n]) => `<figure style="margin:0"><img src="data:image/png;base64,${fs.readFileSync(f).toString('base64')}" style="width:100%;height:330px;object-fit:cover;display:block"/><figcaption>${n}</figcaption></figure>`).join('') + '</body>';
+  await sp.setContent(html); await sp.waitForTimeout(300);
+  await sp.screenshot({ path: path.join(OUT, 'jump-sheet.png'), fullPage: true });
+  await sp.context().close();
+  files.forEach(([f]) => fs.rmSync(f, { force: true }));
+  notes.push(`${label}: contact sheet tools/verify/out/jump-sheet.png (${files.length} stills: a running and a standing jump, side on, at fixed times)`);
+}
+
+/* ---------- the pad: a standard-mapping pad injected through navigator.getGamepads; walking on its curve, run and camera
+   clicks, A and X jumping, the pause menu, the settings' sliders, the journal's tabs, a talk's choices, the desk's phone
+   and the end, all from the pad with the focus always shown; and rumbles wherever a haptic fires ---------- */
+async function padCheck(vname, w, h, mobile) {
+  const label = `${vname} pad`;
+  const ctx = await storyCtx(w, h, mobile, true);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await openStory(p, mobile);
+  const ex = await toExploreJ(p); await turnAway(p);
+  if (!ex.ok) { errs.push(`${label}: never got to explore`); await ctx.close(); return; }
+  await p.evaluate(() => window.JG_STORY.debug.freeze && window.JG_STORY.debug.freeze(true));
+  // press a button for one step of the pad's poll (sim runs the poll), then let it go
+  const press = (i, n = 1) => p.evaluate(([i, n]) => { const d = window.JG_STORY.debug, B = window.__pad.buttons[i]; B.pressed = true; B.value = 1; d.sim(1, 1 / 60); B.pressed = false; B.value = 0; d.sim(n, 1 / 60); }, [i, n]);
+  const stick = (ax, ay, n) => p.evaluate(([ax, ay, n]) => { const d = window.JG_STORY.debug; window.__pad.axes[0] = ax; window.__pad.axes[1] = ay; d.sim(n, 1 / 60); const s = d.jumpState(); return s; }, [ax, ay, n]);
+  const J = () => p.evaluate(() => window.JG_STORY.debug.jumpState());
+  const F = () => p.evaluate(() => window.JG_STORY.debug.focus());
+  const lane = await findLane(p, 5);
+  if (lane) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
+  // the device: any press makes the pad the last thing used; the legend and the glyphs follow
+  await press(4);
+  let j = await J();
+  if (j.dev !== 'pad') errs.push(`${label}: the pad wasn't taken as the device (${j.dev})`);
+  if (!/Jump/.test(j.legend)) errs.push(`${label}: no pad legend while exploring ("${j.legend}")`);
+  // walking: a light push strolls, all the way runs, a click of the stick runs on a light push
+  const slow = await stick(0, -0.35, 40), full = await stick(0, -1, 60);
+  await stick(0, 0, 30);
+  await stick(0, -0.4, 2); await press(10, 40); const latched = await J();
+  await stick(0, 0, 30);
+  if (!(slow.speed > 0.2 && slow.speed < 1.0)) errs.push(`${label}: a light push walked at ${slow.speed} m/s (want an easy stroll)`);
+  if (!(full.speed > 2.2)) errs.push(`${label}: a full push only reached ${full.speed} m/s`);
+  if (!(latched.speed > 2.2)) errs.push(`${label}: the stick's click didn't run on a light push (${latched.speed} m/s)`);
+  notes.push(`${label}: the stick's curve: a light push ${slow.speed} m/s, all the way ${full.speed} m/s, clicked and light ${latched.speed} m/s`);
+  // A with nothing to use jumps, X jumps; the landing rumbles
+  if (lane) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
+  await p.evaluate(() => window.JG_STORY.debug.sim(20, 1 / 60));
+  const n0 = (await J()).n;
+  await press(0, 80); const ja = await J();
+  await press(2, 80); const jx = await J();
+  if (ja.n !== n0 + 1 || ja.how !== 'pad') errs.push(`${label}: A with nothing prompted didn't jump (${ja.n - n0}, ${ja.how})`);
+  if (jx.n !== n0 + 2) errs.push(`${label}: X didn't jump`);
+  const rum = await p.evaluate(t => window.__rumble.filter(r => Math.abs(r.t - t) < 4), jx.last ? jx.last.t : 0);
+  if (!rum.length) errs.push(`${label}: no rumble on the landing`);
+  else notes.push(`${label}: A (nothing prompted) and X jump; the landing rumbles (${rum[0].type}, strong ${rum[0].strongMagnitude.toFixed(2)}, weak ${rum[0].weakMagnitude.toFixed(2)}, ${rum[0].duration} ms)`);
+  // the right stick's click puts the camera back behind you
+  await p.evaluate(() => { window.__pad.axes[2] = 1; window.JG_STORY.debug.sim(30, 1 / 60); window.__pad.axes[2] = 0; window.JG_STORY.debug.sim(5, 1 / 60); });
+  const off = (await J()).cam;
+  await press(11, 40);
+  const back = (await J()).cam;
+  const dyaw = c => Math.abs(Math.atan2(Math.sin(c[0] - c[1] - Math.PI), Math.cos(c[0] - c[1] - Math.PI)));
+  if (dyaw(back) > 0.15) errs.push(`${label}: the right stick's click left the camera ${dyaw(back).toFixed(2)} rad off behind you (was ${dyaw(off).toFixed(2)})`);
+  else notes.push(`${label}: the right stick's click brings the camera from ${dyaw(off).toFixed(2)} rad off to ${dyaw(back).toFixed(2)} behind you`);
+  // the pause menu: Menu opens it, the D-pad moves a visible focus, A goes into Settings, the D-pad's right moves a slider, B backs out twice
+  await press(9, 2);
+  if ((await st(p)).phase !== 'pause') errs.push(`${label}: Menu didn't pause`);
+  await press(13, 2); const f1 = await F(); await press(13, 2); const f2 = await F();
+  if (!f1 || !f2 || !f1.inHost || f1.text === f2.text) errs.push(`${label}: the D-pad didn't move the focus in the pause menu (${JSON.stringify([f1, f2])})`);
+  if (f2 && f2.outline === 'none') errs.push(`${label}: the pause menu's focus doesn't show`);
+  for (let i = 0; i < 6; i++) { const f = await F(); if (f && f.text === STORY.ui.settings) break; await press(i < 3 ? 12 : 13, 2); }
+  await press(0, 3);
+  const inSet = await p.evaluate(() => !!document.querySelector('.st-pause [data-mix]'));
+  if (!inSet) errs.push(`${label}: A on Settings didn't open the settings`);
+  else {
+    const m0 = await p.evaluate(() => window.JG_STORY.debug.settings().mix);
+    let onSlider = false;
+    for (let i = 0; i < 6 && !onSlider; i++) { onSlider = await p.evaluate(() => document.activeElement && document.activeElement.matches('input[type=range]')); if (!onSlider) await press(13, 2); }
+    await press(14, 2);
+    const m1 = await p.evaluate(() => window.JG_STORY.debug.settings().mix);
+    if (!onSlider || JSON.stringify(m0) === JSON.stringify(m1)) errs.push(`${label}: the D-pad didn't move a mix slider (${onSlider})`);
+    else notes.push(`${label}: the settings' sliders move on the D-pad (${Object.keys(m0).filter(k => m0[k] !== m1[k]).join(' ')})`);
+    await press(15, 2);
+    await press(1, 3);
+  }
+  await press(1, 3);
+  if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't back out of the pause menu (${(await st(p)).phase})`);
+  // the journal: Y opens it, the D-pad goes along the tabs, A opens one, B closes it
+  await press(3, 4);
+  if ((await st(p)).phase !== 'journal') errs.push(`${label}: Y didn't open the journal`);
+  else {
+    await press(15, 2); await press(0, 3);
+    const tab = await p.evaluate(() => { const t = document.querySelector('.st-journal [aria-selected="true"]'); return t && t.dataset.tab; });
+    if (tab === 'things') errs.push(`${label}: the D-pad and A didn't change the journal's tab`);
+    else notes.push(`${label}: the journal's tabs move on the D-pad and open on A (${tab})`);
+    await press(1, 3);
+    if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't close the journal`);
+  }
+  // a talk: A at Jason starts it, A moves the lines on, the D-pad moves through the choices, A picks
+  await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+  const warped = await p.evaluate(() => window.JG_STORY.debug.warp('jason-lot'));
+  if (warped && await until(p, () => window.JG_STORY.debug.state().near === 'jason-lot', null, 15000)) {
+    await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+    const before = await J();
+    await press(0, 3);
+    if ((await J()).n !== before.n) errs.push(`${label}: A jumped with a prompt showing`);
+    let picked = false;
+    for (let i = 0; i < 80 && !picked; i++) {
+      const s = await st(p);
+      if (s.choices) {
+        await press(13, 2); const f = await F();
+        const idx = await p.evaluate(() => [...document.querySelectorAll('.st-ch')].indexOf(document.activeElement));
+        if (idx !== 1) errs.push(`${label}: the D-pad didn't move to the second choice (${idx})`);
+        await press(0, 3);
+        picked = !(await st(p)).choices;
+        if (picked) notes.push(`${label}: a talk on A, lines moved on with A, the second choice reached on the D-pad and picked with A`);
+        else errs.push(`${label}: A didn't pick the choice`);
+        break;
+      }
+      if (s.line) await press(0, 2); else { await p.evaluate(() => window.JG_STORY.debug.sim(10, 1 / 60)); await p.waitForTimeout(100); }
+    }
+    if (!picked) notes.push(`${label}: no choices came up in the talk at Jason`);
+    await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+    const tx = await toExploreJ(p); if (!tx.ok) errs.push(`${label}: never back to explore after the talk`);
+    await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+  } else notes.push(`${label}: Jason wasn't on the lot to talk to; the choices check was skipped`);
+  // the desk's phone: A finds the main button, A presses it, the D-pad reaches a car, A picks it, B backs out
+  const opened = await p.evaluate(() => window.JG_STORY.debug.sheet());
+  if (opened) {
+    await p.waitForTimeout(500);
+    const scr = () => p.evaluate(() => { const s = document.querySelector('.st-sheet .app-screen.is-on'); return s ? (s.getAttribute('aria-label') || s.querySelector('h1,h2,h3,h4') && s.querySelector('h1,h2,h3,h4').textContent || '').trim() : null; });
+    const s0 = await scr();
+    await press(0, 2); const fd = await F(); await press(0, 2); await p.waitForTimeout(600);
+    const s1 = await scr();
+    await press(13, 2); const fc = await F(); await press(0, 2); await p.waitForTimeout(600);
+    const s2 = await scr();
+    if (s0 === s1 || s1 === s2) errs.push(`${label}: the desk's phone didn't move on with the pad (${JSON.stringify([s0, s1, s2])}; focus ${JSON.stringify([fd, fc])})`);
+    else notes.push(`${label}: the desk's phone runs from the pad: ${[s0, s1, s2].join(' to ')}`);
+    if (fc && fc.outline === 'none') errs.push(`${label}: the focus on the desk's phone doesn't show`);
+    await press(1, 3);
+    if ((await st(p)).phase === 'sheet') errs.push(`${label}: B didn't leave the desk's phone`);
+  }
+  // the end: the D-pad moves a visible focus over its buttons
+  await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+  await p.evaluate(() => window.JG_STORY.debug.end('passing'));
+  if (await until(p, () => { const e = document.querySelector('.st-end'); return e && !e.hidden && e.querySelector('[data-st]'); }, null, 60000)) {
+    await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+    await press(13, 2); const e1 = await F(); await press(13, 2); const e2 = await F();
+    if (!e1 || !e1.inHost) errs.push(`${label}: the D-pad found nothing on the end screen (${JSON.stringify(e1)})`);
+    else if (e1.outline === 'none') errs.push(`${label}: the end screen's focus doesn't show`);
+    else notes.push(`${label}: the end screen's buttons take the focus from the D-pad (${e1.text}${e2 && e2.text !== e1.text ? ', then ' + e2.text : ''})`);
+    const lg = (await J()).legend; if (!/Select/.test(lg)) errs.push(`${label}: the end screen's legend reads "${lg}"`);
+  } else errs.push(`${label}: the end screen didn't show`);
+  // skips and cancels never rumble: B out of the journal, B out of the pause menu
+  await textRules(p, label);
+  await ctx.close();
+}
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
@@ -978,6 +1363,11 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (JUMPC || PADC) {
+    if (JUMPC) { try { await jumpCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} jump: ${e.message.split('\n')[0]}`); } }
+    if (PADC) { try { await padCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} pad: ${e.message.split('\n')[0]}`); } }
+    continue;
+  }
   if (EXPLORE) { try { await exploreCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} explore: ${e.message.split('\n')[0]}`); } continue; }
   if (AUDIO) { try { await audioCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} audio: ${e.message.split('\n')[0]}`); } continue; }
   if (WAY) { try { await wayCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} way: ${e.message.split('\n')[0]}`); } continue; }

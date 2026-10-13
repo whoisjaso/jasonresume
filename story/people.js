@@ -1632,6 +1632,7 @@ class Person {
   /* the clock: called first thing in update(), before the body is placed */
   jumpStep(dt) {
     const J = this.jmp; J.t += dt;
+    let landed = false;
     const GJ = 14; // a touch heavier than the world's gravity: a jump that hangs reads as floaty
     if (J.st === "pre") {
       this.pos.y = this.jumpGround();
@@ -1644,7 +1645,7 @@ class Person {
         this.pos.y = gy; J.st = "land"; J.t = 0; J.land = lerp(0.26, 0.42, J.imp) * lerp(1, 0.8, J.run);
         // the feet plant where they come down
         this.feet.l.lock = this.feet.r.lock = false; this.feet.l.w = this.feet.r.w = 0;
-        if (J.onLand) J.onLand(J.imp, J.air);
+        landed = true;
       }
     } else {
       this.pos.y = this.jumpGround();
@@ -1653,10 +1654,12 @@ class Person {
     // the crouch (loading, then the knees taking the landing), how much of the body is in the air, and the whole jump's weight
     const pre = J.st === "pre" ? sstep(0, 1, J.t / J.pre) : 0;
     const u = J.st === "land" ? J.t / J.land : 0;
-    const absorb = J.st === "land" ? (u < 0.22 ? sstep(0, 0.22, u) : 1 - sstep(0.22, 1, u)) * J.imp : 0;
+    const absorb = J.st === "land" ? (u < 0.22 ? lerp(0.4, 1, sstep(0, 0.22, u)) : 1 - sstep(0.22, 1, u)) * J.imp : 0;
     this.jC = damp(this.jC, Math.max(pre * lerp(1, 0.55, J.run), absorb), J.st === "air" ? 26 : 40, dt);
     this.jAir = J.st === "air" ? 1 : 0;
     this.jK = damp(this.jK, J.st === "land" ? 1 - sstep(0.6, 1, u) : 1, 18, dt);
+    // the touch down is one frame: the knees have started to give before the episode hears it
+    if (landed && J.onLand) J.onLand(J.imp, J.air);
   }
   /* the body: hips down into the crouch, the back over the knees, the lean of a run carried into the air */
   jumpBody(hipC) {
