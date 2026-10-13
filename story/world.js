@@ -1282,8 +1282,8 @@ export function buildLot(o) {
   set.userData.camRail = [V3(-22, 1.0, 26), V3(-12, 0.7, 16), V3(-2, 1.3, 6), V3(6, 2.2, -3), V3(10, 2.0, -8.5)];
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
   set.userData.ready = lotReady;
-  /* what the wet ground's mirror can leave out on a phone (post.js reads it when post.lite): every car part but
-     its lamps (bodies, tyres, trim, glass, cabins, plates...); rebuilt when the cars land */
+  /* what the wet ground's mirror can leave out on a phone (post.js reads it when post.lite): every surface lit by
+     the lamps (the cars but their lamps, the buildings, the fence, the props); rebuilt when the cars land */
   { let cache = null, n = -1;
     set.userData.reflectSkip = () => {
       if (cache && n === set.children.length) return cache;
@@ -1291,9 +1291,9 @@ export function buildLot(o) {
       for (const k of ["lamp_head", "lamp_head_in", "lamp_tail", "lamp_tail_in", "lamp_amber", "idleTail", "idleTailIn", "idleHeadIn", "idleHead"]) keep.add(M[k]);
       for (const c of drivable) { const rg = c.object && c.object.userData.rig; if (rg) for (const m of Object.values(rg.own)) keep.add(m); }
       cache = [];
-      set.traverse(o => { if (!o.isMesh || !o.material || !o.material.userData || !o.material.userData.pbr || keep.has(o.material)) return;
-        let car = o.isInstancedMesh; for (let q = o.parent; q && q !== set && !car; q = q.parent) if (q.userData.rig) car = true;
-        if (car) cache.push(o); });
+      // on a phone the mirror keeps what reads in a wet lot at night: the lights (lamps, signs, lit windows, the
+      // cars' lamps) and the sky; every lit-by-the-lamps surface is left out of that pass
+      set.traverse(o => { if (!o.isMesh || !o.material || !o.material.userData || !o.material.userData.pbr || keep.has(o.material)) return; cache.push(o); });
       n = set.children.length; return cache;
     }; }
   _debug.sets[day ? "keys" : "lot"] = set;

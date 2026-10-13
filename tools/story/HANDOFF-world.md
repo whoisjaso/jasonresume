@@ -161,7 +161,7 @@ the fast harness) does differently, and what main.js can call:
   call). The rig's four wheels are one instanced mesh per material (all tiers).
 - **The wet ground's mirror** (post.js `lite`, on by default on phones; `post.lite = false` turns it
   off): a quarter of the screen instead of a half, and it leaves out every car part but the lamps
-  (`set.userData.reflectSkip()`, the list it hides for that pass).
+  and every other lamp-lit surface: in a wet lot at night the mirror shows the lights, the signs, the lit windows and the sky (`set.userData.reflectSkip()` is the list it hides for that pass).
 - **Bloom** on phones: three levels from a quarter of the screen, one blur each way, added back up
   without copy passes (11 passes instead of 23). Depth of field stays off below quality 2 (main.js).
 - **No garbage per frame** in world or vehicle code: the collision helpers write into shared buffers,
