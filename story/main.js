@@ -1367,7 +1367,9 @@ function updatePrompts() {
     // facing matters a little: things in front of you win ties
     const a = Math.abs(angTo(me.yaw, Math.atan2(s.p.x - me.pos.x, s.p.z - me.pos.z)));
     // a story thing you haven't looked at yet wins over a plain thing beside it (the drawer in the filing cabinet)
-    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0);
+    // and standing on a thing's own spot, facing it, means that thing (the radio under the whiteboard), whatever's beside it
+    const st = s.sp.stand, own = st && a < 0.7 ? Math.max(0, 1 - Math.hypot(st.x - me.pos.x, st.z - me.pos.z) / 0.6) : 0;
+    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - own;
     if (d < r && score < bd) { best = s; bd = score; }
   }
   if (best !== near && best) progress();

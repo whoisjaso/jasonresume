@@ -918,7 +918,8 @@ async function exploreCheck(vname, w, h, mobile) {
   const useIt = async id => {
     const ok = await p.evaluate(id => window.JG_STORY.debug.warp(id), id);
     if (!ok) { errs.push(`${label}: no ${id} here`); return false; }
-    await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000);
+    // (standing at a thing, facing it, its prompt is the one you get; a press that lands on something else isn't this thing's)
+    if (!(await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000))) { errs.push(`${label}: standing at ${id}, the prompt is for ${(await st(p)).near}`); return false; }
     // (the log keeps only its last 60 events, so what came after the press is found by its time, not its index)
     const t0 = await p.evaluate(() => performance.now());
     if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.evaluate(id => window.JG_STORY.debug.interact(id), id)); else await p.keyboard.press('e');
@@ -1000,10 +1001,23 @@ async function exploreCheck(vname, w, h, mobile) {
   if (await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000)) exits.push('lot to office');
   await toExplore();
   const off = await spots();
-  for (const id of ['desk-lamp', 'radio', 'drawer', 'fridge', 'mug'].filter(x => off.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
-  // (the radio isn't an ambient bed; it logs itself when it starts playing)
-  const radio = await p.evaluate(() => window.JG_STORY.debug.audio().events.some(e => e.kind === 'amb' && e.name === 'radio'));
-  if (off.includes('radio') && !radio && await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn())) errs.push(`${label}: the radio is on but silent`);
+  const scoreOn = () => p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
+  for (const id of ['desk-lamp', 'radio', 'drawer', 'fridge', 'mug'].filter(x => off.includes(x))) {
+    const t0 = await p.evaluate(() => performance.now());
+    const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k));
+    // the radio, switched on, plays where it stands (it isn't an ambient bed: it logs its own start, and its stop);
+    // switched off again, it stops. Read right after each press, by time, before the log moves on
+    if (id === 'radio' && ev && await scoreOn()) {
+      const heard = (name, t) => until(p, ([name, t]) => window.JG_STORY.debug.audio().events.some(e => e.t >= t && e.kind === 'amb' && e.name === name), [name, t], 15000);
+      if (!(await heard('radio', t0)) || !(await p.evaluate(() => window.JG_STORY.debug.audio().radio))) errs.push(`${label}: the radio is on but silent`);
+      else {
+        const t1 = await p.evaluate(() => performance.now());
+        await useIt('radio');
+        if (!(await heard('radio-off', t1)) || await p.evaluate(() => window.JG_STORY.debug.audio().radio)) errs.push(`${label}: the radio is off but still playing`);
+        else kinds.add('radio');
+      }
+    }
+  }
   if (!off.includes('office-exit')) errs.push(`${label}: the office has no way out`);
   else { await useIt('office-exit'); if (await until(p, () => window.JG_STORY.debug.state().scene === 'lot', null, 120000)) exits.push('office to lot'); else errs.push(`${label}: the office exit didn't lead to the lot`); }
   await toExplore();

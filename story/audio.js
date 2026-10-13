@@ -741,7 +741,7 @@ export function createAudio(o) {
       return {
         built: !!A.ctx, state: A.ctx ? A.ctx.state : "none", loaded: !!A.buf, scene: A.scene, mix: { ...mix },
         buses: A.ctx ? { master: N.master.gain.value, voice: N.voice.gain.value, sfx: N.sfx.gain.value, amb: N.amb.gain.value, ui: N.ui.gain.value, ambDuck: N.ambDuck.gain.value, sfxDuck: N.sfxDuck.gain.value, out: N.outLp.frequency.value, limiter: N.limit.threshold.value } : null,
-        amb: A.amb.filter(n => n.name).map(n => n.name), car: A.drv ? A.drv.state : null, peak: +(A.peak || 0).toFixed(3), peakMax: +(A.peakMax || 0).toFixed(3), events: A.events.slice(-60)
+        amb: A.amb.filter(n => n.name).map(n => n.name), car: A.drv ? A.drv.state : null, radio: !!A.radio, peak: +(A.peak || 0).toFixed(3), peakMax: +(A.peakMax || 0).toFixed(3), events: A.events.slice(-60)
       };
     }
   };
