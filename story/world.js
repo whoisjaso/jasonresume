@@ -20,6 +20,7 @@
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { paint as paint0, glow as glow0, coneMat as coneMat0, blobMat as blobMat0, pbr as pbr0, U } from "./paint.js";
 import * as TX from "./tex.js";
+import { plateMesh, plateMat, plateMounts, cellColor, CELL } from "./plates.js";
 import { mergeGeometries, mergeVertices } from "../vendor/three-0.184.0/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "../vendor/three-0.184.0/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "../vendor/meshopt-0.22.0/meshopt_decoder.module.js";
@@ -344,7 +345,10 @@ async function loadCars() {
     // drivable: each moving node on its own (its meshes in the car's space, so the paint's panel lines stay put)
     const nodes = {};
     gltf.scene.traverse(o => { if (MOVING.test(o.name) || o.name === "body" || /^seat_[DP]$/.test(o.name)) nodes[o.name] = o; });
-    carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
+    const meta0 = meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 };
+    // the model's plate patches only say where the plates go: the plates themselves are story/plates.js's, one mesh for a whole set
+    const mounts = plateMounts(parts.plate, meta0); delete parts.plate;
+    carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta0, mounts };
   }));
 }
 /* panel lines, door handle recesses and the fuel door, drawn from the car's own measurements */
@@ -396,7 +400,6 @@ function carMats() {
     lamp_tail_in: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#1c0201" }),
     lamp_head_in: pbr({ ...v, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 }),
     lamp_amber: pbr({ ...v, color: "#7a3c06", rough: 0.08, wet: 1, emit: "#0a0400" }),
-    plate: pbr({ ...v, color: "#9a968c", map: TX.plateTex(), nmap: TX.plateTex(true), tri: 4, local: true, nk: 0.8, rough: 0.5, wet: 0.6 }),
     interior: pbr({ ...v, color: "#141414", rough: 0.85, wet: 0, spec: 0.4 }),
     seat: pbr({ ...v, color: "#1c1c1d", rough: 0.92, wet: 0, spec: 0.3 }),
     dash: pbr({ ...v, color: "#111213", rough: 0.6, wet: 0, spec: 0.6 }),
@@ -502,6 +505,20 @@ function parkCars(set, list) {
     cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); slotOf(c, sh, i, blobLocal); });
     sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; set.add(sh); out.push(sh);
   }
+  // the plates, front and back on every car of every kind, each car its own letters (the same car keeps the same
+  // plate night and morning): one mesh, one draw
+  const order = list.slice().sort((a, b) => (!!a.idle - !!b.idle) || (Math.round(a.z) - Math.round(b.z)) || (a.x - b.x));
+  order.forEach((c, i) => { if (c.plateCell == null) c.plateCell = CELL.lot + i; });
+  const libOf = c => carLib[c.kind] || carLib[Object.keys(carLib)[0]];
+  let np = 0; for (const c of list) np += (libOf(c) || { mounts: [] }).mounts.length;
+  if (np) {
+    const pl = plateMesh(plateMat(TIER.carLo), np); let i = 0;
+    for (const c of list) for (const local of (libOf(c) || { mounts: [] }).mounts) {
+      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local);
+      pl.setMatrixAt(i, m4); pl.setColorAt(i, cellColor(c.plateCell, TIER.carLo, col)); slotOf(c, pl, i, local); i++;
+    }
+    pl.name = "plates"; set.add(pl); out.push(pl);
+  }
   for (const im of out) { im.computeBoundingSphere(); im.frustumCulled = true; }
   return out;
 }
@@ -543,7 +560,11 @@ function buildRig(set, c) {
     parent.add(im); return im;
   };
   const body = new THREE.Group(); body.name = "body"; root.add(body);
-  for (const [name, geo] of Object.entries(nodeParts(lib.nodes.body))) inst(geo, name, body);
+  for (const [name, geo] of Object.entries(nodeParts(lib.nodes.body))) if (name !== "plate") inst(geo, name, body);
+  // its plates, front and back, the same faces it wears parked (one draw)
+  { const pl = plateMesh(plateMat(TIER.carLo), lib.mounts.length), cc = new THREE.Color();
+    lib.mounts.forEach((m, i) => { pl.setMatrixAt(i, m); pl.setColorAt(i, cellColor(c.plateCell != null ? c.plateCell : CELL.lot, TIER.carLo, cc)); });
+    pl.computeBoundingSphere(); pl.name = "plates"; body.add(pl); }
   const at = n => { const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(); n.matrixWorld.decompose(p, q, sc); return { p, q }; };
   const doors = {};
   for (const side of ["L", "R"]) {
@@ -1162,6 +1183,10 @@ function moreStreet(set, day, CO) {
     const lamps2 = (x, s) => mergeGeometries([-0.62, 0.62].map(z => new THREE.PlaneGeometry(0.26, 0.11).rotateY(s * Math.PI / 2).translate(x, 0.74, z)));
     const head = new THREE.Mesh(lamps2(2.21, 1), glow0("#fff4dc", { k: 3.2 })); car.add(head);
     const tail = new THREE.Mesh(lamps2(-2.21, -1), glow0("#ff3020", { k: 1.6 })); car.add(tail);
+    // its plates, front and back (story/plates.js)
+    { const pl = plateMesh(plateMat(TIER.carLo), 2), m4 = new THREE.Matrix4(), cc = cellColor(CELL.passing, TIER.carLo);
+      for (const s of [1, -1]) { pl.setMatrixAt(s > 0 ? 0 : 1, m4.makeRotationY(s * Math.PI / 2).setPosition(s * 2.201, 0.47, 0)); pl.setColorAt(s > 0 ? 0 : 1, cc); }
+      pl.computeBoundingSphere(); car.add(pl); }
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 2.2, 11, 16, 1, true), coneMat0("#fff0d0", 0.9)); beam.rotation.z = Math.PI / 2; beam.position.set(2.3 + 5.5, 0.62, 0); beam.layers.set(3); car.add(beam);
     const pc = { on: false, x: 0, z: 0, dir: 1, v: 0, cruise: 13, wait: 8 + Math.random() * 10 };
     const start = (x0, sp) => {

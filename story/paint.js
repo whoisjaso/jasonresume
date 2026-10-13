@@ -265,6 +265,9 @@ uniform mat3 uUvM;
 #ifdef USE_VAO
 attribute vec4 color;
 #endif
+#ifdef USE_CELL
+uniform vec2 uCellS;
+#endif
 void main(){
   vUv = (uUvM * vec3(uv, 1.0)).xy;
   vC = vec4(1.0);
@@ -273,6 +276,10 @@ void main(){
   #endif
   #ifdef USE_INSTANCING_COLOR
   vC.rgb = instanceColor;
+  #ifdef USE_CELL
+  // an atlas: each instance's colour is where its cell starts, so one material draws a different face per instance
+  vUv = instanceColor.rg + uv * uCellS; vC.rgb = vec3(1.0);
+  #endif
   #endif
   vLocal = position; vLN = normal;
   mat4 M = modelMatrix;
@@ -504,7 +511,7 @@ void main(){
 /* one physically based material.
    o: { color, map, nmap, rmap (AO, roughness, metal in R, G, B), emap, ek, emit, rough, metal, coat, coatRough, wet, ao (how much baked AO counts),
         vao (AO in the vertex colour's R), tri (world-space scale for projected maps, 1 / metres), nk (normal strength), spec, diff,
-        drops (water beads), glass (Fresnel opacity), room ([x0, x1, z0, z1, height]: a box room's corner occlusion), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
+        drops (water beads), glass (Fresnel opacity), cell ([w, h]: an atlas cell's size in UV, its corner from each instance's colour), room ([x0, x1, z0, z1, height]: a box room's corner occlusion), panel ({ tex, box: [z0, length, height, halfWidth] }), alpha, alphaTest, side, transparent, depthWrite } */
 /* phones (and ?wq=lo) skip the clear coat's own lamp highlights; the coat still reflects the set */
 export const LOWQ = typeof location !== "undefined" && (/[?&]wq=lo/.test(location.search) || (/[?&]debug=story/.test(location.search) && /[?&]fast=1/.test(location.search) && !/[?&]wq=hi/.test(location.search))) || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && !/[?&]wq=hi/.test(location.search));
 export function pbr(o = {}) {
@@ -536,6 +543,7 @@ export function pbr(o = {}) {
   if (o.drops) defines.USE_DROPS = "";
   if (o.glass) defines.USE_GLASS = "";
   if (o.room) { defines.USE_ROOMAO = ""; uniforms.uRoom = { value: new THREE.Vector4(...o.room.slice(0, 4)) }; uniforms.uRoomH = { value: o.room[4] }; }
+  if (o.cell) { defines.USE_CELL = ""; uniforms.uCellS = { value: new THREE.Vector2(o.cell[0], o.cell[1]) }; }
   if (o.panel) { defines.USE_PANEL = ""; uniforms.uPanel = { value: o.panel.tex }; uniforms.uPanelBox = { value: new THREE.Vector4(...o.panel.box) }; }
   const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vertPBR, fragmentShader: fragPBR, defines, side: o.side || THREE.FrontSide,
     transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });

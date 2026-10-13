@@ -779,8 +779,9 @@ export function createAudio(o) {
       case "sit": cloth(at, 0.9); sprite("creak-1", { ...v, gain: 0.14, rate: 1.4, delay: 0.25, lp: 2500 }); break;
       case "pickup": sprite("keys-0", { ...v, gain: 0.25, rate: 1.2 }); cloth(at, 0.5); break;
       case "read": sprite(pick(["page-0", "page-1", "page-2"]), { ...v, gain: 0.4 }); break;
-      // a lost temp tag: the paper off the ground, and a soft chime that says it counted
-      case "tag": sprite("page-2", { ...v, gain: 0.42, rate: 1.3 }); sprite("page-1", { ...v, gain: 0.16, rate: 1.55, delay: 0.05 }); tone({ f: 1567.98, partials: [[1, 1], [2.01, 0.22]], decay: 0.8, gain: 0.02, delay: 0.07, bus: A.nodes.ui }); tone({ f: 2349.3, decay: 0.6, gain: 0.011, delay: 0.16, bus: A.nodes.ui }); break;
+      // a lost plate: the light clink of thin aluminium lifted off where it lay (a click and the sheet's own
+      // short, out-of-tune ring), then the soft chime that says it counted
+      case "tag": sprite("click-metal", { ...v, gain: 0.3, rate: 1.55, lp: 7000 }); tone({ f: 1874, partials: [[1, 1], [2.32, 0.55], [3.91, 0.3], [5.73, 0.14]], decay: 0.32, gain: 0.016, at, ref: 2.2 }); tone({ f: 1567.98, partials: [[1, 1], [2.01, 0.22]], decay: 0.8, gain: 0.02, delay: 0.09, bus: A.nodes.ui }); tone({ f: 2349.3, decay: 0.6, gain: 0.011, delay: 0.18, bus: A.nodes.ui }); break;
       case "splash": step("puddle", { at, gain: 1.5, ref: 3 }); burst({ f: 3000, q: 0.6, gain: 0.18, decay: 0.3, at }); break;
       case "knock": for (let i = 0; i < 3; i++) { tone({ f: 140, to: 90, glide: 0.04, decay: 0.07, gain: 0.12, delay: i * 0.17, at, ref: 2 }); burst({ type: "lowpass", f: 900, gain: 0.08, decay: 0.04, delay: i * 0.17, at, buf: A.brown }); } break;
       case "exit": sprite("door-open", { ...v, gain: 0.4, rate: 1.0 }); break;

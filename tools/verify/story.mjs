@@ -2,7 +2,7 @@
 //   python3 -m http.server 8765 &   then   node tools/verify/story.mjs [desktop|landscape|portrait] [--shots]
 //   --jump: the jump (Space, the Jump button, the arc on a fixed clock, walls, puddles; tools/verify/out/jump-sheet.png)
 //   --pad: the whole episode's controls from a standard-mapping pad injected through navigator.getGamepads
-//   --tags: the lost temp tags, every one picked up (tools/verify/out/tags-glint.png, tags-counter-portrait.png)
+//   --tags: the lost license plates, every one picked up (tools/verify/out/tags-glint.png, tags-counter-portrait.png)
 //
 // For each viewport (desktop 1440x900, a phone sideways 844x390 and upright 390x844) it
 // plays every major branch with the keyboard, clicks or taps: hiring (and the role's
@@ -1572,8 +1572,8 @@ async function padCheck(vname, w, h, mobile) {
   await textRules(p, label);
   await ctx.close();
 }
-/* ---------- the lost temp tags: warp to each, pick it up by the prompt (E or a click; on a phone a tap on the big
-   button or on the prompt), and check the paper and the chime, the haptic and the lift land together, the counter's
+/* ---------- the lost license plates: warp to each, pick it up by the prompt (E or a click; on a phone a tap on the big
+   button or on the prompt), and check the clink and the chime, the haptic and the lift land together, the counter's
    marks (and no figure anywhere), the all-found note, the journal's page, the save, and Restart clearing them.
    Stills: tools/verify/out/tags-glint.png (desktop), tags-counter-portrait.png (portrait) ---------- */
 const TAGSC = process.argv.includes('--tags');
@@ -1651,7 +1651,7 @@ async function tagsCheck(vname, w, h, mobile) {
       if (!c.text.includes(STORY.ui.tag) || !c.text.includes(STORY.ui.tags_found)) errs.push(`${label}: the counter reads "${c.text}"`);
       digit('the counter', c.text);
     }
-    if (r.tg.draws > 3 || r.tg.meshes !== 3) errs.push(`${label}: the tags take ${r.tg.draws} draws (${r.tg.meshes} meshes)`);
+    if (r.tg.draws > 3 || r.tg.meshes !== 3) errs.push(`${label}: the lost plates take ${r.tg.draws} draws (${r.tg.meshes} meshes)`);
     await p.waitForTimeout(300);
   };
   const scene = async (want, ids) => {
@@ -1684,7 +1684,7 @@ async function tagsCheck(vname, w, h, mobile) {
     const note = await until(p, () => window.JG_STORY.debug.tags().noted, null, 10000);
     if (!note) errs.push(`${label}: no note when the last tag was found`);
     const s1 = await st(p);
-    if (!s1.journal.includes('tags')) errs.push(`${label}: the journal has no page for the tags`);
+    if (!s1.journal.includes('tags')) errs.push(`${label}: the journal has no page for the lost plates`);
     const ui = await p.evaluate(() => window.JG_STORY.debug.audio().events.filter(e => e.kind === 'ui' && e.name === 'notice').length);
     if (!ui) errs.push(`${label}: the note made no sound`);
     const more = s1.trophies.filter(x => !tro0.includes(x)); if (more.length) errs.push(`${label}: the last tag earned a trophy (${more.join(' ')})`);
@@ -1720,7 +1720,7 @@ async function tagsCheck(vname, w, h, mobile) {
     if (r.found.length) errs.push(`${label}: Restart kept ${r.found.length} tags`);
     if (!r.here.length || !(await p.evaluate(() => window.JG_STORY.debug.spots())).includes('tag-wiper')) errs.push(`${label}: after Restart the lot's tags aren't back`);
   } else errs.push(`${label}: the pause menu has no Restart`);
-  if (!errs.some(e => e.startsWith(label))) notes.push(`${label}: ${tg.found.length} of ${tg.total} picked up by the prompt${mobile ? ' and by taps' : ''}, each with its paper, chime, haptic and lift in one frame; marks, never figures; the note, the journal's page, kept by the save and cleared by Restart`);
+  if (!errs.some(e => e.startsWith(label))) notes.push(`${label}: ${tg.found.length} of ${tg.total} picked up by the prompt${mobile ? ' and by taps' : ''}, each with its clink, chime, haptic and lift in one frame; marks, never figures; the note, the journal's page, kept by the save and cleared by Restart`);
   await ctx.close();
 }
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }

@@ -120,7 +120,8 @@ Nodes (three.js names after GLTFLoader):
 
 Materials by role (world.js paints them): `paint glass trim chrome tire rim disc well
 interior seat dash cluster lamp_head lamp_head_in lamp_tail lamp_tail_in lamp_brake lamp_rev
-lamp_amber plate`. Glass is see-through (you can see the seats, the dash and the wheel).
+lamp_amber plate`. Glass is see-through (you can see the seats, the dash and the wheel). `plate` marks
+where the plates go; the plates themselves are story/plates.js's (a rig carries its own two, one draw).
 
 Measurements, in the car's local frame (metres; x the driver's side, y up, z forward; with the body at
 rest; the same numbers are in each file's extras on the `car` node and on `car.object.userData.rig.meta`):

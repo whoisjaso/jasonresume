@@ -32,7 +32,7 @@ import { Post, GRADES, applyGrade } from "./post.js";
 import { createAudio } from "./audio.js";
 import { buildNav, pathLen } from "./nav.js";
 import { Guide } from "./guide.js";
-import { addTags, syncTags, takeTag, tickTags, TAG_IDS, tagGen } from "./tags.js";
+import { addLostPlates, syncLostPlates, takeLostPlate, tickLostPlates, LOST_IDS, lostGen } from "./tags.js";
 
 const root = document.documentElement, body = document.body;
 const D = JSON.parse(document.getElementById("story-data").textContent);
@@ -184,7 +184,7 @@ function getSet(name) {
   // the morning lot: the keys and the sale share one set; where its drivable cars were parked is remembered
   else if (name === "keys" || name === "sale") { s = sets.keys || sets.sale; if (!s) { s = buildLot({ wordmark, day: true, lowres: true }); addKeys(s); for (const c of s.userData.drivable || []) c.home = { x: c.x, z: c.z, yaw: c.yaw }; } }
   else if (name === "june") s = buildWaitingRoom({});
-  if (name !== "keys" && name !== "sale" && name !== "june") addTags(s, name === "decision" ? "lot" : name, UI.tag); // the lost temp tags (story/tags.js)
+  if (name !== "keys" && name !== "sale" && name !== "june") addLostPlates(s, name === "decision" ? "lot" : name, UI.tag); // the lost license plates (story/tags.js)
   s.visible = false; world.add(s);
   sets[name] = s; if (name === "lot") sets.decision = s; if (name === "decision") sets.lot = s; if (name === "keys") sets.sale = s; if (name === "sale") sets.keys = s;
   return s;
@@ -1349,9 +1349,9 @@ const worldSpotCache = new WeakMap();
 function worldSpots() {
   const sp = set && set.userData.spots; if (!sp) return [];
   // a story object with the same id wins where the story uses it (the lot's office door); elsewhere the world's own
-  // (a tag found, or a door in front of one opened or shut, starts the list again)
+  // (a lost plate found, or a door in front of one opened or shut, starts the list again)
   let store0 = worldSpotCache.get(set);
-  if (!store0 || store0.gen !== tagGen.n) { store0 = { gen: tagGen.n }; worldSpotCache.set(set, store0); }
+  if (!store0 || store0.gen !== lostGen.n) { store0 = { gen: lostGen.n }; worldSpotCache.set(set, store0); }
   const key = S.scene;
   let c = store0[key];
   if (!c) {
@@ -1370,7 +1370,7 @@ function worldSpots() {
 }
 async function useWorld(s, how) {
   const x = s.sp, kind = x.kind, at = s.p;
-  if (x.tag) { pickTag(s, how); return; }
+  if (x.tag) { pickPlate(s, how); return; }
   mv.path = null; mv.after = null; guide.clearRing(); progress();
   T("story_use", { id: s.id, kind, scene: S.scene, how: how || "" });
   if (kind === "exit") { FX("arrive"); AU.use("exit", at); hap("tap"); await roam(x.to); return; }
@@ -1421,41 +1421,41 @@ async function useWorld(s, how) {
   } catch (e) {}
   feel();
 }
-/* the lost temp tags (story/tags.js): walk up to one and pick it up, or tap it. The paper and a soft chime, the haptic
-   and the tag lifting off where it lay land in one frame, and a bar of marks shows how many you have (marks, not
-   figures: no number on the page). The last one leaves a note, the score's sting and a page in the journal. No
-   trophy: trophies are the record. Found tags ride in the save; Restart clears them */
+/* the lost license plates (story/tags.js): walk up to one and pick it up, or tap it. The metal's clink and a soft
+   chime, the haptic and the plate lifting off where it lay land in one frame, and a bar of marks shows how many you
+   have (marks, not figures: no number on the page). The last one leaves a note, the score's sting and a page in the
+   journal. No trophy: trophies are the record. Found plates ride in the save (as "tags"); Restart clears them */
 let tagsEl = null, tagT = null, tagSeen = null, tagSeenGen = -1;
-function tagBar(fresh) {
+function plateBar(fresh) {
   let h = ""; const n = S.tags.length;
-  for (let i = 0; i < TAG_IDS.length; i++) h += i < n ? (fresh && i === n - 1 ? '<i class="is-on is-new"></i>' : '<i class="is-on"></i>') : "<i></i>";
+  for (let i = 0; i < LOST_IDS.length; i++) h += i < n ? (fresh && i === n - 1 ? '<i class="is-on is-new"></i>' : '<i class="is-on"></i>') : "<i></i>";
   return '<span class="st-marks" aria-hidden="true">' + h + "</span>";
 }
-function tagCount() {
+function plateCount() {
   if (!tagsEl) { tagsEl = document.createElement("div"); tagsEl.className = "st-tags"; tagsEl.setAttribute("role", "status"); tagsEl.hidden = true; el.appendChild(tagsEl); }
-  tagsEl.innerHTML = '<span class="st-tags__k">' + E(UI.tag) + "</span>" + tagBar(true) + '<span class="st-tags__f">' + E(UI.tags_found) + "</span>";
+  tagsEl.innerHTML = '<span class="st-tags__k">' + E(UI.tag) + "</span>" + plateBar(true) + '<span class="st-tags__f">' + E(UI.tags_found) + "</span>";
   tagsEl.hidden = false; tagsEl.classList.remove("is-on"); void tagsEl.offsetWidth; tagsEl.classList.add("is-on");
   clearTimeout(tagT); tagT = setTimeout(() => { tagsEl.classList.remove("is-on"); tagT = setTimeout(() => (tagsEl.hidden = true), 450); }, FAST ? 2500 : 3200);
 }
-function pickTag(s, how) {
+function pickPlate(s, how) {
   if (S.tags.includes(s.id)) return;
   mv.path = null; mv.after = null; guide.clearRing(); progress();
   S.tags.push(s.id);
-  const at = s.p, all = S.tags.length >= TAG_IDS.length;
+  const at = s.p, all = S.tags.length >= LOST_IDS.length;
   me.wantYaw = Math.atan2(at.x - me.pos.x, at.z - me.pos.z);
-  AU.use("tag", at); hap("tap"); takeTag(set, s.id, still()); tagCount();
+  AU.use("tag", at); hap("tap"); takeLostPlate(set, s.id, still()); plateCount();
   if (me.reachTo) { try { const r = me.reachTo(at.clone(), { hold: "pinch" }); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
   T("story_tag", { id: s.id, scene: S.scene, how: how || "", all });
   if (all) setTimeout(() => { notice(UI.tags_all); FX("unlock"); addJournal("tags"); save(); }, FAST ? 0 : 900);
   save();
 }
-function tagsTick(dt) {
+function platesTick(dt) {
   if (!set || !set.userData.tags) return;
-  if (tagSeen !== set || tagSeenGen !== tagGen.n) { syncTags(set, S.tags); tagSeen = set; tagSeenGen = tagGen.n; }
-  tickTags(set, me && S.phase === "explore" ? me.pos : null, S.t, dt);
+  if (tagSeen !== set || tagSeenGen !== lostGen.n) { syncLostPlates(set, S.tags); tagSeen = set; tagSeenGen = lostGen.n; }
+  tickLostPlates(set, me && S.phase === "explore" ? me.pos : null, S.t, dt);
 }
-// a door in front of a tag opened or shut: what you can reach has changed
-document.addEventListener("jg:story-use", () => { tagGen.n++; });
+// a door in front of a lost plate opened or shut: what you can reach has changed
+document.addEventListener("jg:story-use", () => { lostGen.n++; });
 /* free roam between sets: the story's arrival talk plays only the first time; the way keeps pointing at the next step */
 async function roam(to) {
   if (!to || !D.scenes[to] && to !== "lot") return;
@@ -1495,7 +1495,7 @@ function updatePrompts() {
     // the thing that already has the prompt keeps it a little longer and a little further, so it doesn't flicker
     // between two things or go out under your thumb; on a touch screen every reach is a little longer
     const keep = s === near || (near && s.id === near.id);
-    // (standing on a lost tag's own spot, facing it, it edges out the thing beside it: the laundromat's open door)
+    // (standing on a lost plate's own spot, facing it, it edges out the thing beside it: the laundromat's open door)
     const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - (s.sp.tag && own > 0.5 ? 0.5 : 0) - own - (keep ? 0.3 : 0);
     const reach = r * (keep ? 1.3 : 1) + (dev === "touch" ? 0.4 : 0);
     if (d < reach && score < bd) { best = s; bd = score; }
@@ -1508,7 +1508,7 @@ function updatePrompts() {
   dotGen++;
   for (const s of list) {
     if (s === best) continue;
-    // (a lost tag gets its dot only up close: from across the lot, it's the glint you look for)
+    // (a lost plate gets its dot only up close: from across the lot, it's the glint you look for)
     const d = Math.hypot(s.p.x - me.pos.x, s.p.z - me.pos.z); if (d > (s.sp.tag ? 4.5 : 11)) continue;
     const q = project(s.p); if (!q.on) continue;
     const fresh = !S.looked[s.id] && !s.o.who && d < 7;
@@ -1902,9 +1902,9 @@ function closeJournal() { journalEl.classList.remove("is-on"); setTimeout(() => 
 function renderJournal() {
   const people = ["jason", "dell", "renata"].filter(k => (k === "jason" && S.flags.met) || (k === "dell" && S.looked.dell) || (k === "renata" && S.flags.desked));
   const things = S.journal.filter(k => !["jason", "dell", "renata"].includes(k));
-  const entry = k => { const J = D.journal[k]; const sk = sketches[k] || sketches[J.sketch]; return '<li class="jr-e">' + (sk ? '<img src="' + sk + '" alt="" />' : '<span class="jr-e__blank" aria-hidden="true"></span>') + "<div><h4>" + E(J.h) + (J.fictional ? ' <small>' + E(UI.fictional) + "</small>" : "") + "</h4><p>" + E(J.p) + "</p>" + (k === "tags" ? tagBar() : "") + "</div></li>"; };
-  // the temp tags found so far, as marks, until the last one gives them their own page
-  const tagRow = S.tags.length && !things.includes("tags") ? '<li class="jr-e jr-tags"><span class="jr-e__blank" aria-hidden="true"></span><div><h4>' + E(UI.tag) + "</h4>" + tagBar() + "<p>" + E(UI.tags_found) + "</p></div></li>" : "";
+  const entry = k => { const J = D.journal[k]; const sk = sketches[k] || sketches[J.sketch]; return '<li class="jr-e">' + (sk ? '<img src="' + sk + '" alt="" />' : '<span class="jr-e__blank" aria-hidden="true"></span>') + "<div><h4>" + E(J.h) + (J.fictional ? ' <small>' + E(UI.fictional) + "</small>" : "") + "</h4><p>" + E(J.p) + "</p>" + (k === "tags" ? plateBar() : "") + "</div></li>"; };
+  // the lost plates found so far, as marks, until the last one gives them their own page
+  const tagRow = S.tags.length && !things.includes("tags") ? '<li class="jr-e jr-tags"><span class="jr-e__blank" aria-hidden="true"></span><div><h4>' + E(UI.tag) + "</h4>" + plateBar() + "<p>" + E(UI.tags_found) + "</p></div></li>" : "";
   const tabs = [["things", UI.j_things], ["people", UI.j_people], ["trophies", UI.j_trophies], ["choices", UI.j_choices]];
   let inner = "";
   if (jTab === "things") inner = things.length || tagRow ? '<ul class="jr-list">' + things.map(entry).join("") + tagRow + "</ul>" : '<p class="jr-empty">' + E(UI.j_empty) + "</p>";
@@ -2073,7 +2073,7 @@ pauseEl.addEventListener("click", async e => {
   else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh("lot"); }
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
-function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.tags = []; tagGen.n++; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
+function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.tags = []; lostGen.n++; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
 async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); setPhase("explore"); if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
@@ -3011,7 +3011,7 @@ function frame(now) {
     perf.people = performance.now() - tP;
     updateCamera(dt);
     const tU = performance.now();
-    updatePrompts(); updateWay(dt); arcadeWatch(dt); tagsTick(dt);
+    updatePrompts(); updateWay(dt); arcadeWatch(dt); platesTick(dt);
     guide.tick(dt, S.t, still());
     perf.prompts = performance.now() - tU;
     // the ear is the camera; the lamps that buzz are the ones nearest you
@@ -3221,7 +3221,7 @@ async function open(sceneName, how) {
   const saved = loadSave();
   const fresh = !sceneName && !saved;
   if (fresh || sceneName) resetState();
-  if (saved && !sceneName) { tagGen.n++; Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [], tags: (saved.tags || []).filter(id => TAG_IDS.includes(id)), obj: saved.obj || null, hint: saved.hint || null }); }
+  if (saved && !sceneName) { lostGen.n++; Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [], tags: (saved.tags || []).filter(id => LOST_IDS.includes(id)), obj: saved.obj || null, hint: saved.hint || null }); }
   T("story_started", { how: how || "", scene: sceneName || (saved ? saved.scene : "lot"), cont: !!(saved && !sceneName) });
   await boot();
   setLoad(1);
@@ -3370,8 +3370,8 @@ window.JG_STORY = {
     hint: talk => { if (talk == null) { S.hint = null; return null; } hintFrom(talk); return S.hint; },
     hints: () => ({ ...HINTS }),
     seated: () => !!(me && me.seated),
-    /* the lost temp tags (tools/verify/story.mjs --tags) */
-    tags: () => { const T0 = set && set.userData.tags; return { found: S.tags.slice(), total: TAG_IDS.length, noted: S.log.some(x => x.note === UI.tags_all), here: T0 ? T0.list.map(e => e.id) : [], glint: !!(T0 && T0.gl.visible), fly: !!(T0 && T0.fly.visible), draws: T0 ? [T0.im, T0.gl, T0.fly].filter(o => o.visible).length : 0, meshes: T0 ? set.children.filter(o => o === T0.im || o === T0.gl || o === T0.fly).length : 0, counter: tagsEl && !tagsEl.hidden ? { on: tagsEl.classList.contains("is-on"), text: tagsEl.textContent, marks: tagsEl.querySelectorAll(".st-marks i").length, filled: tagsEl.querySelectorAll(".st-marks i.is-on").length } : null }; },
+    /* the lost license plates (tools/verify/story.mjs --tags) */
+    tags: () => { const T0 = set && set.userData.tags; return { found: S.tags.slice(), total: LOST_IDS.length, noted: S.log.some(x => x.note === UI.tags_all), here: T0 ? T0.list.map(e => e.id) : [], glint: !!(T0 && T0.gl.visible), fly: !!(T0 && T0.fly.visible), draws: T0 ? [T0.im, T0.gl, T0.fly].filter(o => o.visible).length : 0, meshes: T0 ? set.children.filter(o => o === T0.im || o === T0.gl || o === T0.fly).length : 0, counter: tagsEl && !tagsEl.hidden ? { on: tagsEl.classList.contains("is-on"), text: tagsEl.textContent, marks: tagsEl.querySelectorAll(".st-marks i").length, filled: tagsEl.querySelectorAll(".st-marks i.is-on").length } : null }; },
     tagAt: id => { const sp = set && set.userData.spots[id]; return sp && sp.tag ? { p: [sp.p.x, sp.p.y, sp.p.z], stand: [sp.stand.x, sp.stand.z], open: !sp.when || sp.when() } : null; },
     obj: k => { objective(k || null); return S.obj; },
     unlook: id => { delete S.looked[id]; },

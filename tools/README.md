@@ -62,7 +62,8 @@ The sets (story/world.js; tools/story/HANDOFF-world.md has the detail):
 
 - The cars are first-party: modelled by `tools/story/world/cars.py` in Blender, no third-party mesh. Compressed with gltfpack 0.22.0 (MIT).
 - Tiled materials from Poly Haven (polyhaven.com), all CC0 (public domain, no attribution required; credited here anyway), downloaded at 1k and re-encoded as WebP by `tools/story/world/textures.py`: asphalt `asphalt_02`, concrete `concrete_floor_worn_001`, plaster `painted_plaster_wall`, wood `oak_veneer_01`, carpet `dirty_carpet`, parquet `herringbone_parquet`, fabric `caban` (greyed). Files: `assets/story/world/tex-v1/<role>_{col,nor,arm}_<size>.webp`.
-- Everything else in the sets (signs, posters, the plates' emboss, the ceiling tiles, the clocks, the sky, the ground's patches, oil, puddles, cracks and lamp shadows) is drawn in code in story/tex.js and story/world.js.
+- The Texas license plate is first-party too: `tools/story/plate.py` builds it in Blender (run with Blender as a Python module, `pip install bpy` in a Python 3.11 venv), packed with gltfpack into `assets/story/plate-v1.glb`; its face is drawn in story/tex.js (`plateAtlas`, letters only). `node tools/story/world/plate-stills.mjs` writes `plate-texture.png`, `plate-car.png` and `plate-lost.png` to tools/verify/out.
+- Everything else in the sets (signs, posters, the plates' faces and emboss, the ceiling tiles, the clocks, the sky, the ground's patches, oil, puddles, cracks and lamp shadows) is drawn in code in story/tex.js and story/world.js.
 
 ```
 blender -b --python tools/story/world/cars.py -- /tmp/cars [sedan compact hatch suv truck]

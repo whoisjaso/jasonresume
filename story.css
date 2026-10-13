@@ -111,7 +111,7 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
 @keyframes st-glint { 0% { opacity: 0; transform: scale(.7); } 30% { opacity: 1; transform: scale(1.12); } 100% { transform: none; } }
 .st-toast { position: absolute; top: 22px; left: 50%; transform: translate(-50%, -6px); z-index: 7; margin: 0; font: 500 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--bone-2); text-shadow: 0 1px 8px rgba(0, 0, 0, .9); opacity: 0; transition: opacity .4s var(--ease), transform .5s var(--ease); white-space: nowrap; }
 .st-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
-/* the lost temp tags: a small counter, the found ones as filled marks and the rest as empty ones (no figures) */
+/* the lost license plates: a small counter, the found ones as filled marks and the rest as empty ones (no figures) */
 .st-tags { position: absolute; top: 64px; left: 50%; z-index: 7; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 3px; background: rgba(5, 7, 10, .55); color: var(--bone); opacity: 0; transform: translate(-50%, -6px); transition: opacity .4s var(--ease), transform .5s var(--ease); white-space: nowrap; pointer-events: none; }
 .st-tags.is-on { opacity: 1; transform: translate(-50%, 0); }
 .st-tags__k { font: italic 500 17px/1 var(--serif); }

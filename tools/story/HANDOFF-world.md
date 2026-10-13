@@ -72,12 +72,20 @@ shelf and fence is in `walls`, which nav.js already reads.
 - **Cars** (tools/story/world/cars.py, first-party): sedan, compact, hatch,
   SUV and pickup, lofted in Blender from side, plan and section profiles,
   smoothed, wheel wells cut, glass, pillars, bumpers and rocker assigned from
-  the loft, lamps (lens plus a lit inner element), grille, plates (plain,
-  embossed, no characters), mirrors, handles, wipers, lathed wheels with
+  the loft, lamps (lens plus a lit inner element), grille, plate patches
+  front and back (they only say where the plates go), mirrors, handles, wipers, lathed wheels with
   spoked rims and discs, interiors and headrests behind the glass, ambient
   occlusion baked to vertex colour. Paint is clear-coated with rain beading,
   panel lines drawn from each car's measurements, colour per car, solid or
   metallic. Instanced by kind and material (about 60 draws for 30 cars).
+- **Plates** (story/plates.js; the model from tools/story/plate.py, Blender,
+  assets/story/plate-v1.glb; the faces from story/tex.js plateAtlas): Texas
+  standard plates, 12 by 6 inches, front and back on every car, letters only
+  (consonant groups round the state's outline, no figures), each car its own
+  cell of one atlas, picked by the instance colour. Every plate in a set is
+  one instanced mesh with one material: one draw for the lot's cars, one per
+  drivable rig and one for the car going by on the street. The lost plates
+  (story/tags.js) are the same model and atlas.
   One car idles by the showroom with its lights on.
 - **The lot**: tiled CC0 asphalt (two scales against repetition) under a baked
   layer of patches, oil under engines, worn paint, tar-sealed cracks, puddles
