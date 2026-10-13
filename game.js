@@ -17,7 +17,7 @@
    window.JG_GAME.unlock(slug, how)  one trophy, earned in the run (game-run.js)
    window.JG_GAME.play(levelId, how) the run: loads game-run.js and its CSS on first press (the episode's arcade cabinet calls it)
    window.JG_GAME.story(scene, how)  After Hours, the episode: loads story/main.js (and three.js) on first press
-   Routes also take #story and #story/<scene> (lot, office, memory, keys, decision).
+   Routes also take #story and #story/<scene> (lot, office, memory, keys, june, sale, decision).
    Events: document "jg:title" {id, open} */
 (function () {
   "use strict";
