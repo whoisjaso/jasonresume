@@ -39,6 +39,7 @@ html.story-on body > *:not(#story):not(script):not(dialog) { visibility: hidden 
 /* ---------- captions ---------- */
 .st-cap { position: absolute; left: 50%; bottom: max(30px, calc(env(safe-area-inset-bottom) + 18px)); transform: translate(-50%, 8px); z-index: 8; width: min(860px, calc(100% - 32px)); text-align: center; opacity: 0; transition: opacity .35s var(--ease), transform .5s var(--ease); pointer-events: auto; cursor: pointer; }
 .st-cap.is-on { opacity: 1; transform: translate(-50%, 0); }
+.st-cap.is-passing, .st-cap:not(.is-on) { pointer-events: none; }
 /* the scrim under captions and choices lives on the frame itself (a fixed child of a transformed box would be clipped to it) */
 .story::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40vh; z-index: 7; pointer-events: none; background: linear-gradient(to top, rgba(4, 6, 8, .78), rgba(4, 6, 8, .38) 50%, transparent); opacity: 0; transition: opacity .5s var(--ease); }
 .story.is-talking::after { opacity: 1; }
@@ -110,6 +111,18 @@ html[data-still] .st-dot i, html[data-still] .st-prompt { animation: none; }
 @keyframes st-glint { 0% { opacity: 0; transform: scale(.7); } 30% { opacity: 1; transform: scale(1.12); } 100% { transform: none; } }
 .st-toast { position: absolute; top: 22px; left: 50%; transform: translate(-50%, -6px); z-index: 7; margin: 0; font: 500 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--bone-2); text-shadow: 0 1px 8px rgba(0, 0, 0, .9); opacity: 0; transition: opacity .4s var(--ease), transform .5s var(--ease); white-space: nowrap; }
 .st-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+/* the lost temp tags: a small counter, the found ones as filled marks and the rest as empty ones (no figures) */
+.st-tags { position: absolute; top: 64px; left: 50%; z-index: 7; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 3px; background: rgba(5, 7, 10, .55); color: var(--bone); opacity: 0; transform: translate(-50%, -6px); transition: opacity .4s var(--ease), transform .5s var(--ease); white-space: nowrap; pointer-events: none; }
+.st-tags.is-on { opacity: 1; transform: translate(-50%, 0); }
+.st-tags__k { font: italic 500 17px/1 var(--serif); }
+.st-tags__f { font: 500 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--bone-2); }
+.st-marks { display: inline-flex; gap: 3px; align-items: center; }
+.st-marks i { width: 7px; height: 12px; border: 1.5px solid currentColor; border-radius: 1.5px; opacity: .45; }
+.st-marks i.is-on { background: currentColor; opacity: 1; }
+.st-tags.is-on .st-marks i.is-new { animation: st-mark .7s var(--ease); }
+@keyframes st-mark { 0% { transform: translateY(-6px) scale(.6); opacity: 0; } 60% { transform: translateY(1px) scale(1.15); opacity: 1; } 100% { transform: none; } }
+.jr-tags .st-marks, .jr-e .st-marks { color: #3c372f; margin: 2px 0 6px; }
+html[data-still] .st-tags .st-marks i.is-new { animation: none; }
 .st-trophy { position: absolute; right: max(20px, env(safe-area-inset-right)); top: 76px; z-index: 11; width: min(360px, calc(100% - 40px)); display: grid; grid-template-columns: 56px 1fr; gap: 14px; align-items: center; padding: 14px 16px; background: var(--lacquer); border: 1px solid var(--hair-2); border-radius: 4px; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .8); opacity: 0; transform: translateX(16px); transition: opacity .45s var(--ease), transform .7s var(--ease); }
 .st-trophy.is-on { opacity: 1; transform: none; }
 .st-trophy img { width: 56px; height: 56px; }
@@ -429,3 +442,26 @@ html[data-still] .st-dot.is-new::after { animation: none; opacity: .5; transform
 .story[data-dev="pad"] .st-ch:focus span::after { transform: scaleX(1); }
 .story[data-dev="pad"] .pz-m button:focus { color: var(--bone); transform: translateX(6px); }
 .story[data-dev="pad"] .st-sheet .iphone :focus { outline-color: #111; outline-offset: 2px; }
+
+/* the hold: a ring that fills under your thumb (sitting down beside him), with a pulse on each heartbeat */
+.st-hold { position: absolute; left: 0; top: 0; z-index: 9; width: 64px; height: 64px; margin: -32px 0 0 -32px; pointer-events: none; opacity: 0; transition: opacity .25s var(--ease); }
+.st-hold.is-on { opacity: 1; }
+.st-hold svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.st-hold circle { fill: none; stroke-width: 2.5; }
+.st-hold__bg { stroke: rgba(237, 231, 219, .22); }
+.st-hold__fg { stroke: var(--bone, #ede7db); stroke-dasharray: 176; stroke-dashoffset: 176; stroke-linecap: round; }
+.st-hold.is-beat svg { animation: st-beat .42s var(--ease); }
+@keyframes st-beat { 0% { transform: rotate(-90deg) scale(1); } 30% { transform: rotate(-90deg) scale(1.08); } 100% { transform: rotate(-90deg) scale(1); } }
+html[data-still] .st-hold.is-beat svg { animation: none; }
+
+/* the test drive's clock: a thin bar that runs down (never a fail) and a pip for each ring passed; no numbers */
+.st-course { position: absolute; left: 50%; top: max(18px, calc(env(safe-area-inset-top) + 12px)); z-index: 8; width: min(260px, calc(100% - 140px)); transform: translate(-50%, -6px); display: grid; gap: 8px; justify-items: center; pointer-events: none; opacity: 0; transition: opacity .4s var(--ease), transform .5s var(--ease); }
+.st-course.is-on { opacity: 1; transform: translate(-50%, 0); }
+.st-course__t { display: block; width: 100%; height: 2px; background: rgba(237, 231, 219, .2); border-radius: 2px; overflow: hidden; }
+.st-course__t b { display: block; height: 100%; background: var(--bone, #ede7db); transform-origin: left; transition: transform .3s linear; }
+.st-course__pips { display: flex; gap: 8px; }
+.st-course__pips b { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(237, 231, 219, .6); transition: background-color .3s var(--ease), transform .3s var(--ease); }
+.st-course__pips b.is-on { background: var(--bone, #ede7db); animation: st-pip .45s var(--ease); }
+@keyframes st-pip { 0% { transform: scale(1); } 40% { transform: scale(1.7); } 100% { transform: scale(1); } }
+html[data-still] .st-course__pips b.is-on { animation: none; }
+.story.is-upright .st-course { top: max(78px, calc(env(safe-area-inset-top) + 72px)); }

@@ -92,6 +92,7 @@ export function createAudio(o) {
   function ramp(p, v, secs) { const t = now(); p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(v, t + (secs || 0.05)); }
 
   /* ---------- the mix ---------- */
+  let scoreK = 1, scoreT = 0; // (scoreLevel, below)
   function applyMix(instant) {
     const s = A.ctx ? 1 : 0, m = mix, N = A.nodes, on = soundOn();
     if (A.ctx) {
@@ -104,8 +105,16 @@ export function createAudio(o) {
       ramp(N.verbG.gain, LEVELS.verb * m.sfx, t);
     }
     // the score's own level: master times music for the stems, master times effects for its stings
-    const SC = window.JG_SCORE; if (SC && SC.mix) SC.mix(m.master * m.music, m.master * Math.min(1, 0.4 + m.sfx * 0.7));
+    const SC = window.JG_SCORE; if (SC && SC.mix) SC.mix(m.master * m.music * scoreK, m.master * Math.min(1, 0.4 + m.sfx * 0.7));
     return s;
+  }
+  /* a scene's hold on the score, under the visitor's own music level: the waiting room nearly silences it, the
+     morning gives it back; eased over secs */
+  function scoreLevel(k, secs = 3) {
+    clearInterval(scoreT);
+    const from = scoreK, t0 = performance.now();
+    if (!(secs > 0) || Math.abs(k - from) < 1e-3) { scoreK = k; applyMix(); return; }
+    scoreT = setInterval(() => { const u = Math.min(1, (performance.now() - t0) / (secs * 1000)); scoreK = from + (k - from) * u * u * (3 - 2 * u); applyMix(); if (u >= 1) clearInterval(scoreT); }, 150);
   }
   function setMix(k, v) { mix[k] = Math.max(0, Math.min(1, +v)); store.set(MIX_KEY, JSON.stringify(mix)); applyMix(); }
   function sound(on) {
@@ -240,13 +249,14 @@ export function createAudio(o) {
     A.scene = name; A.set = set; A.info = info;
     if (!A.ctx) return;
     clearAmb();
-    const N = A.nodes, t = now(), outside = name === "lot" || name === "decision" || name === "keys";
+    const N = A.nodes, t = now(), outside = name === "lot" || name === "decision" || name === "keys" || name === "sale";
     const rain = name === "lot" ? 1 : name === "decision" ? 0.6 : name === "office" ? 1 : 0;
     // the glass: wide open outside, a murmur inside
     N.outLp.frequency.cancelScheduledValues(t); N.outLp.frequency.setTargetAtTime(outside ? 16000 : name === "office" ? 640 : 300, t, 0.3);
     ramp(N.out.gain, outside ? 1 : name === "office" ? 0.5 : 0, 1);
-    N.verb.buffer = name === "memory" ? room(2.4, 0.6, 0.012) : name === "office" ? room(0.55, 0.85, 0.004) : room(1.1, 0.95, 0.03);
-    A.verbAmt = name === "memory" ? 0.55 : name === "office" ? 0.32 : 0.16;
+    N.verb.buffer = name === "memory" ? room(2.4, 0.6, 0.012) : name === "office" ? room(0.55, 0.85, 0.004) : name === "june" ? room(0.9, 0.9, 0.006) : room(1.1, 0.95, 0.03);
+    A.verbAmt = name === "memory" ? 0.55 : name === "office" ? 0.32 : name === "june" ? 0.4 : 0.16;
+    A.clockGain = 0.05;
     if (rain) {
       loop(A.pink, { name: "rain-hiss", bus: N.out, filters: [["highpass", 450], ["lowpass", 9000], ["peaking", 3200, 0.8, 3]], gain: 0.2 * rain });
       loop(A.drops, { name: "rain-patter", bus: N.out, filters: [["highpass", 900]], gain: 0.34 * rain });
@@ -282,7 +292,24 @@ export function createAudio(o) {
       // the places that hum: the machine by the showroom, the gas station's canopy, the laundromat's dryers, the taco truck's generator
       for (const k of Object.keys(SN)) { const s0 = SN[k], h = s0 && HUM[s0.kind]; if (h) loop(A.brown, { name: "hum-" + k, bus: N.out, filters: h.f, gain: h.g, at: s0, ref: h.ref, roll: 1.4, max: 60 }); }
     }
-    if (name === "keys") { A.nextBird = t + 1; A.nextCar = t + rnd(3, 8); }
+    if (name === "keys" || name === "sale") { A.nextBird = t + 1; A.nextCar = t + rnd(3, 8); }
+    if (name === "june") {
+      // the waiting room after midnight: the building's air, the tubes' hum (one failing), the machines, the rain on the
+      // window, and the clock, loud in the quiet; far down the corridor now and then a page, footsteps, a monitor
+      loop(A.brown, { name: "hvac", filters: [["lowpass", 180]], gain: 0.2 });
+      loop(A.pink, { name: "air", filters: [["highpass", 1600], ["lowpass", 5000]], gain: 0.014 });
+      osc("sine", 60, { name: "mains", gain: 0.016 });
+      osc("sine", 120, { name: "mains-2", gain: 0.006 });
+      lamps(set, "tube");
+      if (SN.vending) loop(A.brown, { name: "hum-vending", filters: HUM["fridge-hum"].f, gain: 0.07, at: SN.vending, ref: 1.2, roll: 1.4 });
+      const win = SN.window || { x: 5.9, y: 1.6, z: -0.4 };
+      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2200, 0.6]], gain: 0.3, at: win, ref: 1.8, roll: 1.1 }); if (win.w) A.lines.push({ n: A.window, src: { ...win, w: 0 }, zSpan: win.w / 2 });
+      loop(A.brown, { name: "rain-far", filters: [["lowpass", 420]], gain: 0.06 });
+      A.clock = SN.clock || { x: -0.9, y: 2.4, z: -4.4 };
+      A.clockOn = true; A.tickT = t + 0.4; A.clockGain = 0.11;
+      A.corridor = SN.corridor || { x: 4.2, y: 1.2, z: 6 };
+      A.nextHosp = t + rnd(5, 10);
+    }
     if (name === "office") {
       // HVAC: a low rush of air and the mains hum under the fluorescents
       loop(A.brown, { name: "hvac", filters: [["lowpass", 210]], gain: 0.22 });
@@ -362,7 +389,8 @@ export function createAudio(o) {
     // the office clock
     if (A.clockOn && t >= A.tickT) {
       const tock = (A.tickN = (A.tickN || 0) + 1) % 2;
-      burst({ f: tock ? 2400 : 3100, q: 6, gain: 0.05, decay: 0.03, at: A.clock, ref: 1.2, roll: 1.3, bus: A.nodes.amb });
+      burst({ f: tock ? 2400 : 3100, q: 6, gain: A.clockGain || 0.05, decay: 0.03, at: A.clock, ref: 1.2, roll: 1.3, bus: A.nodes.amb });
+      if (A.scene === "june") tone({ f: tock ? 520 : 610, decay: 0.05, gain: 0.012, at: A.clock, ref: 1.2, roll: 1.3, bus: A.nodes.amb });
       A.tickT += 1;
     }
     // Renata types when she's at her desk and not talking
@@ -382,8 +410,10 @@ export function createAudio(o) {
       else sprite(pick(["creak-0", "creak-2"]), { gain: 0.1, rate: rnd(0.6, 0.8), at, ref: 1, roll: 1, verb: 0.7, lp: 2500, bus: A.nodes.amb, kind: "amb" });
       A.nextHush = t + rnd(7, 18);
     }
+    // the hospital, far down the corridor: a soft two-note page, someone's footsteps passing, a monitor somewhere
+    if (A.scene === "june" && A.nextHosp && t >= A.nextHosp) { hospital(); A.nextHosp = t + rnd(9, 20); }
     // the morning: birds in the trees along the fence
-    if (A.scene === "keys" && t >= A.nextBird) {
+    if ((A.scene === "keys" || A.scene === "sale") && t >= A.nextBird) {
       const at = { x: rnd(-30, 30), y: rnd(4, 8), z: rnd(-26, 22) }, n = (rnd(2, 6)) | 0, base = rnd(2600, 4200);
       for (let i = 0; i < n; i++) tone({ f: base * rnd(0.9, 1.1), to: base * rnd(1.2, 1.6), glide: rnd(0.04, 0.09), decay: rnd(0.05, 0.12), gain: 0.02, delay: i * rnd(0.09, 0.16), at, ref: 3, roll: 1, bus: A.nodes.amb });
       A.nextBird = t + rnd(1.5, 6);
@@ -397,10 +427,46 @@ export function createAudio(o) {
     // far off, now and then: a siren crossing town, a train's horn, a dog
     if ((A.scene === "lot" || A.scene === "decision") && A.nextFar && t >= A.nextFar) { far(); A.nextFar = t + rnd(35, 80); }
     // a car passes on the street, with its doppler
-    if ((A.scene === "lot" || A.scene === "decision" || A.scene === "keys" || A.scene === "office") && !A.car && t >= A.nextCar && A.nextCar) passCar(A.scene !== "keys");
+    if ((A.scene === "lot" || A.scene === "decision" || A.scene === "keys" || A.scene === "sale" || A.scene === "office") && !A.car && t >= A.nextCar && A.nextCar) passCar(A.scene !== "keys" && A.scene !== "sale");
     if (A.car) A.car.tick(dt, w.ear);
     // a peak meter, for the harness: the limiter keeps it under full scale
     if ((A.mt = (A.mt || 0) + dt) > 0.25) { A.mt = 0; const d = new Float32Array(A.nodes.meter.fftSize); A.nodes.meter.getFloatTimeDomainData(d); let m = 0; for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); A.peak = Math.max(A.peak * 0.9, m); A.peakMax = Math.max(A.peakMax || 0, m); }
+  }
+  function hospital() {
+    if (!soundOn()) return;
+    const c = A.corridor || { x: 4.2, y: 1.2, z: 6 }, at = { x: c.x + rnd(-2, 2), y: 1.6, z: c.z + rnd(1, 5) }, roll = Math.random(), amb = A.nodes.amb;
+    if (roll < 0.34) {
+      // the page: two soft notes down a long hall, through the doors
+      tone({ f: 659.3, partials: [[1, 1], [2, 0.2]], decay: 1.1, gain: 0.018, at, ref: 2, roll: 0.8, bus: amb });
+      tone({ f: 523.3, partials: [[1, 1], [2, 0.2]], decay: 1.4, gain: 0.018, delay: 0.42, at, ref: 2, roll: 0.8, bus: amb });
+      log("amb", "page");
+    } else if (roll < 0.72) {
+      // footsteps passing outside the doors, left to right, unhurried
+      const n = 8 + ((Math.random() * 5) | 0), dir = Math.random() < 0.5 ? 1 : -1;
+      for (let i = 0; i < n; i++) { const k = i / (n - 1); sprite("step-concrete-" + (i % 5), { at: { x: c.x + dir * (k * 10 - 5), y: 0.05, z: c.z + 1.2 }, gain: 0.16 * Math.sin(k * Math.PI) + 0.02, rate: rnd(1.0, 1.1), lp: 2600, ref: 2, roll: 1.1, verb: 0.7, delay: i * 0.56, bus: amb, kind: "amb" }); }
+      log("amb", "steps");
+    } else {
+      // a monitor in a room down the hall: a few soft beeps, then it stops
+      for (let i = 0; i < 6; i++) tone({ f: 1046.5, decay: 0.09, gain: 0.006, delay: i * 0.92, at, ref: 2, roll: 0.9, bus: amb });
+      log("amb", "monitor");
+    }
+  }
+  /* a phone vibrating on a plastic seat: bursts of a low rattle */
+  function buzz(at, n = 2) {
+    if (!A.ctx) return false;
+    for (let i = 0; i < n; i++) {
+      tone({ f: 165, wave: "square", partials: [[1, 1]], decay: 0.42, attack: 0.02, gain: 0.03, delay: i * 1.1, at, ref: 1.2, roll: 1.4, lp: 900 });
+      burst({ type: "bandpass", f: 310, q: 4, gain: 0.05, attack: 0.02, decay: 0.38, delay: i * 1.1, at, ref: 1.2, roll: 1.4 });
+    }
+    log("thing", "buzz"); return true;
+  }
+  /* a heartbeat: the pulse that runs under a hold, felt more than heard */
+  function heart(k = 1) {
+    if (!A.ctx) return false;
+    const U = A.nodes.ui;
+    tone({ f: 58, to: 44, glide: 0.08, decay: 0.16, gain: 0.07 * k, bus: U });
+    tone({ f: 52, to: 40, glide: 0.08, decay: 0.2, gain: 0.05 * k, delay: 0.19, bus: U });
+    log("ui", "heart"); return true;
   }
   function far() {
     if (!soundOn()) return;
@@ -499,6 +565,13 @@ export function createAudio(o) {
       case "mem-cert": case "mem-letter": sprite(P(), { ...v, gain: 0.4 }); break;
       case "laptop": case "mem-laptop": sprite("ui-click", { ...v, gain: 0.12, rate: 0.7, lp: 3000 }); sprite("ui-click", { ...v, gain: 0.1, rate: 0.75, lp: 3000, delay: 0.16 }); break;
       case "keys": sprite("keys-0", { ...v, gain: 0.45 }); break;
+      case "mem-psych": sprite("book-open", { ...v, gain: 0.45, rate: 1.15 }); sprite(P(), { ...v, gain: 0.3, delay: 0.2 }); break;
+      case "june-window": for (let i = 0; i < 3; i++) tone({ f: 1900 + i * 140, to: 2400 + i * 160, glide: 0.2, decay: 0.16, gain: 0.006, delay: 0.05 + i * 0.22, at, ref: 1.2 }); burst({ type: "bandpass", f: 3200, q: 2, gain: 0.03, attack: 0.05, decay: 0.5, at, ref: 1.2 }); break;
+      case "june-scan": sprite("click-metal", { ...v, gain: 0.22, rate: 1.3 }); break;
+      case "june-coffee": sprite("ui-click", { ...v, gain: 0.3, rate: 0.8, lp: 3000 }); burst({ type: "lowpass", f: 700, gain: 0.08, attack: 0.15, decay: 1.4, delay: 0.3, at, ref: 1.6 }); break;
+      case "june-phone": sprite("ui-click", { ...v, gain: 0.15, rate: 1.4, lp: 4000 }); break;
+      case "june-door": sprite("door-open", { ...v, gain: 0.45, rate: 0.9 }); break;
+      case "june-jason": case "sale-buyer": case "sale-keys": cloth(at, 0.8); break;
       case "gate": chain(at); break;
       case "door": sprite("door-open", { ...v, gain: 0.45, rate: 0.95 }); break;
       case "mem-lamp": case "lampoff": sprite("click-metal", { ...v, gain: 0.3, rate: 1.2 }); break;
@@ -706,6 +779,8 @@ export function createAudio(o) {
       case "sit": cloth(at, 0.9); sprite("creak-1", { ...v, gain: 0.14, rate: 1.4, delay: 0.25, lp: 2500 }); break;
       case "pickup": sprite("keys-0", { ...v, gain: 0.25, rate: 1.2 }); cloth(at, 0.5); break;
       case "read": sprite(pick(["page-0", "page-1", "page-2"]), { ...v, gain: 0.4 }); break;
+      // a lost temp tag: the paper off the ground, and a soft chime that says it counted
+      case "tag": sprite("page-2", { ...v, gain: 0.42, rate: 1.3 }); sprite("page-1", { ...v, gain: 0.16, rate: 1.55, delay: 0.05 }); tone({ f: 1567.98, partials: [[1, 1], [2.01, 0.22]], decay: 0.8, gain: 0.02, delay: 0.07, bus: A.nodes.ui }); tone({ f: 2349.3, decay: 0.6, gain: 0.011, delay: 0.16, bus: A.nodes.ui }); break;
       case "splash": step("puddle", { at, gain: 1.5, ref: 3 }); burst({ f: 3000, q: 0.6, gain: 0.18, decay: 0.3, at }); break;
       case "knock": for (let i = 0; i < 3; i++) { tone({ f: 140, to: 90, glide: 0.04, decay: 0.07, gain: 0.12, delay: i * 0.17, at, ref: 2 }); burst({ type: "lowpass", f: 900, gain: 0.08, decay: 0.04, delay: i * 0.17, at, buf: A.brown }); } break;
       case "exit": sprite("door-open", { ...v, gain: 0.4, rate: 1.0 }); break;
@@ -735,7 +810,7 @@ export function createAudio(o) {
   function stopAll() { if (!A.ctx) return; clearAmb(0.6); A.clockOn = false; }
 
   return {
-    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive, use,
+    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive, use, buzz, heart, scoreLevel, get scoreK() { return scoreK; },
     debug: () => {
       const N = A.nodes;
       return {

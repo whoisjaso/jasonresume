@@ -1,0 +1,72 @@
+{
+ "id": "jason-sale-jason-5",
+ "text": "I listen first. People decide with how they feel, then find the reasons.",
+ "duration": 5.08,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.04,
+   "e": 0.2
+  },
+  {
+   "w": "listen",
+   "s": 0.2,
+   "e": 0.46
+  },
+  {
+   "w": "first.",
+   "s": 0.46,
+   "e": 0.88
+  },
+  {
+   "w": "People",
+   "s": 1.48,
+   "e": 1.76
+  },
+  {
+   "w": "decide",
+   "s": 1.76,
+   "e": 2.24
+  },
+  {
+   "w": "with",
+   "s": 2.24,
+   "e": 2.46
+  },
+  {
+   "w": "how",
+   "s": 2.46,
+   "e": 2.66
+  },
+  {
+   "w": "they",
+   "s": 2.66,
+   "e": 2.82
+  },
+  {
+   "w": "feel,",
+   "s": 2.82,
+   "e": 3.3
+  },
+  {
+   "w": "then",
+   "s": 3.7,
+   "e": 3.9
+  },
+  {
+   "w": "find",
+   "s": 3.9,
+   "e": 4.22
+  },
+  {
+   "w": "the",
+   "s": 4.22,
+   "e": 4.4
+  },
+  {
+   "w": "reasons.",
+   "s": 4.4,
+   "e": 4.7
+  }
+ ]
+}

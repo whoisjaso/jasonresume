@@ -290,6 +290,27 @@ export function clockTex(h = 10, m = 8) {
   g.fillStyle = "#1b1d1a"; g.beginPath(); g.arc(128, 128, 7, 0, 7); g.fill();
   return tex(c);
 }
+/* a brain scan on a light box: four axial slices on a sheet of film, white folds on black, no labels */
+export function scanTex() {
+  const c = cv(256, 256), g = c.getContext("2d"), r = rng(17);
+  g.fillStyle = "#c8d4dc"; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = "#0c0f12"; g.fillRect(8, 8, 240, 240);
+  for (let k = 0; k < 4; k++) {
+    const cx = 68 + (k % 2) * 120, cy = 68 + ((k / 2) | 0) * 120, rx = 42 - k * 2, ry = 52 - k * 2;
+    g.save(); g.translate(cx, cy);
+    // the skull, the brain inside it, the fissure down the middle, the folds
+    g.strokeStyle = "rgba(235,240,244,0.9)"; g.lineWidth = 3; g.beginPath(); g.ellipse(0, 0, rx + 5, ry + 5, 0, 0, 7); g.stroke();
+    g.fillStyle = "rgba(150,160,168,0.75)"; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, 7); g.fill();
+    g.strokeStyle = "rgba(25,28,32,0.85)"; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -ry); g.lineTo(0, ry); g.stroke();
+    g.lineWidth = 1.2;
+    for (let i = 0; i < 26; i++) { const a = r() * Math.PI * 2, d = 0.35 + r() * 0.55; g.beginPath(); g.moveTo(Math.cos(a) * rx * d, Math.sin(a) * ry * d); g.quadraticCurveTo(Math.cos(a + 0.2) * rx * (d + 0.15), Math.sin(a + 0.2) * ry * (d + 0.15), Math.cos(a + 0.35) * rx * d, Math.sin(a + 0.35) * ry * d); g.stroke(); }
+    // the ventricles, dark at the centre
+    g.fillStyle = "rgba(20,22,26,0.9)"; g.beginPath(); g.ellipse(-7, -4, 5, 13, 0.2, 0, 7); g.ellipse(7, -4, 5, 13, -0.2, 0, 7); g.fill();
+    g.restore();
+  }
+  return tex(c);
+}
+
 /* night through a library's tall window: a dark campus, a few warm windows and lamps, out of focus */
 export function nightTex(seed = 3) {
   const c = cv(256, 512), g = c.getContext("2d"), r = rng(seed);
@@ -477,6 +498,21 @@ export function skylineTex() {
   }
   // far windows and lamps, warm specks
   for (let i = 0; i < 140; i++) { g.fillStyle = r() < 0.7 ? "rgba(255,190,110," + (0.4 + r() * 0.6) + ")" : "rgba(200,220,255,0.6)"; g.fillRect(r() * 2048, 180 + r() * 70, 2, 2); }
+  return tex(c);
+}
+/* a paper temp tag, the kind a dealer tapes in a back window: the word TEMP and blank lines, no numbers on it.
+   One texture for every lost tag in the episode (story/tags.js) */
+export function tempTagTex() {
+  const w = 256, h = 128, c = cv(w, h), g = c.getContext("2d");
+  g.drawImage(paper(w, h, "#efe9da"), 0, 0);
+  // a fold across the middle, and the corners gone soft with handling
+  g.fillStyle = "rgba(60,50,30,0.07)"; g.fillRect(w / 2 - 1, 0, 2, h);
+  g.strokeStyle = "#2b2f2c"; g.lineWidth = 3; g.strokeRect(7, 7, w - 14, h - 14);
+  g.fillStyle = "#1c3229"; g.fillRect(7, 7, w - 14, 22);
+  g.fillStyle = BONE; g.font = "700 15px " + SANS; tracked(g, "TEMP", w / 2, 24, 5);
+  g.fillStyle = "#1b1d1a"; g.font = "700 46px " + SANS; tracked(g, "TEMP", w / 2, 76, 6);
+  g.fillStyle = "rgba(27,29,26,0.55)"; for (const y of [92, 106]) g.fillRect(22, y, w - 44, 1.5);
+  g.strokeStyle = "rgba(27,29,26,0.5)"; g.lineWidth = 1.5; g.strokeRect(w - 52, 88, 30, 22);
   return tex(c);
 }
 export { cv };

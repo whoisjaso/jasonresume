@@ -608,6 +608,7 @@
     "june-door": { "scene": "june", "label": "Doors", "verb": "Go", "talk": "june-go", "if": "juned" },
 
     "sale-buyer": { "scene": "sale", "label": "Marisol", "verb": "Talk", "talk": "sale-buyer", "who": "marisol", "once": true },
+    "sale-keys": { "scene": "sale", "label": "the keys", "verb": "Hand her", "talk": "sale-done", "who": "marisol", "if": "testdrive,!droven", "once": true },
 
     "jason-end": { "scene": "decision", "label": "Jason", "verb": "Talk", "talk": "dec-arrive", "who": "jason", "once": true }
   },
@@ -721,7 +722,12 @@
     "showroom-lights": "The showroom wakes up, one row at a time.",
     "taco-menu": "Tacos. Open late. The best kind of sign.",
     "truck-bell": "The bell dings over the hiss of the grill.",
-    "vending": "Something drops with a thunk. Small victories."
+    "vending": "Something drops with a thunk. Small victories.",
+    "wr-vending": "Something drops behind the glass. Nobody here is hungry.",
+    "wr-bell": "A small bell on the ledge. Nobody comes. That's alright.",
+    "wr-chair": "The seat is cold. Everyone here sits like they're about to stand.",
+    "magazine": "An old magazine, soft from other people's hands.",
+    "cooler-cup": "Cold water in a paper cone. Something to hold on to."
   },
   "ui": {
     "play": "Play",
@@ -819,6 +825,9 @@
     "to_keys": "Out to the lot",
     "to_june": "Through the doors",
     "to_sale": "Out to the lot",
+    "drive_fast": "Quick, and back in one piece.",
+    "drive_smooth": "Smooth the whole way. She noticed.",
+    "drive_scenic": "The scenic route. She didn't mind.",
     "tag": "Temp tag",
     "tags_found": "found",
     "tags_all": "Every temp tag found."

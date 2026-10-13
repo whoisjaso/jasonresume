@@ -1,0 +1,32 @@
+{
+ "id": "jason-june-jason-9",
+ "text": "That, and how people decide.",
+ "duration": 2.744,
+ "words": [
+  {
+   "w": "That,",
+   "s": 0.1,
+   "e": 0.563
+  },
+  {
+   "w": "and",
+   "s": 0.563,
+   "e": 1.426
+  },
+  {
+   "w": "how",
+   "s": 1.426,
+   "e": 1.615
+  },
+  {
+   "w": "people",
+   "s": 1.615,
+   "e": 1.973
+  },
+  {
+   "w": "decide.",
+   "s": 1.973,
+   "e": 2.583
+  }
+ ]
+}
