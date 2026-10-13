@@ -666,6 +666,7 @@ export function createAudio(o) {
       case "splash": step("puddle", { at, gain: 1.5, ref: 3 }); burst({ f: 3000, q: 0.6, gain: 0.18, decay: 0.3, at }); break;
       case "knock": for (let i = 0; i < 3; i++) { tone({ f: 140, to: 90, glide: 0.04, decay: 0.07, gain: 0.12, delay: i * 0.17, at, ref: 2 }); burst({ type: "lowpass", f: 900, gain: 0.08, decay: 0.04, delay: i * 0.17, at, buf: A.brown }); } break;
       case "exit": sprite("door-open", { ...v, gain: 0.4, rate: 1.0 }); break;
+      case "knock1": tone({ f: 140, to: 90, glide: 0.04, decay: 0.07, gain: 0.12, at, ref: 2 }); burst({ type: "lowpass", f: 900, gain: 0.08, decay: 0.04, at, buf: A.brown }); break;
     }
     log("use", kind);
   }

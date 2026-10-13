@@ -4,7 +4,7 @@
 // triangles, and the texture memory uploaded by the time the scene is up (textures and render targets, at 4 bytes a texel). The quality main.js picked for the phone is held; the pixel ratio is
 // pinned tiny so software GL keeps up (GPU fill is not measured, the CPU work per draw is the same). Software GL makes GPU time meaningless here, so it isn't reported.
 //   python3 -m http.server 8765 &   then   node tools/story/world/perf.mjs [tag] [land|port|desk] [scene ...]
-// Writes tools/verify/out/real-world-perf-<tag>-<scene>-<vp>.png and prints a table (and JSON with --json).
+// Writes tools/verify/out/real-world-perf-<tag>-<scene>-<vp>[-phone].png and prints a table (and JSON with --json).
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -75,7 +75,9 @@ for (const vp of vps) {
       const avg = k => f.reduce((s, x) => s + x[k], 0) / Math.max(1, f.length);
       return { n: f.length, ms: avg('ms'), p50: ms[Math.floor(ms.length * 0.5)] || 0, p90: ms[Math.floor(ms.length * 0.9)] || 0, calls: avg('calls'), tris: avg('tris'), texMB: P.texAt / 1048576 }; });
     if (mobile) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-    const f = path.join(OUT, `real-world-perf-${tag}-${scene}-${vp}.png`);
+    // the still at the phone's own quality and pixel ratio, as main.js had it
+    await p.evaluate(([q, pr]) => window.JG_STORY.debug.quality(q, pr), [st0.quality, st0.pixelRatio]); await p.waitForTimeout(3500);
+    const f = path.join(OUT, `real-world-perf-${tag}-${scene}-${vp}${mobile ? '-phone' : ''}.png`);
     await p.screenshot({ path: f, timeout: 240000 });
     const row = { tag, vp, scene, q: st0.quality, pr: st0.pixelRatio, ...r, errs: errs.length };
     rows.push(row);

@@ -1082,23 +1082,43 @@ async function useWorld(s, how) {
   const feel = () => {
     if (fired) return; fired = true;
     x.on = !x.on;
-    FX("arrive"); AU.use(kind, at, x.on); hap("tap");
+    FX("arrive"); if (kind !== "knock") AU.use(kind, at, x.on); hap("tap");
     try { if (typeof x.use === "function") x.use({ kind, on: x.on, who: me }); } catch (e) {}
+    if (kind === "read" && x.text) toast(x.text);
     document.dispatchEvent(new CustomEvent("jg:story-use", { detail: { id: s.id, kind, on: x.on } }));
   };
-  if (kind === "sit" && me.sitAt) {
-    if (me.seated) { try { await me.standUp(); } catch (e) {} return; }
-    let sat = false; feel();
-    setPhase("cinematic"); // the walk to the seat is people.js's; a press or a push of the stick gets you up again
-    try { const r = me.sitAt(x.seat || at, x.yaw); setTimeout(() => { if (!sat && S.phase === "cinematic") setPhase("explore"); }, 9000); await r; } catch (e) {}
-    sat = true; if (S.phase === "cinematic") setPhase("explore");
-    return;
-  }
-  if (kind === "splash") { feel(); return; }
-  if (me.reachTo && kind !== "sit") {
-    try { const r = me.reachTo(at.clone ? at.clone() : at, { hold: kind === "pickup" ? "pinch" : kind === "open" ? "grip" : kind === "press" || kind === "toggle" ? "press" : "touch", onContact: feel }); if (r && r.catch) r.catch(feel); } catch (e) { feel(); }
-    setTimeout(feel, FAST ? 0 : 1200);
-  } else feel();
+  const safety = () => setTimeout(feel, FAST ? 0 : 2500); // a move that never lands still gets its answer
+  const pt = at.clone ? at.clone() : new THREE.Vector3(at.x, at.y, at.z);
+  try {
+    if (kind === "sit") {
+      if (me.seated) { if (me.standUp) await me.standUp(); return; }
+      const seat = x.seat || at, yaw = x.yaw != null ? x.yaw : me.yaw;
+      const sitNow = async () => {
+        setPhase("cinematic"); feel(); // people.js moves the body until it has sat; a press or a push gets you up
+        const go = me.sitDown || me.sitAt;
+        try { const r = go.call(me, seat, yaw); await Promise.race([r, new Promise(res => setTimeout(res, 10000))]); } catch (e) {}
+        if (S.phase === "cinematic") setPhase("explore");
+      };
+      const ap = me.seatApproach ? me.seatApproach(seat, yaw) : null;
+      if (ap && Math.hypot(ap.x - me.pos.x, ap.z - me.pos.z) > 0.6 && walkTo(ap, () => { sitNow(); }, { ring: false })) return;
+      await sitNow(); return;
+    }
+    if (kind === "splash") { feel(); return; }
+    if (kind === "toggle" && me.flip) { safety(); await me.flip(pt, { dir: x.on ? "up" : "down", onFlip: feel }); feel(); return; }
+    if (kind === "press" && me.press) { safety(); await me.press(pt, { onContact: feel }); feel(); return; }
+    if (kind === "knock" && me.knock) {
+      safety(); await me.knock(pt, { n: 3, onKnock: i => { AU.use("knock1", at); if (!i) feel(); } }); feel(); return;
+    }
+    if (kind === "knock") { AU.use("knock", at); feel(); return; }
+    if (kind === "open" && /lid/i.test(x.label || "") && me.openLid) {
+      safety(); const R = new THREE.Vector3(Math.cos(me.yaw), 0, -Math.sin(me.yaw)).multiplyScalar(0.38);
+      await me.openLid(() => ({ l: pt.clone().sub(R), r: pt.clone().add(R) }), { dur: 1.1, onProgress: t => { if (t > 0.02) feel(); }, letGo: 0.7 }); feel(); return;
+    }
+    if (kind === "open" && me.openWith) { safety(); await me.openWith(pt, { dur: 0.9, onProgress: t => { if (t > 0.02) feel(); } }); feel(); return; }
+    if (kind === "read" && me.lookAt) { feel(); await me.lookAt(pt, { read: true, dur: 3 }); return; }
+    if (me.reachTo) { safety(); const r = me.reachTo(pt, { hold: kind === "pickup" ? "pinch" : kind === "open" ? "grip" : "touch", onContact: feel }); if (r && r.catch) r.catch(feel); return; }
+  } catch (e) {}
+  feel();
 }
 /* free roam between sets: the story's arrival talk plays only the first time; the way keeps pointing at the next step */
 async function roam(to) {

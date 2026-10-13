@@ -559,9 +559,9 @@ if (!only || only === 'desktop') {
   await p.goto('about:blank'); await p.goto(URL0 + '?run=triple-j'); await p.waitForTimeout(2500);
   const rq = await p.evaluate(() => ({ intro: !!document.getElementById('intro'), run: !!window.JG_RUN }));
   if (!rq.intro || rq.run) errs.push(`doors: ?run= still skips the title screen or opens the run ${JSON.stringify(rq)}`);
+  if (fetched.length) errs.push(`doors: fetched ${fetched.join(' ')}`);
   const wk = await p.goto(URL0 + 'walkthrough.html').then(r => r.status(), () => 0);
   if (wk === 200) errs.push('doors: walkthrough.html is still served');
-  if (fetched.length) errs.push(`doors: fetched ${fetched.join(' ')}`);
   if (!errs.some(e => /^doors/.test(e))) notes.push('retired doors: no walkthrough, no tour, no G, no Play in the bar or help, no Find it in the run, no #play, no ?run=; JG_GAME.play stays for the cabinet');
   await ctx.close();
 }

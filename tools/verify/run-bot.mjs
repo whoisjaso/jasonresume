@@ -59,6 +59,8 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
   await p.goto(URL0 + '?debug=run', { referer: URL0 });
   for (let i = 0; i < 200; i++) { if (await p.evaluate(() => !!(window.JG_GAME && window.JG_GAME.play))) break; await p.clock.runFor(48); }
   await p.evaluate(l => window.JG_GAME && window.JG_GAME.play(l, 'debug'), level);
+  // game-run.js arrives over the network, in real time, whatever the page's clock says
+  for (let i = 0; i < 200; i++) { if (await p.evaluate(() => !!window.JG_RUN_DEBUG)) break; await new Promise(r => setTimeout(r, 50)); await p.clock.runFor(16); }
   let ready = false;
   for (let i = 0; i < 400 && !ready; i++) { await p.clock.runFor(48); ready = await p.evaluate(() => { const d = window.JG_RUN_DEBUG, s = d && d.state(); return !!(s && s.running && !s.panel); }); }
   const res = { level, mobile, finished: false, medals: [], of: 0, ms: 0, respawns: 0, tol: [], blind: [], replans: 0, missed: [], errors, planned: [] };
