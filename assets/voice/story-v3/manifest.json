@@ -594,6 +594,41 @@
    "file": "sale-you-2.mp3",
    "timings": "sale-you-2.json",
    "voice": "af_heart,af_nicole"
+  },
+  "w-wr-vending": {
+   "hash": "6e5055f3006f",
+   "duration": 5.175,
+   "file": "w-wr-vending.mp3",
+   "timings": "w-wr-vending.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-wr-bell": {
+   "hash": "d47a639f1cb2",
+   "duration": 5.025,
+   "file": "w-wr-bell.mp3",
+   "timings": "w-wr-bell.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-wr-chair": {
+   "hash": "8fdf70e1f44d",
+   "duration": 5.55,
+   "file": "w-wr-chair.mp3",
+   "timings": "w-wr-chair.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-magazine": {
+   "hash": "9b9023ad33d2",
+   "duration": 4.525,
+   "file": "w-magazine.mp3",
+   "timings": "w-magazine.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-cooler-cup": {
+   "hash": "313563aa8f77",
+   "duration": 4.625,
+   "file": "w-cooler-cup.mp3",
+   "timings": "w-cooler-cup.json",
+   "voice": "af_heart,af_nicole"
   }
  },
  "voice": {

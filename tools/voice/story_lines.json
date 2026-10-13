@@ -566,6 +566,41 @@
    "voice": "af_heart,af_nicole",
    "text": "Something drops with a thunk. Small victories.",
    "speed": 0.9
+  },
+  {
+   "id": "w-wr-vending",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Something drops behind the glass. Nobody here is hungry.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-wr-bell",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A small bell on the ledge. Nobody comes. That's alright.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-wr-chair",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The seat is cold. Everyone here sits like they're about to stand.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-magazine",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "An old magazine, soft from other people's hands.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-cooler-cup",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Cold water in a paper cone. Something to hold on to.",
+   "speed": 0.9
   }
  ]
 }
