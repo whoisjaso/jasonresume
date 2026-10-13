@@ -3,8 +3,8 @@
 #   python3 tools/site/story_voice.py
 #
 # Reads tools/site/story.json and writes the two files the voice tools read:
-#   tools/voice/story_lines.json        the fictional cast, each line with its stock
-#                                       Kokoro voice (render with narrate_free.py)
+#   tools/voice/story_lines.json        the fictional cast and your own thoughts, each line
+#                                       with its stock Kokoro voice (render with narrate_free.py)
 #   tools/voice/story_jason_lines.json  my own lines, ids prefixed jason- (render with
 #                                       narrate_jason.py, my voice from my recording)
 # Both write to assets/voice/story. assemble_home.py checks the Jason file agrees
@@ -23,8 +23,6 @@ for tid, t in story["talks"].items():
             raise SystemExit("story_voice: duplicate line id " + l["id"])
         seen.add(l["id"])
         who = l["who"]
-        if who == "you":
-            continue  # your thoughts are text
         if who == "jason":
             mine.append({"id": "jason-" + l["id"], "text": l["t"]})
         else:
@@ -32,8 +30,8 @@ for tid, t in story["talks"].items():
             if not v:
                 raise SystemExit("story_voice: no voice for " + who)
             fl = {"id": l["id"], "who": who, "voice": v, "text": l["t"]}
-            if l.get("speed"):
-                fl["speed"] = l["speed"]  # a line that needs saying slower to be clear
+            if l.get("speed") or cast[who].get("speed"):
+                fl["speed"] = l.get("speed") or cast[who]["speed"]  # a line, or a voice (your thoughts), said slower
             fict.append(fl)
 
 (ROOT / "tools/voice/story_lines.json").write_text(json.dumps({
@@ -45,4 +43,4 @@ for tid, t in story["talks"].items():
     "say": {"206,777": "two hundred six thousand, seven hundred seventy-seven dollars", "130-U": "one thirty U", "30-day": "thirty-day",
             "3.63": "three point six three", "n8n": "N eight N", "webDEALER": "web dealer", "SOP": "S O P"},
     "lines": mine}, indent=1, ensure_ascii=False) + "\n")
-print(f"story_voice: {len(fict)} fictional lines, {len(mine)} of mine, {sum(1 for t in story['talks'].values() for l in t.get('lines', []) if l['who'] == 'you')} thoughts")
+print(f"story_voice: {len(fict)} fictional lines, {len(mine)} of mine, {sum(1 for l in fict if l['who'] == 'you')} of them your thoughts")

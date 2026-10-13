@@ -1,0 +1,67 @@
+{
+ "id": "off-you-3",
+ "text": "A lead from Facebook Marketplace, researched and waiting. The seller's labelled example.",
+ "duration": 7.7,
+ "words": [
+  {
+   "w": "A",
+   "s": 0.308,
+   "e": 0.391
+  },
+  {
+   "w": "lead",
+   "s": 0.391,
+   "e": 0.757
+  },
+  {
+   "w": "from",
+   "s": 0.757,
+   "e": 0.958
+  },
+  {
+   "w": "Facebook",
+   "s": 0.958,
+   "e": 1.441
+  },
+  {
+   "w": "Marketplace,",
+   "s": 1.441,
+   "e": 2.409
+  },
+  {
+   "w": "researched",
+   "s": 2.562,
+   "e": 3.376
+  },
+  {
+   "w": "and",
+   "s": 3.376,
+   "e": 3.541
+  },
+  {
+   "w": "waiting.",
+   "s": 3.541,
+   "e": 4.627
+  },
+  {
+   "w": "The",
+   "s": 4.851,
+   "e": 5.005
+  },
+  {
+   "w": "seller's",
+   "s": 5.005,
+   "e": 5.63
+  },
+  {
+   "w": "labelled",
+   "s": 5.63,
+   "e": 6.09
+  },
+  {
+   "w": "example.",
+   "s": 6.09,
+   "e": 7.034
+  }
+ ]
+}

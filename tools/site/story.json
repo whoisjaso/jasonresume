@@ -5,10 +5,10 @@
   "title": "After Hours",
   "episode": "Episode One",
   "name": "Lamps On",
-  "voices_note": "Jason's lines are his own voice, synthesized from his recording with his permission. Dell, Renata, the caller, the voice agent and the library are fictional, voiced with stock Kokoro voices (open source).",
+  "voices_note": "Jason's lines are his own voice, synthesized from his recording with his permission. Dell, Renata, the caller, the voice agent and the library are fictional, voiced with stock Kokoro voices (open source). Your own thoughts are narrated in a stock Kokoro voice too.",
   "cast": {
     "jason": { "name": "Jason" },
-    "you": { "name": "" },
+    "you": { "name": "", "voice": "af_heart,af_nicole", "speed": 0.9 },
     "dell": { "name": "Dell", "tag": "Night porter, fictional", "voice": "am_onyx", "fictional": true },
     "renata": { "name": "Renata", "tag": "Buyer, fictional", "voice": "af_bella", "fictional": true },
     "caller": { "name": "A caller", "tag": "Fictional call", "voice": "af_nicole", "fictional": true },
@@ -233,7 +233,7 @@
 
     "look-cabinet": {
       "lines": [
-        { "id": "off-you-1", "who": "you", "t": "Folders tabbed by hand. Form 130-U. webDEALER. Liens. Temp tags." },
+        { "id": "off-you-1", "who": "you", "t": "Folders tabbed by hand. Form 130-U, webDEALER, liens, temp tags." },
         { "id": "off-jason-13", "who": "jason", "t": "I prepare and file title and registration paperwork, including the Form 130-U and webDEALER." },
         { "id": "off-jason-14", "who": "jason", "t": "Title transfers go in inside the Texas 30-day window. Lien payoffs, plates and temporary tags, I handle myself." },
         { "id": "off-jason-15", "who": "jason", "if": "lot=paperwork", "t": "That's the drawer you came for." }
