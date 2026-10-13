@@ -968,7 +968,8 @@ async function exploreCheck(vname, w, h, mobile) {
   await toExplore();
   const off = await spots();
   for (const id of ['desk-lamp', 'radio', 'drawer', 'fridge', 'mug'].filter(x => off.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
-  const radio = await p.evaluate(() => window.JG_STORY.debug.audio().amb.includes('radio'));
+  // (the radio isn't an ambient bed; it logs itself when it starts playing)
+  const radio = await p.evaluate(() => window.JG_STORY.debug.audio().events.some(e => e.kind === 'amb' && e.name === 'radio'));
   if (off.includes('radio') && !radio && await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn())) errs.push(`${label}: the radio is on but silent`);
   if (!off.includes('office-exit')) errs.push(`${label}: the office has no way out`);
   else { await useIt('office-exit'); if (await until(p, () => window.JG_STORY.debug.state().scene === 'lot', null, 120000)) exits.push('office to lot'); else errs.push(`${label}: the office exit didn't lead to the lot`); }
