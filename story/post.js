@@ -7,7 +7,7 @@
    Quality steps down (resolution, bloom, depth of field, reflections) when the
    frame rate does. Tone mapping is ACES, or AgX blended in per scene (tone). */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
-import { U } from "./paint.js";
+import { U, LOWQ } from "./paint.js";
 
 const FS = new THREE.BufferGeometry();
 FS.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
@@ -24,6 +24,9 @@ const CAM = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 export class Post {
   constructor(renderer, o = {}) {
     this.R = renderer; this.q = o.quality || 2;
+    /* lite (phones, and ?wq=lo): the mirror at a quarter of the screen and without the cars' small parts, a three-step
+       bloom with no copy passes, the soft copy only when a memory asks for it. Desktop is unchanged. */
+    this.lite = o.lite != null ? !!o.lite : LOWQ;
     const opt = { type: THREE.HalfFloatType, depthBuffer: true };
     this.main = new THREE.WebGLRenderTarget(4, 4, { ...opt, samples: this.q >= 2 && !/[?&]msaa=0/.test(location.search) ? 4 : 0 });
     this.main.depthTexture = new THREE.DepthTexture(4, 4); this.main.depthTexture.type = THREE.UnsignedIntType;
@@ -97,7 +100,7 @@ export class Post {
   setSize(w, h) {
     this.w = w; this.h = h;
     this.main.setSize(w, h); this.main.depthTexture.image.width = w; this.main.depthTexture.image.height = h;
-    this.refl.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1));
+    this.refl.setSize(Math.max(2, w >> (this.lite ? 2 : 1)), Math.max(2, h >> (this.lite ? 2 : 1)));
     let mw = w >> 1, mh = h >> 1;
     for (const [a, b] of this.mips) { a.setSize(Math.max(2, mw), Math.max(2, mh)); b.setSize(Math.max(2, mw), Math.max(2, mh)); mw >>= 1; mh >>= 1; }
     this.dof.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
@@ -111,7 +114,10 @@ export class Post {
     world.scale.y = -1; world.updateMatrixWorld(true); U.uMirror.value = 1;
     ground.visible = false;
     cam.layers.disable(2); cam.layers.disable(3); cam.layers.disable(4);
+    const skipF = this.lite && ground.parent && ground.parent.userData.reflectSkip, skip = skipF ? skipF() : null;
+    if (skip) for (let i = 0; i < skip.length; i++) skip[i].visible = false;
     R.setRenderTarget(this.refl); R.setClearColor(0x000000, 1); R.clear(); R.render(scene, cam);
+    if (skip) for (let i = 0; i < skip.length; i++) skip[i].visible = true;
     world.scale.y = 1; world.updateMatrixWorld(true); U.uMirror.value = 0;
     ground.visible = true; cam.layers.mask = mask;
     ground.material.uniforms.uRefl.value = this.refl.texture;
@@ -122,7 +128,18 @@ export class Post {
     R.setRenderTarget(this.main); R.clear(); R.render(scene, cam);
     // bloom pyramid
     const bloomOn = this.q >= 1;
-    if (bloomOn) {
+    if (bloomOn && this.lite) {
+      // three levels (a quarter, an eighth, a sixteenth), one blur each way per level, added back up without copies
+      this.bright.u.t.value = this.main.texture; this.run(this.bright, this.mips[1][0]);
+      for (let i = 2; i < 4; i++) { this.down.u.t.value = this.mips[i - 1][0].texture; this.down.u.px.value.set(1 / this.mips[i - 1][0].width, 1 / this.mips[i - 1][0].height); this.run(this.down, this.mips[i][0]); }
+      for (let i = 1; i < 4; i++) {
+        const [a, b] = this.mips[i];
+        this.blur.u.t.value = a.texture; this.blur.u.dir.value.set(1 / a.width, 0); this.run(this.blur, b);
+        this.blur.u.t.value = b.texture; this.blur.u.dir.value.set(0, 1 / a.height); this.run(this.blur, a);
+      }
+      this.up.u.t.value = this.mips[2][0].texture; this.up.u.lo.value = this.mips[3][0].texture; this.up.u.k.value = 0.8; this.run(this.up, this.mips[2][1]);
+      this.up.u.t.value = this.mips[1][0].texture; this.up.u.lo.value = this.mips[2][1].texture; this.up.u.k.value = 0.8; this.run(this.up, this.mips[1][1]);
+    } else if (bloomOn) {
       this.bright.u.t.value = this.main.texture; this.run(this.bright, this.mips[0][0]);
       for (let i = 1; i < this.mips.length; i++) { this.down.u.t.value = this.mips[i - 1][0].texture; this.down.u.px.value.set(1 / this.mips[i - 1][0].width, 1 / this.mips[i - 1][0].height); this.run(this.down, this.mips[i][0]); }
       for (let i = 0; i < this.mips.length; i++) {
@@ -141,7 +158,7 @@ export class Post {
       this.blur.u.t.value = tmp.texture; this.blur.u.dir.value.set(0, 1.5 / this.dof.height); this.run(this.blur, this.dof);
     }
     const u = this.comp.u;
-    u.tCol.value = this.main.texture; u.tBloom.value = bloomOn ? this.mips[0][0].texture : this.mips[4][0].texture; u.uBloom.value = bloomOn ? u.uBloom.value : 0;
+    u.tCol.value = this.main.texture; u.tBloom.value = bloomOn ? (this.lite ? this.mips[1][1].texture : this.mips[0][0].texture) : this.mips[4][0].texture; u.uBloom.value = bloomOn ? u.uBloom.value : 0;
     u.tDof.value = this.dof.texture; u.tDepth.value = this.main.depthTexture; u.uTime.value = t; u.uNear.value = cam.near; u.uFar.value = cam.far;
     this.run(this.comp, null);
   }

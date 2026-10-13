@@ -1,0 +1,43 @@
+{
+ "id": "jason-dec-jason-3",
+ "text": "And thanks for grabbing the phone.",
+ "duration": 1.76,
+ "words": [
+  {
+   "w": "And",
+   "s": 0.05,
+   "e": 0.324
+  },
+  {
+   "w": "thanks",
+   "s": 0.324,
+   "e": 0.618
+  },
+  {
+   "w": "for",
+   "s": 0.618,
+   "e": 0.85
+  },
+  {
+   "w": "grabbing",
+   "s": 0.85,
+   "e": 1.165
+  },
+  {
+   "w": "the",
+   "s": 1.165,
+   "e": 1.418
+  },
+  {
+   "w": "phone.",
+   "s": 1.418,
+   "e": 1.691
+  }
+ ],
+ "retimed": {
+  "k": 1.052,
+  "b": 0.05,
+  "before": 0.903,
+  "after": 0.994
+ }
+}

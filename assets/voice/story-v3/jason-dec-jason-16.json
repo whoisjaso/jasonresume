@@ -1,0 +1,53 @@
+{
+ "id": "jason-dec-jason-16",
+ "text": "I keep a business's people and systems working.",
+ "duration": 2.72,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.04,
+   "e": 0.241
+  },
+  {
+   "w": "keep",
+   "s": 0.241,
+   "e": 0.486
+  },
+  {
+   "w": "a",
+   "s": 0.486,
+   "e": 0.664
+  },
+  {
+   "w": "business's",
+   "s": 0.664,
+   "e": 1.221
+  },
+  {
+   "w": "people",
+   "s": 1.221,
+   "e": 1.622
+  },
+  {
+   "w": "and",
+   "s": 1.622,
+   "e": 1.889
+  },
+  {
+   "w": "systems",
+   "s": 1.889,
+   "e": 2.29
+  },
+  {
+   "w": "working.",
+   "s": 2.29,
+   "e": 2.714
+  }
+ ],
+ "retimed": {
+  "k": 1.114,
+  "b": 0.04,
+  "before": 0.875,
+  "after": 0.996
+ }
+}

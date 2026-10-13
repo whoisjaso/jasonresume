@@ -1,0 +1,48 @@
+{
+ "id": "jason-dec-jason-38",
+ "text": "You listened to that whole call, though.",
+ "duration": 2.0,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.05,
+   "e": 0.271
+  },
+  {
+   "w": "listened",
+   "s": 0.271,
+   "e": 0.558
+  },
+  {
+   "w": "to",
+   "s": 0.558,
+   "e": 0.845
+  },
+  {
+   "w": "that",
+   "s": 0.845,
+   "e": 1.022
+  },
+  {
+   "w": "whole",
+   "s": 1.022,
+   "e": 1.264
+  },
+  {
+   "w": "call,",
+   "s": 1.264,
+   "e": 1.662
+  },
+  {
+   "w": "though.",
+   "s": 1.662,
+   "e": 1.993
+  }
+ ],
+ "retimed": {
+  "k": 1.104,
+  "b": 0.05,
+  "before": 0.865,
+  "after": 0.995
+ }
+}

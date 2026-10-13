@@ -3,7 +3,7 @@
 // again on a click from home), the title head above the fold, every section
 // tab and Q/E, the film, the screen loops, the desk app from start to Filed,
 // the lessons, the early-access form (sent, the email fallback, a failed send,
-// validation), the get bar, deep and legacy links, the no-JS document,
+// validation), the get bar, deep links, the no-JS document,
 // overflow, dashes, percent signs, Apohenia never visible, the fictional
 // labels, and the retired dash code staying off the page.
 //   python3 -m http.server 8765 &   then   node tools/verify/briefing.mjs [desktop|mobile]
@@ -251,11 +251,11 @@ if (!only || only === 'mobile') {
   await p.screenshot({ path: path.join(OUT, 'brief-onboarding-early.png') });
   // a click from the home page to /obavia.html is not a new arrival: no second title screen
   await p.goto('http://127.0.0.1:8765/'); await p.waitForSelector('#intro'); await p.click('[data-intro-skip]'); await p.waitForTimeout(700);
-  await p.evaluate(() => { const a = document.createElement('a'); a.href = '/obavia.html#story-desk'; a.id = 'go-ob'; a.textContent = 'go'; document.body.appendChild(a); });
+  await p.evaluate(() => { const a = document.createElement('a'); a.href = '/obavia.html#run'; a.id = 'go-ob'; a.textContent = 'go'; document.body.appendChild(a); });
   await Promise.all([p.waitForURL(/obavia\.html/), p.evaluate(() => document.getElementById('go-ob').click())]); await p.waitForTimeout(1600);
   if (await p.$('#intro')) errs.push('title screen replayed on a click between pages');
   const leg = await p.evaluate(() => ({ hash: location.hash, top: Math.round(document.getElementById('run').getBoundingClientRect().top) }));
-  if (leg.hash !== '#run' || Math.abs(leg.top) > 200) errs.push(`legacy #story-desk did not land on the desk ${JSON.stringify(leg)}`);
+  if (leg.hash !== '#run' || Math.abs(leg.top) > 200) errs.push(`#run from the home page did not land on the desk ${JSON.stringify(leg)}`);
   await ctx.close();
 }
 

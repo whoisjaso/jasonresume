@@ -16,7 +16,7 @@ Every plate goes through the same steps, so the set reads as one world:
    a soft-knee limiter then holds any leftover highlight in the text zone
    under a ceiling, so bone text keeps 4.5:1 against the brightest pixel.
 4. Fine film grain, swinging about 3 percent at mid grey, from a fixed seed.
-5. Export to assets/game/art/: <id>-1920.webp and .avif, <id>-1280.webp,
+5. Export to assets/game/art/: <id>-1920.webp, <id>-1280.webp,
    <id>-m.webp (828x1104 portrait), <id>-tile-512.webp, <id>-tile-256.webp,
    and a 24px blurred placeholder in placeholders.json under <id>.
 6. Measure the text zone (x 0 to 0.42, y 0.38 to 0.92) on the decoded
@@ -47,7 +47,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PIL import Image, ImageFilter, features
+from PIL import Image, ImageFilter
 from scipy.interpolate import PchipInterpolator
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -367,12 +367,6 @@ def webp_bytes(img8, q):
     return buf.getvalue()
 
 
-def avif_bytes(img8, q):
-    buf = io.BytesIO()
-    Image.fromarray(img8).save(buf, "AVIF", quality=int(q), speed=4, subsampling="4:2:0")
-    return buf.getvalue()
-
-
 def tune(encode, img8, cap_bytes, lo, hi):
     """Highest integer quality in [lo, hi] whose file fits under cap_bytes."""
     best = None
@@ -392,16 +386,6 @@ def tune(encode, img8, cap_bytes, lo, hi):
 
 def decode(data):
     return np.asarray(Image.open(io.BytesIO(data)).convert("RGB"))
-
-
-def avif_ok():
-    try:
-        if not features.check("avif"):
-            return False
-        decode(avif_bytes(np.full((16, 16, 3), 40, np.uint8), 60))
-        return True
-    except Exception:
-        return False
 
 
 def find_embed(explicit):
@@ -549,10 +533,6 @@ def main():
         webp_q, webp1920 = tune(webp_bytes, h1920, a.webp_kb * 1024, 40, 95)
         webp1280 = webp_bytes(h1280, webp_q)
         files = {f"{a.id}-1920.webp": webp1920, f"{a.id}-1280.webp": webp1280}
-        avif_q = None
-        if avif_ok():
-            avif_q, avif1920 = tune(avif_bytes, h1920, int(len(webp1920) * 0.8), 30, 90)
-            files[f"{a.id}-1920.avif"] = avif1920
         measured = {name: zone_stats(decode(data)) for name, data in files.items()}
         if min(m["bone_contrast"] for m in measured.values()) >= MIN_CONTRAST:
             break
@@ -560,8 +540,6 @@ def main():
     else:
         warnings.append("text zone below 4.5:1 after encoding; recompose the plate")
 
-    if not avif_q:
-        warnings.append("no working AVIF encoder: AVIF skipped")
     if touched > 0.002:
         warnings.append(f"limiter held {touched * 100:.1f}% of the text zone: the subject is "
                         "crowding the type side; the plate wants recomposing")
@@ -637,7 +615,6 @@ def main():
         "text_zone_pass": min(m["bone_contrast"] for m in measured.values()) >= MIN_CONTRAST,
         "mobile_bottom_band": {"max_lum": round(band_y, 4), "bone_contrast": round(contrast_on(band_y), 2)},
         "webp_quality": webp_q,
-        "avif_quality": avif_q,
         "files": {p.name: f"{p.stat().st_size / 1024:.1f}KB" for p in written},
         "placeholder_bytes": len(uri),
         "grain": {"amount": a.grain, "seed": sid},

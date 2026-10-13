@@ -1,0 +1,43 @@
+{
+ "id": "jason-dec-jason-10",
+ "text": "You went through the filing cabinet.",
+ "duration": 2.12,
+ "words": [
+  {
+   "w": "You",
+   "s": 0.05,
+   "e": 0.333
+  },
+  {
+   "w": "went",
+   "s": 0.333,
+   "e": 0.572
+  },
+  {
+   "w": "through",
+   "s": 0.572,
+   "e": 0.942
+  },
+  {
+   "w": "the",
+   "s": 0.942,
+   "e": 1.312
+  },
+  {
+   "w": "filing",
+   "s": 1.312,
+   "e": 1.638
+  },
+  {
+   "w": "cabinet.",
+   "s": 1.638,
+   "e": 2.052
+  }
+ ],
+ "retimed": {
+  "k": 1.088,
+  "b": 0.05,
+  "before": 0.882,
+  "after": 0.995
+ }
+}

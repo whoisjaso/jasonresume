@@ -1,0 +1,23 @@
+{
+ "id": "jason-lot-jason-20",
+ "text": "You'll see.",
+ "duration": 0.84,
+ "words": [
+  {
+   "w": "You'll",
+   "s": 0.04,
+   "e": 0.413
+  },
+  {
+   "w": "see.",
+   "s": 0.413,
+   "e": 0.711
+  }
+ ],
+ "retimed": {
+  "k": 1.242,
+  "b": 0.04,
+  "before": 0.75,
+  "after": 0.976
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "id": "jason-dec-jason-41",
+ "text": "Last chance. No pressure.",
+ "duration": 1.64,
+ "words": [
+  {
+   "w": "Last",
+   "s": 0.04,
+   "e": 0.411
+  },
+  {
+   "w": "chance.",
+   "s": 0.411,
+   "e": 0.825
+  },
+  {
+   "w": "No",
+   "s": 1.065,
+   "e": 1.239
+  },
+  {
+   "w": "pressure.",
+   "s": 1.239,
+   "e": 1.566
+  }
+ ],
+ "retimed": {
+  "k": 1.09,
+  "b": 0.04,
+  "before": 0.762,
+  "after": 0.841
+ }
+}

@@ -1,0 +1,48 @@
+{
+ "id": "off-renata-2",
+ "text": "Signed. That was quick. Thank you, fictionally.",
+ "duration": 3.5,
+ "words": [
+  {
+   "w": "Signed.",
+   "s": 0.506,
+   "e": 0.876
+  },
+  {
+   "w": "That",
+   "s": 0.963,
+   "e": 1.104
+  },
+  {
+   "w": "was",
+   "s": 1.104,
+   "e": 1.224
+  },
+  {
+   "w": "quick.",
+   "s": 1.224,
+   "e": 1.594
+  },
+  {
+   "w": "Thank",
+   "s": 1.691,
+   "e": 1.942
+  },
+  {
+   "w": "you,",
+   "s": 1.942,
+   "e": 2.051
+  },
+  {
+   "w": "fictionally.",
+   "s": 2.094,
+   "e": 2.899
+  }
+ ],
+ "retimed": {
+  "k": 0.87,
+  "b": 0.115,
+  "before": 0.797,
+  "after": 0.846
+ }
+}

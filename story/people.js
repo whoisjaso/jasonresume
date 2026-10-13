@@ -19,8 +19,15 @@
      ends up twisted or out of place takes a real step back under the body, which
      is also how a turn in place happens
    - leaning into turns and into a start, a breathing chest, weight shifts
-   - upper-body layers: talking gestures, a phone at the ear, an umbrella held up,
-     one-shot moves (reach, pick up, hand over, nod, shake), with arm IK for props
+   - upper-body layers: one-shot moves (pick up, hand over, nod, shake); then the arms by
+     IK with a pole: swinging walking and running, hanging standing, word-timed beats
+     talking, a phone at the ear, an umbrella held up, reaches to a point in the world
+     (reachTo), and the steering wheel
+   - the hands: a pose library (relaxed, open, fist, grip, pinch, point...) blended per
+     hand, the forearm turned so the palm faces the right way, the wrist kept natural,
+     and the gripping part of the hand put exactly on what it holds
+   - cars: walking up, the door, sitting in, the legs over the sill, the wheel, the
+     pedals, the look into the turn and the lean in the corners (enterCar, drive, exitCar)
    - the head and eyes look at whoever is speaking or what is in focus, eyes lead
      and saccade, lids blink and track
    - the face: visemes from the voice's word timings, brows that react, a smile
@@ -121,7 +128,7 @@ class Motion {
       let x1 = q[o1 + i], y1 = q[o1 + i + 1], z1 = q[o1 + i + 2], w1 = q[o1 + i + 3];
       const x0 = q[o0 + i], y0 = q[o0 + i + 1], z0 = q[o0 + i + 2], w0 = q[o0 + i + 3];
       if (x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1 < 0) { x1 = -x1; y1 = -y1; z1 = -z1; w1 = -w1; }
-      const x = x0 + (x1 - x0) * a, y = y0 + (y1 - y0) * a, z = z0 + (z1 - z0) * a, w = w0 + (w1 - w0) * a, L = 1 / (Math.hypot(x, y, z, w) || 1);
+      const x = x0 + (x1 - x0) * a, y = y0 + (y1 - y0) * a, z = z0 + (z1 - z0) * a, w = w0 + (w1 - w0) * a, L = 1 / (Math.sqrt(x * x + y * y + z * z + w * w) || 1);
       oq[i] = x * L; oq[i + 1] = y * L; oq[i + 2] = z * L; oq[i + 3] = w * L;
     }
     const p = c.p; for (let k = 0; k < 3; k++) out.p[k] = p[f0 * 3 + k] + (p[f1 * 3 + k] - p[f0 * 3 + k]) * a;
@@ -154,6 +161,10 @@ class Motion {
     }
     // the cycle's phase origin: the left heel strike
     let h = 0; for (let f = 0; f < last; f++) if (contact.l[f] && !contact.l[(f - 1 + last) % last]) { h = f; break; }
+    // the arms' swing: in phase with the opposite foot's reach; u = cos(2 pi phase - swing) is +1 when the right foot
+    // is furthest ahead (the left arm forward)
+    let fa = 0, fb = 0; for (let f = 0; f < last; f++) { const zd = zs.r[f] - zs.l[f], ph = f / last * TAU; fa += zd * Math.cos(ph); fb += zd * Math.sin(ph); }
+    c.swing = Math.atan2(fb, fa);
     c.dist = dist; c.heel = h / last; c.contact = contact; c.footY = ys; c.lo = { l: Math.min(...ys.l), r: Math.min(...ys.r) };
   }
 }
@@ -162,6 +173,7 @@ const _e = new THREE.Euler(0, 0, 0, "ZXY"), _m = new THREE.Matrix4(), _m2 = new 
 const _k1 = new THREE.Vector3(), _k2 = new THREE.Vector3(), _k3 = new THREE.Vector3(), _k4 = new THREE.Vector3(), _kq = new THREE.Quaternion(), _kq2 = new THREE.Quaternion();
 const _f1 = new THREE.Vector3(), _f2 = new THREE.Vector3(), _f3 = new THREE.Vector3(), _f4 = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0), AXX = new THREE.Vector3(1, 0, 0);
+const _cq0 = new THREE.Quaternion(), _cq1 = new THREE.Quaternion(), _cq2 = new THREE.Quaternion(), _cq3 = new THREE.Quaternion();
 
 /* which bones a layer moves: masks over the source skeleton */
 function mask(motion, fn) { const m = new Float32Array(motion.n); motion.names.forEach((n, i) => (m[i] = fn(n.toLowerCase()))); return m; }
@@ -176,7 +188,8 @@ function chainOf(name) {
   return "other";
 }
 const MASKS = {
-  calm: c => ({ armL: 0.4, armR: 0.4 })[c] || 1,
+  calm: c => ({ armL: 0.15, armR: 0.15 })[c] ?? 1,
+  talkBody: c => ({ spine1: 0.25, spine: 0.4, head: 0.45, armL: 0.05, armR: 0.05 })[c] ?? 0,
   upper: c => ({ spine1: 0.35, spine: 1, head: 1, armL: 1, armR: 1 })[c] || 0,
   upperL: c => ({ spine1: 0.3, spine: 0.8, head: 1, armL: 1 })[c] || 0,
   arms: c => ({ spine: 0.4, head: 0.6, armL: 1, armR: 1 })[c] || 0,
@@ -285,13 +298,50 @@ class Person {
       this.arm[s] = { ua, la, ha, l1: R["lowerarm_" + s].at.distanceTo(R["upperarm_" + s].at), l2: R["hand_" + s].at.distanceTo(R["lowerarm_" + s].at),
         dir: R["lowerarm_" + s].at.clone().sub(R["upperarm_" + s].at).normalize().applyQuaternion(R["upperarm_" + s].wi) };
     }
+    this.handRig = {};
+    for (const s of ["l", "r"]) if (this.arm[s] && R["middle_01_" + s] && R["index_01_" + s] && R["pinky_01_" + s]) this.handRig[s] = this.rigHand(s);
     // eyes, when the body has eye bones
-    this.eyeB = ["eye_l", "eye_r"].map(n => this.bones[n]).filter(Boolean);
+    this.eyeB =["eye_l", "eye_r"].map(n => this.bones[n]).filter(Boolean);
     // layer masks and pose buffers
     this.mk = {}; for (const [k, f] of Object.entries(MASKS)) this.mk[k] = mask(M, n => f(chainOf(n)));
     this.P = { a: M.pose(), b: M.pose(), c: M.pose(), acc: M.pose(), tmp: M.pose() };
     this.SW = M.fk(M.rest);
     this.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(M.restW.q[M.ix.head].clone().invert());
+  }
+
+  /* a hand's frame at rest, in character space and in the hand bone's own: d along the fingers, n out of the palm,
+     a across the knuckles toward the little finger; and for each finger joint the axis it curls about (toward the
+     palm) and the axis it spreads about, in that joint's own frame */
+  rigHand(s) {
+    const R = this.rest, h = R["hand_" + s].at;
+    const d = R["middle_01_" + s].at.clone().sub(h).normalize();
+    const a0 = R["pinky_01_" + s].at.clone().sub(R["index_01_" + s].at).normalize();
+    const n = new THREE.Vector3().crossVectors(d, a0).normalize(); if (s === "l") n.negate();
+    const a = new THREE.Vector3().crossVectors(n, d).normalize(); if (a.dot(a0) < 0) a.negate();
+    const hw = R["hand_" + s].wi;
+    const fingers = [];
+    for (const f of ["index", "middle", "ring", "pinky", "thumb"]) {
+      let prev = null;
+      for (let j = 1; j <= 3; j++) {
+        const nm = f + "_0" + j + "_" + s, i = this.bi[nm]; if (i == null) continue;
+        const nx = R[f + "_0" + (j + 1) + "_" + s];
+        const fd = nx ? nx.at.clone().sub(R[nm].at).normalize() : prev ? prev.clone() : d.clone();
+        prev = fd;
+        let to;
+        // the thumb closes across the palm toward the little finger; the fingers straight into the palm
+        if (f === "thumb") to = j === 1 ? n.clone().multiplyScalar(0.8).addScaledVector(a, 0.6).normalize() : n.clone().multiplyScalar(0.55).addScaledVector(a, 0.85).normalize();
+        else to = n;
+        const fx = new THREE.Vector3().crossVectors(fd, to).normalize();
+        // spread: about the palm normal; + moves toward the little finger
+        const sx = n.clone(); if (new THREE.Vector3().crossVectors(sx, fd).dot(a) < 0) sx.negate();
+        const sgn = { index: -1, middle: -0.15, ring: 0.6, pinky: 1.2, thumb: -1 }[f];
+        fingers.push({ i, f: f[0], j, q: R[nm].q.clone(), fx: fx.applyQuaternion(R[nm].wi), sx: sx.applyQuaternion(R[nm].wi), sgn });
+      }
+    }
+    // the grip's centre (where a held bar runs through the closed fist) and the fingertips, from the wrist, in the hand's frame
+    const grip = d.clone().multiplyScalar(0.085).addScaledVector(n, 0.03).addScaledVector(a, 0.008);
+    const tip = d.clone().multiplyScalar(0.18);
+    return { d, n, a, dL: d.clone().applyQuaternion(hw), nL: n.clone().applyQuaternion(hw), aL: a.clone().applyQuaternion(hw), fingers, gripL: grip.applyQuaternion(hw), tipL: tip.applyQuaternion(hw), palmL: d.clone().multiplyScalar(0.06).addScaledVector(n, 0.025).applyQuaternion(hw) };
   }
 
   under(k, a) { for (let p = this.par[k]; p >= 0; p = this.par[p]) if (p === a) return true; return false; }
@@ -394,6 +444,13 @@ class Person {
       const w = this.chestPocket || new THREE.Vector3(0.1, 0.12, 0.125);
       ps.position.copy(w.clone().applyQuaternion(sp.wi)); ps.quaternion.copy(sp.wi); this.bones.spine_03.add(ps);
     }
+    if (this.bones.hand_r && this.handRig && this.handRig.r) {
+      // a phone, in the right hand when hold is "phone": its long side across the knuckles, its back to the fingers
+      const H = this.handRig.r, ph = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.148, 0.008), paint({ color: "#111214", wet: 1.4, rim: 0.4 }));
+      _m.makeBasis(H.dL, new THREE.Vector3().crossVectors(H.nL, H.dL), H.nL); ph.quaternion.setFromRotationMatrix(_m);
+      ph.position.copy(H.palmL).addScaledVector(H.nL, 0.014).addScaledVector(H.dL, 0.01);
+      ph.visible = false; this.bones.hand_r.add(ph); this.phoneProp = ph;
+    }
     if (L.umbrella && this.bones.hand_r) {
       // a long umbrella, held by its hook at about chest height; the shaft runs down through the fist and the canopy rides above the head
       const u = new THREE.Group();
@@ -420,7 +477,13 @@ class Person {
   }
   headWorld(v = new THREE.Vector3()) { const h = this.bones.head; if (h) { h.getWorldPosition(v); v.y += 0.08; } else v.copy(this.pos).setY(1.6); return v; }
   eyeLevel() { return this.height - 0.1; }
-  setFx(k, v) { for (const m of this.morphs) { const i = m.morphTargetDictionary[k]; if (i != null) m.morphTargetInfluences[i] = v; } }
+  setFx(k, v) {
+    // the morph slots for each shape, looked up once
+    const fx = this.fxIx || (this.fxIx = {});
+    let ix = fx[k];
+    if (!ix) { ix = fx[k] = []; for (const m of this.morphs) { const i = m.morphTargetDictionary[k]; if (i != null) ix.push(m.morphTargetInfluences, i); } }
+    for (let j = 0; j < ix.length; j += 2) ix[j][ix[j + 1]] = v;
+  }
 
   /* one-shot moves: "interact" (reach and touch), "pickup", "give" (hand something over), "yes", "no" */
   play(kind) {
@@ -438,7 +501,12 @@ class Person {
   update(dt) {
     dt = Math.min(dt, 0.1);
     const t = (this.t += dt), M = this.M, L = this.L;
-    // ---- where the body is and how fast it really moves
+    // ---- in or at a car: the sequence (walking up, the door, sitting in, the wheel) moves the body
+    if (this.car) this.carStep(dt);
+    if (this.jobs && this.jobs.length) this.runJobs(dt);
+    const seated = !!(this.car && this.car.seated);
+    // ---- where the body is and how fast it really moves (seated, the car moves it: no walking)
+    if (seated) { this.lastPos = (this.lastPos || new THREE.Vector3()).copy(this.pos); this.vel.set(0, 0, 0); }
     if (!this.lastPos || this.lastPos.distanceTo(this.pos) > 3) { this.lastPos = this.pos.clone(); this.vel.set(0, 0, 0); this.feet.l.init = this.feet.r.init = false; }
     if (dt > 0) { _v1.copy(this.pos).sub(this.lastPos).divideScalar(dt); _v1.y = 0; this.vel.lerp(_v1, 1 - Math.exp(-14 * dt)); }
     this.lastPos.copy(this.pos);
@@ -450,12 +518,13 @@ class Person {
     const turnRate = moving ? 6 : this.sitK > 0.3 ? 0 : 3.2 * sstep(0.02, 0.35, Math.abs(dy)) + 0.6;
     this.yaw += clamp(dy, -turnRate * dt, turnRate * dt);
     this.group.rotation.y = this.yaw; this.group.updateMatrix();
+    if (seated) this.carPlace();
     this.yawRate = damp(this.yawRate, dt > 0 ? angDiff(prevYaw, this.yaw) / dt : 0, 8, dt);
     // forward speed along the facing (strafing during a sharp turn counts less)
     const fwd = _v2.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
     const v = Math.max(0, this.vel.dot(fwd)) * 0.85 + this.vel.length() * 0.15;
     const prevGs = this.gs;
-    this.gs = damp(this.gs, v, 10, dt);
+    this.gs = seated ? 0 : damp(this.gs, v, 10, dt);
     const acc = dt > 0 ? (this.gs - prevGs) / dt : 0;
     this.gsF = damp(this.gsF, acc, 4, dt);
 
@@ -522,7 +591,7 @@ class Person {
     const talking = this.talk > 0.05 && this.sitK < 0.5;
     this.talkW = damp(this.talkW, talking ? 1 : 0, talking ? 2.2 : 1.2, dt);
     // speaking: the captured conversation's hands come through more strongly (they stay inside the arm limits below)
-    if (this.talkW > 0.01 && M.clips.converse) { M.sample(M.clips.converse, this.convT || 0, P.c); blendPose(acc0, P.c, this.talkW * 0.6 * (1 - this.locoW), this.hold === "umbrella" ? this.mk.armL : this.mk.arms); }
+    if (this.talkW > 0.01 && M.clips.converse) { M.sample(M.clips.converse, this.convT || 0, P.c); blendPose(acc0, P.c, this.talkW * 0.6 * (1 - this.locoW), this.mk.talkBody); }
     // sitting: down, settled (talking when talking), and up
     if (this.sitK > 0.001 && M.clips.sit) {
       const st = this.sitState;
@@ -531,6 +600,9 @@ class Person {
       else { M.sample(M.clips.sit, t, P.b); if (M.clips.sitTalk && this.talk > 0.05) { M.sample(M.clips.sitTalk, t, P.c); blendPose(P.b, P.c, 0.8, this.mk.upper); } }
       blendPose(acc0, P.b, this.sitK, null);
     }
+    // in a car: the seated clip under everything below the hips' placement (the legs and arms go by IK)
+    this.carK = this.car ? this.car.sitW : 0;
+    if (this.carK > 0.001 && M.clips.sit) { M.sample(M.clips.sit, t, P.b); blendPose(acc0, P.b, this.carK, null); }
     // a one-shot over everything, eased in and out
     if (this.shot) {
       const s = this.shot; s.t += dt;
@@ -564,13 +636,7 @@ class Person {
       const pq = par[i] >= 0 ? wq[par[i]] : this.baseQ;
       lq[i].copy(pq).invert().multiply(wq[i]);
     }
-    // relaxed hands: index and middle nearly straight, the curl growing toward the little finger, the thumb lying alongside
-    if (!this.fingers) this.fingers = this.order.map((b, i) => (/^(index|middle|ring|pinky|thumb)_0[123]_[lr]$/.test(b.name) ? i : -1)).filter(i => i >= 0);
-    for (const i of this.fingers) {
-      const nm = this.order[i].name, f = nm.split("_")[0], j = +nm.split("_")[1];
-      const c = ({ index: 0.1, middle: 0.16, ring: 0.26, pinky: 0.36, thumb: 0.06 })[f] * (j === 1 ? 0.8 : j === 2 ? 1.2 : 0.9);
-      lq[i].copy(this.rest[nm].q).multiply(_q1.setFromAxisAngle(AXX, c));
-    }
+    // (the fingers and the wrists are set after the arms, in hands())
     // the collarbones: captured shoulders shrug and roll more than these jackets can take; keep most of their rest
     for (const sd of ["l", "r"]) { const i = this.bi["clavicle_" + sd]; if (i != null && DEBUG.clav !== 0) lq[i].slerp(this.rest["clavicle_" + sd].q, DEBUG.clav == null ? 0.65 : DEBUG.clav); }
     // the hips: the source's hip travel, scaled to this body
@@ -580,10 +646,12 @@ class Person {
     // sitting: the seat is 0.49 high; settle the hips on it whatever this body's legs
     if (this.sitK > 0.001) hipC.y += this.sitK * this.seatFix(sHip);
     this.hipC = hipC;
+    if (this.car && this.car.hipW > 0) this.carHip(hipC);
 
     // ---- procedural layers in character axes
     const breathe = Math.sin(t * TAU * 0.24 + this.tempo * 5);
     const still = (1 - this.locoW) * (1 - this.sitK);
+    this.stillK = still;
     // lean into the turn (centripetal) and into the start (acceleration); never more than a few degrees
     this.lean = damp(this.lean, clamp(Math.atan(this.gs * this.yawRate / G) * 0.9, -0.22, 0.22), 6, dt);
     this.leanF = damp(this.leanF, clamp(this.gsF / G * 0.7, -0.08, 0.12), 5, dt);
@@ -609,23 +677,27 @@ class Person {
     // relaxed arms: a soft bend at the elbow, the hands a little in front of the thighs
     const elb = still * (1 - this.talkW * 0.5) * (1 - this.engW * 0.3);
     for (const sd of ["l", "r"]) { if (this.hold === "umbrella" && sd === "r") continue; const k = sd === "l" ? 1 : 0.85; this.rot("upperarm_" + sd, -0.07 * elb, 0, 0); this.rot("lowerarm_" + sd, -0.3 * k * elb, 0, 0); }
-    // running: the arms drive and the shoulders counter the hips
+    // running: the shoulders counter the hips (the arms themselves are driven by IK in arms())
     const jw = this.jogW * this.locoW;
-    if (jw > 0.01) {
-      const c = Math.cos(this.gPhase * TAU);
-      this.rot("upperarm_l", 0.3 * c * jw, 0, 0); this.rot("upperarm_r", -0.3 * c * jw, 0, 0);
-      this.rot("lowerarm_l", -0.25 * jw, 0, 0); this.rot("lowerarm_r", -0.25 * jw, 0, 0);
-      this.rot("spine_03", 0, 0.12 * c * jw, 0); this.rot("pelvis", 0, -0.06 * c * jw, 0);
-    }
+    // the arms' swing, from the clips' own feet: +1 when the left arm is furthest forward
+    let u = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) u += this.lw[i] * Math.cos(((this.gPhase + LC[i].heel) % 1) * TAU - (LC[i].swing || 0));
+    this.armSwing = u;
+    if (jw > 0.01) { this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0); }
+    // reaching: lean and turn toward what the hand goes for, and bend at the knees for something low
+    this.reachBody(hipC, dt);
+    // driving: reclined in the seat, ducking under the roof getting in and out, pushed about by the corners
+    if (this.car) this.carBody(dt);
 
     // ---- the head looks
     let wantY = 0, wantP = 0;
     // idle glances: now and then a look off to one side and back, when nobody holds the eye
     this.gT = (this.gT == null ? 3 + Math.random() * 5 : this.gT) - dt;
     if (this.gT <= 0) { this.glance = this.glance ? 0 : (Math.random() - 0.5) * 1.3; this.gT = this.glance ? 1 + Math.random() * 1.6 : 4 + Math.random() * 6; }
-    if (!this.lookAtP) wantY = (this.glance || 0) * still;
-    if (this.lookAtP) {
-      const hw = this.headWorld(_v4), d = _v1.copy(this.lookAtP).sub(hw);
+    // reaching or driving, the eyes go to the hand's target or the road
+    const lookP = (this.lookTask && this.lookTask.p) || this.taskLook || this.lookAtP;
+    if (!lookP) wantY = (this.glance || 0) * still;
+    if (lookP) {
+      const hw = this.headWorld(_v4), d = _v1.copy(lookP).sub(hw);
       const local = angDiff(0, Math.atan2(d.x, d.z) - this.yaw);
       wantY = Math.abs(local) > 2.3 ? 0 : clamp(local, -1.2, 1.2);
       wantP = clamp(-Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.45, 0.5);
@@ -650,6 +722,7 @@ class Person {
     // ---- forward kinematics with the hips in place, then the feet and the hands
     this.fk(hipC);
     if (DEBUG.ik) { this.legs(dt); this.arms(dt); }
+    if (DEBUG.hands !== false) this.hands(dt);
     // write the bones
     for (let i = 0; i < n; i++) this.order[i].quaternion.copy(lq[i]);
     const pb = this.order[pi], pp = par[pi] >= 0 ? par[pi] : -1;
@@ -657,6 +730,8 @@ class Person {
     pb.position.copy(_v1);
     this.eyes(dt, wantY, wantP);
     this.face(dt);
+    if (this.phoneProp) this.phoneProp.visible = this.holdK.phone > 0.6 && this.showPhone !== false;
+    if (this.carrying && (this.carrying.l || this.carrying.r)) this.carryPlace();
     if (this.umbrella && this.bones.hand_r) {
       const hp = this.wp[this.bi.hand_r];
       this.umbrella.position.copy(hp).applyMatrix4(this.root.matrix).add(_v1.set(0, 0.03, 0));
@@ -685,6 +760,7 @@ class Person {
 
   /* ---- the legs: stride warp, foot locks, little steps, two-bone IK ---- */
   legs(dt) {
+    if (this.car && this.car.feetW > 0.001) { this.carLegs(); return; }
     if (this.sitK > 0.05) { this.feet.l.init = this.feet.r.init = false; return; }
     const M = this.M, LC = this.locoClips, SW = this.SW;
     // character space to the space the body stands in (its parent's), and back
@@ -710,34 +786,40 @@ class Person {
         let cs = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) cs += this.lw[i] * contactAt(LC[i], (this.gPhase + LC[i].heel) % 1, s);
         const contact = cs > 0.5;
         F.step = 0;
-        if (contact && !F.lock) { F.lock = true; F.pos.copy(wantW); F.yaw = wantYaw; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", clamp(0.35 + this.gs * 0.25, 0, 1)); }
+        // planting: where the foot is now (the stride's place, or partway back from a lock it was letting go of)
+        if (contact && !F.lock) { F.pos.lerpVectors(wantW, F.pos, F.w); F.yaw = wantYaw; F.lock = true; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", clamp(0.35 + this.gs * 0.25, 0, 1)); }
         if (!contact) F.lock = false;
-        // a lock that drifts too far (a sharp turn mid stride) gives way
-        if (F.lock && F.pos.distanceTo(wantW) > 0.3) { F.pos.copy(wantW); F.yaw = wantYaw; }
-        F.w = damp(F.w, F.lock ? 1 : 0, F.lock ? 40 : 12, dt);
+        // a lock that drifts too far (a sharp turn mid stride, a start from standing) lets go and the foot blends over
+        // to where the stride wants it (never a jump, at any frame rate)
+        if (F.lock && F.pos.distanceTo(wantW) > 0.3) F.lock = false;
+        // planting is instant (at heel strike the lock is where the foot already is); lifting blends out
+        F.w = F.lock ? 1 : damp(F.w, 0, 12, dt);
       } else {
         // standing: feet stay put until one is out of place, then it steps; one foot at a time
+        // stopping: a foot that was in the air plants where it is, not where it was last planted
+        if (!F.lock && F.step === 0) { F.pos.lerpVectors(wantW, F.pos, F.w); F.lock = true; F.w = 1; }
         F.w = damp(F.w, 1, 12, dt);
         if (F.step > 0) {
-          F.step = Math.min(1, F.step + dt / 0.28);
+          F.step = Math.min(1, F.step + dt / (F.dur || 0.28));
           const u = sstep(0, 1, F.step);
           F.pos.lerpVectors(F.from, wantW, u); F.pos.y = wantW.y + Math.sin(u * Math.PI) * 0.06;
           F.yaw = F.fromYaw + angDiff(F.fromYaw, wantYaw) * u;
           if (F.step >= 1) { F.step = 0; F.pos.copy(wantW); F.yaw = wantYaw; if (this.onFoot) this.onFoot(s === "l" ? "L" : "R", 0.2); }
         } else {
-          if (!F.lock) { F.lock = true; }
-          const off = Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z), tw = Math.abs(angDiff(F.yaw, wantYaw));
+            const off = Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z), tw = Math.abs(angDiff(F.yaw, wantYaw));
           const free = other.step === 0 || other.step > 0.65;
           if ((off > 0.09 || tw > 0.45) && free && t - (this.lastStep || -9) > 0.1) {
             // the foot that is furthest out goes first
             const oOff = Math.hypot(other.pos.x - wantW.x, other.pos.z - wantW.z);
             if (other.step === 0 && oOff > off * 1.5 && Math.abs(angDiff(other.yaw, wantYaw)) > tw) { /* wait for the other */ }
-            else { F.step = 0.001; F.from.copy(F.pos); F.fromYaw = F.yaw; this.lastStep = t; }
+            else { F.step = 0.001; F.from.copy(F.pos); F.fromYaw = F.yaw; F.dur = clamp(Math.hypot(F.pos.x - wantW.x, F.pos.z - wantW.z) / 0.9, 0.28, 0.6); this.lastStep = t; }
           }
         }
       }
       // the target in character space
       const lockC = _f3.copy(F.pos).applyMatrix4(fromP);
+      // a planted foot the leg can no longer reach (pulling away hard from a start) peels off rather than dragging
+      if (this.loco && F.lock && lockC.distanceTo(this.wp[g.th]) > (g.l1 + g.l2) * 0.995) F.lock = false;
       const tgt = _f4.copy(want).lerp(lockC, F.w);
       // never through the floor
       tgt.y = Math.max(tgt.y, this.rest["foot_" + s].at.y * 0.9);
@@ -775,27 +857,904 @@ class Person {
     this.fkFrom(c);
   }
 
-  /* ---- the arms: props and holds, by IK on top of the clip ---- */
+  /* ---- the arms: props, holds, the running arms, reaches and the wheel, by IK on top of the clip ---- */
   arms(dt) {
     const want = { umbrella: this.hold === "umbrella" ? 1 : 0, phone: this.hold === "phone" ? 1 : 0 };
-    for (const k of ["umbrella", "phone"]) this.holdK[k] = damp(this.holdK[k] || 0, want[k] * (1 - this.sitK), 5, dt);
+    for (const k of ["umbrella", "phone"]) this.holdK[k] = damp(this.holdK[k] || 0, want[k] * (1 - this.sitK) * (1 - (this.carK || 0)), 5, dt);
+    const R = this.rest;
+    // walking and running: the capture's arms carry the hands in front of the hips, palms up; instead the arms swing
+    // from the shoulder by IK, opposite the legs. Walking: nearly straight, the hands passing the thighs, further at
+    // speed. Running: loose fists from the hip to the chest, elbows held near a right angle and pointing back
+    const lk = this.locoW * (1 - (this.carK || 0)) * (1 - this.sitK);
+    if (lk > 0.01) for (const s of ["l", "r"]) {
+      const g = this.arm[s]; if (!g || (s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5))) continue;
+      if (this.reaches && this.reaches[s]) continue;
+      const side = s === "l" ? 1 : -1, u = this.armSwing * side, f = 0.5 + 0.5 * u, S = this.wp[g.ua], L = g.l1 + g.l2;
+      const amp = clamp(this.gs / 1.45, 0.4, 1.3), jr = this.jogW;
+      const walk = _f3.set(S.x + side * lerp(0.06, 0.035, f), S.y - L * lerp(0.95, 0.9, f * amp), S.z + 0.03 + lerp(-0.15, 0.17, f) * amp);
+      const runT = _f4.set(S.x - side * lerp(0.0, 0.07, f), S.y - lerp(0.4, 0.27, f) + Math.abs(Math.sin(this.gPhase * TAU * 2)) * 0.01, S.z + lerp(-0.16, 0.2, f));
+      const tgt = _f1.copy(walk).lerp(runT, jr);
+      const pole = _f2.set(S.x + side * lerp(0.25, 0.3, jr), S.y - lerp(0.3, 0.35, jr), S.z - 0.6);
+      this.ikArm(s, tgt, pole, lk);
+    }
+    // standing: the capture clasps its hands in front, where the fingers pass through each other; the arms hang instead,
+    // relaxed at the sides, elbows soft, the hands by the thighs and swaying a little with the breath and the weight
+    // (on a chair the arms keep hanging until the hands come to rest on the thighs; in a car they go to the wheel)
+    const seatM = this.car && /^seat/.test(this.car.mode);
+    const hang = (this.stillK || 0) * (1 - (this.styleW || 0)) * (this.shot ? 0 : 1) * (seatM ? 1 : 1 - (this.carK || 0));
+    if (hang > 0.01) for (const s of ["l", "r"]) {
+      const g = this.arm[s]; if (!g) continue;
+      const k = hang * (s === "r" ? (1 - this.holdK.umbrella) * (1 - this.holdK.phone) : 1) * (1 - this.engW * 0.25);
+      if (k < 0.01) continue;
+      const side = s === "l" ? 1 : -1, S = this.wp[g.ua], L = g.l1 + g.l2;
+      const sw = Math.sin(this.t * 0.9 + side) * 0.008 + (this.wK || 0) * side * 0.01;
+      const tgt = _f1.set(S.x + side * 0.05, S.y - L * 0.96, S.z + 0.035 + sw);
+      this.ikArm(s, tgt, _f2.set(S.x + side * 0.25, S.y - 0.3, S.z - 0.6), k);
+    }
+    // talking: beats. On a stressed word (or every second or so without the voice's words) a hand comes up to an open
+    // palm in front of the waist, holds the thought, and settles back; the captured talker's arms cross and his
+    // fingers go through each other, so these replace them
+    this.gestures(dt);
+    // the phone at the ear: the hand cupped round it, the palm to the cheek, the elbow down and out
+    const pk = this.holdK.phone;
+    if (pk > 0.01 && this.arm.r && this.handRig.r) {
+      const hb = this.bi.head, hr = this.rest.head, H = this.handRig.r;
+      const ear = _f1.set(-0.075, 0.06, 0.0).applyQuaternion(hr.wi).applyQuaternion(this.wq[hb]).add(this.wp[hb]);
+      // the phone runs from the ear to the mouth; the fingers wrap its back, pointing back along the head
+      ear.y -= 0.055; ear.z += 0.035;
+      const n = _f3.set(1, 0, 0.25).normalize(), d = _f4.set(0.2, 0.3, -0.93).normalize();
+      (this.phoneAim || (this.phoneAim = { n: new THREE.Vector3(), d: new THREE.Vector3() })).n.copy(n); this.phoneAim.d.copy(d);
+      const off = this.handOffset(H, H.palmL, d, n, _v3);
+      const S = this.wp[this.arm.r.ua];
+      this.ikArm("r", _f2.copy(ear).sub(off).addScaledVector(n, -0.03), _v4.set(S.x - 0.35, S.y - 0.4, S.z - 0.1), pk);
+    }
     const uk = this.holdK.umbrella;
     if (uk > 0.01 && this.arm.r) {
       // the right fist in front of the chest, the forearm up, the elbow by the ribs
-      const g = this.arm.r, R = this.rest;
-      const sh = this.wp[g.ua];
-      const tgt = _f1.set(R.upperarm_r.at.x * 0.7, R.upperarm_r.at.y - 0.16, R.upperarm_r.at.z + 0.27);
+      const tgt = _f1.set(R.upperarm_r.at.x * 0.55, R.upperarm_r.at.y - 0.2, R.upperarm_r.at.z + 0.26);
       tgt.y += Math.sin(this.t * 2.1) * 0.006 + this.locoW * 0.01 * Math.sin(this.phase * 2);
-      const tg = _f2.copy(this.wp[g.ha]).lerp(tgt, uk);
-      this.ik2(g.ua, g.la, g.ha, g.l1, g.l2, tg, 0);
-      // the fist closes round the handle
-      this.curl("r", 0.9 * uk);
+      this.ikArm("r", tgt, _f2.set(R.upperarm_r.at.x - 0.25, R.upperarm_r.at.y - 0.5, R.upperarm_r.at.z - 0.1), uk);
+    }
+    // hands that hold or rest on something: a carried thing, the thighs seated (reaches go on top of these)
+    this.pinArms(dt);
+    // reaches: to a point in the world, approach, contact, retract
+    for (const s of ["l", "r"]) { const r = this.reaches && this.reaches[s]; if (r) this.reachArm(r, dt); }
+    // the wheel
+    if (this.carK > 0.001) this.wheelArms(dt);
+  }
+
+  gestures(dt) {
+    const G = this.gest || (this.gest = { l: { k: 0, t: 0, d: 0, x: 0, y: 0 }, r: { k: 0, t: 0, d: 0, x: 0, y: 0 }, next: 0.4, lastW: null });
+    const can = this.talkW * (1 - this.locoW * 0.7) * (1 - this.sitK) * (1 - (this.styleW || 0)) * (this.car && this.car.mode === "seat" ? 1 : 1 - (this.carK || 0));
+    // a beat: on a new long or stressed word, or on a timer when there are no word timings
+    let beat = false;
+    if (this.talk > 0.05) {
+      if (this.lastWord && this.lastWord !== G.lastW) { G.lastW = this.lastWord; const w = this.lastWord.w.replace(/[^a-z]/gi, ""); if ((w.length >= 5 || /[!?,.]$/.test(this.lastWord.w)) && this.t - (G.at || -9) > 0.7) beat = true; }
+      if (!(this.words && this.t - this.wordsAt < 0.25)) { G.next -= dt; if (G.next <= 0) { beat = true; G.next = 0.9 + Math.random() * 1.1; } }
+    }
+    if (beat && can > 0.2) {
+      G.at = this.t;
+      const free = s => !(this.reaches && this.reaches[s]) && !(s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5));
+      let hs = Math.random() < 0.3 ? ["l", "r"] : [Math.random() < 0.62 ? "r" : "l"];
+      hs = hs.filter(free); if (!hs.length && free("l")) hs = ["l"];
+      for (const s of hs) { const g = G[s]; g.t = 0; g.d = 0.7 + Math.random() * 0.6; g.x = Math.random(); g.y = Math.random(); }
+    }
+    for (const s of ["l", "r"]) {
+      const g = G[s]; g.t += dt;
+      const want = g.t < g.d ? 1 : 0;
+      g.k = damp(g.k, want, want ? 7 : 3.2, dt);
+      // between beats, the hands rest a little forward and up (ready to talk), not hanging straight
+      const ready = can * 0.3, k = Math.max(ready, g.k * can);
+      this.gestK = this.gestK || { l: 0, r: 0 }; this.gestK[s] = g.k * can;
+      const arm = this.arm[s]; if (!arm || k < 0.01) continue;
+      if (this.reaches && this.reaches[s]) continue;
+      if (s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5)) continue;
+      if (this.carrying && this.carrying[s]) continue;
+      const side = s === "l" ? 1 : -1, S = this.wp[arm.ua];
+      const up = g.k * can / Math.max(k, 1e-3);
+      const tgt = _f1.set(S.x + side * lerp(0.04, -0.03 + g.x * 0.07, up), S.y - lerp(0.52, 0.32 - g.y * 0.07, up), S.z + lerp(0.1, 0.34 + g.y * 0.05, up));
+      this.ikArm(s, tgt, _f2.set(S.x + side * 0.35, S.y - 0.45, S.z - 0.3), k);
     }
   }
-  curl(s, k) {
-    for (const fg of ["index", "middle", "ring", "pinky"]) for (let j = 1; j <= 3; j++) {
-      const n = fg + "_0" + j + "_" + s, i = this.bi[n]; if (i == null) continue;
-      this.lq[i].multiply(_q1.setFromAxisAngle(_v1.set(0, 0, s === "l" ? 1 : -1), k * (j === 1 ? 0.9 : 1.1)));
+
+  /* two-bone arm IK with a pole: the elbow bends toward pole (character space). k blends from the arm as it was */
+  ikArm(s, tgt, pole, k) {
+    const g = this.arm[s]; if (!g || k <= 0) return;
+    const wq = this.wq, wp = this.wp, lq = this.lq, par = this.par;
+    const q0a = _kq.copy(lq[g.ua]), q0b = _kq2.copy(lq[g.la]);
+    const A = wp[g.ua], l1 = g.l1, l2 = g.l2;
+    const at = _k1.copy(tgt).sub(A); let d = at.length(); at.divideScalar(d || 1);
+    d = clamp(d, Math.abs(l1 - l2) + 0.01, l1 + l2 - 0.003);
+    // the elbow: along the shoulder-to-target line, out toward the pole
+    const x = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - x * x));
+    const pp = _k2.copy(pole).sub(A); pp.addScaledVector(at, -pp.dot(at)); if (pp.lengthSq() < 1e-8) pp.set(0, -1, 0); pp.normalize();
+    const E = _k3.copy(A).addScaledVector(at, x).addScaledVector(pp, h);
+    const T = _k4.copy(A).addScaledVector(at, d);
+    // swing the upper arm onto the elbow, then the forearm onto the wrist (shortest arcs, so the clip's twist stays)
+    _v1.copy(wp[g.la]).sub(A).normalize(); _v2.copy(E).sub(A).normalize();
+    _q3.setFromUnitVectors(_v1, _v2); wq[g.ua].premultiply(_q3); lq[g.ua].copy(wq[par[g.ua]]).invert().multiply(wq[g.ua]); this.fkFrom(g.ua);
+    _v1.copy(wp[g.ha]).sub(wp[g.la]).normalize(); _v2.copy(T).sub(wp[g.la]).normalize();
+    _q3.setFromUnitVectors(_v1, _v2); wq[g.la].premultiply(_q3); lq[g.la].copy(wq[g.ua]).invert().multiply(wq[g.la]);
+    if (k < 1) { lq[g.ua].copy(q0a.slerp(lq[g.ua], k)); lq[g.la].copy(q0b.slerp(lq[g.la], k)); }
+    this.fkFrom(g.ua);
+  }
+
+  /* world point to character space (and back) */
+  toChar(v, out) { this.group.updateWorldMatrix(true, false); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert(); return out.copy(v).applyMatrix4(_m); }
+  toWorld(v, out) { this.group.updateWorldMatrix(true, false); _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix); return out.copy(v).applyMatrix4(_m); }
+
+  /* reach for a point in the world with one hand, by IK: the hand travels to it (approach), stays on it (contact), and
+     comes back (retract). point: a THREE.Vector3 (read live, so it can move with a door) or a function returning one.
+     o.hand "l" | "r" (default: the side the point is on), o.hold "grip" | "pinch" | "touch" | "press" (what the hand does
+     there, default "touch"), o.stay true to keep the hand there until release(hand), o.palm a world direction the palm
+     should face at contact, o.dur the approach in seconds, o.onContact called at contact. Resolves when the hand is back
+     (or at contact with stay). */
+  /* where on a hand a hold touches, in the hand's frame: the grip's centre (a bar through the fist), the pinch, the
+     fingertip, the knuckles, the middle of a cup held from the side (its axis radius r beyond the palm), the palm */
+  contactOf(H, hold, r = 0.04) {
+    const v = new THREE.Vector3();
+    if (hold === "grip") return v.copy(H.gripL);
+    if (hold === "press") return v.copy(H.tipL);
+    if (hold === "pinch") return v.copy(H.dL).multiplyScalar(0.13).addScaledVector(H.nL, 0.03);
+    if (hold === "knock") return v.copy(H.dL).multiplyScalar(0.115).addScaledVector(H.nL, 0.012);
+    if (hold === "cup") return v.copy(H.dL).multiplyScalar(0.075).addScaledVector(H.nL, 0.02 + r);
+    return v.copy(H.palmL);
+  }
+  reachTo(point, o = {}) {
+    const P = typeof point === "function" ? point : () => point;
+    let s = o.hand;
+    if (s !== "l" && s !== "r") { const c = this.toChar(P(), _v4); s = c.x >= 0 ? "l" : "r"; if (this.hold === "umbrella" || this.holdK.umbrella > 0.5) s = "l"; }
+    const old = this.reaches && this.reaches[s]; if (old && old.resolve) old.resolve(false);
+    const c = this.toChar(P(), new THREE.Vector3()), g = this.arm[s];
+    // the approach takes longer from further (measured from where the hand is), so a hand never darts
+    const far = g ? c.distanceTo(this.wp[g.ha]) : 0.6;
+    const dIn = Math.max(o.dur || 0, clamp(0.3 + far * 0.55, 0.45, 1.15));
+    return new Promise(res => {
+      const r = (this.reaches || (this.reaches = {}))[s] = { s, P, hold: o.hold || "touch", stay: !!o.stay, palm: o.palm || null, t: 0, dIn, dOn: o.hold === "press" ? 0.18 : o.contact != null ? o.contact : 0.32, dOut: o.out || 0.5, k: 0, phase: "in", onContact: o.onContact, resolve: res, from: null, tc: new THREE.Vector3(),
+        cl: o.cl ? o.cl.clone() : null, pose: o.pose || null, radius: o.radius || 0.04, aimFn: o.aimFn || null };
+      // keep the hand's frame as it is now (putting something down the way it's held)
+      if (o.keepAim && this.handRig[s]) { const q = this.wq[this.arm[s].ha], H = this.handRig[s]; r.keepD = H.dL.clone().applyQuaternion(q); r.keepN = H.nL.clone().applyQuaternion(q); }
+    });
+  }
+  /* how long a hand takes to come back down: longer from further (a hand up on a raised lid), never a snap */
+  backTime(s, d0 = 0.5) { const g = this.arm[s]; if (!g) return d0; const S = this.wp[g.ua], h = this.wp[g.ha]; const far = Math.hypot(h.x - S.x, h.y - (S.y - (g.l1 + g.l2) * 0.95), h.z - S.z); return clamp(0.35 + far * 0.95, d0, 1.5); }
+  /* a hand that lets go stops following what it held (a lid rising on, a door swinging) and comes back from there */
+  letGo(r) { const p = this.toWorld(r.tc, new THREE.Vector3()); r.P = () => p; }
+  /* bring a hand back from a reach that stayed (or cut one short) */
+  release(hand) {
+    const rs = this.reaches || {}; const list = hand ? [rs[hand]] : [rs.l, rs.r];
+    return Promise.all(list.filter(Boolean).map(r => new Promise(res => { if (r.resolve) r.resolve(true); r.resolve = res; r.phase = "out"; r.t = 0; r.dOut = this.backTime(r.s, r.dOut); this.letGo(r); })));
+  }
+  reachArm(r, dt) {
+    const g = this.arm[r.s], H = this.handRig[r.s]; if (!g || !H) { if (r.resolve) r.resolve(false); this.reaches[r.s] = null; return; }
+    r.t += dt;
+    const tc = this.toChar(r.P(), r.tc);
+    if (r.phase === "in") { r.k = sstep(0, 1, r.t / r.dIn); if (r.t >= r.dIn) { r.phase = "on"; r.t = 0; if (r.onContact) try { r.onContact(); } catch (e) {} if (r.stay && r.resolve) { r.resolve(true); r.resolve = null; } } }
+    else if (r.phase === "on") { r.k = 1; if (!r.stay && r.t >= r.dOn) { r.phase = "out"; r.t = 0; r.dOut = this.backTime(r.s, r.dOut); this.letGo(r); } }
+    else { r.k = 1 - sstep(0, 1, r.t / r.dOut); if (r.t >= r.dOut) { this.reaches[r.s] = null; this.taskLook = null; if (r.resolve) r.resolve(true); return; } }
+    // where the hand goes: the palm faces the target from the shoulder's side (or as asked); the contact point of the hand
+    // (the grip's centre, the pads of the fingers, or the fingertip) lands on the target
+    const S = this.wp[g.ua], side = r.s === "l" ? 1 : -1;
+    const app = _f3.copy(tc).sub(S); app.y *= 0.6; app.normalize();
+    // the hand's frame at contact: d along the fingers, n out of the palm (character space)
+    const N = r.aimN || (r.aimN = new THREE.Vector3()), D = r.aimD || (r.aimD = new THREE.Vector3());
+    if (r.keepD) { D.copy(r.keepD); N.copy(r.keepN); }                                    // as the hand is now
+    else if (r.aimFn) r.aimFn(D, N, app, side, tc, S);
+    else if (r.hold === "cup") { N.set(app.x - side * 0.8, 0, app.z).normalize(); D.crossVectors(UP, N).multiplyScalar(side); } // a cup from the outside: palm to it, thumb up
+    else if (r.hold === "knock") { D.copy(app); N.set(-side * 0.6, -1, 0); }             // knuckles to a door, palm down and in
+    else if (r.hold === "press") { D.copy(app); N.set(-side * 0.3, -1, 0); }                 // a fingertip on a button: fingers to it, palm down
+    else if (r.hold === "pinch") { D.copy(app); N.set(-side * 0.35, -1, 0.1); }          // picking up: palm down over it
+    else if (r.hold === "grip") { D.copy(app); N.set(-side, -0.3, 0.05); }               // a handle: fingers round it, knuckles out
+    else { N.copy(app); D.set(0, 1, 0.2); if (tc.y < S.y - 0.45) { N.set(0, -1, 0.2); D.copy(app); } } // a flat hand on it: fingers up, or palm down on a low surface
+    if (r.palm) N.copy(r.palm).transformDirection(_m.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert());
+    N.normalize();
+    if (r.hold === "touch" && !(tc.y < S.y - 0.45)) D.addScaledVector(N, -D.dot(N)).normalize();
+    else { N.addScaledVector(D.normalize(), -N.dot(D)).normalize(); }
+    if (D.lengthSq() < 0.5) D.set(0, 0, 1);
+    // the wrist goes where the hand's contact point, in that orientation, puts the target
+    const cl = r.cl || (r.cl = this.contactOf(H, r.hold, r.radius));
+    const off = this.handOffset(H, cl, r.aimD, r.aimN, _v3);
+    const wrist = _f1.copy(tc).sub(off);
+    // eased from where the hand is now, along a small arc (up and out a little at mid-approach)
+    if (!r.from) r.from = this.wp[g.ha].clone();
+    const lift = Math.sin(r.k * Math.PI) * 0.05 * (r.phase === "in" ? 1 : 0.5);
+    const tgt = _f2.copy(r.from).lerp(wrist, r.k); tgt.y += lift; tgt.x += side * lift * 0.6;
+    if (r.phase !== "in") r.from.copy(this.wp[g.ha]);
+    const pole = _v4.set(S.x + side * 0.35, S.y - 0.45, S.z - 0.2);
+    this.ikArm(r.s, tgt, pole, 1);
+    (r.pole || (r.pole = new THREE.Vector3())).copy(pole);
+    r.k2 = r.k; // used by hands() for the aim and the pose
+    this.taskLook = r.k > 0.2 ? this.toWorld(tc, this._look || (this._look = new THREE.Vector3())) : this.taskLook;
+  }
+  /* the offset from the wrist to a point given in the hand's own frame (cl), once the hand is aimed d, n (character space) */
+  handOffset(H, cl, d, n, out) {
+    const bL = _k1.crossVectors(H.nL, H.dL), x = cl.dot(H.dL), y = cl.dot(bL), z = cl.dot(H.nL);
+    return out.copy(d).multiplyScalar(x).addScaledVector(n, z).addScaledVector(_k2.crossVectors(n, d), y);
+  }
+  /* reaching: the body helps. Lean toward a far target, turn toward one off to the side, bend the knees for a low one */
+  reachBody(hipC, dt) {
+    let lean = 0, twist = 0, drop = 0, fx = 0, fz = 0;
+    for (const s of ["l", "r"]) {
+      const r = this.reaches && this.reaches[s]; if (!r || !r.tc || !this.arm[s]) continue;
+      const g = this.arm[s], c = r.tc, k = r.k || 0;
+      // from the shoulder at rest (the live one moves with the lean this sets)
+      const S = this.rest[s === "l" ? "upperarm_l" : "upperarm_r"].at;
+      const reach = g.l1 + g.l2 + 0.05;
+      const low = clamp(0.95 - c.y, 0, 0.95);
+      const ex = Math.max(0, Math.hypot(c.x - S.x, c.z - S.z, (c.y + low * 0.6) - S.y) - reach);
+      // and more if the hand still falls short of it
+      r.boost = clamp((r.boost || 0) + ((r.miss || 0) > 0.004 && k > 0.6 ? dt * 1.2 : -dt * 0.15), 0, 0.5);
+      lean = Math.max(lean, clamp(ex * 2.2 + r.boost * (low > 0.3 ? 0.4 : 1), 0, 0.65) * k);
+      if (low > 0.3) drop = Math.max(drop, (low + r.boost * 0.5) * k);
+      const h = Math.hypot(c.x, c.z) || 1; fx += (c.x / h) * ex * 0.35 * k; fz += (c.z / h) * ex * 0.35 * k;
+      twist += clamp(Math.atan2(c.x, Math.max(0.15, c.z)) * 0.35, -0.35, 0.35) * k;
+      drop = Math.max(drop, low * k);
+    }
+    this.rLean = damp(this.rLean || 0, lean, 10, dt); this.rTwist = damp(this.rTwist || 0, twist, 10, dt); this.rDrop = damp(this.rDrop || 0, drop, 10, dt);
+    this.rFx = damp(this.rFx || 0, fx, 10, dt); this.rFz = damp(this.rFz || 0, fz, 10, dt);
+    if (this.rLean + Math.abs(this.rTwist) + this.rDrop + Math.abs(this.rFz) < 0.002) return;
+    // low: a squat, hips back, back bent forward (the knees follow from the feet staying planted)
+    // seated, the hips stay on the seat: only the back leans and turns
+    const sk = 1 - clamp(this.carK || 0, 0, 1);
+    this.rDrop *= sk; this.rFx *= sk; this.rFz *= sk;
+    const d = this.rDrop;
+    hipC.y -= d * 0.6; hipC.z -= d * 0.18; hipC.x += this.rFx; hipC.z += this.rFz * (1 - d);
+    this.rot("pelvis", d * 0.3, 0, 0);
+    this.rot("spine_01", this.rLean * 0.4 + d * 0.18, this.rTwist * 0.3, 0);
+    this.rot("spine_02", this.rLean * 0.35 + d * 0.14, this.rTwist * 0.35, 0);
+    this.rot("spine_03", this.rLean * 0.25 + d * 0.05, this.rTwist * 0.35, 0);
+    this.rot("neck_01", -d * 0.35, 0, 0);
+  }
+
+  /* ================================================================
+     CARS: getting in and out, and driving. The car is a vehicle from story/vehicle.js (tools/story/HANDOFF-drive.md):
+     body, seat / seatP, steeringWheel (its rim in its local XY plane, turning about its local Z), doors (open, get,
+     node, handle, inner), speed, steerAngle, wheelAngle. Car local axes: +Z forward, +X the driver's side, +Y up.
+     While a sequence runs, people.js moves the body itself: main.js leaves pos and wantYaw alone until it resolves.
+     ================================================================ */
+  enterCar(v, side = "driver") { return this.carRun(v, side, "enter"); }
+  exitCar(v) { const c = this.car; if (!c) return Promise.resolve(false); return this.carRun(v || c.v, c.side, "exit"); }
+  /* driving each frame: p.drive(car) (or p.driving = car) puts the body straight in the seat, hands on the wheel */
+  drive(v, side = "driver") { if (!v) { this.driving = null; return; } if (!this.car || this.car.v !== v) this.seatIn(v, side); }
+  get driving() { return this.car && this.car.mode === "drive" ? this.car.v : null; }
+  set driving(v) { if (v) this.drive(v); else if (this.car) this.unseat(); }
+  get inCar() { return !!this.car; }
+
+  carGeo(v, side) {
+    const body = v.body || v.object;
+    body.updateWorldMatrix(true, true);
+    const inv = new THREE.Matrix4().copy(body.matrixWorld).invert();
+    const loc = o => o.getWorldPosition(new THREE.Vector3()).applyMatrix4(inv);
+    const seatN = side === "passenger" ? v.seatP || v.seat : v.seat;
+    const S = seatN ? loc(seatN) : new THREE.Vector3(side === "passenger" ? -0.39 : 0.39, 0.56, -0.19);
+    const sx = Math.sign(S.x) || 1;
+    const dn = v.doors && v.doors.node ? v.doors.node(side) : null;
+    const H = dn ? loc(dn) : new THREE.Vector3(sx * 0.9, 0.55, S.z + 0.93);
+    const steer = side === "passenger" ? null : v.steeringWheel || null;
+    return { body, inv, S, sx, H, half: Math.abs(H.x), steer, rimR: steer && steer.userData && steer.userData.rimR ? steer.userData.rimR : 0.185 };
+  }
+  /* body-local (the car body's frame) to world and character space */
+  carW(p, out) { return out.copy(p).applyMatrix4(this.car.G.body.matrixWorld); }
+  carL(p, out) { this.car.G.body.updateWorldMatrix(true, false); return out.copy(p).applyMatrix4(_m2.copy(this.car.G.body.matrixWorld).invert()); }
+  carYaw() { const e = this.car.G.body.matrixWorld.elements; return Math.atan2(e[8], e[10]); }
+
+  newCar(v, side, mode) {
+    const G = this.carGeo(v, side), S = G.S;
+    const c = this.car = { v, side, G, mode, steps: [], seated: false, sitW: 0, hipW: 0, feetW: 0, wheelK: 0, duck: 0, root: new THREE.Vector3(), yaw: 0, hip: new THREE.Vector3(),
+      feet: { l: new THREE.Vector3(), r: new THREE.Vector3() }, hands: { l: { th: null, sw: null }, r: { th: null, sw: null } }, lean: 0, pitch: 0, lastYaw: null, lastSpeed: 0 };
+    // where things are, in the body's frame
+    const sx = G.sx, half = G.half;
+    c.P = {
+      A: new THREE.Vector3(sx * (half + 0.62), 0, G.H.z - 1.35),             // outside, behind the open door's sweep
+      B: new THREE.Vector3(sx * (half + 0.2), 0, S.z + 0.08),                // in the opening, beside the seat
+      E: new THREE.Vector3(sx * (Math.abs(S.x) + 0.3), S.y + 0.03, S.z + 0.02), // the seat's edge by the door
+      out: { l: new THREE.Vector3(sx * (half + 0.3), 0.08, S.z + 0.02 - 0.12 * sx), r: new THREE.Vector3(sx * (half + 0.3), 0.08, S.z + 0.02 + 0.12 * sx) }, // facing out, the left foot is the rear one on the driver's side
+      // the pedals: the right foot on the accelerator (or the brake), the left on the rest
+      gas: new THREE.Vector3(S.x - 0.15, S.y - 0.24, S.z + 0.74), brake: new THREE.Vector3(S.x - 0.02, S.y - 0.2, S.z + 0.7),
+      rest: new THREE.Vector3(S.x + 0.14, S.y - 0.26, S.z + 0.64)
+    };
+    return c;
+  }
+  seatIn(v, side) {
+    if (this.car) this.unseat();
+    const c = this.newCar(v, side, "drive");
+    c.seated = true; c.sitW = c.hipW = c.feetW = c.wheelK = 1; c.yaw = 0;
+    c.hip.copy(c.G.S); c.root.set(c.G.S.x, 0, c.G.S.z);
+    c.feet.l.copy(c.P.rest); c.feet.r.copy(c.P.gas);
+    this.lastPos = null;
+  }
+  unseat() {
+    const c = this.car; if (!c) return;
+    this.car = null; this.carK = 0; this.taskLook = null; this.wheelHands = null;
+    this.feet.l.init = this.feet.r.init = false; this.lastPos = null;
+  }
+
+  /* build and run a sequence; resolves when it ends */
+  carRun(v, side, mode) {
+    if (this.car && mode === "enter") this.unseat();
+    const c = mode === "enter" ? this.newCar(v, side, "enter") : this.car;
+    c.mode = mode;
+    const G = c.G, S = G.S, sx = G.sx, P = c.P;
+    const door = (a, b, d) => ({ run: st => { const u = sstep(0, 1, st.t / d); if (v.doors && v.doors.open) v.doors.open(side, lerp(a, b, u)); return st.t >= d; } });
+    const handle = () => v.doors && v.doors.handle ? v.doors.handle(side) : this.carW(_v1.set(sx * (G.half + 0.03), 0.92, G.H.z - 0.95), new THREE.Vector3());
+    const inner = () => v.doors && v.doors.inner ? v.doors.inner(side) : this.carW(_v1.set(sx * (G.half - 0.09), 0.82, G.H.z - 0.6), new THREE.Vector3());
+    const reach = (hand, P, hold) => ({ start: st => { st.p = this.reachTo(P, { hand, hold, stay: true }); }, run: () => this.reaches && this.reaches[hand] && this.reaches[hand].phase === "on" });
+    const release = hand => ({ start: () => this.release(hand), run: () => !(this.reaches && this.reaches[hand]) });
+    const wait = d => ({ run: st => st.t >= d });
+    // the hand nearer the handle from outside, and the door's hand seated
+    const hOut = sx > 0 ? "l" : "r", hIn = sx > 0 ? "l" : "r";
+    const steps = [];
+    if (mode === "enter") {
+      steps.push(this.cWalk(P.A, 1.25), this.cFace(() => { const h = this.carL(handle(), new THREE.Vector3()); return Math.atan2(h.x - P.A.x, h.z - P.A.z); }),
+        reach(hOut, handle, "grip"), door(0, 0.85, 1.0), release(hOut),
+        this.cWalk(P.B, 0.9), this.cFace(() => sx * Math.PI / 2),
+        this.cSit(0.9), this.cSwing(1.1, true),
+        reach(hIn, inner, "grip"), door(0.85, 0, 0.7), release(hIn),
+        this.cWheel(1, 0.55), { run: () => { c.mode = "drive"; return true; } });
+    } else {
+      steps.push(this.cWheel(0, 0.4), reach(hIn, inner, "grip"), door(v.doors && v.doors.get ? v.doors.get(side) : 0, 0.85, 0.8), release(hIn),
+        this.cSwing(1.0, false), this.cStand(0.9),
+        this.cWalk(P.A, 1.1), this.cFace(() => { const h = this.carL(handle(), new THREE.Vector3()); return Math.atan2(h.x - P.A.x, h.z - P.A.z); }),
+        reach(hOut, handle, "grip"), door(0.85, 0, 0.75), release(hOut), wait(0.1));
+    }
+    c.steps = steps;
+    return new Promise(res => { c.done = () => { if (mode === "exit") this.unseat(); res(true); }; });
+  }
+  /* sequence steps */
+  cWalk(to, sp) {
+    return { run: (st, dt) => {
+      const w = this.carW(to, _f1); const dx = w.x - this.pos.x, dz = w.z - this.pos.z, d = Math.hypot(dx, dz);
+      if (d < 0.03 || st.t > 8) return true;
+      const k = Math.min(1, sp * dt / d) * sstep(0, 0.25, st.t + 0.05);
+      this.pos.x += dx * k; this.pos.z += dz * k; this.speed = sp;
+      if (d > 0.12) this.wantYaw = Math.atan2(dx, dz);
+      return false;
+    } };
+  }
+  cFace(yf) {
+    return { start: st => { st.y = yf(); }, run: st => { this.speed = 0; this.wantYaw = this.carYaw() + st.y; return Math.abs(angDiff(this.yaw, this.wantYaw)) < 0.05 || st.t > 2.5; } };
+  }
+  /* sit: from standing in the opening down onto the seat's edge, back first, ducking under the roof */
+  cSit(d) {
+    const c = this.car;
+    return { start: st => {
+      c.seated = true; c.root.copy(this.carL(this.pos, _f1)).setY(0); c.yaw = angDiff(this.carYaw(), this.yaw);
+      // where the hips are now, and the feet, in the body's frame
+      st.h0 = this.toWorld(this.hipC || _f2.set(0, 0.95, 0), new THREE.Vector3()); this.carL(st.h0, st.h0);
+      for (const s of ["l", "r"]) this.carL(this.feet[s].init ? this.feet[s].pos : this.toWorld(this.wp[this.leg[s].fo], _f3), c.feet[s]);
+      c.feetW = 1;
+      // the feet come together under the body first (a walking stance would make it a lunge): side by side, a little apart
+      st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() };
+      const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw), mid = c.feet.l.clone().add(c.feet.r).multiplyScalar(0.5);
+      st.f1 = {}; for (const s of ["l", "r"]) { const sd = s === "l" ? 0.11 : -0.11; st.f1[s] = new THREE.Vector3(c.root.x + cy * sd, c.feet[s].y, c.root.z - sy * sd); st.f1[s].addScaledVector(_v1.set(sy, 0, cy), 0.04); }
+      st.move = Math.max(st.f0.l.distanceTo(st.f1.l), st.f0.r.distanceTo(st.f1.r)) > 0.08;
+    }, run: st => {
+      if (st.move) for (const s of ["l", "r"]) { const a = s === "l" ? 0 : 0.18, k = sstep(a, a + 0.3, st.t / d); c.feet[s].lerpVectors(st.f0[s], st.f1[s], k); c.feet[s].y = st.f0[s].y + Math.sin(k * Math.PI) * 0.05; }
+      const u = sstep(st.move ? 0.2 : 0, 1, st.t / d);
+      c.hip.copy(st.h0).lerp(c.P.E, u); c.hip.y = lerp(st.h0.y, c.P.E.y, u) - Math.sin(u * Math.PI) * 0.03;
+      c.hipW = 1; c.sitW = sstep(0.1, 0.9, st.t / d); c.duck = Math.sin(clamp(st.t / d, 0, 1) * Math.PI);
+      return st.t >= d;
+    } };
+  }
+  /* swing round on the seat: in (from the edge, facing out, to the seat, facing forward, the feet over the sill onto the
+     pedals) or out (the reverse, the feet onto the ground) */
+  cSwing(d, inward) {
+    const c = this.car, P = c.P, sx = c.G.sx;
+    return { start: st => {
+      st.y0 = c.yaw; st.y1 = inward ? 0 : sx * Math.PI / 2;
+      st.h0 = c.hip.clone(); st.h1 = inward ? c.G.S.clone() : P.E.clone();
+      st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() };
+      st.f1 = inward ? { l: P.rest.clone(), r: P.gas.clone() } : { l: P.out.l.clone(), r: P.out.r.clone() };
+      c.root.set(c.hip.x, 0, c.hip.z);
+    }, run: st => {
+      const u = sstep(0, 1, st.t / d);
+      c.hip.lerpVectors(st.h0, st.h1, u); c.root.set(c.hip.x, 0, c.hip.z);
+      c.yaw = st.y0 + angDiff(st.y0, st.y1) * u;
+      c.duck = (1 - u) * 0.6 * (inward ? 1 : 0) + u * 0.6 * (inward ? 0 : 1);
+      c.sitW = 1; c.hipW = 1;
+      // the door-side foot goes last on the way in, first on the way out
+      for (const s of ["l", "r"]) {
+        const late = (s === "l") === (sx > 0) === inward ? 0.25 : 0;
+        const k = sstep(late, late + 0.75, st.t / d);
+        c.feet[s].lerpVectors(st.f0[s], st.f1[s], k); c.feet[s].y += Math.sin(k * Math.PI) * 0.32;
+      }
+      return st.t >= d;
+    } };
+  }
+  /* stand: up from the seat's edge onto the feet outside, ducking, and back to walking */
+  cStand(d) {
+    const c = this.car;
+    return { start: st => {
+      // the body stands over its feet: that ground point becomes the root
+      st.root = c.feet.l.clone().add(c.feet.r).multiplyScalar(0.5).setY(0);
+      st.root.x += c.G.sx * 0.06;
+      st.h0 = c.hip.clone(); c.root.copy(st.root);
+      st.h1 = st.root.clone().setY(0.92 * (this.rest.thigh_l ? this.rest.thigh_l.at.y / 0.98 : 1)); st.h1.x -= c.G.sx * 0.05;
+    }, run: st => {
+      const u = sstep(0, 1, st.t / d);
+      c.hip.lerpVectors(st.h0, st.h1, u); c.hipW = 1 - sstep(0.75, 1, st.t / d);
+      c.sitW = 1 - sstep(0.15, 0.85, st.t / d); c.duck = Math.sin(clamp(1 - st.t / d, 0, 1) * Math.PI * 0.85);
+      if (st.t >= d) {
+        // walking again: the body's own place and facing
+        const w = this.carW(c.root, _f1); this.pos.set(w.x, this.pos.y, w.z);
+        this.yaw = this.wantYaw = this.carYaw() + c.yaw; this.speed = 0;
+        c.seated = false; c.feetW = 0; c.hipW = 0; c.sitW = 0; c.duck = 0;
+        // the feet carry on from where they are (planted), not from where the clip would put them
+        for (const s of ["l", "r"]) { const F = this.feet[s]; this.carW(c.feet[s], F.pos); F.yaw = this.yaw; F.lock = true; F.w = 1; F.step = 0; F.init = true; }
+        this.lastPos = null;
+        return true;
+      }
+      return false;
+    } };
+  }
+  cWheel(on, d) {
+    const c = this.car;
+    return { start: st => { st.k0 = c.wheelK; }, run: st => { c.wheelK = lerp(st.k0, on, sstep(0, 1, st.t / d)); if (!on) c.hands.l.th = c.hands.r.th = null; return st.t >= d; } };
+  }
+  carStep(dt) {
+    const c = this.car;
+    let st = c.steps[0], guard = 0;
+    while (st && guard++ < 8) {
+      if (!st.started) { st.started = true; st.t = 0; if (st.start) st.start(st); }
+      else st.t += dt;
+      if (!st.run(st, dt)) break;
+      c.steps.shift(); st = c.steps[0];
+    }
+    if (!st && c.done) { const f = c.done; c.done = null; f(); }
+  }
+  /* seated: the body goes where the car's body is (pitch and roll too), at its root and facing in the car */
+  carPlace() {
+    const c = this.car, B = c.G.body;
+    B.updateWorldMatrix(true, false);
+    _m.makeRotationY(c.yaw).setPosition(c.root); _m.premultiply(B.matrixWorld);
+    if (this.group.parent) { this.group.parent.updateWorldMatrix(true, false); _m.premultiply(_m2.copy(this.group.parent.matrixWorld).invert()); }
+    _m.decompose(this.group.position, this.group.quaternion, _v1);
+    this.group.updateMatrix(); this.group.updateWorldMatrix(true, false);
+    this.pos.copy(this.group.position); this.yaw = this.carYaw() + c.yaw; this.wantYaw = this.yaw;
+  }
+  carHip(hipC) {
+    const c = this.car;
+    const h = _f1.copy(c.hip).sub(c.root).applyAxisAngle(UP, -c.yaw);
+    hipC.lerp(h, c.hipW);
+  }
+  carBody(dt) {
+    const c = this.car, v = c.v, k = c.sitW;
+    // seated back in the seat, the head up; ducking under the roof getting in and out
+    if (k > 0.001) {
+      const rc = DEBUG.recline == null ? 0.32 : DEBUG.recline;
+      this.rot("pelvis", -rc * k * c.wheelK - (/^seat/.test(c.mode) ? 0.08 : 0.02) * k, 0, 0);
+      this.rot("spine_03", rc * 0.3 * k * c.wheelK, 0, 0); this.rot("neck_01", rc * 0.35 * k * c.wheelK, 0, 0);
+    }
+    if (c.duck > 0.001) { this.rot("spine_01", 0.28 * c.duck, 0, 0); this.rot("spine_02", 0.22 * c.duck, 0, 0); this.rot("neck_01", 0.15 * c.duck, 0, 0); }
+    // driving: thrown a little outward in the corners, back under acceleration and forward under braking; the head
+    // stays level (the reflex) and looks where the car is going
+    if (c.mode === "drive" || c.wheelK > 0.01) {
+      const yaw = this.carYaw(), sp = v.speed || 0;
+      const yr = c.lastYaw == null || dt <= 0 ? 0 : angDiff(c.lastYaw, yaw) / dt; c.lastYaw = yaw;
+      const acc = dt > 0 ? (sp - c.lastSpeed) / dt : 0; c.lastSpeed = sp;
+      c.lean = damp(c.lean, clamp(sp * yr / G * 0.32, -0.16, 0.16), 5, dt);
+      c.pitch = damp(c.pitch, clamp(-acc / G * 0.35, -0.1, 0.12), 4, dt);
+      // the shoulders turn a little with the wheel
+      c.tw = damp(c.tw || 0, clamp((c.drift || 0) * (DEBUG.twSign || 0) * 0.12, -0.2, 0.2), 6, dt);
+      this.rot("spine_02", 0, c.tw * 0.5, 0); this.rot("spine_03", 0, c.tw * 0.5, 0);
+      this.rot("spine_01", c.pitch * 0.5, 0, c.lean * 0.45); this.rot("spine_02", c.pitch * 0.4, 0, c.lean * 0.35);
+      this.rot("neck_01", -c.pitch * 0.4, 0, -c.lean * 0.5); this.rot("head", 0, 0, -c.lean * 0.3);
+      // the look: ahead, turned into the bend
+      const st = v.steerAngle != null ? v.steerAngle : (v.wheelAngle || 0) / 14;
+      const hw = this.headWorld(_f2), e = c.G.body.matrixWorld.elements;
+      const fx = e[8], fz = e[10], fl = Math.hypot(fx, fz) || 1, a = -clamp(st * 2.4 + yr * 0.25, -1.1, 1.1);
+      const ca = Math.cos(a), sa = Math.sin(a), dx = (fx * ca + fz * sa) / fl, dz = (-fx * sa + fz * ca) / fl;
+      this.taskLook = (this._clook || (this._clook = new THREE.Vector3())).set(hw.x + dx * 12, hw.y - 0.35, hw.z + dz * 12);
+    } else if (!(this.reaches && (this.reaches.l || this.reaches.r))) this.taskLook = null;
+  }
+  carLegs() {
+    const c = this.car, v = c.v;
+    // the right foot on the accelerator, over to the brake when braking, pressing with the pedal
+    if (c.mode === "drive" && c.feetW > 0.5) {
+      // (vehicle.js shows the throttle as load and the brake as its brake lights)
+      const lit = v.lights && v.lights.get ? v.lights.get() : null;
+      const th = clamp(v.throttle != null ? v.throttle : v.input ? v.input.throttle || 0 : v.load || 0, 0, 1);
+      const br = clamp(v.brake != null ? v.brake : v.input ? v.input.brake || 0 : lit && lit.brake && !lit.reverse ? 1 : 0, 0, 1);
+      c.brk = damp(c.brk || 0, br > 0.05 ? 1 : 0, 12, 1 / 60);
+      c.feet.r.copy(c.P.gas).lerp(c.P.brake, c.brk); c.feet.r.z += (th * (1 - c.brk) + br * c.brk) * 0.04; c.feet.r.y -= (th * (1 - c.brk) + br * c.brk) * 0.02;
+      c.feet.l.copy(c.P.rest);
+    }
+    for (const s of ["l", "r"]) {
+      const g = this.leg[s];
+      const tgt = this.toChar(this.carW(c.feet[s], _f1), _f4);
+      const cur = _f3.copy(this.wp[g.fo]);
+      this.ik2(g.th, g.ca, g.fo, g.l1, g.l2, cur.lerp(tgt, c.feetW), 0);
+    }
+  }
+  /* the hands on the wheel: each holds the rim at about 10 and 2 and turns with it; past about a quarter turn a hand
+     lets go and takes the rim again further round (hand over hand) while the other one holds */
+  wheelArms(dt) {
+    const c = this.car; if (!c || !c.G.steer || c.wheelK < 0.001) { this.wheelHands = null; return; }
+    const W = c.G.steer, R = c.G.rimR;
+    W.updateWorldMatrix(true, true);
+    // the axis the wheel turns about: local Z by the handoff; found from the rim's mesh (its thin axis) to be sure
+    const ax = W.userData.rimAxis || (W.userData.rimAxis = rimAxisOf(W));
+    const e1 = { z: "x", y: "z", x: "y" }[ax], e2 = { z: "y", y: "x", x: "z" }[ax];
+    // the wheel at rest: vehicle.js keeps it as userData.q0 and turns it on top (q = q0 * turn about the axis); else
+    // the rest is the node's rotation without its turn
+    if (!W.userData.restQ) { const r = W.rotation; W.userData.restQ = W.userData.q0 ? W.userData.q0.clone() : new THREE.Quaternion().setFromEuler(new THREE.Euler(ax === "x" ? 0 : r.x, ax === "y" ? 0 : r.y, ax === "z" ? 0 : r.z, r.order)); }
+    const qt = _kq2.copy(W.userData.restQ).invert().multiply(W.quaternion), alpha = 2 * Math.atan2(qt[ax], qt.w);
+    // the wheel's frame at rest, in its own axes (e1, e2 across the rim): which way is up and which way the driver's left
+    const qi = _kq.copy(W.userData.restQ).invert();
+    const up = _f1.set(0, 1, 0).applyQuaternion(qi), left = _f2.set(1, 0, 0).applyQuaternion(qi);
+    const u1 = up[e1], u2 = up[e2], l1 = left[e1], l2 = left[e2];
+    const home = { l: Math.atan2(u2 * 0.5 + l2 * 0.866, u1 * 0.5 + l1 * 0.866), r: Math.atan2(u2 * 0.5 - l2 * 0.866, u1 * 0.5 - l1 * 0.866) };
+    const hub = W.getWorldPosition(_f3);
+    const N = _f4.set(0, 0, 0); N[ax] = 1; N.transformDirection(W.matrixWorld);
+    const seatW = this.carW(c.G.S, _v1); if (N.dot(_v2.copy(seatW).sub(hub)) < 0) N.negate();
+    const toC = _m2.multiplyMatrices(this.group.matrixWorld, this.root.matrix).invert();
+    this.wheelHands = this.wheelHands || { l: { k: 0, n: new THREE.Vector3(), d: new THREE.Vector3() }, r: { k: 0, n: new THREE.Vector3(), d: new THREE.Vector3() } };
+    for (const s of ["l", "r"]) {
+      const h = c.hands[s], o = c.hands[s === "l" ? "r" : "l"], g = this.arm[s], H = this.handRig[s];
+      if (!g || !H) continue;
+      if (h.th == null) h.th = home[s] - alpha;
+      const drift = angDiff(home[s], h.th + alpha);
+      if (!h.sw && !o.sw && Math.abs(drift) > (DEBUG.swap || 1.3)) h.sw = { t: 0, a0: h.th + alpha };
+      let ang = h.th, lift = 0;
+      if (h.sw) {
+        h.sw.t += dt; const u = sstep(0, 1, h.sw.t / 0.28);
+        ang = h.sw.a0 + angDiff(h.sw.a0, home[s]) * u - alpha; lift = Math.sin(u * Math.PI);
+        if (h.sw.t >= 0.28) { h.th = home[s] - alpha; h.sw = null; }
+      }
+      const P = _v3.set(0, 0, 0); P[e1] = R * Math.cos(ang); P[e2] = R * Math.sin(ang); P.applyMatrix4(W.matrixWorld);
+      const r = _v4.copy(P).sub(hub).normalize();
+      // the rim runs across the knuckles (its tangent), the fingers go round it continuing the line of the arm, the
+      // palm on its outside toward the hub; lifted toward the driver while changing grip
+      P.addScaledVector(N, lift * 0.08);
+      const Pc = P.applyMatrix4(toC), S = this.wp[g.ua], side = s === "l" ? 1 : -1;
+      const tg = _k3.crossVectors(N, r).transformDirection(toC), rc = r.transformDirection(toC), Nc = _k4.copy(N).transformDirection(toC);
+      const d = _k1.copy(Pc).sub(S).normalize().addScaledVector(Nc, -0.35); d.addScaledVector(tg, -d.dot(tg)).normalize();
+      const n = _k2.crossVectors(tg, d).normalize(); if (n.dot(rc) > 0) n.negate();
+      const off = this.handOffset(H, H.gripL, d, n, _f1);
+      const wrist = _f3.copy(Pc).sub(off);
+      // a hand that would have to straighten its arm to stay on lets go and takes the rim again (hand over hand)
+      if (!h.sw && !o.sw && Math.abs(drift) > 0.6 && wrist.distanceTo(S) > (g.l1 + g.l2) * 0.96) h.sw = { t: 0, a0: h.th + alpha };
+      // still out of reach (the other hand is changing grip and the wheel is spinning): this one slides round the rim
+      if (!h.sw && wrist.distanceTo(S) > (g.l1 + g.l2) * 0.97) h.th += angDiff(h.th + alpha, home[s]) * Math.min(1, dt * 14);
+      c.drift = (c.drift || 0) * 0.5 + drift * 0.25;
+      const pole = _f2.set(S.x + side * 0.3, S.y - 0.5, S.z - 0.05);
+      this.ikArm(s, wrist, pole, c.wheelK);
+      const wh = this.wheelHands[s]; wh.k = c.wheelK * (1 - lift * 0.8); wh.n.copy(n); wh.d.copy(d);
+      (wh.at || (wh.at = new THREE.Vector3())).copy(Pc); (wh.pole || (wh.pole = new THREE.Vector3())).copy(pole);
+    }
+  }
+
+  /* ================================================================
+     THINGS TO DO: pick up and put down, knock, press, flip a switch, open a lid or a hatch with both hands, open with
+     one, look at (and read), sit down and stand up. Each returns a promise; all of them blend in from whatever the body
+     was doing and back out to it. Points are world points (a Vector3 read live, or a function returning one).
+     ================================================================ */
+  /* a small job run every frame until fn(dt, t) returns true */
+  job(fn) { return new Promise(res => { (this.jobs || (this.jobs = [])).push({ fn, t: 0, res }); }); }
+  runJobs(dt) {
+    for (let i = 0; i < this.jobs.length; i++) {
+      const j = this.jobs[i]; j.t += dt; let done = true;
+      try { done = j.fn(dt, j.t); } catch (e) {}
+      if (done) { this.jobs.splice(i--, 1); j.res(true); }
+    }
+  }
+  sideOf(p) { return this.toChar(p, _v4).x >= 0 ? "l" : "r"; }
+  freeHand(p) {
+    // the hand on the point's side, unless it's busy (carrying, the umbrella), then the other
+    let s = this.sideOf(p); const busy = h => (this.carrying && this.carrying[h]) || (h === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5));
+    if (busy(s) && !busy(s === "l" ? "r" : "l")) s = s === "l" ? "r" : "l";
+    return s;
+  }
+  static live(p) { return typeof p === "function" ? p : () => p; }
+
+  /* pick something up: the hand goes to it (a cup from the side, anything flat or small with a pinch), closes on it, and
+     brings it in to be carried; the thing follows the hand from then on. o.hand, o.hold ("cup" | "pinch" | "grip"),
+     o.grip (a point in the thing's own frame to hold it by) */
+  async pickUp(obj, o = {}) {
+    obj.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+    const hold = o.hold || obj.userData.hold || (size.y > 0.06 && Math.max(size.x, size.z) < 0.13 ? "cup" : "pinch");
+    const rad = clamp(Math.min(size.x, size.z) / 2, 0.015, 0.06);
+    const gw = o.grip ? obj.localToWorld(o.grip.clone()) : obj.userData.grip ? obj.localToWorld(obj.userData.grip.clone()) : hold === "cup" ? ctr.clone() : new THREE.Vector3(ctr.x, box.max.y - Math.min(0.012, size.y * 0.4), ctr.z);
+    const gl = obj.worldToLocal(gw.clone()), bl = obj.worldToLocal(new THREE.Vector3(ctr.x, box.min.y, ctr.z));
+    const s = o.hand || this.freeHand(gw);
+    const at = () => obj.localToWorld(new THREE.Vector3().copy(gl));
+    await this.reachTo(at, { hand: s, hold, radius: rad, stay: true, onContact: o.onContact });
+    const r = this.reaches && this.reaches[s]; if (!r) return false;
+    // held: how it sits (its turn about the vertical, kept against the body's; its own tilt) and where it's held
+    const q = obj.getWorldQuaternion(new THREE.Quaternion()), e = new THREE.Euler().setFromQuaternion(q, "YXZ");
+    const yq = new THREE.Quaternion().setFromAxisAngle(UP, e.y);
+    const c = { obj, s, hold, cl: r.cl.clone(), gl, bl, rad, yawOff: angDiff(this.yaw, e.y), tilt: yq.invert().multiply(q), pose: hold === "cup" ? "cup" : hold, scale: obj.getWorldScale(new THREE.Vector3()) };
+    (this.carrying || (this.carrying = {}))[s] = c;
+    await this.release(s);
+    return true;
+  }
+  /* put down what a hand carries: lowered as it's held, its base onto the point, let go, the hand back */
+  async putDown(point, o = {}) {
+    const C = this.carrying || {}; const s = o.hand || (C.r ? "r" : C.l ? "l" : null); const c = s && C[s]; if (!c) return false;
+    const P = Person.live(point);
+    // the grip above the base, as it's held now (upright)
+    const off = () => { const q = this.carryQ(c, _kq); return _f4.copy(c.gl).sub(c.bl).multiply(c.scale).applyQuaternion(q); };
+    c.putting = true;
+    await this.reachTo(() => P().clone().add(off()), { hand: s, hold: c.hold, cl: c.cl, keepAim: true, stay: true, pose: c.pose, dur: o.dur, onContact: o.onContact });
+    // let go: the thing stands exactly on the point
+    this.carryPlace();
+    const obj = c.obj, q = this.carryQ(c, new THREE.Quaternion());
+    const base = new THREE.Vector3().copy(c.bl).multiply(c.scale).applyQuaternion(q);
+    this.setWorld(obj, P().clone().sub(base), q);
+    C[s] = null;
+    await this.release(s);
+    return true;
+  }
+  /* the carried thing's world rotation: upright, turned with the body */
+  carryQ(c, out) { return out.setFromAxisAngle(UP, this.yaw + c.yawOff).multiply(c.tilt); }
+  setWorld(obj, pos, q) {
+    const par = obj.parent;
+    if (par) { par.updateWorldMatrix(true, false); _m.compose(pos, q, _v1.set(1, 1, 1)); _m.premultiply(_m2.copy(par.matrixWorld).invert()); _m.decompose(obj.position, obj.quaternion, _v2); }
+    else { obj.position.copy(pos); obj.quaternion.copy(q); }
+    obj.updateMatrixWorld(true);
+  }
+  /* each frame: a carried thing goes where the hand holds it */
+  carryPlace() {
+    this.group.updateWorldMatrix(true, false);
+    const toW = _m.multiplyMatrices(this.group.matrixWorld, this.root.matrix);
+    for (const s of ["l", "r"]) {
+      const c = this.carrying[s]; if (!c) continue;
+      const ha = this.arm[s].ha;
+      const g = _v3.copy(c.cl).applyQuaternion(this.wq[ha]).add(this.wp[ha]).applyMatrix4(toW);
+      const q = this.carryQ(c, _kq2);
+      const pos = g.sub(_v4.copy(c.gl).multiply(c.scale).applyQuaternion(q));
+      this.setWorld(c.obj, pos, q);
+    }
+  }
+  /* knock on a door: knuckles to it, o.n (3) quick taps, o.onKnock(i) on each, the hand back. o.normal: the door's face
+     toward you (else from the door to the body) */
+  async knock(point, o = {}) {
+    const p0 = Person.live(point)().clone();
+    const nrm = o.normal ? o.normal.clone().normalize() : new THREE.Vector3(this.pos.x - p0.x, 0, this.pos.z - p0.z).normalize();
+    let off = 0.07;
+    const P = () => Person.live(point)().clone().addScaledVector(nrm, off);
+    const s = o.hand || this.freeHand(p0);
+    await this.reachTo(P, { hand: s, hold: "knock", stay: true, dur: o.dur });
+    const n = o.n || 3, beat = 0.24;
+    let fired = -1;
+    await this.job((dt, t) => {
+      const i = Math.floor(t / beat), u = (t % beat) / beat;
+      off = u < 0.45 ? lerp(0.07, 0, sstep(0, 1, u / 0.45)) : lerp(0, 0.06, sstep(0, 1, (u - 0.45) / 0.55));
+      if (u >= 0.45 && i > fired && i < n) { fired = i; if (o.onKnock) try { o.onKnock(i); } catch (e) {} }
+      return t >= n * beat;
+    });
+    await this.release(s);
+    return true;
+  }
+  /* press a button with a fingertip */
+  press(point, o = {}) { return this.reachTo(point, { hand: o.hand || this.freeHand(Person.live(point)()), hold: "press", contact: 0.2, onContact: o.onContact }); }
+  /* flip a switch: the fingertip on it and a short push down (or up, o.dir "up"), o.onFlip at the click */
+  async flip(point, o = {}) {
+    const dir = o.dir === "up" ? 1 : -1; let off = -dir * 0.018;
+    const P = () => Person.live(point)().clone().add(_v1.set(0, off, 0));
+    const s = o.hand || this.freeHand(Person.live(point)());
+    await this.reachTo(P, { hand: s, hold: "press", stay: true, dur: o.dur });
+    let clicked = false;
+    await this.job((dt, t) => { const u = sstep(0, 1, t / 0.14); off = lerp(-dir * 0.018, dir * 0.018, u); if (u > 0.5 && !clicked) { clicked = true; if (o.onFlip) try { o.onFlip(); } catch (e) {} } return t >= 0.2; });
+    await this.release(s);
+    return true;
+  }
+  /* open with one hand (a drawer, the fridge, a mailbox, a cabinet): grip the handle, o.onProgress(t) from 0 to 1 over
+     o.dur while the hand stays on the handle (the world moves it), let go */
+  async openWith(point, o = {}) {
+    const P = Person.live(point), s = o.hand || this.freeHand(P());
+    await this.reachTo(P, { hand: s, hold: o.hold || "grip", stay: true });
+    const d = o.dur || 0.9;
+    await this.job((dt, t) => { if (o.onProgress) try { o.onProgress(sstep(0, 1, t / d)); } catch (e) {} return t >= d; });
+    await this.release(s);
+    return true;
+  }
+  /* open a lid or a hatch (a hood, a trunk) with both hands: points() gives { l, r } on its edge (live, so the hands
+     ride up with it), o.onProgress(t) moves it over o.dur, then both let go */
+  async openLid(points, o = {}) {
+    const pts = typeof points === "function" ? points : () => points;
+    await Promise.all([this.reachTo(() => pts().l, { hand: "l", hold: o.hold || "grip", stay: true }), this.reachTo(() => pts().r, { hand: "r", hold: o.hold || "grip", stay: true })]);
+    // the hands ride up with it, then let it go on up (o.letGo of the way, 0.7 by default) and come back while it
+    // finishes rising (a hood or a trunk is pushed up and left to its struts)
+    const d = o.dur || 1.2, lg = o.letGo == null ? 0.7 : o.letGo;
+    let gone = false, back = null;
+    await this.job((dt, t) => {
+      const u = sstep(0, 1, t / d);
+      if (o.onProgress) try { o.onProgress(u); } catch (e) {}
+      if (!gone && u >= lg) { gone = true; back = this.release(); }
+      return t >= d;
+    });
+    if (back) await back; else await this.release();
+    return true;
+  }
+  openHatch(points, o) { return this.openLid(points, o); }
+  /* look at a point with the head and eyes (o.read: the eyes go along lines as if reading); for o.dur seconds, or until
+     lookAt(null) */
+  lookAt(point, o = {}) {
+    if (!point) { this.lookTask = null; return Promise.resolve(true); }
+    const L = this.lookTask = { p: point, read: !!o.read, t: 0 };
+    return this.job((dt, t) => { L.t = t; if (this.lookTask !== L) return true; if (o.dur && t >= o.dur) { this.lookTask = null; return true; } return false; });
+  }
+
+  /* sit on a chair or a bench: walk to it, turn, sit (back first, the hands coming to rest on the thighs), settle. seat:
+     the seat's surface (world), facing: a yaw or a point to face. Resolves seated; standUp() gets up again */
+  sitDown(seat, facing, o = {}) {
+    if (this.car) this.unseat();
+    const yaw = typeof facing === "number" ? facing : facing && facing.isVector3 ? Math.atan2(facing.x - seat.x, facing.z - seat.z) : this.yaw;
+    const frame = new THREE.Object3D(); frame.position.set(seat.x, this.pos.y, seat.z); frame.rotation.y = yaw; frame.updateMatrixWorld(true);
+    const sh = seat.y - this.pos.y, ank = this.rest.foot_l ? this.rest.foot_l.at.y : 0.08;
+    const S = new THREE.Vector3(0, sh + 0.08, -0.04);
+    const c = this.car = { v: {}, side: "seat", mode: "seat-in", G: { body: frame, S, sx: 0, H: new THREE.Vector3(), half: 0, steer: null }, steps: [], seated: false, sitW: 0, hipW: 0, feetW: 0, wheelK: 0, duck: 0,
+      root: new THREE.Vector3(), yaw: 0, hip: new THREE.Vector3(), feet: { l: new THREE.Vector3(), r: new THREE.Vector3() }, hands: { l: {}, r: {} }, lean: 0, pitch: 0, lastYaw: null, lastSpeed: 0,
+      P: { E: S.clone(), A: new THREE.Vector3(0, 0, (o.front || 0.42)) } };
+    const settle = { start: st => { st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() }; st.f1 = { l: new THREE.Vector3(0.11, ank, 0.36 + sh * 0.1), r: new THREE.Vector3(-0.11, ank, 0.38 + sh * 0.1) }; },
+      run: st => { for (const s of ["l", "r"]) { const k = sstep(s === "l" ? 0 : 0.3, s === "l" ? 0.7 : 1, st.t / 0.7); c.feet[s].lerpVectors(st.f0[s], st.f1[s], k); c.feet[s].y += Math.sin(k * Math.PI) * 0.03; } return st.t >= 0.7; } };
+    c.steps = [this.cWalk(c.P.A, o.speed || 1.1), this.cFace(() => 0), this.cSit(o.dur || 1.15), settle, { run: () => { c.mode = "seat"; return true; } }];
+    return new Promise(res => { c.done = () => res(true); });
+  }
+  sitAt(seat, facing, o) { return this.sitDown(seat, facing, o); }
+  /* where sitDown walks to before it turns and sits (world, on the ground): path there first if anything is in the way */
+  seatApproach(seat, facing, front = 0.42) { const yaw = typeof facing === "number" ? facing : Math.atan2(facing.x - seat.x, facing.z - seat.z); return new THREE.Vector3(seat.x + Math.sin(yaw) * front, this.pos.y, seat.z + Math.cos(yaw) * front); }
+  /* up from a seat: feet under, lean forward, rise; walking again when it resolves */
+  standUp(o = {}) {
+    const c = this.car; if (!c || !/^seat/.test(c.mode)) return Promise.resolve(false);
+    c.mode = "seat-out";
+    const tuck = { start: st => { st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() }; }, run: st => { for (const s of ["l", "r"]) { c.feet[s].copy(st.f0[s]); c.feet[s].z -= sstep(0, 1, st.t / 0.35) * 0.08; } return st.t >= 0.35; } };
+    c.steps = [tuck, this.cStand(o.dur || 1.0)];
+    return new Promise(res => { c.done = () => { this.unseat(); res(true); }; });
+  }
+  get seated() { return !!(this.car && this.car.mode === "seat"); }
+
+  /* hands held by something: carrying (in front of the waist, the forearm level), resting on the thighs seated */
+  pinArms(dt) {
+    const PN = this.pins || (this.pins = { l: null, r: null });
+    for (const s of ["l", "r"]) {
+      const g = this.arm[s], H = this.handRig[s]; if (!g || !H) continue;
+      const pin = PN[s] || (PN[s] = { k: 0, at: new THREE.Vector3(), d: new THREE.Vector3(), n: new THREE.Vector3(), cl: null, pole: new THREE.Vector3(), pose: "relaxed" });
+      const c = this.carrying && this.carrying[s], S = this.wp[g.ua], side = s === "l" ? 1 : -1;
+      let want = 0;
+      if (c) {
+        want = 1; pin.pose = c.pose; pin.cl = c.cl;
+        const bob = Math.sin(this.gPhase * TAU * 2) * 0.008 * this.locoW;
+        // seated, the hand rests lower, over the lap
+        const sk = this.car && this.car.mode === "seat" ? this.car.sitW : 0;
+        pin.at.set(S.x - side * lerp(0.06, 0.1, sk), S.y - lerp(0.4, 0.42, sk) + bob, S.z + lerp(0.28, 0.32, sk));
+        pin.n.set(-side, 0, 0.3).normalize(); pin.d.set(side * 0.3, 0, 1).normalize();
+        pin.pole.set(S.x + side * 0.3, S.y - 0.5, S.z - 0.3);
+      } else if (this.car && /^seat/.test(this.car.mode) && this.car.sitW > 0.05) {
+        // resting on the thigh, palm down, fingers toward the knee
+        const L = this.leg[s], th = this.wp[L.th], kn = this.wp[L.ca];
+        const gk = this.gestK ? this.gestK[s] : 0;
+        want = sstep(0.3, 1, this.car.sitW) * (1 - gk);
+        pin.pose = "rest"; pin.cl = H.palmL;
+        pin.d.copy(kn).sub(th).normalize();
+        pin.at.copy(th).lerp(kn, 0.62).addScaledVector(UP, 0.075); pin.at.x += side * 0.012;
+        pin.n.set(0, -1, 0); pin.n.addScaledVector(pin.d, -pin.n.dot(pin.d)).normalize();
+        pin.pole.set(S.x + side * 0.12, S.y - 0.45, S.z - 0.35);
+      }
+      pin.k = damp(pin.k, want, want > pin.k ? (c ? 6 : 4) : 4, dt);
+      if (pin.k < 0.001) continue;
+      if (this.reaches && this.reaches[s] && this.reaches[s].k > 0.999) continue;
+      const off = this.handOffset(H, pin.cl || H.palmL, pin.d, pin.n, _f1);
+      this.ikArm(s, _f2.copy(pin.at).sub(off), pin.pole, pin.k);
+    }
+  }
+
+  /* ---- the hands: a pose for each (fingers, thumb, spread), the forearm turned so the palm faces the right way, the
+     wrist kept natural (the capture's wrists bend back and its palms face forward), all blended by what the body does ---- */
+  hands(dt) {
+    const st = this.handSt || (this.handSt = { l: { w: { relaxed: 1 } }, r: { w: { relaxed: 1 } } });
+    const run = sstep(1.9, 2.6, this.gs) * this.locoW * (1 - this.sitK);
+    const talkAll = this.talkW * (1 - this.locoW) * (1 - this.sitK);
+    const clipHands = Math.max(this.styleW || 0, this.sitK, this.shot ? 1 : 0);
+    for (const s of ["l", "r"]) {
+      const H = this.handRig[s], g = this.arm[s]; if (!H || !g) continue;
+      const S = st[s], side = s === "l" ? 1 : -1;
+      const talk = Math.max(talkAll * 0.3, this.gestK ? this.gestK[s] : 0);
+      // the pose this hand wants
+      const W = {};
+      W.relaxed = 1;
+      W.fist = run * 1.6;
+      W.open = talk * (s === "r" && this.holdK.umbrella > 0.5 ? 0 : 1.3);
+      if (s === "r") { W.grip = (this.holdK.umbrella || 0) * 4; W.phone = (this.holdK.phone || 0) * 4; }
+      const r = this.reaches && this.reaches[s];
+      if (r) W[r.pose || { grip: "grip", pinch: "pinch", press: "point", touch: "flat", cup: "cup", knock: "fist" }[r.hold] || "flat"] = 5 * sstep(0.2, 0.8, r.k);
+      const pin = this.pins && this.pins[s];
+      if (pin && pin.k > 0.001) W[pin.pose] = (W[pin.pose] || 0) + 6 * pin.k;
+      if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s]) W.grip = (W.grip || 0) + 6 * this.wheelHands[s].k;
+      if (this.handPose && this.handPose[s]) W[this.handPose[s]] = (W[this.handPose[s]] || 0) + 6;
+      for (const k of Object.keys(S.w)) if (!(k in W)) W[k] = 0;
+      let tot = 0;
+      for (const k in W) { S.w[k] = damp(S.w[k] || 0, W[k], r || this.carK ? 14 : 8, dt); tot += S.w[k]; }
+      // mix the curls
+      const cur = S.cur || (S.cur = { i: [0, 0, 0], m: [0, 0, 0], r: [0, 0, 0], p: [0, 0, 0], t: [0, 0, 0], s: 0 });
+      for (const f of "imrpt") for (let j = 0; j < 3; j++) cur[f][j] = 0;
+      cur.s = 0;
+      for (const k in S.w) { const w = S.w[k] / (tot || 1), P = HANDS[k]; if (!P || w < 1e-4) continue; for (const f of "imrpt") for (let j = 0; j < 3; j++) cur[f][j] += P[f][j] * w; cur.s += P.s * w; }
+      // a little life: the fingers of a hanging hand drift
+      const life = Math.sin(this.t * 0.7 + side * 1.3) * 0.04 * (1 - run);
+      // 1. turn the forearm so the palm faces where it should (about the forearm's own axis; the wrist stays put)
+      const la = g.la, ha = g.ha, wq = this.wq, wp = this.wp, lq = this.lq;
+      const fa = _v1.copy(wp[ha]).sub(wp[la]).normalize();
+      let aimK = 0, nT = null, dT = null;
+      if (r && r.aimN && r.k2 > 0) { aimK = r.k2; nT = r.aimN; dT = r.aimD; }
+      if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s] && this.wheelHands[s].k > 0) { aimK = this.wheelHands[s].k; nT = this.wheelHands[s].n; dT = this.wheelHands[s].d; }
+      if (pin && pin.k > 0.001 && !(r && r.k2 > 0.5) && pin.k > aimK) { aimK = pin.k; nT = pin.n; dT = pin.d; }
+      if (s === "r" && this.holdK.phone > 0.01 && this.phoneAim && aimK < this.holdK.phone) { aimK = this.holdK.phone; nT = this.phoneAim.n; dT = this.phoneAim.d; }
+      if (s === "r" && this.holdK.umbrella > 0.01 && aimK < this.holdK.umbrella) { aimK = this.holdK.umbrella; nT = _f3.set(0.3, 0, -1).normalize(); dT = _f4.set(1, 0, 0.3).normalize(); }
+      // the palm's resting direction: toward the thigh hanging, inward running, inward and up while explaining
+      const pal = _v2.set(-side, 0, -0.3).normalize();
+      pal.lerp(_v3.set(-side, 0.15, 0.05).normalize(), run).lerp(_v3.set(-side * 0.75, 0.65, 0.1).normalize(), talk * 0.7).normalize();
+      if (aimK > 0) pal.lerp(nT, aimK).normalize();
+      const twistK = (1 - clipHands * 0.7) * 0.9 + aimK * 0.1;
+      if (twistK > 0.01) {
+        const n = _v3.copy(H.nL).applyQuaternion(wq[ha]);
+        const a = n.addScaledVector(fa, -n.dot(fa)), b = _v4.copy(pal).addScaledVector(fa, -pal.dot(fa));
+        if (a.lengthSq() > 1e-6 && b.lengthSq() > 1e-6) {
+          a.normalize(); b.normalize();
+          let ang = Math.atan2(_k1.crossVectors(a, b).dot(fa), a.dot(b));
+          ang = clamp(ang, -1.6, 1.6) * twistK;
+          // most of the turn in the forearm, the rest at the wrist
+          _q3.setFromAxisAngle(fa, ang * 0.8); wq[la].premultiply(_q3); lq[la].copy(wq[g.ua]).invert().multiply(wq[la]); this.fkFrom(la);
+        }
+      }
+      // 2. the wrist: in line with the forearm, flexed a touch toward the palm (more hanging, a little running, slightly
+      //    back while explaining); or, holding something, the hand set exactly to the grip
+      const flex = lerp(lerp(0.07, 0.05, run), -0.12, talk * 0.8) + life * 0.4;
+      const dev = DEBUG.dev == null ? -0.08 * (1 - run) : DEBUG.dev;
+      _q1.copy(this.rest[this.order[ha].name].q).multiply(_q2.setFromAxisAngle(_k2.crossVectors(H.dL, H.nL).normalize(), flex)).multiply(_kq.setFromAxisAngle(H.nL, dev * side));
+      const wristK = clamp(1 - clipHands * 0.75, 0, 1);
+      lq[ha].slerp(_q1, wristK);
+      if (aimK > 0.001) {
+        // the hand's full frame: fingers along d, palm facing n (character space)
+        const n = _k3.copy(nT).addScaledVector(dT, -nT.dot(dT)).normalize(), d = _k4.copy(dT);
+        _m.makeBasis(d, _k1.crossVectors(n, d), n);
+        _kq.setFromRotationMatrix(_m);
+        _m2.makeBasis(H.dL, _k1.crossVectors(H.nL, H.dL), H.nL);
+        _kq2.setFromRotationMatrix(_m2).invert();
+        const want = _kq.multiply(_kq2); // world: takes the hand's own axes to (d, n)
+        // never bend the wrist past what a wrist does: limit the angle between the forearm and the fingers
+        const lim = 1.05;
+        const dw = _v4.copy(H.dL).applyQuaternion(want), ang = Math.acos(clamp(dw.dot(fa), -1, 1));
+        if (ang > lim) { _q3.setFromUnitVectors(dw, _v3.copy(dw).lerp(fa, 1 - lim / ang).normalize()); want.premultiply(_q3); }
+        _q2.copy(wq[la]).invert().multiply(want);
+        lq[ha].slerp(_q2, aimK);
+      }
+      wq[ha].copy(wq[la]).multiply(lq[ha]);
+      // the contact: wherever the wrist's limits left the hand, put the gripping part of it exactly on the target
+      // (move the wrist by the miss and solve the arm again, the hand keeping its frame); twice converges
+      let ct = null, ccl = null, cpole = null, ck = 0;
+      if (r && r.cl && r.k2 > 0) { ct = r.tc; ccl = r.cl; cpole = r.pole; ck = r.k2; }
+      if (this.carK > 0.01 && this.wheelHands && this.wheelHands[s] && this.wheelHands[s].at && this.car.wheelK > 0.01) { const wh = this.wheelHands[s]; ct = wh.at; ccl = H.gripL; cpole = wh.pole; ck = this.car.wheelK; }
+      if (!ct && pin && pin.k > 0.05 && pin.cl && !(r && r.k2 > 0.2)) { ct = pin.at; ccl = pin.cl; cpole = pin.pole; ck = pin.k; }
+      if (ct && ck > 0.05) {
+        // solved fully, then blended in with the hold's weight (no step when it starts)
+        const cw = sstep(0.05, 0.6, ck), ua = g.ua;
+        const q0u = _cq0.copy(lq[ua]), q0l = _cq1.copy(lq[la]), hw0 = _cq2.copy(wq[ha]);
+        for (let it = 0; it < 5; it++) {
+          const cur = _v4.copy(ccl).applyQuaternion(wq[ha]).add(wp[ha]), e = _v3.copy(ct).sub(cur);
+          if (e.lengthSq() < 4e-6) break;
+          const hw = _cq3.copy(wq[ha]); // (its own: ikArm uses the shared scratch quaternions)
+          this.ikArm(s, _f3.copy(wp[ha]).add(e), cpole, 1);
+          lq[ha].copy(wq[la]).invert().multiply(hw); wq[ha].copy(hw);
+        }
+        if (cw < 0.999) { lq[ua].copy(q0u.slerp(lq[ua], cw)); lq[la].copy(q0l.slerp(lq[la], cw)); this.fkFrom(ua); lq[ha].copy(wq[la]).invert().multiply(hw0); wq[ha].copy(hw0); }
+      }
+      // what is still missed (out of reach): the body leans further next frame (reachBody)
+      if (r && ct === r.tc) r.miss = _v4.copy(ccl).applyQuaternion(wq[ha]).add(wp[ha]).distanceTo(ct);
+      // 3. the fingers
+      // (each joint's rotation is kept and only rebuilt when its curl or the spread moves)
+      for (const F of H.fingers) {
+        const c = cur[F.f][F.j - 1] + (F.f !== "t" ? life * (F.j === 1 ? 1 : 0.5) : 0), sp = F.j === 1 ? cur.s * F.sgn : 0;
+        if (!F.cq || Math.abs(c - F.cc) > 0.003 || Math.abs(sp - F.cs) > 0.003) {
+          F.cq = F.cq || new THREE.Quaternion(); F.cc = c; F.cs = sp;
+          F.cq.copy(F.q).multiply(_q1.setFromAxisAngle(F.fx, c));
+          if (F.j === 1) F.cq.multiply(_q2.setFromAxisAngle(F.sx, sp));
+        }
+        lq[F.i].copy(F.cq);
+      }
+      this.fkFrom(ha);
     }
   }
 
@@ -808,6 +1767,11 @@ class Person {
       const sm = this.lookAtP ? 0.05 : 0.14;
       E.tx = (Math.random() - 0.5) * sm * 2; E.ty = (Math.random() - 0.5) * sm;
       E.t = this.lookAtP ? 0.4 + Math.random() * 1.4 : 0.8 + Math.random() * 2.5;
+    }
+    // reading: along a line and back to the start of the next, a little lower each time
+    if (this.lookTask && this.lookTask.read) {
+      const L = this.lookTask, per = 1.5, u = (L.t % per) / per, line = Math.floor(L.t / per) % 4;
+      E.tx = u < 0.85 ? lerp(-0.13, 0.13, u / 0.85) : lerp(0.13, -0.13, (u - 0.85) / 0.15); E.ty = 0.025 - line * 0.02; E.t = 1;
     }
     // the eyes cover what the head hasn't turned yet
     const ly = clamp(wantY - this.lookYaw * 1.2, -0.45, 0.45), lp = clamp(wantP - this.lookPitch * 0.95, -0.3, 0.3);
@@ -834,7 +1798,8 @@ class Person {
     const K = ["visAA", "visOW", "visEE", "visPBM", "visFV", "jawOpen"], tgt = { visAA: 0, visOW: 0, visEE: 0, visPBM: 0, visFV: 0, jawOpen: 0 };
     const words = this.words && this.t - this.wordsAt < 0.25 ? this.words : null;
     if (words) {
-      const now = this.wordsNow + (this.t - this.wordsAt);
+      // the audio clock (measured: with the blend rates below the mouth leads the sound by 10 to 60 ms, as lips do)
+      const now = this.wordsNow + (this.t - this.wordsAt) + (DEBUG.lipLead || 0);
       const w = words.find(x => now >= x.s - 0.02 && now <= x.e);
       if (w && w !== this.lastWord) {
         // a long or stressed word lifts the brows a touch, and the head marks the beat
@@ -842,7 +1807,10 @@ class Person {
         if (w.w.replace(/[^a-z]/gi, "").length >= 6 || /[!?]$/.test(w.w)) { this.browPulse = 0.35 + Math.random() * 0.25; if (Math.random() < 0.4 && !this.nodK) this.nodK = { t: 0, d: 0.4, a: 0.25 }; }
       }
       if (w) {
-        const seq = visemes(w.w), u = clamp((now - w.s) / Math.max(0.05, w.e - w.s), 0, 0.999), k = seq[Math.floor(u * seq.length)];
+        // a word's shapes over the time it takes to say them (a word whose timing runs on into a pause, often the last
+        // one of a line, closes the mouth when it's said instead of drawing the shapes out over the silence)
+        const seq = visemes(w.w), span = Math.min(Math.max(0.05, w.e - w.s), 0.075 * seq.length + 0.1);
+        const u = (now - w.s) / span, k = u < 1 ? seq[Math.floor(clamp(u, 0, 0.999) * seq.length)] : null;
         if (k) { tgt[k[0]] = k[1]; tgt.jawOpen = k[2]; }
       }
     } else if (this.mouth > 0.05) {
@@ -851,7 +1819,7 @@ class Person {
       if (this.vis && this.vis[0]) { tgt[this.vis[0]] = this.vis[1] * this.mouth; }
       if (this.vis) tgt.jawOpen = this.vis[2] * this.mouth;
     }
-    for (const k of K) { this.visK[k] = damp(this.visK[k] || 0, tgt[k], k === "visPBM" ? 30 : 20, dt); this.setFx(k, this.visK[k]); }
+    for (const k of K) { this.visK[k] = damp(this.visK[k] || 0, tgt[k], k === "visPBM" ? 40 : 28, dt); this.setFx(k, this.visK[k]); }
     // at rest the lips meet: the base face sits a little parted
     this.restLip = damp(this.restLip || 0, this.mouth < 0.05 && !words ? 1 : 0, 6, dt);
     this.setFx("mouthClose", 0); this.setFx("mouthPressLeft", this.restLip * 0.3); this.setFx("mouthPressRight", this.restLip * 0.3);
@@ -867,6 +1835,29 @@ class Person {
   }
 }
 function t0(p) { return p.t; }
+/* a steering wheel's turning axis: the thinnest axis of its meshes in its own frame */
+function rimAxisOf(W) {
+  const inv = new THREE.Matrix4().copy(W.matrixWorld).invert(), bb = new THREE.Box3(), v = new THREE.Vector3();
+  W.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i += 3) bb.expandByPoint(v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld).applyMatrix4(inv)); });
+  if (bb.isEmpty()) return "z";
+  const sz = bb.getSize(v);
+  return sz.z <= sz.x && sz.z <= sz.y ? "z" : sz.y <= sz.x ? "y" : "x";
+}
+
+/* the hand poses: per finger (i index, m middle, r ring, p little, t thumb) the curl at each joint from the knuckle out,
+   in radians toward the palm, and s the spread of the fingers. hands() blends them per hand by what the body does */
+const HANDS = {
+  relaxed: { i: [0.2, 0.3, 0.18], m: [0.28, 0.4, 0.22], r: [0.36, 0.48, 0.26], p: [0.44, 0.52, 0.3], t: [0.22, 0.12, 0.18], s: 0.02 },
+  flat:    { i: [0.06, 0.08, 0.04], m: [0.06, 0.08, 0.04], r: [0.08, 0.1, 0.05], p: [0.1, 0.12, 0.06], t: [0.05, 0.05, 0.08], s: 0.03 },
+  open:    { i: [0.1, 0.14, 0.08], m: [0.14, 0.2, 0.1], r: [0.2, 0.26, 0.14], p: [0.26, 0.3, 0.16], t: [0.0, 0.08, 0.12], s: 0.1 },
+  fist:    { i: [1.0, 1.35, 0.75], m: [1.1, 1.4, 0.75], r: [1.15, 1.4, 0.75], p: [1.2, 1.35, 0.7], t: [0.7, 0.35, 0.45], s: -0.04 },
+  grip:    { i: [0.85, 1.05, 0.55], m: [0.92, 1.1, 0.55], r: [0.98, 1.1, 0.55], p: [1.05, 1.05, 0.5], t: [0.75, 0.3, 0.3], s: -0.03 },
+  pinch:   { i: [0.55, 0.7, 0.35], m: [0.7, 0.9, 0.5], r: [0.85, 1.05, 0.55], p: [0.95, 1.05, 0.55], t: [0.65, 0.3, 0.3], s: 0 },
+  point:   { i: [0.04, 0.05, 0.03], m: [1.15, 1.4, 0.75], r: [1.2, 1.4, 0.75], p: [1.25, 1.35, 0.7], t: [0.6, 0.35, 0.4], s: 0 },
+  phone:   { i: [0.3, 0.35, 0.2], m: [0.36, 0.42, 0.22], r: [0.44, 0.46, 0.25], p: [0.52, 0.5, 0.3], t: [0.55, 0.1, 0.1], s: 0.02 },
+  cup:     { i: [0.5, 0.6, 0.35], m: [0.55, 0.65, 0.35], r: [0.6, 0.68, 0.35], p: [0.68, 0.68, 0.35], t: [0.45, 0.2, 0.15], s: -0.02 },
+  rest:    { i: [0.14, 0.2, 0.1], m: [0.16, 0.24, 0.12], r: [0.2, 0.28, 0.14], p: [0.26, 0.32, 0.16], t: [0.12, 0.1, 0.14], s: 0.03 }
+};
 
 /* blend pose b into a with weight w (per bone mask m), all in local quaternions */
 function blendPose(a, b, w, m) {
@@ -877,7 +1868,7 @@ function blendPose(a, b, w, m) {
     const o = i * 4;
     let x = qb[o], y = qb[o + 1], z = qb[o + 2], ww = qb[o + 3];
     if (qa[o] * x + qa[o + 1] * y + qa[o + 2] * z + qa[o + 3] * ww < 0) { x = -x; y = -y; z = -z; ww = -ww; }
-    const X = qa[o] + (x - qa[o]) * k, Y = qa[o + 1] + (y - qa[o + 1]) * k, Z = qa[o + 2] + (z - qa[o + 2]) * k, W = qa[o + 3] + (ww - qa[o + 3]) * k, L = 1 / (Math.hypot(X, Y, Z, W) || 1);
+    const X = qa[o] + (x - qa[o]) * k, Y = qa[o + 1] + (y - qa[o + 1]) * k, Z = qa[o + 2] + (z - qa[o + 2]) * k, W = qa[o + 3] + (ww - qa[o + 3]) * k, L = 1 / (Math.sqrt(X * X + Y * Y + Z * Z + W * W) || 1);
     qa[o] = X * L; qa[o + 1] = Y * L; qa[o + 2] = Z * L; qa[o + 3] = W * L;
   }
   const k = m ? 0 : w;

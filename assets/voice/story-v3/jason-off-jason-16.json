@@ -1,0 +1,68 @@
+{
+ "id": "jason-off-jason-16",
+ "text": "I designed the lead-to-title data model, the roles and the validation.",
+ "duration": 5.12,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.0,
+   "e": -0.074
+  },
+  {
+   "w": "designed",
+   "s": 0.0,
+   "e": 0.261
+  },
+  {
+   "w": "the",
+   "s": 0.261,
+   "e": 0.479
+  },
+  {
+   "w": "lead-to-title",
+   "s": 0.479,
+   "e": 1.149
+  },
+  {
+   "w": "data",
+   "s": 1.149,
+   "e": 1.417
+  },
+  {
+   "w": "model,",
+   "s": 1.417,
+   "e": 1.82
+  },
+  {
+   "w": "the",
+   "s": 2.239,
+   "e": 2.289
+  },
+  {
+   "w": "roles",
+   "s": 2.289,
+   "e": 2.607
+  },
+  {
+   "w": "and",
+   "s": 3.144,
+   "e": 3.211
+  },
+  {
+   "w": "the",
+   "s": 3.211,
+   "e": 3.311
+  },
+  {
+   "w": "validation.",
+   "s": 3.311,
+   "e": 3.714
+  }
+ ],
+ "retimed": {
+  "k": 0.838,
+  "b": -0.225,
+  "before": 0.73,
+  "after": 0.969
+ }
+}

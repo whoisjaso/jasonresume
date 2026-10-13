@@ -1,0 +1,103 @@
+{
+ "id": "jason-off-jason-6",
+ "text": "Then it does the registration math and routes the deal to the right documents. Nothing missing, nothing extra.",
+ "duration": 6.76,
+ "words": [
+  {
+   "w": "Then",
+   "s": 0.025,
+   "e": 0.835
+  },
+  {
+   "w": "it",
+   "s": 0.835,
+   "e": 1.007
+  },
+  {
+   "w": "does",
+   "s": 1.007,
+   "e": 1.302
+  },
+  {
+   "w": "the",
+   "s": 1.302,
+   "e": 1.523
+  },
+  {
+   "w": "registration",
+   "s": 1.523,
+   "e": 2.088
+  },
+  {
+   "w": "math",
+   "s": 2.088,
+   "e": 2.653
+  },
+  {
+   "w": "and",
+   "s": 2.653,
+   "e": 3.316
+  },
+  {
+   "w": "routes",
+   "s": 3.316,
+   "e": 3.684
+  },
+  {
+   "w": "the",
+   "s": 3.684,
+   "e": 4.004
+  },
+  {
+   "w": "deal",
+   "s": 4.004,
+   "e": 4.298
+  },
+  {
+   "w": "to",
+   "s": 4.298,
+   "e": 4.667
+  },
+  {
+   "w": "the",
+   "s": 4.667,
+   "e": 4.814
+  },
+  {
+   "w": "right",
+   "s": 4.814,
+   "e": 5.084
+  },
+  {
+   "w": "documents.",
+   "s": 5.084,
+   "e": 5.698
+  },
+  {
+   "w": "Nothing",
+   "s": 6.288,
+   "e": 6.337
+  },
+  {
+   "w": "missing,",
+   "s": 6.337,
+   "e": 6.681
+  },
+  {
+   "w": "nothing",
+   "s": 7.172,
+   "e": 6.76
+  },
+  {
+   "w": "extra.",
+   "s": 7.368,
+   "e": 7.448
+  }
+ ],
+ "retimed": {
+  "k": 1.228,
+  "b": 0.025,
+  "before": 0.833,
+  "after": 0.895
+ }
+}

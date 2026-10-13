@@ -1,11 +1,7 @@
 {
-  "_note": "The single source for the Slate, the record on the home page, the presentation deck and the resumes. tools/site/build_resume.py renders resume-pdf.html and resume/<build>.html from the resume block below and tools/site/builds.json. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
-  "name": "Jason Obawemimo",
-  "line": "I build the systems a business runs on, and I run the operations they serve.",
+  "_note": "The single source for the Slate, Check me, the presentation deck and the resumes. tools/site/assemble_home.py reads deck, slate, verify, email, calendar and pdf; tools/site/build_resume.py renders resume-pdf.html and resume/<build>.html from the resume block below, summary, courses and tools/site/builds.json. Every fact here must already be in llms.txt. Change a fact here, then run tools/site/assemble_home.py and tools/site/build_resume.py.",
   "summary": "I build the CRM, voice AI and automation systems a business runs on, and I run the operations they serve. At a Houston used vehicle dealership I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds since June 2025, while building production tools that connect lead intake, calls, scheduling, CRM records and follow-up.",
   "email": "jobawems@gmail.com",
-  "site": "jasonobawemimo.com",
-  "location": "Pearland, Texas",
   "calendar": "https://calendly.com/jason-apohenia/30min",
   "pdf": "assets/Jason_Obawemimo_Resume_2026.pdf?v=oct26s",
   "slate": [
@@ -24,147 +20,6 @@
     {
       "k": "Education",
       "v": "Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028. Associate of Arts in Business, San Jacinto College, May 2026, GPA 3.63, Dean's Honor List."
-    }
-  ],
-  "record": [
-    {
-      "id": "triplej",
-      "role": "Owner and Operations Lead",
-      "org": "Triple J Auto Investment and Rental Operations, Houston",
-      "when": "August 2024 to now",
-      "text": "I own it and run its operations: pricing, inventory, vendors, logistics, financing and title processing. Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds. The CRM, voice AI and automation it runs on are mine too, below.",
-      "proof": [
-        {
-          "label": "thetriplejauto.com",
-          "href": "https://thetriplejauto.com",
-          "ext": true
-        }
-      ],
-      "icon": {
-        "src": "assets/brand/triplej-logo.png",
-        "style": "logo"
-      }
-    },
-    {
-      "id": "crm",
-      "role": "Custom dealership CRM",
-      "org": "Handle a Sale, built for Triple J",
-      "when": "",
-      "text": "One system: the CRM I built for Triple J, with Handle a Sale as its sale desk. I designed the lead-to-title data model, roles and validation, tested its Supabase row-level security policies against unauthorized role access, and added validation that keeps invalid deal and inventory records from being written. I ran production schema migrations while preserving existing records and operational tables. Three staff use it daily across inventory, deals and follow-up. The sale desk asks one plain question at a time, scans the buyer's license once so every form fills itself, does the registration math, routes the deal to the right documents with nothing missing and nothing extra, works in English or Spanish, and the customer signs on their phone or in person. Every sale is saved on file. TypeScript, React, Next.js, PostgreSQL, Supabase and Vercel, with Edge Functions for the voice and texting webhooks.",
-      "proof": [
-        {
-          "label": "The film",
-          "href": "assets/film/triple-j-sale-desk.mp4",
-          "ext": true
-        }
-      ],
-      "icon": {
-        "sym": "i-file"
-      }
-    },
-    {
-      "id": "voice",
-      "role": "Inbound voice AI",
-      "org": "Retell AI, Bland AI, Twilio and CRM webhooks",
-      "when": "",
-      "text": "I deployed inbound voice AI that books appointments into the CRM and live-transfers unresolved calls to staff. Across August and September 2026 it averaged 41 inbound calls, 14 booked appointments and 4 CRM-matched vehicle sales per month ($15,000 a month in sale proceeds).",
-      "proof": [],
-      "icon": {
-        "sym": "i-ask"
-      }
-    },
-    {
-      "id": "prospecting",
-      "role": "Prospecting workflow",
-      "org": "Python, Claude API, n8n and CRM webhooks",
-      "when": "",
-      "text": "A Python workflow I built uses the Claude API to research Facebook Marketplace leads, writes its findings to the CRM, and generates SOP-based reply text for automatic follow-up. It's Triple J's live lead-research workflow.",
-      "proof": [],
-      "icon": {
-        "sym": "i-look"
-      }
-    },
-    {
-      "id": "obavia",
-      "role": "Founder",
-      "org": "Obavia",
-      "when": "September 2024 to now. In development.",
-      "text": "Obavia: every sale, start to signed, a dealership sale desk for Texas independent dealers. It grew out of Handle a Sale, the sale desk in the CRM I built for Triple J, and it's being built on that floor. It isn't live yet, and early access is a conversation.",
-      "proof": [
-        {
-          "label": "The briefing",
-          "href": "/obavia.html"
-        },
-        {
-          "label": "obavia.co",
-          "href": "https://obavia.co",
-          "ext": true
-        }
-      ],
-      "icon": {
-        "src": "assets/brand/obavia-icon.png",
-        "style": "full"
-      }
-    },
-    {
-      "id": "tools",
-      "role": "Skills",
-      "org": "What I build with",
-      "when": "",
-      "text": "TypeScript, JavaScript, Python and SQL. React, Next.js, PostgreSQL, Supabase and Vercel. Edge Functions, REST APIs, row-level security and webhook services. n8n, API integrations, Retell AI, Bland AI and Twilio. Claude Code, the Claude API and Codex. Git and GitHub, Excel and Google Sheets, and Microsoft 365 and Google Workspace, which I administer. Dealership operations, sales pipelines, inventory and vendor management. I speak Spanish professionally and proficiently.",
-      "proof": [
-        {
-          "label": "GitHub whoisjaso",
-          "href": "https://github.com/whoisjaso",
-          "ext": true
-        }
-      ],
-      "icon": {
-        "stack": [
-          "supabase",
-          "postgresql",
-          "vercel",
-          "claude",
-          "github"
-        ]
-      }
-    },
-    {
-      "id": "education",
-      "role": "Associate of Arts in Business",
-      "org": "San Jacinto College",
-      "when": "May 2026",
-      "text": "GPA 3.63, Dean's Honor List. Pursuing a Bachelor of Science in Neuroscience at The University of Texas at Austin, expected 2028. I also completed Google AI Essentials (Google, Coursera) in 2026.",
-      "proof": [
-        {
-          "label": "Degree PDF",
-          "href": "assets/Jason_Obawemimo_Associate_Degree.pdf"
-        }
-      ],
-      "icon": {
-        "mono": "SJ"
-      }
-    },
-    {
-      "id": "coursework",
-      "role": "Anthropic coursework",
-      "org": "Nineteen completed courses",
-      "when": "",
-      "text": "Claude, Claude Code, the Claude API, Model Context Protocol, agent skills, subagents, Bedrock, Vertex AI and the AI Fluency series.",
-      "proof": [
-        {
-          "label": "Certificates PDF",
-          "href": "assets/Jason_Obawemimo_Anthropic_Certificates.pdf"
-        },
-        {
-          "label": "Credential proof",
-          "href": "/credentials.html"
-        }
-      ],
-      "icon": {
-        "src": "assets/brand/stack/anthropic.svg",
-        "style": "ink"
-      }
     }
   ],
   "courses": [
@@ -187,18 +42,6 @@
     "Introduction to subagents",
     "AI Capabilities and Limitations",
     "AI Fluency for Small Businesses"
-  ],
-  "focus": [
-    "AI implementation",
-    "Workflow automation",
-    "CRM systems",
-    "Inbound voice AI",
-    "Dealership sale desk software",
-    "Title and registration workflow",
-    "Dealership operations",
-    "Sales pipelines",
-    "Supabase and PostgreSQL",
-    "Vercel deployments"
   ],
   "verify": [
     {
@@ -254,19 +97,13 @@
       "k": "Credentials",
       "v": "Credential and honor evidence",
       "href": "/credentials.html",
-      "kind": "credentials",
-      "icon": {
-        "mono": "C"
-      }
+      "kind": "credentials"
     },
     {
       "k": "Degree",
       "v": "Associate degree PDF",
       "href": "assets/Jason_Obawemimo_Associate_Degree.pdf",
-      "kind": "degree",
-      "icon": {
-        "mono": "SJ"
-      }
+      "kind": "degree"
     },
     {
       "k": "Coursework",
@@ -282,19 +119,13 @@
       "k": "Public record",
       "v": "City of Pearland document",
       "href": "https://documents.pearlandtx.gov/WebLink/DocView.aspx?dbid=0&id=1827555&repo=City-Of-Pearland",
-      "kind": "pearland",
-      "icon": {
-        "mono": "P"
-      }
+      "kind": "pearland"
     },
     {
       "k": "Older mentions",
       "v": "Reporter News, Pearland and Friendswood",
       "href": "/mentions.html",
-      "kind": "mentions",
-      "icon": {
-        "mono": "R"
-      }
+      "kind": "mentions"
     },
     {
       "k": "Email",

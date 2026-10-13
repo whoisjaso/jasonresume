@@ -10,7 +10,7 @@
       <image:geo_location>Pearland, Texas, United States</image:geo_location>
     </image:image>
     <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/favicon-512.png</image:loc>
+      <image:loc>https://jasonobawemimo.com/assets/favicon-w-512.png</image:loc>
       <image:title>Jason Obawemimo favicon portrait</image:title>
       <image:caption>Site icon for Jason Obawemimo's official portfolio.</image:caption>
     </image:image>
@@ -23,10 +23,6 @@
       <image:loc>https://jasonobawemimo.com/assets/brand/triplej-logo.png</image:loc>
       <image:title>Triple J Auto Investment monogram</image:title>
       <image:caption>Monogram of Triple J Auto Investment, owned and operated by Jason Obawemimo.</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/film/signature-poster.jpg</image:loc>
-      <image:title>Jason Obawemimo, signature film poster</image:title>
     </image:image>
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/film/triple-j-sale-desk.jpg</image:loc>

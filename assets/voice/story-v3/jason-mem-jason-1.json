@@ -1,0 +1,78 @@
+{
+ "id": "jason-mem-jason-1",
+ "text": "Nineteen completed Anthropic courses. Building with the Claude API is one of them.",
+ "duration": 5.44,
+ "words": [
+  {
+   "w": "Nineteen",
+   "s": 0.04,
+   "e": 0.582
+  },
+  {
+   "w": "completed",
+   "s": 0.582,
+   "e": 1.124
+  },
+  {
+   "w": "Anthropic",
+   "s": 1.124,
+   "e": 1.948
+  },
+  {
+   "w": "courses.",
+   "s": 1.948,
+   "e": 2.349
+  },
+  {
+   "w": "Building",
+   "s": 2.349,
+   "e": 3.032
+  },
+  {
+   "w": "with",
+   "s": 3.032,
+   "e": 3.293
+  },
+  {
+   "w": "the",
+   "s": 3.293,
+   "e": 3.454
+  },
+  {
+   "w": "Claude",
+   "s": 3.454,
+   "e": 3.795
+  },
+  {
+   "w": "API",
+   "s": 3.795,
+   "e": 4.297
+  },
+  {
+   "w": "is",
+   "s": 4.297,
+   "e": 4.779
+  },
+  {
+   "w": "one",
+   "s": 4.779,
+   "e": 5.02
+  },
+  {
+   "w": "of",
+   "s": 5.02,
+   "e": 5.16
+  },
+  {
+   "w": "them.",
+   "s": 5.16,
+   "e": 5.361
+  }
+ ],
+ "retimed": {
+  "k": 1.004,
+  "b": 0.04,
+  "before": 0.925,
+  "after": 0.939
+ }
+}

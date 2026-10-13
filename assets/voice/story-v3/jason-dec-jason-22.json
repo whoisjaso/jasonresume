@@ -1,0 +1,58 @@
+{
+ "id": "jason-dec-jason-22",
+ "text": "I keep a business's data structured, clean and intact.",
+ "duration": 3.96,
+ "words": [
+  {
+   "w": "I",
+   "s": 0.04,
+   "e": 0.246
+  },
+  {
+   "w": "keep",
+   "s": 0.246,
+   "e": 0.472
+  },
+  {
+   "w": "a",
+   "s": 0.472,
+   "e": 0.677
+  },
+  {
+   "w": "business's",
+   "s": 0.677,
+   "e": 1.274
+  },
+  {
+   "w": "data",
+   "s": 1.274,
+   "e": 1.644
+  },
+  {
+   "w": "structured,",
+   "s": 1.644,
+   "e": 2.26
+  },
+  {
+   "w": "clean",
+   "s": 2.713,
+   "e": 3.062
+  },
+  {
+   "w": "and",
+   "s": 3.062,
+   "e": 3.494
+  },
+  {
+   "w": "intact.",
+   "s": 3.494,
+   "e": 3.864
+  }
+ ],
+ "retimed": {
+  "k": 1.028,
+  "b": 0.04,
+  "before": 0.881,
+  "after": 0.942
+ }
+}

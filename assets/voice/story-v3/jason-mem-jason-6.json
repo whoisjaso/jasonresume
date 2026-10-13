@@ -1,0 +1,23 @@
+{
+ "id": "jason-mem-jason-6",
+ "text": "One more.",
+ "duration": 0.84,
+ "words": [
+  {
+   "w": "One",
+   "s": 0.04,
+   "e": 0.376
+  },
+  {
+   "w": "more.",
+   "s": 0.376,
+   "e": 0.76
+  }
+ ],
+ "retimed": {
+  "k": 1.2,
+  "b": 0.04,
+  "before": 0.774,
+  "after": 0.988
+ }
+}

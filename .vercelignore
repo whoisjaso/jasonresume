@@ -7,7 +7,6 @@
 # (discovery.json links scripts/; vercel.json gives the .md files noindex).
 /SPEC.md
 /DESIGN.md
-/PUBLISH_NOW.md
 /HANDOFF.md
 /OUTREACH.md
 /RESEARCH.md

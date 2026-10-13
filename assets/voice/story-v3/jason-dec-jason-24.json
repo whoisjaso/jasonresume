@@ -1,0 +1,38 @@
+{
+ "id": "jason-dec-jason-24",
+ "text": "So your lot misses calls.",
+ "duration": 1.92,
+ "words": [
+  {
+   "w": "So",
+   "s": 0.04,
+   "e": 0.28
+  },
+  {
+   "w": "your",
+   "s": 0.28,
+   "e": 0.52
+  },
+  {
+   "w": "lot",
+   "s": 0.52,
+   "e": 0.88
+  },
+  {
+   "w": "misses",
+   "s": 0.88,
+   "e": 1.288
+  },
+  {
+   "w": "calls.",
+   "s": 1.288,
+   "e": 1.912
+  }
+ ],
+ "retimed": {
+  "k": 1.2,
+  "b": 0.04,
+  "before": 0.802,
+  "after": 0.995
+ }
+}

@@ -21,9 +21,12 @@
 import * as THREE from "../../vendor/three-0.184.0/three.module.min.js";
 import { loadCast, DEBUG } from "../../story/people.js";
 import { GLTFLoader } from "../../vendor/three-0.184.0/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "../../vendor/meshopt-0.22.0/meshopt_decoder.module.js";
 import { U } from "../../story/paint.js";
 import { brush } from "../../story/tex.js";
 const q = new URLSearchParams(location.search);
+// the same run every time: a seeded random (the cast's blinks, glances, beats and tempo), ?seed= to vary it
+{ let a = +(q.get("seed") || 1) >>> 0; Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const who = (q.get("who") || "jason").split(",");
 const W = +(q.get("w") || innerWidth), H = +(q.get("h") || innerHeight);
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -39,6 +42,29 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasi
 const chair = new THREE.Group(); const cm = new THREE.MeshBasicMaterial({ color: "#5a4a3a" });
 const bx = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cm); m.position.set(x, y, z); chair.add(m); };
 bx(0.5, 0.06, 0.5, 0, 0.46, 0); bx(0.5, 0.5, 0.06, 0, 0.74, -0.24); bx(0.06, 0.44, 0.06, 0, 0.22, 0); chair.visible = false; scene.add(chair);
+
+// a car to get into and drive: ?car=sedan (assets/story/world/car-<kind>-v2.glb) as a stand-in for story/vehicle.js,
+// with the same parts and calls (tools/story/HANDOFF-drive.md): body, seat, steeringWheel, doors, speed, steerAngle
+let CAR = null;
+if (q.get("car")) {
+  const ld = new GLTFLoader(); ld.setMeshoptDecoder(MeshoptDecoder);
+  const g = await ld.loadAsync("../../assets/story/world/car-" + q.get("car") + "-v2.glb");
+  const root = new THREE.Group(); root.add(g.scene); scene.add(root);
+  const col = { paint: ["#4a5866", 0.3], glass: ["#9fb6c8", 0.12], interior: ["#2b2926", 1], seat: ["#3d3530", 1], dash: ["#1e1d1c", 1], tire: ["#111", 1], rim: ["#888", 1], chrome: ["#aaa", 1], trim: ["#222", 1], well: ["#151515", 1] };
+  g.scene.traverse(o => { if (o.isMesh) { const nm = (o.material.name || "trim").replace(/\.\d+$/, ""), c = col[nm] || ["#444", 1]; o.material = new THREE.MeshBasicMaterial({ color: c[0], transparent: c[1] < 1, opacity: c[1], depthWrite: c[1] >= 1, side: THREE.DoubleSide }); o.frustumCulled = false; } });
+  const body = g.scene.getObjectByName("body"), V3 = THREE.Vector3;
+  const dn = s => body.getObjectByName(s === "passenger" ? "door_R" : "door_L"), sxOf = s => (s === "passenger" ? -1 : 1);
+  CAR = { object: root, body, seat: body.getObjectByName("seat_D"), seatP: body.getObjectByName("seat_P"), steeringWheel: body.getObjectByName("steer"),
+    speed: 0, steerAngle: 0, wheelAngle: 0, throttle: 0, brake: 0,
+    doors: { t: { driver: 0, passenger: 0 }, node: dn, get(s) { return this.t[s] || 0; },
+      open(s, t) { this.t[s] = t; dn(s).rotation.y = -sxOf(s) * t * 1.134; },
+      handle(s) { return dn(s).localToWorld(new V3(sxOf(s) * 0.03, 0.36, -1.08)); },
+      inner(s) { return dn(s).localToWorld(new V3(-sxOf(s) * 0.08, 0.27, -0.72)); } } };
+  CAR.steeringWheel.userData.rimR = 0.185;
+  // the handoff's wheel turns about its local Z with the rim in local XY; a model whose rim lies in XZ is stood up here
+  // (?wheelfix=0 keeps the model as it is)
+  { const W = CAR.steeringWheel, m = W.children.find(o => o.isMesh); if (m && q.get("wheelfix") !== "0") { m.geometry.computeBoundingBox(); const s = new THREE.Vector3(); m.geometry.boundingBox.getSize(s); if (s.y < s.z && s.y < s.x) { const pv = new THREE.Group(); pv.rotation.x = -Math.PI / 2; W.add(pv); pv.add(m); } } }
+}
 const cast = await loadCast("../../assets/story/cast/", { clips: q.get("clips") || undefined });
 const P = [];
 for (let i = 0; i < who.length; i++) { const p = await cast.make(who[i] + "-v1"); scene.add(p.group); p.pos.set((i - (who.length - 1) / 2) * 1.2, 0, 0); P.push(p); }
@@ -71,9 +97,9 @@ if (q.get("refgrid")) {
 // any clip, played straight on the first person: ?clip=name
 if (q.get("clip")) { const c = cast.motion.clips[q.get("clip")]; if (c) { cast.motion.clips.idle = c; c.loop = true; } }
 // a voice line's word timings driving the first person's mouth: ?words=<line id in assets/voice/story>
-let WORDS = null; if (q.get("words")) WORDS = await (await fetch("../../assets/voice/story/" + q.get("words") + ".json")).json();
+let WORDS = null; if (q.get("words")) WORDS = await (await fetch("../../assets/voice/" + (q.get("vdir") || "story-v3") + "/" + q.get("words") + ".json")).json();
 const run = q.get("run") || "idle", speed = +(q.get("speed") || 1.45);
-let T = 0;
+let T = 0; const REACH = {}, CARS = {}, IX = {};
 // a scripted driver, deterministic in time
 function drive(p, i, dt) {
   const t = T;
@@ -99,10 +125,106 @@ function drive(p, i, dt) {
   } else if (run === "talk") {
     p.talk = Math.sin(t * 7) > -0.3 && (t % 6) < 4.5 ? 1 : 0.15; if ((t % 6) > 4.5) p.talk = 0;
     p.lookAtP = new THREE.Vector3(Math.sin(t * 0.3) * 1.5, 1.6, 2);
+  } else if (run === "car" && i === 0 && CAR) {
+    // ?run=car&seq=enter|drive|exit: walk up, open the door, get in, close it, take the wheel; or drive (the wheel and
+    // the car turning); or get out
+    const seq = q.get("seq") || "enter";
+    if (!CARS.started) {
+      CARS.started = true;
+      if (seq === "enter") { p.pos.set(2.6, 0, -2.6); p.yaw = p.wantYaw = 0; p.enterCar(CAR, "driver").then(() => (CARS.done = T)); }
+      else { p.drive(CAR); if (seq === "exit") CARS.exitAt = 1.0; }
+    }
+    if (CARS.exitAt != null && t >= CARS.exitAt) { CARS.exitAt = null; p.exitCar(CAR).then(() => (CARS.done = T)); }
+    if (seq === "drive") {
+      // the wheel a full turn each way (hand over hand), the car on a gentle curve
+      const w = +(q.get("wheel") || 0) || Math.sin(t * 0.55) * 4.2;
+      CAR.wheelAngle = w; CAR.steerAngle = w / 14; { const W = CAR.steeringWheel; W.userData.q0 = W.userData.q0 || W.quaternion.clone(); const ax = W.userData.rimAxis || "z"; const a = new THREE.Vector3(); a[ax] = 1; W.quaternion.copy(W.userData.q0).multiply(new THREE.Quaternion().setFromAxisAngle(a, w)); } CAR.speed = 6; CAR.throttle = 0.4 + 0.3 * Math.sin(t);
+      if (q.get("move")) { CARS.yaw = (CARS.yaw || 0) - CAR.steerAngle * 6 / 2.8 * dt; CAR.object.rotation.y = CARS.yaw; CAR.object.position.x += Math.sin(CARS.yaw) * 6 * dt; CAR.object.position.z += Math.cos(CARS.yaw) * 6 * dt; }
+    }
+  } else if (run === "ix" && i === 0) {
+    // things to do: ?run=ix&seq=sit|cup|knock|switch|lid|read|all
+    if (!IX.made) { IX.made = true; ixScene(p); }
+    if (IX.drive) IX.drive(dt);
+    if (IX.waits) for (let k = IX.waits.length - 1; k >= 0; k--) if (T >= IX.waits[k].t1) { IX.waits[k].r(); IX.waits.splice(k, 1); }
+  } else if (run === "reach" && i === 0) {
+    // reaching for things: a door handle, a book on a shelf, keys on the floor; a red dot marks each contact point
+    if (!REACH.made) {
+      REACH.made = true;
+      const mk = (c, w, h, d, x, y, z, o = 1) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, depthWrite: o >= 1 })); m.position.set(x, y, z); scene.add(m); return m; };
+      mk("#3b3631", 0.9, 2.1, 0.05, 0.55, 1.05, 0.58, 0.35);                    // a door
+      mk("#9a9a9a", 0.13, 0.022, 0.022, 0.3, 1.0, 0.53);                  // its handle (bar along x)
+      mk("#4a3a2c", 0.6, 0.03, 0.3, -0.5, 1.42, 0.5, 0.6);                    // a shelf
+      mk("#7a2e26", 0.035, 0.22, 0.16, -0.36, 1.545, 0.42);                  // a book standing on it
+      mk("#c9a96a", 0.05, 0.012, 0.03, 0.16, 0.006, 0.42);                  // keys on the floor
+      const dot = new THREE.MeshBasicMaterial({ color: "#ff2a2a", depthTest: false });
+      REACH.pts = [ [new THREE.Vector3(0.3, 1.0, 0.53), "grip"], [new THREE.Vector3(-0.36, 1.6, 0.42), "pinch"], [new THREE.Vector3(0.16, 0.02, 0.42), "pinch"], [new THREE.Vector3(0.14, 1.3, 0.55), "press"] ];
+      for (const [v] of REACH.pts) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), dot); d.position.copy(v); d.renderOrder = 9; scene.add(d); }
+      REACH.k = 0; REACH.next = 0.5;
+    }
+    // (the harness steps frames synchronously, so poll the reach rather than wait on its promise)
+    const busy = p.reaches && (p.reaches.l || p.reaches.r);
+    if (busy) REACH.next = t + 0.4;
+    else if (t >= REACH.next) {
+      const sel = q.get("pt") != null ? +q.get("pt") : REACH.k++ % REACH.pts.length;
+      const [v, hold] = REACH.pts[sel];
+      p.reachTo(v, { hold, contact: 0.6 });
+    }
   } else if (run === "sit") { chair.visible = true; chair.position.set(p.pos.x, 0, p.pos.z); p.pose = (t % 8) < 6 ? "sit" : "stand"; }
   if (WORDS && i === 0) { const now = t % (WORDS.duration + 0.6); const w = WORDS.words.find(w => now >= w.s && now <= w.e); p.talk = w ? 1 : 0.15; p.speak(WORDS.words, now); }
   if (q.get("hold")) p.hold = q.get("hold");
   if (q.get("look")) p.lookAtP = new THREE.Vector3(0, 1.6, 3);
+}
+
+// the things-to-do scene: a chair, a table with a cup and a book, a door, a switch and a button, a lid, a sign
+function ixScene(p) {
+  const seq = q.get("seq") || "all";
+  const M = c => new THREE.MeshBasicMaterial({ color: c });
+  const box = (c, w, h, d, x, y, z, par = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); par.add(m); return m; };
+  const dot = new THREE.MeshBasicMaterial({ color: "#ff2a2a", depthTest: false });
+  const mark = v => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), dot); d.position.copy(v); d.renderOrder = 9; scene.add(d); return d; };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // a chair facing +z at (0, 0, 1.6): seat top 0.46
+  const chair = new THREE.Group(); scene.add(chair); chair.position.set(0, 0, 1.6);
+  box("#5a4a3a", 0.46, 0.05, 0.44, 0, 0.435, 0, chair); box("#5a4a3a", 0.46, 0.5, 0.05, 0, 0.71, -0.22, chair);
+  for (const [x, z] of [[-0.2, -0.19], [0.2, -0.19], [-0.2, 0.19], [0.2, 0.19]]) box("#4a3a2c", 0.04, 0.42, 0.04, x, 0.21, z, chair);
+  // a table at z 2.6 (top 0.75) with a cup and a book; a second table to the side to put them on
+  box("#4a3a2c", 0.9, 0.04, 0.6, 0.0, 0.73, 3.0); box("#4a3a2c", 0.6, 0.04, 0.5, 1.4, 0.73, 1.0);
+  const cup = new THREE.Group(); scene.add(cup); cup.position.set(0.12, 0.75, 2.78);
+  const cm = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.036, 0.1, 16), M("#e9e4da")); cm.position.y = 0.05; cup.add(cm);
+  const book = new THREE.Group(); scene.add(book); book.position.set(-0.18, 0.75, 2.8); book.rotation.y = 0.3;
+  const bm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.23), M("#7a2e26")); bm.position.y = 0.015; book.add(bm);
+  // a door at z -2 (facing +z), a switch and a button beside it; a lid (a trunk) at x -2; a sign at x 2
+  box("#3b3631", 0.9, 2.1, 0.05, 0, 1.05, -2.0);
+  box("#d8d2c6", 0.07, 0.11, 0.015, 0.7, 1.25, -1.98); box("#9a9a9a", 0.03, 0.03, 0.012, 0.7, 1.05, -1.98);
+  const lidP = new THREE.Group(); lidP.position.set(-2.0, 1.0, -0.35); scene.add(lidP); // the hinge at the back, lid toward +z
+  const lid = box("#4a5866", 1.2, 0.03, 0.75, 0, 0, 0.375, lidP);
+  box("#3a4652", 1.2, 0.95, 0.9, -2.0, 0.47, 0.05);
+  const sign = box("#ece6d8", 0.6, 0.4, 0.02, 2.2, 1.55, 0.2); sign.rotation.y = -Math.PI / 2;
+  IX.parts = { chair, cup, book, lidP };
+  // waits end on the lab's own clock, checked as it steps, so a run is the same every time
+  IX.waits = [];
+  const wait = s => new Promise(r => IX.waits.push({ t1: T + s, r }));
+  const walkTo = (x, z, sp = 1.3) => new Promise(r => { IX.walk = { x, z, sp, r }; });
+  IX.drive = (dt) => { const w = IX.walk; if (!w) return; const dx = w.x - p.pos.x, dz = w.z - p.pos.z, d = Math.hypot(dx, dz); if (d < 0.04) { IX.walk = null; p.speed = 0; w.r(); return; } const k = Math.min(1, w.sp * dt / d); p.pos.x += dx * k; p.pos.z += dz * k; p.wantYaw = Math.atan2(dx, dz); p.speed = w.sp; };
+  const face = y => { p.wantYaw = y; return wait(0.7); };
+  const lidEdge = side => () => { lidP.updateMatrixWorld(true); return lidP.localToWorld(V(side * 0.35, 0.03, 0.75)); };
+  (async () => {
+    p.pos.set(0, 0, 0); p.yaw = p.wantYaw = 0;
+    await wait(0.3);
+    if (seq === "sit" || seq === "all") { IX.stage = "sit"; await walkTo(0.9, 2.6); await p.sitDown(V(0, 0.46, 1.6), 0); await wait(seq === "sit" ? 2.5 : 1.2); if (q.get("talk")) { p.talk = 1; await wait(2.5); p.talk = 0; } await p.standUp(); await walkTo(0, 0.6); }
+    if (seq === "cup" || seq === "all") { IX.stage = "cup";
+      await walkTo(0.15, 2.3); await face(0); await wait(0.2);
+      await p.pickUp(cup); await wait(0.3);
+      await walkTo(1.4, 0.6, 1.2); await face(Math.atan2(0, 0.4)); await wait(0.2);
+      await p.putDown(V(1.38, 0.75, 1.02)); (IX.placed = IX.placed || []).push({ obj: cup, at: V(1.38, 0.75, 1.02), t: T }); await wait(0.3);
+      if (seq === "cup") { await walkTo(-0.1, 2.3); await face(0); await p.pickUp(book); await wait(0.6); await p.putDown(V(-0.2, 0.75, 2.85)); (IX.placed = IX.placed || []).push({ obj: book, at: V(-0.2, 0.75, 2.85), t: T }); }
+    }
+    if (seq === "knock" || seq === "all") { IX.stage = "knock"; await walkTo(0.1, -1.45); await face(Math.PI); await p.knock(V(0.12, 1.35, -1.97)); await wait(0.3); }
+    if (seq === "switch" || seq === "all") { IX.stage = "switch"; await walkTo(0.62, -1.5); await face(Math.PI); await p.flip(V(0.7, 1.25, -1.97)); await wait(0.3); await p.press(V(0.7, 1.05, -1.975)); await wait(0.3); }
+    if (seq === "lid" || seq === "all") { IX.stage = "lid"; await walkTo(-2.0, 0.95); await face(Math.PI); await p.openLid(() => ({ l: lidEdge(-1)(), r: lidEdge(1)() }), { dur: 1.3, onProgress: t => { lidP.rotation.x = -t * 1.25; } }); await wait(0.5); }
+    if (seq === "read" || seq === "all") { IX.stage = "read"; await walkTo(1.3, 0.2); await face(Math.PI / 2); await p.lookAt(V(2.18, 1.58, 0.2), { read: true, dur: 4 }); }
+    IX.done = T;
+  })();
 }
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 function ang(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
@@ -115,17 +237,34 @@ function placeCam() {
   else if (camMode === "follow") { const y = p.yaw; camera.position.set(c.x - Math.sin(y) * 4 + 1.2, 1.7, c.z - Math.cos(y) * 4); camera.lookAt(c.x, 1.0, c.z); }
   else if (camMode === "feet") { camera.position.set(c.x + 2.2, 0.35, c.z + 0.4); camera.lookAt(c.x, 0.25, c.z); }
   else if (camMode === "face") { const h = p.headWorld(new THREE.Vector3()); camera.position.set(h.x + Math.sin(p.yaw) * 0.75 + 0.15, h.y - 0.02, h.z + Math.cos(p.yaw) * 0.75); camera.lookAt(h.x, h.y - 0.05, h.z); }
+  else if (camMode === "hand" || camMode === "handl") {
+    // close on a hand, from the body's side, so wrist angles and fingers read
+    const b = p.bones[camMode === "hand" ? "hand_r" : "hand_l"], h = b.getWorldPosition(new THREE.Vector3()), sd = camMode === "hand" ? -1 : 1, y = p.yaw;
+    const d = +(q.get("cd") || 0.75);
+    camera.position.set(h.x + Math.cos(y) * sd * d + Math.sin(y) * d * 0.35, h.y + 0.12, h.z - Math.sin(y) * sd * d + Math.cos(y) * d * 0.35); camera.lookAt(h);
+  }
+  else if (camMode === "arm") { const y = p.yaw; camera.position.set(c.x + Math.sin(y + 0.9) * 2.4, 1.3, c.z + Math.cos(y + 0.9) * 2.4); camera.lookAt(c.x, 1.05, c.z); }
+  else if (camMode === "armr") { const y = p.yaw; camera.position.set(c.x + Math.sin(y - 0.9) * 2.4, 1.3, c.z + Math.cos(y - 0.9) * 2.4); camera.lookAt(c.x, 1.05, c.z); }
+  else if (camMode === "car") { const o = CAR ? CAR.object.position : c; camera.position.set(o.x + 3.6, 1.45, o.z - 1.2); camera.lookAt(o.x + 0.7, 0.85, o.z - 0.2); }
+  else if (camMode === "carin") { const o = CAR.object; const v = new THREE.Vector3(-0.15, 1.2, 1.05); o.localToWorld(v); camera.position.copy(v); camera.lookAt(o.localToWorld(new THREE.Vector3(0.42, 0.95, -0.05))); }
+  else if (camMode === "carpass") { const o = CAR.object; const v = new THREE.Vector3(-0.42, 1.12, -0.22); o.localToWorld(v); camera.position.copy(v); camera.lookAt(o.localToWorld(new THREE.Vector3(0.36, 0.98, 0.12))); }
+  else if (camMode === "carside") { const o = CAR.object; const v = new THREE.Vector3(2.4, 1.15, -0.05); o.localToWorld(v); camera.position.copy(v); camera.lookAt(o.localToWorld(new THREE.Vector3(0.4, 0.85, 0.1))); }
+  else if (camMode === "ix") { const y = p.yaw + (+(q.get("ca") || 0.9)), d = +(q.get("cd") || 2.3); camera.position.set(c.x + Math.sin(y) * d, 1.35, c.z + Math.cos(y) * d); camera.lookAt(c.x, +(q.get("cy") || 0.9), c.z); }
+  else if (camMode === "reachl" || camMode === "reachr") { const sd = camMode === "reachl" ? 1 : -1; camera.position.set(c.x + sd * 2.2, 1.15, c.z + 1.3); camera.lookAt(c.x + sd * 0.1, 0.85, c.z + 0.3); }
+  else if (camMode === "reach") { camera.position.set(c.x - 1.0, 1.15, c.z + 2.4); camera.lookAt(c.x, 0.85, c.z + 0.2); }
   else if (camMode === "grid") { camera.position.set(0, 2.2, 7.5); camera.lookAt(0, 0.6, -1.2); }
   else if (camMode === "fixed") { const z = +(q.get("cz") || 4); camera.position.set(6, 1.3, z); camera.lookAt(0, 0.9, z); }
 }
 function step(dt) { T += dt; P.forEach((p, i) => { drive(p, i, dt); p.update(dt); }); if (refMix) refMix.update(dt); refMixers.forEach(m => m.update(dt)); }
 function render() { placeCam(); U.uTime.value = T; renderer.render(scene, camera); hud.textContent = q.get("hud") === "0" ? "" : `${run}  t ${T.toFixed(2)}  v ${P[0].gs.toFixed(2)}  loco ${P[0].locoW.toFixed(2)} jog ${P[0].jogW.toFixed(2)} stride ${(P[0].stride || 0).toFixed(2)}`; }
-function sheet(cols, rows, every, dt = 1 / 30) {
+// a frame at a time with the page's promises let through between frames (the cast's moves are async: pick up, sit...)
+const tick = () => new Promise(r => { const ch = new MessageChannel(); ch.port1.onmessage = () => r(); ch.port2.postMessage(0); });
+async function sheet(cols, rows, every, dt = 1 / 30) {
   const c = document.createElement("canvas"); c.width = W * cols; c.height = H * rows; const g = c.getContext("2d");
-  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) step(dt); render(); g.fillStyle = "#2a2f2d"; g.fillRect((k % cols) * W, Math.floor(k / cols) * H, W, H); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
+  for (let k = 0; k < cols * rows; k++) { for (let i = 0; i < every; i++) { step(dt); await tick(); } render(); g.fillStyle = "#2a2f2d"; g.fillRect((k % cols) * W, Math.floor(k / cols) * H, W, H); g.drawImage(renderer.domElement, (k % cols) * W, Math.floor(k / cols) * H, W, H); g.fillStyle = "#ede7db"; g.font = "12px sans-serif"; g.fillText(T.toFixed(2), (k % cols) * W + 4, Math.floor(k / cols) * H + 14); }
   return c.toDataURL("image/png");
 }
-window.LAB = { P, step, render, sheet, advance(n, dt = 1 / 30) { for (let i = 0; i < n; i++) step(dt); render(); return T; }, cast };
+window.LAB = { P, step, render, sheet, tick, get IX() { return IX; }, async advance(n, dt = 1 / 30) { for (let i = 0; i < n; i++) { step(dt); await tick(); } render(); return T; }, cast };
 if (q.get("auto") !== "0") { let last = performance.now(); (function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; step(dt); render(); requestAnimationFrame(loop); })(last); }
 else { step(0); render(); }
 window.LAB_READY = true;

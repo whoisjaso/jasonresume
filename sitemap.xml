@@ -16,14 +16,6 @@
       <image:title>Jason Obawemimo, owner and operator of Triple J Auto Investment and founder of Obavia</image:title>
     </image:image>
     <video:video>
-      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/signature-poster.jpg</video:thumbnail_loc>
-      <video:title>Jason Obawemimo, the signature film</video:title>
-      <video:description>A five second title film of Jason Obawemimo, owner and operator of Triple J Auto Investment and founder of Obavia, that opens jasonobawemimo.com.</video:description>
-      <video:content_loc>https://jasonobawemimo.com/assets/film/signature.mp4</video:content_loc>
-      <video:duration>5</video:duration>
-      <video:family_friendly>yes</video:family_friendly>
-    </video:video>
-    <video:video>
       <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/triple-j-sale-desk.jpg</video:thumbnail_loc>
       <video:title>Triple J: Handle a Sale</video:title>
       <video:description>Handle a Sale, the sale desk in the CRM Jason Obawemimo built for Triple J Auto Investment in Houston and the system the dealership closes sales on: one plain question at a time, one license scan that fills every form, the registration math, and the right documents with nothing missing and nothing extra, in English or Spanish.</video:description>
@@ -341,21 +333,5 @@
       <image:loc>https://jasonobawemimo.com/assets/stp/og-stp.jpg</image:loc>
       <image:title>Stop Thinking Poor. No caption, just action.</image:title>
     </image:image>
-  </url>
-  <url>
-    <loc>https://jasonobawemimo.com/walkthrough.html</loc>
-    <lastmod>2026-10-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <video:video>
-      <video:thumbnail_loc>https://jasonobawemimo.com/assets/film/after-hours.jpg</video:thumbnail_loc>
-      <video:title>After Hours, the walkthrough</video:title>
-      <video:description>After Hours, a narrated walkthrough of jasonobawemimo.com: the lot at night, who is playing, the build, the six titles, the sale desk, a trophy, Level 53 and the resume.</video:description>
-      <video:content_loc>https://jasonobawemimo.com/assets/film/after-hours.mp4</video:content_loc>
-      <video:duration>74</video:duration>
-      <video:publication_date>2026-10-10</video:publication_date>
-      <video:family_friendly>yes</video:family_friendly>
-      <video:live>no</video:live>
-    </video:video>
   </url>
 </urlset>

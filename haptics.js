@@ -13,7 +13,7 @@
     tap: [9],                 /* a choice made */
     select: [14],             /* continue, submit */
     arrive: [7, 34, 7],       /* the teacher camera lands on a spot */
-    success: [12, 46, 22],    /* end of the tour, form accepted */
+    success: [12, 46, 22],    /* a card built, form accepted */
     unlock: [26],             /* booking or application sent */
     heart: [15, 120, 15]      /* welcome back */
   };

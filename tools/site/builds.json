@@ -1,15 +1,5 @@
 {
  "_about": "The builds: the same verified record read for nine kinds of role, plus six lot problems for dealers. One fact base for the build step on the title screen, the build screen and card, the tailored resumes (tools/verify/resume.mjs renders one PDF per build into assets/resume) and the listing match. Every proof is a fact already in llms.txt, written in Jason's first person; every headline and summary is in llms.txt under 'Nine Ways To Read The Record'. A proof marked skill: true is a skill, not a duty: the resumes print it in Skills (a skills group in record.json names it), never as a bullet. No em dashes, no percent signs, never a computed rate. A proof's medal is a trophy slug or a proof medal in assets/game/medals.",
- "areas": {
-  "sell": "Sell",
-  "run": "Run",
-  "lead": "Lead",
-  "support": "Support",
-  "automate": "Automate",
-  "file": "File",
-  "build": "Build",
-  "learn": "Learn"
- },
  "proofs": {
   "sales": {
    "text": "Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",

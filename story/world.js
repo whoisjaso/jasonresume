@@ -289,28 +289,62 @@ function floatGeo(mesh) {
   if (g.attributes.normal) g.attributes.normal.needsUpdate = true;
   return g;
 }
-async function loadCars() {
-  await Promise.allSettled(CAR_KINDS.map(async kind => {
-    const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v1.glb";
-    let gltf;
-    try { gltf = await Promise.race([loader.loadAsync(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 12000))]); } catch (e) { console.warn("[world] car " + kind, e && e.message); return; } finally { progress(); }
-    const byMat = new Map(); let meta = null;
-    gltf.scene.updateMatrixWorld(true);
-    gltf.scene.traverse(o => {
-      if (o.userData && o.userData.L) meta = o.userData;
-      if (!o.isMesh) return;
-      const name = (o.material && o.material.name || "trim").replace(/\.\d+$/, "");
+/* a node's own meshes (not those of the moving parts hung from it), merged by material, in the car's space */
+function nodeParts(node) {
+  const byMat = new Map();
+  const walk = o => {
+    if (o !== node && MOVING.test(o.name)) return;
+    if (o.isMesh) {
+      const name = fam((o.material && o.material.name || "trim").replace(/\.\d+$/, ""), true);
       if (!byMat.has(name)) byMat.set(name, []);
       byMat.get(name).push(floatGeo(o));
-    });
+    }
+    for (const c of o.children) walk(c);
+  };
+  walk(node);
+  const parts = {};
+  for (const [name, list] of byMat) {
+    for (const g of list) for (const k of Object.keys(g.attributes)) if (!["position", "normal", "color"].includes(k)) g.deleteAttribute(k);
+    for (const g of list) if (!g.attributes.color) { const c = new Float32Array(g.attributes.position.count * 4).fill(1); g.setAttribute("color", new THREE.BufferAttribute(c, 4)); }
+    const m = list.length > 1 ? mergeGeometries(list, false) : list[0];
+    if (m) { m.computeBoundingSphere(); parts[name] = m; }
+  }
+  return parts;
+}
+const MOVING = /^(door_[LR]|wheel_[FR][LR]|steer)$/;
+/* the phone tier folds the car's near-black and bright-metal materials into one each (fewer draws per car kind
+   and per rig: about 10 instead of 21); a drivable car's own lamps and cluster stay apart (they light up) */
+const FAMILY = TIER.carLo ? { interior: "trim", seat: "trim", dash: "trim", well: "trim", tire: "trim", disc: "trim", cluster: "trim", chrome: "rim", mirror: "rim", lamp_rev: "lamp_head", lamp_brake: "lamp_tail" } : {};
+const OWN_KEYS = new Set(["lamp_head", "lamp_head_in", "lamp_tail", "lamp_tail_in", "lamp_brake", "lamp_rev", "cluster"]);
+const fam = (name, own) => (own && OWN_KEYS.has(name) ? name : FAMILY[name] || name);
+async function loadCars() {
+  await Promise.allSettled(CAR_KINDS.map(async kind => {
+    const url = BASE + "car-" + kind + (TIER.carLo ? "-lo" : "") + "-v2.glb";
+    let gltf;
+    try { gltf = await Promise.race([loader.loadAsync(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 12000))]); } catch (e) { console.warn("[world] car " + kind, e && e.message); return; } finally { progress(); }
+    let meta = null;
+    gltf.scene.updateMatrixWorld(true);
+    gltf.scene.traverse(o => { if (o.userData && o.userData.L) meta = o.userData; });
+    // parked: every part in place, merged by material (doors shut, wheels straight), for instancing
     const parts = {};
-    for (const [name, list] of byMat) {
+    const all = new Map();
+    gltf.scene.traverse(o => {
+      if (!o.isMesh) return;
+      const name = fam((o.material && o.material.name || "trim").replace(/\.\d+$/, ""), false);
+      if (!all.has(name)) all.set(name, []);
+      all.get(name).push(floatGeo(o));
+    });
+    for (const [name, list] of all) {
       for (const g of list) for (const k of Object.keys(g.attributes)) if (!["position", "normal", "color"].includes(k)) g.deleteAttribute(k);
       for (const g of list) if (!g.attributes.color) { const c = new Float32Array(g.attributes.position.count * 4).fill(1); g.setAttribute("color", new THREE.BufferAttribute(c, 4)); }
       const m = list.length > 1 ? mergeGeometries(list.map(g => (g.index ? g : g)), false) : list[0];
+      if (!m) { console.warn("[world] car " + kind + " " + name + " did not merge"); continue; }
       m.computeBoundingSphere(); parts[name] = m;
     }
-    carLib[kind] = { parts, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
+    // drivable: each moving node on its own (its meshes in the car's space, so the paint's panel lines stay put)
+    const nodes = {};
+    gltf.scene.traverse(o => { if (MOVING.test(o.name) || o.name === "body" || /^seat_[DP]$/.test(o.name)) nodes[o.name] = o; });
+    carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
   }));
 }
 /* panel lines, door handle recesses and the fuel door, drawn from the car's own measurements */
@@ -349,7 +383,8 @@ function carMats() {
   if (CARM) return CARM;
   const v = { vao: true };
   CARM = {
-    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6 }),
+    // tinted and see-through, so the cabin reads: the seats, the dash, the wheel
+    glass: pbr({ ...v, color: "#0b0e10", rough: 0.035, wet: 1, drops: true, spec: 1.0, diff: 0.6, alpha: 0.58, glass: true, depthWrite: false, ao: 0 }),
     trim: pbr({ ...v, color: "#141516", rough: 0.55, wet: 0.8 }),
     chrome: pbr({ ...v, color: "#c9ccd0", metal: 1, rough: 0.14, wet: 0.6 }),
     tire: pbr({ ...v, color: "#141414", rough: 0.82, wet: 0.7 }),
@@ -362,7 +397,13 @@ function carMats() {
     lamp_head_in: pbr({ ...v, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 }),
     lamp_amber: pbr({ ...v, color: "#7a3c06", rough: 0.08, wet: 1, emit: "#0a0400" }),
     plate: pbr({ ...v, color: "#9a968c", map: TX.plateTex(), nmap: TX.plateTex(true), tri: 4, local: true, nk: 0.8, rough: 0.5, wet: 0.6 }),
-    interior: pbr({ ...v, color: "#0b0b0b", rough: 0.85, wet: 0, spec: 0.4 }),
+    interior: pbr({ ...v, color: "#141414", rough: 0.85, wet: 0, spec: 0.4 }),
+    seat: pbr({ ...v, color: "#1c1c1d", rough: 0.92, wet: 0, spec: 0.3 }),
+    dash: pbr({ ...v, color: "#111213", rough: 0.6, wet: 0, spec: 0.6 }),
+    cluster: pbr({ ...v, color: "#08090a", rough: 0.2, wet: 0, spec: 0.8 }),
+    lamp_rev: pbr({ ...v, color: "#c8c8c4", metal: 0.6, rough: 0.12, wet: 0.6, drops: true }),
+    lamp_brake: pbr({ ...v, color: "#3a0605", rough: 0.08, wet: 0.8, spec: 1.1 }),
+    mirror: pbr({ ...v, color: "#5d6266", metal: 1, rough: 0.04, wet: 0.5, drops: true }),
     sticker: pbr({ color: "#ece5d4", rough: 0.6, wet: 0, ao: 0, emit: "#0c0a07" }),
     idleTail: pbr({ ...v, color: "#5a0806", rough: 0.05, wet: 1, drops: true, emit: "#3a0302" }),
     idleTailIn: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#ff1a0a" }),
@@ -386,6 +427,38 @@ export const CAR_COLORS = [
   ["#d9d8d2", 0], ["#aeb2b5", 1], ["#6f7478", 1], ["#16181a", 0], ["#f0eee8", 0], ["#3a3f44", 1], ["#1d2b40", 1], ["#5b1416", 1],
   ["#8d8270", 1], ["#2c3a30", 0], ["#9b1b14", 0], ["#c5c7c9", 1], ["#4a5560", 1], ["#2a2a2c", 1], ["#e6e3dc", 0], ["#7d8b97", 1]
 ];
+/* where each parked car lives in the instanced meshes, so a knock can rock it (rockCar / tickCars below) */
+function slotOf(c, im, i, local) { Object.defineProperty(c, "_slots", { value: c._slots || [], enumerable: false, writable: true }); c._slots.push([im, i, local]); }
+/* a parked car that was hit rocks on its springs and creeps a few centimetres; it never drives off */
+function rockCar(c, strength, nx, nz) {
+  if (!c._slots) return;
+  const r = c._rock || (c._rock = { t: 0, ax: 0, az: 0, live: false });
+  const k = Math.min(1, strength / 6);
+  // in the car's frame: a push along its length pitches it, across it rolls it
+  const cs = Math.cos(c.yaw), sn = Math.sin(c.yaw), along = nx * sn + nz * cs, across = nx * cs - nz * sn;
+  r.ax += -along * 0.05 * k; r.az += across * 0.06 * k; r.live = true;
+  const shove = Math.min(0.04 * k, Math.max(0, 0.25 - (c._shoved || 0)));
+  c._shoved = (c._shoved || 0) + shove; c.x -= nx * shove; c.z -= nz * shove;
+  if (c.collider) { c.collider.x = c.x; c.collider.z = c.z; }
+}
+const TK = { m4: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(0, 0, 0, "YXZ"), s1: new THREE.Vector3(1, 1, 1), p: new THREE.Vector3() };
+function tickCars(list, dt) {
+  const { m4, q, e, s1, p } = TK;
+  for (let ci = 0; ci < list.length; ci++) {
+    const c = list[ci];
+    const r = c._rock; if (!r || !r.live) continue;
+    // a damped spring on each axis (about 1.6 Hz, settles in a second or so)
+    r.t += dt; const w = 10, z = 0.18;
+    r.vx = (r.vx || 0) + (-w * w * r.ax - 2 * z * w * (r.vx || 0)) * dt; r.ax += r.vx * dt;
+    r.vz = (r.vz || 0) + (-w * w * r.az - 2 * z * w * (r.vz || 0)) * dt; r.az += r.vz * dt;
+    if (Math.abs(r.ax) + Math.abs(r.az) + Math.abs(r.vx) + Math.abs(r.vz) < 1e-4) { r.ax = r.az = r.vx = r.vz = 0; r.live = false; }
+    e.set(r.ax, c.yaw, r.az); q.setFromEuler(e); p.set(c.x, (c.y || 0) + Math.abs(r.az) * 0.4, c.z);
+    for (const [im, i, local] of c._slots) {
+      m4.compose(p, q, s1); if (local) m4.multiply(local);
+      im.setMatrixAt(i, m4); im.instanceMatrix.needsUpdate = true;
+    }
+  }
+}
 /* place cars: list of { kind, x, z, yaw, color, metal, idle } in the set's space; returns the instanced meshes */
 function parkCars(set, list) {
   const M = carMats(), out = [];
@@ -400,7 +473,7 @@ function parkCars(set, list) {
         for (const metallic of [false, true]) {
           const sub = cars.filter(c => !!c.metal === metallic); if (!sub.length) continue;
           const im = new THREE.InstancedMesh(geo, paintMat(carLib[kind] ? kind : Object.keys(carLib)[0], metallic), sub.length);
-          sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(c.color).convertSRGBToLinear()); });
+          sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(c.color).convertSRGBToLinear()); slotOf(c, im, i, null); });
           im.userData.keep = true; set.add(im); out.push(im);
         }
         continue;
@@ -410,7 +483,7 @@ function parkCars(set, list) {
       groups.forEach((sub, gi) => {
         if (!sub.length) return;
         const im = new THREE.InstancedMesh(geo, gi === 1 ? idleSwap : (M[name] || M.trim), sub.length);
-        sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); });
+        sub.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1); im.setMatrixAt(i, m4); slotOf(c, im, i, null); });
         im.userData.keep = true; set.add(im); out.push(im);
       });
     }
@@ -420,16 +493,108 @@ function parkCars(set, list) {
     const st = new THREE.InstancedMesh(STICKER_GEO, M.sticker, cars.length);
     cars.forEach((c, i) => {
       const local = new THREE.Matrix4().compose(new THREE.Vector3(-0.42, belt + 0.1, meta.L / 2 - c0 - (c1 - c0) * 0.18 - 0.03), new THREE.Quaternion().setFromEuler(new THREE.Euler(-sl, 0, 0)), s1);
-      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local); st.setMatrixAt(i, m4);
+      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local); st.setMatrixAt(i, m4); slotOf(c, st, i, local);
     });
     st.userData.keep = true; set.add(st); out.push(st);
     // the soft dark under each car (the ground bakes its own too; this one sits on anything)
     const sh = new THREE.InstancedMesh(BLOB_GEO, blobMat(0.8, true), cars.length);
-    cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); });
+    const blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, 0.012, 0), new THREE.Quaternion(), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5));
+    cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); slotOf(c, sh, i, blobLocal); });
     sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; set.add(sh); out.push(sh);
   }
   for (const im of out) { im.computeBoundingSphere(); im.frustumCulled = true; }
   return out;
+}
+/* ---------- a car you can drive: the same model as a rig (body, doors on hinges, wheels on hubs, the steering
+   wheel on its column, the seats), each part an instance of one so it paints exactly like the parked rows.
+   story/vehicle.js moves it; tools/story/HANDOFF-drive.md is the contract. ---------- */
+/* each drivable car owns its lamps and its cluster, so one car's brake lights are its own */
+const OWN = {
+  lamp_head: { vao: true, color: "#b9bdc0", metal: 0.85, rough: 0.07, wet: 1, drops: true },
+  lamp_head_in: { vao: true, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 },
+  lamp_tail: { vao: true, color: "#3a0605", rough: 0.05, wet: 1, drops: true, spec: 1.2, diff: 0.6 },
+  lamp_tail_in: { vao: true, color: "#8a1410", rough: 0.3, wet: 0.3 },
+  lamp_brake: { vao: true, color: "#3a0605", rough: 0.08, wet: 0.8, spec: 1.1 },
+  lamp_rev: { vao: true, color: "#c8c8c4", metal: 0.6, rough: 0.12, wet: 0.6, drops: true },
+  cluster: { vao: true, color: "#08090a", rough: 0.2, wet: 0, spec: 0.8 }
+};
+/* the lamps' glow by state, linear colours times a strength (vehicle.js and the idle car use this) */
+export function carLights(own, o) {
+  const k = (v) => (v === true ? 1 : v ? +v : 0);
+  const head = k(o.head), tail = Math.max(k(o.tail), head * 0.6), brake = k(o.brake), rev = k(o.reverse), cl = k(o.cluster);
+  const set = (m, hex, f) => { if (m) m.uniforms.uEmit.value.set(hex).multiplyScalar(f); };
+  set(own.lamp_head_in, "#fff6e6", head * 1.6); set(own.lamp_head, "#fff4e0", head * 0.12);
+  set(own.lamp_tail_in, "#ff1a0a", Math.max(tail * 0.45, brake * 1.6)); set(own.lamp_tail, "#5a0604", Math.max(tail * 0.35, brake * 1.0));
+  set(own.lamp_brake, "#ff1a0a", brake * 1.5); set(own.lamp_rev, "#fff4ea", rev * 1.3);
+  set(own.cluster, "#6f8a96", cl * 0.05);
+}
+function buildRig(set, c) {
+  const lib = carLib[c.kind] || carLib[Object.keys(carLib)[0]]; if (!lib || !lib.nodes || !lib.nodes.body) return null;
+  const meta = lib.meta, M = carMats(), root = c.object;
+  const col = new THREE.Color().set(c.color).convertSRGBToLinear(), I = new THREE.Matrix4();
+  const own = {}; for (const [k, o] of Object.entries(OWN)) own[k] = pbr0(o);
+  const kindKey = carLib[c.kind] ? c.kind : Object.keys(carLib)[0];
+  const inst = (geo, name, parent, offset) => {
+    const mat = name === "paint" ? paintMat(kindKey, !!c.metal) : own[name] || M[name] || M.trim;
+    const im = new THREE.InstancedMesh(geo, mat, 1); im.setMatrixAt(0, I);
+    if (name === "paint") im.setColorAt(0, col);
+    im.computeBoundingSphere(); im.userData.keep = true; im.name = name;
+    if (offset) im.position.copy(offset).negate();
+    parent.add(im); return im;
+  };
+  const body = new THREE.Group(); body.name = "body"; root.add(body);
+  for (const [name, geo] of Object.entries(nodeParts(lib.nodes.body))) inst(geo, name, body);
+  const at = n => { const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(); n.matrixWorld.decompose(p, q, sc); return { p, q }; };
+  const doors = {};
+  for (const side of ["L", "R"]) {
+    const n = lib.nodes["door_" + side]; if (!n) continue;
+    const { p } = at(n), pivot = new THREE.Group(); pivot.name = "door_" + side; pivot.position.copy(p); body.add(pivot);
+    for (const [name, geo] of Object.entries(nodeParts(n))) inst(geo, name, pivot, p);
+    doors[side] = pivot;
+  }
+  // the four wheels: their pivots are empty nodes (the API's), and the wheels themselves are one instanced mesh
+  // per material with four instances, set from the pivots (syncWheels), so a rig costs 2 or 3 draws for its wheels
+  // instead of 12. The right wheels are the model's; the left ones are the same turned half round.
+  const wheels = [];
+  for (const nm of ["wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR"]) {
+    const n = lib.nodes[nm]; if (!n) continue;
+    const { p } = at(n), pivot = new THREE.Group(); pivot.name = nm; pivot.position.copy(p); pivot.rotation.order = "YXZ"; root.add(pivot);
+    pivot.userData.rest = p.clone(); pivot.userData.left = nm.endsWith("L"); wheels.push(pivot);
+  }
+  const wheelIM = [];
+  { const n = lib.nodes.wheel_FR || lib.nodes.wheel_RR, hub = n ? at(n).p : null;
+    if (n) for (const [name, geo] of Object.entries(nodeParts(n))) {
+      const g = geo.clone(); g.translate(-hub.x, -hub.y, -hub.z);
+      const mat = own[name] || M[name] || M.trim;
+      const im = new THREE.InstancedMesh(g, mat, wheels.length); im.name = "wheels-" + name; im.userData.keep = true; im.frustumCulled = false; root.add(im); wheelIM.push(im);
+    } }
+  const FLIP = new THREE.Matrix4().makeRotationY(Math.PI), WM = new THREE.Matrix4();
+  const syncWheels = () => {
+    for (let i = 0; i < wheels.length; i++) {
+      const w = wheels[i]; w.updateMatrix(); WM.copy(w.matrix); if (w.userData.left) WM.multiply(FLIP);
+      for (const im of wheelIM) im.setMatrixAt(i, WM);
+    }
+    for (const im of wheelIM) im.instanceMatrix.needsUpdate = true;
+  };
+  let steer = null;
+  if (lib.nodes.steer) {
+    const { p, q } = at(lib.nodes.steer);
+    steer = new THREE.Group(); steer.name = "steer"; steer.position.copy(p); steer.quaternion.copy(q); body.add(steer);
+    const inv = new THREE.Matrix4().compose(p, q, new THREE.Vector3(1, 1, 1)).invert();
+    for (const [name, geo] of Object.entries(nodeParts(lib.nodes.steer))) { const g = geo.clone().applyMatrix4(inv); inst(g, name, steer); }
+    steer.userData.rimR = meta.rimR || 0.185; steer.userData.q0 = q.clone();
+  }
+  const seat = new THREE.Object3D(); seat.name = "seat_D"; const seatP = new THREE.Object3D(); seatP.name = "seat_P";
+  if (lib.nodes.seat_D) seat.position.copy(at(lib.nodes.seat_D).p); if (lib.nodes.seat_P) seatP.position.copy(at(lib.nodes.seat_P).p);
+  body.add(seat, seatP);
+  // the soft dark under it, which goes where it goes
+  const sh = new THREE.InstancedMesh(BLOB_GEO, blobMat(0.8, true), 1);
+  sh.setMatrixAt(0, new THREE.Matrix4().compose(new THREE.Vector3(0, 0.012, 0), new THREE.Quaternion(), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)));
+  sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; sh.computeBoundingSphere(); root.add(sh);
+  root.userData.rig = { body, doors, wheels, steer, seat, seatP, own, meta, shadow: sh, kind: kindKey, syncWheels, wheelIM };
+  syncWheels();
+  carLights(own, c.lights || {});
+  return root.userData.rig;
 }
 const STICKER_GEO = new THREE.PlaneGeometry(0.2, 0.14);
 const BLOB_GEO = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -461,11 +626,13 @@ function lampPost(x, z, h, set, o = {}) {
   }
   set.add(g);
   set.userData.walls.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
+  if (set.userData.colliders) set.userData.colliders.push({ type: "circle", x, z, r: 0.34, what: "pole" });
   return lamps;
 }
 
 function palm(x, z, h, set, r) {
   const g = new THREE.Group(); g.position.set(x, 0, z);
+  if (set.userData.colliders) set.userData.colliders.push({ type: "circle", x, z, r: 0.24, what: "pole" });
   const pts = []; const lean = (r() - 0.5) * 0.8;
   for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(lean * t * t, t * h, lean * 0.3 * t * t)); }
   const trunk = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.17, 7), pbr({ color: "#2b2620", rough: 0.9, wet: 0.6 }));
@@ -511,12 +678,293 @@ function skyDome(o) {
 }
 
 /* ================================================================
+   THINGS YOU CAN USE, AND THE PLACES ACROSS THE ROAD
+   (tools/story/HANDOFF-explore.md). A thing is a spot in set.userData.spots with a kind main.js knows
+   (exit, toggle, open, sit, press, pickup, read, splash, knock), a short label, where it is (p), where you
+   stand (stand), and use({ kind, on }) which the world answers by animating its own state. Animations
+   run from a hook in the render (no per-frame allocation), so nothing has to call them; set.userData.tick
+   (dt, { player }) runs them by hand if you'd rather.
+   ================================================================ */
+const TICK_CTX = { player: null, t: 0 };
+function thingsOf(set) {
+  const ud = set.userData;
+  if (ud.anims) return ud;
+  ud.anims = []; ud.things = [];
+  ud.tick = (dt, ctx) => { const c = ctx || TICK_CTX; for (let i = 0; i < ud.anims.length; i++) ud.anims[i](dt, c); };
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3));
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, depthTest: false }));
+  m.frustumCulled = false; m.userData.keep = true; m.layers.enableAll(); m.renderOrder = -11;
+  let last = 0;
+  m.onBeforeRender = (r, sc, cam) => {
+    const now = performance.now(); if (now - last < 6) return; // once a frame, not once per pass
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
+    TICK_CTX.player = cam.position; TICK_CTX.t += dt; ud.tick(dt, TICK_CTX);
+  };
+  set.add(m);
+  return ud;
+}
+function thing(set, id, def) {
+  const ud = thingsOf(set);
+  const sp = Object.assign({ id, r: 1.6, on: false }, def);
+  if (sp.use && !sp.act) sp.act = sp.use;
+  ud.spots[id] = sp; ud.things.push(id); return sp;
+}
+const easeTo = (cur, goal, k, dt) => cur + (goal - cur) * (1 - Math.exp(-k * dt));
+function anim(set, f) { thingsOf(set).anims.push(f); }
+/* a hinged part that swings to its goal: a lid, a door, a drawer (slide) */
+function swinger(set, obj, axis, open, k = 7) {
+  const s = { v: 0, goal: 0 };
+  anim(set, dt => { if (Math.abs(s.v - s.goal) < 1e-4) return; s.v = easeTo(s.v, s.goal, k, dt); if (axis === "slide") obj.position.z = obj.userData.z0 + s.v * open; else obj.rotation[axis] = s.v * open; });
+  if (axis === "slide") obj.userData.z0 = obj.position.z;
+  return s;
+}
+
+/* ---------- across Almeda Genoa Road: a bus stop, a closed shop front, a lit gas station, an empty lot with
+   its streetlight, a crosswalk; all fictional, no names, no numbers ---------- */
+function placesAcross(set, o, day, CO) {
+  const W = set.userData.walls, steel = pbr({ color: "#5d6265", metal: 0.8, rough: 0.45, wet: 1 });
+  const conc = rmat({ color: "#9a968e", rough: 0.85, wet: day ? 0 : 0.9, mapK: "concC", tri: 0.6 });
+  const darkM = pbr({ color: "#1c1e1e", rough: 0.5, metal: 0.3, wet: 1 });
+  const wall = (x0, x1, z0, z1, what = "wall", h = 3) => { W.push({ x0, x1, z0, z1 }); CO.push({ type: "box", x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hl: (z1 - z0) / 2, yaw: 0, h, what }); };
+  const post = (x, z, r = 0.12) => { W.push({ x0: x - r, x1: x + r, z0: z - r, z1: z + r }); CO.push({ type: "circle", x, z, r, what: "pole" }); };
+  // the edges of where you can go: the road's far ends, and the back of the places across it
+  W.push({ x0: -78, x1: -77, z0: 21.8, z1: 58 }, { x0: 77, x1: 78, z0: 21.8, z1: 58 }, { x0: -78, x1: 78, z0: 56, z1: 57 });
+  set.userData.nav = { x0: -77.5, x1: 77.5, z0: -26.4, z1: 56.5, cell: 0.4 };
+
+  /* the crosswalk by the gate, with a button and a signal on each side */
+  { const zebra = pbr({ color: "#d8d4c8", rough: 0.6, wet: day ? 0 : 1 });
+    for (let i = 0; i < 12; i++) { const b = plane(3.0, 0.45, zebra, set); b.rotation.x = -Math.PI / 2; b.position.set(-7.5, -0.003, 24.9 + i * 1.08); }
+    const sigs = [];
+    for (const [x, z, face] of [[-9.6, 24.3, 1], [-9.6, 38.2, -1]]) {
+      const pole = cyl(0.05, 0.06, 3.0, steel, x, 1.5, z, set, 8); post(x, z, 0.12);
+      box(0.12, 0.2, 0.1, darkM, x, 1.1, z + face * 0.07, set);
+      const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 12), glow0("#d8c9a0", { k: 0.25 })); btn.rotation.x = Math.PI / 2; btn.position.set(x, 1.12, z + face * 0.13); btn.userData.keep = true; set.add(btn);
+      box(0.32, 0.36, 0.22, darkM, x, 2.75, z + face * 0.05, set);
+      const head = plane(0.24, 0.26, glow0("#f2efe6", { k: 1 }), set); head.material.uniforms.uK.value = 0; head.position.set(x, 2.75, z + face * 0.165); if (face < 0) head.rotation.y = Math.PI; head.userData.keep = true;
+      sigs.push({ btn, head });
+    }
+    const st = { t: 0 };
+    anim(set, dt => { if (st.t <= 0) return; st.t -= dt; const on = st.t > 0 && (st.t > 2 || Math.floor(st.t * 3) % 2 === 0) ? 1 : 0; for (const s of sigs) { s.head.material.uniforms.uK.value = on * 1.6; s.btn.material.uniforms.uK.value = st.t > 0 ? 1.4 : 0.25; } });
+    for (const [i, [x, z, face]] of [[-9.6, 24.3, 1], [-9.6, 38.2, -1]].entries())
+      thing(set, "crosswalk-" + i, { kind: "press", label: "Button", p: V3(x, 1.12, z + face * 0.13), stand: V3(x + 0.3, 0, z + face * 0.75), r: 1.4, use: () => { st.t = 8; } });
+  }
+
+  /* the bus stop on the far side: a shelter with a glass back, a bench, the stop's sign */
+  { const x0 = -18, zb = 40.4;
+    const glassM = pbr({ color: "#0b0f10", rough: 0.03, wet: 0.8, alpha: 0.2, glass: true, depthWrite: false, spec: 1, diff: 0.2 });
+    for (const dx of [-1.9, 1.9]) { cyl(0.05, 0.05, 2.5, steel, x0 + dx, 1.25, zb, set, 8); post(x0 + dx, zb, 0.1); }
+    box(4.2, 0.08, 1.6, darkM, x0, 2.52, zb - 0.6, set);
+    const back = plane(3.8, 1.9, glassM, set); back.position.set(x0, 1.35, zb + 0.02); back.rotation.y = Math.PI; back.userData.keep = true; back.renderOrder = 2;
+    const roofGlow = plane(3.6, 0.25, glow("#f4ead2", { k: day ? 0.1 : 1.0 }), set); roofGlow.rotation.x = Math.PI / 2; roofGlow.position.set(x0, 2.47, zb - 0.5);
+    const wood = pbr({ color: "#6b5440", rough: 0.6, wet: 0.8 });
+    box(2.4, 0.06, 0.42, wood, x0, 0.46, zb - 0.3, set); box(2.4, 0.4, 0.05, wood, x0, 0.72, zb - 0.08, set);
+    for (const dx of [-1.0, 1.0]) box(0.06, 0.46, 0.38, steel, x0 + dx, 0.23, zb - 0.3, set);
+    wall(x0 - 2.0, x0 + 2.0, zb - 0.1, zb + 0.15, "wall", 2.5);
+    thing(set, "bus-bench", { kind: "sit", label: "Bench", p: V3(x0, 0.5, zb - 0.3), stand: V3(x0, 0, zb - 1.1), seat: V3(x0, 0.49, zb - 0.32), yaw: Math.PI, r: 1.6 });
+    // the stop's sign: a disc on a pole, a bus drawn on it (no words, no numbers)
+    cyl(0.04, 0.04, 2.8, steel, x0 + 3.2, 1.4, zb - 1.0, set, 8); post(x0 + 3.2, zb - 1.0, 0.1);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.3, 24), glow("#ffffff", { map: TX.busSignTex(), k: day ? 0.8 : 0.9 })); disc.position.set(x0 + 3.2, 2.55, zb - 1.04); disc.rotation.y = Math.PI; set.add(disc);
+    const disc2 = disc.clone(); disc2.rotation.y = 0; disc2.position.z = zb - 0.96; set.add(disc2);
+    thing(set, "bus-sign", { kind: "read", label: "Sign", text: "Bus stop", p: V3(x0 + 3.2, 2.4, zb - 1.0), stand: V3(x0 + 3.2, 0, zb - 2.2), r: 2.4 });
+  }
+
+  /* a shop across the road, closed for the night: the shutter down, its sign dark, a side door, a light over it */
+  { const x0 = 14, zf = 41.2, w = 14, d = 9, h = 5.2;
+    box(w, h, d, rmat({ color: "#4a4743", rough: 0.9, wet: day ? 0 : 0.6, mapK: "concC", tri: 0.3 }), x0, h / 2, zf + d / 2, set); wall(x0 - w / 2, x0 + w / 2, zf, zf + d);
+    for (let i = 0; i < 16; i++) box(9.6, 0.16, 0.06, pbr({ color: i % 2 ? "#6c6f70" : "#5c5f60", metal: 0.6, rough: 0.5, wet: day ? 0 : 1 }), x0 - 1.6, 0.1 + i * 0.17, zf - 0.04, set);
+    box(9.8, 0.3, 0.3, darkM, x0 - 1.6, 2.85, zf - 0.1, set);
+    box(10.4, 0.9, 0.12, pbr({ color: "#2a2c2c", rough: 0.4, metal: 0.3, wet: 1 }), x0 - 1.6, 3.8, zf - 0.07, set);
+    // the side door: glass, dark inside, a sign that says it's closed
+    box(1.1, 2.2, 0.08, darkM, x0 + 5.0, 1.1, zf - 0.04, set);
+    const dg = plane(0.8, 1.6, pbr({ color: "#0b0f10", rough: 0.04, wet: 0.6, spec: 1 }), set); dg.position.set(x0 + 5.0, 1.25, zf - 0.09); dg.rotation.y = Math.PI;
+    const cl = plane(0.34, 0.14, pbr({ map: TX.labelTex("CLOSED", { bg: "#e9e4d8", fg: "#1c1e1e", w: 256, h: 104 }), color: "#fff", rough: 0.7, wet: 0, ao: 0 }), set); cl.position.set(x0 + 5.0, 1.5, zf - 0.1); cl.rotation.y = Math.PI;
+    box(0.35, 0.12, 0.18, darkM, x0 + 5.0, 2.55, zf - 0.12, set);
+    const ln = plane(0.3, 0.14, glow("#ffe0b0", { k: day ? 0.2 : 2.4 }), set); ln.rotation.x = Math.PI / 2; ln.position.set(x0 + 5.0, 2.485, zf - 0.13);
+    if (!day) set.userData.lamps.push({ p: V3(x0 + 5.0, 2.4, zf - 0.6), range: 6, col: [1.2, 0.85, 0.5], cone: 0, fixed: false });
+    thing(set, "shop-door", { kind: "knock", label: "Door", p: V3(x0 + 5.0, 1.3, zf - 0.1), stand: V3(x0 + 5.0, 0, zf - 1.1), r: 1.6 });
+    thing(set, "shop-sign", { kind: "read", label: "Sign", text: "Closed", p: V3(x0 + 5.0, 1.5, zf - 0.1), stand: V3(x0 + 4.4, 0, zf - 1.1), r: 1.4 });
+    thing(set, "shop-shutter", { kind: "knock", label: "Shutter", p: V3(x0 - 1.6, 1.2, zf - 0.1), stand: V3(x0 - 1.6, 0, zf - 1.2), r: 2.0 });
+  }
+
+  /* a gas station, open and lit under its canopy: two pump islands, a kiosk at the back (no brand, no prices) */
+  { const cx = 34, cz = 46;
+    const fore = plane(20, 12, conc, set); fore.rotation.x = -Math.PI / 2; fore.position.set(cx, -0.008, 45.5);
+    const canopyM = pbr({ color: "#d9d6cf", rough: 0.5, wet: day ? 0 : 0.5 });
+    box(15, 0.7, 8.5, canopyM, cx, 5.0, cz, set);
+    box(15.2, 0.25, 8.7, pbr({ color: "#1c3229", rough: 0.4, wet: 0.8 }), cx, 4.55, cz, set);
+    const panel = glow("#fff6e4", { k: day ? 0.3 : 2.6 });
+    for (const px of [-4.5, 0, 4.5]) for (const pz of [-2, 2]) { const p0 = plane(1.6, 0.6, panel, set); p0.rotation.x = Math.PI / 2; p0.position.set(cx + px, 4.42, cz + pz); }
+    for (const px of [-5.8, 5.8]) for (const pz of [-1.6, 1.6]) { cyl(0.22, 0.22, 4.4, canopyM, cx + px, 2.2, cz + pz, set, 12); post(cx + px, cz + pz, 0.26); }
+    for (const pz of [-1.6, 1.6]) {
+      box(6.0, 0.18, 1.1, conc, cx, 0.09, cz + pz, set);
+      for (const px of [-1.6, 1.6]) {
+        box(0.75, 1.55, 0.45, pbr({ color: "#e4e1d9", rough: 0.4, wet: 0.3 }), cx + px, 0.95, cz + pz, set);
+        for (const f of [-1, 1]) { const sc = plane(0.4, 0.22, glow("#cfe0d8", { k: day ? 0.2 : 0.6 }), set); sc.position.set(cx + px, 1.35, cz + pz + f * 0.23); if (f < 0) sc.rotation.y = Math.PI; }
+        box(0.06, 0.5, 0.06, darkM, cx + px + 0.3, 0.95, cz + pz + 0.25, set);
+      }
+      wall(cx - 3.0, cx + 3.0, cz + pz - 0.55, cz + pz + 0.55, "wall", 1.6);
+    }
+    set.userData.lamps.push({ p: V3(cx, 4.3, cz), range: 16, col: [2.0, 1.95, 1.8], cone: 0, fixed: false });
+    // the kiosk, its windows lit
+    box(10, 3.4, 5, rmat({ color: "#cfcac0", rough: 0.85, wet: day ? 0 : 0.5, mapK: "concC", tri: 0.4 }), cx, 1.7, 53.5, set); wall(cx - 5, cx + 5, 51, 56);
+    const kw = plane(6, 1.6, glow("#f3e6c8", { k: day ? 0.3 : 1.1 }), set); kw.position.set(cx - 1, 1.5, 50.98); kw.rotation.y = Math.PI;
+    box(1.0, 2.1, 0.06, darkM, cx + 3.4, 1.05, 50.97, set);
+    for (let i = 0; i < 2; i++) thing(set, "pump-" + i, { kind: "press", label: "Pump", p: V3(cx - 1.6 + i * 3.2, 1.3, cz - 1.6 - 0.25), stand: V3(cx - 1.6 + i * 3.2, 0, cz - 2.9), r: 1.4 });
+    thing(set, "kiosk-door", { kind: "knock", label: "Door", p: V3(cx + 3.4, 1.2, 50.95), stand: V3(cx + 3.4, 0, 50.0), r: 1.6 });
+    set.userData.sounds.gas = { x: cx, y: 4.3, z: cz, kind: "sodium-hum" };
+  }
+
+  /* the empty lot to the west: gravel, weeds, one streetlight on a wooden pole, a puddle */
+  { const cx = -30, cz = 45.5;
+    const grav = plane(16, 11, rmat({ color: "#5e5a52", rough: 0.95, wet: day ? 0 : 0.7, mapK: "asphC", tri: 0.5 }), set); grav.rotation.x = -Math.PI / 2; grav.position.set(cx, -0.006, cz);
+    const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
+    cyl(0.13, 0.16, 7.5, wood, cx + 3, 3.75, cz + 2, set, 8); post(cx + 3, cz + 2, 0.18);
+    const arm = cyl(0.04, 0.04, 1.8, steel, cx + 3, 7.2, cz + 1.2, set, 6); arm.rotation.x = Math.PI / 2;
+    box(0.3, 0.14, 0.6, steel, cx + 3, 7.15, cz + 0.3, set);
+    const ln = plane(0.26, 0.5, glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 3.2 }), set); ln.rotation.x = Math.PI / 2; ln.position.set(cx + 3, 7.07, cz + 0.3); ln.userData.keep = true;
+    if (!day) { const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 3.4, 6.9, 24, 1, true), coneMat0("#ffb466", 0.6)); cone.position.set(cx + 3, 3.55, cz + 0.3); cone.layers.set(3); cone.userData.keep = true; set.add(cone);
+      set.userData.lamps.push({ p: V3(cx + 3, 6.9, cz + 0.3), range: 14, col: [2.6, 1.6, 0.75], cone: 0.28, fixed: false }); }
+    const weed = paint({ color: "#2c3424", map: set.userData.frond, alphaTest: 0.5, side: THREE.DoubleSide, rim: 0.2 });
+    const rw = rng(91);
+    for (let i = 0; i < 18; i++) { const wp = plane(0.5 + rw() * 0.5, 0.4 + rw() * 0.4, weed, set); wp.position.set(cx - 7 + rw() * 14, 0.2, cz - 4.5 + rw() * 9); wp.rotation.y = rw() * 6.28; }
+    if (!day) { const pd = plane(2.6, 1.6, pbr({ color: "#0b0e0f", rough: 0.02, wet: 1, spec: 1.2, diff: 0.3 }), set); pd.rotation.x = -Math.PI / 2; pd.position.set(cx - 2, 0.002, cz - 1);
+      thing(set, "lot-puddle", { kind: "splash", label: "Puddle", p: V3(cx - 2, 0.05, cz - 1), stand: V3(cx - 2, 0, cz + 0.6), r: 1.8 }); }
+  }
+}
+
+/* ---------- the lot's things: the showroom's lights, a vending machine, the dumpster and its lid, a mailbox
+   by the gate, puddles to stamp in, the glass to knock on, and the life: a moth at Jason's lamp, a stray cat ---------- */
+function lotThings(set, day, refs) {
+  const darkM = pbr({ color: "#1c1e1e", rough: 0.5, metal: 0.3, wet: 1 });
+  const CO = set.userData.colliders, W = set.userData.walls;
+  const solid = (x0, x1, z0, z1, h = 1.5) => { W.push({ x0, x1, z0, z1 }); CO.push({ type: "box", x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hl: (z1 - z0) / 2, yaw: 0, h, what: "wall" }); };
+  // the showroom's lights: a switch plate by the office door
+  { box(0.08, 0.12, 0.02, pbr({ color: "#e9e6de", rough: 0.4, wet: 0.4 }), 14.25, 1.3, -17.79, set);
+    const k0 = refs.panelM.uniforms.uK.value, k1 = refs.dl.uniforms.uK.value, cols = refs.lamps.map(l => l.col.slice());
+    const st = { v: 1, goal: 1 };
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 9, dt);
+      refs.panelM.uniforms.uK.value = k0 * (0.06 + 0.94 * st.v); refs.dl.uniforms.uK.value = k1 * (0.06 + 0.94 * st.v);
+      refs.lamps.forEach((l, i) => { l.col[0] = cols[i][0] * st.v; l.col[1] = cols[i][1] * st.v; l.col[2] = cols[i][2] * st.v; }); });
+    thing(set, "showroom-lights", { kind: "toggle", label: "Lights", on: true, p: V3(14.25, 1.3, -17.75), stand: V3(14.4, 0, -16.6), r: 1.4, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  // a vending machine against the showroom's east wall, lit, no words; a can drops when you press
+  { const x = 15.75, z = -19.6;
+    box(0.8, 1.85, 0.95, pbr({ color: "#2a3a33", rough: 0.4, metal: 0.3, wet: 0.8 }), x, 0.925, z, set);
+    const front = plane(0.62, 1.2, glow("#e8f0ea", { k: day ? 0.4 : 1.1 }), set); front.rotation.y = Math.PI / 2; front.position.set(x + 0.405, 1.15, z - 0.08);
+    box(0.02, 0.5, 0.18, darkM, x + 0.41, 1.05, z + 0.32, set);
+    const tray = box(0.04, 0.16, 0.5, darkM, x + 0.41, 0.3, z - 0.05, set);
+    const can = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.033, 0.12, 12), pbr({ color: "#7a2a22", metal: 0.7, rough: 0.3, wet: 0.2 })); can.rotation.x = Math.PI / 2; can.position.set(x + 0.43, -1, z - 0.05); can.userData.keep = true; set.add(can);
+    const st = { t: 0 };
+    anim(set, dt => { if (st.t <= 0) return; st.t -= dt; const u = Math.min(1, (1.4 - st.t) / 0.35); can.position.y = st.t > 0 ? 0.62 - 0.36 * Math.max(0, Math.min(1, u)) : -1; });
+    solid(x - 0.45, x + 0.45, z - 0.5, z + 0.5, 1.9);
+    if (!day) set.userData.lamps.push({ p: V3(x + 0.9, 1.2, z), range: 3.2, col: [0.45, 0.6, 0.52], cone: 0, fixed: false });
+    thing(set, "vending", { kind: "press", label: "Machine", p: V3(x + 0.42, 1.1, z + 0.32), stand: V3(x + 1.25, 0, z), r: 1.5, use: () => { st.t = 6; } });
+    set.userData.sounds.vending = { x, y: 1, z, kind: "fridge-hum" }; }
+  // the dumpster behind the west end of the showroom, its lid on a hinge, and a cat that lives by it
+  { const x = -13.8, z = -20.8;
+    const green = pbr({ color: "#24352c", metal: 0.5, rough: 0.55, wet: 1 });
+    box(1.9, 1.15, 1.2, green, x, 0.62, z, set); box(1.95, 0.08, 1.25, green, x, 0.08, z, set);
+    const lid = new THREE.Group(); lid.position.set(x, 1.22, z - 0.62); lid.userData.keep = true; set.add(lid);
+    box(1.98, 0.05, 1.26, pbr({ color: "#1b1d1c", rough: 0.6, wet: 1 }), 0, 0, 0.63, lid);
+    const lidS = swinger(set, lid, "x", -1.6, 5);
+    solid(x - 1.0, x + 1.0, z - 0.65, z + 0.65, 1.3);
+    thing(set, "dumpster", { kind: "open", label: "Lid", p: V3(x, 1.2, z + 0.6), stand: V3(x, 0, z + 1.5), r: 1.6, use: ({ on }) => { lidS.goal = on ? 1 : 0; } });
+    // the stray: a low cat shape that keeps its distance; walks off when you come near, comes back when you leave
+    const catM = paint({ color: "#2a2622", rim: 0.4 });
+    const cat = new THREE.Group(); cat.userData.keep = true; set.add(cat);
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.28, 4, 8), catM); body.rotation.z = Math.PI / 2; body.rotation.y = Math.PI / 2; body.position.y = 0.2; cat.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), catM); head.position.set(0, 0.29, 0.22); cat.add(head);
+    for (const s of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 4), catM); ear.position.set(s * 0.035, 0.36, 0.22); cat.add(ear); }
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.018, 0.3, 5), catM); tail.position.set(0, 0.3, -0.25); tail.rotation.x = -0.6; cat.add(tail);
+    const legs = []; for (const [lx, lz] of [[-0.05, 0.12], [0.05, 0.12], [-0.05, -0.12], [0.05, -0.12]]) { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.16, 5), catM); lg.position.set(lx, 0.08, lz); cat.add(lg); legs.push(lg); }
+    const home = { x: x + 1.5, z: z + 1.4 }, away = { x: x - 4.5, z: z + 3.0 };
+    const c = { x: home.x, z: home.z, yaw: -0.6, gait: 0, goal: home };
+    cat.position.set(c.x, 0, c.z);
+    anim(set, (dt, ctx) => {
+      const pl = ctx.player; if (pl) { const d = Math.hypot(pl.x - c.x, pl.z - c.z), dh = Math.hypot(pl.x - home.x, pl.z - home.z); c.goal = d < 3.2 || dh < 3.5 ? away : home; }
+      const dx = c.goal.x - c.x, dz = c.goal.z - c.z, dd = Math.hypot(dx, dz);
+      if (dd > 0.05) { const sp = Math.min(dd, 1.6 * dt); c.x += dx / dd * sp; c.z += dz / dd * sp; const ty = Math.atan2(dx, dz); c.yaw += Math.atan2(Math.sin(ty - c.yaw), Math.cos(ty - c.yaw)) * Math.min(1, dt * 8); c.gait += dt * 14; }
+      cat.position.set(c.x, 0, c.z); cat.rotation.y = c.yaw;
+      const g = dd > 0.05 ? 1 : 0; for (let i = 0; i < 4; i++) legs[i].rotation.x = Math.sin(c.gait + (i % 2 ? 0 : Math.PI) + (i > 1 ? Math.PI : 0)) * 0.5 * g;
+      tail.rotation.z = Math.sin(TICK_CTX.t * 1.7) * 0.25;
+    });
+  }
+  // a mailbox on a post by the gate, its door on a hinge
+  { const x = 5.8, z = 22.8;
+    const steelM = pbr({ color: "#3a4048", metal: 0.6, rough: 0.4, wet: 1 });
+    box(0.08, 1.0, 0.08, pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 }), x, 0.5, z, set);
+    box(0.24, 0.24, 0.48, steelM, x, 1.12, z, set);
+    const md = new THREE.Group(); md.position.set(x, 1.0, z + 0.245); md.userData.keep = true; set.add(md); box(0.24, 0.24, 0.015, steelM, 0, 0.12, 0, md);
+    const mdS = swinger(set, md, "x", 1.5, 7);
+    solid(x - 0.15, x + 0.15, z - 0.3, z + 0.3, 1.2);
+    thing(set, "mailbox", { kind: "open", label: "Mailbox", p: V3(x, 1.12, z + 0.26), stand: V3(x, 0, z + 0.95), r: 1.3, use: ({ on }) => { mdS.goal = on ? 1 : 0; } }); }
+  // the storefront's glass, to knock on
+  thing(set, "showroom-glass", { kind: "knock", label: "Glass", p: V3(4, 1.4, -17.95), stand: V3(4, 0, -16.9), r: 1.8 });
+  // puddles to stamp in (the story's own puddle keeps its spot)
+  if (!day) [[-12.5, 1.2], [9.5, 10.5], [-6.2, -9.6]].forEach(([px, pz], i) => thing(set, "puddle-" + i, { kind: "splash", label: "Puddle", p: V3(px, 0.05, pz), stand: V3(px, 0, pz + 1.0), r: 1.6 }));
+  // a moth at the lamp by Jason
+  if (!day) { const L = set.userData.lamps[5]; if (L) {
+    const moth = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.035), glow0("#efe3c8", { k: 0.9, side: THREE.DoubleSide })); moth.userData.keep = true; set.add(moth);
+    anim(set, (dt, ctx) => { const t = ctx.t; moth.position.set(L.p.x + Math.sin(t * 3.1) * 0.32 + Math.sin(t * 7.3) * 0.06, L.p.y - 0.12 + Math.sin(t * 5.2) * 0.08, L.p.z + Math.cos(t * 2.6) * 0.28); moth.rotation.y = t * 6; moth.scale.x = 0.6 + 0.4 * Math.abs(Math.sin(t * 40)); });
+  } }
+}
+
+/* ---------- the office's things: the way out to the lot, the desk lamp, the room's lights, a radio, the filing
+   drawers, the fridge, chairs and armchairs, a mug to pick up ---------- */
+function officeThings(set, refs) {
+  const ud = set.userData;
+  // the door out to the lot (left wall, by the coffee corner)
+  thing(set, "office-exit", { kind: "exit", label: "Lot", to: "lot", p: V3(-6.9, 1.1, 4.2), stand: V3(-6.0, 0, 4.2), r: 1.8 });
+  ud.marks["lot-door"] = V3(-6.0, 0, 4.2); ud.marks["lot-doorYaw"] = Math.PI / 2;
+  // the desk lamp
+  { const L = ud.lamps.find(l => Math.abs(l.p.x + 2.1) < 0.01), bulb = refs.deskBulb, k0 = bulb ? bulb.material.uniforms.uK.value : 1, c0 = L ? L.col.slice() : null, st = { v: 1, goal: 1 };
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 12, dt); if (bulb) bulb.material.uniforms.uK.value = k0 * st.v; if (L) { L.col[0] = c0[0] * st.v; L.col[1] = c0[1] * st.v; L.col[2] = c0[2] * st.v; } });
+    thing(set, "desk-lamp", { kind: "toggle", label: "Lamp", on: true, p: V3(-2.1, 1.15, -2.0), stand: V3(-2.4, 0, -0.9), r: 1.5, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  // the light switch by the door: the troffers
+  { box(0.08, 0.12, 0.02, pbr({ color: "#e9e6de", rough: 0.4, wet: 0 }), -6.97, 1.3, 3.4, set).rotation.y = Math.PI / 2;
+    const tro = ud.lamps.filter(l => l.p.y > 2.9), c0 = tro.map(l => l.col.slice()), k0 = refs.trof.uniforms.uK.value, st = { v: 1, goal: 1 };
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 14, dt); refs.trof.uniforms.uK.value = k0 * (0.04 + 0.96 * st.v); tro.forEach((l, i) => { l.col[0] = c0[i][0] * st.v; l.col[1] = c0[i][1] * st.v; l.col[2] = c0[i][2] * st.v; }); });
+    thing(set, "office-lights", { kind: "toggle", label: "Lights", on: true, p: V3(-6.95, 1.3, 3.4), stand: V3(-6.0, 0, 3.3), r: 1.4, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  // a radio on the credenza under the whiteboard: its dial lights when it plays (main.js plays the sound)
+  { const rg = new THREE.Group(); rg.position.set(1.95, 0.7, -4.75); set.add(rg);
+    rbox(0.34, 0.18, 0.12, 0.02, pbr({ color: "#3a2c22", rough: 0.5, wet: 0 }), 0, 0.09, 0, rg);
+    box(0.14, 0.12, 0.005, pbr({ color: "#1b1a18", rough: 0.8, wet: 0 }), -0.08, 0.09, 0.062, rg);
+    const dial = plane(0.1, 0.04, glow0("#f3c98a", { k: 1 }), rg); dial.position.set(0.09, 0.11, 0.063); dial.material.uniforms.uK.value = 0.05; dial.userData.keep = true;
+    thing(set, "radio", { kind: "toggle", label: "Radio", p: V3(1.95, 0.85, -4.7), stand: V3(1.95, 0, -3.8), r: 1.4, use: ({ on }) => { dial.material.uniforms.uK.value = on ? 1.2 : 0.05; ud.sounds.radio = on ? { x: 1.95, y: 0.8, z: -4.7, kind: "radio" } : null; } }); }
+  // the filing cabinet's top drawer slides out
+  if (refs.drawer) { const dS = swinger(set, refs.drawer, "slide", 0.42, 8);
+    thing(set, "drawer", { kind: "open", label: "Drawer", p: V3(-6.25, 1.15, -2.6), stand: V3(-5.4, 0, -2.6), r: 1.5, use: ({ on }) => { dS.goal = on ? 1 : 0; } }); }
+  // the fridge door
+  if (refs.fridgeDoor) { const fS = swinger(set, refs.fridgeDoor, "y", 1.7, 6);
+    thing(set, "fridge", { kind: "open", label: "Fridge", p: V3(-6.25, 1.2, 1.45), stand: V3(-5.5, 0, 1.45), r: 1.5, use: ({ on }) => { fS.goal = on ? 1 : 0; } }); }
+  // somewhere to sit: the second desk's chair, the armchairs by the window
+  thing(set, "chair-2", { kind: "sit", label: "Chair", p: V3(3.4, 0.5, -0.75), stand: V3(3.5, 0, 0.0), seat: V3(3.4, 0.48, -0.75), yaw: Math.PI + 0.2, r: 1.3 });
+  for (const [x, ry] of [[-2.2, 0.35], [2.2, -0.35]]) thing(set, "armchair" + (x < 0 ? "-l" : "-r"), { kind: "sit", label: "Armchair", p: V3(x, 0.45, 3.9), stand: V3(x - Math.sin(Math.PI + ry) * 0.9, 0, 3.9 - Math.cos(Math.PI + ry) * 0.9), seat: V3(x, 0.42, 3.92), yaw: Math.PI + ry, r: 1.4 });
+  // a mug on the coffee counter you can pick up and put down
+  if (refs.mug) { const m = refs.mug, home = m.position.clone(), st = { held: false };
+    thing(set, "mug", { kind: "pickup", label: "Mug", p: V3(-6.58, 0.97, 2.78), stand: V3(-5.55, 0, 2.8), r: 1.4, use: ({ on }) => { st.held = on; m.visible = !on; ud.held = on ? "mug" : null; } }); }
+}
+
+/* ---------- the library's things: the doors out, the reading lamps, the chairs, a book from the cart ---------- */
+function libraryThings(set, refs) {
+  const ud = set.userData;
+  thing(set, "memory-exit", { kind: "exit", label: "Doors", to: "office", p: V3(0, 1.3, 8.85), stand: V3(0, 0, 7.6), r: 2.2 });
+  ud.marks["office-door"] = V3(0, 0, 7.6); ud.marks["office-doorYaw"] = Math.PI;
+  { const st = { v: 1, goal: 1 }, k0 = refs.bulb.uniforms.uK.value, L = ud.lamps.filter(l => l.range < 4 && l.p.y < 1.2), c0 = L.map(l => l.col.slice());
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 12, dt); refs.bulb.uniforms.uK.value = k0 * (0.03 + 0.97 * st.v); refs.shade.uniforms.uK.value = refs.shadeK * (0.3 + 0.7 * st.v); L.forEach((l, i) => { l.col[0] = c0[i][0] * st.v; l.col[1] = c0[i][1] * st.v; l.col[2] = c0[i][2] * st.v; }); });
+    thing(set, "reading-lamps", { kind: "toggle", label: "Lamps", on: true, p: V3(-1.1, 1.12, 3.0), stand: V3(-1.1, 0, 4.1), r: 1.3, use: ({ on }) => { st.goal = on ? 1 : 0; } }); }
+  (refs.chairs || []).slice(0, 4).forEach((c, i) => thing(set, "lib-chair-" + i, { kind: "sit", label: "Chair", p: V3(c.x, 0.5, c.z), stand: V3(c.x + Math.sin(c.yaw) * 0.8, 0, c.z + Math.cos(c.yaw) * 0.8), seat: V3(c.x, 0.47, c.z), yaw: c.yaw, r: 1.2 }));
+  if (refs.book) { const b = refs.book;
+    thing(set, "cart-book", { kind: "pickup", label: "Book", p: b.getWorldPosition(new THREE.Vector3()), stand: V3(-2.4, 0, 7.2), r: 1.5, use: ({ on }) => { b.visible = !on; ud.held = on ? "book" : null; } }); }
+}
+
+/* ================================================================
    THE LOT
    ================================================================ */
 export function buildLot(o) {
   const set = new THREE.Group(); set.name = "lot";
-  set.userData = { lamps: [], spots: {}, walls: [], frond: TX.frondTex(), sounds: {} };
+  set.userData = { lamps: [], spots: {}, walls: [], frond: TX.frondTex(), sounds: {}, colliders: [] };
   const r = rng(53), day = !!o.day;
+  const CO = set.userData.colliders;
   const W = 70, H = 52;
   // parking lines: two rows of stalls back to back across the drive lane, and a third along the fence
   const lines = [];
@@ -546,7 +994,7 @@ export function buildLot(o) {
   const fl = plane(22.8, 5.8, tile, sh); fl.rotation.x = -Math.PI / 2; fl.position.set(-1, 0.01, -3.0);
   const ceilM = pbr({ color: "#d9d6cf", rough: 0.9, wet: 0 });
   const ce = plane(22.8, 5.8, ceilM, sh); ce.rotation.x = Math.PI / 2; ce.position.set(-1, 4.0, -3.0);
-  const panelM = glow("#fff3e0", { k: day ? 0.6 : 2.0 });
+  const panelM = glow("#fff3e0", { k: day ? 0.6 : 2.0 }); set.userData._panelM = panelM; set.userData._dl = dl;
   for (let i = 0; i < 7; i++) for (const zz of [-1.6, -4.2]) { const p0 = plane(1.2, 0.6, panelM, sh); p0.rotation.x = Math.PI / 2; p0.position.set(-11 + i * 3.3, 3.98, zz); }
   const wallIn = pbr({ color: "#e4ddd0", rough: 0.85, wet: 0 });
   const bw = plane(22.8, 4.0, wallIn, sh); bw.position.set(-1, 2.0, -5.88);
@@ -567,17 +1015,51 @@ export function buildLot(o) {
   const pane = plane(22.0, 3.75, glassM, sh); pane.position.set(-1, 1.92, 0.02); pane.renderOrder = 2; pane.userData.keep = true;
   for (let i = 0; i <= 8; i++) box(0.1, 3.85, 0.18, alu, -12 + i * 2.75, 1.92, 0.05, sh);
   box(22.4, 0.12, 0.2, alu, -1, 3.86, 0.05, sh); box(22.4, 0.14, 0.2, alu, -1, 0.07, 0.05, sh);
-  // the office door at the right end, lit from inside
-  box(1.5, 2.5, 0.14, alu, 11, 1.25, 0.05, sh);
-  const doorGlow = plane(1.1, 2.0, glow("#f3d2a0", { k: day ? 0.3 : 1.1 }), sh); doorGlow.position.set(11, 1.2, 0.13);
-  box(0.04, 0.5, 0.06, pbr({ color: "#c9ccd0", metal: 1, rough: 0.2 }), 10.55, 1.15, 0.19, sh);
+  /* the office door at the right end, on the wall beside the storefront: a pale casing round a green door with
+     a glass panel, a push bar, a kick plate and three hinges, a concrete step and a mat, a lit OFFICE sign and a
+     sconce over it throwing warm light on the walk. It opens outward: set.userData.officeDoor.open(t), t 0..1. */
+  {
+    const casing = pbr({ color: "#d8d0c0", rough: 0.55, wet: 0.7 });
+    const leafM = pbr({ color: "#1f3a2e", rough: 0.4, metal: 0.25, wet: 0.9, coat: 0.6 });
+    const steel = pbr({ color: "#b9bcbf", metal: 1, rough: 0.32, wet: 0.6 });
+    const dx = 11, fz = 0.2;                       // the door's centre on the wall, the wall's face
+    box(0.13, 2.42, 0.13, casing, dx - 0.615, 1.21, fz + 0.06, sh); box(0.13, 2.42, 0.13, casing, dx + 0.615, 1.21, fz + 0.06, sh);
+    box(1.36, 0.14, 0.13, casing, dx, 2.35, fz + 0.06, sh);
+    // the lit room behind the leaf (seen through its glass, and all of it when the door opens)
+    const inner = plane(1.1, 2.26, glow("#f1cf98", { k: day ? 0.3 : 0.62 }), sh); inner.position.set(dx, 1.15, fz + 0.004);
+    box(1.7, 0.1, 0.55, rmat({ color: "#9b968c", rough: 0.85, wet: 0.8, mapK: "concC", tri: 1.2 }), dx, 0.05, fz + 0.27, sh);
+    const mat = plane(1.1, 0.62, pbr({ color: "#1d1c1a", rough: 0.95, wet: 0.4 }), sh); mat.rotation.x = -Math.PI / 2; mat.position.set(dx, 0.012, fz + 0.9);
+    // the leaf, hinged on its left edge (as you face it)
+    const leaf = new THREE.Group(); leaf.position.set(dx - 0.55, 0.1, fz + 0.04); leaf.userData.keep = true; sh.add(leaf);
+    const W0 = 1.1, H0 = 2.18;
+    box(0.1, H0, 0.05, leafM, 0.05, H0 / 2, 0, leaf); box(0.1, H0, 0.05, leafM, W0 - 0.05, H0 / 2, 0, leaf);
+    box(W0, 0.12, 0.05, leafM, W0 / 2, H0 - 0.06, 0, leaf); box(W0, 0.42, 0.05, leafM, W0 / 2, 0.21, 0, leaf);
+    const gl = plane(W0 - 0.2, H0 - 0.56, pbr({ color: "#0b0f10", rough: 0.03, wet: 0.6, alpha: 0.18, glass: true, depthWrite: false, spec: 1, diff: 0.2 }), leaf);
+    gl.position.set(W0 / 2, 0.42 + (H0 - 0.56) / 2, 0.005); gl.renderOrder = 2;
+    box(W0 - 0.1, 0.26, 0.008, steel, W0 / 2, 0.15, 0.029, leaf);                       // kick plate
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.78, 10), steel); bar.rotation.z = Math.PI / 2; bar.position.set(W0 / 2 + 0.04, 1.02, 0.085); leaf.add(bar);
+    for (const bx of [W0 / 2 - 0.35, W0 / 2 + 0.43]) box(0.04, 0.05, 0.06, steel, bx, 1.02, 0.055, leaf);
+    for (const hy of [0.3, 1.1, 1.9]) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.11, 8), steel); h.position.set(-0.005, hy, 0.03); leaf.add(h); }
+    // OFFICE, lit, and the sconce under it
+    const sign = plane(1.4, 0.4, glow("#ffffff", { map: TX.officeSignTex(), k: day ? 0.8 : 1.35 }), sh); sign.position.set(dx, 3.08, fz + 0.012);
+    box(1.48, 0.48, 0.03, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.4, wet: 0.9 }), dx, 3.08, fz - 0.005, sh);
+    // the sconce's light in the rain, a pool you can see from across the lot
+    if (!day) { const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 1.5, 2.45, 24, 1, true), coneMat0("#ffc98a", 0.6)); cone.position.set(dx, 2.56 - 1.225, fz + 0.55); cone.layers.set(3); cone.userData.keep = true; sh.add(cone); }
+    box(0.34, 0.1, 0.16, pbr({ color: "#1b1e1d", rough: 0.4, metal: 0.5, wet: 0.9 }), dx, 2.62, fz + 0.08, sh);
+    const lens = plane(0.3, 0.12, glow("#ffe0b0", { k: day ? 0.3 : 3.0 }), sh); lens.rotation.x = Math.PI / 2; lens.position.set(dx, 2.565, fz + 0.08);
+    set.userData.officeDoor = {
+      leaf, t: 0,
+      // swings out toward the lot, up to about 80 degrees
+      open(t) { this.t = Math.max(0, Math.min(1, t)); leaf.rotation.y = -1.4 * this.t * this.t * (3 - 2 * this.t); }
+    };
+  }
   // the wordmark over the canopy, lit
   const signT = TX.signTex(o.wordmark);
   const sign = plane(7.2, 1.8, glow("#ffffff", { map: signT, k: day ? 0.9 : 1.25 }), sh); sign.position.set(-1, 5.0, 0.51);
   // the sold board by the door; it fills from June 2025, so on the morning of the keys (August 2024) it is not up yet
   if (!day) { const sold = plane(1.6, 1.2, pbr({ map: TX.soldTex(), color: "#fff", rough: 0.5, wet: 0.3 }), sh); sold.position.set(8.6, 1.55, 0.16); }
   set.userData.spots.sold = { p: V3(2 + 8.6, 1.5, -18 + 0.3), r: 2.4, stand: V3(10.6, 0, -16.2) };
-  set.userData.spots.door = { p: V3(13, 1.3, -17.6), r: 2.4, stand: V3(13, 0, -16.3) };
+  set.userData.spots.door = { p: V3(13, 1.3, -17.6), r: 2.4, stand: V3(13, 0, -16.3), kind: "exit", label: "Office", to: "office", at: "lot-door" };
   set.userData.walls.push({ x0: -11.3, x1: 15.3, z0: -26.3, z1: -17.7 });
   // a trash can and a bench by the door
   { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.24, 0.85, 16, 1, true), pbr({ color: "#2a2c2b", metal: 0.6, rough: 0.4, wet: 1, side: THREE.DoubleSide })); can.position.set(14.6, 0.425, -17.2); set.add(can);
@@ -605,34 +1087,70 @@ export function buildLot(o) {
     const c = { kind, x, z, yaw, color, metal: !!metal }; lotCars.push(c);
     const [w, l] = carSize(kind); const ca = Math.abs(Math.cos(yaw)), sa = Math.abs(Math.sin(yaw));
     const hw = (w * ca + l * sa) / 2 + 0.2, hl = (w * sa + l * ca) / 2 + 0.2;
-    set.userData.walls.push({ x0: x - hw, x1: x + hw, z0: z - hl, z1: z + hl });
+    c.wall = { x0: x - hw, x1: x + hw, z0: z - hl, z1: z + hl }; set.userData.walls.push(c.wall);
     return c;
   };
   let k = 0;
   for (let x = -17.6; x <= 17.6; x += 3.2) { if (r() < 0.12) continue; addCar(x + (r() - 0.5) * 0.12, -5.6 + (r() - 0.5) * 0.25, Math.PI + (r() - 0.5) * 0.05, KINDS[k % KINDS.length], k * 7 + 3); k++; }
   for (let x = -17.6; x <= 17.6; x += 3.2) { if (Math.abs(x - 1.6) < 1.7 || r() < 0.15) continue; const kd = x > 4 && x < 6 ? "truck" : KINDS[(k + 2) % KINDS.length]; addCar(x + (r() - 0.5) * 0.12, 4.5 + (r() - 0.5) * 0.25, (r() - 0.5) * 0.05, kd, x > 4 && x < 6 ? 2 : k * 3 + 1); if (kd === "truck") set.userData.spots.truck = { p: V3(x, 1.3, 4.5 + 2.9), r: 3, stand: V3(x, 0, 8.8) }; k++; }
-  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25) continue; addCar(x + (r() - 0.5) * 0.12, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
+  // (the stalls in front of the gate stay empty: it's the way in and out)
+  for (let x = -17.6; x <= 9; x += 3.2) { if (r() < 0.25 || Math.abs(x) < 3) continue; addCar(x + (r() - 0.5) * 0.12, 14.4, Math.PI + (r() - 0.5) * 0.05, KINDS[(k + 1) % KINDS.length], k * 5); k++; }
   // one car by the showroom with its engine running and its lights on: someone's ride, waiting (not in the morning)
-  if (!day) { const idle = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true }; lotCars.push(idle); set.userData.walls.push({ x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 });
+  let idleCar = null;
+  if (!day) { const idle = idleCar = { kind: "sedan", x: 16.6, z: -11.2, yaw: -Math.PI / 2 + 0.12, color: "#16181a", metal: false, idle: true }; lotCars.push(idle); idle.wall = { x0: 14.2, x1: 19.0, z0: -12.3, z1: -10.1 }; set.userData.walls.push(idle.wall);
     set.userData.sounds.idle = { x: 16.6 + 2.2, y: 0.4, z: -11.5, kind: "engine-idle" };
     // its lights on the wet ground ahead of it and the tail lights' red behind
-    set.userData.lamps.push({ p: V3(13.6, 0.75, -10.8), range: 7, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true });
+    idle.lamp = { p: V3(13.6, 0.75, -10.8), range: 7, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true };
+    set.userData.lamps.push(idle.lamp);
   }
+  /* the cars you can drive (story/vehicle.js, tools/story/HANDOFF-drive.md): the idling sedan, a car by the
+     entrance aisle and the pickup at the truck spot; drawn as rigs, not in the instanced rows */
+  const drivable = [];
+  { const pick = (id, f) => { let best = null, bd = 1e9; for (const c of lotCars) { if (c.drivable) continue; const d = f(c); if (d < bd) { bd = d; best = c; } } if (best) { best.drivable = true; best.id = id; drivable.push(best); } };
+    if (idleCar) { idleCar.drivable = true; idleCar.id = "idle"; idleCar.engine = true; idleCar.lights = { head: true, tail: true, cluster: true }; drivable.push(idleCar); }
+    pick("car", c => (Math.abs(c.z - 4.5) < 1 && c.kind !== "truck" && c.kind !== "suv" ? Math.abs(c.x + 1.6) : 1e9));
+    pick("truck", c => (c.kind === "truck" && Math.abs(c.z - 4.5) < 1 ? Math.abs(c.x - 4.8) : 1e9));
+    for (const c of drivable) { const g = new THREE.Group(); g.name = "car-" + c.id; g.position.set(c.x, 0, c.z); g.rotation.y = c.yaw; g.userData.keep = true; set.add(g); c.object = g; }
+  }
+  set.userData.drivable = drivable;
+  const parked = lotCars.filter(c => !c.drivable);
+  set.userData.parked = parked;
+  set.userData.rockCar = rockCar;
+  set.userData.tickCars = dt => tickCars(parked, dt);
   // the cars, now or when they land
-  if (Object.keys(carLib).length) parkCars(set, lotCars.concat(showCars));
-  else lotReady.then(() => { parkCars(set, lotCars.concat(showCars)); set.userData.envTex = null; });
+  /* a drivable car standing still is drawn with the parked rows (one instance slot per part, no extra draws);
+     its rig (the moving parts) shows only while story/vehicle.js has it: showRig(car, true | false) */
+  const ZERO = new THREE.Matrix4().makeScale(0, 0, 0), RM = new THREE.Matrix4(), RQ = new THREE.Quaternion(), RP = new THREE.Vector3(), RS = new THREE.Vector3(1, 1, 1), UP = new THREE.Vector3(0, 1, 0);
+  set.userData.showRig = (c, on) => {
+    if (c.object) c.object.visible = !!on;
+    if (!c._slots) return;
+    RP.set(c.x, 0, c.z); RQ.setFromAxisAngle(UP, c.yaw);
+    for (const [im, i, local] of c._slots) {
+      if (on) im.setMatrixAt(i, ZERO); else { RM.compose(RP, RQ, RS); if (local) RM.multiply(local); im.setMatrixAt(i, RM); }
+      im.instanceMatrix.needsUpdate = true; if (!on) im.computeBoundingSphere();
+    }
+  };
+  const land = () => { parkCars(set, parked.concat(showCars, drivable)); for (const c of drivable) { buildRig(set, c); c.object.visible = false; } for (const c of parked) if (c.collider) { const [w, l] = carSize(c.kind); c.collider.hw = w / 2; c.collider.hl = l / 2; } };
+  if (Object.keys(carLib).length) land();
+  else lotReady.then(() => { land(); set.userData.envTex = null; });
   if (!set.userData.spots.truck) set.userData.spots.truck = { p: V3(4.8, 1.3, 7.1), r: 3, stand: V3(4.8, 0, 8.6) };
   // wheel stops at the head of each stall, concrete
   { const ws = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.13, 0.16), rmat({ color: "#9b968c", rough: 0.85, wet: 0.8, mapK: "concC", tri: 1.2 }), 40); let n = 0; const m4 = new THREE.Matrix4();
     for (let x = -17.6; x <= 17.6; x += 3.2) { m4.makeTranslation(x, 0.065, -7.75); ws.setMatrixAt(n++, m4); m4.makeTranslation(x, 0.065, 6.75); ws.setMatrixAt(n++, m4); }
     ws.count = n; ws.userData.keep = true; set.add(ws); }
 
+  /* --- what a car you drive can hit (story/vehicle.js): parked cars, the showroom, the pylon's legs, the can, wheel stops --- */
+  for (const c of parked) { const [w, l] = carSize(c.kind); c.collider = { type: "box", x: c.x, z: c.z, hw: w / 2, hl: l / 2, yaw: c.yaw, h: 1.4, what: "car", car: c }; CO.push(c.collider); }
+  CO.push({ type: "box", x: 2, z: -22.0, hw: 13.3, hl: 4.3, yaw: 0, h: 5.6, what: "wall" });
+  CO.push({ type: "circle", x: -16.6, z: -9, r: 0.45, what: "pole" }, { type: "circle", x: -13.4, z: -9, r: 0.45, what: "pole" }, { type: "circle", x: 14.6, z: -17.2, r: 0.3, what: "wall" });
+  for (let x = -17.6; x <= 17.6; x += 3.2) for (const zz of [-7.75, 6.75]) CO.push({ type: "bump", x, z: zz, hw: 0.9, hl: 0.08, h: 0.13 });
   /* --- lamps --- */
   [[-9, -1.2, 8.5, 1], [8, -1.2, 8.5, 1], [-1, 9.4, 8.5, 1], [13, 9.4, 8.5, 0], [-17, 12, 8, 0], [11.6, -13.4, 7, 0], [6.2, 18.6, 7.5, 0]].forEach(([x, z, h, twin]) => lampPost(x, z, h, set, { day, twin: false }));
   // the showroom's own light: spilling out through the glass, and the room inside it
   set.userData.lamps.push({ p: V3(2, 2.4, -16.4), range: 15, col: [1.6, 1.15, 0.7], cone: 0, fixed: true });
   set.userData.lamps.push({ p: V3(1, 3.3, -21.0), range: 13, col: [2.2, 1.9, 1.5], cone: 0, fixed: true });
-  set.userData.lamps.push({ p: V3(13, 2.2, -16.4), range: 6, col: [1.0, 0.75, 0.45], cone: 0, fixed: true });
+  // the office door's sconce: warm light on the step, the mat and the walk in front of it
+  set.userData.lamps.push({ p: V3(13, 2.5, -17.3), range: 7.5, col: [1.9, 1.3, 0.68], cone: 0, fixed: true });
   set.userData.sounds.lamps = set.userData.lamps.filter(l => l.coneMesh).map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, kind: "sodium-hum" }));
   // the puddle by the middle lamp
   set.userData.spots.puddle = { p: V3(-1.5, 0.05, 11.2), r: 2.2, stand: V3(-1.5, 0, 12.6) };
@@ -649,6 +1167,7 @@ export function buildLot(o) {
     const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, len, 8), galv); rail.rotation.z = Math.PI / 2; rail.position.set((x0 + x1) / 2, 1.95, 21.5); set.add(rail);
     for (let s = 0; s < 3; s++) { const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, len, 4), galv); wire.rotation.z = Math.PI / 2; wire.position.set((x0 + x1) / 2, 2.07 + s * 0.11, 21.55 + s * 0.09); set.add(wire); }
     set.userData.walls.push({ x0, x1, z0: 21.2, z1: 21.8 });
+    CO.push({ type: "box", x: (x0 + x1) / 2, z: 21.5, hw: (x1 - x0) / 2, hl: 0.08, yaw: 0, h: 2, what: "fence" });
   }
   const gate = new THREE.Group(); gate.position.set(-3.2, 0, 21.9); set.add(gate); gate.userData.keep = true;
   { const t = ct.clone(); t.needsUpdate = true; t.repeat.set(3.4 / 0.11, 1.8 / 0.11);
@@ -658,9 +1177,16 @@ export function buildLot(o) {
     const brace = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 3.85, 6), galv); brace.rotation.z = Math.atan2(1.8, 3.4) + Math.PI / 2; brace.position.set(-1.7, 1.0, 0.02); gate.add(brace);
     for (const x of [-0.4, -3.0]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.05, 12), pbr({ color: "#202020", rough: 0.8 })); w.rotation.x = Math.PI / 2; w.position.set(x, 0.08, 0); gate.add(w); } }
   set.userData.gate = gate;
+  // the gate is live: its box follows the gate wherever main.js rolls it (it spans gate.x - 3.4 to gate.x)
+  { const gc = { type: "box", x: -4.9, z: 21.9, hw: 1.7, hl: 0.08, yaw: 0, h: 2, what: "gate" };
+    Object.defineProperty(gc, "x", { get: () => gate.position.x - 1.7, enumerable: true }); Object.defineProperty(gc, "z", { get: () => gate.position.z, enumerable: true }); CO.push(gc); }
   set.userData.sounds.gate = { x: -3.2, y: 1.0, z: 21.9, kind: "chain-link" };
   set.userData.spots.gate = { p: V3(-3.4, 1.2, 21.9), r: 2.4, stand: V3(-2.6, 0, 20.4) };
-  set.userData.walls.push({ x0: -35, x1: 35, z0: -27, z1: -26.4 }, { x0: -35, x1: -34.4, z0: -27, z1: 22 }, { x0: 34.4, x1: 35, z0: -27, z1: 22 }, { x0: -4, x1: 4, z0: 23.6, z1: 24.2 });
+  set.userData.walls.push({ x0: -35, x1: 35, z0: -27, z1: -26.4 }, { x0: -35, x1: -34.4, z0: -27, z1: 22 }, { x0: 34.4, x1: 35, z0: -27, z1: 22 });
+  CO.push({ type: "box", x: 0, z: -26.7, hw: 35, hl: 0.3, yaw: 0, h: 3, what: "wall" }, { type: "box", x: -34.7, z: -2.5, hw: 0.3, hl: 24.5, yaw: 0, h: 3, what: "fence" }, { type: "box", x: 34.7, z: -2.5, hw: 0.3, hl: 24.5, yaw: 0, h: 3, what: "fence" });
+  // where a car may be: the lot inside the fence, the gate's opening, and Almeda Genoa Road; past the road's ends a soft wall turns you round
+  set.userData.driveBounds = { rects: [{ x0: -34.4, x1: 34.4, z0: -26.4, z1: 21.5, name: "lot" }, { x0: -3.2, x1: 3.2, z0: 21.0, z1: 24.6, name: "gate" }, { x0: -76, x1: 76, z0: 22.4, z1: 37.6, name: "road" }, { x0: 24, x1: 44, z0: 37, z1: 51, name: "gas" }, { x0: -38, x1: -22, z0: 37, z1: 50, name: "empty lot" }] };
+  set.userData.inDriveBounds = (x, z) => set.userData.driveBounds.rects.some(b => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
 
   /* --- beyond the fence: Almeda Genoa Road, its street lights and power poles, palms, the buildings across it, the sky --- */
   {
@@ -674,16 +1200,17 @@ export function buildLot(o) {
     const pole = pbr({ color: "#6f7376", metal: 0.8, rough: 0.5, wet: 1 });
     const lensM = glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 4.0 });
     for (let x = -60; x <= 60; x += 30) {
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 9, 8), pole); p.position.set(x, 4.5, 38.6); set.add(p);
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 9, 8), pole); p.position.set(x, 4.5, 38.6); set.add(p); CO.push({ type: "circle", x, z: 38.6, r: 0.16, what: "pole" });
       const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), pole); a.rotation.x = Math.PI / 2; a.position.set(x, 8.9, 37.4); set.add(a);
       const hd = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.8), pole); hd.position.set(x, 8.85, 36.1); set.add(hd);
       const ln = plane(0.3, 0.6, lensM, set); ln.rotation.x = Math.PI / 2; ln.position.set(x, 8.76, 36.1); ln.userData.keep = true;
     }
     // power poles and their wires, along the lot's side of the road
     const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
-    for (let x = -66; x <= 66; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); }
+    // (none in front of the gate: it's a driveway)
+    for (let x = -55; x <= 55; x += 22) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 11, 8), wood); p.position.set(x, 5.5, 25.4); set.add(p); box(2.4, 0.12, 0.12, wood, x, 10.2, 25.4, set); CO.push({ type: "circle", x, z: 25.4, r: 0.2, what: "pole" }); }
     for (const [dx, y] of [[-1.0, 10.3], [1.0, 10.3], [0, 9.2]]) {
-      for (let x = -66; x < 66; x += 22) {
+      for (let x = -55; x < 55; x += 22) {
         const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(x + t * 22, y - Math.sin(t * Math.PI) * 0.45, 25.4 + dx * 0.05)); }
         const wm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.012, 3), pbr({ color: "#111", rough: 0.6, wet: 0.5 })); set.add(wm);
       }
@@ -691,27 +1218,31 @@ export function buildLot(o) {
     // across the road: a strip of low buildings, dark at this hour, a few signs and windows still lit
     const bldg = rmat({ color: "#3a3936", rough: 0.9, wet: 0.6, mapK: "concC", tri: 0.25 });
     const rb = rng(77);
+    // (the places you can walk or drive to across the road keep their ground: the empty lot, the shop, the gas station)
+    const RESERVED = [[-40, -22], [6, 22], [24, 46]];
     for (let x = -70; x < 70;) {
-      const w = 9 + rb() * 14, h = 4 + rb() * 4.5, d = 10;
-      box(w - 0.6, h, d, bldg, x + w / 2, h / 2, 46 + rb() * 3, set);
-      if (!day && rb() < 0.6) { const s = plane(w * 0.5, 0.7, glow(["#e8d9b8", "#b8d0e8", "#f0b878"][(rb() * 3) | 0], { k: 0.5 + rb() * 0.6 }), set); s.rotation.y = Math.PI; s.position.set(x + w / 2, h - 0.9, 46 - 5.05); }
-      if (!day && rb() < 0.5) { const s = plane(1.4, 1.1, glow("#f1d6a0", { k: 0.35 }), set); s.rotation.y = Math.PI; s.position.set(x + w * (0.25 + rb() * 0.5), 1.4, 46 - 5.05); }
+      const w = 9 + rb() * 14, h = 4 + rb() * 4.5, d = 10, zc = 46 + rb() * 3;
+      const keep = !RESERVED.some(([a, b2]) => x + w > a && x < b2);
+      if (keep) { box(w - 0.6, h, d, bldg, x + w / 2, h / 2, zc, set); set.userData.walls.push({ x0: x, x1: x + w - 0.6, z0: zc - 5, z1: zc + 5 }); CO.push({ type: "box", x: x + w / 2 - 0.3, z: zc, hw: (w - 0.6) / 2, hl: 5, yaw: 0, h, what: "wall" }); }
+      if (!day && rb() < 0.6) { const c = ["#e8d9b8", "#b8d0e8", "#f0b878"][(rb() * 3) | 0], k = 0.5 + rb() * 0.6; if (keep) { const s = plane(w * 0.5, 0.7, glow(c, { k }), set); s.rotation.y = Math.PI; s.position.set(x + w / 2, h - 0.9, 46 - 5.05); } }
+      if (!day && rb() < 0.5) { const fx = x + w * (0.25 + rb() * 0.5); if (keep) { const s = plane(1.4, 1.1, glow("#f1d6a0", { k: 0.35 }), set); s.rotation.y = Math.PI; s.position.set(fx, 1.4, 46 - 5.05); } }
       x += w;
     }
     // palms along the road and the lot's west side
-    for (let i = 0; i < 9; i++) palm(-30 + i * 7.5 + (r() - 0.5) * 3, 24.8 + r() * 1.0, 8 + r() * 4, set, r);
+    for (let i = 0; i < 9; i++) { const px = -30 + i * 7.5 + (r() - 0.5) * 3, pz = 24.8 + r() * 1.0, ph = 8 + r() * 4; if (Math.abs(px) > 4.5) palm(px, pz, ph, set, r); }
     for (let i = 0; i < 4; i++) palm(-38 - r() * 4, -20 + i * 11, 7 + r() * 4, set, r);
     const sky = skyDome(o); sky.renderOrder = -1; set.add(sky);
     set.userData.sounds.road = { x: 0, y: 0.5, z: 31, kind: "traffic" };
+    placesAcross(set, o, day, CO);
   }
 
   /* --- the ground, now that everything standing on it is known --- */
   {
     const px = o.lowres ? 14 : 24;
-    const carsG = lotCars.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
+    const carsG = parked.map(c => { const [w, l] = carSize(c.kind); return { x: c.x, z: c.z, yaw: c.yaw, w, l }; });
     const conc = [[-12.4, -17.9, 16.4, -15.6]];
     const g = TX.lotGround(W, H, px, { puddles: [[-1.5, 11.2, 1.9, 1.3], [-0.6, 10.2, 0.8, 0.6]], lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25], [-34, 21.4, 34, 21.6, 0.3, 0.3]].concat(set.userData.lamps.filter(l => l.coneMesh).map(l => [l.p.x - 0.82 - 0.3, l.p.z - 0.3, l.p.x - 0.82 + 0.3, l.p.z + 0.3, 0.6, 0.45])) });
-    const shBoxes = lotCars.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
+    const shBoxes = parked.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
       .concat([{ x: 2, z: -22.6, hw: 13.3, hl: 3.7, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }, { x: 2, z: -16.9, hw: 13.6, hl: 0.95, h: 4.1, y0: 3.87, yaw: 0 }]);
     const shL = set.userData.lamps.filter(l => !l.car).slice(0, 8);
     const sh = day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, shL.map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range })), shBoxes);
@@ -735,6 +1266,7 @@ export function buildLot(o) {
     // rain on things: the canopy, the cars' roofs, the showroom's glass
     set.userData.sounds.rain = day ? [] : [{ x: 2, y: 4.0, z: -16.9, kind: "rain-canopy", w: 27 }, { x: 0, y: 1.4, z: 0, kind: "rain-cars", w: 36 }, { x: 1, y: 1.9, z: -17.98, kind: "rain-glass", w: 22 }];
   }
+  lotThings(set, day, { panelM: set.userData._panelM, dl: set.userData._dl, lamps: set.userData.lamps.filter(l => l.fixed && l.p.z < -16 && l.p.x < 5) });
   envHook(set, V3(1, 1.7, 1));
   mergeStatic(set);
   // where people stand
@@ -750,6 +1282,21 @@ export function buildLot(o) {
   set.userData.camRail = [V3(-22, 1.0, 26), V3(-12, 0.7, 16), V3(-2, 1.3, 6), V3(6, 2.2, -3), V3(10, 2.0, -8.5)];
   set.userData.camLook = [V3(-6, 1.6, 8), V3(0, 1.2, -2), V3(6, 1.6, -10), V3(9, 2.2, -14), V3(10.2, 1.6, -14.6)];
   set.userData.ready = lotReady;
+  /* what the wet ground's mirror can leave out on a phone (post.js reads it when post.lite): every surface lit by
+     the lamps (the cars but their lamps, the buildings, the fence, the props); rebuilt when the cars land */
+  { let cache = null, n = -1;
+    set.userData.reflectSkip = () => {
+      if (cache && n === set.children.length) return cache;
+      const M = carMats(), keep = new Set();   // (the paint too: in the mirror the lot's cars read by their lamps)
+      for (const k of ["lamp_head", "lamp_head_in", "lamp_tail", "lamp_tail_in", "lamp_amber", "idleTail", "idleTailIn", "idleHeadIn", "idleHead"]) keep.add(M[k]);
+      for (const c of drivable) { const rg = c.object && c.object.userData.rig; if (rg) for (const m of Object.values(rg.own)) keep.add(m); }
+      cache = [];
+      // on a phone the mirror keeps what reads in a wet lot at night: the lights (lamps, signs, lit windows, the
+      // cars' lamps) and the sky; every lit-by-the-lamps surface is left out of that pass
+      set.traverse(o => { if (!o.isMesh || !o.material || !o.material.userData || !o.material.userData.pbr || keep.has(o.material)) return; cache.push(o); });
+      n = set.children.length; return cache;
+    }; }
+  _debug.sets[day ? "keys" : "lot"] = set;
   return set;
 }
 
@@ -960,7 +1507,7 @@ export function buildOffice(o) {
     const a1 = cyl(0.009, 0.009, 0.42, M.steel, 0, 0.2, 0.05, L, 6); a1.rotation.x = 0.25;
     const a2 = cyl(0.009, 0.009, 0.36, M.steel, 0, 0.44, 0.18, L, 6); a2.rotation.x = -1.0;
     const dsh = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.1, 0.14, 16, 1, true), pbr({ color: "#1c3229", rough: 0.4, metal: 0.4, wet: 0, side: THREE.DoubleSide })); dsh.position.set(0, 0.42, 0.36); dsh.rotation.x = 0.35; L.add(dsh);
-    const dbulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glow("#ffd9a0", { k: 2.6 })); dbulb.position.set(0, 0.39, 0.37); L.add(dbulb); }
+    const dbulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glow("#ffd9a0", { k: 2.6 })); dbulb.position.set(0, 0.39, 0.37); L.add(dbulb); set.userData._deskBulb = dbulb; }
   set.userData.lamps.push({ p: V3(-2.1, 1.12, -1.72), range: 3.8, col: [1.6, 1.0, 0.52], cone: 0, fixed: true });
   // the monitor's cable along the floor to the wall
   box(0.012, 0.012, 1.4, M.plastic, 0.2, 0.006, -2.9, set);
@@ -974,12 +1521,15 @@ export function buildOffice(o) {
   // the filing cabinet on the left wall: four drawers, label holders, handles
   const cab = new THREE.Group(); cab.position.set(-6.6, 0, -2.6); cab.rotation.y = Math.PI / 2; set.add(cab);
   rbox(0.46, 1.36, 0.62, 0.01, M.putty, 0, 0.68, 0, cab);
+  let drawer = null;
   ["Form 130-U", "webDEALER", "Liens", "Temp tags"].forEach((t, i) => {
     const y = 1.18 - i * 0.32;
-    box(0.43, 0.3, 0.012, M.putty, 0, y - 0.04, 0.312, cab);
-    const lb = plane(0.11, 0.035, pbr({ map: TX.labelTex(t, { w: 256, h: 80 }), color: "#fff", rough: 0.7, wet: 0, ao: 0 }), cab); lb.position.set(0, y + 0.06, 0.32);
-    box(0.13, 0.05, 0.004, M.chrome, 0, y + 0.06, 0.319, cab);
-    rbox(0.16, 0.025, 0.03, 0.01, M.chrome, 0, y - 0.03, 0.33, cab);
+    // the top drawer is its own piece, so it can slide out (a box behind its front, hidden while shut)
+    const dg = i === 0 ? (drawer = new THREE.Group()) : cab; if (i === 0) { drawer.userData.keep = true; cab.add(drawer); box(0.4, 0.24, 0.5, M.putty, 0, y - 0.05, 0.05, drawer); for (let k = 0; k < 6; k++) box(0.36, 0.22, 0.004, M.paper, 0, y - 0.05, -0.15 + k * 0.06, drawer); }
+    box(0.43, 0.3, 0.012, M.putty, 0, y - 0.04, 0.312, dg);
+    const lb = plane(0.11, 0.035, pbr({ map: TX.labelTex(t, { w: 256, h: 80 }), color: "#fff", rough: 0.7, wet: 0, ao: 0 }), dg); lb.position.set(0, y + 0.06, 0.32);
+    box(0.13, 0.05, 0.004, M.chrome, 0, y + 0.06, 0.319, dg);
+    rbox(0.16, 0.025, 0.03, 0.01, M.chrome, 0, y - 0.03, 0.33, dg);
   });
   // a scale model's worth of clutter on top: a tray of folders
   box(0.32, 0.08, 0.26, M.plastic, 0, 1.4, 0, cab); for (let i = 0; i < 4; i++) box(0.3, 0.004, 0.23, M.paper, 0, 1.38 + i * 0.012, 0.01, cab);
@@ -1033,13 +1583,19 @@ export function buildOffice(o) {
   rbox(0.8, 0.88, 0.6, 0.01, M.wood, 0, 0.44, 0, cof); rbox(0.84, 0.04, 0.64, 0.01, pbr({ color: "#2a2928", rough: 0.3, wet: 0 }), 0, 0.9, 0, cof);
   rbox(0.32, 0.42, 0.3, 0.02, M.plastic, 0, 1.13, -0.05, cof); box(0.16, 0.02, 0.12, M.chrome, 0, 0.94, 0.08, cof); cyl(0.06, 0.05, 0.14, pbr({ color: "#202224", rough: 0.08, wet: 0 }), 0, 1.0, 0.06, cof, 16);
   box(0.06, 0.03, 0.02, glow("#c94a2a", { k: 1.2 }), 0.1, 1.25, 0.11, cof);
-  for (let i = 0; i < 3; i++) cyl(0.04, 0.036, 0.09, pbr({ color: ["#ece8de", "#1c3229", "#ece8de"][i], rough: 0.25, wet: 0 }), -0.28 + i * 0.1, 0.965, 0.18, cof, 14);
+  let mug2 = null;
+  for (let i = 0; i < 3; i++) { const mm = cyl(0.04, 0.036, 0.09, pbr({ color: ["#ece8de", "#1c3229", "#ece8de"][i], rough: 0.25, wet: 0 }), -0.28 + i * 0.1, 0.965, 0.18, cof, 14); if (i === 1) { mm.userData.keep = true; mug2 = mm; } }
   set.userData.spots.coffee = { p: V3(-6.3, 1.1, 2.6), r: 1.7, stand: V3(-5.4, 0, 2.6) };
   // the fridge beside it
+  let fridgeDoor = null;
   { const fr = new THREE.Group(); fr.position.set(-6.62, 0, 1.45); fr.rotation.y = Math.PI / 2; set.add(fr);
-    const enamel = pbr({ color: "#e4e2dc", rough: 0.25, wet: 0, room: ROOM }); rbox(0.7, 1.72, 0.66, 0.03, enamel, 0, 0.86, 0, fr);
-    box(0.68, 0.006, 0.01, M.plastic, 0, 1.2, 0.335, fr); rbox(0.03, 0.42, 0.04, 0.012, M.chrome, -0.28, 1.45, 0.35, fr); rbox(0.03, 0.3, 0.04, 0.012, M.chrome, -0.28, 0.95, 0.35, fr);
-    for (let i = 0; i < 3; i++) box(0.06, 0.06, 0.004, pbr({ color: ["#c9a96a", "#1c3229", "#a85a3a"][i], rough: 0.5, wet: 0 }), 0.1 + i * 0.08, 1.5 - i * 0.05, 0.336, fr);
+    const enamel = pbr({ color: "#e4e2dc", rough: 0.25, wet: 0, room: ROOM }); rbox(0.7, 1.72, 0.6, 0.03, enamel, 0, 0.86, -0.03, fr);
+    // the door, hinged on its right edge (as you face it), with the handles and magnets on it; inside, a lit box and a shelf
+    const inside = plane(0.6, 1.5, glow("#f4f2ea", { k: 0.55 }), fr); inside.position.set(0, 0.86, 0.272);
+    fridgeDoor = new THREE.Group(); fridgeDoor.position.set(0.35, 0, 0.3); fridgeDoor.userData.keep = true; fr.add(fridgeDoor);
+    rbox(0.7, 1.72, 0.06, 0.02, enamel, -0.35, 0.86, 0.03, fridgeDoor);
+    box(0.68, 0.006, 0.01, M.plastic, -0.35, 1.2, 0.062, fridgeDoor); rbox(0.03, 0.42, 0.04, 0.012, M.chrome, -0.63, 1.45, 0.08, fridgeDoor); rbox(0.03, 0.3, 0.04, 0.012, M.chrome, -0.63, 0.95, 0.08, fridgeDoor);
+    for (let i = 0; i < 3; i++) box(0.06, 0.06, 0.004, pbr({ color: ["#c9a96a", "#1c3229", "#a85a3a"][i], rough: 0.5, wet: 0 }), -0.25 + i * 0.08, 1.5 - i * 0.05, 0.063, fridgeDoor);
     set.userData.walls.push({ x0: -7, x1: -6.25, z0: 1.05, z1: 1.85 }); set.userData.sounds.fridge = { x: -6.62, y: 0.9, z: 1.45, kind: "fridge-hum" }; }
   set.userData.sounds.coffee = { x: -6.4, y: 1.1, z: 2.6, kind: "coffee-machine" };
   set.userData.walls.push({ x0: -7, x1: -5.9, z0: 2.2, z1: 3.0 });
@@ -1115,9 +1671,12 @@ export function buildOffice(o) {
   { const wbk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.32, 16, 1, true), pbr({ color: "#2a2b2c", rough: 0.5, wet: 0, side: THREE.DoubleSide })); wbk.position.set(0.55, 0.16, -2.3); set.add(wbk); }
   { const d = new THREE.Group(); d.position.set(-6.98, 0, 4.2); d.rotation.y = Math.PI / 2; set.add(d); box(1.0, 2.1, 0.04, rmat({ color: "#6b5440", mapK: "woodC", tri: 1.2, rough: 0.5, wet: 0 }), 0, 1.05, 0.02, d); box(1.1, 2.18, 0.03, M.steel, 0, 1.09, 0.0, d); rbox(0.12, 0.03, 0.05, 0.01, M.chrome, 0.38, 1.0, 0.07, d); }
   box(0.08, 0.12, 0.025, pbr({ color: "#e9e6de", rough: 0.4, wet: 0 }), -6.98, 1.5, 1.3, set).rotation.y = Math.PI / 2;
+  set.userData.marks = {};
+  officeThings(set, { deskBulb: set.userData._deskBulb, trof, drawer, fridgeDoor, mug: mug2 });
   mergeStatic(set);
   envHook(set, V3(0, 1.6, 0.5));
   set.userData.marks = {
+    ...set.userData.marks,
     playerStart: V3(4.5, 0, 3.6), playerYaw: Math.PI,
     jason: V3(-1.3, 0, -0.55), jasonYaw: 0.4, jasonPhone: V3(-1.95, 0, -0.85),
     renata: V3(-0.2, 0, -2.75), renataYaw: 0
@@ -1127,6 +1686,7 @@ export function buildOffice(o) {
   set.userData.surfaceAt = (x, z) => (x < -4.8 && z > 1.0 ? "tile" : "carpet");
   set.userData.fogDen = 0.006;
   set.userData.ready = roomsReady;
+  _debug.sets.office = set;
   return set;
 }
 
@@ -1164,7 +1724,7 @@ export function buildLibrary(o) {
     box(0.08, 3.7, 0.1, M.dark, x - 0.84, 3.4, -8.94, set); box(0.08, 3.7, 0.1, M.dark, x + 0.84, 3.4, -8.94, set); box(1.6, 0.05, 0.06, M.dark, x, 4.3, -8.94, set); box(0.04, 3.6, 0.06, M.dark, x, 3.4, -8.94, set);
   }
   set.userData.sounds.windows = { x: 0, y: 3.4, z: -8.9, kind: "rain-glass", w: 18 };
-  const shade = glow("#2f6a46", { k: 0.9 });
+  const shade = glow("#2f6a46", { k: 0.9 }), bulbM = glow("#ffe2b0", { k: 2.4 }), chairs = [];
   // long tables with green banker's lamps; one of them is the desk
   const r = rng(11);
   for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3], [0, 3]]) {
@@ -1174,7 +1734,7 @@ export function buildLibrary(o) {
     for (const lx of [-1.1, 1.1]) {
       cyl(0.07, 0.08, 0.02, M.brass, lx, 0.825, 0, t, 16); cyl(0.01, 0.01, 0.3, M.brass, lx, 0.97, -0.05, t, 6);
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 0.08, 20, 1, true, 0, Math.PI), shade); sh.rotation.z = Math.PI / 2; sh.rotation.y = Math.PI / 2; sh.position.set(lx, 1.13, 0.0); t.add(sh);
-      const bulb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), glow("#ffe2b0", { k: 2.4 })); bulb.rotation.z = Math.PI / 2; bulb.position.set(lx, 1.1, 0.0); t.add(bulb);
+      const bulb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), bulbM); bulb.rotation.z = Math.PI / 2; bulb.position.set(lx, 1.1, 0.0); t.add(bulb);
       set.userData.lamps.push({ p: V3(tx + lx, 1.08, tz), range: 3.6, col: [2.4, 1.75, 0.9], cone: 0, fixed: true });
     }
     const sh2 = new THREE.Mesh(BLOB_GEO, blobMat(0.5, true)); sh2.scale.set(4.6, 1, 1.8); sh2.position.y = 0.01; sh2.layers.set(2); t.add(sh2);
@@ -1218,6 +1778,7 @@ export function buildLibrary(o) {
   for (const [tx, tz] of [[-6, -3], [6, -3], [-6, 3], [6, 3], [0, 3]]) for (const side of [-1, 1]) for (const cx of [-1.2, 0, 1.2]) {
     if (tx === 0 && side > 0) continue; // your side of the desk stays open
     const c = new THREE.Group(); c.position.set(tx + cx + (rr() - 0.5) * 0.2, 0, tz + side * (0.95 + rr() * 0.25)); c.rotation.y = (side > 0 ? Math.PI : 0) + (rr() - 0.5) * 0.4; set.add(c);
+    if (tz > 0 && tx !== 0 && side > 0) chairs.push({ x: c.position.x, z: c.position.z, yaw: c.rotation.y + Math.PI });
     rbox(0.44, 0.045, 0.42, 0.012, chairM, 0, 0.46, 0, c);
     for (const [lx, lz] of [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]]) cyl(0.018, 0.015, 0.46, chairM, lx, 0.23, lz, c, 8);
     for (const lx of [-0.19, 0.19]) cyl(0.015, 0.015, 0.5, chairM, lx, 0.72, 0.19, c, 8);
@@ -1228,19 +1789,35 @@ export function buildLibrary(o) {
     for (let b = 0; b < 2 + ((rr() * 3) | 0); b++) { const h = 0.03 + rr() * 0.03; const m = rbox(0.22 + rr() * 0.08, h, 0.3, 0.004, pbr({ color: bc[(rr() * bc.length) | 0], rough: 0.6, wet: 0 }), x, y + h / 2, z, set); m.rotation.y = (rr() - 0.5) * 0.5; y += h; }
     if (rr() < 0.6) { const pg = plane(0.42, 0.3, M.paper, set); pg.rotation.set(-Math.PI / 2, 0, (rr() - 0.5) * 0.6); pg.position.set(x + 0.4, 0.817, z + 0.1); }
   }
+  let cartBook = null;
   { const c = new THREE.Group(); c.position.set(-2.6, 0, 6.2); c.rotation.y = 0.3; set.add(c); rbox(1.0, 0.04, 0.45, 0.01, M.wood, 0, 0.3, 0, c); rbox(1.0, 0.04, 0.45, 0.01, M.wood, 0, 0.75, 0, c); for (const lx of [-0.48, 0.48]) box(0.04, 0.8, 0.45, M.wood, lx, 0.4, 0, c);
     for (const [wx, wz] of [[-0.42, -0.18], [0.42, -0.18], [-0.42, 0.18], [0.42, 0.18]]) { const wh = cyl(0.04, 0.04, 0.03, pbr({ color: "#1a1a1a", rough: 0.7, wet: 0 }), wx, 0.04, wz, c, 12); wh.rotation.z = Math.PI / 2; }
     let x = -0.44; while (x < 0.44) { const w = 0.04 + rr() * 0.04, h = 0.24 + rr() * 0.1; rbox(w, h, 0.2, 0.004, pbr({ color: bc[(rr() * bc.length) | 0], rough: 0.6, wet: 0 }), x, 0.77 + h / 2, 0, c); x += w + 0.01; }
+    // one lying on the top shelf of the cart, to pick up
+    cartBook = rbox(0.24, 0.05, 0.32, 0.006, pbr({ color: "#6a2f2a", rough: 0.6, wet: 0 }), 0.15, 0.345, 0, c); cartBook.rotation.y = 0.3; cartBook.userData.keep = true;
     set.userData.walls.push({ x0: -3.3, x1: -1.9, z0: 5.8, z1: 6.6 }); }
+  /* the way out: double doors at the end of the runner, lit over the top */
+  { const dk = M.dark, wd = M.wood;
+    box(2.6, 0.22, 0.2, dk, 0, 3.0, 8.9, set); box(0.2, 3.0, 0.2, dk, -1.2, 1.5, 8.9, set); box(0.2, 3.0, 0.2, dk, 1.2, 1.5, 8.9, set);
+    for (const s of [-1, 1]) {
+      box(1.08, 2.86, 0.06, wd, s * 0.55, 1.43, 8.94, set);
+      for (const py of [0.75, 2.05]) box(0.8, py > 1 ? 1.0 : 0.9, 0.02, dk, s * 0.55, py, 8.905, set);
+      box(0.04, 0.42, 0.05, M.brass, s * 0.1, 1.1, 8.88, set);
+    }
+    const tr = plane(2.2, 0.5, glow("#f3dcae", { k: 0.6 }), set); tr.position.set(0, 3.4, 8.96); tr.rotation.y = Math.PI;
+    set.userData.lamps.push({ p: V3(0, 3.0, 8.3), range: 5, col: [0.9, 0.7, 0.45], cone: 0, fixed: true }); }
   const runner = plane(3, 14, M.runner, set); runner.rotation.x = -Math.PI / 2; runner.position.set(0, 0.008, 0);
   { const clk = new THREE.Group(); clk.position.set(0, 5.6, -8.95); set.add(clk); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.03, 8, 40), M.brass); clk.add(rim); const face = new THREE.Mesh(new THREE.CircleGeometry(0.35, 40), pbr({ map: TX.clockTex(11, 40), color: "#fff", rough: 0.4, wet: 0, ao: 0 })); face.position.z = 0.01; clk.add(face); set.userData.sounds.clock = { x: 0, y: 5.6, z: -8.9, kind: "clock-tick" }; }
+  set.userData.marks = {};
+  libraryThings(set, { bulb: bulbM, shade, shadeK: shade.uniforms.uK.value, chairs, book: cartBook });
   mergeStatic(set);
   envHook(set, V3(0, 1.6, 4));
-  set.userData.marks = { playerStart: V3(0, 0, 4.4), playerYaw: Math.PI };
+  set.userData.marks = { ...set.userData.marks, playerStart: V3(0, 0, 4.4), playerYaw: Math.PI };
   set.userData.fogDen = 0.006; // a big quiet room: clear air, the windows' bokeh still soft
   set.userData.bounds = { x0: -11.5, x1: 11.5, z0: -8.5, z1: 8.5 };
   set.userData.surfaceAt = (x, z) => (Math.abs(x) < 1.5 && Math.abs(z) < 7 ? "carpet" : "wood");
   set.userData.ready = roomsReady;
+  _debug.sets.memory = set;
   return set;
 }
 
@@ -1259,4 +1836,26 @@ loadTotal += CAR_KINDS.length;
 export const lotReady = Promise.all([loadCars().catch(e => console.warn("[world] cars", e)), loadSetTex(LOT_TEX)]);
 lotReady.then(patchLate);
 export const roomsReady = lotReady.then(() => loadSetTex(ROOM_TEX)).then(patchLate);
-export const _debug = { carLib, T, TIER };
+/* warm-up: compile every material in a set (the hidden ones too: the drivable rigs, the open door's room) and
+   upload its textures to the GPU, so entering a scene or getting into a car never stutters on a shader compile or
+   a texture upload. main.js calls it during loading for each set it builds (lot, office, memory, keys), after
+   set.userData.ready. Returns a promise; safe to call twice. */
+export async function warmSet(renderer, camera, set) {
+  if (!renderer || !set) return;
+  const texs = new Set(), hidden = [];
+  set.traverse(o => {
+    if (o.visible === false) { hidden.push(o); o.visible = true; }
+    if (!o.material) return;
+    for (const m of [].concat(o.material)) {
+      if (m.uniforms) { for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) texs.add(v); } }
+      if (m.map) texs.add(m.map);
+    }
+  });
+  for (const t of texs) { const im = t.image; if (!t.isRenderTargetTexture && im && (im.width || (im.data && im.data.length) || im.length)) { try { renderer.initTexture(t); } catch (e) {} } }
+  // everything at once while the hidden parts are shown (synchronously, so nothing hidden is ever drawn), then wait
+  // for the programs to finish linking where the browser can do that in the background
+  try { renderer.compile(set, camera); } catch (e) { console.warn("[world] warm", e && e.message); }
+  finally { for (const o of hidden) o.visible = false; }
+  try { if (renderer.compileAsync) await renderer.compileAsync(set, camera); } catch (e) {}
+}
+export const _debug = { carLib, T, TIER, sets: {} };

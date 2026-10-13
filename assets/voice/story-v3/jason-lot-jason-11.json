@@ -1,0 +1,38 @@
+{
+ "id": "jason-lot-jason-11",
+ "text": "What's slowing your lot down?",
+ "duration": 2.16,
+ "words": [
+  {
+   "w": "What's",
+   "s": 0.05,
+   "e": 0.488
+  },
+  {
+   "w": "slowing",
+   "s": 0.488,
+   "e": 0.971
+  },
+  {
+   "w": "your",
+   "s": 0.971,
+   "e": 1.343
+  },
+  {
+   "w": "lot",
+   "s": 1.343,
+   "e": 1.694
+  },
+  {
+   "w": "down?",
+   "s": 1.694,
+   "e": 2.132
+  }
+ ],
+ "retimed": {
+  "k": 1.096,
+  "b": 0.05,
+  "before": 0.88,
+  "after": 0.981
+ }
+}

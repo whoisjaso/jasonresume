@@ -113,7 +113,7 @@ shelf and fence is in `walls`, which nav.js already reads.
 ```
 # Blender 4.2 LTS headless (no extensions needed)
 blender -b --python tools/story/world/cars.py -- /tmp/cars          # 5 raw GLBs
-node tools/story/world/pack.mjs /tmp/cars v1                          # assets/story/world/car-<kind>[-lo]-v1.glb
+node tools/story/world/pack.mjs /tmp/cars v2                          # assets/story/world/car-<kind>[-lo]-v2.glb
 python3 tools/story/world/textures.py /tmp/ph-cache                   # assets/story/world/tex-v1/*.webp from Poly Haven (CC0)
 node tools/story/world/stills.mjs <tag> [desktop|phone|all] [lot office memory keys]   # tools/verify/out/real-world-*.png
 node tools/story/world/probe.mjs "<expression>"                       # evaluate against /story/world.js in a blank page
@@ -131,3 +131,48 @@ new version (`v2`, `tex-v2`) and story/world.js moves with it.
   passed in the other portrait branches. Worth a rerun on a quiet machine.
 - The harness URL (`?debug=story&fast=1`) gets the light world tier (`-lo` cars, 512 textures,
   no clear-coat lamp loop) so the game clock keeps up on SwiftShader; stills.mjs pins `wq`.
+
+## 7. Driving (this pass)
+
+The cars are v2 (`car-<kind>[-lo]-v2.glb`): the same bodies cut into parts that move (front doors on
+hinges, wheels on hubs, the steering wheel on its column), a cabin behind see-through glass, reverse
+and third brake lamps. Three of them on the lot are drivable rigs (`set.userData.drivable`), driven by
+story/vehicle.js against `set.userData.colliders` and `set.userData.driveBounds`. The contract for
+main.js and people.js is tools/story/HANDOFF-drive.md. Build: `cars.py` then `pack.mjs <dir> v2`
+(the phone tier is simplified aggressively, `-sa`). Tests: `drive-test.mjs`, `drive-stills.mjs`.
+The fence row leaves the stalls in front of the gate empty and the road has no pole or palm in
+front of the gate, so a car can drive out onto Almeda Genoa Road.
+
+## 8. Phones: the performance pass
+
+What the phone tier (`TIER.name === "lo"`, which is `LOWQ` in paint.js: a coarse pointer, `?wq=lo`, or
+the fast harness) does differently, and what main.js can call:
+
+- **Warm-up, no hitches**: `warmSet(renderer, camera, set)` (world.js, async) compiles every material in
+  a set, including the hidden ones (the drivable rigs, the office door's room, the fridge's inside),
+  and uploads its textures to the GPU. Call it for each set during loading, after
+  `set.userData.ready` (lot, office, memory, keys), so entering a scene or a car never stalls on a
+  shader compile or a texture upload. It shows hidden parts only inside one synchronous
+  `renderer.compile`, so nothing hidden is ever drawn.
+- **Cars**: the phone files fold the near-black and the bright-metal materials into one each (about
+  10 materials a kind instead of 21), so each kind costs about half the draws. A drivable car
+  standing still is drawn with the parked rows (one instance slot per part); its rig shows only
+  while story/vehicle.js has it (`set.userData.showRig(car, on)`, which createVehicle and dispose
+  call). The rig's four wheels are one instanced mesh per material (all tiers).
+- **The wet ground's mirror** (post.js `lite`, on by default on phones; `post.lite = false` turns it
+  off): a quarter of the screen instead of a half, and it leaves out every car part but the lamps
+  and every other lamp-lit surface: in a wet lot at night the mirror shows the lights, the signs, the lit windows and the sky (`set.userData.reflectSkip()` is the list it hides for that pass).
+- **Bloom** on phones: three levels from a quarter of the screen, one blur each way, added back up
+  without copy passes (11 passes instead of 23). Depth of field stays off below quality 2 (main.js).
+- **No garbage per frame** in world or vehicle code: the collision helpers write into shared buffers,
+  inputs reuse one object, the lamps' colours are set only when they change, the parked cars' rocking
+  reuses its matrices, and the things' animations allocate nothing.
+- Measure: `node tools/story/world/perf.mjs <tag> [land,port,desk] [scene ...]` (phone viewport, DPR 3,
+  CPU slowed 4x through CDP, the pixel ratio pinned tiny so software GL keeps up; reports the main
+  thread's ms per frame, draw calls, triangles, texture memory; stills at
+  tools/verify/out/real-world-perf-<tag>-<scene>-<vp>.png).
+
+For main.js (not mine to change): the arcade's VideoTexture re-uploads the whole clip every frame in
+the office (the biggest texture cost on a phone: update it every other frame, or only when the
+cabinet is on screen); `updateLamps` allocates a copy and sorts all lamps every frame; the rain's
+particle count on phones (`quality >= 2 ? 800 : 420`) could go to about 250.

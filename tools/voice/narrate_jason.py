@@ -23,6 +23,8 @@
 import difflib, hashlib, json, re, subprocess, sys, tempfile
 from datetime import date
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "story"))
+from retime import retime_words
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -148,6 +150,8 @@ def main():
         for wi, w in enumerate(written):
             ts = [times[k] for k, (_, owner) in enumerate(spoken) if owner == wi]
             words.append({"w": w, "s": round(min(x[0] for x in ts), 3), "e": round(max(x[1] for x in ts), 3)})
+        # the recogniser's word times run early by the end of a line: fitted to the voice itself (tools/story/retime.py)
+        words = retime_words(words, wav, sr)
         # loudness: even across lines, peaks under -1 dBFS
         rms = float(np.sqrt(np.mean(wav ** 2))) or 1e-6
         wav = wav * min(10 ** (-18 / 20) / rms, 10 ** (-1 / 20) / max(1e-6, float(np.abs(wav).max())))

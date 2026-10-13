@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = path.join(ROOT, 'tools', 'verify', 'out');
 fs.mkdirSync(OUT, { recursive: true });
-const URL0 = 'http://127.0.0.1:8765/';
+const URL0 = process.env.STORY_URL || 'http://127.0.0.1:8765/';
 const LLMS = fs.readFileSync(path.join(ROOT, 'llms.txt'), 'utf8') + fs.readFileSync(path.join(ROOT, 'llms-full.txt'), 'utf8');
 const LIB = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'site', 'library.json'), 'utf8'));
 const STORY = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'site', 'story.json'), 'utf8'));
@@ -121,9 +121,14 @@ async function use(p, mobile, id, label) {
   const hit = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return 'hidden'; const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e && b.contains(e) ? 'ok' : 'covered by ' + (e ? e.className || e.tagName : 'nothing'); });
   if (hit !== 'ok' && (mobile || hit !== 'hidden')) errs.push(`${label}: the prompt for ${id} is ${hit}`);
   if (hit !== 'ok') { if (mobile) await p.evaluate(id => { window.JG_STORY.debug.interact(id); }, id); else await p.keyboard.press('e'); }
-  else if (mobile) await p.tap('.st-prompt', { force: true }); else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt', { force: true });
+  else if (mobile) {
+    // at software-GL frame rates the camera is still settling after the warp, so the prompt drifts between touch down
+    // and touch up and the browser drops the click; tap once it has stopped moving, as a person would
+    let last = null;
+    for (let i = 0; i < 40; i++) { const r = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return null; const q = b.getBoundingClientRect(); return [Math.round(q.left), Math.round(q.top)]; }); if (r && last && r[0] === last[0] && r[1] === last[1]) break; last = r; await p.waitForTimeout(250); }
+    await p.evaluate(() => { window.__pc = 0; const b = document.querySelector('.st-prompt'); if (b && !b.__pc) { b.__pc = 1; b.addEventListener('click', () => window.__pc++, true); } }); await p.tap('.st-prompt', { force: true }); } else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt', { force: true });
   const on = await until(p, ([id, n]) => { const s = window.JG_STORY.debug.state(); return s.phase !== 'explore' || (s.looked[id] || 0) > n || s.scene !== window.__scene; }, [id, n0], 20000);
-  if (!on) errs.push(`${label}: ${id} did not respond`);
+  if (!on) { const why = await p.evaluate(() => { const s = window.JG_STORY.debug.state(); const b = document.querySelector('.st-prompt'); return { phase: s.phase, scene: s.scene, near: s.near, prompt: b && !b.hidden ? b.textContent.trim() : null, me: s.me, clicks: window.__pc, turn: !!document.querySelector('.st-turn'), talking: s.talking }; }).catch(() => null); errs.push(`${label}: ${id} did not respond ${JSON.stringify(why)}`); }
   return on;
 }
 async function finishTalk(p, label) { const ok = await phase(p, 'explore', 120000); if (!ok) errs.push(`${label}: talk did not end ${JSON.stringify(await st(p))}`); return ok; }
@@ -200,6 +205,20 @@ async function office(p, mobile, o, label) {
   await choose(p, mobile, o.phone, label);
   await finishTalk(p, label);
   for (const id of o.looks || []) {
+    if (id === 'arcade') {
+      // the cabinet plays the run: it opens over the episode, and closing it puts you back at the cabinet
+      await use(p, mobile, 'arcade', label);
+      const open = await until(p, () => window.JG_RUN && window.JG_RUN.isOpen(), null, 30000);
+      if (!open) { errs.push(`${label}: the arcade cabinet did not open the run`); continue; }
+      notes.push(`${label}: the arcade cabinet plays the run`);
+      await p.waitForTimeout(1500);
+      await p.evaluate(() => window.JG_RUN.close('test'));
+      const back = await phase(p, 'explore', 60000);
+      const st0 = await st(p);
+      if (!back || st0.scene !== 'office') errs.push(`${label}: closing the run did not bring you back to the office (${JSON.stringify({ phase: st0.phase, scene: st0.scene })})`);
+      else notes.push(`${label}: closing the run puts you back in the office`);
+      continue;
+    }
     if (id === 'board') {
       await use(p, mobile, 'board', label);
       const close = await phase(p, 'close', 60000);
@@ -448,6 +467,501 @@ async function feel(vname, w, h, mobile) {
   else notes.push(`${label}: Master, Music${mobile ? '' : ' and the run toggle'} kept across a reload`);
   await ctx.close();
 }
+/* ---------- the voice clock: real voices, some arriving late; captions, the ball and the mouth follow the recording ---------- */
+const SYNC = process.argv.includes('--sync');
+async function sync(vname, w, h, mobile) {
+  const label = `${vname} sync`;
+  const ctx = await ctxFor(w, h, mobile);
+  // every other recording arrives late, as on a slow phone connection; the caption must wait for it
+  let nth = 0;
+  await ctx.route(/assets\/voice\/story-v\d+\/.*\.mp3$/, async r => { if (nth++ % 2 === 0) await new Promise(res => setTimeout(res, 1100)); r.continue(); });
+  const p = await ctx.newPage();
+  p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
+  await p.goto(URL0 + '?debug=story&pr=0.2&sq=0');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  await p.click('[data-title-play]');
+  // the arrival is your own thought (no voice): skip through it, silently, to the people who speak
+  await until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug; if (d.state().line) d.skip(); return d.state().phase === 'explore'; }, null, 400000);
+  if (((await st(p)) || {}).phase !== 'explore') { errs.push(`${label}: never got to explore ${JSON.stringify(await st(p))}`); await ctx.close(); return; }
+  const on = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
+  if (!on) { errs.push(`${label}: the score is off after Play, so nothing is voiced`); await ctx.close(); return; }
+  // sample every frame: the caption's clock against the recording's, the lit words, the ball, how many voices sound
+  await p.evaluate(() => {
+    window.__sync = []; const D = window.JG_STORY.debug;
+    const f = () => { const s = D.sync(); if (s.line) { const b = D.ball(); window.__sync.push({ line: s.line, mode: s.mode, now: s.now, ct: s.ct, paused: s.paused, stall: s.stall, said: s.said, words: s.words, voices: s.voices, ball: b && b.b ? { x: b.b.x, y: b.b.y, air: b.b.air, o: b.b.o } : null }); } else window.__sync.push({ line: null, voices: s.voices }); window.__syncRaf = requestAnimationFrame(f); };
+    f();
+  });
+  await use(p, mobile, 'dell', label);
+  await choose(p, mobile, 'Rough night to be out.', label);
+  await phase(p, 'explore', 120000);
+  await until(p, () => !window.JG_STORY.debug.state().line, null, 60000);
+  const r = await p.evaluate(() => { cancelAnimationFrame(window.__syncRaf); return { s: window.__sync, log: window.JG_STORY.debug.sync().log }; });
+  const voiced = r.log.filter(l => l.voiced);
+  if (voiced.length < 3) errs.push(`${label}: only ${voiced.length} voiced lines played (${JSON.stringify(r.log.map(l => l.id + ':' + l.mode))})`);
+  // drift: the lit words against the words the recording has reached; the caption clock against currentTime
+  let n = 0, wordOff = 0, maxDrift = 0, sumDrift = 0, maxVoices = 0, early = 0;
+  for (const x of r.s) {
+    maxVoices = Math.max(maxVoices, x.voices || 0);
+    if (!x.line || x.mode !== 'voice' || x.paused || x.ct == null) { if (x.line && x.mode === 'wait' && x.said > 0) early++; continue; }
+    const d = Math.abs(x.now - x.ct); maxDrift = Math.max(maxDrift, d); sumDrift += d; n++;
+    const want = x.words.filter(w => x.ct >= w[0] - 0.02).length;
+    if (Math.abs(want - x.said) > 1) wordOff++;
+  }
+  if (!n) errs.push(`${label}: never saw a voice playing`);
+  if (maxVoices > 1) errs.push(`${label}: ${maxVoices} voices sounded at once`);
+  if (early) errs.push(`${label}: words lit before their voice started (${early} frames)`);
+  if (n && maxDrift > 0.3) errs.push(`${label}: the caption clock drifted ${maxDrift.toFixed(3)} s from the recording`);
+  if (n && wordOff > n * 0.02) errs.push(`${label}: the lit words were more than a word off the voice in ${wordOff} of ${n} frames`);
+  // each voiced line ends after its recording ends (a short hold), and the next line starts after that
+  const ends = [];
+  for (const l of voiced) {
+    if (l.skipped) continue;
+    if (l.mode !== 'voice') { errs.push(`${label}: ${l.id} fell back to ${l.mode}`); continue; }
+    if (!l.ended) { errs.push(`${label}: ${l.id} ended before its voice did`); continue; }
+    ends.push(l.end - l.ended);
+    if (l.end < l.ended - 5) errs.push(`${label}: ${l.id} ended ${(l.ended - l.end).toFixed(0)} ms before its voice`);
+  }
+  for (let i = 1; i < r.log.length; i++) if (r.log[i].at < r.log[i - 1].end - 5) errs.push(`${label}: ${r.log[i].id} started before ${r.log[i - 1].id} finished`);
+  const waits = voiced.filter(l => l.playing).map(l => Math.round(l.playing - l.at));
+  // the ball lands on each word: at the word's start it sits on that word
+  const landed = r.s.filter(x => x.ball && x.mode === 'voice' && !x.ball.air).length, air = r.s.filter(x => x.ball && x.ball.air && x.ball.o > 0.5).length;
+  if (!landed || !air) errs.push(`${label}: the caption ball never ${landed ? 'flew' : 'landed'}`);
+  notes.push(`${label}: ${voiced.length} voiced lines (half their files held back 1.1 s), caption clock vs recording drift mean ${(sumDrift / Math.max(1, n) * 1000).toFixed(1)} ms, max ${(maxDrift * 1000).toFixed(0)} ms over ${n} frames; lit words off by more than one word in ${wordOff} frames; voices at once: max ${maxVoices}; caption waited for its voice ${waits.join(', ')} ms; line ends ${ends.map(e => Math.round(e)).join(', ')} ms after the voice; ball landed ${landed} frames, in flight ${air}`);
+  await ctx.close();
+}
+/* ---------- driving: get in, drive, steer, brake, hit something, swap the camera, get out (keys on desktop, the touch controls on a phone) ---------- */
+const DRIVE = process.argv.includes('--drive');
+async function drive(vname, w, h, mobile) {
+  const label = `${vname} drive`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await p.goto(URL0 + '?debug=story&fast=1&sq=' + (SHOTS ? '1' : '0') + '&pr=' + (SHOTS ? '0.8' : '0.3'));
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  if (!(await phase(p, 'explore', 120000))) { errs.push(`${label}: never got to explore`); await ctx.close(); return; }
+  await until(p, () => !window.JG_STORY.debug.state().line && window.JG_STORY.debug.cars().length > 0, null, 60000);
+  const D = () => p.evaluate(() => window.JG_STORY.debug.drive());
+  const cars = await p.evaluate(() => window.JG_STORY.debug.cars());
+  if (!cars.length) { errs.push(`${label}: no drivable cars on the lot`); await ctx.close(); return; }
+  const car = cars.find(c => c.id !== 'idle') || cars[0];
+  // stand at the driver's door: the Drive prompt shows
+  await p.evaluate(([x, z, cx, cz]) => window.JG_STORY.debug.put(x, z, Math.atan2(cx - x, cz - z)), [car.stand[0], car.stand[1], car.x, car.z]);
+  const near = await until(p, id => window.JG_STORY.debug.state().near === id, 'car:' + car.id, 15000);
+  if (!near) { errs.push(`${label}: no Drive prompt at ${car.id}'s door (near ${(await st(p)).near})`); await ctx.close(); return; }
+  const verb = await p.textContent('.st-prompt__verb');
+  if (verb !== STORY.ui.drive) errs.push(`${label}: the prompt says "${verb}", not "${STORY.ui.drive}"`);
+  // in: E on a keyboard, the big button on a phone; the sequence plays (on a phone, a tap skips it)
+  if (mobile) await p.tap('.st-act', { force: true }); else await p.keyboard.press('e');
+  await until(p, () => window.JG_STORY.debug.drive().state === 'enter', null, 5000);
+  const t0 = Date.now();
+  if (mobile) { await p.waitForTimeout(1500); await p.evaluate(() => window.JG_STORY.debug.skipCar()); }
+  const inside = await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 120000);
+  if (!inside) { errs.push(`${label}: never got in ${JSON.stringify(await D())}`); await ctx.close(); return; }
+  const dIn = await D();
+  notes.push(`${label}: Drive at ${car.id}'s door; in after ${((Date.now() - t0) / 1000).toFixed(1)} s${mobile ? ' (skipped with a tap)' : ''}, seated ${dIn.inCar}, engine ${dIn.au && dIn.au.on ? 'on' : 'quiet (sound off)'}`);
+  if (!dIn.ui) errs.push(`${label}: the drive controls did not show`);
+  await p.waitForTimeout(1200);
+  await shot0(p, `drive-${vname}-chase`);
+  // drive: hold the gas; then steer; then brake
+  const pressGas = async on => { if (mobile) { const b = await p.$('[data-drv="gas"]'); const bb = await b.boundingBox(); await touch(on ? 'touchStart' : 'touchEnd', bb.x + bb.width / 2, bb.y + bb.height / 2, 2); } else if (on) await p.keyboard.down('w'); else await p.keyboard.up('w'); };
+  let cdp = null;
+  const touch = async (type, x, y, id) => { cdp = cdp || await ctx.newCDPSession(p); touch.pts = touch.pts || {}; if (type === 'touchEnd') delete touch.pts[id]; else touch.pts[id] = { x: Math.round(x), y: Math.round(y), id }; await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: Object.values(touch.pts) }); };
+  // a clear run on the lot to drive and turn in
+  const lane = await p.evaluate(() => window.JG_STORY.debug.lane(14));
+  if (!lane) errs.push(`${label}: no clear lane on the lot to drive in`);
+  else await p.evaluate(l => window.JG_STORY.debug.carPut(l[0], l[1], l[2]), lane);
+  await p.waitForTimeout(400);
+  await pressGas(true);
+  await until(p, () => window.JG_STORY.debug.drive().speed > 3, null, 40000);
+  await p.waitForTimeout(300);
+  const fast = await D();
+  if (!(fast.speed > 3)) errs.push(`${label}: the gas didn't get it moving (${JSON.stringify(fast)})`);
+  if (!(fast.rpm > 1000)) errs.push(`${label}: the engine didn't rev (${fast.rpm})`);
+  if (fast.fov <= dIn.fov) errs.push(`${label}: the view didn't widen with speed (${dIn.fov} to ${fast.fov})`);
+  if (mobile) await shot0(p, `drive-${vname}-touch`);
+  // steer right
+  const yaw0 = fast.pose[2];
+  if (mobile) { const s0 = await (await p.$('.st-drive__steer')).boundingBox(); const sx = s0.x + s0.width / 2, sy = s0.y + s0.height / 2; await touch('touchStart', sx, sy, 3); for (let i = 1; i <= 6; i++) await touch('touchMove', sx + i * 14, sy, 3); }
+  else await p.keyboard.down('d');
+  await until(p, y0 => Math.abs(window.JG_STORY.debug.drive().pose[2] - y0) > 0.25, yaw0, 20000);
+  const turned = await D();
+  if (!(turned.inp.steer > 0.3)) errs.push(`${label}: steering right read ${turned.inp.steer}`);
+  if (Math.abs(turned.pose[2] - yaw0) < 0.25) errs.push(`${label}: the car didn't turn (${yaw0} to ${turned.pose[2]})`);
+  if (mobile) await touch('touchEnd', 0, 0, 3); else await p.keyboard.up('d');
+  await pressGas(false);
+  // brake
+  if (mobile) { const b = await (await p.$('[data-drv="brake"]')).boundingBox(); await touch('touchStart', b.x + b.width / 2, b.y + b.height / 2, 4); } else await p.keyboard.down('s');
+  const v1 = (await D()).speed;
+  await until(p, () => Math.abs(window.JG_STORY.debug.drive().speed) < 0.5, null, 30000);
+  const stopped = await D();
+  if (mobile) await touch('touchEnd', 0, 0, 4); else await p.keyboard.up('s');
+  if (Math.abs(stopped.speed) >= 0.5) errs.push(`${label}: braking from ${v1} only got to ${stopped.speed}`);
+  else notes.push(`${label}: gas to ${fast.speed} m/s at ${fast.rpm} rpm (gear ${fast.gear}, view ${dIn.fov} to ${fast.fov} degrees), steered ${(turned.pose[2] - yaw0).toFixed(2)} rad, braked from ${v1} to a stop`);
+  // hit something: point it at a parked car a few metres off and floor it
+  const walls = await p.evaluate(() => window.JG_STORY.debug.walls());
+  const here = (await D()).pose;
+  const target = walls.map(r => ({ r, cx: (r[0] + r[1]) / 2, cz: (r[2] + r[3]) / 2 })).filter(o => { const a = o.r[1] - o.r[0], b = o.r[3] - o.r[2]; return Math.max(a, b) > 3.6 && Math.max(a, b) < 6 && Math.min(a, b) > 1.5 && Math.min(a, b) < 2.4 && Math.hypot(o.cx - here[0], o.cz - here[1]) > 3; }).sort((a, b) => Math.hypot(a.cx - here[0], a.cz - here[1]) - Math.hypot(b.cx - here[0], b.cz - here[1]))[0];
+  if (!target) errs.push(`${label}: nothing to drive into`);
+  else {
+    // start 7 m off the target's long side, facing it
+    const a = target.r[1] - target.r[0] > target.r[3] - target.r[2];
+    let sx = target.cx, sz = target.cz; if (a) sz += (target.cz > 0 ? -1 : 1) * 7; else sx += (target.cx > 0 ? -1 : 1) * 7;
+    await p.evaluate(([x, z, tx, tz]) => window.JG_STORY.debug.carPut(x, z, Math.atan2(tx - x, tz - z)), [sx, sz, target.cx, target.cz]);
+    const h0 = (await D()).hits;
+    await pressGas(true);
+    const hit = await until(p, h0 => window.JG_STORY.debug.drive().hits > h0, h0, 40000);
+    await p.waitForTimeout(60);
+    const dh = await D();
+    await pressGas(false);
+    if (!hit) errs.push(`${label}: drove at a parked car and never hit it (${JSON.stringify(dh.pose)}, target ${JSON.stringify(target.r)})`);
+    else {
+      const ev = await p.evaluate(() => window.JG_STORY.debug.audio().events.filter(e => e.kind === 'car').map(e => e.name));
+      if (!(dh.shake > 0) && !dh.log.length) errs.push(`${label}: a hit didn't shake the camera`);
+      notes.push(`${label}: hit ${dh.log.slice(-1).map(l => l.what + ' at ' + l.k + ' m/s').join('')}; the camera shook; car sounds: ${[...new Set(ev)].join(' ') || 'none (sound off)'}`);
+      if (await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn()) && !ev.includes('impact')) errs.push(`${label}: no impact sound`);
+    }
+    await p.waitForTimeout(800);
+    await shot0(p, `drive-${vname}-impact`);
+  }
+  // the camera: in the car, then back out
+  if (mobile) await p.tap('[data-drv="cam"]', { force: true }); else await p.keyboard.press('c');
+  await p.waitForTimeout(900);
+  const inCam = await D();
+  if (inCam.cam !== 'car') errs.push(`${label}: C/camera didn't switch to the in-car view`);
+  await shot0(p, `drive-${vname}-incar`);
+  if (mobile) await p.tap('[data-drv="cam"]', { force: true }); else await p.keyboard.press('c');
+  // a talk prompt never shows from inside the car
+  const ns = await st(p); if (ns.near) errs.push(`${label}: a prompt (${ns.near}) showed from inside the car`);
+  // pause works in the car
+  await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+  if ((await st(p)).phase !== 'pause') errs.push(`${label}: Esc didn't pause in the car`);
+  await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+  if ((await st(p)).phase !== 'drive') errs.push(`${label}: resume didn't come back to the car (${(await st(p)).phase})`);
+  // out
+  if (mobile) await p.tap('[data-drv="out"]', { force: true }); else await p.keyboard.press('e');
+  if (mobile) { await p.waitForTimeout(1200); await p.evaluate(() => window.JG_STORY.debug.skipCar()); }
+  const out = await until(p, () => window.JG_STORY.debug.state().phase === 'explore' && !window.JG_STORY.debug.drive().state, null, 120000);
+  // on your feet: the walk camera finds its room again (a few frames, which is a while on software GL)
+  await until(p, () => window.JG_STORY.debug.drive().visible, null, 30000);
+  const dOut = await D();
+  if (!out) errs.push(`${label}: never got out (${JSON.stringify(dOut)})`);
+  else if (!dOut.visible || dOut.inCar) errs.push(`${label}: out of the car but not on your feet (${JSON.stringify(dOut)}, you at ${JSON.stringify((await st(p)).me)})`);
+  else notes.push(`${label}: got out on your feet; the walk is back`);
+  await ctx.close();
+}
+/* ---------- the caption ball: stills in flight and landed, and it never sits on the words ---------- */
+const BALL = process.argv.includes('--ball');
+async function ballCheck(vname, w, h, mobile) {
+  const label = `${vname} ball`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.5');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  if (!(await phase(p, 'explore', 300000))) { errs.push(`${label}: never got to explore`); await ctx.close(); return; }
+  await until(p, () => !window.JG_STORY.debug.state().line, null, 30000);
+  await p.evaluate(() => window.JG_STORY.debug.hold(true));
+  await use(p, mobile, 'jason-lot', label);
+  if (!(await until(p, () => { const s = window.JG_STORY.debug.sync(); return s.line && s.words.length >= 6; }, null, 30000))) { errs.push(`${label}: no line long enough to watch`); await ctx.close(); return; }
+  await p.waitForTimeout(600);
+  const r = await p.evaluate(() => {
+    const D = window.JG_STORY.debug, s = D.sync(), W = s.words, cap = document.querySelector('.st-cap').getBoundingClientRect();
+    const spans = [...document.querySelectorAll('.st-cap__said i')].map(e => { const q = e.getBoundingClientRect(); return { x0: q.left - cap.left, x1: q.right - cap.left, y0: q.top - cap.top + (q.height - parseFloat(getComputedStyle(e).fontSize)) * 0.5, y1: q.bottom - cap.top - (q.height - parseFloat(getComputedStyle(e).fontSize)) * 0.5 }; });
+    let over = 0, n = 0, landed = 0, air = 0, R = D.ball(0).R;
+    const end = W[W.length - 1][1] + 0.5;
+    for (let t = 0; t < end; t += 0.01) {
+      const b = D.ball(t).b; if (!b || b.o < 0.3) continue; n++;
+      if (b.air) air++; else landed++;
+      if (b.wrap) continue;
+      // the glyphs proper (not the line box): the ball may pass over the gap, never over a word's letters
+      if (spans.some(q => b.x + R > q.x0 + 1 && b.x - R < q.x1 - 1 && b.y + R > q.y0 + 2 && b.y - R < q.y1 - 2)) over++;
+    }
+    // a mid-flight moment and a landed one
+    let fly = null; for (let i = 1; i < W.length && !fly; i++) { const t = W[i][0] - Math.min(0.12, (W[i][0] - W[i - 1][0]) * 0.3); const b = D.ball(t).b; if (b && b.air && !b.wrap && W[i][0] - W[i - 1][0] > 0.2) fly = t; }
+    return { over, n, landed, air, fly: fly || W[2][0] - 0.06, land: W[2][0] + 0.08, rest: W[Math.min(4, W.length - 1)][0] + 0.12, line: s.line };
+  });
+  if (r.over) errs.push(`${label}: the ball sat on the letters in ${r.over} of ${r.n} samples`);
+  if (!r.air || !r.landed) errs.push(`${label}: the ball never ${r.air ? 'landed' : 'flew'}`);
+  await p.evaluate(t => window.JG_STORY.debug.pin(t), r.fly); await p.waitForTimeout(500);
+  await shot0(p, `caption-ball-${vname}-flight`);
+  await p.evaluate(t => window.JG_STORY.debug.pin(t), r.land); await p.waitForTimeout(500);
+  await shot0(p, `caption-ball-${vname}-landed`);
+  const cap = await p.$('.st-cap'); const bb = await cap.boundingBox();
+  await p.screenshot({ path: path.join(OUT, `caption-ball-${vname}.png`), clip: { x: Math.max(0, bb.x - 20), y: Math.max(0, bb.y - 30), width: Math.min(w, bb.width + 40), height: Math.min(h - Math.max(0, bb.y - 30), bb.height + 50) } });
+  await p.evaluate(() => { window.JG_STORY.debug.pin(null); window.JG_STORY.debug.hold(false); });
+  notes.push(`${label}: on ${r.line} the ball flew in ${r.air} and rested in ${r.landed} of ${r.n} samples, on the letters in ${r.over}; stills caption-ball-${vname}{,-flight,-landed}.png`);
+  await ctx.close();
+}
+/* ---------- resume: save at several points, reload, Continue, and you can still walk (keys, or the touch stick) ---------- */
+const RESUME = process.argv.includes('--resume');
+async function resume(vname, w, h, mobile) {
+  const label = `${vname} resume`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  const go = async () => { await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3'); await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); };
+  const press = async () => { if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); };
+  // to explore: skip lines; at choices take the first
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
+  let cdp = null;
+  const canMove = async tag => {
+    if (!(await toExplore())) { errs.push(`${label} ${tag}: never got back to exploring ${JSON.stringify(await st(p))}`); return; }
+    await turnAway(p);
+    const a = (await st(p)).me;
+    if (mobile) {
+      cdp = cdp || await ctx.newCDPSession(p);
+      const bx = Math.round(w * 0.18), by = Math.round(h * 0.75), T0 = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+      await T0('touchStart', bx, by); await T0('touchMove', bx, by - 10); await T0('touchMove', bx, by - 40);
+      await until(p, a => { const m = window.JG_STORY.debug.state().me; return Math.hypot(m[0] - a[0], m[1] - a[1]) > 0.05; }, a, 20000);
+      await p.evaluate(() => window.JG_STORY.debug.sim(30, 1 / 30));
+      await T0('touchEnd');
+    } else {
+      await p.keyboard.down('w');
+      await until(p, a => { const m = window.JG_STORY.debug.state().me; return Math.hypot(m[0] - a[0], m[1] - a[1]) > 0.05; }, a, 20000);
+      await p.evaluate(() => window.JG_STORY.debug.sim(30, 1 / 30));
+      await p.keyboard.up('w');
+    }
+    const b2 = (await st(p)).me, d = Math.hypot(b2[0] - a[0], b2[1] - a[1]);
+    if (d < 0.4) errs.push(`${label} ${tag}: can't move after resuming (moved ${d.toFixed(2)} m from ${a.map(n => n.toFixed(1))}, ${JSON.stringify(await p.evaluate(() => window.JG_STORY.debug.input()))})`);
+    else notes.push(`${label} ${tag}: walks ${d.toFixed(2)} m with ${mobile ? 'the touch stick' : 'W'} after resuming`);
+  };
+  const reload = async () => { await go(); const lab = (await p.textContent('[data-title-play]')).trim(); if (lab !== 'Continue') errs.push(`${label}: the start screen says "${lab}" after a save`); await press(); };
+  await p.addInitScript(() => { try { if (!sessionStorage.getItem('__cleared')) { localStorage.removeItem('jg_story'); sessionStorage.setItem('__cleared', '1'); } } catch (e) {} });
+  await go(); await press();
+  // 1: saved on the lot, before meeting anyone
+  await toExplore(); await reload(); await canMove('lot, before Jason');
+  // 2: mid-talk with Dell
+  await p.evaluate(() => window.JG_STORY.debug.hold(true));
+  await use(p, mobile, 'dell', label);
+  await until(p, () => !!window.JG_STORY.debug.state().line, null, 20000);
+  await reload(); await canMove('mid-talk');
+  // 3: after a choice
+  await use(p, mobile, 'dell', label);
+  await until(p, () => { const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); return !!s.choices; }, null, 60000);
+  await p.evaluate(() => window.JG_STORY.debug.choose(0)); await p.waitForTimeout(500);
+  await reload(); await canMove('after a choice');
+  // 4: in a car
+  const cars = await p.evaluate(() => window.JG_STORY.debug.cars());
+  if (cars.length) {
+    const c = cars.find(x => x.id !== 'idle') || cars[0];
+    await p.evaluate(([x, z, cx, cz]) => window.JG_STORY.debug.put(x, z, Math.atan2(cx - x, cz - z)), [c.stand[0], c.stand[1], c.x, c.z]);
+    await until(p, id => window.JG_STORY.debug.state().near === id, 'car:' + c.id, 15000);
+    await p.evaluate(id => window.JG_STORY.debug.interact(id), 'car:' + c.id);
+    await until(p, () => window.JG_STORY.debug.drive().state, null, 10000); await p.evaluate(() => window.JG_STORY.debug.skipCar());
+    await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 60000);
+    await reload(); await canMove('saved in a car');
+  }
+  // 5: paused while arriving (the scene card), then Resume: you can walk
+  await go(); await press();
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().phase === 'cinematic', null, 120000);
+  await p.waitForTimeout(150);
+  if (mobile) await p.tap('[data-st="pause"]', { force: true }).catch(() => p.evaluate(() => document.querySelector('[data-st="pause"]').click())); else await p.keyboard.press('Escape');
+  await until(p, () => window.JG_STORY.debug.state().phase === 'pause', null, 15000);
+  await p.waitForTimeout(4000);
+  if (mobile) await p.tap('[data-p="resume"]', { force: true }); else await p.keyboard.press('Escape');
+  await canMove('paused while arriving, then resumed');
+  // 6: close and open again in the same page
+  await p.evaluate(() => window.JG_STORY.close('test')); await p.waitForTimeout(800);
+  await p.evaluate(() => window.JG_STORY.open(null, 'test'));
+  await canMove('closed and reopened');
+  // 7: the office, by its link, then Continue
+  await p.goto('about:blank');
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
+  await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
+  await p.click('#intro [data-intro-skip]').catch(() => {});
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
+  await canMove('office by its link');
+  await reload(); await canMove('office, continued');
+  await ctx.close();
+}
+/* ---------- the way: every hint's trail ends at the thing it names (or the way into its room) ---------- */
+const WAY = process.argv.includes('--way');
+async function wayCheck(vname, w, h, mobile) {
+  const label = `${vname} way`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
+  const check = async (talk, want, where) => {
+    // the thing has to be there to be pointed at: the phone rings, the book is mentioned, the desk is open
+    const need = (STORY.objects[want] || {}).if;
+    await p.evaluate(([t, id, f]) => { const d = window.JG_STORY.debug; if (f && /^\w+$/.test(f)) d.flag(f, 1); d.unlook(id); d.obj(null); d.hint(t); }, [talk, want, need || null]);
+    const ok = await until(p, want => { const g = window.JG_STORY.debug.guide(); return g.target && g.target.id === want && g.route && g.route.length > 1; }, want, 20000);
+    const g = await p.evaluate(() => window.JG_STORY.debug.guide());
+    if (!ok) { errs.push(`${label}: after "${talk}" the way leads to ${g.target ? g.target.id : 'nothing'}, not ${want}`); return; }
+    const end = g.route[g.route.length - 1], miss = Math.hypot(end[0] - g.target.x, end[1] - g.target.z);
+    if (miss > 0.6) errs.push(`${label}: the trail for "${talk}" stops ${miss.toFixed(2)} m short of ${want}`);
+    return true;
+  };
+  // the lot: after meeting Jason, an office hint leads to the door
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  await toExplore(); await turnAway(p);
+  let n = 0;
+  await p.evaluate(() => window.JG_STORY.debug.flag('met', 1));
+  for (const t of ['hire-build', 'lot-paperwork', 'lot-come-in']) if (await check(t, 'door', 'lot')) n++;
+  // the office: each hint leads to its own thing
+  await p.goto('about:blank');
+  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
+  await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
+  await p.click('#intro [data-intro-skip]').catch(() => {});
+  await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
+  await toExplore(); await turnAway(p);
+  const H = await p.evaluate(() => window.JG_STORY.debug.hints());
+  for (const [t, id] of Object.entries(H)) { if (STORY.objects[id] && STORY.objects[id].scene === 'office' && await check(t, id, 'office')) n++; }
+  await shot0(p, `way-${vname}`);
+  notes.push(`${label}: ${n} hints checked; each trail ends at the thing named (or the office door from the lot)`);
+  await ctx.close();
+}
+/* ---------- the sound: no missing files, one voice at a time, beds that change with the room, feet on every
+   surface, car sounds that stop when you get out, nothing stuck after a scene change, nothing clipping ---------- */
+const AUDIO = process.argv.includes('--audio');
+async function audioCheck(vname, w, h, mobile) {
+  const label = `${vname} audio`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  const missing = [];
+  p.on('response', r => { if (r.status() >= 400 && /\/assets\//.test(r.url())) missing.push(r.status() + ' ' + r.url().replace(/^https?:\/\/[^/]+/, '')); });
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  await p.goto(URL0 + '?debug=story&pr=0.2&sq=0');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+  await until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line && s.line.startsWith('lot-you')) d.skip(); return s.phase === 'explore'; }, null, 400000);
+  await turnAway(p);
+  if (!(await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn()))) { errs.push(`${label}: the score is off after Play`); await ctx.close(); return; }
+  const A = () => p.evaluate(() => window.JG_STORY.debug.audio());
+  const lotAmb = (await A()).amb;
+  // voices: Dell's lines, each played once, never two at a time, the world ducked under them
+  await p.evaluate(() => { window.__vmax = 0; window.__duck = 1; const f = () => { const d = window.JG_STORY.debug, s = d.sync(), a = d.audio(); window.__vmax = Math.max(window.__vmax, s.voices); if (s.line && s.mode === 'voice' && a.buses) window.__duck = Math.min(window.__duck, a.buses.ambDuck); window.__vr = requestAnimationFrame(f); }; f(); });
+  await use(p, mobile, 'dell', label);
+  await choose(p, mobile, 'Rough night to be out.', label);
+  await until(p, () => window.JG_STORY.debug.state().phase === 'explore' && !window.JG_STORY.debug.state().line, null, 120000);
+  const v = await p.evaluate(() => { cancelAnimationFrame(window.__vr); const log = window.JG_STORY.debug.sync().log, ev = window.JG_STORY.debug.audio().events.filter(e => e.kind === 'voice').map(e => e.name); return { log, ev, vmax: window.__vmax, duck: window.__duck }; });
+  const voiced = v.log.filter(l => l.voiced);
+  const twice = Object.entries(v.ev.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {})).filter(([, n]) => n > 1);
+  if (!voiced.length) errs.push(`${label}: no voiced lines played`);
+  if (v.vmax > 1) errs.push(`${label}: ${v.vmax} voices at once`);
+  if (twice.length) errs.push(`${label}: voices routed twice: ${twice.map(t => t[0]).join(' ')}`);
+  if (!(v.duck < 0.95)) errs.push(`${label}: the world didn't step back under the voices (amb duck ${v.duck})`);
+  for (const l of voiced) if (l.mode !== 'voice' || !l.ended) errs.push(`${label}: ${l.id} ${l.mode !== 'voice' ? 'fell back to ' + l.mode : 'never finished its voice'}`);
+  // feet: on the lot's wet and dry ground
+  const surf = new Set();
+  for (const [x, z] of [[-6, 9], [2, -18.2]]) {
+    await p.evaluate(([x, z]) => window.JG_STORY.debug.put(x, z, 0), [x, z]);
+    const n0 = (await A()).events.length;
+    if (mobile) await p.evaluate(() => window.JG_STORY.debug.sim(40, 1 / 30)); else { await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(40, 1 / 30)); await p.keyboard.up('w'); }
+    await p.waitForTimeout(300);
+    const evs = (await A()).events.slice(n0).filter(e => e.kind === 'step');
+    if (evs.length) surf.add(await p.evaluate(([x, z]) => window.JG_STORY.debug.surface(x, z), [x, z]));
+  }
+  if (!surf.size) errs.push(`${label}: no footsteps on the lot`);
+  // a car: its sounds start, and stop when you get out
+  const cars = await p.evaluate(() => window.JG_STORY.debug.cars());
+  let carNote = 'no car';
+  if (cars.length) {
+    const c = cars.find(x => x.id !== 'idle') || cars[0];
+    await p.evaluate(([x, z, cx, cz]) => window.JG_STORY.debug.put(x, z, Math.atan2(cx - x, cz - z)), [c.stand[0], c.stand[1], c.x, c.z]);
+    await until(p, id => window.JG_STORY.debug.state().near === id, 'car:' + c.id, 15000);
+    await p.evaluate(id => window.JG_STORY.debug.interact(id), 'car:' + c.id);
+    await until(p, () => window.JG_STORY.debug.drive().state, null, 10000); await p.waitForTimeout(500); await p.evaluate(() => window.JG_STORY.debug.skipCar());
+    await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 60000);
+    await p.waitForTimeout(1500);
+    const inCar = (await A()).car;
+    if (!inCar || !inCar.on) errs.push(`${label}: no engine in the car (${JSON.stringify(inCar)})`);
+    if (mobile) { await p.tap('[data-drv="out"]', { force: true }); await p.waitForTimeout(600); await p.evaluate(() => window.JG_STORY.debug.skipCar()); } else await p.keyboard.press('e');
+    await until(p, () => !window.JG_STORY.debug.drive().state, null, 120000);
+    await p.waitForTimeout(1600);
+    const out = await A();
+    if (out.car) errs.push(`${label}: car sounds still going after getting out`);
+    carNote = `engine ${inCar ? Math.round(inCar.rpm) + ' rpm' : 'none'}, silent after getting out`;
+  }
+  // the office: the lot's bed stops, the office's starts
+  await p.evaluate(() => { const d = window.JG_STORY.debug; d.flag('met', 1); d.warp('door'); });
+  await p.waitForTimeout(500);
+  await p.evaluate(() => window.JG_STORY.debug.interact('door'));
+  await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000);
+  await until(p, () => { const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
+  await p.waitForTimeout(2500);
+  const off = await A();
+  if (off.scene !== 'office') errs.push(`${label}: the sound still thinks it's on the ${off.scene}`);
+  const stuck = off.amb.filter(n => lotAmb.includes(n) && /traffic|rain-hiss|lamp/.test(n));
+  if (stuck.length) errs.push(`${label}: the lot's sounds kept going in the office: ${stuck.join(' ')}`);
+  if (off.peakMax >= 1) errs.push(`${label}: the mix clipped (peak ${off.peakMax})`);
+  if (missing.length) errs.push(`${label}: missing files: ${[...new Set(missing)].slice(0, 6).join(', ')}`);
+  notes.push(`${label}: ${voiced.length} voiced lines, each once, max ${v.vmax} at a time, beds ducked to ${(+v.duck).toFixed(2)} under them; feet on ${[...surf].join(' and ')}; car: ${carNote}; lot bed [${lotAmb.join(' ')}] gave way to the office's [${off.amb.join(' ')}]; peak ${off.peakMax}; ${missing.length} missing files`);
+  await ctx.close();
+}
+/* ---------- free roam: every set has a way out, the world's things answer, and you can sit and get up ---------- */
+const EXPLORE = process.argv.includes('--explore');
+async function exploreCheck(vname, w, h, mobile) {
+  const label = `${vname} explore`;
+  const ctx = await ctxFor(w, h, mobile);
+  const p = await ctx.newPage();
+  p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
+  const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
+  const open = async hash => {
+    await p.goto('about:blank');
+    await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3' + (hash || ''));
+    if (hash) { await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {}); await p.click('#intro [data-intro-skip]').catch(() => {}); }
+    else { await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); }
+    await toExplore(); await turnAway(p);
+  };
+  const spots = () => p.evaluate(() => window.JG_STORY.debug.spots());
+  const useIt = async id => {
+    const ok = await p.evaluate(id => window.JG_STORY.debug.warp(id), id);
+    if (!ok) { errs.push(`${label}: no ${id} here`); return false; }
+    await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000);
+    const n0 = (await p.evaluate(() => window.JG_STORY.debug.audio().events.length));
+    if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.evaluate(id => window.JG_STORY.debug.interact(id), id)); else await p.keyboard.press('e');
+    await p.waitForTimeout(1600);
+    const ev = await p.evaluate(n0 => window.JG_STORY.debug.audio().events.slice(n0).filter(e => e.kind === 'use').map(e => e.name), n0);
+    return ev;
+  };
+  const kinds = new Set(), exits = [];
+  // the lot: a switch, a machine, a lid, a puddle, a knock, a sign
+  await open('');
+  const lot = await spots();
+  for (const id of ['showroom-lights', 'vending', 'dumpster', 'puddle-0', 'showroom-glass', 'bus-sign'].filter(x => lot.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
+  // sit on the bench and get up again with a push
+  if (lot.includes('bus-bench')) {
+    await useIt('bus-bench');
+    const sat = await until(p, () => window.JG_STORY.debug.seated && window.JG_STORY.debug.seated(), null, 30000);
+    if (!sat) errs.push(`${label}: never sat on the bench`);
+    else {
+      if (mobile) await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); else { await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); }
+      const up = await until(p, () => !window.JG_STORY.debug.seated(), null, 30000);
+      if (!mobile) await p.keyboard.up('w');
+      if (!up) errs.push(`${label}: a push didn't get you up off the bench`); else kinds.add('sit');
+    }
+  }
+  // out through the office door and back through the office's own exit
+  await p.evaluate(() => window.JG_STORY.debug.flag('met', 1));
+  await useIt('door');
+  if (await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000)) exits.push('lot to office');
+  await toExplore();
+  const off = await spots();
+  for (const id of ['desk-lamp', 'radio', 'drawer', 'fridge', 'mug'].filter(x => off.includes(x))) { const ev = await useIt(id); (ev || []).forEach(k => kinds.add(k)); }
+  const radio = await p.evaluate(() => window.JG_STORY.debug.audio().amb.includes('radio'));
+  if (off.includes('radio') && !radio && await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn())) errs.push(`${label}: the radio is on but silent`);
+  if (!off.includes('office-exit')) errs.push(`${label}: the office has no way out`);
+  else { await useIt('office-exit'); if (await until(p, () => window.JG_STORY.debug.state().scene === 'lot', null, 120000)) exits.push('office to lot'); else errs.push(`${label}: the office exit didn't lead to the lot`); }
+  await toExplore();
+  const back = await p.evaluate(() => window.JG_STORY.debug.state().me);
+  // the library: its own way out
+  await open('#story/memory');
+  const mem = await spots();
+  if (!mem.includes('memory-exit')) errs.push(`${label}: the library has no way out`);
+  else { await useIt('memory-exit'); if (await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000)) exits.push('library to office'); else errs.push(`${label}: the library exit didn't lead out`); }
+  await shot0(p, `explore-${vname}`);
+  notes.push(`${label}: ways out: ${exits.join(', ')}; things used: ${[...kinds].join(' ')}; back on the lot at ${back.map(n => n.toFixed(1))}`);
+  await ctx.close();
+}
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
@@ -464,6 +978,13 @@ const PATHS = [
 
 for (const [vname, w, h, mobile] of VIEWS) {
   if (only && only !== vname) continue;
+  if (EXPLORE) { try { await exploreCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} explore: ${e.message.split('\n')[0]}`); } continue; }
+  if (AUDIO) { try { await audioCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} audio: ${e.message.split('\n')[0]}`); } continue; }
+  if (WAY) { try { await wayCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} way: ${e.message.split('\n')[0]}`); } continue; }
+  if (RESUME) { try { await resume(vname, w, h, mobile); } catch (e) { errs.push(`${vname} resume: ${e.message.split('\n')[0]}`); } continue; }
+  if (BALL) { try { await ballCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} ball: ${e.message.split('\n')[0]}`); } continue; }
+  if (DRIVE) { try { await drive(vname, w, h, mobile); } catch (e) { errs.push(`${vname} drive: ${e.message.split('\n')[0]}`); } continue; }
+  if (SYNC) { try { await sync(vname, w, h, mobile); } catch (e) { errs.push(`${vname} sync: ${e.message.split('\n')[0]}`); } continue; }
   if (!NOFEEL && !ONLY_PATH) { try { await feel(vname, w, h, mobile); } catch (e) { errs.push(`${vname} feel: ${e.message.split('\n')[0]}`); } }
   if (FEEL) continue;
   if (vname === 'portrait') RAN_PORTRAIT = true;

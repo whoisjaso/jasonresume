@@ -1,6 +1,7 @@
-# The walkthrough's narration, voiced for free with Kokoro.
+# Stock narration and character voices (the run's cast, the episode's fictional
+# people), voiced for free with Kokoro.
 #
-#   python tools/voice/narrate_free.py [lines.json] [--force] [--only id,id] [--voice am_michael]
+#   python tools/voice/narrate_free.py lines.json [--force] [--only id,id] [--voice am_michael]
 #
 # Kokoro-82M (hexgrad/Kokoro-82M on Hugging Face, Apache-2.0) is an open-weight
 # text-to-speech model that runs locally on the CPU: no account, no key, no cost.
@@ -10,16 +11,16 @@
 #   ~/kvenv/bin/pip install kokoro soundfile
 # then run this with ~/kvenv/bin/python. The weights download on first run.
 #
-# Reads tools/voice/tour_lines.json (or the file given) and writes the same files
-# tools/voice/eleven.mjs would, so timeline.mjs, the film and the tour read either:
-#   assets/voice/tour-v2/<id>.mp3    the line, mp3 44.1 kHz 128 kbps
-#   assets/voice/tour-v2/<id>.json   { id, text, duration, words: [{ w, s, e }] } in seconds,
-#                                 from Kokoro's own predicted word durations
-#   assets/voice/tour-v2/manifest.json  every voiced line, its hash, the voice and model
+# Reads the lines file given (tools/site/run.json, tools/voice/story_lines.json)
+# and writes into the folder it names as "out":
+#   <out>/<id>.mp3    the line, mp3 44.1 kHz 128 kbps
+#   <out>/<id>.json   { id, text, duration, words: [{ w, s, e }] } in seconds,
+#                     from Kokoro's own predicted word durations
+#   <out>/manifest.json  every voiced line, its hash, the voice and model
 # A line whose text, voice and speed are unchanged since the last run is skipped.
 # A line in the json may carry its own "speed" (KOKORO_SPEED is the default) and
 # its own stock "voice" (for a cast of characters, e.g. the run's speakers); the
-# file may name its own output folder as "out" (relative to the repo root).
+# file names its own output folder as "out" (relative to the repo root).
 # Lines without either hash exactly as before.
 #
 # The voice is a stock Kokoro voice, never a clone of anyone. Default am_michael,
@@ -27,10 +28,12 @@
 import hashlib, json, os, re, subprocess, sys, tempfile
 from datetime import date
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "story"))
+from retime import retime_words
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-OUT = ROOT / "assets" / "voice" / "tour-v2"
+OUT = None
 FFMPEG = ROOT / "tools/film/node_modules/@remotion/compositor-linux-x64-gnu/ffmpeg"
 MODEL = "hexgrad/Kokoro-82M"
 SR = 24000
@@ -43,7 +46,9 @@ only = set(filter(None, (opt("--only") or "").split(","))) or None
 VOICE = opt("--voice") or os.environ.get("KOKORO_VOICE", "am_michael")
 SPEED = float(os.environ.get("KOKORO_SPEED", "0.95"))
 pos = [a for i, a in enumerate(args) if not a.startswith("--") and (i == 0 or args[i - 1] not in ("--only", "--voice"))]
-lines_file = Path(pos[0]) if pos else HERE / "tour_lines.json"
+if not pos:
+    sys.exit("usage: narrate_free.py lines.json (tools/site/run.json or tools/voice/story_lines.json)")
+lines_file = Path(pos[0])
 
 # How names are said. Kokoro reads markdown links as [word](/IPA/); the written
 # word stays the caption.
@@ -66,8 +71,9 @@ def main():
     from kokoro import KPipeline
     global OUT
     doc = json.loads(lines_file.read_text())
-    if doc.get("out"):
-        OUT = ROOT / doc["out"]
+    if not doc.get("out"):
+        sys.exit("%s names no \"out\" folder" % lines_file)
+    OUT = ROOT / doc["out"]
     lines = [l for l in doc["lines"] if not only or l["id"] in only]
     OUT.mkdir(parents=True, exist_ok=True)
     man_path = OUT / "manifest.json"
@@ -97,6 +103,8 @@ def main():
         if len(written) == len(words):
             for w, src in zip(words, written): w["w"] = src
         pcm = np.concatenate(audio)
+        # the timings fitted to the voice itself (the last word ends when the voice does): tools/story/retime.py
+        words = retime_words(words, pcm, SR)
         with tempfile.TemporaryDirectory() as tmp:
             wav = Path(tmp) / "line.wav"
             sf.write(wav, pcm, SR)

@@ -1,0 +1,43 @@
+{
+ "id": "jason-lot-jason-22",
+ "text": "Look around anyway. The door's open.",
+ "duration": 2.4,
+ "words": [
+  {
+   "w": "Look",
+   "s": 0.04,
+   "e": 0.299
+  },
+  {
+   "w": "around",
+   "s": 0.299,
+   "e": 0.58
+  },
+  {
+   "w": "anyway.",
+   "s": 0.58,
+   "e": 1.012
+  },
+  {
+   "w": "The",
+   "s": 1.509,
+   "e": 1.595
+  },
+  {
+   "w": "door's",
+   "s": 1.595,
+   "e": 2.027
+  },
+  {
+   "w": "open.",
+   "s": 2.027,
+   "e": 2.33
+  }
+ ],
+ "retimed": {
+  "k": 1.08,
+  "b": 0.04,
+  "before": 0.721,
+  "after": 0.796
+ }
+}

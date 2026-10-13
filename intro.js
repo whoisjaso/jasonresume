@@ -16,15 +16,10 @@
    live in tools/site/onboarding.json, inlined as #onboarding-data.
    The loading screen (#boot, tools/site/boot.js) draws the lot while the art,
    the fonts and the scripts arrive; the title screen fades in as it dissolves
-   (window.JG_BOOT.ready). Two ways to be shown around sit under Start: Watch
-   the walkthrough (the narrated film, in a dialog; window.JG_FILM) and, on the
-   home page, Take the tour (tour.js, through the live library).
+   (window.JG_BOOT.ready).
    After Hours (story/main.js): the start screen's one Play opens the episode
-   (Continue when a save exists); jg:intro-done carries story: true.
-   The run (game-run.js): someone just looking meets Play after the seat, one
-   press into the first level ("jg:intro-done" carries play: true and game.js
-   loads the game); a class is the quieter second choice. Someone hiring or
-   running a lot keeps their first step and sees the run as one line on the card.
+   (Continue when a save exists); jg:intro-done carries story: true. The run
+   (game-run.js) lives only on the arcade cabinet inside the episode.
    The head script sets html.intro-pending so the page never flashes first.
    While it is up, html has .intro-on. When it ends, document gets
    "jg:intro-done" { role, named }. */
@@ -57,9 +52,6 @@
     try { var u = new URL(location.href); u.searchParams.delete("for"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
   })();
   if (/^#build\/v1\//.test(location.hash)) BD = null;
-  /* the run (game-run.js): someone just looking meets Play first; the others see it on their card */
-  var PLAY = (O.play && document.getElementById("run-data")) ? O.play : null;
-  if (location.hash && location.hash !== "#") PLAY = null; /* a deep link is where they're going; it opens after the title screen */ /* a shared build opens after the title screen; no need to build one first */
 
   if (/[?&]intro=1/.test(location.search)) { try { var u = new URL(location.href); u.searchParams.delete("intro"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {} }
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
@@ -67,17 +59,15 @@
 
   /* ---------- the title screen, mounted before anything else loads ---------- */
   var t = O.title, mob = innerWidth < 760;
-  /* the walkthrough film (assemble_home.py adds O.walk once assets/film/after-hours.mp4 exists) and the live tour (home page only) */
-  var WALK = O.walk || null, TOUR = !!document.querySelector('script[src^="tour.js"]');
-  /* the run is the front door wherever it lives (the home page carries #run-data): Play is the first and largest thing on the title screen, over real play */
   /* someone sent with a purpose keeps the guided door (Start, who's playing, the build): a ?for=<role>
      link from an application, a legacy ?cut=, or ?door=library (the link to give a recruiter who should
      meet the record first). Everyone else meets the start screen. */
   var DOOR = /[?&](door=library|cut=)/.test(location.search) || !!FOR;
   if (/[?&]door=library/.test(location.search)) { try { var u2 = new URL(location.href); u2.searchParams.delete("door"); history.replaceState(null, "", u2.pathname + u2.search + u2.hash); } catch (e) {} }
-  var TPLAY = !!(PLAY && t.play && !DOOR && document.getElementById("run-data"));
   /* the start screen's Play starts After Hours (the episode, story/main.js) when the page carries it; a saved episode reads Continue */
   var STORY = !!document.getElementById("story-data");
+  /* a deep link is where they're going (it opens after the title screen), so it meets the guided door, not the start screen */
+  var TPLAY = !!(STORY && t.play && !DOOR && !(location.hash && location.hash !== "#"));
   var SAVED = STORY && (function () { try { var v = JSON.parse(localStorage.getItem("jg_story") || "null"); return !!(v && v.scene); } catch (e) { return false; } })();
   /* a title's art files go by its stem (O.arts, from library.json "art"): a regraded plate ships under a new name */
   var art = body.getAttribute("data-intro-art") || O.art || "assets/game/art/" + ((O.arts && O.arts["triple-j"]) || "triple-j");
@@ -107,10 +97,6 @@
           '<button class="btn btn--ghost" type="button" data-start="off">' + E(t.muted) + "</button>" +
         "</div>" +
         '<p class="intro__fine">' + E(t.note) + "</p>" +
-        (TOUR || WALK ? '<div class="intro__more">' +
-          (TOUR ? '<button class="intro__textbtn" type="button" data-intro-tour><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-move"/></svg>' + E(t.tour || "Take the tour") + "</button>" : "") +
-          (WALK ? '<button class="intro__textbtn" type="button" data-watch><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-select"/></svg>' + E(t.watch || "Watch the walkthrough") + "</button>" : "") +
-        "</div>" : "") +
       "</section>") +
     '<section class="intro__scene intro__scene--seat" data-scene="seat" hidden>' +
       '<h2 class="intro__h">' + E(O.question.title) + "</h2>" +
@@ -126,12 +112,6 @@
         '<p class="intro__fine">' + E(COARSE ? W.fine_touch : W.fine_pointer) + ' <button class="intro__textbtn" type="button" data-build-skip>' + E(W.skip) + "</button></p>" +
       '</div><aside class="cls__preview" data-build-preview aria-live="polite"></aside></div>' +
     "</section>" : "") +
-    (PLAY ? '<section class="intro__scene intro__scene--play" data-scene="play" hidden>' +
-      '<h2 class="intro__h">' + E(PLAY.title) + "</h2>" +
-      '<p class="intro__sub">' + E(PLAY.sub) + "</p>" +
-      '<div class="intro__acts"><button class="btn btn--primary btn--lg" type="button" data-play-go><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(PLAY.go) + '</button>' + (BD ? '<button class="btn btn--ghost" type="button" data-play-alt>' + E(PLAY.alt) + "</button>" : "") + "</div>" +
-      '<p class="intro__fine">' + E(COARSE ? PLAY.fine_touch : PLAY.fine_pointer) + "</p>" +
-    "</section>" : "") +
     '<section class="intro__scene intro__scene--name" data-scene="name" hidden>' +
       '<h2 class="intro__h" data-name-h>' + E(O.name.title) + "</h2>" +
       '<form class="intro__form" data-name-form autocomplete="off">' +
@@ -143,7 +123,7 @@
     "</section>" +
     '<section class="intro__scene intro__scene--card" data-scene="card" hidden aria-live="polite">' +
       '<p class="intro__card"></p>' +
-      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts" data-built-acts><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + '</button></div><p class="intro__fine intro__open" data-built-more hidden></p>' + (PLAY ? '<p class="intro__fine intro__runline"><button class="intro__textbtn" type="button" data-play-go><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pad"/></svg>' + E(PLAY.card) + "</button> " + E(PLAY.card_p) + "</p>" : "") + '</div></div>' +
+      '<div class="intro__built" data-built hidden><div class="intro__cardwrap" data-built-card></div><div class="intro__built-side"><p class="intro__card intro__card--sm" data-built-hi></p><p class="intro__fine">' + E(O.card.edit || "") + '</p><div class="intro__acts" data-built-acts><button class="btn btn--primary" type="button" data-enter>' + E(O.card.enter || "Enter the library") + '</button><button class="btn" type="button" data-save-card><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-share"/></svg>' + E(O.card.save || "Save the card") + '</button></div><p class="intro__fine intro__open" data-built-more hidden></p></div></div>' +
     "</section>";
   body.appendChild(el);
   root.classList.add("intro-on");
@@ -161,7 +141,7 @@
       if (on) { s.hidden = false; requestAnimationFrame(function () { requestAnimationFrame(function () { s.classList.add("is-on"); }); }); }
       else { s.classList.remove("is-on"); s.hidden = true; }
     });
-    var f = name === "play" ? el.querySelector("[data-scene=\"play\"] [data-play-go]") : name === "seat" ? el.querySelector(".menu__row.is-on") : name === "build" ? el.querySelector("[data-build-menu] .menu__row.is-on") : name === "name" ? el.querySelector("#intro-name") : name === "card" ? el.querySelector("[data-built]:not([hidden]) [data-enter]") : null;
+    var f = name === "seat" ? el.querySelector(".menu__row.is-on") : name === "build" ? el.querySelector("[data-build-menu] .menu__row.is-on") : name === "name" ? el.querySelector("#intro-name") : name === "card" ? el.querySelector("[data-built]:not([hidden]) [data-enter]") : null;
     if (f) setTimeout(function () { f.focus({ preventScroll: true }); }, wait(260));
   }
   var startBtn = el.querySelector("[data-title-play]") || el.querySelector('[data-start="on"]');
@@ -174,31 +154,7 @@
       var pr = attract.play(); if (pr && pr.catch) pr.catch(function () {});
     }, 900);
   });
-  bootP.then(function () { setTimeout(function () { if (!filmOpen()) startBtn.focus({ preventScroll: true }); }, 60); });
-
-  /* ---------- the walkthrough: the narrated film in a dialog. A press opens it, so
-     its sound (once it is voiced) only ever follows a press; closing is silent ---------- */
-  var film = null;
-  function filmOpen() { return !!(film && film.open); }
-  function openFilm(where) {
-    if (!WALK) return;
-    if (!film) {
-      var tall = matchMedia("(max-width: 759px) and (orientation: portrait)").matches && WALK.vsrc;
-      film = document.createElement("dialog");
-      film.className = "sheet film-sheet"; film.setAttribute("aria-label", t.watch || "Watch the walkthrough");
-      film.innerHTML = '<div class="film-sheet__frame"><video controls playsinline preload="metadata" poster="' + E(tall ? WALK.vposter : WALK.poster) + '"><source src="' + E(tall ? WALK.vsrc : WALK.src) + '" type="video/mp4" />' + ((tall ? WALK.vwebm : WALK.webm) ? '<source src="' + E(tall ? WALK.vwebm : WALK.webm) + '" type="video/webm" />' : "") + (WALK.vtt ? '<track kind="captions" srclang="en" label="English" src="' + E(WALK.vtt) + '" />' : "") + "</video></div>" +
-        '<div class="film-sheet__bar"><p class="film-sheet__note">' + E(WALK.note || "") + '</p><div class="film-sheet__acts">' + (WALK.page ? '<a class="btn btn--sm btn--ghost" href="' + E(WALK.page) + '">' + E(WALK.page_label || "The film page") + "</a>" : "") + '<button class="x" type="button" data-close aria-label="Close the walkthrough"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-x"/></svg></button></div></div>';
-      body.appendChild(film);
-      film.addEventListener("click", function (e) { if (e.target === film || e.target.closest("[data-close]")) film.close(); });
-      film.addEventListener("close", function () { var v = film.querySelector("video"); if (v) v.pause(); T("walkthrough_closed", { at: v ? Math.round(v.currentTime) : 0 }); if (!ended && phase === "title") startBtn.focus({ preventScroll: true }); });
-    }
-    if (typeof film.showModal === "function") film.showModal(); else film.setAttribute("open", "");
-    if (window.JG_FX) window.JG_FX("arrive"); else hap("tap");
-    T("walkthrough_opened", { where: where || "" });
-    var v = film.querySelector("video"), pr = v && v.play(); if (pr && pr.catch) pr.catch(function () {});
-  }
-  window.JG_FILM = { open: openFilm };
-  if (window.JG_BOOT && window.JG_BOOT.film) openFilm("boot");
+  bootP.then(function () { setTimeout(function () { startBtn.focus({ preventScroll: true }); }, 60); });
 
   /* ---------- start: with the score, or muted ---------- */
   function start(sound, how) {
@@ -212,13 +168,11 @@
   el.addEventListener("click", function (e) {
     var b = e.target.closest("[data-start]");
     if (b) { start(b.getAttribute("data-start") === "on", "button"); return; }
-    if (e.target.closest("[data-watch]")) { openFilm("title"); return; }
-    if (e.target.closest("[data-intro-tour]")) { takeTour(); return; }
     if (e.target.closest("[data-title-play]")) { playFromTitle("button"); return; }
     if (phase === "title" && !e.target.closest("button,a,input")) { if (TPLAY) playFromTitle("tap"); else start(true, "tap"); }
   });
 
-  /* Play from the title screen: the score starts with the press, then straight into the episode (or the run where the episode isn't carried) */
+  /* Play from the title screen: the score starts with the press, then straight into the episode */
   var storyAfter = false;
   function playFromTitle(how) {
     if (phase !== "title") return;
@@ -227,18 +181,6 @@
     if (attract) attract.pause();
     if (STORY) storyAfter = true;
     playNow(how);
-  }
-
-  /* the tour: a press, so it starts the score the way Start does, then goes
-     straight to the library and the tour runs there (tour.js) */
-  function takeTour() {
-    if (phase !== "title") return;
-    if (S()) { S().set(true, "tour"); setTimeout(function () { S().sting("start"); }, 120); }
-    hap("tap");
-    T("intro_started", { sound: true, how: "tour" });
-    el.classList.add("is-started");
-    document.addEventListener("jg:intro-done", function go() { document.removeEventListener("jg:intro-done", go); setTimeout(function () { if (window.JG_TOUR) window.JG_TOUR.start("title"); }, 200); });
-    phase = "tour"; setTimeout(function () { done(true, "tour"); }, wait(320));
   }
 
   /* ---------- who's playing ---------- */
@@ -255,7 +197,7 @@
     T("role_chosen", { role: id, where: "intro" }, { role: id });
     var r = rows.filter(function (x) { return x.getAttribute("data-role") === id; })[0];
     if (r) r.classList.add("is-picked");
-    setTimeout(function () { if (id === "lurker" && PLAY) scene("play"); else if (BD && window.JG_BUILD) { buildScene(id); scene("build"); } else toName(); }, wait(420));
+    setTimeout(function () { if (BD && window.JG_BUILD) { buildScene(id); scene("build"); } else toName(); }, wait(420));
   }
   function toName() {
     var h = el.querySelector("[data-name-h]"), fi = el.querySelector("[data-name-fine]");
@@ -425,7 +367,7 @@
     else if (e.target.closest("[data-build-obavia]")) { if (built && window.JG_BUILD) store.set("jg_lot", window.JG_BUILD.label(built)); if (window.JG_FX) window.JG_FX("send"); T("cta_click", { cta: "obavia_early", where: "intro", lot: built ? built.id : "" }); }
   });
 
-  /* ---------- play: one press into the run (game.js loads it once the title screen is gone) ---------- */
+  /* ---------- play: one press into the episode (game.js loads it once the title screen is gone) ---------- */
   var playAfter = false;
   function playNow(how) {
     if (ended) return;
@@ -434,27 +376,22 @@
     /* a phone goes fullscreen from the press itself */
     if (COARSE && !document.fullscreenElement) { var d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen; if (rq) try { window.JG_RUN_FS = true; var pr = rq.call(d, { navigationUI: "hide" }); if (pr && pr.then) pr.then(function () { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); }).catch(function () {}); } catch (x) {} }
     T("intro_play", { role: role, how: how || "", story: storyAfter ? (SAVED ? "continue" : "new") : "" });
-    done(false, "play");
+    done(false);
   }
-  el.addEventListener("click", function (e) {
-    if (e.target.closest("[data-play-go]")) { playNow(phase === "card" ? "card" : "button"); return; }
-    if (e.target.closest("[data-play-alt]") && phase === "play") { if (BD && window.JG_BUILD) { buildScene(role); scene("build"); } else toName(); }
-  });
 
   /* ---------- the end: into the library ---------- */
   var ended = false;
-  function done(skipped, why) {
+  function done(skipped) {
     if (ended) return; ended = true;
     store.set("jg_intro", "1");
     if (!skipped) T("intro_finished", { role: role, named: named });
-    else if (why === "tour") T("intro_tour", { role: role });
     el.classList.add("is-leaving");
     root.classList.remove("intro-on");
     setTimeout(function () {
       el.remove();
       root.classList.remove("intro-pending");
       if (window.JG_LOCK) window.JG_LOCK(false);
-      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "", play: playAfter && !storyAfter, story: storyAfter } }));
+      document.dispatchEvent(new CustomEvent("jg:intro-done", { detail: { role: skipped ? store.get("jg_role") : role, named: named, build: built ? built.id : "", story: storyAfter } }));
     }, wait(playAfter ? 380 : 700));
   }
   el.querySelector("[data-intro-skip]").addEventListener("click", function () { T("intro_skipped", { phase: phase }); done(true); });
@@ -462,10 +399,9 @@
   /* ---------- keys ---------- */
   addEventListener("keydown", function (e) {
     if (ended || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (filmOpen()) return; /* the film's dialog has the keys (Escape closes it, silently) */
     var k = e.key;
     if (phase === "title") {
-      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip],[data-watch],[data-intro-tour]")) return; /* the focused button handles its own key */
+      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip]")) return; /* the focused button handles its own key */
       if (k === "Enter" || k === " ") { e.preventDefault(); start(true, "key"); }
       else if (k === "m" || k === "M") { e.preventDefault(); start(false, "key"); }
       else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }
@@ -485,9 +421,6 @@
       else if (k === "ArrowUp" || k === "ArrowLeft") { e.preventDefault(); bmark(Math.max(0, bi - 1)); }
       else if (k === "Enter" || k === " ") { if (e.target && e.target.closest && e.target.closest("[data-go-build],[data-build-skip]")) return; e.preventDefault(); pick(Math.max(0, bi), "key"); }
       else if (k === "Escape") { e.preventDefault(); skipBuild(); }
-    } else if (phase === "play") {
-      if (k === "Enter" || k === " ") { if (e.target && e.target.closest && e.target.closest("[data-play-alt],[data-intro-skip]")) return; e.preventDefault(); playNow("key"); }
-      else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }
     } else if (phase === "name") {
       if (k === "Escape") { e.preventDefault(); T("name_skipped", { role: role }); finishName(""); }
     } else if (phase === "card" && built) {
@@ -503,7 +436,7 @@
       var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
       if (gp) {
         var a = gp.buttons[0] && gp.buttons[0].pressed, dn = (gp.buttons[13] && gp.buttons[13].pressed) || gp.axes[1] > 0.5, up = (gp.buttons[12] && gp.buttons[12].pressed) || gp.axes[1] < -0.5;
-        if (a && !prev.a) { if (phase === "title") { if (TPLAY) playFromTitle("pad"); else start(true, "pad"); } else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); else if (phase === "play") playNow("pad"); }
+        if (a && !prev.a) { if (phase === "title") { if (TPLAY) playFromTitle("pad"); else start(true, "pad"); } else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); }
         if (phase === "seat") { var i = rows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) mark(Math.min(rows.length - 1, i + 1)); if (up && !prev.up) mark(Math.max(0, i - 1)); }
         if (phase === "build") { var j = brows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) bmark(Math.min(brows.length - 1, j + 1)); if (up && !prev.up) bmark(Math.max(0, j - 1)); }
         prev = { a: a, dn: dn, up: up };

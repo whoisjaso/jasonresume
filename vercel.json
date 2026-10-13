@@ -58,6 +58,16 @@
       "source": "/join.html",
       "destination": "/obavia.html",
       "permanent": false
+    },
+    {
+      "source": "/walkthrough",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/walkthrough.html",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "headers": [
@@ -602,7 +612,7 @@
       ]
     },
     {
-      "source": "/(HANDOFF|RESEARCH|OUTREACH|CONFIG|CLAUDE|PRODUCT|README|SPEC|DESIGN|PUBLISH_NOW)\\.md",
+      "source": "/(HANDOFF|RESEARCH|OUTREACH|CONFIG|CLAUDE|PRODUCT|README|SPEC|DESIGN)\\.md",
       "headers": [
         {
           "key": "X-Robots-Tag",

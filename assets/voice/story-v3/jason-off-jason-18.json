@@ -1,0 +1,73 @@
+{
+ "id": "jason-off-jason-18",
+ "text": "Validation stops an invalid deal or inventory record before it's ever written.",
+ "duration": 5.96,
+ "words": [
+  {
+   "w": "Validation",
+   "s": 0.035,
+   "e": 0.865
+  },
+  {
+   "w": "stops",
+   "s": 0.865,
+   "e": 1.593
+  },
+  {
+   "w": "an",
+   "s": 1.593,
+   "e": 1.897
+  },
+  {
+   "w": "invalid",
+   "s": 1.897,
+   "e": 2.403
+  },
+  {
+   "w": "deal",
+   "s": 2.403,
+   "e": 2.869
+  },
+  {
+   "w": "or",
+   "s": 2.869,
+   "e": 3.435
+  },
+  {
+   "w": "inventory",
+   "s": 3.435,
+   "e": 3.881
+  },
+  {
+   "w": "record",
+   "s": 3.881,
+   "e": 4.569
+  },
+  {
+   "w": "before",
+   "s": 4.569,
+   "e": 5.014
+  },
+  {
+   "w": "it's",
+   "s": 5.014,
+   "e": 5.277
+  },
+  {
+   "w": "ever",
+   "s": 5.277,
+   "e": 5.5
+  },
+  {
+   "w": "written.",
+   "s": 5.5,
+   "e": 5.884
+  }
+ ],
+ "retimed": {
+  "k": 1.012,
+  "b": 0.035,
+  "before": 0.97,
+  "after": 0.992
+ }
+}

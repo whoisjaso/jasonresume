@@ -10,7 +10,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const OUT = path.join(ROOT, 'tools', 'verify', 'out'); fs.mkdirSync(OUT, { recursive: true });
 const tag = process.argv[2] || 'now';
 const vps = process.argv[3] && process.argv[3] !== 'all' ? [process.argv[3]] : ['desktop', 'phone'];
-const only = process.argv.slice(4);
+const only = process.argv.slice(4).filter(a => !a.startsWith('view='));
+const viewOnly = (process.argv.find(a => a.startsWith('view=')) || '').slice(5).split(',').filter(Boolean);
 const VIEWS = {
   lot: [
     ['wide', [-14, 2.6, 22], [6, 1.2, -6]],
@@ -19,7 +20,10 @@ const VIEWS = {
     ['showroom', [4, 1.7, -7.5], [4, 2.0, -18]],
     ['jason', [6.4, 1.5, -9.3], [9.4, 1.45, -12.0]],
     ['gate', [2, 1.7, 13], [-2, 1.2, 22]],
-    ['face', [9.9, 1.68, -13.6], [10.2, 1.62, -14.6]]
+    ['face', [9.9, 1.68, -13.6], [10.2, 1.62, -14.6]],
+    // the office door: from the gate where you come in, and from beside Jason by the showroom
+    ['door-far', [0.4, 1.65, 20.5], [12.6, 1.6, -17.8]],
+    ['door-near', [9.4, 1.6, -11.6], [13.0, 1.5, -17.9]]
   ],
   office: [['face', [-0.91, 1.68, 0.37], [-1.3, 1.62, -0.55]], ['room', [4.8, 1.6, 3.9], [-1.5, 1.0, -2.5]], ['desk', [0.6, 1.4, 0.6], [-1.2, 0.9, -2.0]], ['window', [-1, 1.5, -0.5], [0.5, 1.6, 5]]],
   memory: [['room', [0, 1.7, 7.5], [0, 1.2, -4]], ['desk', [0.4, 1.4, 4.8], [0.2, 0.85, 3.0]]],
@@ -51,6 +55,7 @@ for (const vp of vps) {
     await p.evaluate(() => { window.JG_STORY.debug.quality(2, 1); window.JG_STORY.debug.box(0); });
     await p.addStyleTag({ content: '#story .st-hud,#story .st-cap,#story .st-prompt,#story .st-obj,#story .st-hint,#story .st-choices,#story .st-dots,#story .st-stick,#story .st-toast,#story .st-card,#story .st-turn,#story .st-note{display:none!important} #story .st-fade{opacity:0!important}' });
     for (const [name, pos, look] of VIEWS[scene]) {
+      if (viewOnly.length && !viewOnly.includes(name)) continue;
       await p.evaluate(([pos, look]) => window.JG_STORY.debug.view(pos, look, 8), [pos, look]);
       await p.waitForTimeout(1500);
       const f = path.join(OUT, `real-world-${tag}-${scene}-${name}-${vp}.png`);

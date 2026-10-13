@@ -8,12 +8,10 @@
    before it dissolves into the title screen. A tap or a key finishes it at once
    (silently, like any skip).
    Reduced motion shows the finished drawing as a still.
-   window.JG_BOOT.ready resolves when the dissolve starts; intro.js waits on it.
-   window.JG_BOOT.film is set when "Watch the walkthrough" is pressed before
-   intro.js has loaded. */
+   window.JG_BOOT.ready resolves when the dissolve starts; intro.js waits on it. */
 (function () {
   var d = document.documentElement, b = document.getElementById("boot");
-  var res, J = window.JG_BOOT = { ready: new Promise(function (r) { res = r; }), film: false };
+  var res; window.JG_BOOT = { ready: new Promise(function (r) { res = r; }) };
   if (!b || !d.classList.contains("intro-pending")) { if (b) b.remove(); res(); return; }
   var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var DRAW = 3400, HOLD = 1300, W = { page: 1, fonts: 1, art: 2 }, got = {}, target = 0, shown = 0, last = performance.now(), t0 = last, over = false;
@@ -28,14 +26,12 @@
   }
   if (document.readyState !== "loading") { mark("page"); fonts(); }
   else document.addEventListener("DOMContentLoaded", function () { mark("page"); fonts(); });
-  var bar = b.querySelector(".boot__bar i");
   function frame(now) {
     if (over) return;
     var dt = now - last; last = now;
     /* the drawing follows the measure, at most a full drawing per DRAW ms */
     shown = RM ? target : Math.min(target, shown + dt / DRAW);
     b.style.setProperty("--p", shown.toFixed(4));
-    if (bar) bar.style.transform = "scaleX(" + target.toFixed(3) + ")";
     if (shown >= 1 || now - t0 > 10000) { finish(); return; }
     requestAnimationFrame(frame);
   }
@@ -49,11 +45,8 @@
     }, RM ? 0 : HOLD);
   }
   /* a tap or a key: straight to the lamps (only once the page itself is in) */
-  function hurry(e) { if (over || (e.target && e.target.closest && e.target.closest("[data-watch]"))) return; if (!got.page) return; DRAW = 1; HOLD = 250; target = 1; }
+  function hurry() { if (over || !got.page) return; DRAW = 1; HOLD = 250; target = 1; }
   b.addEventListener("pointerdown", hurry);
   addEventListener("keydown", function k(e) { if (over) { removeEventListener("keydown", k); return; } hurry(e); });
   requestAnimationFrame(frame);
-  /* the walkthrough, if pressed before intro.js is here to open it */
-  var w = b.querySelector("[data-watch]");
-  if (w) w.addEventListener("click", function () { if (window.JG_FILM) window.JG_FILM.open("boot"); else J.film = true; });
 })();

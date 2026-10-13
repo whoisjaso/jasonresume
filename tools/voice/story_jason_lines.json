@@ -1,6 +1,6 @@
 {
  "_about": "Written by tools/site/story_voice.py from tools/site/story.json. My own lines in After Hours, first person, every fact already in llms.txt, rendered in my voice from my own recording with my permission. Render: /root/cbvenv/bin/python -I tools/voice/narrate_jason.py tools/voice/story_jason_lines.json. The reference recording is never committed.",
- "out": "assets/voice/story-v2",
+ "out": "assets/voice/story-v3",
  "say": {
   "206,777": "two hundred six thousand, seven hundred seventy-seven dollars",
   "130-U": "one thirty U",
