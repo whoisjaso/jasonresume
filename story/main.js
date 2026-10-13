@@ -1155,7 +1155,8 @@ function updatePrompts() {
     const r = s.sp.r || 2;
     // facing matters a little: things in front of you win ties
     const a = Math.abs(angTo(me.yaw, Math.atan2(s.p.x - me.pos.x, s.p.z - me.pos.z)));
-    const score = d + a * 0.35;
+    // a story thing you haven't looked at yet wins over a plain thing beside it (the drawer in the filing cabinet)
+    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0);
     if (d < r && score < bd) { best = s; bd = score; }
   }
   if (best !== near && best) progress();

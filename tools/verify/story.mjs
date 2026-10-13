@@ -200,6 +200,20 @@ async function office(p, mobile, o, label) {
   await choose(p, mobile, o.phone, label);
   await finishTalk(p, label);
   for (const id of o.looks || []) {
+    if (id === 'arcade') {
+      // the cabinet plays the run: it opens over the episode, and closing it puts you back at the cabinet
+      await use(p, mobile, 'arcade', label);
+      const open = await until(p, () => window.JG_RUN && window.JG_RUN.isOpen(), null, 30000);
+      if (!open) { errs.push(`${label}: the arcade cabinet did not open the run`); continue; }
+      notes.push(`${label}: the arcade cabinet plays the run`);
+      await p.waitForTimeout(1500);
+      await p.evaluate(() => window.JG_RUN.close('test'));
+      const back = await phase(p, 'explore', 60000);
+      const st0 = await st(p);
+      if (!back || st0.scene !== 'office') errs.push(`${label}: closing the run did not bring you back to the office (${JSON.stringify({ phase: st0.phase, scene: st0.scene })})`);
+      else notes.push(`${label}: closing the run puts you back in the office`);
+      continue;
+    }
     if (id === 'board') {
       await use(p, mobile, 'board', label);
       const close = await phase(p, 'close', 60000);
