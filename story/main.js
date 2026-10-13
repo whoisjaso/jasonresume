@@ -3382,7 +3382,7 @@ window.JG_STORY = {
     },
     you: () => me, veh: () => DRV.veh,
     /* the waiting room and the test drive (tools/verify/story.mjs) */
-    june: () => ({ seated: !!(me && me.seated), jasonSit: !!(P.jason && P.jason.pose === "sit"), hold: !!HOLDG, busy: !!S.busy, phoneEar: !!(me && me.hold === "phone"), cup: !!(set && set.userData.cup && set.userData.cup.visible), jasonCup: !!(P.jason && P.jason.carrying && (P.jason.carrying.l || P.jason.carrying.r)) }),
+    june: () => ({ seated: !!(me && me.seated), jasonSit: !!(P.jason && P.jason.pose === "sit"), hold: !!HOLDG, busy: !!S.busy, phoneEar: !!(me && me.hold === "phone"), cup: !!(set && set.userData.cup && set.userData.cup.visible), jasonCup: !!(P.jason && P.jason.carrying && (P.jason.carrying.l || P.jason.carrying.r)), meshes: (() => { let n = 0; if (set) set.traverse(o => { if (o.isMesh && o.visible) n++; }); return n; })() }),
     course: () => ({ live: courseLive(), i: COURSE.i, n: COURSE.pts.length, t: +COURSE.t.toFixed(2), pts: COURSE.pts.map(p => p.slice()), ring: courseG.ringMesh.visible, ui: courseEl.classList.contains("is-on"), marisol: !!(P.marisol && P.marisol.inCar), drove: S.flags.drove || null, auto: !!AUTO })
   }
 };
