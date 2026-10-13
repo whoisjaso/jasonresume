@@ -643,7 +643,7 @@
     "june": { "h": "June 2025", "p": "My dad had a stroke. I started selling the cars myself that month.", "sketch": "june" },
     "faith": { "h": "The window", "p": "I believe God puts us in situations that make us act, especially when we take too long on our own.", "sketch": "june" },
     "sale": { "h": "The next morning", "p": "Listen first. Since June 2025, 53 vehicle sales personally closed and $206,777 in sale proceeds.", "sketch": "sale" },
-    "tags": { "h": "Temp tags", "p": "Every lost temp tag on the lot, the street, the office and the library, found.", "sketch": "keys" }
+    "tags": { "h": "Lost plates", "p": "Every lost Texas plate on the lot, the street, the office and the library, found.", "sketch": "keys" }
   },
 
   "recap": {
@@ -828,8 +828,8 @@
     "drive_fast": "Quick, and back in one piece.",
     "drive_smooth": "Smooth the whole way. She noticed.",
     "drive_scenic": "The scenic route. She didn't mind.",
-    "tag": "Temp tag",
+    "tag": "Lost plate",
     "tags_found": "found",
-    "tags_all": "Every temp tag found."
+    "tags_all": "Every lost plate found."
   }
 }
