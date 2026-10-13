@@ -643,7 +643,7 @@ const SCENE_LIGHT = {
   memory: { sky: "#463c34", ground: "#1d1712", moon: "#4a3826", rim: "#7c6a58", fog: "#1a1612", den: 0.014, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
   keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] },
   june: { sky: "#2a3134", ground: "#191b1a", moon: "#23282a", rim: "#66706e", fog: "#111517", den: 0.012, wetAll: 0.12, sat: 0.8, moonDir: [0.6, 0.7, -0.2] },
-  sale: { sky: "#a9b9c4", ground: "#625849", moon: "#ffdcae", rim: "#ddd5c6", fog: "#d4d0c4", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.65, 0.5, 0.4] }
+  sale: { sky: "#a9b9c4", ground: "#625849", moon: "#ffdcae", rim: "#ddd5c6", fog: "#d8ccb4", den: 0.0035, wetAll: 0.0, sat: 1, moonDir: [0.65, 0.5, 0.4] }
 };
 function lightScene(name) {
   const L = SCENE_LIGHT[name];
@@ -738,7 +738,7 @@ async function enter(name, o = {}) {
   // come in through an exit: you arrive at the way back to where you were
   if (me && o.from) { const ex = Object.values(set.userData.spots || {}).find(x => x && x.kind === "exit" && (x.to === o.from || (o.from === "decision" && x.to === "lot") || (o.from === "lot" && x.to === "decision"))); if (ex) { const q = ex.stand || ex.p || ex.at; if (q) { me.pos.set(q.x, 0, q.z); const f = ex.p || ex.at; if (f && f !== q) me.yaw = me.wantYaw = Math.atan2(q.x - f.x, q.z - f.z); } } }
   if (me && !o.cold) unstick(me);
-  if (name === "decision" && S.obj === "keys") objective(null);
+  if (name === "decision" && ["keys", "sale", "drive", "back"].includes(S.obj)) objective(null);
   // the rain: hard on the lot, gentler at the end, none inside or in the morning
   if (!rain) { rain = makeRain(); scene.add(rain); }
   rain.visible = name === "lot" || name === "decision";
