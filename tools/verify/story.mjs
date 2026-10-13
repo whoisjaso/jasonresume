@@ -788,6 +788,7 @@ async function wayCheck(vname, w, h, mobile) {
   await p.evaluate(() => window.JG_STORY.debug.flag('met', 1));
   for (const t of ['hire-build', 'lot-paperwork', 'lot-come-in']) if (await check(t, 'door', 'lot')) n++;
   // the office: each hint leads to its own thing
+  await p.goto('about:blank');
   await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
   await p.click('#intro [data-intro-skip]').catch(() => {});

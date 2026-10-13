@@ -582,8 +582,12 @@ function showTrophy() {
 /* ================================================================
    PEOPLE IN THE SCENES
    ================================================================ */
-async function person(key, name) {
-  if (P[key]) return P[key];
+const personP = {};
+function person(key, name) {
+  if (P[key]) return Promise.resolve(P[key]);
+  return personP[key] || (personP[key] = person0(key, name).finally(() => { delete personP[key]; }));
+}
+async function person0(key, name) {
   const p = await cast.make(name + "-" + VER);
   p.key = key; world.add(p.group);
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), blobMat(0.55)); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.015; sh.layers.set(2); world.add(sh); p.shadow = sh;
@@ -610,7 +614,7 @@ function lightScene(name) {
 }
 let set = null, rain = null;
 function makeRain() {
-  const n = quality >= 2 ? 800 : quality >= 1 ? 420 : 260;
+  const n = quality >= 2 ? 800 : COARSE.matches ? 250 : quality >= 1 ? 420 : 250;
   const g = new THREE.InstancedBufferGeometry(); g.instanceCount = n;
   g.setAttribute("position", new THREE.Float32BufferAttribute([-0.0025, 0, 0, 0.0025, 0, 0, 0.0025, 1, 0, -0.0025, 1, 0], 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
   const seed = new Float32Array(n * 4); for (let i = 0; i < n; i++) { seed[i * 4] = Math.random(); seed[i * 4 + 1] = Math.random(); seed[i * 4 + 2] = Math.random(); seed[i * 4 + 3] = 0.7 + Math.random() * 0.6; }
@@ -2126,10 +2130,19 @@ function driveView(dt) {
 /* ================================================================
    LAMPS: the eight that matter, nearest the camera
    ================================================================ */
+/* the lamps the shaders light with: re-ranked only when the camera has moved a metre and a half (or the set or its
+   lamps changed), into one array kept between frames; the values are written every frame (lights fade) */
+const lampOrder = [], lampAt = new THREE.Vector3(1e9, 0, 0);
+let lampSet = null, lampN = -1;
+const lampCmp = (a, b) => (a.fixed ? -1 : 0) - (b.fixed ? -1 : 0) || a.p.distanceToSquared(lampAt) - b.p.distanceToSquared(lampAt);
 function updateLamps() {
-  const L = set.userData.lamps.slice();
-  const c = camera.position;
-  L.sort((a, b) => (a.fixed ? -1 : 0) - (b.fixed ? -1 : 0) || a.p.distanceToSquared(c) - b.p.distanceToSquared(c));
+  const src = set.userData.lamps, c = camera.position;
+  if (lampSet !== set || lampN !== src.length || lampAt.distanceToSquared(c) > 2.25) {
+    lampSet = set; lampN = src.length; lampAt.copy(c);
+    lampOrder.length = 0; for (let i = 0; i < src.length; i++) lampOrder.push(src[i]);
+    lampOrder.sort(lampCmp);
+  }
+  const L = lampOrder;
   const n = Math.min(MAXL, L.length);
   const day = S.scene === "keys";
   for (let i = 0; i < MAXL; i++) {
@@ -2470,18 +2483,25 @@ async function boot() {
   getSet("lot");
   setLoad(0.7);
   // warm the shaders on the first frames, behind the loading screen
-  await person("you", "player"); setLoad(0.8); await person("jason", "jason"); await person("dell", "dell"); setLoad(0.92);
+  await person("you", "player"); setLoad(0.8); await person("jason", "jason"); await person("dell", "dell"); setLoad(0.86);
+  // every set's shaders and textures, behind the loading screen: no hitch on the first step into the office, the library or a car
+  if (typeof WORLD.warmSet === "function") { for (const n of ["lot", "office", "memory"]) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.02 * ["lot", "office", "memory"].indexOf(n)); } }
+  setLoad(0.92);
   raf = requestAnimationFrame(frame);
   // build the rest while you play, and compile its shaders off the main path (parallel where the GPU allows), so the
   // first step into the office or the library never hitches on a shader
-  setTimeout(() => warmSets(["office", "memory"]), FAST ? 400 : 2500);
+  if (typeof WORLD.warmSet !== "function") setTimeout(() => warmSets(["office", "memory"]), FAST ? 400 : 2500);
+  // the people you meet later, loaded (and kept out of sight) while you're on the lot
+  setTimeout(async () => { for (const [k, n] of [["renata", "renata"], ["memory", "jason-memory"]]) { if (P[k]) continue; try { const q = await person(k, n); const here = (S.scene === "office" && k === "renata") || (S.scene === "memory" && k === "memory"); if (!here) hide(q); } catch (e) {} } }, FAST ? 300 : 3000);
 }
 
 async function warmSets(names) {
   for (const n of names) {
     try {
       // visible only while the compile walks the scene (synchronously), so it never shows in a frame
-      const st = getSet(n), was = st.visible; st.visible = true;
+      const st = getSet(n);
+      if (typeof WORLD.warmSet === "function") { await WORLD.warmSet(renderer, camera, st); await new Promise(r => setTimeout(r, 200)); continue; }
+      const was = st.visible; st.visible = true;
       let pr = null; try { pr = renderer.compileAsync ? renderer.compileAsync(scene, camera) : (renderer.compile(scene, camera), null); } finally { if (set !== st) st.visible = was; }
       if (pr) await pr;
     } catch (e) {}

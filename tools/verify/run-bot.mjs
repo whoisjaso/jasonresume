@@ -57,10 +57,13 @@ export async function playLevel(b, level, { mobile = false, medals = true, walkO
   await p.clock.install({ time: new Date('2026-10-10T22:00:00Z') });
   await p.clock.pauseAt(new Date('2026-10-10T22:00:01Z'));
   await p.goto(URL0 + '?debug=run', { referer: URL0 });
-  for (let i = 0; i < 200; i++) { if (await p.evaluate(() => !!(window.JG_GAME && window.JG_GAME.play))) break; await p.clock.runFor(48); }
+  // the page's scripts and game-run.js arrive over the network, in real time, whatever the page's clock says
+  const until = async (fn, arg) => { for (let i = 0; i < 400; i++) { if (await p.evaluate(fn, arg)) return true; await new Promise(r => setTimeout(r, 50)); await p.clock.runFor(16); } return false; };
+  // after the page's own arrival (hud.js routes the address 40 ms after load, which would close a run opened sooner)
+  await until(() => !!(window.JG_GAME && window.JG_GAME.play) && document.readyState === 'complete');
+  await p.clock.runFor(200);
   await p.evaluate(l => window.JG_GAME && window.JG_GAME.play(l, 'debug'), level);
-  // game-run.js arrives over the network, in real time, whatever the page's clock says
-  for (let i = 0; i < 200; i++) { if (await p.evaluate(() => !!window.JG_RUN_DEBUG)) break; await new Promise(r => setTimeout(r, 50)); await p.clock.runFor(16); }
+  await until(() => !!(window.JG_RUN_DEBUG && window.JG_RUN && window.JG_RUN.isOpen()));
   let ready = false;
   for (let i = 0; i < 400 && !ready; i++) { await p.clock.runFor(48); ready = await p.evaluate(() => { const d = window.JG_RUN_DEBUG, s = d && d.state(); return !!(s && s.running && !s.panel); }); }
   const res = { level, mobile, finished: false, medals: [], of: 0, ms: 0, respawns: 0, tol: [], blind: [], replans: 0, missed: [], errors, planned: [] };
