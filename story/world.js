@@ -830,6 +830,247 @@ function placesAcross(set, o, day, CO) {
     if (!day) { const pd = plane(2.6, 1.6, pbr({ color: "#0b0e0f", rough: 0.02, wet: 1, spec: 1.2, diff: 0.3 }), set); pd.rotation.x = -Math.PI / 2; pd.position.set(cx - 2, 0.002, cz - 1);
       thing(set, "lot-puddle", { kind: "splash", label: "Puddle", p: V3(cx - 2, 0.05, cz - 1), stand: V3(cx - 2, 0, cz + 0.6), r: 1.8 }); }
   }
+  moreStreet(set, day, CO);
+}
+
+/* ---------- more of the street: storefronts along the far side (most dark, a few lit), a laundromat open late at
+   the end of the crosswalk, a payphone, a newspaper box, a bike locked to a rack, a taco truck in the empty lot, an
+   ice chest at the gas station, a signal over the road that cycles, a car now and then with its lights on the wet
+   road, and wind that comes through the rain in gusts. All fictional: no names, no prices, no numbers. Built from
+   the materials the street already uses, so the static merge folds it into the draws that are already there; the
+   few new draws (two signs, the signal's three lamps, the moving parts, the passing car) are culled out of view ---------- */
+function moreStreet(set, day, CO) {
+  const ud = set.userData, W = ud.walls;
+  const wall = (x0, x1, z0, z1, what = "wall", h = 3) => { W.push({ x0, x1, z0, z1 }); CO.push({ type: "box", x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hl: (z1 - z0) / 2, yaw: 0, h, what }); };
+  const post = (x, z, r = 0.12) => { W.push({ x0: x - r, x1: x + r, z0: z - r, z1: z + r }); CO.push({ type: "circle", x, z, r, what: "pole" }); };
+  // (the street's own looks, shared with what's already across the road)
+  const steel = pbr({ color: "#5d6265", metal: 0.8, rough: 0.45, wet: 1 });
+  const darkM = pbr({ color: "#1c1e1e", rough: 0.5, metal: 0.3, wet: 1 });
+  const bldg = rmat({ color: "#3a3936", rough: 0.9, wet: 0.6, mapK: "concC", tri: 0.25 });
+  const shopM = rmat({ color: "#4a4743", rough: 0.9, wet: day ? 0 : 0.6, mapK: "concC", tri: 0.3 });
+  const conc = rmat({ color: "#9a968e", rough: 0.85, wet: day ? 0 : 0.9, mapK: "concC", tri: 0.6 });
+  const darkGlass = pbr({ color: "#0b0f10", rough: 0.04, wet: 0.6, spec: 1 });
+  const white = pbr({ color: "#e4e1d9", rough: 0.4, wet: 0.3 });
+  const canopyM = pbr({ color: "#d9d6cf", rough: 0.5, wet: day ? 0 : 0.5 });
+  const green = pbr({ color: "#2a3a33", rough: 0.4, metal: 0.3, wet: 0.8 });
+  const litWin = glow("#f3e6c8", { k: day ? 0.3 : 1.1 }), dimWin = glow("#f1d6a0", { k: 0.35 });
+  const panel = glow("#fff6e4", { k: day ? 0.3 : 2.6 }), bulbM = glow("#ffe0b0", { k: day ? 0.2 : 2.4 }), screenM = glow("#cfe0d8", { k: day ? 0.2 : 0.6 });
+  const bandM = glow("#e8d9b8", { k: day ? 0.25 : 0.8 });
+  const puddleM = pbr({ color: "#0b0e0f", rough: 0.02, wet: 1, spec: 1.2, diff: 0.3 });
+  const face = m => { m.rotation.y = Math.PI; return m; };   // a plane turned to face the road
+  const UP = V3(0, 1, 0), D = new THREE.Vector3();
+  const rod = (a, b, r, mat, parent) => { D.subVectors(b, a); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, D.length(), 6), mat); m.position.addVectors(a, b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, D.normalize()); parent.add(m); return m; };
+  ud.farPuddles = ud.farPuddles || [];
+
+  /* storefronts in the gaps along the far side: a body, a glass front (dark, or lit from inside), a door, a sign band,
+     an awning on some, a lit window upstairs on the taller ones */
+  const front = (x0, x1, zf, h, o = {}) => {
+    const w = x1 - x0, cx = (x0 + x1) / 2, d = o.d || 9;
+    box(w, h, d, bldg, cx, h / 2, zf + d / 2, set); wall(x0, x1, zf, zf + d, "wall", h);
+    const gw = w * 0.56, gx = cx - w * 0.12;
+    face(plane(gw, 1.9, o.lit && !day ? litWin : darkGlass, set)).position.set(gx, 1.35, zf - 0.02);
+    for (let i = 0; i <= 3; i++) box(0.08, 2.0, 0.08, darkM, gx - gw / 2 + i * gw / 3, 1.35, zf - 0.04, set);
+    box(gw + 0.2, 0.12, 0.14, darkM, gx, 0.33, zf - 0.05, set); box(gw + 0.2, 0.12, 0.14, darkM, gx, 2.35, zf - 0.05, set);
+    box(1.0, 2.15, 0.06, darkM, cx + w * 0.34, 1.08, zf - 0.03, set);
+    box(w * 0.86, 0.7, 0.12, darkM, cx, Math.min(h - 0.6, 3.4), zf - 0.06, set);
+    if (o.band) face(plane(w * 0.8, 0.5, day ? darkM : bandM, set)).position.set(cx, Math.min(h - 0.6, 3.4), zf - 0.13);
+    if (o.awning) { const a = box(w * 0.7, 0.06, 1.1, o.awning === "pale" ? canopyM : darkM, gx, 2.75, zf - 0.55, set); a.rotation.x = -0.22; }
+    if (h > 5.5 && !day) for (const k of o.up || []) face(plane(1.1, 1.0, dimWin, set)).position.set(x0 + w * k, h - 1.7, zf - 0.02);
+  };
+  front(-45.5, -38.6, 42.0, 5.8, { lit: true, band: true, awning: "dark", up: [0.3] });   // a corner store, lit
+  front(-21.8, -15.4, 42.6, 4.8, { awning: "dark" });                                   // dark, behind the bus stop
+  front(-3.6, 5.6, 42.2, 6.6, { band: false, up: [0.25, 0.72] });                      // two floors, a light on upstairs
+  front(44.6, 56.2, 42.4, 5.0, { band: true, d: 10 });                                  // past the gas station, its sign on
+
+  /* a laundromat, open late, where the crosswalk lands: a lit room behind the glass, a wall of washers and dryers,
+     a folding table, light panels, its sign, a glass door that opens */
+  { const x0 = -9.5, w = 9.8, zf = 41.4, dd = 2.0, xl = x0 - w / 2, xr = x0 + w / 2;
+    box(w, 1.2, dd, shopM, x0, 3.2, zf + dd / 2, set);
+    box(0.5, 2.6, dd, shopM, xl + 0.25, 1.3, zf + dd / 2, set); box(0.5, 2.6, dd, shopM, xr - 0.25, 1.3, zf + dd / 2, set);
+    wall(xl, xr, zf, zf + dd, "wall", 3.8);
+    // the room: its back wall lit, the floor, the panels, the machines
+    face(plane(w - 1, 2.6, litWin, set)).position.set(x0, 1.3, zf + dd - 0.06);
+    const fl = plane(w - 1, dd, white, set); fl.rotation.x = -Math.PI / 2; fl.position.set(x0, 0.01, zf + dd / 2);
+    for (const px of [-3, 0, 3]) { const p0 = plane(1.4, 0.4, panel, set); p0.rotation.x = Math.PI / 2; p0.position.set(x0 + px, 2.58, zf + 1.0); }
+    for (let i = 0; i < 8; i++) {
+      const mx = xl + 1.0 + i * 0.86;
+      box(0.78, 0.9, 0.7, white, mx, 0.45, zf + 1.55, set);
+      const pw = face(new THREE.Mesh(new THREE.CircleGeometry(0.22, 16), darkGlass)); pw.position.set(mx, 0.5, zf + 1.19); set.add(pw);
+      if (i < 6) { box(0.78, 0.75, 0.7, white, mx, 1.3, zf + 1.55, set); const pd = face(new THREE.Mesh(new THREE.CircleGeometry(0.2, 16), darkGlass)); pd.position.set(mx, 1.32, zf + 1.19); set.add(pd); }
+    }
+    box(2.6, 0.06, 0.7, white, xl + 3.0, 0.82, zf + 0.6, set); for (const dx of [-1.1, 1.1]) box(0.05, 0.8, 0.05, darkM, xl + 3.0 + dx, 0.4, zf + 0.6, set);
+    // the front: mullions, the sill, the glass, the sign over it
+    const gx0 = xl + 0.5, gx1 = xr - 1.85, gw = gx1 - gx0, gm = (gx0 + gx1) / 2;
+    box(gw, 0.4, 0.2, shopM, gm, 0.2, zf + 0.1, set);
+    for (let i = 0; i <= 3; i++) box(0.07, 2.2, 0.1, darkM, gx0 + i * gw / 3, 1.5, zf + 0.02, set);
+    box(w - 1, 0.1, 0.12, darkM, x0, 2.6, zf + 0.02, set);
+    const glassM = pbr({ color: "#0b0f10", rough: 0.03, wet: 0.8, alpha: 0.2, glass: true, depthWrite: false, spec: 1, diff: 0.2 });
+    const gl = face(plane(gw, 2.2, glassM, set)); gl.position.set(gm, 1.5, zf + 0.03); gl.renderOrder = 2;
+    box(0.25, 2.6, 0.2, darkM, xr - 1.75, 1.3, zf + 0.1, set);
+    const sign = face(plane(3.6, 0.62, glow("#ffffff", { map: TX.labelTex("LAUNDRY", { bg: "#16201b", fg: "#efe6d2", w: 512, h: 96 }), k: day ? 0.7 : 1.15 }), set)); sign.position.set(x0 - 1.2, 3.2, zf - 0.02);
+    // the door: glass in a dark frame, hinged on its left (as you face it), it swings out onto the walk
+    const hinge = new THREE.Group(); hinge.position.set(xr - 0.55, 0, zf + 0.02); hinge.userData.keep = true; set.add(hinge);
+    const leafG = mergeGeometries([new THREE.BoxGeometry(1.1, 2.25, 0.05).translate(-0.55, 1.13, 0), new THREE.BoxGeometry(0.04, 0.3, 0.06).translate(-0.98, 1.05, -0.05)]);
+    const leaf = new THREE.Mesh(leafG, darkGlass); hinge.add(leaf);
+    const dS = swinger(set, hinge, "y", -1.5, 6);
+    if (!day) { set.userData.lamps.push({ p: V3(x0, 2.3, zf - 0.7), range: 8, col: [1.35, 1.3, 1.15], cone: 0, fixed: false }); }
+    thing(set, "laundry-door", { kind: "open", label: "Door", p: V3(xr - 1.1, 1.1, zf - 0.05), stand: V3(xr - 1.1, 0, zf - 1.3), r: 1.6, use: ({ on }) => { dS.goal = on ? 1 : 0; } });
+    thing(set, "laundry-sign", { kind: "read", label: "Sign", text: "Laundry. Open late.", p: V3(x0 - 1.2, 2.9, zf - 0.05), stand: V3(x0 - 1.2, 0, zf - 1.6), r: 2.2 });
+    ud.sounds.laundry = { x: x0, y: 1.0, z: zf + 1.2, kind: "dryer" };
+  }
+
+  /* a payphone on the walk, the receiver on its hook; lift it and the dial tone plays */
+  { const x = 2.4, z = 40.5;
+    box(0.1, 1.25, 0.1, steel, x, 0.62, z + 0.05, set);
+    box(0.44, 0.64, 0.24, steel, x, 1.48, z, set); box(0.62, 0.06, 0.42, darkM, x, 1.86, z - 0.06, set);
+    face(plane(0.14, 0.2, screenM, set)).position.set(x - 0.06, 1.46, z - 0.125);
+    const rec = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.26, 0.07), darkM); rec.position.set(x + 0.15, 1.5, z - 0.16); rec.userData.keep = true; set.add(rec);
+    const st = { v: 0, goal: 0 }, home = rec.position.clone();
+    anim(set, dt => { if (Math.abs(st.v - st.goal) < 1e-3) return; st.v = easeTo(st.v, st.goal, 8, dt);
+      rec.position.set(home.x + 0.12 * st.v, home.y + 0.06 * st.v, home.z - 0.3 * st.v); rec.rotation.set(-0.9 * st.v, 0, 0.5 * st.v); });
+    wall(x - 0.26, x + 0.26, z - 0.18, z + 0.18, "pole", 1.9);
+    thing(set, "payphone", { kind: "pickup", label: "Phone", p: V3(x + 0.15, 1.5, z - 0.16), stand: V3(x, 0, z - 0.95), r: 1.4,
+      use: ({ on }) => { st.goal = on ? 1 : 0; ud.sounds.dial = on ? { x, y: 1.5, z: z - 0.2, kind: "dial" } : null; } });
+  }
+
+  /* a newspaper box by the bus stop; its window door tips down */
+  { const x = -21.3, z = 40.1;
+    box(0.5, 1.0, 0.45, green, x, 0.5, z, set);
+    box(0.4, 0.06, 0.34, white, x, 0.62, z, set);
+    const hinge = new THREE.Group(); hinge.position.set(x, 0.56, z - 0.23); hinge.userData.keep = true; set.add(hinge);
+    box(0.44, 0.38, 0.02, darkM, 0, 0.19, 0, hinge);
+    const nS = swinger(set, hinge, "x", -1.1, 7);
+    wall(x - 0.28, x + 0.28, z - 0.26, z + 0.26, "wall", 1.0);
+    thing(set, "news-box", { kind: "open", label: "Box", p: V3(x, 0.75, z - 0.25), stand: V3(x, 0, z - 1.0), r: 1.3, use: ({ on }) => { nS.goal = on ? 1 : 0; } });
+  }
+
+  /* a bike locked to a rack in front of the two-floor building; ring its bell */
+  { const x = -1.6, z = 40.5, g = new THREE.Group(); g.position.set(x, 0, z); set.add(g);
+    for (const dx of [-0.5, 0.5]) { cyl(0.025, 0.025, 0.8, steel, dx, 0.4, 0.22, g, 6); }
+    rod(V3(-0.5, 0.8, 0.22), V3(0.5, 0.8, 0.22), 0.025, steel, g);
+    for (const dx of [-0.52, 0.52]) { const wh = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.022, 5, 20), darkM); wh.position.set(dx, 0.35, 0); g.add(wh); }
+    const P = (a, b) => V3(a, b, 0);
+    rod(P(-0.52, 0.35), P(-0.05, 0.35), 0.016, steel, g); rod(P(-0.05, 0.35), P(-0.18, 0.86), 0.018, steel, g);
+    rod(P(-0.52, 0.35), P(-0.18, 0.82), 0.014, steel, g); rod(P(-0.05, 0.35), P(0.38, 0.84), 0.02, steel, g);
+    rod(P(-0.18, 0.82), P(0.38, 0.84), 0.018, steel, g); rod(P(0.52, 0.35), P(0.4, 0.98), 0.016, steel, g);
+    rod(V3(0.4, 0.98, -0.24), V3(0.4, 0.98, 0.24), 0.014, darkM, g);
+    box(0.24, 0.05, 0.1, darkM, -0.2, 0.9, 0, g);
+    wall(x - 0.9, x + 0.9, z - 0.15, z + 0.3, "wall", 1.0);
+    thing(set, "bike", { kind: "press", label: "Bell", p: V3(x + 0.4, 0.98, z - 0.15), stand: V3(x + 0.4, 0, z - 0.85), r: 1.3 });
+  }
+
+  /* a puddle at the curb where the crosswalk lands */
+  if (!day) { const pd = plane(2.2, 1.1, puddleM, set); pd.rotation.x = -Math.PI / 2; pd.position.set(-2.6, 0.002, 37.3);
+    ud.farPuddles.push({ x: -2.6, z: 37.3, r: 1.0 }, { x: -32, z: 44.5, r: 1.2 });
+    thing(set, "curb-puddle", { kind: "splash", label: "Puddle", p: V3(-2.6, 0.05, 37.3), stand: V3(-2.6, 0, 38.7), r: 1.6 }); }
+
+  /* a taco truck in the empty lot, its window open and lit, bulbs strung under the awning, a bell on the counter */
+  { const cx = -34.3, cz = 48.8, zw = cz - 1.2;
+    box(4.6, 2.5, 2.4, white, cx, 1.75, cz, set);
+    box(1.6, 1.9, 2.3, white, cx + 3.1, 1.45, cz, set);
+    const ws = plane(2.0, 0.8, darkGlass, set); ws.rotation.y = Math.PI / 2; ws.position.set(cx + 3.91, 1.9, cz);
+    face(plane(0.8, 0.6, darkGlass, set)).position.set(cx + 3.1, 1.85, zw - 0.06);
+    box(6.0, 0.35, 2.0, darkM, cx + 0.7, 0.4, cz, set);
+    for (const wx of [cx - 1.3, cx + 3.1]) for (const s of [-1, 1]) { const wh = cyl(0.42, 0.42, 0.3, darkM, wx, 0.42, cz + s * 1.08, set, 14); wh.rotation.x = Math.PI / 2; }
+    face(plane(2.4, 1.0, litWin, set)).position.set(cx, 1.9, zw - 0.02);
+    box(2.6, 0.06, 0.35, steel, cx, 1.36, zw - 0.17, set);
+    const aw = box(2.8, 0.05, 0.9, canopyM, cx, 2.62, zw - 0.42, set); aw.rotation.x = -0.25;
+    for (let i = 0; i < 7; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), bulbM); b.position.set(cx - 1.35 + i * 0.45, 2.48 - Math.sin(i / 6 * Math.PI) * 0.08, zw - 0.84); set.add(b); }
+    box(2.7, 0.62, 0.08, darkM, cx, 3.3, zw + 0.05, set);
+    face(plane(2.5, 0.52, glow("#ffffff", { map: TX.labelTex("TACOS", { bg: "#1c3229", fg: "#efe6d2", w: 384, h: 80 }), k: day ? 0.7 : 1.2 }), set)).position.set(cx, 3.3, zw - 0.0);
+    // a chalkboard on the gravel, and a barrel for the trash
+    const cb = box(0.62, 0.86, 0.04, darkM, cx + 1.9, 0.43, zw - 1.25, set); cb.rotation.x = 0.2;
+    cyl(0.28, 0.26, 0.9, darkM, cx - 2.7, 0.45, zw - 0.7, set, 12); post(cx - 2.7, zw - 0.7, 0.3);
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), steel); bell.position.set(cx + 0.8, 1.39, zw - 0.2); set.add(bell);
+    wall(cx - 2.35, cx + 3.95, cz - 1.25, cz + 1.25, "wall", 3.0);
+    if (!day) set.userData.lamps.push({ p: V3(cx, 2.3, zw - 1.0), range: 7, col: [1.7, 1.15, 0.6], cone: 0, fixed: false });
+    thing(set, "truck-bell", { kind: "press", label: "Bell", p: V3(cx + 0.8, 1.42, zw - 0.2), stand: V3(cx + 0.8, 0, zw - 0.95), r: 1.3 });
+    thing(set, "taco-menu", { kind: "read", label: "Board", text: "Tacos. Open late.", p: V3(cx + 1.9, 0.6, zw - 1.3), stand: V3(cx + 1.9, 0, zw - 2.1), r: 1.4 });
+    ud.sounds.truck = { x: cx - 1.5, y: 0.8, z: cz, kind: "generator" };
+    // a low block wall across the back of the lot
+    box(16, 1.6, 0.25, conc, -30, 0.8, 51.4, set); wall(-38, -22, 51.25, 51.55, "wall", 1.6);
+  }
+
+  /* an ice chest at the gas station's kiosk; its lid lifts */
+  { const x = 29.7, z = 50.45;
+    box(1.2, 0.95, 0.7, white, x, 0.48, z, set);
+    const hinge = new THREE.Group(); hinge.position.set(x, 0.97, z + 0.35); hinge.userData.keep = true; set.add(hinge);
+    box(1.24, 0.07, 0.74, canopyM, 0, 0, -0.37, hinge);
+    const iS = swinger(set, hinge, "x", 1.15, 5);
+    wall(x - 0.65, x + 0.65, z - 0.4, z + 0.4, "wall", 1.0);
+    thing(set, "ice", { kind: "open", label: "Lid", p: V3(x, 1.0, z - 0.3), stand: V3(x, 0, z - 1.15), r: 1.4, use: ({ on }) => { iS.goal = on ? 1 : 0; } });
+  }
+
+  /* a signal over the road at the crosswalk, a mast arm from each side: green, amber, red, round again. The
+     crosswalk's button (crosswalk-0/1) turns it to amber then red while the walk shows */
+  { const lens = { r: [], a: [], g: [] }, heads = [[-12.6, 24.4, 29.0, 1], [-5.4, 38.5, 33.6, -1]];
+    for (const [x, zp, zh, fx] of heads) {
+      cyl(0.1, 0.13, 6.2, steel, x, 3.1, zp, set, 10); post(x, zp, 0.17);
+      const arm = cyl(0.06, 0.06, Math.abs(zh - zp) + 0.3, steel, x, 5.95, (zp + zh) / 2, set, 6); arm.rotation.x = Math.PI / 2;
+      box(0.3, 1.0, 0.3, darkM, x, 5.35, zh, set); box(0.04, 0.3, 0.04, darkM, x, 5.95, zh, set);
+      for (const [k, dy] of [["r", 0.3], ["a", 0], ["g", -0.3]]) {
+        const c = new THREE.CircleGeometry(0.1, 12); c.rotateY(fx * Math.PI / 2); c.translate(x + fx * 0.16, 5.35 + dy, zh); lens[k].push(c);
+        const vz = box(0.03, 0.04, 0.26, darkM, x + fx * 0.2, 5.35 + dy + 0.12, zh, set); vz.rotation.z = fx * 0.4;
+      }
+    }
+    const LC = { r: "#ff4636", a: "#ffae3c", g: "#4fe0a2" }, L = {};
+    for (const k of ["r", "a", "g"]) { const m = new THREE.Mesh(mergeGeometries(lens[k]), glow0(LC[k], { k: 1 })); m.userData.keep = true; set.add(m); L[k] = m.material.uniforms.uK; }
+    const ON = day ? 1.3 : 2.4, OFF = 0.05, sig = { ph: 0, t: 6 };
+    ud.signal = sig;
+    const show = () => { L.g.value = sig.ph === 0 ? ON : OFF; L.a.value = sig.ph === 1 ? ON : OFF; L.r.value = sig.ph === 2 ? ON : OFF; };
+    show();
+    anim(set, dt => {
+      sig.t += dt; const ph = sig.ph;
+      if (sig.ph === 0 && sig.t > 16) sig.ph = 1; else if (sig.ph === 1 && sig.t > 3) sig.ph = 2;
+      else if (sig.ph === 2 && sig.t > 12 && !(sig.walk > 0)) sig.ph = 0;
+      if (sig.walk > 0) sig.walk -= dt;
+      if (ph !== sig.ph) { sig.t = 0; show(); }
+    });
+    // the buttons: a press turns it (amber first if it's green) and holds the red while the walk shows
+    for (const id of ["crosswalk-0", "crosswalk-1"]) { const sp = ud.spots[id]; if (!sp) continue; const f0 = sp.use;
+      sp.use = sp.act = a => { if (f0) f0(a); if (sig.ph === 0) { sig.ph = 1; sig.t = 1; show(); } sig.walk = 8; }; }
+  }
+
+  /* a car now and then along the road, its lights on the wet asphalt (night). story/audio.js calls passCar when
+     it plays a car going by, so the lights and the sound pass together; with the sound off it comes by itself.
+     It slows and waits if you're in its lane, and nothing here allocates per frame */
+  if (!day) {
+    const car = new THREE.Group(); car.visible = false; car.userData.keep = true; set.add(car);
+    const bodyG = mergeGeometries([new THREE.BoxGeometry(4.4, 0.66, 1.82).translate(0, 0.62, 0), new THREE.BoxGeometry(2.3, 0.52, 1.6).translate(-0.25, 1.2, 0)]);
+    car.add(new THREE.Mesh(bodyG, pbr({ color: "#17191b", metal: 0.6, rough: 0.3, wet: 1 })));
+    const lamps2 = (x, s) => mergeGeometries([-0.62, 0.62].map(z => new THREE.PlaneGeometry(0.26, 0.11).rotateY(s * Math.PI / 2).translate(x, 0.74, z)));
+    const head = new THREE.Mesh(lamps2(2.21, 1), glow0("#fff4dc", { k: 3.2 })); car.add(head);
+    const tail = new THREE.Mesh(lamps2(-2.21, -1), glow0("#ff3020", { k: 1.6 })); car.add(tail);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 2.2, 11, 16, 1, true), coneMat0("#fff0d0", 0.9)); beam.rotation.z = Math.PI / 2; beam.position.set(2.3 + 5.5, 0.62, 0); beam.layers.set(3); car.add(beam);
+    const pc = { on: false, x: 0, z: 0, dir: 1, v: 0, cruise: 13, wait: 8 + Math.random() * 10 };
+    const start = (x0, sp) => {
+      pc.dir = sp >= 0 ? 1 : -1; pc.cruise = Math.min(17, Math.max(10, Math.abs(sp) || 13)); pc.v = pc.cruise;
+      pc.x = Math.max(-92, Math.min(92, x0 == null ? -92 * pc.dir : x0)); pc.z = pc.dir > 0 ? 34.0 : 28.0;   // (keeps to the right)
+      car.rotation.y = pc.dir > 0 ? 0 : Math.PI; car.position.set(pc.x, 0, pc.z); car.visible = true; pc.on = true;
+    };
+    ud.passCar = (x0, v) => { if (!pc.on) start(x0, v); pc.wait = 40 + Math.random() * 30; };
+    anim(set, (dt, ctx) => {
+      if (!pc.on) { pc.wait -= dt; if (pc.wait <= 0) { start(null, (Math.random() < 0.5 ? -1 : 1) * (11 + Math.random() * 5)); } return; }
+      // someone in the lane ahead: ease off and wait for them
+      const me = ctx.player; let want = pc.cruise;
+      if (me) { const ahead = (me.x - pc.x) * pc.dir; if (Math.abs(me.z - pc.z) < 4.5 && ahead > -1 && ahead < 16) want = 0; }
+      pc.v = easeTo(pc.v, want, want ? 1.2 : 2.6, dt);
+      pc.x += pc.dir * pc.v * dt; car.position.x = pc.x;
+      if (Math.abs(pc.x) > 93) { pc.on = false; car.visible = false; pc.wait = 30 + Math.random() * 30; }
+    });
+  }
+
+  /* the wind: every so often a gust leans the rain over and sighs through the street (story/audio.js reads ud.gust) */
+  { const g = { t: 0, next: 6 + Math.random() * 10, dur: 4, dx: 1, dz: 0.3 }; ud.gust = 0;
+    if (U.uWind) U.uWind.value.set(0, 0);
+    anim(set, dt => {
+      if (day) return;
+      g.t += dt;
+      if (g.t >= g.next) { const u = (g.t - g.next) / g.dur; ud.gust = u >= 1 ? 0 : Math.sin(u * Math.PI) * (0.6 + 0.4 * Math.sin(u * 23.0) * Math.sin(u * 7.0));
+        if (u >= 1) { g.t = 0; g.next = 9 + Math.random() * 16; g.dur = 3 + Math.random() * 3; const a = Math.random() * 0.8 - 0.4 + (Math.random() < 0.5 ? 0 : Math.PI); g.dx = Math.cos(a); g.dz = Math.sin(a); } }
+      if (U.uWind) U.uWind.value.set(g.dx * ud.gust * 1.6, g.dz * ud.gust * 1.6);
+    });
+  }
 }
 
 /* ---------- the lot's things: the showroom's lights, a vending machine, the dumpster and its lid, a mailbox
@@ -1254,7 +1495,12 @@ export function buildLot(o) {
     set.userData.surfaceAt = (x, z) => {
       if (z < -17.7 && x > -11.3 && x < 15.3) return "tile";
       const i = Math.floor((x + W / 2) * g.px), j = Math.floor((z + H / 2) * g.px);
-      if (i < 0 || j < 0 || i >= g.w || j >= g.h) return day ? "asphalt" : "wet";
+      if (i < 0 || j < 0 || i >= g.w || j >= g.h) {
+        // across the road: its puddles, the walks and the gas station's apron are concrete
+        if (!day) for (const q of set.userData.farPuddles || []) if ((x - q.x) * (x - q.x) + (z - q.z) * (z - q.z) < q.r * q.r) return "puddle";
+        const walk = (z > 21.7 && z < 25.1) || (z > 37.9 && z < 44) || (x > 24 && x < 44 && z > 39 && z < 51.5);
+        return walk ? (day ? "concrete" : "wet-concrete") : day ? "asphalt" : "wet";
+      }
       const kk = j * g.w + i;
       if (g.conc[kk]) return day ? "concrete" : "wet-concrete";
       if (!day && g.pud[kk] > 110) return "puddle";

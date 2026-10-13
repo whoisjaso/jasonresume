@@ -264,9 +264,11 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
    While a line plays the next one's recording is already loading.
    ================================================================ */
 const VBASE = D.out || "assets/voice/story-v3";
+const VREV = "2";
 const have = { fict: {}, me: {} };
-fetch(VBASE + "/manifest.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
-fetch(VBASE + "/manifest-jason.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
+// the manifests are fetched past the year-long asset cache: a line voiced later (your thoughts) still gets heard
+fetch(VBASE + "/manifest.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
+fetch(VBASE + "/manifest-jason.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
 let line = null; // { L, t, mode: "wait"|"voice"|"text", clock, vt, dur, endAt, audio, v, words, est, sp, resolve }
 let skipLine = null;
 const HOLD = 0.35, WAIT_MAX = 3.5, STALL_MAX = 6;
@@ -275,7 +277,7 @@ let curV = null;
 const syncLog = []; // for tools/verify/story.mjs: how each line began and ended
 function speakerOf(who) { return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
 function voiceId(L) { return L.who === "jason" ? "jason-" + L.id : L.id; }
-function voicedLine(L) { if (!L || L.who === "you" || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
+function voicedLine(L) { if (!L || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
 function prepVoice(L) {
   const id = voiceId(L); let v = VC.get(id);
   if (v) { VC.delete(id); VC.set(id, v); return v; }
@@ -621,11 +623,12 @@ function makeRain() {
   g.setAttribute("seed", new THREE.InstancedBufferAttribute(seed, 4));
   const m = new THREE.ShaderMaterial({
     uniforms: { ...U, uCam: { value: new THREE.Vector3() }, uK: { value: 1 } },
-    vertexShader: `attribute vec4 seed; uniform vec3 uCam; uniform float uTime; uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; varying float vL; varying float vA;
-      void main(){ vec3 box = vec3(22.0, 12.0, 22.0); vec3 p = vec3(seed.x, fract(seed.y - uTime * 0.85 * seed.w), seed.z) * box - box * 0.5; p.y += 4.0;
+    vertexShader: `attribute vec4 seed; uniform vec3 uCam; uniform float uTime; uniform vec2 uWind; uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; varying float vL; varying float vA;
+      void main(){ vec3 box = vec3(22.0, 12.0, 22.0); float ph = fract(seed.y - uTime * 0.85 * seed.w); vec3 p = vec3(seed.x, ph, seed.z) * box - box * 0.5; p.y += 4.0;
+        p.xz += uWind * (1.0 - ph) * 1.4; // a gust carries the drops sideways as they fall
         p.xz = uCam.xz + mod(p.xz - uCam.xz + box.xz * 0.5, box.xz) - box.xz * 0.5; p.x += position.y * 0.05;
-        float len = 0.25 * seed.w; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z);
-        vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + side * position.x * 1.2;
+        float len = 0.25 * seed.w; vec3 lean = vec3(-uWind.x, 0.0, -uWind.y) * position.y * len * 0.5; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z) + lean;
+        vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + lean + side * position.x * 1.2;
         float l = 0.05; for (int i = 0; i < 8; i++) { if (i >= uLampN) break; float d = length(uLampPos[i].xyz - wp); l += max(0.0, 1.0 - d / (uLampPos[i].w * 0.6)) * length(uLampCol[i].rgb) * 0.6; }
         vL = l; vA = smoothstep(4.0, 7.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
@@ -829,7 +832,8 @@ function insideAny(x, y, z, pad, list) {
 const _head = new THREE.Vector3(), _off = new THREE.Vector3(), _right = new THREE.Vector3(), _aim = new THREE.Vector3(), _pivot = new THREE.Vector3(), _o2 = new THREE.Vector3(), _want = new THREE.Vector3(), _look = new THREE.Vector3(), _tmp = new THREE.Vector3();
 const _fv = { want: _want, look: _look }, _near = [];
 function followView(dt, probe) {
-  const head = _head.copy(me.pos); head.y += me.height * 0.86;
+  // a jump: the camera goes half way up with you, and dips with the landing
+  const head = _head.copy(me.pos); head.y += me.height * 0.86 - me.pos.y * 0.5 - JUMP.dip;
   // drift behind the walker unless the visitor is steering the camera
   if (!probe) {
     if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-(mv.path ? 1.0 : 1.6) * dt));
@@ -943,6 +947,9 @@ function moveMe(dt) {
   const inp = wantInput();
   // seated (or sitting down, or getting up): people.js has the body; a push of the stick gets you up
   if (me.inCar) { if (me.seated && inp && me.standUp) me.standUp(); return; }
+  // a jump: the air carries the body; on the ground again the walk takes over
+  jumpTick(dt);
+  if (me.jumping && jumpMove(dt, inp)) return;
   let speed = 0, dir = null;
   const prevSpeed = me.speed;
   if (inp) {
@@ -999,6 +1006,74 @@ function walkTo(v, then, o = {}) {
   mv.pathRun = !!o.run || pathLen(path) > 9;
   if (o.ring !== false) { const e = path[path.length - 1]; guide.ring(e.x, e.z); }
   return true;
+}
+
+/* ---------- the jump: Space, A with nothing to use (X any time), the Jump button under the right thumb on a touch screen.
+   Only on your feet, exploring: never talking, seated, in a car or in a cutscene. people.js does the body (the crouch,
+   the air, the knees taking it); here the ground carries it: a running jump keeps its speed, a standing one stays put
+   with a little steer, and the walls (every car, pole and desk) stop it in the air as on the ground, so nothing gets
+   jumped over or onto. The landing is one frame: the step on that surface (a splash in a puddle), the haptic and the
+   rumble, and the camera's dip. Nothing here allocates per frame ---------- */
+const JUMP = { vx: 0, vz: 0, dip: 0, dipT: 1, dipA: 0, n: 0, at: { x: 0, y: 0.05, z: 0 } };
+/* the floor under a point: the world can give heights (set.userData.heightAt); the sets are flat otherwise */
+function groundY(x, z) { const h = set && set.userData.heightAt; return typeof h === "function" ? h(x, z) || 0 : 0; }
+function canJump() {
+  return !!(me && me.jump && S.open && S.phase === "explore" && !DRV.state && !me.inCar && !me.jumping && !S.skipOpen && !choosing && me.group.visible &&
+    !(me.reaches && (me.reaches.l || me.reaches.r)) && !(me.shot));
+}
+function jump(how) {
+  if (!canJump()) return false;
+  if (mv.path) { mv.path = null; mv.after = null; guide.clearRing(); }
+  mv.idle = 0;
+  const run = clamp((me.speed - WALK) / (RUN - WALK), 0, 1);
+  const p = me.jump({ run, ground: groundY, onTakeoff: jumpOff, onLand: jumpLand });
+  if (!p) return false;
+  JUMP.n++; JUMP.how = how || "";
+  return true;
+}
+function jumpAt() { JUMP.at.x = me.pos.x; JUMP.at.z = me.pos.z; return JUMP.at; }
+/* off the ground: the speed you had is the speed you keep; a scuff and the cloth */
+function jumpOff() {
+  JUMP.vx = me.vel.x; JUMP.vz = me.vel.z;
+  const at = jumpAt();
+  AU.step(surfaceAt(at.x, at.z), { at, gain: 0.35, ref: 4.2 }); AU.cloth(at, 0.7);
+}
+/* down: the step on whatever is underfoot (a splash in a puddle), the haptic, the rumble and the camera's dip, together */
+function jumpLand(imp) {
+  const at = jumpAt(), surf = surfaceAt(at.x, at.z);
+  AU.step(surf, { at, run: imp > 0.5, gain: 0.9 + imp * 0.6, ref: 4.2 });
+  if (surf === "puddle") AU.use("splash", at);
+  hap(imp > 0.7 ? "select" : "tap", 0.6 + imp);
+  JUMP.dipA = still() ? 0 : 0.04 + 0.07 * imp; JUMP.dipT = 0;
+  mv.idle = 0;
+}
+/* the ground under a jump: in the air the body goes where the takeoff sent it (a little steer from the stick); landing
+   from a run it rolls on unless you push somewhere else. Returns true when it has moved the body this frame */
+function jumpMove(dt, inp) {
+  const air = me.airborne, land = me.jumping && !air && me.jmp.st === "land";
+  if (!air && !(land && !inp)) return false;
+  if (air && inp) {
+    const a = Math.atan2(inp.x, inp.z) + camState.yaw, sp = speedFor(inp.m);
+    JUMP.vx = damp(JUMP.vx, Math.sin(a) * Math.max(sp, Math.hypot(JUMP.vx, JUMP.vz)), 1.6, dt);
+    JUMP.vz = damp(JUMP.vz, Math.cos(a) * Math.max(sp, Math.hypot(JUMP.vx, JUMP.vz)), 1.6, dt);
+  }
+  if (land) { JUMP.vx = damp(JUMP.vx, 0, 7, dt); JUMP.vz = damp(JUMP.vz, 0, 7, dt); }
+  const nx = me.pos.x + JUMP.vx * dt, nz = me.pos.z + JUMP.vz * dt;
+  // walls stop you in the air as on the ground: slide along them, never over
+  if (!blocked(nx, nz) || blocked(me.pos.x, me.pos.z)) { me.pos.x = nx; me.pos.z = nz; }
+  else if (!blocked(nx, me.pos.z)) { me.pos.x = nx; JUMP.vz = 0; }
+  else if (!blocked(me.pos.x, nz)) { me.pos.z = nz; JUMP.vx = 0; }
+  else { JUMP.vx = JUMP.vz = 0; }
+  const sp = Math.hypot(JUMP.vx, JUMP.vz);
+  if (sp > 0.3) me.wantYaw = Math.atan2(JUMP.vx, JUMP.vz);
+  me.speed = sp; mv.idle = 0;
+  return true;
+}
+/* the camera's dip on a landing, and the shadow left on the ground shrinking under you in the air */
+function jumpTick(dt) {
+  if (JUMP.dipT < 1) { JUMP.dipT = Math.min(1, JUMP.dipT + dt / 0.34); JUMP.dip = JUMP.dipA * Math.sin(JUMP.dipT * Math.PI) * (1 - JUMP.dipT * 0.35); }
+  else JUMP.dip = 0;
+  if (me.shadow) { const s = 1 - clamp(me.pos.y, 0, 1) * 0.45; if (me.shadow.scale.x !== s) me.shadow.scale.set(s, s, s); }
 }
 
 /* ---------- gamepad: left stick walks (all the way over runs), right stick looks; A, B, Y, Start ---------- */
@@ -2670,6 +2745,16 @@ window.JG_STORY = {
     seated: () => !!(me && me.seated),
     obj: k => { objective(k || null); return S.obj; },
     unlook: id => { delete S.looked[id]; },
-    skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; }
+    skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; },
+    /* the getting in and out stills (tools/verify/car-sheet.mjs): stop the loop, then step whole frames on a fixed clock and draw */
+    freeze: on => { S.attract = !!on; last = performance.now(); return S.attract; },
+    step: (n, dt) => {
+      for (let i = 0; i < n; i++) { S.t += dt; if (DRV.veh) tickDrive(dt); if (!DRV.state) moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updateCamera(dt); }
+      updateLamps(); camera.updateMatrixWorld();
+      const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
+      if (ground && quality >= 1) post.reflect(scene, camera, world, ground);
+      post.render(scene, camera, S.t); return true;
+    },
+    you: () => me, veh: () => DRV.veh
   }
 };

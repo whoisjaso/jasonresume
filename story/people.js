@@ -504,6 +504,8 @@ class Person {
     // ---- in or at a car: the sequence (walking up, the door, sitting in, the wheel) moves the body
     if (this.car) this.carStep(dt);
     if (this.jobs && this.jobs.length) this.runJobs(dt);
+    // ---- a jump: up, the air and down again (the episode carries the body over the ground)
+    if (this.jmp) this.jumpStep(dt); else if (this.jK > 0.001) { this.jK = damp(this.jK, 0, 18, dt); this.jC = damp(this.jC, 0, 30, dt); }
     const seated = !!(this.car && this.car.seated);
     // ---- where the body is and how fast it really moves (seated, the car moves it: no walking)
     if (seated) { this.lastPos = (this.lastPos || new THREE.Vector3()).copy(this.pos); this.vel.set(0, 0, 0); }
@@ -557,7 +559,7 @@ class Person {
     const v0 = nv[0], vN = nv[LC.length - 1];
     f *= gs < v0 ? clamp(Math.sqrt(gs / v0), 0.75, 1) : gs > vN ? clamp(Math.sqrt(gs / vN), 1, 1.2) : 1;
     f *= this.tempo;
-    if (this.locoW > 0.01) this.gPhase = (this.gPhase + f * dt) % 1;
+    if (this.locoW > 0.01) this.gPhase = (this.gPhase + f * dt * (1 - (this.jAir || 0))) % 1; // in the air the stride holds
     // the phase the episode listens to for footsteps: each heel strike is a multiple of pi
     this.phase = this.gPhase * TAU;
     // stride warp: the blended stride scaled so that the feet travel exactly with the ground
@@ -685,6 +687,8 @@ class Person {
     if (jw > 0.01) { this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0); }
     // reaching: lean and turn toward what the hand goes for, and bend at the knees for something low
     this.reachBody(hipC, dt);
+    // jumping: the crouch, the air, the landing
+    if (this.jK > 0.001) this.jumpBody(hipC);
     // driving: reclined in the seat, ducking under the roof getting in and out, pushed about by the corners
     if (this.car) this.carBody(dt);
 
@@ -781,6 +785,7 @@ class Person {
       const wantYaw = this.yaw;
       const wantW = _f2.copy(want).applyMatrix4(toP);
       if (!F.init) { F.pos.copy(wantW); F.yaw = wantYaw; F.lock = true; F.step = 0; F.init = true; F.w = 1; }
+      if (this.jAir) { this.jumpLeg(s, g, F); continue; }
       if (this.loco) {
         // the clip says whether this foot bears weight now
         let cs = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) cs += this.lw[i] * contactAt(LC[i], (this.gPhase + LC[i].heel) % 1, s);
@@ -915,6 +920,8 @@ class Person {
       tgt.y += Math.sin(this.t * 2.1) * 0.006 + this.locoW * 0.01 * Math.sin(this.phase * 2);
       this.ikArm("r", tgt, _f2.set(R.upperarm_r.at.x - 0.25, R.upperarm_r.at.y - 0.5, R.upperarm_r.at.z - 0.1), uk);
     }
+    // jumping: the arms load, throw and balance
+    if (this.jK > 0.01) this.jumpArms();
     // hands that hold or rest on something: a carried thing, the thighs seated (reaches go on top of these)
     this.pinArms(dt);
     // reaches: to a point in the world, approach, contact, retract
@@ -1605,6 +1612,100 @@ class Person {
     return new Promise(res => { c.done = () => { this.unseat(); res(true); }; });
   }
   get seated() { return !!(this.car && this.car.mode === "seat"); }
+
+  /* ---- the jump: a crouch to load it, the push off, the air, the landing taken in the knees ----
+     jump(o): o.run 0..1 (how much of a run it starts from), o.h the height in metres, o.ground(x, z) the floor's height
+     under a point (flat by default), o.onTakeoff(), o.onLand(impact 0..1, airtime). The episode carries the body over the
+     ground (a running jump keeps its speed); this lifts it, drops it and poses it. Resolves once it has stood up out of
+     the landing. Nothing here allocates once the jump has started. */
+  jump(o = {}) {
+    if (this.jmp || this.car || this.sitK > 0.3) return null;
+    const run = clamp(o.run || 0, 0, 1);
+    const J = this.jmp = { st: "pre", t: 0, air: 0, run, pre: lerp(0.17, 0.08, run), vy: 0, h: o.h || lerp(0.42, 0.5, run), ground: o.ground || null,
+      onTakeoff: o.onTakeoff || null, onLand: o.onLand || null, imp: 0, land: 0.34, lead: (this.armSwing || 0) >= 0 ? "r" : "l", res: null };
+    this.jC = this.jC || 0; this.jAir = 0; this.jK = this.jK || 0;
+    return new Promise(res => { J.res = res; });
+  }
+  get airborne() { return !!(this.jmp && this.jmp.st === "air"); }
+  get jumping() { return !!this.jmp; }
+  jumpGround() { const J = this.jmp; return J && J.ground ? J.ground(this.pos.x, this.pos.z) || 0 : 0; }
+  /* the clock: called first thing in update(), before the body is placed */
+  jumpStep(dt) {
+    const J = this.jmp; J.t += dt;
+    const GJ = 14; // a touch heavier than the world's gravity: a jump that hangs reads as floaty
+    if (J.st === "pre") {
+      this.pos.y = this.jumpGround();
+      if (J.t >= J.pre) { J.st = "air"; J.t = 0; J.vy = Math.sqrt(2 * GJ * J.h); J.dur = 2 * J.vy / GJ; if (J.onTakeoff) J.onTakeoff(); }
+    } else if (J.st === "air") {
+      J.vy -= GJ * dt; this.pos.y += J.vy * dt;
+      const gy = this.jumpGround();
+      if (this.pos.y <= gy && J.vy < 0) {
+        J.imp = clamp(-J.vy / 6, 0.25, 1); J.air = J.t;
+        this.pos.y = gy; J.st = "land"; J.t = 0; J.land = lerp(0.26, 0.42, J.imp) * lerp(1, 0.8, J.run);
+        // the feet plant where they come down
+        this.feet.l.lock = this.feet.r.lock = false; this.feet.l.w = this.feet.r.w = 0;
+        if (J.onLand) J.onLand(J.imp, J.air);
+      }
+    } else {
+      this.pos.y = this.jumpGround();
+      if (J.t >= J.land) { this.jmp = null; this.jAir = 0; if (J.res) J.res(true); return; }
+    }
+    // the crouch (loading, then the knees taking the landing), how much of the body is in the air, and the whole jump's weight
+    const pre = J.st === "pre" ? sstep(0, 1, J.t / J.pre) : 0;
+    const u = J.st === "land" ? J.t / J.land : 0;
+    const absorb = J.st === "land" ? (u < 0.22 ? sstep(0, 0.22, u) : 1 - sstep(0.22, 1, u)) * J.imp : 0;
+    this.jC = damp(this.jC, Math.max(pre * lerp(1, 0.55, J.run), absorb), J.st === "air" ? 26 : 40, dt);
+    this.jAir = J.st === "air" ? 1 : 0;
+    this.jK = damp(this.jK, J.st === "land" ? 1 - sstep(0.6, 1, u) : 1, 18, dt);
+  }
+  /* the body: hips down into the crouch, the back over the knees, the lean of a run carried into the air */
+  jumpBody(hipC) {
+    const J = this.jmp, c = this.jC, run = J ? J.run : 0;
+    hipC.y -= c * lerp(0.13, 0.09, run);
+    hipC.z -= c * 0.02;
+    // in the air: a little forward from a run, upright from standing; the neck gives some back so the eyes stay level
+    const air = this.jAir ? 0.05 + 0.12 * run : 0;
+    const lean = c * 0.32 + air;
+    this.rot("pelvis", lean * 0.45, 0, 0);
+    this.rot("spine_01", lean * 0.3, 0, 0);
+    this.rot("spine_02", lean * 0.2, 0, 0);
+    this.rot("neck_01", -lean * 0.35, 0, 0);
+    this.rot("head", -lean * 0.25, 0, 0);
+  }
+  /* one leg in the air (character space): from straight under the hip at the push, drawn up toward the top of the arc,
+     reaching down for the ground on the way down. From a run the lead knee comes up in front and the other trails */
+  jumpLeg(s, g, F) {
+    const J = this.jmp, run = J ? J.run : 0, H = this.wp[g.th], L = g.l1 + g.l2;
+    const u = J && J.dur ? clamp(J.t / J.dur, 0, 1) : 0.5;
+    // drawn up after the push, most just past the top, then let down to land
+    const tuck = sstep(0, 0.35, u) * (1 - sstep(0.62, 0.95, u));
+    const side = s === "l" ? 1 : -1, lead = J && J.lead === s ? 1 : -1;
+    const tgt = _f3.set(H.x + side * 0.03, H.y - L * (0.97 - tuck * lerp(0.3, 0.26, run)), H.z + tuck * (0.1 + lead * 0.17 * run) + (1 - tuck) * 0.04);
+    if (lead < 0) tgt.y += tuck * run * 0.08; // the trailing foot kicks up behind
+    F.lock = false; F.w = 0; F.step = 0;
+    this.ik2(g.th, g.ca, g.fo, g.l1, g.l2, tgt, 0);
+  }
+  /* the arms: back on the load, up and out through the air (opposite the lead leg from a run), forward for balance landing */
+  jumpArms() {
+    const J = this.jmp, k = this.jK; if (!J || k < 0.01) return;
+    const run = J.run, c = this.jC;
+    for (const s of ["l", "r"]) {
+      const g = this.arm[s]; if (!g || (this.reaches && this.reaches[s])) continue;
+      if (s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5)) continue;
+      if (this.carrying && this.carrying[s]) continue;
+      const side = s === "l" ? 1 : -1, S = this.wp[g.ua], L = g.l1 + g.l2, fwd = J.lead !== s ? 1 : -1;
+      let x, y, z;
+      if (J.st === "pre") { x = side * 0.07; y = -L * 0.88; z = -0.2 * c - 0.02; }
+      else if (J.st === "air") {
+        const u = J.dur ? clamp(J.t / J.dur, 0, 1) : 0.5, up = 1 - sstep(0.15, 0.9, u) * 0.5;
+        // standing: both arms thrown forward and up, opening out; running: one forward, one back
+        const sx = side * lerp(0.12, 0.26, u), sy = -L * lerp(0.42, 0.6, 1 - up), sz = lerp(0.3, 0.16, u);
+        const rx = side * (fwd > 0 ? 0.0 : 0.12), ry = -L * (fwd > 0 ? 0.5 : 0.78), rz = fwd > 0 ? 0.3 : -0.26;
+        x = lerp(sx, rx, run); y = lerp(sy, ry, run); z = lerp(sz, rz, run);
+      } else { x = side * 0.18; y = -L * lerp(0.82, 0.62, c); z = 0.08 + 0.2 * c; }
+      this.ikArm(s, _f1.set(S.x + x, S.y + y, S.z + z), _f2.set(S.x + side * 0.3, S.y - 0.3, S.z - 0.6), k * 0.9);
+    }
+  }
 
   /* hands held by something: carrying (in front of the waist, the forearm level), resting on the thighs seated */
   pinArms(dt) {
