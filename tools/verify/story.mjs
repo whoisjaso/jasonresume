@@ -483,9 +483,12 @@ async function sync(vname, w, h, mobile) {
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   await p.click('[data-title-play]');
-  // the arrival is your own thought (no voice): skip through it, silently, to the people who speak
-  await until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug; if (d.state().line) d.skip(); return d.state().phase === 'explore'; }, null, 400000);
+  // the arrival is your own thought, narrated: it must be heard, the first thing after Play, not fall back to text
+  await until(p, () => !!(window.JG_STORY && window.JG_STORY.debug.state().phase === 'explore'), null, 400000);
   if (((await st(p)) || {}).phase !== 'explore') { errs.push(`${label}: never got to explore ${JSON.stringify(await st(p))}`); await ctx.close(); return; }
+  { const first = await p.evaluate(() => window.JG_STORY.debug.sync().log.find(l => l.id === 'lot-you-1'));
+    if (!first || !first.voiced || first.mode !== 'voice' || !first.ended) errs.push(`${label}: the arrival's narration wasn't heard ${JSON.stringify(first)}`);
+    else notes.push(`${label}: the arrival narrated, voice after ${Math.round(first.playing - first.at)} ms`); }
   const on = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
   if (!on) { errs.push(`${label}: the score is off after Play, so nothing is voiced`); await ctx.close(); return; }
   // sample every frame: the caption's clock against the recording's, the lit words, the ball, how many voices sound
@@ -951,6 +954,12 @@ async function exploreCheck(vname, w, h, mobile) {
     if (id === 'payphone' && await p.evaluate(() => window.JG_SCORE && window.JG_SCORE.isOn()) && !(await p.evaluate(() => window.JG_STORY.debug.audio().amb.includes('dial')))) errs.push(`${label}: the payphone is off its hook but there's no dial tone`);
   }
   if (lot.includes('payphone')) await useIt('payphone'); // hang it up
+  // the first use of each thing out here gets your thought, narrated as you carry on
+  { const log = await p.evaluate(() => window.JG_STORY.debug.sync().log.filter(l => /^w-/.test(l.id)).map(l => ({ id: l.id, voiced: l.voiced, mode: l.mode })));
+    const sound = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
+    if (!log.length) errs.push(`${label}: no thought narrated in the street`);
+    else if (sound && !log.some(l => l.voiced)) errs.push(`${label}: the street's thoughts were text only ${JSON.stringify(log)}`);
+    else notes.push(`${label}: thoughts in the street: ${log.map(l => l.id + (l.voiced ? '' : '(text)')).join(' ')}`); }
   // and you can walk to each of them from the gate
   const far = [['laundromat', -5.7, 40.1], ['payphone', 2.4, 39.6], ['taco truck', -33.5, 46.7], ['ice chest', 29.7, 49.3], ['bus stop', -18, 39.3]];
   const reach = [];

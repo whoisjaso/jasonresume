@@ -1,0 +1,42 @@
+{
+ "id": "w-mailbox",
+ "text": "Empty. Whatever came today is already inside.",
+ "duration": 4.35,
+ "words": [
+  {
+   "w": "Empty.",
+   "s": 0.322,
+   "e": 0.835
+  },
+  {
+   "w": "Whatever",
+   "s": 0.921,
+   "e": 1.285
+  },
+  {
+   "w": "came",
+   "s": 1.285,
+   "e": 1.52
+  },
+  {
+   "w": "today",
+   "s": 1.52,
+   "e": 2.119
+  },
+  {
+   "w": "is",
+   "s": 2.119,
+   "e": 2.279
+  },
+  {
+   "w": "already",
+   "s": 2.279,
+   "e": 2.633
+  },
+  {
+   "w": "inside.",
+   "s": 2.633,
+   "e": 3.532
+  }
+ ]
+}

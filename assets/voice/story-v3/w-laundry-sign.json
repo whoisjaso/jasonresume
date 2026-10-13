@@ -1,0 +1,37 @@
+{
+ "id": "w-laundry-sign",
+ "text": "Laundry. Open late. Somebody always is.",
+ "duration": 3.925,
+ "words": [
+  {
+   "w": "Laundry.",
+   "s": 0.368,
+   "e": 0.826
+  },
+  {
+   "w": "Open",
+   "s": 0.913,
+   "e": 1.197
+  },
+  {
+   "w": "late.",
+   "s": 1.197,
+   "e": 1.72
+  },
+  {
+   "w": "Somebody",
+   "s": 1.851,
+   "e": 2.178
+  },
+  {
+   "w": "always",
+   "s": 2.178,
+   "e": 2.592
+  },
+  {
+   "w": "is.",
+   "s": 2.592,
+   "e": 3.268
+  }
+ ]
+}

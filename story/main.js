@@ -265,10 +265,11 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
    ================================================================ */
 const VBASE = D.out || "assets/voice/story-v3";
 const VREV = "2";
-const have = { fict: {}, me: {} };
+const have = { fict: {}, me: {}, ready: 0 };
+let haveDone; const haveP = new Promise(r => (haveDone = r));
 // the manifests are fetched past the year-long asset cache: a line voiced later (your thoughts) still gets heard
-fetch(VBASE + "/manifest.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
-fetch(VBASE + "/manifest-jason.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
+fetch(VBASE + "/manifest.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {}).then(() => { if (++have.ready === 2) haveDone(); });
+fetch(VBASE + "/manifest-jason.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {}).then(() => { if (++have.ready === 2) haveDone(); });
 let line = null; // { L, t, mode: "wait"|"voice"|"text", clock, vt, dur, endAt, audio, v, words, est, sp, resolve }
 let skipLine = null;
 const HOLD = 0.35, WAIT_MAX = 3.5, STALL_MAX = 6;
@@ -278,10 +279,23 @@ const syncLog = []; // for tools/verify/story.mjs: how each line began and ended
 function speakerOf(who) { return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
 function voiceId(L) { return L.who === "jason" ? "jason-" + L.id : L.id; }
 function voicedLine(L) { if (!L || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
+/* players a press has already started (silently): a phone lets them speak later, outside any press. The title
+   screen's Play leaves a few (intro.js); every press inside the episode tops the pool up */
+const VPOOL = window.JG_VPOOL || (window.JG_VPOOL = []);
+function blessVoices() {
+  if (!S.open || !window.JG_SILENT) return;
+  while (VPOOL.length < 6) {
+    const a = new Audio(); a.src = window.JG_SILENT; a._b = 1;
+    try { const p = a.play(); if (p && p.then) p.then(() => { if (a._b) a.pause(); }).catch(() => {}); } catch (e) {}
+    VPOOL.push(a);
+  }
+}
+addEventListener("pointerdown", blessVoices, true); addEventListener("keydown", blessVoices, true);
 function prepVoice(L) {
   const id = voiceId(L); let v = VC.get(id);
   if (v) { VC.delete(id); VC.set(id, v); return v; }
-  const a = new Audio(); a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3";
+  const a = VPOOL.shift() || new Audio(); a._b = 0; try { a.pause(); } catch (e) {}
+  a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3";
   v = { id, a, words: null, dur: 0, routed: false };
   v.wp = fetch(VBASE + "/" + id + ".json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.words) { v.words = j.words; v.dur = j.duration || 0; } }).catch(() => {});
   VC.set(id, v);
@@ -298,7 +312,19 @@ function estWords(text, t0, t1) {
   let t = t0; return ws.map((w, i) => { const s = t; t += wt[i] * k; return { w, s, e: s + Math.max(0.08, (wt[i] - (/[.?!,;:]$/.test(w) ? 2 : 0)) * k * 0.9) }; });
 }
 function lineWords(l) { return l.words || l.est; }
-function sayLine(L) {
+/* a thought out in the world: the narrator says it while you keep walking (no stop, no camera move); a talk that
+   starts cuts it short */
+const WTH = D.world_thoughts || {};
+function murmur(id, t) {
+  if (S.phase !== "explore" || (line && !line.L.ambient)) return;
+  sayLine({ id: "w-" + id, who: "you", t, ambient: true }).catch(() => {});
+}
+async function sayLine(L) {
+  if (have.ready < 2 && soundOn() && !FAST) await Promise.race([haveP, sleep(3000)]);
+  return sayLine0(L);
+}
+function sayLine0(L) {
+  if (line && line.L.ambient) endLine(true); // a passing thought gives way
   return new Promise(resolve => {
     const words = L.t.split(" ");
     const c = CAST[L.who] || { name: "" };
@@ -1249,13 +1275,27 @@ function spotsHere() {
   spotsFrame = frameNo; spotsMemo = spotsHere0();
   return spotsMemo;
 }
+/* a once-only thing you've already looked at: its narrated thought, said again (no trophy, journal or step twice) */
+const thoughtMemo = {};
+const dotEls = new Map(); let dotGen = 0;
+function clearDots() { if (dotEls.size) { for (const b of dotEls.values()) b.remove(); dotEls.clear(); } if (dotsEl.firstChild) dotsEl.innerHTML = ""; }
+function thoughtOf(id) {
+  if (id in thoughtMemo) return thoughtMemo[id];
+  const o = OBJ[id], T0 = o && o.talk && TALK[o.talk];
+  return (thoughtMemo[id] = T0 && !T0.choices && !T0.next ? (T0.lines || []).filter(L => L.who === "you") : null);
+}
+async function sayAgain(lines) {
+  setPhase("talk"); promptEl.hidden = true; actEl.hidden = true; objEl.classList.add("is-dim"); el.classList.add("is-talking");
+  for (const L of lines) { if (cond(L.if)) { await sayLine(L); if (!FAST) await sleep(120); } }
+  if (S.phase === "talk") endTalk();
+}
 function spotsHere0() {
   const out = [];
   for (const [id, o] of Object.entries(OBJ)) {
     const sceneOk = o.scene === S.scene || (o.scene === "lot" && S.scene === "lot");
     if (!sceneOk) continue;
     if (o.if && !cond(o.if)) continue;
-    if (o.once && S.looked[id] && !o.again) continue;
+    if (o.once && S.looked[id] && !o.again && !thoughtOf(id)) continue; // looked at: only a thought you can have again stays
     const sp = set.userData.spots[id]; if (!sp) continue;
     let p = sp.p;
     if (sp.who) { const who = P[sp.who]; if (!who || !who.group.visible) continue; p = headOf(who).add(new THREE.Vector3(0, -0.15, 0)); }
@@ -1299,7 +1339,10 @@ async function useWorld(s, how) {
     x.on = !x.on;
     FX("arrive"); if (kind !== "knock") AU.use(kind, at, x.on); hap("tap");
     try { if (typeof x.use === "function") x.use({ kind, on: x.on, who: me }); } catch (e) {}
-    if (kind === "read" && x.text) toast(x.text);
+    // the first time, your thought about it, said as you carry on (a sign's own words are in it); after that, the sign
+    const th = WTH[s.id];
+    if (th && S.looked[s.id] === 1) murmur(s.id, th);
+    else if (kind === "read" && x.text) toast(x.text);
     document.dispatchEvent(new CustomEvent("jg:story-use", { detail: { id: s.id, kind, on: x.on } }));
   };
   const safety = () => setTimeout(feel, FAST ? 0 : 2500); // a move that never lands still gets its answer
@@ -1357,8 +1400,9 @@ async function roam(to) {
 let near = null;
 const v2 = new THREE.Vector3();
 function project(p) { v2.copy(p).project(camera); return { x: (v2.x * 0.5 + 0.5) * VW, y: (-v2.y * 0.5 + 0.5) * VH, on: v2.z < 1 && Math.abs(v2.x) < 1.05 && Math.abs(v2.y) < 1.05 }; }
+let nearLost = 0, lastNear = null;
 function updatePrompts() {
-  if (S.phase !== "explore" || !me) { promptEl.hidden = true; actEl.hidden = true; if (dotsEl.firstChild) dotsEl.innerHTML = ""; near = null; return; }
+  if (S.phase !== "explore" || !me) { promptEl.hidden = true; actEl.hidden = true; clearDots(); near = null; lastNear = null; return; }
   const list = spotsHere();
   let best = null, bd = 1e9;
   for (const s of list) {
@@ -1370,22 +1414,37 @@ function updatePrompts() {
     // and standing on a thing's own spot, facing it, means that thing (the radio under the whiteboard), whatever's beside
     // it; seated, the seat you're on (its prompt is how you get up)
     const st = s.sp.stand, own = me.seated ? (s.o.world === "sit" ? 2 : 0) : st && a < 0.7 ? Math.max(0, 1 - Math.hypot(st.x - me.pos.x, st.z - me.pos.z) / 0.6) : 0;
-    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - own;
-    if (d < r && score < bd) { best = s; bd = score; }
+    // the thing that already has the prompt keeps it a little longer and a little further, so it doesn't flicker
+    // between two things or go out under your thumb; on a touch screen every reach is a little longer
+    const keep = s === near || (near && s.id === near.id);
+    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - own - (keep ? 0.3 : 0);
+    const reach = r * (keep ? 1.3 : 1) + (dev === "touch" ? 0.4 : 0);
+    if (d < reach && score < bd) { best = s; bd = score; }
   }
-  if (best !== near && best) progress();
-  near = best;
+  if (best && (!near || best.id !== near.id)) progress();
+  if (best) { near = best; lastNear = best; nearLost = 0; }
+  else { near = null; nearLost = performance.now(); }
   // faint dots on what's interactable nearby; things you haven't looked at yet shimmer when you're close; the nearest gets the full prompt
-  let html = "";
+  dotGen++;
   for (const s of list) {
     if (s === best) continue;
     const d = Math.hypot(s.p.x - me.pos.x, s.p.z - me.pos.z); if (d > 11) continue;
     const q = project(s.p); if (!q.on) continue;
     const fresh = !S.looked[s.id] && !s.o.who && d < 7;
-    html += '<button type="button" class="st-dot' + (fresh ? " is-new" : "") + '" data-spot="' + s.id + '" style="transform:translate(' + q.x.toFixed(0) + "px," + q.y.toFixed(0) + 'px)" aria-label="' + E(s.o.verb + " " + s.o.label) + '"><i></i></button>';
+    let b = dotEls.get(s.id);
+    if (!b) { b = document.createElement("button"); b.type = "button"; b.className = "st-dot"; b.dataset.spot = s.id; b.innerHTML = "<i></i>"; b.setAttribute("aria-label", s.o.verb + " " + s.o.label); dotsEl.appendChild(b); dotEls.set(s.id, b); }
+    b._gen = dotGen;
+    if (b._fresh !== fresh) { b._fresh = fresh; b.classList.toggle("is-new", fresh); }
+    const tx = "translate(" + q.x.toFixed(0) + "px," + q.y.toFixed(0) + "px)";
+    if (b._tx !== tx) { b._tx = tx; b.style.transform = tx; }
   }
-  if (html !== dotsEl._html) { dotsEl.innerHTML = html; dotsEl._html = html; }
-  if (!best) { promptEl.hidden = true; actEl.hidden = true; return; }
+  for (const [id, b] of dotEls) if (b._gen !== dotGen) { b.remove(); dotEls.delete(id); }
+  if (!best) {
+    promptEl.hidden = true;
+    // the big button stays a moment after you drift out of reach: a press then walks you back to the thing and uses it
+    actEl.hidden = !(dev === "touch" && lastNear && performance.now() - nearLost < 900);
+    return;
+  }
   const q = project(best.p);
   // a thing above or beside the frame (the pylon sign seen up close on a phone) keeps its prompt at the edge of the screen
   if (v2.z >= 1) { q.x = VW / 2 - 60; q.y = 90; }
@@ -1402,8 +1461,20 @@ function updatePrompts() {
   // on a touch screen, the thing you're next to also gets a big button under your right thumb
   actEl.hidden = dev !== "touch";
 }
-promptEl.addEventListener("click", e => { e.stopPropagation(); if (near) interact(near.id, "click"); });
-dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); goInteract(b.dataset.spot); });
+/* a press acts the moment the finger or button comes down, on what had the prompt then: a click arriving later
+   (after the prompt moved, or went for a frame) would find nothing; the click that follows a press is swallowed */
+let pressT = 0;
+function pressUse(how) {
+  if (S.phase !== "explore") return;
+  pressT = performance.now();
+  if (near) { interact(near.id, how); return; }
+  // just out of reach (you drifted a step): walk back to it and use it
+  if (lastNear && performance.now() - nearLost < 900) goInteract(lastNear.id);
+}
+promptEl.addEventListener("pointerdown", e => { if (e.button > 0) return; e.preventDefault(); e.stopPropagation(); pressUse("click"); });
+promptEl.addEventListener("click", e => { e.stopPropagation(); if (performance.now() - pressT > 600) pressUse("click"); });
+dotsEl.addEventListener("pointerdown", e => { const b = e.target.closest("[data-spot]"); if (!b || e.button > 0) return; e.preventDefault(); e.stopPropagation(); pressT = performance.now(); goInteract(b.dataset.spot); });
+dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); if (performance.now() - pressT > 600) goInteract(b.dataset.spot); });
 function goInteract(id) {
   const s = spotsHere().find(x => x.id === id); if (!s) return;
   const stand = s.sp.stand || (s.sp.who ? P[s.sp.who].pos.clone().add(me.pos.clone().sub(P[s.sp.who].pos).setY(0).normalize().multiplyScalar(1.2)) : s.p);
@@ -1455,12 +1526,13 @@ async function interact(id, how) {
   S.focusPoint = s.p || null;
   const talk = !first && o.again ? o.again : o.talk;
   if (s.close) return;
+  if (!first && o.once && !o.again) { const th = thoughtOf(id); if (th && th.length) await sayAgain(th); return; }
   await runTalk(talk);
 }
 async function runTalk(id) {
   if (DRV.state) exitCar("talk", true); // nobody talks to you through the glass: out first
   if (me) me.group.visible = true;
-  setPhase("talk"); promptEl.hidden = true; dotsEl.innerHTML = ""; objEl.classList.add("is-dim");
+  setPhase("talk"); promptEl.hidden = true; clearDots(); objEl.classList.add("is-dim");
   el.classList.add("is-talking");
   const partner = S.partner;
   if (partner && me) { partner.lookAtP = headOf(me); me.lookAtP = headOf(partner); partner.wantYaw = Math.atan2(me.pos.x - partner.pos.x, me.pos.z - partner.pos.z); me.wantYaw = Math.atan2(partner.pos.x - me.pos.x, partner.pos.z - me.pos.z); }
@@ -1562,7 +1634,7 @@ function officeDoor(to, ms) {
   return new Promise(res => { const step = () => { const u = Math.min(1, (performance.now() - t0) / dur); d.t = from + (to - from) * EZ(u); try { d.open(d.t); } catch (e) {} if (u < 1) requestAnimationFrame(step); else res(); }; step(); });
 }
 async function travel(to) {
-  setPhase("cinematic"); promptEl.hidden = true; dotsEl.innerHTML = "";
+  setPhase("cinematic"); promptEl.hidden = true; clearDots();
   if (S.scene === "lot" && to === "office") officeDoor(1, 520);
   const memoryIn = to === "memory" || to === "keys";
   if (to === "memory") { fadeEl.classList.add("is-memory"); await fade(1, 1400, "#e9dfc8"); }
@@ -1762,7 +1834,7 @@ function readOf() {
 }
 async function ending(kind) {
   S.ending = kind; setPhase("end");
-  promptEl.hidden = true; dotsEl.innerHTML = ""; objective(null);
+  promptEl.hidden = true; clearDots(); objective(null);
   T("story_ending", { ending: kind, role: S.flags.role || "", lot: S.flags.lot || "", why: S.flags.why || "" });
   // the ending's build: the card and the page for a role, the lot's card for a dealer
   let b = null;
@@ -1803,7 +1875,7 @@ endEl.addEventListener("click", e => {
    ================================================================ */
 let pzView = "main";
 /* behind a menu the prompt, the dots, the big button and the arrow step out of the way */
-function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; dotsEl.innerHTML = ""; dotsEl._html = ""; wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
+function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; clearDots(); wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
 function pause() {
   if (S.phase === "end" || S.phase === "load" || S.phase === "pause") return;
   if (S.phase === "explore") save();
@@ -2059,7 +2131,8 @@ function padLegend() {
   legendEl.innerHTML = mode === "menu" ? g("A", "Select") + g("B", "Back") : mode === "end" ? g("A", "Select") : mode === "choose" ? g("A", "Choose") :
     mode === "walk" ? g("A", "Jump") + g("Y", UI.journal) : mode === "near" ? g("X", "Jump") + g("Y", UI.journal) : "";
 }
-actEl.addEventListener("click", e => { e.stopPropagation(); if (near && S.phase === "explore") interact(near.id, "tap"); });
+actEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); pressUse("tap"); });
+actEl.addEventListener("click", e => { e.stopPropagation(); if (performance.now() - pressT > 600) pressUse("tap"); });
 skipEl.addEventListener("click", e => { e.stopPropagation(); if (S.skipOpen) S.skipOpen(); });
 el.addEventListener("click", e => {
   const b = e.target.closest("[data-st]"); if (!b) return;

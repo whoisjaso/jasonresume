@@ -1,0 +1,32 @@
+{
+ "id": "w-showroom-glass",
+ "text": "Your own reflection knocks back.",
+ "duration": 2.85,
+ "words": [
+  {
+   "w": "Your",
+   "s": 0.32,
+   "e": 0.433
+  },
+  {
+   "w": "own",
+   "s": 0.433,
+   "e": 0.694
+  },
+  {
+   "w": "reflection",
+   "s": 0.694,
+   "e": 1.239
+  },
+  {
+   "w": "knocks",
+   "s": 1.239,
+   "e": 1.553
+  },
+  {
+   "w": "back.",
+   "s": 1.553,
+   "e": 2.182
+  }
+ ]
+}
