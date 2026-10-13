@@ -531,6 +531,69 @@
    "file": "sale-mar-6.mp3",
    "timings": "sale-mar-6.json",
    "voice": "af_sarah"
+  },
+  "june-you-3": {
+   "hash": "a1f0a2c3fa4f",
+   "duration": 2.975,
+   "file": "june-you-3.mp3",
+   "timings": "june-you-3.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-4": {
+   "hash": "29b8ee6b12ac",
+   "duration": 2.125,
+   "file": "june-you-4.mp3",
+   "timings": "june-you-4.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-call-1": {
+   "hash": "cd16928f560c",
+   "duration": 5.225,
+   "file": "june-call-1.mp3",
+   "timings": "june-call-1.json",
+   "voice": "af_nicole"
+  },
+  "june-you-5": {
+   "hash": "1d17ee54bfae",
+   "duration": 4.375,
+   "file": "june-you-5.mp3",
+   "timings": "june-you-5.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-6": {
+   "hash": "8ae2d58c3370",
+   "duration": 3.925,
+   "file": "june-you-6.mp3",
+   "timings": "june-you-6.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-7": {
+   "hash": "21816bb8856b",
+   "duration": 4.675,
+   "file": "june-you-7.mp3",
+   "timings": "june-you-7.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-8": {
+   "hash": "05ed6c04ed70",
+   "duration": 4.4,
+   "file": "june-you-8.mp3",
+   "timings": "june-you-8.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-9": {
+   "hash": "6c4026d818a2",
+   "duration": 4.775,
+   "file": "june-you-9.mp3",
+   "timings": "june-you-9.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "sale-you-2": {
+   "hash": "4979162e6491",
+   "duration": 5.175,
+   "file": "sale-you-2.mp3",
+   "timings": "sale-you-2.json",
+   "voice": "af_heart,af_nicole"
   }
  },
  "voice": {

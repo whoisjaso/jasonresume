@@ -1,0 +1,22 @@
+{
+ "id": "june-you-4",
+ "text": "It's buzzing again.",
+ "duration": 2.125,
+ "words": [
+  {
+   "w": "It's",
+   "s": 0.31,
+   "e": 0.416
+  },
+  {
+   "w": "buzzing",
+   "s": 0.416,
+   "e": 0.762
+  },
+  {
+   "w": "again.",
+   "s": 0.762,
+   "e": 1.474
+  }
+ ]
+}
