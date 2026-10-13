@@ -947,18 +947,51 @@ async function exploreCheck(vname, w, h, mobile) {
   const reach = [];
   for (const [n, x, z] of far) { await p.evaluate(() => window.JG_STORY.debug.put(0.2, 19.5, 0)); const path = await p.evaluate(([x, z]) => window.JG_STORY.debug.walk(x, z), [x, z]); if (!path) errs.push(`${label}: no way to walk to the ${n}`); else reach.push(n); await p.evaluate(() => window.JG_STORY.debug.put(0.2, 19.5, 0)); }
   notes.push(`${label}: the street: used ${streetUsed.join(' ')}; walked to ${reach.join(', ')}`);
-  // sit on the bench and get up again with a push
+  // sit on the bench and get up again with a push: W on a keyboard; on a phone the left thumb on the stick, as a
+  // player's would be (a touch in the lower left of the screen, dragged up), and then, sat down again, a tap on the
+  // ground, which gets you up and walks you there
   if (lot.includes('bus-bench')) {
-    await useIt('bus-bench');
-    const sat = await until(p, () => window.JG_STORY.debug.seated && window.JG_STORY.debug.seated(), null, 30000);
-    if (!sat) errs.push(`${label}: never sat on the bench`);
-    else {
-      if (mobile) await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); else { await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); }
+    const sitDown = async () => {
+      await useIt('bus-bench');
+      // (sat, and the episode back in explore, which is when a push counts)
+      return until(p, () => { const d = window.JG_STORY.debug; return d.seated && d.seated() && d.state().phase === 'explore'; }, null, 30000);
+    };
+    const standUp = async () => {
       const up = await until(p, () => !window.JG_STORY.debug.seated(), null, 30000);
-      if (!mobile) await p.keyboard.up('w');
-      if (!up) errs.push(`${label}: a push didn't get you up off the bench`); else kinds.add('sit');
       // (seated() goes false as the body starts to rise; wait until it has stood all the way up, or the next warp is undone)
-      if (up && !(await until(p, () => !window.JG_STORY.debug.drive().inCar, null, 60000))) errs.push(`${label}: never finished getting up off the bench`);
+      return up && await until(p, () => !window.JG_STORY.debug.drive().inCar, null, 60000) ? 'up' : up ? 'rising' : null;
+    };
+    if (!(await sitDown())) errs.push(`${label}: never sat on the bench`);
+    else {
+      let up;
+      if (mobile) {
+        const cdp = await ctx.newCDPSession(p), vs = p.viewportSize(), x = Math.round(vs.width * 0.2), y = Math.round(vs.height * 0.78);
+        const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+        await touch('touchStart', [{ x, y, id: 1 }]);
+        for (let k = 1; k <= 4; k++) await touch('touchMove', [{ x, y: y - 14 * k, id: 1 }]);
+        const pushed = await until(p, () => window.JG_STORY.debug.input().stick && window.JG_STORY.debug.input().mag > 0.5, null, 10000);
+        if (!pushed) errs.push(`${label}: the stick didn't take the thumb`);
+        await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30));
+        up = await standUp();
+        await touch('touchEnd', [{ x, y: y - 56, id: 1 }]);
+      } else { await p.keyboard.down('w'); await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30)); up = await standUp(); await p.keyboard.up('w'); }
+      if (!up) errs.push(`${label}: a push didn't get you up off the bench`); else if (up === 'rising') errs.push(`${label}: never finished getting up off the bench`); else kinds.add('sit');
+      // a tap on the open ground in front of the bench (a phone player's other way to move)
+      if (up === 'up' && mobile) {
+        if (!(await sitDown())) errs.push(`${label}: never sat on the bench a second time`);
+        else {
+          const q = await p.evaluate(() => { const d = window.JG_STORY.debug, me = d.you(), y = me.yaw; for (const r of [2.6, 2, 3.2, 1.6]) { const x = me.pos.x + Math.sin(y) * r, z = me.pos.z + Math.cos(y) * r; if (!d.blocked(x, z)) { const q = d.tap(x, z); if (q.on) return q; } } return null; });
+          if (!q) errs.push(`${label}: no open ground to tap in front of the bench`);
+          else {
+            // (the loop held still for the tap, so a slow frame between the finger's down and up can't make it a hold)
+            await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+            await p.touchscreen.tap(Math.round(q.x), Math.round(q.y));
+            await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+            await p.evaluate(() => window.JG_STORY.debug.sim(5, 1 / 30));
+            if ((await standUp()) !== 'up') errs.push(`${label}: a tap on the ground didn't get you up off the bench`);
+          }
+        }
+      }
     }
   }
   // out through the office door and back through the office's own exit

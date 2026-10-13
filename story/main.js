@@ -945,8 +945,9 @@ let clothT = 0;
 function moveMe(dt) {
   if (!me) return;
   const inp = wantInput();
-  // seated (or sitting down, or getting up): people.js has the body; a push of the stick gets you up
-  if (me.inCar) { if (me.seated && inp && me.standUp) me.standUp(); return; }
+  // seated (or sitting down, or getting up): people.js has the body; any move gets you up (a push of the stick or a
+  // key, or a tap on the ground: its walk waits until you're on your feet, then goes)
+  if (me.inCar) { if (me.seated && (inp || mv.path) && me.standUp) me.standUp(); return; }
   // a jump: the air carries the body; on the ground again the walk takes over
   jumpTick(dt);
   if (me.jumping && jumpMove(dt, inp)) return;
@@ -1387,10 +1388,12 @@ function updatePrompts() {
   if (v2.z >= 1) { q.x = VW / 2 - 60; q.y = 90; }
   q.x = clamp(q.x, 24, VW - 200); q.y = clamp(q.y, 84, VH - 110);
   promptEl.hidden = false;
-  if (promptEl.dataset.spot !== best.id) {
-    $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
-    promptEl.dataset.spot = best.id;
-    $(".st-act__verb", actEl).textContent = best.o.verb; actEl.setAttribute("aria-label", best.o.verb + " " + best.o.label);
+  // seated, the seat's own prompt gets you up again
+  const verb = best.o.world === "sit" && me.seated ? UI.v_stand || best.o.verb : best.o.verb;
+  if (promptEl.dataset.spot !== best.id || promptEl.dataset.verb !== verb) {
+    $(".st-prompt__verb", promptEl).textContent = verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
+    promptEl.dataset.spot = best.id; promptEl.dataset.verb = verb;
+    $(".st-act__verb", actEl).textContent = verb; actEl.setAttribute("aria-label", verb + " " + best.o.label);
   }
   promptEl.style.transform = "translate(" + Math.round(q.x) + "px," + Math.round(q.y) + "px)";
   // on a touch screen, the thing you're next to also gets a big button under your right thumb
