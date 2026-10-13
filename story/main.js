@@ -2627,7 +2627,7 @@ function holdTick(dt) {
 function endHold(ok) { const H = HOLDG; HOLDG = null; holdEl.classList.remove("is-on", "is-beat"); setTimeout(() => { if (!HOLDG) holdEl.hidden = true; }, 260); if (H) H.res(ok); }
 
 /* a walk the episode takes for you (you can't steer it; S.busy keeps the controls and the prompts out of it) */
-function walkAwait(v, ms = 12000) { return new Promise(res => { const t = setTimeout(() => res(false), FAST ? 40000 : ms); // (the harness's software clock is slow) if (!walkTo(v, () => { clearTimeout(t); res(true); }, { ring: false })) { clearTimeout(t); res(false); } }); }
+function walkAwait(v, ms = 12000) { return new Promise(res => { const t = setTimeout(() => res(false), FAST ? 40000 : ms); /* (the harness's software clock is slow) */ if (!walkTo(v, () => { clearTimeout(t); res(true); }, { ring: false })) { clearTimeout(t); res(false); } }); }
 const raceT = (p, ms) => Promise.race([p || Promise.resolve(), sleep(ms)]);
 
 /* sitting down beside him: to the front of the seat, turn, sit */
