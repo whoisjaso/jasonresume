@@ -228,12 +228,13 @@ export function createAudio(o) {
   function clearAmb(secs = 1.2) {
     const old = A.amb; A.amb = [];
     for (const n of old) { try { ramp(n.g.gain, 0, secs); n.s.stop(now() + secs + 0.1); } catch (e) {} }
-    A.lamps = []; A.roof = null; A.window = null; A.typingAt = null; A.lines = []; A.arcade = null;
+    A.lamps = []; A.roof = null; A.window = null; A.typingAt = null; A.lines = []; A.arcade = null; A.wind = null; A.windV = -1; A.dial = null;
     if (A.car) { try { A.car.stop(); } catch (e) {} A.car = null; }
     if (A.radio) { A.radio.stop(); A.radio = null; }
     A.lampAt = null;
     if (A.drv) { try { A.drv.stop(0.3); } catch (e) {} }
   }
+  const HUM = { "fridge-hum": { f: [["lowpass", 170], ["peaking", 120, 4, 6]], g: 0.05, ref: 1.0 }, "sodium-hum": { f: [["bandpass", 240, 3]], g: 0.035, ref: 3 }, dryer: { f: [["lowpass", 300], ["highpass", 55]], g: 0.09, ref: 2.2 }, generator: { f: [["bandpass", 120, 1.6], ["peaking", 240, 3, 5]], g: 0.11, ref: 2.0 } };
   /* a scene's soundscape: called on every arrival */
   function scene(name, set, info = {}) {
     A.scene = name; A.set = set; A.info = info;
@@ -268,12 +269,18 @@ export function createAudio(o) {
       if (SN.idle) loop(A.brown, { name: "idle-body", filters: [["lowpass", 90]], gain: 0.12, at: ip, ref: 2, roll: 1.5, bus: N.out });
       lamps(set, "sodium");
       A.nextCar = t + rnd(6, 14);
+      // the wind through the street: a breath of it always, swelling with the world's gusts (set.userData.gust)
+      A.wind = loop(A.pink, { name: "wind", bus: N.out, filters: [["lowpass", 620, 0.6], ["highpass", 110]], gain: 0.025 * rain }); A.windV = -1;
+      // far off: a siren, a train's horn, a dog
+      A.nextFar = t + rnd(20, 45);
     }
     if (outside) {
       const road = SN.road || { x: 0, y: 0.5, z: 38 };
       A.traffic = loop(A.brown, { name: "traffic", bus: N.out, filters: [["lowpass", 380], ["highpass", 40]], gain: name === "keys" ? 0.5 : 0.3, at: road, ref: 12, roll: 0.6 }); A.lines.push({ n: A.traffic, src: { ...road, w: 120 } });
       A.roadZ = road.z;
       A.hiss = loop(A.pink, { name: "tires", bus: N.out, filters: [["bandpass", name === "keys" ? 900 : 1600, 0.6]], gain: name === "keys" ? 0.025 : 0.05, at: { x: 30, y: 1, z: 45 }, ref: 40, roll: 0.5 });
+      // the places that hum: the machine by the showroom, the gas station's canopy, the laundromat's dryers, the taco truck's generator
+      for (const k of Object.keys(SN)) { const s0 = SN[k], h = s0 && HUM[s0.kind]; if (h) loop(A.brown, { name: "hum-" + k, bus: N.out, filters: h.f, gain: h.g, at: s0, ref: h.ref, roll: 1.4, max: 60 }); }
     }
     if (name === "keys") { A.nextBird = t + 1; A.nextCar = t + rnd(3, 8); }
     if (name === "office") {
@@ -381,15 +388,51 @@ export function createAudio(o) {
       for (let i = 0; i < n; i++) tone({ f: base * rnd(0.9, 1.1), to: base * rnd(1.2, 1.6), glide: rnd(0.04, 0.09), decay: rnd(0.05, 0.12), gain: 0.02, delay: i * rnd(0.09, 0.16), at, ref: 3, roll: 1, bus: A.nodes.amb });
       A.nextBird = t + rnd(1.5, 6);
     }
+    // the wind follows the world's gusts
+    if (A.wind && A.set && A.set.userData) { const gv = +(A.set.userData.gust || 0).toFixed(2); if (gv !== A.windV) { A.windV = gv; A.wind.g.gain.setTargetAtTime(0.025 + 0.2 * gv, t, 0.3); } }
+    // a payphone off its hook: the dial tone, where it hangs
+    const dl = A.set && A.set.userData && A.set.userData.sounds && A.set.userData.sounds.dial;
+    if (dl && !A.dial && soundOn()) { A.dial = [osc("sine", 350, { name: "dial", gain: 0.014, at: dl, ref: 0.4, roll: 2.2, max: 14, fade: 0.05, bus: A.nodes.sfx }), osc("sine", 440, { name: "dial", gain: 0.014, at: dl, ref: 0.4, roll: 2.2, max: 14, fade: 0.05, bus: A.nodes.sfx })]; log("amb", "dial"); }
+    else if (!dl && A.dial) { for (const n of A.dial) { ramp(n.g.gain, 0, 0.06); try { n.s.stop(now() + 0.1); } catch (e) {} } A.amb = A.amb.filter(n => !A.dial.includes(n)); A.dial = null; }
+    // far off, now and then: a siren crossing town, a train's horn, a dog
+    if ((A.scene === "lot" || A.scene === "decision") && A.nextFar && t >= A.nextFar) { far(); A.nextFar = t + rnd(35, 80); }
     // a car passes on the street, with its doppler
     if ((A.scene === "lot" || A.scene === "decision" || A.scene === "keys" || A.scene === "office") && !A.car && t >= A.nextCar && A.nextCar) passCar(A.scene !== "keys");
     if (A.car) A.car.tick(dt, w.ear);
     // a peak meter, for the harness: the limiter keeps it under full scale
     if ((A.mt = (A.mt || 0) + dt) > 0.25) { A.mt = 0; const d = new Float32Array(A.nodes.meter.fftSize); A.nodes.meter.getFloatTimeDomainData(d); let m = 0; for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); A.peak = Math.max(A.peak * 0.9, m); A.peakMax = Math.max(A.peakMax || 0, m); }
   }
+  function far() {
+    if (!soundOn()) return;
+    const C = A.ctx, t = now(), a = Math.random() * Math.PI * 2, r = rnd(140, 220), at = { x: Math.cos(a) * r, y: 8, z: Math.sin(a) * r }, roll = Math.random();
+    if (roll < 0.4) {
+      // a siren, crossing town: the wail rising and falling, coming up and fading away
+      const os = C.createOscillator(); os.type = "sine"; const f = os.frequency, dur = rnd(10, 15);
+      f.setValueAtTime(720, t); for (let i = 0, k = 0; k < dur; i++, k += 2.2) f.linearRampToValueAtTime(i % 2 ? 720 : 1380, t + k + 2.2);
+      const lp = C.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1700; const g = C.createGain(); g.gain.value = 0;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + dur * 0.4); g.gain.linearRampToValueAtTime(0, t + dur);
+      const p = panner(at.x, at.y, at.z, 30, 1, 400); os.connect(lp); lp.connect(g); g.connect(p); p.connect(A.nodes.out); os.start(t); os.stop(t + dur + 0.1);
+      log("amb", "siren");
+    } else if (roll < 0.75) {
+      // a train's horn across the bayou: two long, a short, a long
+      const blasts = [[0, 1.6], [2.0, 1.5], [3.9, 0.6], [4.8, 2.2]], g = C.createGain(); g.gain.value = 0;
+      for (const [s0, d] of blasts) { g.gain.setValueAtTime(0, t + s0); g.gain.linearRampToValueAtTime(0.035, t + s0 + 0.12); g.gain.setValueAtTime(0.035, t + s0 + d - 0.2); g.gain.linearRampToValueAtTime(0, t + s0 + d); }
+      const lp = C.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900; g.connect(lp);
+      const p = panner(at.x, at.y, at.z, 30, 1, 400); lp.connect(p); p.connect(A.nodes.out);
+      for (const f0 of [155.6, 185, 233.1]) { const os = C.createOscillator(); os.type = "sawtooth"; os.frequency.value = f0 * rnd(0.995, 1.005); os.connect(g); os.start(t); os.stop(t + 7.2); }
+      log("amb", "train");
+    } else {
+      // a dog somewhere behind the buildings across the road
+      const dog = { x: rnd(-40, 40), y: 0.6, z: rnd(60, 90) }, n = 2 + ((Math.random() * 3) | 0);
+      for (let i = 0; i < n; i++) tone({ f: rnd(480, 560), to: rnd(330, 380), glide: 0.07, decay: 0.12, partials: [[1, 1], [2, 0.45], [3, 0.2]], gain: 0.02, delay: i * rnd(0.3, 0.45), at: dog, ref: 6, roll: 1, bus: A.nodes.out });
+      log("amb", "dog");
+    }
+  }
   function passCar(wet) {
     const C = A.ctx, dir = Math.random() < 0.5 ? 1 : -1, z = (A.roadZ || 31) + rnd(-1, 2.5), v = rnd(11, 17) * dir;
     let x = -95 * dir;
+    // the world shows it: a body and its lights along the road (world.js, passCar), when it's the street outside
+    try { const pc = A.set && A.set.userData && A.set.userData.passCar; if (pc && (A.scene === "lot" || A.scene === "decision")) pc(x, v); } catch (e) {}
     const eng = C.createOscillator(); eng.type = "sawtooth"; const f0 = rnd(34, 52); eng.frequency.value = f0;
     const el = C.createBiquadFilter(); el.type = "lowpass"; el.frequency.value = 520; el.Q.value = 0.9;
     const tire = C.createBufferSource(); tire.buffer = A.pink; tire.loop = true;
@@ -698,7 +741,7 @@ export function createAudio(o) {
       return {
         built: !!A.ctx, state: A.ctx ? A.ctx.state : "none", loaded: !!A.buf, scene: A.scene, mix: { ...mix },
         buses: A.ctx ? { master: N.master.gain.value, voice: N.voice.gain.value, sfx: N.sfx.gain.value, amb: N.amb.gain.value, ui: N.ui.gain.value, ambDuck: N.ambDuck.gain.value, sfxDuck: N.sfxDuck.gain.value, out: N.outLp.frequency.value, limiter: N.limit.threshold.value } : null,
-        amb: A.amb.filter(n => n.name).map(n => n.name), car: A.drv ? A.drv.state : null, peak: +(A.peak || 0).toFixed(3), peakMax: +(A.peakMax || 0).toFixed(3), events: A.events.slice(-60)
+        amb: A.amb.filter(n => n.name).map(n => n.name), car: A.drv ? A.drv.state : null, radio: !!A.radio, peak: +(A.peak || 0).toFixed(3), peakMax: +(A.peakMax || 0).toFixed(3), events: A.events.slice(-60)
       };
     }
   };

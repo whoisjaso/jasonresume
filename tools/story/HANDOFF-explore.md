@@ -60,6 +60,21 @@ already drives on the way in and out.
   - an **empty lot** (x -38 to -22): gravel, weeds, one streetlight on a wooden pole, a puddle
 - Life: a moth circling the lamp by Jason; a stray cat by the dumpster that walks off when you come
   near and wanders back when you leave.
+- More of the street (`moreStreet` in world.js): storefronts in the gaps along the far side (a lit
+  corner store west of the empty lot, a dark one behind the bus stop, a two-floor building with a
+  light on upstairs, one past the gas station with its sign band lit); a **laundromat** open late
+  where the crosswalk lands (x -14.4 to -4.6), lit, washers and dryers behind the glass; a
+  **payphone**, a **newspaper box**, a **bike** at a rack; a **taco truck** in the empty lot with
+  its window lit and bulbs under the awning; an **ice chest** at the kiosk; a **signal** on a mast
+  arm from each side of the road at the crosswalk, cycling green, amber, red.
+- A car now and then along the road at night, its lights and beam on the wet asphalt; it keeps
+  to the right and slows and waits if you're in its lane. story/audio.js calls
+  `set.userData.passCar(x, v)` when it plays a car going by, so the two pass together.
+- Wind: every so often a gust (`set.userData.gust`, 0..1) leans the rain over (`U.uWind`, read
+  by the rain in main.js) and swells the wind bed in story/audio.js. Far off now and then: a
+  siren, a train's horn, a dog. The open places hum (`sounds.laundry`, `sounds.truck`,
+  `sounds.gas`, `sounds.vending`). Footsteps across the road: puddles (`farPuddles`), the walks
+  and the gas station's apron are wet concrete.
 
 ## 4. Things, by set
 
@@ -81,6 +96,18 @@ Lot (night; the morning lot has the same except the puddles):
 | `pump-0`, `pump-1` | press | Pump | (sound only) |
 | `kiosk-door` | knock | Door | (sound only) |
 | `lot-puddle` | splash | Puddle | the empty lot's puddle |
+| `laundry-door` | open | Door | the laundromat's glass door swings out onto the walk |
+| `laundry-sign` | read | Sign | "Laundry. Open late." |
+| `payphone` | pickup | Phone | the receiver comes off its hook; `sounds.dial` is set (a dial tone) until you hang it up |
+| `news-box` | open | Box | the newspaper box's window door tips down |
+| `bike` | press | Bell | the bike locked to the rack (sound only) |
+| `curb-puddle` | splash | Puddle | at the curb where the crosswalk lands |
+| `truck-bell` | press | Bell | the bell on the taco truck's counter (sound only) |
+| `taco-menu` | read | Board | "Tacos. Open late." |
+| `ice` | open | Lid | the ice chest at the gas station's kiosk |
+
+The crosswalk buttons also turn the signal over the road (amber, then red, held while the walk shows);
+`set.userData.signal` is its state `{ ph: 0 green | 1 amber | 2 red, t }`.
 
 Office:
 
@@ -111,5 +138,5 @@ hood or trunk nodes yet.
 - `node tools/story/world/things-test.mjs`: builds all four sets, uses every thing on and off, runs
   the tick with someone walking past; checks the kinds, labels, seats and that each set has an exit.
 - `node tools/story/world/explore-stills.mjs [desktop|phone|all] [view ...]` writes
-  tools/verify/out/explore-<view>-<vp>.png. Views: road, bus, crosswalk, shop, gas, empty, dumpster,
-  vending, fridge, exit, doors.
+  tools/verify/out/explore-<view>-<vp>.png. Views: road, bus, crosswalk, shop, gas, empty, laundromat,
+  taco, signal, street, icechest, dumpster, vending, fridge, exit, doors.

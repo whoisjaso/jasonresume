@@ -56,6 +56,10 @@ SAY = {
     "Obawemimo": "/ˌoʊbɑˈwɛmimoʊ/",
     "Obawemimo's": "/ˌoʊbɑˈwɛmimoʊz/",
     "Obavia": "/oʊˈbɑviə/",
+    "Almeda": "/ˌælmˈiːːdə/",
+    "130-U": "/wʌn θɜɹɾi ju/",
+    "webDEALER": "/wɛb dilɚ/",
+    "liens": "/linz/",
 }
 
 def spoken(text):

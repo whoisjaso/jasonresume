@@ -1,0 +1,67 @@
+{
+ "id": "lot-you-2",
+ "text": "Clear vehicles. Clear terms. Real people. Somebody painted that and meant it.",
+ "duration": 6.65,
+ "words": [
+  {
+   "w": "Clear",
+   "s": 0.341,
+   "e": 0.598
+  },
+  {
+   "w": "vehicles.",
+   "s": 0.598,
+   "e": 1.436
+  },
+  {
+   "w": "Clear",
+   "s": 1.564,
+   "e": 1.891
+  },
+  {
+   "w": "terms.",
+   "s": 1.891,
+   "e": 2.532
+  },
+  {
+   "w": "Real",
+   "s": 2.66,
+   "e": 2.951
+  },
+  {
+   "w": "people.",
+   "s": 2.951,
+   "e": 3.766
+  },
+  {
+   "w": "Somebody",
+   "s": 3.964,
+   "e": 4.372
+  },
+  {
+   "w": "painted",
+   "s": 4.372,
+   "e": 4.745
+  },
+  {
+   "w": "that",
+   "s": 4.745,
+   "e": 5.082
+  },
+  {
+   "w": "and",
+   "s": 5.082,
+   "e": 5.211
+  },
+  {
+   "w": "meant",
+   "s": 5.211,
+   "e": 5.456
+  },
+  {
+   "w": "it.",
+   "s": 5.456,
+   "e": 6.003
+  }
+ ]
+}

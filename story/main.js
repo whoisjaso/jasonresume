@@ -53,7 +53,7 @@ const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
 const sleep = ms => new Promise(r => setTimeout(r, FAST ? Math.min(ms, 30) : ms));
 function T(e, p) { if (window.JG_TRACK) window.JG_TRACK(e, p || {}); }
 function FX(k) { if (window.JG_FX) window.JG_FX(k); }
-function hap(k) { if (window.JG_HAPTIC) window.JG_HAPTIC(k); }
+function hap(k, s) { if (window.JG_HAPTIC) window.JG_HAPTIC(k, s); }
 function SC() { return window.JG_SCORE; }
 const soundOn = () => !!(SC() && SC().isOn());
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
@@ -264,9 +264,11 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
    While a line plays the next one's recording is already loading.
    ================================================================ */
 const VBASE = D.out || "assets/voice/story-v3";
+const VREV = "2";
 const have = { fict: {}, me: {} };
-fetch(VBASE + "/manifest.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
-fetch(VBASE + "/manifest-jason.json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
+// the manifests are fetched past the year-long asset cache: a line voiced later (your thoughts) still gets heard
+fetch(VBASE + "/manifest.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
+fetch(VBASE + "/manifest-jason.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
 let line = null; // { L, t, mode: "wait"|"voice"|"text", clock, vt, dur, endAt, audio, v, words, est, sp, resolve }
 let skipLine = null;
 const HOLD = 0.35, WAIT_MAX = 3.5, STALL_MAX = 6;
@@ -275,7 +277,7 @@ let curV = null;
 const syncLog = []; // for tools/verify/story.mjs: how each line began and ended
 function speakerOf(who) { return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
 function voiceId(L) { return L.who === "jason" ? "jason-" + L.id : L.id; }
-function voicedLine(L) { if (!L || L.who === "you" || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
+function voicedLine(L) { if (!L || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
 function prepVoice(L) {
   const id = voiceId(L); let v = VC.get(id);
   if (v) { VC.delete(id); VC.set(id, v); return v; }
@@ -621,11 +623,12 @@ function makeRain() {
   g.setAttribute("seed", new THREE.InstancedBufferAttribute(seed, 4));
   const m = new THREE.ShaderMaterial({
     uniforms: { ...U, uCam: { value: new THREE.Vector3() }, uK: { value: 1 } },
-    vertexShader: `attribute vec4 seed; uniform vec3 uCam; uniform float uTime; uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; varying float vL; varying float vA;
-      void main(){ vec3 box = vec3(22.0, 12.0, 22.0); vec3 p = vec3(seed.x, fract(seed.y - uTime * 0.85 * seed.w), seed.z) * box - box * 0.5; p.y += 4.0;
+    vertexShader: `attribute vec4 seed; uniform vec3 uCam; uniform float uTime; uniform vec2 uWind; uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; varying float vL; varying float vA;
+      void main(){ vec3 box = vec3(22.0, 12.0, 22.0); float ph = fract(seed.y - uTime * 0.85 * seed.w); vec3 p = vec3(seed.x, ph, seed.z) * box - box * 0.5; p.y += 4.0;
+        p.xz += uWind * (1.0 - ph) * 1.4; // a gust carries the drops sideways as they fall
         p.xz = uCam.xz + mod(p.xz - uCam.xz + box.xz * 0.5, box.xz) - box.xz * 0.5; p.x += position.y * 0.05;
-        float len = 0.25 * seed.w; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z);
-        vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + side * position.x * 1.2;
+        float len = 0.25 * seed.w; vec3 lean = vec3(-uWind.x, 0.0, -uWind.y) * position.y * len * 0.5; vec3 wp = vec3(p.x + position.x, p.y + position.y * len, p.z) + lean;
+        vec3 cdir = normalize(wp - cameraPosition); vec3 side = normalize(cross(cdir, vec3(0.0, 1.0, 0.0))); wp = vec3(p.x, p.y + position.y * len, p.z) + lean + side * position.x * 1.2;
         float l = 0.05; for (int i = 0; i < 8; i++) { if (i >= uLampN) break; float d = length(uLampPos[i].xyz - wp); l += max(0.0, 1.0 - d / (uLampPos[i].w * 0.6)) * length(uLampCol[i].rgb) * 0.6; }
         vL = l; vA = smoothstep(4.0, 7.0, length(wp - cameraPosition)) * smoothstep(20.0, 8.0, length(wp - cameraPosition));
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
@@ -829,7 +832,8 @@ function insideAny(x, y, z, pad, list) {
 const _head = new THREE.Vector3(), _off = new THREE.Vector3(), _right = new THREE.Vector3(), _aim = new THREE.Vector3(), _pivot = new THREE.Vector3(), _o2 = new THREE.Vector3(), _want = new THREE.Vector3(), _look = new THREE.Vector3(), _tmp = new THREE.Vector3();
 const _fv = { want: _want, look: _look }, _near = [];
 function followView(dt, probe) {
-  const head = _head.copy(me.pos); head.y += me.height * 0.86;
+  // a jump: the camera goes half way up with you, and dips with the landing
+  const head = _head.copy(me.pos); head.y += me.height * 0.86 - me.pos.y * 0.5 - JUMP.dip;
   // drift behind the walker unless the visitor is steering the camera
   if (!probe) {
     if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-(mv.path ? 1.0 : 1.6) * dt));
@@ -941,8 +945,12 @@ let clothT = 0;
 function moveMe(dt) {
   if (!me) return;
   const inp = wantInput();
-  // seated (or sitting down, or getting up): people.js has the body; a push of the stick gets you up
-  if (me.inCar) { if (me.seated && inp && me.standUp) me.standUp(); return; }
+  // seated (or sitting down, or getting up): people.js has the body; any move gets you up (a push of the stick or a
+  // key, or a tap on the ground: its walk waits until you're on your feet, then goes)
+  if (me.inCar) { if (me.seated && (inp || mv.path) && me.standUp) me.standUp(); return; }
+  // a jump: the air carries the body; on the ground again the walk takes over
+  jumpTick(dt);
+  if (me.jumping && jumpMove(dt, inp)) return;
   let speed = 0, dir = null;
   const prevSpeed = me.speed;
   if (inp) {
@@ -1001,33 +1009,236 @@ function walkTo(v, then, o = {}) {
   return true;
 }
 
-/* ---------- gamepad: left stick walks (all the way over runs), right stick looks; A, B, Y, Start ---------- */
-let padPrev = {}, padSeen = false;
+/* ---------- the jump: Space, A with nothing to use (X any time), the Jump button under the right thumb on a touch screen.
+   Only on your feet, exploring: never talking, seated, in a car or in a cutscene. people.js does the body (the crouch,
+   the air, the knees taking it); here the ground carries it: a running jump keeps its speed, a standing one stays put
+   with a little steer, and the walls (every car, pole and desk) stop it in the air as on the ground, so nothing gets
+   jumped over or onto. The landing is one frame: the step on that surface (a splash in a puddle), the haptic and the
+   rumble, and the camera's dip. Nothing here allocates per frame ---------- */
+const JUMP = { vx: 0, vz: 0, dip: 0, dipT: 1, dipA: 0, n: 0, at: { x: 0, y: 0.05, z: 0 } };
+/* the floor under a point: the world can give heights (set.userData.heightAt); the sets are flat otherwise */
+function groundY(x, z) { const h = set && set.userData.heightAt; return typeof h === "function" ? h(x, z) || 0 : 0; }
+function canJump() {
+  return !!(me && me.jump && S.open && S.phase === "explore" && !DRV.state && !me.inCar && !me.jumping && !S.skipOpen && !choosing && me.group.visible &&
+    !(me.reaches && (me.reaches.l || me.reaches.r)) && !(me.shot));
+}
+function jump(how) {
+  if (!canJump()) return false;
+  if (mv.path) { mv.path = null; mv.after = null; guide.clearRing(); }
+  mv.idle = 0;
+  const run = clamp((me.speed - WALK) / (RUN - WALK), 0, 1);
+  const p = me.jump({ run, ground: groundY, onTakeoff: jumpOff, onLand: jumpLand });
+  if (!p) return false;
+  JUMP.n++; JUMP.how = how || "";
+  return true;
+}
+function jumpAt() { JUMP.at.x = me.pos.x; JUMP.at.z = me.pos.z; return JUMP.at; }
+/* off the ground: the speed you had is the speed you keep; a scuff and the cloth */
+function jumpOff() {
+  JUMP.vx = me.vel.x; JUMP.vz = me.vel.z;
+  const at = jumpAt();
+  AU.step(surfaceAt(at.x, at.z), { at, gain: 0.35, ref: 4.2 }); AU.cloth(at, 0.7);
+}
+/* down: the step on whatever is underfoot (a splash in a puddle), the haptic, the rumble and the camera's dip, together */
+function jumpLand(imp) {
+  const at = jumpAt(), surf = surfaceAt(at.x, at.z);
+  const heard = AU.step(surf, { at, run: imp > 0.5, gain: 0.9 + imp * 0.6, ref: 4.2 });
+  if (surf === "puddle") AU.use("splash", at);
+  hap(imp > 0.7 ? "select" : "tap", 0.6 + imp);
+  // the camera starts down this frame (the knees already have: people.js began the absorb as it touched)
+  JUMP.dipA = still() ? 0 : 0.04 + 0.07 * imp; JUMP.dipT = 0.06; JUMP.dip = JUMP.dipA * Math.sin(JUMP.dipT * Math.PI);
+  mv.idle = 0;
+  if (DEBUG) JUMP.last = { t: performance.now(), surf, heard: !!heard, imp: +imp.toFixed(2), dip: +JUMP.dip.toFixed(3), crouch: +(me.jC || 0).toFixed(3) };
+}
+/* the ground under a jump: in the air the body goes where the takeoff sent it (a little steer from the stick); landing
+   from a run it rolls on unless you push somewhere else. Returns true when it has moved the body this frame */
+function jumpMove(dt, inp) {
+  const air = me.airborne, land = me.jumping && !air && me.jmp.st === "land";
+  if (!air && !(land && !inp)) return false;
+  if (air && inp) {
+    const a = Math.atan2(inp.x, inp.z) + camState.yaw, sp = speedFor(inp.m);
+    JUMP.vx = damp(JUMP.vx, Math.sin(a) * Math.max(sp, Math.hypot(JUMP.vx, JUMP.vz)), 1.6, dt);
+    JUMP.vz = damp(JUMP.vz, Math.cos(a) * Math.max(sp, Math.hypot(JUMP.vx, JUMP.vz)), 1.6, dt);
+  }
+  if (land) { JUMP.vx = damp(JUMP.vx, 0, 7, dt); JUMP.vz = damp(JUMP.vz, 0, 7, dt); }
+  const nx = me.pos.x + JUMP.vx * dt, nz = me.pos.z + JUMP.vz * dt;
+  // walls stop you in the air as on the ground: slide along them, never over
+  if (!blocked(nx, nz) || blocked(me.pos.x, me.pos.z)) { me.pos.x = nx; me.pos.z = nz; }
+  else if (!blocked(nx, me.pos.z)) { me.pos.x = nx; JUMP.vz = 0; }
+  else if (!blocked(me.pos.x, nz)) { me.pos.z = nz; JUMP.vx = 0; }
+  else { JUMP.vx = JUMP.vz = 0; }
+  const sp = Math.hypot(JUMP.vx, JUMP.vz);
+  if (sp > 0.3) me.wantYaw = Math.atan2(JUMP.vx, JUMP.vz);
+  me.speed = sp; mv.idle = 0;
+  return true;
+}
+/* the camera's dip on a landing, and the shadow left on the ground shrinking under you in the air */
+function jumpTick(dt) {
+  if (JUMP.dipT < 1) { JUMP.dipT = Math.min(1, JUMP.dipT + dt / 0.34); JUMP.dip = JUMP.dipA * Math.sin(JUMP.dipT * Math.PI) * (1 - JUMP.dipT * 0.35); }
+  else JUMP.dip = 0;
+  if (me.shadow) { const s = 1 - clamp(me.pos.y, 0, 1) * 0.45; if (me.shadow.scale.x !== s) me.shadow.scale.set(s, s, s); }
+}
+
+/* ---------- gamepad, on the standard mapping, in Xbox letters (a PlayStation pad's cross, circle, square, triangle
+   are the same buttons). Walking: the left stick, on a curve so a light push is an easy stroll and all the way over
+   runs (click it to keep running until you let go); the right stick looks (click it to put the camera back behind
+   you). A uses what's prompted and jumps when nothing is, X jumps any time, B backs out, Y or View opens the journal,
+   Menu pauses. Every menu, the choices, the journal, the board, the phone and the end: the D-pad or the left stick
+   moves the focus, A chooses, B goes back. In the car: RT gas, LT brake, the left stick steers, A the handbrake,
+   X the camera, B out. The pad rumbles wherever a haptic fires (skips and cancels have none, so they never rumble).
+   Nothing here allocates per frame ---------- */
+const padPrev = new Array(17).fill(false);
+let padSeen = false, padGP = null;
+const PADN = { dir: 0, t: 0, run: false, rc: 0, any: false };
+/* the response curve: gentle at the bottom of the throw, so the slowest walk is easy to hold, and full at the top */
+const padCurve = k => k * (0.25 + 0.75 * k);
+function padNow() {
+  if (!navigator.getGamepads) return null;
+  const l = navigator.getGamepads();
+  for (let i = 0; i < l.length; i++) { const g = l[i]; if (g && g.connected) return g; }
+  return null;
+}
+function pb(i) { const b = padGP && padGP.buttons[i]; return !!(b && b.pressed); }
+function pe(i) { return pb(i) && !padPrev[i]; }
+function pv(i) { const b = padGP && padGP.buttons[i]; return b ? b.value || (b.pressed ? 1 : 0) : 0; }
+/* the D-pad or the left stick as one direction (1 up, 2 down, 3 left, 4 right), once on the press, then repeating while held */
+function padDir(dt) {
+  const ax = padGP.axes[0] || 0, ay = padGP.axes[1] || 0;
+  let d = pb(12) ? 1 : pb(13) ? 2 : pb(14) ? 3 : pb(15) ? 4 : 0;
+  if (!d && ax * ax + ay * ay > 0.3) d = Math.abs(ay) >= Math.abs(ax) ? (ay < 0 ? 1 : 2) : (ax < 0 ? 3 : 4);
+  if (d !== PADN.dir) { PADN.dir = d; PADN.t = 0.38; return d; }
+  if (!d) return 0;
+  PADN.t -= dt; if (PADN.t <= 0) { PADN.t = 0.11; return d; }
+  return 0;
+}
 function padPoll(dt) {
-  const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g && g.connected) : null;
+  jumpUI();
+  const gp = padNow(); padGP = gp;
   if (!gp) { pad.x = pad.y = pad.mag = 0; return; }
   const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, m = Math.hypot(ax, ay);
-  if (m > DEAD) { const k = Math.min(1, (m - DEAD) / (1 - DEAD - 0.05)); pad.x = ax / m; pad.y = ay / m; pad.mag = k; } else { pad.x = pad.y = pad.mag = 0; }
-  const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0;
-  if (Math.abs(rx) > 0.16 || Math.abs(ry) > 0.16) {
-    camState.yaw -= rx * 2.4 * dt * SET.look; camState.pitch = clamp(camState.pitch + ry * (SET.invert ? -1 : 1) * 1.4 * dt * SET.look, -0.15, 0.75); camState.drag = 1.5; setDev("pad");
+  // the left stick: a radial dead zone, then the curve; clicked, it runs until it comes back to centre
+  if (m > DEAD) { const k = Math.min(1, (m - DEAD) / (1 - DEAD - 0.05)); pad.x = ax / m; pad.y = ay / m; pad.mag = PADN.run ? 1 : padCurve(k); }
+  else { pad.x = pad.y = pad.mag = 0; PADN.run = false; }
+  const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0, rm = Math.hypot(rx, ry);
+  if (rm > 0.16) {
+    // the right stick: the same kind of dead zone and curve, so a small correction is small
+    const k = padCurve(Math.min(1, (rm - 0.16) / 0.8)) / rm;
+    camState.yaw -= rx * k * 2.8 * dt * SET.look; camState.pitch = clamp(camState.pitch + ry * k * (SET.invert ? -1 : 1) * 1.5 * dt * SET.look, -0.15, 0.75); camState.drag = 1.5; PADN.rc = 0; setDev("pad");
   }
-  const btn = i => gp.buttons[i] && gp.buttons[i].pressed;
-  const edge = i => btn(i) && !padPrev[i];
-  const any = m > 0.3 || gp.buttons.some(b => b.pressed);
+  let any = m > 0.3;
+  for (let i = 0; i < gp.buttons.length && !any; i++) if (gp.buttons[i].pressed) any = true;
   if (any) { setDev("pad"); mv.idle = 0; }
+  const dir = padDir(dt);
   // in the car: RT gas, LT brake, the left stick steers, A the handbrake, X the camera, B out
-  const bv = i => (gp.buttons[i] ? gp.buttons[i].value || (gp.buttons[i].pressed ? 1 : 0) : 0);
-  pad.drive = S.phase === "drive" ? { rt: bv(7), lt: bv(6), sx: Math.abs(ax) > DEAD ? Math.sign(ax) * Math.min(1, (Math.abs(ax) - DEAD) / (1 - DEAD - 0.05)) : 0, a: bv(0) } : null;
-  if (S.phase === "drive") { if (DRV.state !== "drive" && DRV.skip && (edge(0) || edge(1))) DRV.skip(); else if (edge(1)) exitCar("pad"); if (edge(2)) driveCam(); if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; } }
-  else { if (edge(0)) act("a"); if (edge(1)) act("b"); }
-  if (edge(9)) act("pause"); if (edge(3) || edge(8)) act("journal");
-  if (choosing) { if (edge(12)) moveChoice(-1); if (edge(13)) moveChoice(1); }
-  if (S.phase === "pause" || S.phase === "journal") { if (edge(12)) moveFocus(-1); if (edge(13)) moveFocus(1); }
-  padPrev = {}; gp.buttons.forEach((b, i) => (padPrev[i] = b.pressed));
+  pad.drive = S.phase === "drive" ? (pad.driveO || (pad.driveO = { rt: 0, lt: 0, sx: 0, a: 0 })) : null;
+  if (pad.drive) { const d = pad.drive; d.rt = pv(7); d.lt = pv(6); d.sx = Math.abs(ax) > DEAD ? Math.sign(ax) * Math.min(1, (Math.abs(ax) - DEAD) / (1 - DEAD - 0.05)) : 0; d.a = pv(0); }
+  const host = padHost();
+  if (S.phase === "drive") { if (DRV.state !== "drive" && DRV.skip && (pe(0) || pe(1))) DRV.skip(); else if (pe(1)) exitCar("pad"); if (pe(2)) driveCam(); if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; } }
+  else if (S.skipOpen) { if (pe(0) || pe(1)) act("a"); }
+  else if (host && (S.phase === "pause" || S.phase === "journal" || !choosing)) {
+    if (dir) padMove(host, dir);
+    if (pe(0)) padPress(host);
+    if (pe(1)) act("b");
+    // the journal (or a long end) scrolls on the right stick
+    if (Math.abs(ry) > 0.2) { const sc = padScroller(host); if (sc) sc.scrollTop += ry * 900 * dt; }
+  }
+  else if (choosing) { if (dir === 1) moveChoice(-1); else if (dir === 2) moveChoice(1); if (pe(0)) act("a"); }
+  else {
+    if (pe(0)) { if (S.phase === "explore" && !near) jump("pad"); else act("a"); }
+    if (pe(2)) jump("pad");
+    if (pe(1)) act("b");
+    if (pe(10) && S.phase === "explore") PADN.run = !PADN.run;
+    if (pe(11) && S.phase === "explore" && me) PADN.rc = 0.45;
+  }
+  if (pe(9)) act("pause"); if (pe(3) || pe(8)) act("journal");
+  // the right stick's click: the camera swings back behind you
+  if (PADN.rc > 0 && me) { PADN.rc -= dt; camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-12 * dt)); camState.pitch = damp(camState.pitch, 0.2, 12, dt); camState.drag = 0.2; }
+  padLegend();
+  for (let i = 0; i < padPrev.length; i++) padPrev[i] = pb(i);
 }
+/* what the pad is driving: the menu or the screen that's up, or nothing (the world) */
+function padHost() {
+  const ph = S.phase;
+  if (ph === "pause") return pauseEl;
+  if (ph === "journal") return journalEl;
+  if (ph === "sheet") return sheetEl;
+  if (ph === "close") return closeEl;
+  if (ph === "end" && !endEl.hidden) return endEl;
+  return null;
+}
+const PAD_SEL = "button:not([disabled]), a[href], input:not([disabled]):not([type=hidden]), select, textarea, [data-car], [data-note]";
+/* a thing the focus can land on: on screen, shown, and on the phone's current screen */
+function padOk(e) {
+  if (!e || !e.isConnected || e.closest("[hidden]")) return false;
+  const sc = e.closest(".app-screen"); if (sc && !sc.classList.contains("is-on")) return false;
+  const r = e.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight) return false;
+  const cs = getComputedStyle(e); return cs.visibility !== "hidden" && cs.display !== "none" && +cs.opacity > 0.05;
+}
+function padList(host) { return $$(PAD_SEL, host).filter(padOk); }
+function padFocus(e) {
+  if (!e.matches("button, a[href], input, select, textarea") && !e.hasAttribute("tabindex")) e.setAttribute("tabindex", "-1");
+  e.focus({ preventScroll: true });
+  try { e.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (x) {}
+}
+/* nothing focused here yet: the first thing, or the one that's chosen (the open tab, the main button) */
+function padFirst(host) {
+  const l = padList(host); if (!l.length) return null;
+  // a way back (the phone's own back, the Back button) is never where the focus starts unless it's all there is
+  const e = l.find(x => x.getAttribute("aria-selected") === "true" || x.classList.contains("btn--primary") || x.classList.contains("app-btn--gold")) || l.find(x => !x.matches("[data-back], .st-back, .st-x, [data-st$='back']")) || l[0];
+  padFocus(e); return e;
+}
+function padCur(host) { const a = document.activeElement; return a && a !== document.body && host.contains(a) && padOk(a) ? a : null; }
+/* move the focus the way pressed: the nearest thing that way on screen, so rows, columns and the phone's lists all work */
+function padMove(host, dir) {
+  const cur = padCur(host);
+  if (!cur) { if (padFirst(host) && SC()) SC().tick(); return; }
+  if (cur.matches("input[type=range]") && dir > 2) {
+    cur.value = String(+cur.value + (dir === 4 ? 5 : -5));
+    cur.dispatchEvent(new Event("input", { bubbles: true })); cur.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
+  const r0 = cur.getBoundingClientRect(), cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+  let best = null, bs = 1e9;
+  for (const e of padList(host)) {
+    if (e === cur || e.contains(cur) || cur.contains(e)) continue;
+    const r = e.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy;
+    // across: the gap between the two side by side (none when they overlap, as a wide slider under a toggle does)
+    const along = dir === 1 ? -dy : dir === 2 ? dy : dir === 3 ? -dx : dx;
+    const gap = dir < 3 ? Math.max(0, r.left - r0.right, r0.left - r.right) : Math.max(0, r.top - r0.bottom, r0.top - r.bottom);
+    if (along < 4) continue;
+    const sc = along + gap * 2.2 + (dir < 3 ? Math.abs(dx) : Math.abs(dy)) * 0.1;
+    if (sc < bs) { bs = sc; best = e; }
+  }
+  if (best) { padFocus(best); if (SC()) SC().tick(); }
+}
+/* A: press what has the focus (a slider takes left and right instead); nothing focused yet, find something first */
+function padPress(host) {
+  const cur = padCur(host);
+  if (!cur) { padFirst(host); return; }
+  if (cur.matches("input[type=range]")) return;
+  cur.click();
+}
+function padScroller(host) {
+  for (const s of [".jr-b", ".app-screen.is-on .app-scroll", ".en"]) { const e = host.querySelector(s); if (e && e.scrollHeight > e.clientHeight + 2) return e; }
+  return host.scrollHeight > host.clientHeight + 2 ? host : null;
+}
+/* the rumble: the haptic's pattern as a dual-rumble on the pad in use, scaled by k */
+const RUMBLE = { tap: [0.1, 0.32, 45], select: [0.22, 0.45, 70], arrive: [0.14, 0.36, 90], success: [0.5, 0.65, 240], unlock: [0.38, 0.55, 140], heart: [0.2, 0.3, 200] };
+function rumble(kind, k) {
+  const gp = padGP, va = gp && gp.vibrationActuator;
+  if (dev !== "pad" || !va || !va.playEffect) return;
+  const R = RUMBLE[kind] || RUMBLE.tap, s = k == null ? 1 : k;
+  try { const p = va.playEffect(va.type || "dual-rumble", { startDelay: 0, duration: R[2], strongMagnitude: Math.min(1, R[0] * s), weakMagnitude: Math.min(1, R[1] * s) }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+}
+/* every haptic in the episode (the story's own, the site's sounds and stings through JG_FX, the phone on the desk) also
+   rumbles the pad while the episode is open; the site's own haptic carries on as it was */
+(() => {
+  const h0 = window.JG_HAPTIC;
+  if (h0 && h0.__pad) return;
+  const h = function (kind, k) { if (h0) h0(kind); if (S.open) rumble(kind, k); };
+  h.__pad = true; window.JG_HAPTIC = h;
+})();
 function moveChoice(d) { const bs = $$(".st-ch", choicesOl); const i = bs.indexOf(document.activeElement); const n = clamp((i < 0 ? 0 : i + d), 0, bs.length - 1); if (bs[n]) { bs[n].focus({ preventScroll: true }); if (SC()) SC().tick(); } }
-function moveFocus(d) { const host = S.phase === "pause" ? pauseEl : journalEl; const bs = $$("button, input", host).filter(b => b.offsetParent); const i = bs.indexOf(document.activeElement); const n = clamp((i < 0 ? 0 : i + d), 0, bs.length - 1); if (bs[n]) bs[n].focus({ preventScroll: true }); }
 
 /* ================================================================
    INTERACTION: spots, prompts, talking
@@ -1156,7 +1367,10 @@ function updatePrompts() {
     // facing matters a little: things in front of you win ties
     const a = Math.abs(angTo(me.yaw, Math.atan2(s.p.x - me.pos.x, s.p.z - me.pos.z)));
     // a story thing you haven't looked at yet wins over a plain thing beside it (the drawer in the filing cabinet)
-    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0);
+    // and standing on a thing's own spot, facing it, means that thing (the radio under the whiteboard), whatever's beside
+    // it; seated, the seat you're on (its prompt is how you get up)
+    const st = s.sp.stand, own = me.seated ? (s.o.world === "sit" ? 2 : 0) : st && a < 0.7 ? Math.max(0, 1 - Math.hypot(st.x - me.pos.x, st.z - me.pos.z) / 0.6) : 0;
+    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - own;
     if (d < r && score < bd) { best = s; bd = score; }
   }
   if (best !== near && best) progress();
@@ -1177,10 +1391,12 @@ function updatePrompts() {
   if (v2.z >= 1) { q.x = VW / 2 - 60; q.y = 90; }
   q.x = clamp(q.x, 24, VW - 200); q.y = clamp(q.y, 84, VH - 110);
   promptEl.hidden = false;
-  if (promptEl.dataset.spot !== best.id) {
-    $(".st-prompt__verb", promptEl).textContent = best.o.verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
-    promptEl.dataset.spot = best.id;
-    $(".st-act__verb", actEl).textContent = best.o.verb; actEl.setAttribute("aria-label", best.o.verb + " " + best.o.label);
+  // seated, the seat's own prompt gets you up again
+  const verb = best.o.world === "sit" && me.seated ? UI.v_stand || best.o.verb : best.o.verb;
+  if (promptEl.dataset.spot !== best.id || promptEl.dataset.verb !== verb) {
+    $(".st-prompt__verb", promptEl).textContent = verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
+    promptEl.dataset.spot = best.id; promptEl.dataset.verb = verb;
+    $(".st-act__verb", actEl).textContent = verb; actEl.setAttribute("aria-label", verb + " " + best.o.label);
   }
   promptEl.style.transform = "translate(" + Math.round(q.x) + "px," + Math.round(q.y) + "px)";
   // on a touch screen, the thing you're next to also gets a big button under your right thumb
@@ -1680,7 +1896,7 @@ const KEYNAME = { shift: "Shift", " ": "Space", enter: "Enter", arrowup: "Up", a
 const keyLabel = k => KEYNAME[k] || (k && k.length === 1 ? k.toUpperCase() : String(k || "").replace(/^./, c => c.toUpperCase()));
 function setDev(d) {
   if (dev === d) return;
-  dev = d; el.dataset.dev = d; glyphs(); driveGlyphs();
+  dev = d; el.dataset.dev = d; glyphs(); driveGlyphs(); padLegend(); jumpUI();
 }
 function glyphs() {
   const key = $(".st-prompt__key", promptEl);
@@ -1690,9 +1906,9 @@ function glyphs() {
 }
 function hintText() {
   if (dev === "touch") return UI.walk_touch;
-  if (dev === "pad") return UI.walk_pad;
+  if (dev === "pad") return UI.walk_pad + " X to jump.";
   const K = SET.keys, wasd = [K.up, K.left, K.down, K.right].every(k => k.length === 1);
-  return UI.walk_pointer.replace("{move}", wasd ? (K.up + K.left + K.down + K.right).toUpperCase() : "The arrow keys").replace("{run}", keyLabel(K.run)).replace("{act}", keyLabel(K.act)).replace("{journal}", keyLabel(K.journal));
+  return UI.walk_pointer.replace("{move}", wasd ? (K.up + K.left + K.down + K.right).toUpperCase() : "The arrow keys").replace("{run}", keyLabel(K.run)).replace("{act}", keyLabel(K.act)).replace("{journal}", keyLabel(K.journal)) + " Space to jump.";
 }
 function act(k) {
   if (S.skipOpen && (k === "a" || k === "pause" || k === "b")) { S.skipOpen(); return; }
@@ -1734,6 +1950,8 @@ addEventListener("keydown", e => {
   if (k === SET.keys.journal) { e.preventDefault(); act("journal"); return; }
   if (choosing && /^[1-4]$/.test(k)) { e.preventDefault(); pick(+k - 1, "key"); return; }
   if (choosing && (k === "arrowdown" || k === "arrowup")) { e.preventDefault(); moveChoice(k === "arrowdown" ? 1 : -1); return; }
+  // Space jumps when you're on your feet exploring (E and Enter still use things); anywhere else it moves the talk on
+  if (k === " " && S.phase === "explore" && !choosing && !(e.target && e.target.closest && e.target.closest("button,a,input"))) { e.preventDefault(); if (!e.repeat) jump("key"); return; }
   if ((k === SET.keys.act || k === "enter" || k === " ") && !choosing && !moveKey) {
     if (e.target && e.target.closest && e.target.closest("button,a,input") && k !== SET.keys.act) return;
     e.preventDefault(); act("a");
@@ -1816,6 +2034,31 @@ function tapAt(x, y) {
   if (t > 0 && t < 60) { const p = ray.ray.origin.clone().addScaledVector(ray.ray.direction, t); if (walkTo(p)) FX("key"); }
 }
 capEl.addEventListener("click", () => { if (line) endLine(true); });
+/* the pad's glyphs (Xbox letters, drawn in CSS) on the buttons they press, a line of what the pad does here, and the
+   Jump button under the right thumb on a touch screen, only while you're on your feet exploring */
+el.insertAdjacentHTML("beforeend", '<button class="st-jump" type="button" hidden aria-label="Jump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg><span class="st-jump__verb">Jump</span></button><div class="st-legend" aria-hidden="true" hidden></div>');
+const jumpEl = $(".st-jump", el), legendEl = $(".st-legend", el);
+const glyph = k => '<kbd class="st-glyph" aria-hidden="true">' + k + "</kbd>";
+$$(".st-back", el).forEach(b => b.insertAdjacentHTML("beforeend", glyph("B")));
+skipEl.insertAdjacentHTML("beforeend", glyph("A"));
+{ const jb = $("[data-st='journal']", el); if (jb) jb.insertAdjacentHTML("beforeend", glyph("Y")); }
+jumpEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); jump("touch"); });
+jumpEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0) jump("key"); });
+let jumpShown = false;
+function jumpUI() {
+  const on = dev === "touch" && S.open && S.phase === "explore" && !DRV.state && !!me && !me.inCar;
+  if (on !== jumpShown) { jumpShown = on; jumpEl.hidden = !on; }
+}
+let legendMode = "";
+function padLegend() {
+  const ph = S.phase;
+  const mode = dev !== "pad" || !S.open ? "" : ph === "pause" || ph === "journal" || ph === "sheet" || ph === "close" ? "menu" : ph === "end" ? "end" : choosing ? "choose" : ph === "explore" ? (near ? "near" : "walk") : "";
+  if (mode === legendMode) return;
+  legendMode = mode; legendEl.hidden = !mode;
+  const g = (k, t) => "<span>" + glyph(k) + E(t) + "</span>";
+  legendEl.innerHTML = mode === "menu" ? g("A", "Select") + g("B", "Back") : mode === "end" ? g("A", "Select") : mode === "choose" ? g("A", "Choose") :
+    mode === "walk" ? g("A", "Jump") + g("Y", UI.journal) : mode === "near" ? g("X", "Jump") + g("Y", UI.journal) : "";
+}
 actEl.addEventListener("click", e => { e.stopPropagation(); if (near && S.phase === "explore") interact(near.id, "tap"); });
 skipEl.addEventListener("click", e => { e.stopPropagation(); if (S.skipOpen) S.skipOpen(); });
 el.addEventListener("click", e => {
@@ -1931,10 +2174,10 @@ async function enterCar(c, how) {
   DRV.au = AU.drive({ running: !!(v.engine && v.engine.on), start: false, rain: S.scene === "keys" ? 0 : 1 });
   const skipped = new Promise(r => { DRV.skip = () => { DRV.skip = null; r("skip"); }; });
   if (me.enterCar) {
-    let p = null; try { p = me.enterCar(v, "driver"); } catch (e) {}
+    let p = null; try { p = me.enterCar(v, "driver", { onDoor: carDoor }); } catch (e) {}
     const r = await Promise.race([p || Promise.resolve(), skipped]);
     if (DRV.state !== "enter") return;
-    if (r === "skip") { try { me.drive(v, "driver"); } catch (e) {} if (v.doors) v.doors.open("driver", 0); }
+    if (r === "skip") { try { me.drive(v, "driver"); } catch (e) {} if (v.doors) v.doors.open("driver", 0); DRV.doorOpen = false; } // a skip shuts it silently
   } else {
     // no seated driver to show: face the door, open it, step in out of sight, shut it
     const at = doorPoint(c);
@@ -1951,6 +2194,8 @@ async function enterCar(c, how) {
   if (DRV.cam === "car" && me.inCar) me.group.visible = false;
   drvEl.hidden = false; driveGlyphs();
 }
+/* the door leaving its latch or shutting, in the frame people.js moves it: the sound and the buzz together */
+function carDoor(open) { DRV.doorOpen = open; if (DRV.au && DRV.entry) DRV.au.door(open, doorPoint(DRV.entry)); hap("tap"); }
 function swingDoor(v, to, secs) {
   return new Promise(res => {
     if (!v.doors) { res(); return; }
@@ -1980,7 +2225,7 @@ async function exitCar(how, instant) {
   // the driver's door against something (another car, a wall): no climbing out into it; you step out on a clear side
   const ds = doorStand(c), doorFree = !blocked(ds.x, ds.z, 0.25);
   if (!instant && me.inCar && me.exitCar && doorFree) {
-    let p = null; try { p = me.exitCar(v); } catch (e) {}
+    let p = null; try { p = me.exitCar(v, { onDoor: carDoor }); } catch (e) {}
     out = (await Promise.race([p || Promise.resolve(), skipped])) !== "skip";
   } else if (!instant && !me.inCar) { await swingDoor(v, 1, 0.38); await Promise.race([sleep(260), skipped]); await swingDoor(v, 0, 0.3); }
   DRV.skip = null;
@@ -2030,7 +2275,9 @@ function driveInput(dt) {
 }
 function tickDrive(dt) {
   const v = DRV.veh; if (!v || !DRV.state) return;
-  const inp = DRV.state === "drive" && S.phase === "drive" ? driveInput(dt) : { throttle: 0, brake: DRV.state === "exit" ? 1 : 0, steer: 0, handbrake: DRV.state === "exit" ? 0.3 : 1 };
+  // getting out it brakes to a stop, then holds on the handbrake (a held brake at a standstill would select reverse)
+  const rolling = DRV.state === "exit" && Math.abs(v.speed || 0) > 0.4;
+  const inp = DRV.state === "drive" && S.phase === "drive" ? driveInput(dt) : { throttle: 0, brake: rolling ? 1 : 0, steer: 0, handbrake: rolling ? 0.3 : 1 };
   v.update(dt, inp);
   const p = v.pose || { x: v.object.position.x, z: v.object.position.z, yaw: v.object.rotation.y };
   // with no seated driver to show, you ride along unseen; a seated one is people.js's to place
@@ -2619,6 +2866,12 @@ window.JG_STORY = {
     yawTo: (x, z, off) => { const a = Math.atan2(x - me.pos.x, z - me.pos.z); camState.yaw = a + Math.PI + (off || 0); camState.drag = 9; camState.init = true; updateCamera(0.016); camera.updateMatrixWorld(); updateWay(0.016); return way; },
     input: () => ({ mag: +mv.mag.toFixed(3), run: mv.mag >= RUN_AT, x: +mv.x.toFixed(3), z: +mv.z.toFixed(3), want: +speedFor(mv.mag).toFixed(3), speed: me ? +me.speed.toFixed(3) : 0, running: mv.running, stick: !stickEl.hidden, stickRun: stickEl.classList.contains("is-run"), path: mv.path ? mv.path.map(p => [+p.x.toFixed(2), +p.z.toFixed(2)]) : null, dev, keys: { ...SET.keys }, runToggle: SET.runToggle }),
     speedFor: m => speedFor(m),
+    /* the jump and the pad (tools/verify/story.mjs --jump, --pad) */
+    jump: how => jump(how || "debug"),
+    jumpState: () => ({ can: canJump(), jumping: !!(me && me.jumping), air: !!(me && me.airborne), st: me && me.jmp ? me.jmp.st : null, y: me ? +me.pos.y.toFixed(3) : 0, x: me ? +me.pos.x.toFixed(3) : 0, z: me ? +me.pos.z.toFixed(3) : 0, n: JUMP.n, how: JUMP.how || "", last: JUMP.last || null, dip: +JUMP.dip.toFixed(3), btn: !jumpEl.hidden, legend: legendEl.hidden ? "" : legendEl.textContent, dev, run: PADN.run, cam: me ? [+camState.yaw.toFixed(3), +me.yaw.toFixed(3), +camState.pitch.toFixed(3)] : null, speed: me ? +me.speed.toFixed(3) : 0 }),
+    sheet: () => { if (S.phase !== "explore" && S.phase !== "talk") return false; openDesk(); return true; },
+    end: k => { ending(k || "passing"); return true; },
+    focus: () => { const a = document.activeElement; if (!a || a === document.body) return null; const host = padHost(); return { tag: a.tagName.toLowerCase(), text: (a.getAttribute("aria-label") || a.textContent || "").trim().slice(0, 40), inHost: !!(host && host.contains(a)), outline: getComputedStyle(a).outlineStyle }; },
     /* step the walk with a fixed clock, so the harness doesn't depend on the frame rate */
     sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); } return me ? [me.pos.x, me.pos.z] : null; },
     put: (x, z, yaw) => { mv.path = null; me.pos.set(x, 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
@@ -2670,6 +2923,17 @@ window.JG_STORY = {
     seated: () => !!(me && me.seated),
     obj: k => { objective(k || null); return S.obj; },
     unlook: id => { delete S.looked[id]; },
-    skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; }
+    skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; },
+    /* the getting in and out stills (tools/verify/car-sheet.mjs): stop the loop, then step whole frames on a fixed clock and draw */
+    freeze: on => { S.attract = !!on; last = performance.now(); return S.attract; },
+    step: (n, dt, draw = true) => {
+      for (let i = 0; i < n; i++) { S.t += dt; if (DRV.veh) tickDrive(dt); if (!DRV.state) moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updateCamera(dt); }
+      if (!draw) return true;
+      updateLamps(); camera.updateMatrixWorld();
+      const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
+      if (ground && quality >= 1) post.reflect(scene, camera, world, ground);
+      post.render(scene, camera, S.t); return true;
+    },
+    you: () => me, veh: () => DRV.veh
   }
 };

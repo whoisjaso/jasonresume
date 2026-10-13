@@ -3,6 +3,13 @@
  "out": "assets/voice/story-v3",
  "lines": [
   {
+   "id": "lot-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Almeda Genoa Road. The lot's closed, and the lamps are still on.",
+   "speed": 0.9
+  },
+  {
    "id": "lot-dell-1",
    "who": "dell",
    "voice": "am_onyx",
@@ -61,6 +68,34 @@
    "who": "dell",
    "voice": "am_onyx",
    "text": "Well, look at that. Thank you. Go on in before you drown."
+  },
+  {
+   "id": "lot-you-2",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Clear vehicles. Clear terms. Real people. Somebody painted that and meant it.",
+   "speed": 0.9
+  },
+  {
+   "id": "lot-you-3",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A board of sold tags by the door. Somebody keeps count.",
+   "speed": 0.9
+  },
+  {
+   "id": "lot-you-4",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Rain beads on the hood like it was waxed this afternoon.",
+   "speed": 0.9
+  },
+  {
+   "id": "lot-you-5",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The lamps hang upside down in the puddles, waiting for somebody to step on them.",
+   "speed": 0.9
   },
   {
    "id": "off-renata-1",
@@ -129,10 +164,73 @@
    "text": "That's one for the team. Let me get someone for you."
   },
   {
+   "id": "off-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Folders tabbed by hand. Form 130-U, webDEALER, liens, temp tags.",
+   "speed": 0.9
+  },
+  {
+   "id": "off-you-2",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A data model in marker. Lead, deal, title. Three notes hang off it.",
+   "speed": 0.9
+  },
+  {
+   "id": "off-you-3",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A lead from Facebook Marketplace, researched and waiting. The seller's labelled example.",
+   "speed": 0.9
+  },
+  {
+   "id": "off-you-4",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A ledger, closed. The kind you keep even when the computer keeps it too.",
+   "speed": 0.9
+  },
+  {
+   "id": "off-you-5",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "An arcade cabinet. After Hours: The Run. Somebody turned a resume into a game.",
+   "speed": 0.9
+  },
+  {
+   "id": "off-you-6",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The coffee machine ticks as it cools.",
+   "speed": 0.9
+  },
+  {
+   "id": "off-you-7",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "From in here the lot looks like a painting of itself.",
+   "speed": 0.9
+  },
+  {
    "id": "mem-library-1",
    "who": "library",
    "voice": "bf_emma",
    "text": "The library will close soon. Please bring your books to the front desk."
+  },
+  {
+   "id": "mem-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The desk lamp hums. The rest of the floor has gone dark.",
+   "speed": 0.9
+  },
+  {
+   "id": "keys-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Morning. Dry asphalt. The lamps are off for once.",
+   "speed": 0.9
   },
   {
    "id": "dec-dell-1",

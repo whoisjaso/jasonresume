@@ -160,6 +160,104 @@
    "file": "dec-dell-1.mp3",
    "timings": "dec-dell-1.json",
    "voice": "am_onyx"
+  },
+  "lot-you-1": {
+   "hash": "7b3536f63d03",
+   "duration": 6.0,
+   "file": "lot-you-1.mp3",
+   "timings": "lot-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "lot-you-2": {
+   "hash": "84555ad4cd87",
+   "duration": 6.65,
+   "file": "lot-you-2.mp3",
+   "timings": "lot-you-2.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "lot-you-3": {
+   "hash": "ac5ccffaaa13",
+   "duration": 5.025,
+   "file": "lot-you-3.mp3",
+   "timings": "lot-you-3.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "lot-you-4": {
+   "hash": "e07852d2039a",
+   "duration": 4.7,
+   "file": "lot-you-4.mp3",
+   "timings": "lot-you-4.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "lot-you-5": {
+   "hash": "5d91ece783d8",
+   "duration": 6.275,
+   "file": "lot-you-5.mp3",
+   "timings": "lot-you-5.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-1": {
+   "hash": "74fb1b08d05f",
+   "duration": 6.7,
+   "file": "off-you-1.mp3",
+   "timings": "off-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-2": {
+   "hash": "76d6e16133ce",
+   "duration": 6.275,
+   "file": "off-you-2.mp3",
+   "timings": "off-you-2.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-3": {
+   "hash": "aeacfb5143da",
+   "duration": 7.7,
+   "file": "off-you-3.mp3",
+   "timings": "off-you-3.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-4": {
+   "hash": "e8fff467b811",
+   "duration": 5.975,
+   "file": "off-you-4.mp3",
+   "timings": "off-you-4.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-5": {
+   "hash": "9cc61bd5a887",
+   "duration": 7.475,
+   "file": "off-you-5.mp3",
+   "timings": "off-you-5.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-6": {
+   "hash": "b2896b6af0e0",
+   "duration": 3.3,
+   "file": "off-you-6.mp3",
+   "timings": "off-you-6.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "off-you-7": {
+   "hash": "f0c18a6d826b",
+   "duration": 4.45,
+   "file": "off-you-7.mp3",
+   "timings": "off-you-7.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "mem-you-1": {
+   "hash": "449aa0e4c4c0",
+   "duration": 4.95,
+   "file": "mem-you-1.mp3",
+   "timings": "mem-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "keys-you-1": {
+   "hash": "17dadb1b7729",
+   "duration": 4.525,
+   "file": "keys-you-1.mp3",
+   "timings": "keys-you-1.json",
+   "voice": "af_heart,af_nicole"
   }
  },
  "voice": {
@@ -172,5 +270,5 @@
   },
   "source": "Kokoro-82M, an open-weight model (Apache-2.0), a stock voice (not a clone)"
  },
- "updated": "2026-10-12"
+ "updated": "2026-10-13"
 }

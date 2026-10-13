@@ -23,6 +23,8 @@ export const U = {
   uMirror: { value: 0 },
   uWetAll: { value: 0.6 },
   uSat: { value: 1 },
+  // the wind's push on the rain, in metres a second along x and z (world.js gusts it on the lot)
+  uWind: { value: new THREE.Vector2(0, 0) },
   // the set's own reflections: a cube rendered from the middle of the set once it is up (world.js), and how much to trust it
   uEnv: { value: null },
   uEnvOn: { value: 0 },

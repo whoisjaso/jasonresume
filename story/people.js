@@ -171,7 +171,8 @@ class Motion {
 const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion(), _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3();
 const _e = new THREE.Euler(0, 0, 0, "ZXY"), _m = new THREE.Matrix4(), _m2 = new THREE.Matrix4();
 const _k1 = new THREE.Vector3(), _k2 = new THREE.Vector3(), _k3 = new THREE.Vector3(), _k4 = new THREE.Vector3(), _kq = new THREE.Quaternion(), _kq2 = new THREE.Quaternion();
-const _f1 = new THREE.Vector3(), _f2 = new THREE.Vector3(), _f3 = new THREE.Vector3(), _f4 = new THREE.Vector3();
+const _f1 = new THREE.Vector3(), _f2 = new THREE.Vector3(), _f3 = new THREE.Vector3(), _f4 = new THREE.Vector3(), _cr = new THREE.Vector3();
+const LR = ["l", "r"]; // the two sides, for loops that run every frame without making a new array
 const UP = new THREE.Vector3(0, 1, 0), AXX = new THREE.Vector3(1, 0, 0);
 const _cq0 = new THREE.Quaternion(), _cq1 = new THREE.Quaternion(), _cq2 = new THREE.Quaternion(), _cq3 = new THREE.Quaternion();
 
@@ -504,6 +505,8 @@ class Person {
     // ---- in or at a car: the sequence (walking up, the door, sitting in, the wheel) moves the body
     if (this.car) this.carStep(dt);
     if (this.jobs && this.jobs.length) this.runJobs(dt);
+    // ---- a jump: up, the air and down again (the episode carries the body over the ground)
+    if (this.jmp) this.jumpStep(dt); else if (this.jK > 0.001) { this.jK = damp(this.jK, 0, 18, dt); this.jC = damp(this.jC, 0, 30, dt); }
     const seated = !!(this.car && this.car.seated);
     // ---- where the body is and how fast it really moves (seated, the car moves it: no walking)
     if (seated) { this.lastPos = (this.lastPos || new THREE.Vector3()).copy(this.pos); this.vel.set(0, 0, 0); }
@@ -557,7 +560,7 @@ class Person {
     const v0 = nv[0], vN = nv[LC.length - 1];
     f *= gs < v0 ? clamp(Math.sqrt(gs / v0), 0.75, 1) : gs > vN ? clamp(Math.sqrt(gs / vN), 1, 1.2) : 1;
     f *= this.tempo;
-    if (this.locoW > 0.01) this.gPhase = (this.gPhase + f * dt) % 1;
+    if (this.locoW > 0.01) this.gPhase = (this.gPhase + f * dt * (1 - (this.jAir || 0))) % 1; // in the air the stride holds
     // the phase the episode listens to for footsteps: each heel strike is a multiple of pi
     this.phase = this.gPhase * TAU;
     // stride warp: the blended stride scaled so that the feet travel exactly with the ground
@@ -685,6 +688,8 @@ class Person {
     if (jw > 0.01) { this.rot("spine_03", 0, -0.1 * u * jw, 0); this.rot("pelvis", 0, 0.05 * u * jw, 0); }
     // reaching: lean and turn toward what the hand goes for, and bend at the knees for something low
     this.reachBody(hipC, dt);
+    // jumping: the crouch, the air, the landing
+    if (this.jK > 0.001) this.jumpBody(hipC);
     // driving: reclined in the seat, ducking under the roof getting in and out, pushed about by the corners
     if (this.car) this.carBody(dt);
 
@@ -781,6 +786,7 @@ class Person {
       const wantYaw = this.yaw;
       const wantW = _f2.copy(want).applyMatrix4(toP);
       if (!F.init) { F.pos.copy(wantW); F.yaw = wantYaw; F.lock = true; F.step = 0; F.init = true; F.w = 1; }
+      if (this.jAir) { this.jumpLeg(s, g, F); continue; }
       if (this.loco) {
         // the clip says whether this foot bears weight now
         let cs = 0; for (let i = 0; i < LC.length; i++) if (this.lw[i] > 0.002) cs += this.lw[i] * contactAt(LC[i], (this.gPhase + LC[i].heel) % 1, s);
@@ -915,6 +921,8 @@ class Person {
       tgt.y += Math.sin(this.t * 2.1) * 0.006 + this.locoW * 0.01 * Math.sin(this.phase * 2);
       this.ikArm("r", tgt, _f2.set(R.upperarm_r.at.x - 0.25, R.upperarm_r.at.y - 0.5, R.upperarm_r.at.z - 0.1), uk);
     }
+    // jumping: the arms load, throw and balance
+    if (this.jK > 0.01) this.jumpArms();
     // hands that hold or rest on something: a carried thing, the thighs seated (reaches go on top of these)
     this.pinArms(dt);
     // reaches: to a point in the world, approach, contact, retract
@@ -1112,8 +1120,9 @@ class Person {
      node, handle, inner), speed, steerAngle, wheelAngle. Car local axes: +Z forward, +X the driver's side, +Y up.
      While a sequence runs, people.js moves the body itself: main.js leaves pos and wantYaw alone until it resolves.
      ================================================================ */
-  enterCar(v, side = "driver") { return this.carRun(v, side, "enter"); }
-  exitCar(v) { const c = this.car; if (!c) return Promise.resolve(false); return this.carRun(v || c.v, c.side, "exit"); }
+  /* o.onDoor(open) is called in the frame the door leaves its latch and in the frame it shuts (for the sound and the buzz) */
+  enterCar(v, side = "driver", o) { return this.carRun(v, side, "enter", o); }
+  exitCar(v, o) { const c = this.car; if (!c) return Promise.resolve(false); return this.carRun(v || c.v, c.side, "exit", o); }
   /* driving each frame: p.drive(car) (or p.driving = car) puts the body straight in the seat, hands on the wheel */
   drive(v, side = "driver") { if (!v) { this.driving = null; return; } if (!this.car || this.car.v !== v) this.seatIn(v, side); }
   get driving() { return this.car && this.car.mode === "drive" ? this.car.v : null; }
@@ -1153,6 +1162,16 @@ class Person {
       gas: new THREE.Vector3(S.x - 0.15, S.y - 0.24, S.z + 0.74), brake: new THREE.Vector3(S.x - 0.02, S.y - 0.2, S.z + 0.7),
       rest: new THREE.Vector3(S.x + 0.14, S.y - 0.26, S.z + 0.64)
     };
+    // the door: its length, and a point at r back from the hinge, swung a out (on the ground, body frame)
+    const D = v.doors, len = D && D.len ? D.len() : 1.1;
+    const polar = (r, a) => new THREE.Vector3(G.H.x + sx * r * Math.sin(a), 0, G.H.z - r * Math.cos(a));
+    c.door = { len, a: D && D.angle ? D.angle(side) : 0, swing: null, onDoor: null };
+    // outside the door's sweep, just behind the handle (in); the same, behind the open door's back edge (out)
+    c.P.A = polar(len + 0.24, 0.27);
+    c.P.polar = polar;
+    // in the opening, beside the seat, to sit from; the grab rail over the opening (the hand away from the door)
+    c.P.B = new THREE.Vector3(sx * (half + 0.17), 0, S.z + 0.12);
+    c.P.roof = new THREE.Vector3(sx * (Math.abs(S.x) + 0.27), S.y + 0.84, S.z + 0.2);
     return c;
   }
   seatIn(v, side) {
@@ -1161,44 +1180,78 @@ class Person {
     c.seated = true; c.sitW = c.hipW = c.feetW = c.wheelK = 1; c.yaw = 0;
     c.hip.copy(c.G.S); c.root.set(c.G.S.x, 0, c.G.S.z);
     c.feet.l.copy(c.P.rest); c.feet.r.copy(c.P.gas);
+    if (v.weight) v.weight(1, side);
     this.lastPos = null;
   }
   unseat() {
     const c = this.car; if (!c) return;
+    // (a skip lands here too: any hand still on the door or the roof lets go at once)
+    if (this.reaches) { for (const s of ["l", "r"]) { const r = this.reaches[s]; if (r && r.resolve) r.resolve(false); } this.reaches = null; }
+    if (c.v && c.v.weight) c.v.weight(0, c.side);
     this.car = null; this.carK = 0; this.taskLook = null; this.wheelHands = null;
     this.feet.l.init = this.feet.r.init = false; this.lastPos = null;
   }
 
-  /* build and run a sequence; resolves when it ends */
-  carRun(v, side, mode) {
+  /* build and run a sequence; resolves when it ends. In: walk up behind the handle, take it, pull the door open
+     (it swings on, easing out against its check), step into the opening with a hand on the roof rail and one on the
+     door's frame, the inside leg into the footwell, duck under the roof and lower onto the seat (the door comes in
+     with the hand, the car dips on its springs), the other leg in; lean out for the pull, pull it shut (it shuts hard
+     and the car rocks), hands to the wheel. Out is the same backwards, then a step clear and a swing of the door. */
+  carRun(v, side, mode, o = {}) {
     if (this.car && mode === "enter") this.unseat();
     const c = mode === "enter" ? this.newCar(v, side, "enter") : this.car;
-    c.mode = mode;
-    const G = c.G, S = G.S, sx = G.sx, P = c.P;
-    const door = (a, b, d) => ({ run: st => { const u = sstep(0, 1, st.t / d); if (v.doors && v.doors.open) v.doors.open(side, lerp(a, b, u)); return st.t >= d; } });
-    const handle = () => v.doors && v.doors.handle ? v.doors.handle(side) : this.carW(_v1.set(sx * (G.half + 0.03), 0.92, G.H.z - 0.95), new THREE.Vector3());
-    const inner = () => v.doors && v.doors.inner ? v.doors.inner(side) : this.carW(_v1.set(sx * (G.half - 0.09), 0.82, G.H.z - 0.6), new THREE.Vector3());
-    const reach = (hand, P, hold) => ({ start: st => { st.p = this.reachTo(P, { hand, hold, stay: true }); }, run: () => this.reaches && this.reaches[hand] && this.reaches[hand].phase === "on" });
-    const release = hand => ({ start: () => this.release(hand), run: () => !(this.reaches && this.reaches[hand]) });
+    c.mode = mode; c.door.onDoor = o.onDoor || null; c.door.a = v.doors && v.doors.angle ? v.doors.angle(side) : 0;
+    const G = c.G, S = G.S, sx = G.sx, P = c.P, D = v.doors, len = c.door.len;
+    // the hand on the door's side, and the other one; points read live (the door swings, the car rocks)
+    const hDoor = sx > 0 ? "l" : "r", hFar = sx > 0 ? "r" : "l";
+    const pts = { handle: new THREE.Vector3(), inner: new THREE.Vector3(), frame: new THREE.Vector3(), roof: new THREE.Vector3(), wheel: new THREE.Vector3() };
+    // the wheel's rim at 2 o'clock for the right hand, 10 for the left (its own frame: +Y is 12, +X the driver's left)
+    const W = G.steer, wl = new THREE.Vector3(G.rimR * Math.sin(Math.PI / 3) * (hFar === "l" ? 1 : -1), G.rimR * 0.5, 0);
+    const at = k => k === "roof" ? () => this.carW(P.roof, pts.roof) : k === "wheel" ? () => pts.wheel.copy(wl).applyMatrix4(W.matrixWorld) : D && D[k] ? () => D[k](side, pts[k]) : () => this.carW(P.B, pts[k]).setY(0.9);
+    const grab = (hand, k, dur) => ({ start: () => { this.reachTo(at(k), { hand, hold: "grip", stay: true, dur }); }, run: () => true });
+    const held = hand => ({ run: st => !(this.reaches && this.reaches[hand]) || this.reaches[hand].phase === "on" || st.t > 2 });
+    const letGo = hand => ({ start: () => { this.release(hand); }, run: () => true });
+    const swing = (to, d, ease) => ({ start: () => { this.doorSwing(to, d, ease); }, run: () => true });
+    const until = f => ({ run: f });
     const wait = d => ({ run: st => st.t >= d });
-    // the hand nearer the handle from outside, and the door's hand seated
-    const hOut = sx > 0 ? "l" : "r", hIn = sx > 0 ? "l" : "r";
+    const aOpen = 0.92, aHold = 0.5, aOut = 0.86;
     const steps = [];
     if (mode === "enter") {
-      steps.push(this.cWalk(P.A, 1.25), this.cFace(() => { const h = this.carL(handle(), new THREE.Vector3()); return Math.atan2(h.x - P.A.x, h.z - P.A.z); }),
-        reach(hOut, handle, "grip"), door(0, 0.85, 1.0), release(hOut),
-        this.cWalk(P.B, 0.9), this.cFace(() => sx * Math.PI / 2),
-        this.cSit(0.9), this.cSwing(1.1, true),
-        reach(hIn, inner, "grip"), door(0.85, 0, 0.7), release(hIn),
-        this.cWheel(1, 0.55), { run: () => { c.mode = "drive"; return true; } });
+      steps.push(this.cWalk(P.A, 1.2), this.cFaceTo(at("handle"), 0.6),
+        // the handle: take it (still finishing the turn), and pull; the door swings on past the hand
+        grab(hDoor, "handle", 0.4), held(hDoor), swing(aOpen, 0.75, "out"), wait(0.12), letGo(hDoor),
+        // into the opening: a hand up for the roof rail, then the door's frame
+        grab(hFar, "roof", 0.5), this.cWalk(P.B, 1.4), grab(hDoor, "frame", 0.3),
+        // in; near the end of it the body leans out and the hand goes for the pull
+        this.cIn(0.95, aOpen, aHold, hDoor, hFar, at("inner"), W ? at("wheel") : null), held(hDoor),
+        // pulled shut; the hands go to the wheel as it lands
+        swing(0, 0.38, "in"), wait(0.16), letGo(hDoor), { start: () => { c.outT = 0; }, run: () => true },
+        this.cWheel(1, 0.4), letGo(hFar), until(() => !c.door.swing), { run: () => { c.mode = "drive"; return true; } });
     } else {
-      steps.push(this.cWheel(0, 0.4), reach(hIn, inner, "grip"), door(v.doors && v.doors.get ? v.doors.get(side) : 0, 0.85, 0.8), release(hIn),
-        this.cSwing(1.0, false), this.cStand(0.9),
-        this.cWalk(P.A, 1.1), this.cFace(() => { const h = this.carL(handle(), new THREE.Vector3()); return Math.atan2(h.x - P.A.x, h.z - P.A.z); }),
-        reach(hOut, handle, "grip"), door(0.85, 0, 0.75), release(hOut), wait(0.1));
+      steps.push(grab(hDoor, "inner", 0.4), this.cWheel(0, 0.3), held(hDoor),
+        // the pull and a push: it swings out on its own the rest of the way
+        { start: () => { c.outT = 0.6; }, run: () => true }, swing(aOut, 0.8, "out"), wait(0.15), letGo(hDoor), { start: () => { c.outT = 0; }, run: () => true },
+        this.cOut(1.05, hDoor, hFar),
+        // a step clear, behind the door's back edge, reaching for its frame on the way, and swing it shut
+        letGo(hDoor), grab(hFar, "frame", 0.5), this.cWalk(P.polar(len + 0.22, aOut - 0.25), 1.2), this.cFaceTo(at("frame"), 0.4),
+        held(hFar), swing(0, 0.45, "in"), wait(0.22), letGo(hFar),
+        until(() => !c.door.swing), wait(0.12));
     }
     c.steps = steps;
     return new Promise(res => { c.done = () => { if (mode === "exit") this.unseat(); res(true); }; });
+  }
+  /* the door's swing: eased out (pulled, then coasting against its check) or in (pushed, gathering speed to the
+     latch); the latch is heard in the frame the door leaves it and in the frame it shuts, and a shut rocks the car */
+  doorSwing(to, d, ease) { const c = this.car, dr = c.door; dr.swing = { a0: dr.a, a1: to, t: 0, d: Math.max(0.05, d), ease }; }
+  doorTick(dt) {
+    const c = this.car, dr = c.door, w = dr && dr.swing; if (!w) return;
+    w.t += dt; const u = clamp(w.t / w.d, 0, 1), k = w.ease === "in" ? u * u * (1.35 - 0.35 * u) : 1 - (1 - u) * (1 - u) * (1 - u);
+    const a = lerp(w.a0, w.a1, k), was = dr.a, v = c.v;
+    if (v.doors && v.doors.angle) v.doors.angle(c.side, a);
+    dr.a = a;
+    if (was <= 0.002 && a > 0.002) { if (dr.onDoor) try { dr.onDoor(true); } catch (e) {} }
+    else if (was > 0.002 && a <= 0.002) { if (dr.onDoor) try { dr.onDoor(false); } catch (e) {} if (v.nudge) v.nudge(-c.G.sx * 0.09, -0.05); }
+    if (u >= 1) dr.swing = null;
   }
   /* sequence steps */
   cWalk(to, sp) {
@@ -1210,6 +1263,10 @@ class Person {
       if (d > 0.12) this.wantYaw = Math.atan2(dx, dz);
       return false;
     } };
+  }
+  /* turn to face a world point (read live); done within tol radians, the rest of the turn carries on into the next step */
+  cFaceTo(pf, tol = 0.05) {
+    return { run: st => { const p = pf(); this.speed = 0; this.wantYaw = Math.atan2(p.x - this.pos.x, p.z - this.pos.z); return Math.abs(angDiff(this.yaw, this.wantYaw)) < tol || st.t > 2.5; } };
   }
   cFace(yf) {
     return { start: st => { st.y = yf(); }, run: st => { this.speed = 0; this.wantYaw = this.carYaw() + st.y; return Math.abs(angDiff(this.yaw, this.wantYaw)) < 0.05 || st.t > 2.5; } };
@@ -1236,30 +1293,85 @@ class Person {
       return st.t >= d;
     } };
   }
-  /* swing round on the seat: in (from the edge, facing out, to the seat, facing forward, the feet over the sill onto the
-     pedals) or out (the reverse, the feet onto the ground) */
-  cSwing(d, inward) {
-    const c = this.car, P = c.P, sx = c.G.sx;
+  /* in, the inside leg first: from standing in the opening, turned a little toward the seat, that foot goes over the
+     sill into the footwell; the head ducks and the body leans in under the roof as the hips go down and across onto
+     the seat, turning to face forward; the car takes the weight; then the other leg comes in. The hand on the door's
+     frame draws it in with you (to aHold) and lets go; the hand on the roof rail lets go as you sit */
+  cIn(d, aOpen, aHold, hDoor, hFar, pull, wheel) {
+    const c = this.car, P = c.P, sx = c.G.sx, S = c.G.S;
+    const inner = sx > 0 ? "r" : "l", outer = inner === "r" ? "l" : "r";
     return { start: st => {
-      st.y0 = c.yaw; st.y1 = inward ? 0 : sx * Math.PI / 2;
-      st.h0 = c.hip.clone(); st.h1 = inward ? c.G.S.clone() : P.E.clone();
+      c.seated = true; c.root.copy(this.carL(this.pos, _f1)).setY(0); c.yaw = angDiff(this.carYaw(), this.yaw);
+      st.y0 = c.yaw;
+      st.h0 = this.toWorld(this.hipC || _f2.set(0, 0.95, 0), new THREE.Vector3()); this.carL(st.h0, st.h0);
+      for (const s of ["l", "r"]) this.carL(this.feet[s].init ? this.feet[s].pos : this.toWorld(this.wp[this.leg[s].fo], _f3), c.feet[s]);
       st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() };
-      st.f1 = inward ? { l: P.rest.clone(), r: P.gas.clone() } : { l: P.out.l.clone(), r: P.out.r.clone() };
-      c.root.set(c.hip.x, 0, c.hip.z);
+      st.f1 = { l: P.rest.clone(), r: P.gas.clone() };
+      c.feetW = 1; c.hipW = 1; st.a0 = c.door.a; st.gone = {};
     }, run: st => {
-      const u = sstep(0, 1, st.t / d);
-      c.hip.lerpVectors(st.h0, st.h1, u); c.root.set(c.hip.x, 0, c.hip.z);
-      c.yaw = st.y0 + angDiff(st.y0, st.y1) * u;
-      c.duck = (1 - u) * 0.6 * (inward ? 1 : 0) + u * 0.6 * (inward ? 0 : 1);
-      c.sitW = 1; c.hipW = 1;
-      // the door-side foot goes last on the way in, first on the way out
-      for (const s of ["l", "r"]) {
-        const late = (s === "l") === (sx > 0) === inward ? 0.25 : 0;
-        const k = sstep(late, late + 0.75, st.t / d);
-        c.feet[s].lerpVectors(st.f0[s], st.f1[s], k); c.feet[s].y += Math.sin(k * Math.PI) * 0.32;
-      }
-      return st.t >= d;
+      const u = clamp(st.t / d, 0, 1), v = c.v;
+      // the hips: down first, then across (so the head is low before it passes under the roof's edge)
+      const ux = sstep(0.2, 0.9, u), uy = sstep(0.06, 0.78, u);
+      c.hip.x = lerp(st.h0.x, S.x, ux); c.hip.z = lerp(st.h0.z, S.z, ux); c.hip.y = lerp(st.h0.y, S.y, uy) - Math.sin(uy * Math.PI) * 0.025;
+      c.root.set(c.hip.x, 0, c.hip.z);
+      c.yaw = st.y0 + angDiff(st.y0, 0) * sstep(0.18, 0.88, u);
+      c.sitW = sstep(0.25, 0.85, u);
+      c.duck = sstep(0.05, 0.38, u) * (1 - sstep(0.62, 1, u));
+      c.roll = 0.24 * sstep(0.1, 0.42, u) * (1 - sstep(0.55, 0.95, u));
+      // the inside foot over the sill into the footwell (up before across), the outside one once the hips are down
+      this.carFoot(inner, st.f0[inner], st.f1[inner], sstep(0, 0.5, u), 0.2);
+      this.carFoot(outer, st.f0[outer], st.f1[outer], sstep(0.58, 1, u), 0.24);
+      if (v.weight) v.weight(sstep(0.35, 0.9, u), c.side);
+      // the door comes in with the hand on its frame; that hand and the one on the rail let go as you go down
+      if (!st.gone.d) { c.door.a = lerp(st.a0, aHold, sstep(0.08, 0.48, u)); if (v.doors && v.doors.angle) v.doors.angle(c.side, c.door.a); }
+      if (u >= 0.48 && !st.gone.d) { st.gone.d = true; this.release(hDoor); }
+      // (the hand off the rail comes down onto the wheel, if there is one)
+      if (u >= 0.4 && !st.gone.f) { st.gone.f = true; if (wheel) this.reachTo(wheel, { hand: hFar, hold: "grip", stay: true, dur: 0.5 }); else this.release(hFar); }
+      if (u >= 0.66 && pull && !st.gone.p) { st.gone.p = true; c.outT = 1; this.reachTo(pull, { hand: hDoor, hold: "grip", stay: true, dur: 0.4 }); }
+      if (u >= 1) { c.roll = 0; c.duck = 0; return true; }
+      return false;
     } };
+  }
+  /* out, the outside leg first: that foot out onto the ground, the hips across to the edge of the seat and up under the
+     roof, ducking, turning out, the hand away from the door up on the roof rail; the inside foot comes out last and
+     the body stands over both feet, walking again */
+  cOut(d, hDoor, hFar) {
+    const c = this.car, P = c.P, sx = c.G.sx, half = c.G.half, S = c.G.S;
+    const inner = sx > 0 ? "r" : "l", outer = inner === "r" ? "l" : "r";
+    return { start: st => {
+      st.y0 = c.yaw; st.y1 = sx * 0.5; st.h0 = c.hip.clone();
+      const scale = this.rest.thigh_l ? this.rest.thigh_l.at.y / 0.98 : 1;
+      st.h1 = new THREE.Vector3(P.B.x, 0.93 * scale, P.B.z);
+      // where the feet end up: side by side under the standing body, facing the way it ends up facing
+      const lx = Math.cos(st.y1), lz = -Math.sin(st.y1), fx = Math.sin(st.y1) * 0.04, fz = Math.cos(st.y1) * 0.04;
+      st.f0 = { l: c.feet.l.clone(), r: c.feet.r.clone() };
+      st.f1 = { l: new THREE.Vector3(P.B.x + lx * 0.11 + fx, 0.08, P.B.z + lz * 0.11 + fz), r: new THREE.Vector3(P.B.x - lx * 0.11 + fx, 0.08, P.B.z - lz * 0.11 + fz) };
+      // the outside foot reaches out a little further first, then the body comes over it
+      st.f1[outer].x += sx * 0.06;
+      c.feetW = 1; st.gone = {};
+    }, run: st => {
+      const u = clamp(st.t / d, 0, 1), v = c.v;
+      this.carFoot(outer, st.f0[outer], st.f1[outer], sstep(0, 0.4, u), 0.22);
+      this.carFoot(inner, st.f0[inner], st.f1[inner], sstep(0.58, 0.95, u), 0.2);
+      const ux = sstep(0.16, 0.72, u), uy = sstep(0.32, 0.95, u);
+      c.hip.x = lerp(st.h0.x, st.h1.x, ux); c.hip.z = lerp(st.h0.z, st.h1.z, ux); c.hip.y = lerp(st.h0.y, st.h1.y, uy);
+      c.root.set(c.hip.x, 0, c.hip.z);
+      c.yaw = st.y0 + angDiff(st.y0, st.y1) * sstep(0.08, 0.6, u);
+      c.sitW = 1 - sstep(0.35, 0.9, u); c.hipW = 1 - sstep(0.88, 1, u);
+      c.duck = sstep(0.12, 0.35, u) * (1 - sstep(0.62, 0.95, u));
+      c.roll = -0.16 * sstep(0.1, 0.35, u) * (1 - sstep(0.55, 0.9, u));
+      if (v.weight) v.weight(1 - sstep(0.3, 0.85, u), c.side);
+      if (u >= 0.22 && !st.gone.f) { st.gone.f = true; this.reachTo(() => this.carW(P.roof, _cr), { hand: hFar, hold: "grip", stay: true, dur: 0.35 }); }
+      if (u >= 0.82 && !st.gone.r) { st.gone.r = true; this.release(hFar); }
+      if (u >= 1) { c.roll = 0; this.carUp(); return true; }
+      return false;
+    } };
+  }
+  /* a foot from a to b (body frame), k 0..1: up off the ground first, over the sill, down onto the floor or the ground */
+  carFoot(s, a, b, k, lift) {
+    const f = this.car.feet[s], kx = sstep(0.12, 1, k);
+    f.x = lerp(a.x, b.x, kx); f.z = lerp(a.z, b.z, kx);
+    f.y = lerp(a.y, b.y, sstep(0, 1, k)) + Math.sin(Math.min(1, k * 1.15) * Math.PI) * lift;
   }
   /* stand: up from the seat's edge onto the feet outside, ducking, and back to walking */
   cStand(d) {
@@ -1274,18 +1386,19 @@ class Person {
       const u = sstep(0, 1, st.t / d);
       c.hip.lerpVectors(st.h0, st.h1, u); c.hipW = 1 - sstep(0.75, 1, st.t / d);
       c.sitW = 1 - sstep(0.15, 0.85, st.t / d); c.duck = Math.sin(clamp(1 - st.t / d, 0, 1) * Math.PI * 0.85);
-      if (st.t >= d) {
-        // walking again: the body's own place and facing
-        const w = this.carW(c.root, _f1); this.pos.set(w.x, this.pos.y, w.z);
-        this.yaw = this.wantYaw = this.carYaw() + c.yaw; this.speed = 0;
-        c.seated = false; c.feetW = 0; c.hipW = 0; c.sitW = 0; c.duck = 0;
-        // the feet carry on from where they are (planted), not from where the clip would put them
-        for (const s of ["l", "r"]) { const F = this.feet[s]; this.carW(c.feet[s], F.pos); F.yaw = this.yaw; F.lock = true; F.w = 1; F.step = 0; F.init = true; }
-        this.lastPos = null;
-        return true;
-      }
+      if (st.t >= d) { this.carUp(); return true; }
       return false;
     } };
+  }
+  /* on your feet again: the body's own place and facing, and the feet carry on from where they are (planted), not
+     from where the clip would put them */
+  carUp() {
+    const c = this.car;
+    const w = this.carW(c.root, _f1); this.pos.set(w.x, this.pos.y, w.z);
+    this.yaw = this.wantYaw = this.carYaw() + c.yaw; this.speed = 0;
+    c.seated = false; c.feetW = 0; c.hipW = 0; c.sitW = 0; c.duck = 0; c.roll = 0;
+    for (const s of ["l", "r"]) { const F = this.feet[s]; this.carW(c.feet[s], F.pos); F.yaw = this.yaw; F.lock = true; F.w = 1; F.step = 0; F.init = true; }
+    this.lastPos = null;
   }
   cWheel(on, d) {
     const c = this.car;
@@ -1293,6 +1406,7 @@ class Person {
   }
   carStep(dt) {
     const c = this.car;
+    if (c.door) this.doorTick(dt);
     let st = c.steps[0], guard = 0;
     while (st && guard++ < 8) {
       if (!st.started) { st.started = true; st.t = 0; if (st.start) st.start(st); }
@@ -1326,6 +1440,14 @@ class Person {
       this.rot("spine_03", rc * 0.3 * k * c.wheelK, 0, 0); this.rot("neck_01", rc * 0.35 * k * c.wheelK, 0, 0);
     }
     if (c.duck > 0.001) { this.rot("spine_01", 0.28 * c.duck, 0, 0); this.rot("spine_02", 0.22 * c.duck, 0, 0); this.rot("neck_01", 0.15 * c.duck, 0, 0); }
+    // leaning in under the roof getting in (roll > 0 is toward the middle of the car), and out to the door for the
+    // pull: the shoulders go over, turned and a little forward, the head stays nearer level
+    c.outK = damp(c.outK || 0, c.outT || 0, 7, dt);
+    const roll = (c.roll || 0) - c.outK * 0.3, sx = c.G.sx || 1;
+    if (Math.abs(roll) > 0.001 || c.outK > 0.001) {
+      const z = sx * roll, tw = sx * c.outK * 0.22;
+      this.rot("spine_01", c.outK * 0.12, tw * 0.4, z * 0.4); this.rot("spine_02", c.outK * 0.1, tw * 0.6, z * 0.35); this.rot("spine_03", 0, 0, z * 0.25); this.rot("neck_01", 0, 0, -z * 0.35);
+    }
     // driving: thrown a little outward in the corners, back under acceleration and forward under braking; the head
     // stays level (the reflex) and looks where the car is going
     if (c.mode === "drive" || c.wheelK > 0.01) {
@@ -1605,6 +1727,105 @@ class Person {
     return new Promise(res => { c.done = () => { this.unseat(); res(true); }; });
   }
   get seated() { return !!(this.car && this.car.mode === "seat"); }
+
+  /* ---- the jump: a crouch to load it, the push off, the air, the landing taken in the knees ----
+     jump(o): o.run 0..1 (how much of a run it starts from), o.h the height in metres, o.ground(x, z) the floor's height
+     under a point (flat by default), o.onTakeoff(), o.onLand(impact 0..1, airtime). The episode carries the body over the
+     ground (a running jump keeps its speed); this lifts it, drops it and poses it. Resolves once it has stood up out of
+     the landing. Nothing here allocates once the jump has started. */
+  jump(o = {}) {
+    if (this.jmp || this.car || this.sitK > 0.3) return null;
+    const run = clamp(o.run || 0, 0, 1);
+    const J = this.jmp = { st: "pre", t: 0, air: 0, run, pre: lerp(0.17, 0.08, run), vy: 0, h: o.h || lerp(0.42, 0.5, run), ground: o.ground || null,
+      onTakeoff: o.onTakeoff || null, onLand: o.onLand || null, imp: 0, land: 0.34, lead: (this.armSwing || 0) >= 0 ? "r" : "l", res: null };
+    this.jC = this.jC || 0; this.jAir = 0; this.jK = this.jK || 0;
+    return new Promise(res => { J.res = res; });
+  }
+  get airborne() { return !!(this.jmp && this.jmp.st === "air"); }
+  get jumping() { return !!this.jmp; }
+  jumpGround() { const J = this.jmp; return J && J.ground ? J.ground(this.pos.x, this.pos.z) || 0 : 0; }
+  /* the clock: called first thing in update(), before the body is placed */
+  jumpStep(dt) {
+    const J = this.jmp; J.t += dt;
+    let landed = false;
+    const GJ = 14; // a touch heavier than the world's gravity: a jump that hangs reads as floaty
+    if (J.st === "pre") {
+      this.pos.y = this.jumpGround();
+      if (J.t >= J.pre) { J.st = "air"; J.t = 0; J.vy = Math.sqrt(2 * GJ * J.h); J.dur = 2 * J.vy / GJ; if (J.onTakeoff) J.onTakeoff(); }
+    } else if (J.st === "air") {
+      J.vy -= GJ * dt; this.pos.y += J.vy * dt;
+      const gy = this.jumpGround();
+      if (this.pos.y <= gy && J.vy < 0) {
+        J.imp = clamp(-J.vy / 6, 0.25, 1); J.air = J.t;
+        this.pos.y = gy; J.st = "land"; J.t = 0; J.land = lerp(0.26, 0.42, J.imp) * lerp(1, 0.8, J.run);
+        // the feet plant where they come down
+        this.feet.l.lock = this.feet.r.lock = false; this.feet.l.w = this.feet.r.w = 0;
+        landed = true;
+      }
+    } else {
+      this.pos.y = this.jumpGround();
+      if (J.t >= J.land) { this.jmp = null; this.jAir = 0; if (J.res) J.res(true); return; }
+    }
+    // the crouch (loading, then the knees taking the landing), how much of the body is in the air, and the whole jump's weight
+    const pre = J.st === "pre" ? sstep(0, 1, J.t / J.pre) : 0;
+    const u = J.st === "land" ? J.t / J.land : 0;
+    const absorb = J.st === "land" ? (u < 0.22 ? lerp(0.4, 1, sstep(0, 0.22, u)) : 1 - sstep(0.22, 1, u)) * J.imp : 0;
+    this.jC = damp(this.jC, Math.max(pre * lerp(1, 0.55, J.run), absorb), J.st === "air" ? 26 : 40, dt);
+    this.jAir = J.st === "air" ? 1 : 0;
+    this.jK = damp(this.jK, J.st === "land" ? 1 - sstep(0.6, 1, u) : 1, 18, dt);
+    // the touch down is one frame: the knees have started to give before the episode hears it
+    if (landed && J.onLand) J.onLand(J.imp, J.air);
+  }
+  /* the body: hips down into the crouch, the back over the knees, the lean of a run carried into the air */
+  jumpBody(hipC) {
+    const J = this.jmp, c = this.jC, run = J ? J.run : 0;
+    // loading drops the hips less than a landing takes them (a hard one well down, the knees well forward)
+    hipC.y -= c * (J && J.st === "pre" ? lerp(0.13, 0.09, run) : 0.2);
+    hipC.z -= c * 0.02;
+    // in the air: a little forward from a run, upright from standing; the neck gives some back so the eyes stay level
+    const air = this.jAir ? 0.05 + 0.12 * run : 0;
+    const lean = c * 0.32 + air;
+    this.rot("pelvis", lean * 0.45, 0, 0);
+    this.rot("spine_01", lean * 0.3, 0, 0);
+    this.rot("spine_02", lean * 0.2, 0, 0);
+    this.rot("neck_01", -lean * 0.35, 0, 0);
+    this.rot("head", -lean * 0.25, 0, 0);
+  }
+  /* one leg in the air (character space): from straight under the hip at the push, drawn up toward the top of the arc,
+     reaching down for the ground on the way down. From a run the lead knee comes up in front and the other trails */
+  jumpLeg(s, g, F) {
+    const J = this.jmp, run = J ? J.run : 0, H = this.wp[g.th], L = g.l1 + g.l2;
+    const u = J && J.dur ? clamp(J.t / J.dur, 0, 1) : 0.5;
+    // drawn up after the push, most just past the top, then let down to land
+    const tuck = sstep(0, 0.35, u) * (1 - sstep(0.62, 0.95, u));
+    const side = s === "l" ? 1 : -1, lead = J && J.lead === s ? 1 : -1;
+    const tgt = _f3.set(H.x + side * 0.03, H.y - L * (0.97 - tuck * lerp(0.3, 0.22, run)), H.z + tuck * lerp(0.1, lead > 0 ? 0.3 : -0.26, run) + (1 - tuck) * 0.04);
+    if (lead < 0) tgt.y += tuck * run * 0.12; // the trailing foot kicks up behind
+    F.lock = false; F.w = 0; F.step = 0;
+    this.ik2(g.th, g.ca, g.fo, g.l1, g.l2, tgt, 0);
+  }
+  /* the arms: back on the load, up and out through the air (opposite the lead leg from a run), forward for balance landing */
+  jumpArms() {
+    // (after the jump has ended its weight is still easing out, from the landing's pose)
+    const J = this.jmp, k = this.jK; if (k < 0.01) return;
+    const st = J ? J.st : "land", run = J ? J.run : 0, lead = J ? J.lead : "r", c = this.jC;
+    for (const s of LR) {
+      const g = this.arm[s]; if (!g || (this.reaches && this.reaches[s])) continue;
+      if (s === "r" && (this.holdK.umbrella > 0.5 || this.holdK.phone > 0.5)) continue;
+      if (this.carrying && this.carrying[s]) continue;
+      const side = s === "l" ? 1 : -1, S = this.wp[g.ua], L = g.l1 + g.l2, fwd = lead !== s ? 1 : -1;
+      let x, y, z;
+      if (st === "pre") { x = side * 0.07; y = -L * 0.88; z = -0.2 * c - 0.02; }
+      else if (st === "air") {
+        const u = J.dur ? clamp(J.t / J.dur, 0, 1) : 0.5, up = 1 - sstep(0.15, 0.9, u) * 0.5;
+        // standing: both arms thrown forward and up, opening out; running: one forward, one back
+        const sx = side * lerp(0.12, 0.26, u), sy = -L * lerp(0.42, 0.6, 1 - up), sz = lerp(0.3, 0.16, u);
+        const rx = side * (fwd > 0 ? 0.0 : 0.12), ry = -L * (fwd > 0 ? 0.5 : 0.78), rz = fwd > 0 ? 0.3 : -0.26;
+        x = lerp(sx, rx, run); y = lerp(sy, ry, run); z = lerp(sz, rz, run);
+      } else { x = side * 0.18; y = -L * lerp(0.82, 0.62, c); z = 0.08 + 0.2 * c; }
+      this.ikArm(s, _f1.set(S.x + x, S.y + y, S.z + z), _f2.set(S.x + side * 0.3, S.y - 0.3, S.z - 0.6), k * 0.9);
+    }
+  }
 
   /* hands held by something: carrying (in front of the waist, the forearm level), resting on the thighs seated */
   pinArms(dt) {
