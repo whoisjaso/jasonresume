@@ -123,7 +123,7 @@ async function use(p, mobile, id, label) {
   if (hit !== 'ok') { if (mobile) await p.evaluate(id => { window.JG_STORY.debug.interact(id); }, id); else await p.keyboard.press('e'); }
   else if (mobile) await p.tap('.st-prompt', { force: true }); else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt', { force: true });
   const on = await until(p, ([id, n]) => { const s = window.JG_STORY.debug.state(); return s.phase !== 'explore' || (s.looked[id] || 0) > n || s.scene !== window.__scene; }, [id, n0], 20000);
-  if (!on) errs.push(`${label}: ${id} did not respond`);
+  if (!on) { const why = await p.evaluate(() => { const s = window.JG_STORY.debug.state(); const b = document.querySelector('.st-prompt'); return { phase: s.phase, scene: s.scene, near: s.near, prompt: b && !b.hidden ? b.textContent.trim() : null, me: s.me }; }).catch(() => null); errs.push(`${label}: ${id} did not respond ${JSON.stringify(why)}`); }
   return on;
 }
 async function finishTalk(p, label) { const ok = await phase(p, 'explore', 120000); if (!ok) errs.push(`${label}: talk did not end ${JSON.stringify(await st(p))}`); return ok; }
