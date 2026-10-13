@@ -918,11 +918,19 @@ async function exploreCheck(vname, w, h, mobile) {
   const useIt = async id => {
     const ok = await p.evaluate(id => window.JG_STORY.debug.warp(id), id);
     if (!ok) { errs.push(`${label}: no ${id} here`); return false; }
-    // (standing at a thing, facing it, its prompt is the one you get; a press that lands on something else isn't this thing's)
-    if (!(await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000))) { errs.push(`${label}: standing at ${id}, the prompt is for ${(await st(p)).near}`); return false; }
+    // (standing at a thing, facing it, its prompt is the one you get; a press that lands on something else isn't this thing's.
+    // The one exception is by design: a story thing beside it you haven't looked at yet (the filing cabinet over the
+    // drawer, the coffee machine by the mug) has the prompt first, and this thing is a tap on its dot away)
+    let viaDot = false;
+    if (!(await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000))) {
+      const s = await st(p), o = STORY.objects[s.near];
+      if (!(o && o.scene === s.scene && !s.looked[s.near])) { errs.push(`${label}: standing at ${id}, the prompt is for ${s.near}`); return false; }
+      viaDot = true;
+    }
     // (the log keeps only its last 60 events, so what came after the press is found by its time, not its index)
     const t0 = await p.evaluate(() => performance.now());
-    if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.evaluate(id => window.JG_STORY.debug.interact(id), id)); else await p.keyboard.press('e');
+    if (viaDot) await p.evaluate(id => { window.JG_STORY.debug.interact(id); }, id);
+    else if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.evaluate(id => { window.JG_STORY.debug.interact(id); }, id)); else await p.keyboard.press('e');
     await p.waitForTimeout(1600);
     const ev = await p.evaluate(t0 => window.JG_STORY.debug.audio().events.filter(e => e.t >= t0 && e.kind === 'use').map(e => e.name), t0);
     return ev;

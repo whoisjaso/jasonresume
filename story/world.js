@@ -549,7 +549,7 @@ function buildRig(set, c) {
   for (const side of ["L", "R"]) {
     const n = lib.nodes["door_" + side]; if (!n) continue;
     const { p } = at(n), pivot = new THREE.Group(); pivot.name = "door_" + side; pivot.position.copy(p); body.add(pivot);
-    for (const [name, geo] of Object.entries(nodeParts(n))) inst(geo, name, pivot, p);
+    for (const [name, geo] of Object.entries(doorParts(nodeParts(n), side === "L" ? 1 : -1))) inst(geo, name, pivot, p);
     doors[side] = pivot;
   }
   // the four wheels: their pivots are empty nodes (the API's), and the wheels themselves are one instanced mesh
@@ -595,6 +595,127 @@ function buildRig(set, c) {
   syncWheels();
   carLights(own, c.lights || {});
   return root.userData.rig;
+}
+/* a front door that reads as a door when it swings open. The model's door is a slice cut out of the body, so open
+   it showed the cut: a flat dark card and slivers of the window's surround. Kept from it: the outer skin (so it sits
+   flush when shut), the glass, the handle and the mirror. Built round them from a few flat pieces, in the car's space
+   and in the door's own materials (so no more draws): the shut faces round the edge in the body colour, which give it
+   its thickness; the sill under the glass; a frame round the glass; and inside, a dark trim panel with an armrest and
+   a pocket. s: +1 the driver's (left) door, -1 the passenger's */
+function doorParts(parts, s) {
+  const P = parts.paint, Gl = parts.glass;
+  if (!P || !Gl) return parts;
+  // the triangles of a geometry (indexed or not), with their centroid and normal, in the car's space
+  // (kept triangles keep their own smooth normals and baked shade)
+  const tris = g => {
+    const pos = g.attributes.position, nor = g.attributes.normal, col = g.attributes.color, ix = g.index ? g.index.array : null, n = ix ? ix.length : pos.count, out = [];
+    for (let i = 0; i < n; i += 3) {
+      const j = [0, 1, 2].map(k => (ix ? ix[i + k] : i + k)), v = j.map(q => new THREE.Vector3().fromBufferAttribute(pos, q));
+      const nn = new THREE.Vector3().subVectors(v[1], v[0]).cross(new THREE.Vector3().subVectors(v[2], v[0]));
+      if (nn.lengthSq() < 1e-14) continue;
+      out.push({ v, n: nn.normalize(), c: v[0].clone().add(v[1]).add(v[2]).divideScalar(3), vn: nor ? j.map(q => new THREE.Vector3().fromBufferAttribute(nor, q)) : null, vc: col ? j.map(q => col.getX(q)) : null });
+    }
+    return out;
+  };
+  // a list of triangles back into a geometry with the attributes the car's materials read (position, normal, colour)
+  const geo = (list, ao = 1) => {
+    const n = list.length * 3, pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 4).fill(1);
+    list.forEach((t, i) => t.v.forEach((v, k) => { const j = i * 3 + k, nv = t.vn ? t.vn[k] : t.n; pos.set([v.x, v.y, v.z], j * 3); nor.set([nv.x, nv.y, nv.z], j * 3); col[j * 4] = t.vc ? t.vc[k] : t.ao != null ? t.ao : ao; }));
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("normal", new THREE.BufferAttribute(nor, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 4));
+    g.computeBoundingSphere(); return g;
+  };
+  // a flat triangle wound to face along dir; a quad as two
+  const face = (a, b, c, dir, ao) => { const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)); if (n.lengthSq() < 1e-14) return null; n.normalize(); return n.dot(dir) >= 0 ? { v: [a, b, c], n, ao } : { v: [a, c, b], n: n.negate(), ao }; };
+  const quad = (out, a, b, c, d, dir, ao) => { for (const t of [face(a, b, c, dir, ao), face(a, c, d, dir, ao)]) if (t) out.push(t); };
+  // a box between two points on a door edge: w wide across it (along o), from x0 to x1 (in s units) through the door
+  const bar = (out, a, b, o, w, x0, x1, ao) => {
+    const at = (p, k, x) => new THREE.Vector3(s * x, p.y + o.y * w * k, p.z + o.z * w * k);
+    const ax = Math.abs(a.x), bx = Math.abs(b.x);
+    const c = [at(a, 0, ax + x0), at(b, 0, bx + x0), at(b, 1, bx + x0), at(a, 1, ax + x0), at(a, 0, ax + x1), at(b, 0, bx + x1), at(b, 1, bx + x1), at(a, 1, ax + x1)];
+    const mid = a.clone().add(b).multiplyScalar(0.5), cen = new THREE.Vector3(s * (mid.x * s + (x0 + x1) / 2), mid.y + o.y * w / 2, mid.z + o.z * w / 2);
+    for (const f of [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [3, 2, 6, 7], [0, 3, 7, 4], [1, 2, 6, 5]]) {
+      const q = f.map(i => c[i]), fc = q[0].clone().add(q[1]).add(q[2]).add(q[3]).multiplyScalar(0.25);
+      quad(out, q[0], q[1], q[2], q[3], fc.sub(cen), ao);
+    }
+  };
+  // the outer skin: what faces out (and the mirror's arm, which stands proud of it); the cut's walls and card go
+  const pt = tris(P);
+  let zF = -9, zB = 9, yB = 9, xMin = 9;
+  for (const t of pt) zF = Math.max(zF, t.c.z);
+  const flat = pt.filter(t => t.n.x * s > 0.9).map(t => t.c.x * s).sort((a, b) => a - b), xSkin = flat.length ? flat[flat.length >> 1] : 0;
+  const arm = c => c.x * s > xSkin + 0.015 && c.z > zF - 0.35; // the mirror's arm stands proud of the skin, up by the hinge
+  const skin = pt.filter(t => (t.n.x * s > 0.12 && Math.abs(t.n.z) < 0.8 && t.n.y > -0.8) || arm(t.c));
+  if (skin.length < 8 || !flat.length) return parts;
+  zF = -9;
+  for (const t of skin) for (const v of t.v) { zF = Math.max(zF, v.z); zB = Math.min(zB, v.z); yB = Math.min(yB, v.y); }
+  const mids = skin.filter(t => t.c.z > zB + 0.12 && t.c.z < zF - 0.35 && t.n.x * s > 0.5);
+  const ys = mids.map(t => Math.max(t.v[0].y, t.v[1].y, t.v[2].y)).sort((a, b) => a - b);
+  const ySill = ys.length ? ys[Math.floor(ys.length * 0.97)] : yB + 0.65;
+  for (const t of skin) for (const v of t.v) if (v.y < ySill - 0.02) xMin = Math.min(xMin, v.x * s);
+  const xIn = xMin - 0.055, xi = s * xIn;
+  // the shut faces: every open edge of the skin round the door's outline, drawn straight in to the inner face
+  const key = v => (v.x * 1e4 | 0) + "," + (v.y * 1e4 | 0) + "," + (v.z * 1e4 | 0), edges = new Map();
+  for (const t of skin) for (let k = 0; k < 3; k++) { const a = t.v[k], b = t.v[(k + 1) % 3], ka = key(a), kb = key(b), e = ka < kb ? ka + "|" + kb : kb + "|" + ka; const h = edges.get(e); if (h) h.n++; else edges.set(e, { a, b, n: 1 }); }
+  const paint = skin.slice(), trim = [], inner = [], loop = [];
+  const ctr = new THREE.Vector3(0, (yB + ySill) / 2, (zF + zB) / 2);
+  for (const { a, b, n } of edges.values()) {
+    if (n !== 1) continue;
+    const m = a.clone().add(b).multiplyScalar(0.5);
+    const edge = Math.abs(m.z - zF) < 0.035 || Math.abs(m.z - zB) < 0.035 || m.y < yB + 0.05, top = !edge && m.y > ySill - 0.06;
+    if ((!edge && !top) || arm(m)) continue;
+    const a2 = new THREE.Vector3(xi, a.y, a.z), b2 = new THREE.Vector3(xi, b.y, b.z);
+    const out = new THREE.Vector3(0, m.y - ctr.y, m.z - ctr.z); if (top) out.set(0, 1, 0);
+    quad(top ? trim : paint, a, b, b2, a2, out);
+    loop.push(a2, b2);
+  }
+  // the inside: the trim panel over the outline's inner edge (it's convex: a fan from the middle)
+  if (loop.length >= 6) {
+    const c0 = loop.reduce((c, v) => c.add(v), new THREE.Vector3()).divideScalar(loop.length);
+    const hull = hull2(loop.map(v => [v.z, v.y]));
+    for (let i = 0; i < hull.length; i++) {
+      const p0 = hull[i], p1 = hull[(i + 1) % hull.length];
+      const t = face(new THREE.Vector3(xi, c0.y, c0.z), new THREE.Vector3(xi, p0[1], p0[0]), new THREE.Vector3(xi, p1[1], p1[0]), new THREE.Vector3(-s, 0, 0), 0.8); if (t) inner.push(t);
+    }
+  }
+  // an armrest along the panel and the lip of a door pocket under it, from the inner face inward
+  const H = ySill - yB, zr0 = zB + 0.1, zr1 = zF - 0.24;
+  bar(trim, new THREE.Vector3(xi, yB + H * 0.6, zr0), new THREE.Vector3(xi, yB + H * 0.6, zr1), new THREE.Vector3(0, 1, 0), 0.055, -0.075, 0.002, 0.9);
+  bar(trim, new THREE.Vector3(xi, yB + H * 0.2, zr0 + 0.05), new THREE.Vector3(xi, yB + H * 0.2, zr1 - 0.1), new THREE.Vector3(0, 1, 0), 0.03, -0.045, 0.002, 0.85);
+  // the frame round the glass above the sill: a thin bar along each of the window's edges, following the glass's own lean
+  const gv = []; { const pos = Gl.attributes.position; for (let i = 0; i < pos.count; i++) gv.push(new THREE.Vector3().fromBufferAttribute(pos, i)); }
+  const gh = hull2(gv.map(v => [v.z, v.y]), true).map(i => gv[i]);
+  if (gh.length >= 3) {
+    const gc = gh.reduce((c, v) => c.add(v), new THREE.Vector3()).divideScalar(gh.length);
+    for (let i = 0; i < gh.length; i++) {
+      const a = gh[i], b = gh[(i + 1) % gh.length];
+      if ((a.y + b.y) / 2 < ySill + 0.02) continue;
+      const d = new THREE.Vector3(0, b.y - a.y, b.z - a.z), L = d.length(); if (L < 1e-4) continue; d.divideScalar(L);
+      const o = new THREE.Vector3(0, -d.z, d.y); if (o.y * ((a.y + b.y) / 2 - gc.y) + o.z * ((a.z + b.z) / 2 - gc.z) < 0) o.negate();
+      // (each bar runs a little past its corners so the next one meets it without a gap)
+      const e = 0.02, a1 = a.clone().addScaledVector(d, -e), b1 = b.clone().addScaledVector(d, e);
+      a1.x = a.x; b1.x = b.x;
+      bar(trim, new THREE.Vector3(a1.x, Math.max(a1.y, ySill - 0.01), a1.z), new THREE.Vector3(b1.x, Math.max(b1.y, ySill - 0.01), b1.z), o, 0.038, -0.03, 0.014);
+    }
+  }
+  // what's kept of the model's own: the handle and the mirror's foot (the trim that sits proud of the skin)
+  if (parts.trim) for (const t of tris(parts.trim)) if (t.c.x * s > xSkin - 0.03 && t.c.y < ySill + 0.15) trim.push(t);
+  // (on the phone tier the interior is folded into the trim: one geometry for both)
+  const out = Object.assign({}, parts), tk = fam("trim", true), ik = fam("interior", true);
+  delete out.interior;
+  out.paint = geo(paint);
+  out[tk] = ik === tk ? geo(trim.concat(inner)) : geo(trim);
+  if (ik !== tk) out[ik] = geo(inner);
+  return out;
+}
+/* the convex hull of 2D points (monotone chain), as points, or as their indices */
+function hull2(pts, idx) {
+  const I = pts.map((p, i) => i).sort((a, b) => pts[a][0] - pts[b][0] || pts[a][1] - pts[b][1]);
+  const cr = (o, a, b) => (pts[a][0] - pts[o][0]) * (pts[b][1] - pts[o][1]) - (pts[a][1] - pts[o][1]) * (pts[b][0] - pts[o][0]);
+  const lo = [], up = [];
+  for (const i of I) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], i) <= 0) lo.pop(); lo.push(i); }
+  for (let k = I.length - 1; k >= 0; k--) { const i = I[k]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], i) <= 0) up.pop(); up.push(i); }
+  const h = lo.slice(0, -1).concat(up.slice(0, -1));
+  return idx ? h : h.map(i => pts[i]);
 }
 const STICKER_GEO = new THREE.PlaneGeometry(0.2, 0.14);
 const BLOB_GEO = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
