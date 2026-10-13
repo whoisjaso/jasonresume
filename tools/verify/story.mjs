@@ -80,7 +80,8 @@ async function turnAway(p) {
   await p.tap('.st-turn__stay').catch(() => p.click('.st-turn__stay'));
   await p.waitForTimeout(500);
 }
-async function phase(p, ph, ms) { const r = await until(p, ph => window.JG_STORY && window.JG_STORY.debug.state().phase === ph, ph, ms); await turnAway(p); return r; }
+// (exploring means on your feet and yours to steer: not while the episode walks you somewhere, as it does to sit you down)
+async function phase(p, ph, ms) { const r = await until(p, ph => { const s = window.JG_STORY && window.JG_STORY.debug.state(); return !!s && s.phase === ph && (ph !== 'explore' || !s.busy); }, ph, ms); await turnAway(p); return r; }
 async function shot(p, name) { if (SHOTS) await p.screenshot({ path: path.join(OUT, `story-${name}.png`) }); }
 
 /* advance through lines until choices show, the talk ends, or a phase changes */
@@ -90,7 +91,7 @@ async function untilChoice(p, label) {
   while (Date.now() - t0 < 120000) {
     const s = await st(p);
     if (s.choices) return s;
-    const quiet = !s.talking && !s.line && (s.phase === 'explore' || s.phase === 'end' || s.phase === 'sheet' || s.phase === 'close');
+    const quiet = !s.talking && !s.line && !s.busy && (s.phase === 'explore' || s.phase === 'end' || s.phase === 'sheet' || s.phase === 'close');
     if (quiet) { if (!calm) calm = Date.now(); else if (Date.now() - calm > 4000) return s; } else calm = 0;
     await p.waitForTimeout(150);
   }
@@ -300,7 +301,7 @@ async function holdUse(p, mobile, id, label, early) {
 }
 async function june(p, mobile, o, label) {
   await phase(p, 'explore', 120000);
-  if (!o.shots && !o.stills) {} else { await p.waitForTimeout(3000); await shot(p, `${o.tag}-june`); if (o.stills) await shot0(p, 'june-waiting-room'); }
+  if (!o.shots && !o.stills) {} else { await p.waitForTimeout(3000); await shot(p, `${o.tag}-june`); if (o.stills) { await p.evaluate(() => window.JG_STORY.debug.view([3.9, 1.6, 3.7], [-1.4, 0.85, -1.0], 8)); await p.waitForTimeout(2500); await shot0(p, 'june-waiting-room'); await p.evaluate(() => window.JG_STORY.debug.view(null)); } }
   if ((await st(p)).obj !== 'sit') errs.push(`${label}: the waiting room's objective is ${(await st(p)).obj}`);
   await holdUse(p, mobile, 'june-jason', label, o.early);
   await choose(p, mobile, o.june, label);
@@ -309,7 +310,7 @@ async function june(p, mobile, o, label) {
   if (!s0.flags.sat || s0.obj !== 'june-look') errs.push(`${label}: after sitting with Jason, sat ${s0.flags.sat} objective ${s0.obj}`);
   if (!j.seated) errs.push(`${label}: you weren't sitting beside him (${JSON.stringify(j)})`); else notes.push(`${label}: held Sit, sat down beside Jason ("${o.june}")`);
   await use(p, mobile, 'june-phone', label); await choose(p, mobile, o.phone2, label);
-  if (o.phone2 === 'Answer it.') { await p.waitForTimeout(400); if (!(await p.evaluate(() => window.JG_STORY.debug.june().phoneEar))) errs.push(`${label}: answering didn't lift the phone to your ear`); }
+  if (o.phone2 === 'Answer it.') { if (!(await until(p, () => window.JG_STORY.debug.june().answered > 0, null, 20000))) errs.push(`${label}: answering didn't lift the phone to your ear`); }
   await finishTalk(p, label);
   await use(p, mobile, 'june-window', label); await finishTalk(p, label);
   await use(p, mobile, 'june-scan', label);
@@ -800,7 +801,7 @@ async function saleDrive(vname, w, h, mobile) {
   if (!done) errs.push(`${label}: the drive back didn't lead to the sale (${JSON.stringify(ce)})`);
   else notes.push(`${label}: every ring passed, back on the lot (${ce.drove}), on to the sale`);
   const off = await until(p, () => window.JG_STORY.debug.course().auto, null, 120000);
-  if (off && vname === 'desktop') { await p.waitForTimeout(1500); await shot0(p, 'sale-driveoff'); }
+  if (!off) notes.push(`${label}: (the drive away went by between polls)`);
   const dec = await until(p, () => window.JG_STORY.debug.state().scene === 'decision', null, 240000);
   if (!dec) errs.push(`${label}: the sale didn't lead back to the lot`); else notes.push(`${label}: she drives off, and the night lot comes back`);
   const s = await st(p);

@@ -2628,7 +2628,7 @@ function endHold(ok) { const H = HOLDG; HOLDG = null; holdEl.classList.remove("i
 
 /* a walk the episode takes for you (you can't steer it; S.busy keeps the controls and the prompts out of it) */
 function walkAwait(v, ms = 12000) { return new Promise(res => { const t = setTimeout(() => res(false), FAST ? 40000 : ms); /* (the harness's software clock is slow) */ if (!walkTo(v, () => { clearTimeout(t); res(true); }, { ring: false })) { clearTimeout(t); res(false); } }); }
-const raceT = (p, ms) => Promise.race([p || Promise.resolve(), sleep(ms)]);
+const raceT = (p, ms) => Promise.race([p || Promise.resolve(), new Promise(r => setTimeout(r, ms))]); // (a real cap: sleep() is cut short under the harness)
 
 /* sitting down beside him: to the front of the seat, turn, sit */
 async function sitBeside() {
@@ -2638,7 +2638,9 @@ async function sitBeside() {
     const ap = me.seatApproach ? me.seatApproach(st.p, st.yaw) : st.p;
     if (Math.hypot(ap.x - me.pos.x, ap.z - me.pos.z) > 0.7) await walkAwait(new THREE.Vector3(ap.x, 0, ap.z));
     FX("arrive"); hap("heart"); AU.use("sit", st.p);
-    await raceT(me.sitDown(st.p, st.yaw), FAST ? 40000 : 9000);
+    await raceT(me.sitDown(st.p, st.yaw, FAST ? { dur: 0.3, speed: 3 } : {}), FAST ? 40000 : 9000);
+    // (the body settles a beat after the sequence hands back: the talk starts once you're really down)
+    for (let t0 = performance.now(); !me.seated && me.car && performance.now() - t0 < (FAST ? 40000 : 3000);) await new Promise(r => setTimeout(r, 50));
   } catch (e) {}
   S.busy = false;
 }
@@ -2647,26 +2649,29 @@ async function coffeeRun(s) {
   const ud = set.userData, J = P.jason;
   S.busy = true; hideWorldUI(); mv.path = null;
   try {
-    if (me.seated && me.standUp) await raceT(me.standUp(), FAST ? 30000 : 3000);
+    if (me.seated && me.standUp) await raceT(me.standUp(), FAST ? 90000 : 3000);
     const stand = s.sp.stand;
     if (stand && Math.hypot(stand.x - me.pos.x, stand.z - me.pos.z) > 0.5) await walkAwait(stand);
     me.wantYaw = Math.atan2(s.p.x - me.pos.x, s.p.z - me.pos.z);
     const btn = s.p.clone().add(new THREE.Vector3(0.12, 0.42, 0.06));
     let pressed = false; const press = () => { if (pressed) return; pressed = true; FX("arrive"); AU.thing("june-coffee", s.p); hap("tap"); };
-    await raceT(me.press ? me.press(btn, { onContact: press }) : null, FAST ? 30000 : 3000); press();
+    await raceT(me.press ? me.press(btn, { hand: "r", onContact: press }) : null, FAST ? 90000 : 3000); press();
     await sleep(FAST ? 50 : 1700);
     const cup = ud.dropCup ? ud.dropCup() : null;
-    if (cup && me.pickUp) await raceT(me.pickUp(cup, { hold: "cup", onContact: () => { AU.use("pickup", cup.position); hap("tap"); } }), FAST ? 30000 : 6000);
+    let picked = null;
+    if (cup && me.pickUp) await raceT(me.pickUp(cup, { hold: "cup", hand: "l", onContact: () => { AU.use("pickup", cup.position); hap("tap"); } }).then(v => (picked = v)), FAST ? 90000 : 6000);
     const side = me.carrying ? (me.carrying.l && me.carrying.l.obj === cup ? "l" : me.carrying.r && me.carrying.r.obj === cup ? "r" : null) : null;
-    // across to him, and down to his level
+    S.cof = { side, cup: !!cup, picked, carry: me.carrying ? Object.keys(me.carrying).filter(k => me.carrying[k]) : null };
+    // across to him; the camera takes the two of you in for the hand-over
     await walkAwait(J.pos.clone().add(new THREE.Vector3(0.12, 0, 0.78)));
     me.wantYaw = Math.atan2(J.pos.x - me.pos.x, J.pos.z - me.pos.z);
     J.lookAtP = headOf(me);
+    S.partner = J; setPhase("talk"); shotChoices();
     await sleep(FAST ? 50 : 450);
     if (cup && side && J.pickUp) {
       // his hand comes up to the cup; yours lets go as his closes on it
       const give = () => { if (me.carrying && me.carrying[side]) { me.carrying[side] = null; try { me.release(side); } catch (e) {} } hap("tap"); AU.use("pickup", cup.position); };
-      await raceT(J.pickUp(cup, { hold: "cup", onContact: give }), FAST ? 30000 : 6000); give();
+      S.cof.took = await raceT(J.pickUp(cup, { hold: "cup", onContact: give }), FAST ? 90000 : 6000); give();
     } else if (cup) cup.visible = false;
   } catch (e) {}
   S.busy = false;
@@ -2684,7 +2689,7 @@ function phoneBuzz(on, n = 2) {
 }
 function phoneChoice(k) {
   const ud = set.userData;
-  if (k === "answered") { if (ud.phoneBuzz) ud.phoneBuzz(false); if (ud.phone) ud.phone.visible = false; me.hold = "phone"; AU.use("pickup", ud.phone ? ud.phone.position : me.pos); hap("tap"); }
+  if (k === "answered") { if (ud.phoneBuzz) ud.phoneBuzz(false); if (ud.phone) ud.phone.visible = false; me.hold = "phone"; S.phoneEar = (S.phoneEar || 0) + 1; AU.use("pickup", ud.phone ? ud.phone.position : me.pos); hap("tap"); }
   else phoneBuzz(true, 3);
 }
 function juneTick(dt) {
@@ -2708,11 +2713,11 @@ function juneShot(L) {
   if (L.who === "jason") {
     // on him, from just in front of your shoulder, the lens at his eye line looking a little up
     const pos = yh.clone().addScaledVector(fwd, 0.62).addScaledVector(side, -0.08).add(new THREE.Vector3(0, -0.2, 0));
-    camState.shot = { pos, look: jh.clone().add(new THREE.Vector3(0, -0.05, 0)), push: reduced ? 0 : 0.14, dur: 12, focus: pos.distanceTo(jh), range: 0.7 };
+    camState.shot = { pos, look: jh.clone().add(new THREE.Vector3(0, -0.05, 0)), push: reduced ? 0 : 0.14, dur: 12, focus: pos.distanceTo(jh), range: 1.1 };
   } else {
     // the two of you on the row, from low in front, the room falling away behind
     const pos = mid.clone().addScaledVector(fwd, 1.7).addScaledVector(side, 0.55).add(new THREE.Vector3(0, -0.28, 0));
-    camState.shot = { pos, look: mid.clone().add(new THREE.Vector3(0, -0.12, 0)), push: reduced ? 0 : 0.1, dur: 12, focus: pos.distanceTo(mid), range: 1.0 };
+    camState.shot = { pos, look: mid.clone().add(new THREE.Vector3(0, -0.12, 0)), push: reduced ? 0 : 0.1, dur: 12, focus: pos.distanceTo(mid), range: 1.7 };
   }
   camState.shotT = 0; camState.cut = !camState.juneIn; camState.juneIn = true;
 }
@@ -3176,14 +3181,14 @@ async function boot() {
   // warm the shaders on the first frames, behind the loading screen
   await person("you", "player"); setLoad(0.8); await person("jason", "jason"); await person("dell", "dell"); setLoad(0.86);
   // every set's shaders and textures, behind the loading screen: no hitch on the first step into the office, the library or a car
-  if (typeof WORLD.warmSet === "function") { for (const n of ["lot", "office", "memory"]) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.02 * ["lot", "office", "memory"].indexOf(n)); } }
+  if (typeof WORLD.warmSet === "function") { const W0 = ["lot", "office", "memory", "june"]; for (const n of W0) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.015 * W0.indexOf(n)); } }
   setLoad(0.92);
   raf = requestAnimationFrame(frame);
   // build the rest while you play, and compile its shaders off the main path (parallel where the GPU allows), so the
   // first step into the office or the library never hitches on a shader
-  if (typeof WORLD.warmSet !== "function") setTimeout(() => warmSets(["office", "memory"]), FAST ? 400 : 2500);
+  if (typeof WORLD.warmSet !== "function") setTimeout(() => warmSets(["office", "memory", "june"]), FAST ? 400 : 2500);
   // the people you meet later, loaded (and kept out of sight) while you're on the lot
-  setTimeout(async () => { for (const [k, n] of [["renata", "renata"], ["memory", "jason-memory"]]) { if (P[k]) continue; try { const q = await person(k, n); const here = (S.scene === "office" && k === "renata") || (S.scene === "memory" && k === "memory"); if (!here) hide(q); } catch (e) {} } }, FAST ? 300 : 3000);
+  setTimeout(async () => { for (const [k, n, lo] of [["renata", "renata"], ["memory", "jason-memory"], ["marisol", "renata", { look: "marisol" }]]) { if (P[k]) continue; try { const q = await person(k, n, lo); const here = (S.scene === "office" && k === "renata") || (S.scene === "memory" && k === "memory") || (S.scene === "sale" && k === "marisol"); if (!here) hide(q); } catch (e) {} } }, FAST ? 300 : 3000);
 }
 
 async function warmSets(names) {
@@ -3262,7 +3267,7 @@ document.addEventListener("jg:run-closed", () => {
 window.JG_STORY = {
   open, close, isOpen: () => S.open, hasSave: () => !!loadSave(),
   debug: {
-    state: () => ({ open: S.open, scene: S.scene, phase: S.phase, flags: { ...S.flags }, looked: { ...S.looked }, trophies: S.trophies.slice(), journal: S.journal.slice(), talking: S.talking, line: line ? line.L.id : null, choices: choosing ? choosing.list.map(c => c.t) : null, ending: S.ending, near: near ? near.id : null, me: me ? [me.pos.x, me.pos.z] : null, quality, pixelRatio, fps: fpsLog.slice(-5), obj: S.obj }),
+    state: () => ({ open: S.open, scene: S.scene, phase: S.phase, flags: { ...S.flags }, looked: { ...S.looked }, trophies: S.trophies.slice(), journal: S.journal.slice(), talking: S.talking, line: line ? line.L.id : null, choices: choosing ? choosing.list.map(c => c.t) : null, ending: S.ending, near: near ? near.id : null, me: me ? [me.pos.x, me.pos.z] : null, busy: !!S.busy, quality, pixelRatio, fps: fpsLog.slice(-5), obj: S.obj }),
     skip: () => { if (line) endLine(true); },
     flag: (k, v) => { S.flags[k] = v; },
     choose: i => pick(i, "debug"),
@@ -3271,6 +3276,7 @@ window.JG_STORY = {
       const s = spotsHere().find(x => x.id === id); if (!s) return false;
       let st = s.sp.stand || s.p;
       if (s.sp.who) { const w = P[s.sp.who]; st = w.pos.clone().add(new THREE.Vector3(Math.sin(w.yaw), 0, Math.cos(w.yaw)).multiplyScalar(1.35)); }
+      if (me.car && !DRV.state) { try { me.driving = null; } catch (e) {} } // (seated: the harness stands you up to move you)
       mv.path = null; mv.after = null; guide.clearRing(); me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
     },
     interact: id => interact(id, "debug"),
@@ -3382,7 +3388,7 @@ window.JG_STORY = {
     },
     you: () => me, veh: () => DRV.veh,
     /* the waiting room and the test drive (tools/verify/story.mjs) */
-    june: () => ({ seated: !!(me && me.seated), jasonSit: !!(P.jason && P.jason.pose === "sit"), hold: !!HOLDG, busy: !!S.busy, phoneEar: !!(me && me.hold === "phone"), cup: !!(set && set.userData.cup && set.userData.cup.visible), jasonCup: !!(P.jason && P.jason.carrying && (P.jason.carrying.l || P.jason.carrying.r)), meshes: (() => { let n = 0; if (set) set.traverse(o => { if (o.isMesh && o.visible) n++; }); return n; })() }),
+    june: () => ({ seated: !!(me && me.seated), sitMode: me && me.car ? me.car.mode : null, at: me ? [+me.pos.x.toFixed(2), +me.pos.z.toFixed(2)] : null, jasonSit: !!(P.jason && P.jason.pose === "sit"), hold: !!HOLDG, busy: !!S.busy, phoneEar: !!(me && me.hold === "phone"), answered: S.phoneEar || 0, cof: S.cof || null, cup: !!(set && set.userData.cup && set.userData.cup.visible), jasonCup: !!(P.jason && P.jason.carrying && (P.jason.carrying.l || P.jason.carrying.r)), meshes: (() => { let n = 0; if (set) set.traverse(o => { if (o.isMesh && o.visible) n++; }); return n; })() }),
     course: () => ({ live: courseLive(), i: COURSE.i, n: COURSE.pts.length, t: +COURSE.t.toFixed(2), pts: COURSE.pts.map(p => p.slice()), ring: courseG.ringMesh.visible, ui: courseEl.classList.contains("is-on"), marisol: !!(P.marisol && P.marisol.inCar), drove: S.flags.drove || null, auto: !!AUTO })
   }
 };
