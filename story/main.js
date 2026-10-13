@@ -1182,7 +1182,8 @@ function padFocus(e) {
 /* nothing focused here yet: the first thing, or the one that's chosen (the open tab, the main button) */
 function padFirst(host) {
   const l = padList(host); if (!l.length) return null;
-  const e = l.find(x => x.getAttribute("aria-selected") === "true" || x.classList.contains("btn--primary") || x.classList.contains("app-btn--gold")) || l[0];
+  // a way back (the phone's own back, the Back button) is never where the focus starts unless it's all there is
+  const e = l.find(x => x.getAttribute("aria-selected") === "true" || x.classList.contains("btn--primary") || x.classList.contains("app-btn--gold")) || l.find(x => !x.matches("[data-back], .st-back, .st-x, [data-st$='back']")) || l[0];
   padFocus(e); return e;
 }
 function padCur(host) { const a = document.activeElement; return a && a !== document.body && host.contains(a) && padOk(a) ? a : null; }
@@ -1200,9 +1201,11 @@ function padMove(host, dir) {
   for (const e of padList(host)) {
     if (e === cur || e.contains(cur) || cur.contains(e)) continue;
     const r = e.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy;
-    const along = dir === 1 ? -dy : dir === 2 ? dy : dir === 3 ? -dx : dx, across = dir < 3 ? Math.abs(dx) : Math.abs(dy);
+    // across: the gap between the two side by side (none when they overlap, as a wide slider under a toggle does)
+    const along = dir === 1 ? -dy : dir === 2 ? dy : dir === 3 ? -dx : dx;
+    const gap = dir < 3 ? Math.max(0, r.left - r0.right, r0.left - r.right) : Math.max(0, r.top - r0.bottom, r0.top - r.bottom);
     if (along < 4) continue;
-    const sc = along + across * 2.2;
+    const sc = along + gap * 2.2 + (dir < 3 ? Math.abs(dx) : Math.abs(dy)) * 0.1;
     if (sc < bs) { bs = sc; best = e; }
   }
   if (best) { padFocus(best); if (SC()) SC().tick(); }
@@ -2165,10 +2168,10 @@ async function enterCar(c, how) {
   DRV.au = AU.drive({ running: !!(v.engine && v.engine.on), start: false, rain: S.scene === "keys" ? 0 : 1 });
   const skipped = new Promise(r => { DRV.skip = () => { DRV.skip = null; r("skip"); }; });
   if (me.enterCar) {
-    let p = null; try { p = me.enterCar(v, "driver"); } catch (e) {}
+    let p = null; try { p = me.enterCar(v, "driver", { onDoor: carDoor }); } catch (e) {}
     const r = await Promise.race([p || Promise.resolve(), skipped]);
     if (DRV.state !== "enter") return;
-    if (r === "skip") { try { me.drive(v, "driver"); } catch (e) {} if (v.doors) v.doors.open("driver", 0); }
+    if (r === "skip") { try { me.drive(v, "driver"); } catch (e) {} if (v.doors) v.doors.open("driver", 0); DRV.doorOpen = false; } // a skip shuts it silently
   } else {
     // no seated driver to show: face the door, open it, step in out of sight, shut it
     const at = doorPoint(c);
@@ -2185,6 +2188,8 @@ async function enterCar(c, how) {
   if (DRV.cam === "car" && me.inCar) me.group.visible = false;
   drvEl.hidden = false; driveGlyphs();
 }
+/* the door leaving its latch or shutting, in the frame people.js moves it: the sound and the buzz together */
+function carDoor(open) { DRV.doorOpen = open; if (DRV.au && DRV.entry) DRV.au.door(open, doorPoint(DRV.entry)); hap("tap"); }
 function swingDoor(v, to, secs) {
   return new Promise(res => {
     if (!v.doors) { res(); return; }
@@ -2214,7 +2219,7 @@ async function exitCar(how, instant) {
   // the driver's door against something (another car, a wall): no climbing out into it; you step out on a clear side
   const ds = doorStand(c), doorFree = !blocked(ds.x, ds.z, 0.25);
   if (!instant && me.inCar && me.exitCar && doorFree) {
-    let p = null; try { p = me.exitCar(v); } catch (e) {}
+    let p = null; try { p = me.exitCar(v, { onDoor: carDoor }); } catch (e) {}
     out = (await Promise.race([p || Promise.resolve(), skipped])) !== "skip";
   } else if (!instant && !me.inCar) { await swingDoor(v, 1, 0.38); await Promise.race([sleep(260), skipped]); await swingDoor(v, 0, 0.3); }
   DRV.skip = null;
@@ -2264,7 +2269,9 @@ function driveInput(dt) {
 }
 function tickDrive(dt) {
   const v = DRV.veh; if (!v || !DRV.state) return;
-  const inp = DRV.state === "drive" && S.phase === "drive" ? driveInput(dt) : { throttle: 0, brake: DRV.state === "exit" ? 1 : 0, steer: 0, handbrake: DRV.state === "exit" ? 0.3 : 1 };
+  // getting out it brakes to a stop, then holds on the handbrake (a held brake at a standstill would select reverse)
+  const rolling = DRV.state === "exit" && Math.abs(v.speed || 0) > 0.4;
+  const inp = DRV.state === "drive" && S.phase === "drive" ? driveInput(dt) : { throttle: 0, brake: rolling ? 1 : 0, steer: 0, handbrake: rolling ? 0.3 : 1 };
   v.update(dt, inp);
   const p = v.pose || { x: v.object.position.x, z: v.object.position.z, yaw: v.object.rotation.y };
   // with no seated driver to show, you ride along unseen; a seated one is people.js's to place
@@ -2913,8 +2920,9 @@ window.JG_STORY = {
     skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; },
     /* the getting in and out stills (tools/verify/car-sheet.mjs): stop the loop, then step whole frames on a fixed clock and draw */
     freeze: on => { S.attract = !!on; last = performance.now(); return S.attract; },
-    step: (n, dt) => {
+    step: (n, dt, draw = true) => {
       for (let i = 0; i < n; i++) { S.t += dt; if (DRV.veh) tickDrive(dt); if (!DRV.state) moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updateCamera(dt); }
+      if (!draw) return true;
       updateLamps(); camera.updateMatrixWorld();
       const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
       if (ground && quality >= 1) post.reflect(scene, camera, world, ground);

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 story = json.loads((ROOT / "tools/site/story.json").read_text())
 out = story.get("out", "assets/voice/story")
 cast = story["cast"]
+THOUGHT_SPEED = 0.9  # kept here, not in story.json, so the number stays off the page
 fict, mine, seen = [], [], set()
 for tid, t in story["talks"].items():
     for l in t.get("lines", []):
@@ -30,8 +31,9 @@ for tid, t in story["talks"].items():
             if not v:
                 raise SystemExit("story_voice: no voice for " + who)
             fl = {"id": l["id"], "who": who, "voice": v, "text": l["t"]}
-            if l.get("speed") or cast[who].get("speed"):
-                fl["speed"] = l.get("speed") or cast[who]["speed"]  # a line, or a voice (your thoughts), said slower
+            sp = l.get("speed") or (THOUGHT_SPEED if who == "you" else None)
+            if sp:
+                fl["speed"] = sp  # a line that needs saying slower to be clear, and your thoughts, unhurried
             fict.append(fl)
 
 (ROOT / "tools/voice/story_lines.json").write_text(json.dumps({

@@ -907,7 +907,7 @@ function moreStreet(set, day, CO) {
     const glassM = pbr({ color: "#0b0f10", rough: 0.03, wet: 0.8, alpha: 0.2, glass: true, depthWrite: false, spec: 1, diff: 0.2 });
     const gl = face(plane(gw, 2.2, glassM, set)); gl.position.set(gm, 1.5, zf + 0.03); gl.renderOrder = 2;
     box(0.25, 2.6, 0.2, darkM, xr - 1.75, 1.3, zf + 0.1, set);
-    const sign = face(plane(3.6, 0.62, glow("#ffffff", { map: TX.labelTex("LAUNDRY", { bg: "#16201b", fg: "#efe6d2", w: 512, h: 96 }), k: day ? 0.7 : 1.15 }), set)); sign.position.set(x0 - 1.2, 3.2, zf - 0.02);
+    const sign = face(plane(3.6, 0.62, glow("#ffffff", { map: TX.labelTex("LAUNDRY", { bg: "#0c110f", fg: "#efe6d2", w: 512, h: 96 }), k: day ? 0.7 : 1.15 }), set)); sign.position.set(x0 - 1.2, 3.2, zf - 0.02);
     // the door: glass in a dark frame, hinged on its left (as you face it), it swings out onto the walk
     const hinge = new THREE.Group(); hinge.position.set(xr - 0.55, 0, zf + 0.02); hinge.userData.keep = true; set.add(hinge);
     const leafG = mergeGeometries([new THREE.BoxGeometry(1.1, 2.25, 0.05).translate(-0.55, 1.13, 0), new THREE.BoxGeometry(0.04, 0.3, 0.06).translate(-0.98, 1.05, -0.05)]);
@@ -966,8 +966,8 @@ function moreStreet(set, day, CO) {
 
   /* a taco truck in the empty lot, its window open and lit, bulbs strung under the awning, a bell on the counter */
   { const cx = -34.3, cz = 48.8, zw = cz - 1.2;
-    box(4.6, 2.5, 2.4, white, cx, 1.75, cz, set);
-    box(1.6, 1.9, 2.3, white, cx + 3.1, 1.45, cz, set);
+    box(4.6, 2.5, 2.4, green, cx, 1.75, cz, set);
+    box(1.6, 1.9, 2.3, green, cx + 3.1, 1.45, cz, set);
     const ws = plane(2.0, 0.8, darkGlass, set); ws.rotation.y = Math.PI / 2; ws.position.set(cx + 3.91, 1.9, cz);
     face(plane(0.8, 0.6, darkGlass, set)).position.set(cx + 3.1, 1.85, zw - 0.06);
     box(6.0, 0.35, 2.0, darkM, cx + 0.7, 0.4, cz, set);
@@ -977,13 +977,13 @@ function moreStreet(set, day, CO) {
     const aw = box(2.8, 0.05, 0.9, canopyM, cx, 2.62, zw - 0.42, set); aw.rotation.x = -0.25;
     for (let i = 0; i < 7; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), bulbM); b.position.set(cx - 1.35 + i * 0.45, 2.48 - Math.sin(i / 6 * Math.PI) * 0.08, zw - 0.84); set.add(b); }
     box(2.7, 0.62, 0.08, darkM, cx, 3.3, zw + 0.05, set);
-    face(plane(2.5, 0.52, glow("#ffffff", { map: TX.labelTex("TACOS", { bg: "#1c3229", fg: "#efe6d2", w: 384, h: 80 }), k: day ? 0.7 : 1.2 }), set)).position.set(cx, 3.3, zw - 0.0);
+    face(plane(2.5, 0.52, glow("#ffffff", { map: TX.labelTex("TACOS", { bg: "#0c110f", fg: "#efe6d2", w: 384, h: 80 }), k: day ? 0.7 : 1.2 }), set)).position.set(cx, 3.3, zw - 0.0);
     // a chalkboard on the gravel, and a barrel for the trash
-    const cb = box(0.62, 0.86, 0.04, darkM, cx + 1.9, 0.43, zw - 1.25, set); cb.rotation.x = 0.2;
+    const cb = box(0.62, 0.86, 0.04, darkM, cx + 1.9, 0.45, zw - 1.25, set); cb.rotation.x = 0.2;
     cyl(0.28, 0.26, 0.9, darkM, cx - 2.7, 0.45, zw - 0.7, set, 12); post(cx - 2.7, zw - 0.7, 0.3);
     const bell = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), steel); bell.position.set(cx + 0.8, 1.39, zw - 0.2); set.add(bell);
     wall(cx - 2.35, cx + 3.95, cz - 1.25, cz + 1.25, "wall", 3.0);
-    if (!day) set.userData.lamps.push({ p: V3(cx, 2.3, zw - 1.0), range: 7, col: [1.7, 1.15, 0.6], cone: 0, fixed: false });
+    if (!day) set.userData.lamps.push({ p: V3(cx, 2.2, zw - 1.5), range: 6.5, col: [1.2, 0.8, 0.42], cone: 0, fixed: false });
     thing(set, "truck-bell", { kind: "press", label: "Bell", p: V3(cx + 0.8, 1.42, zw - 0.2), stand: V3(cx + 0.8, 0, zw - 0.95), r: 1.3 });
     thing(set, "taco-menu", { kind: "read", label: "Board", text: "Tacos. Open late.", p: V3(cx + 1.9, 0.6, zw - 1.3), stand: V3(cx + 1.9, 0, zw - 2.1), r: 1.4 });
     ud.sounds.truck = { x: cx - 1.5, y: 0.8, z: cz, kind: "generator" };

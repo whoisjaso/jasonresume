@@ -919,10 +919,11 @@ async function exploreCheck(vname, w, h, mobile) {
     const ok = await p.evaluate(id => window.JG_STORY.debug.warp(id), id);
     if (!ok) { errs.push(`${label}: no ${id} here`); return false; }
     await until(p, id => window.JG_STORY.debug.state().near === id, id, 15000);
-    const n0 = (await p.evaluate(() => window.JG_STORY.debug.audio().events.length));
+    // (the log keeps only its last 60 events, so what came after the press is found by its time, not its index)
+    const t0 = await p.evaluate(() => performance.now());
     if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.evaluate(id => window.JG_STORY.debug.interact(id), id)); else await p.keyboard.press('e');
     await p.waitForTimeout(1600);
-    const ev = await p.evaluate(n0 => window.JG_STORY.debug.audio().events.slice(n0).filter(e => e.kind === 'use').map(e => e.name), n0);
+    const ev = await p.evaluate(t0 => window.JG_STORY.debug.audio().events.filter(e => e.t >= t0 && e.kind === 'use').map(e => e.name), t0);
     return ev;
   };
   const kinds = new Set(), exits = [];
@@ -956,6 +957,8 @@ async function exploreCheck(vname, w, h, mobile) {
       const up = await until(p, () => !window.JG_STORY.debug.seated(), null, 30000);
       if (!mobile) await p.keyboard.up('w');
       if (!up) errs.push(`${label}: a push didn't get you up off the bench`); else kinds.add('sit');
+      // (seated() goes false as the body starts to rise; wait until it has stood all the way up, or the next warp is undone)
+      if (up && !(await until(p, () => !window.JG_STORY.debug.drive().inCar, null, 60000))) errs.push(`${label}: never finished getting up off the bench`);
     }
   }
   // out through the office door and back through the office's own exit
@@ -1167,22 +1170,26 @@ async function jumpCheck(vname, w, h, mobile) {
 async function jumpSheet(p, lane, label) {
   const files = [];
   const cv = await p.$('.st-cv');
-  const snap = async name => { const f = path.join(OUT, `jump-${name}.png`); await cv.screenshot({ path: f }); files.push([f, name]); };
+  const vb = await cv.boundingBox();
+  const snap = async name => { const f = path.join(OUT, `jump-${name}.png`); await p.screenshot({ path: f, clip: { x: vb.x + vb.width * 0.29, y: vb.y + vb.height * 0.12, width: vb.width * 0.42, height: vb.height * 0.76 } }); files.push([f, name]); };
   await p.evaluate(() => { window.JG_STORY.debug.freeze(true); const h = document.querySelector('.st-hud'); if (h) h.style.visibility = 'hidden'; for (const s of ['.st-obj', '.st-way', '.st-dots', '.st-prompt', '.st-hint', '.st-legend']) { const e = document.querySelector(s); if (e) e.style.visibility = 'hidden'; } });
   for (const kind of ['run', 'stand']) {
     if (kind === 'run') { await p.keyboard.down('w'); await p.keyboard.down('Shift'); }
     await p.evaluate(([l, kind]) => {
       const d = window.JG_STORY.debug;
-      d.put(l[0], l[1], l[2]); d.sim(kind === 'run' ? 70 : 20, 1 / 60);
-      // the camera side on, level with the hips, framing the arc ahead
-      const j = d.jumpState(), fx = Math.sin(l[2]), fz = Math.cos(l[2]), ahead = kind === 'run' ? 0.9 : 0;
+      d.put(l[0], l[1], l[2]);
+      // nobody else in the frame
+      for (const who of ['dell', 'jason', 'renata']) d.place(who, l[0] + 40, l[1] + 40, 0);
+      d.sim(kind === 'run' ? 70 : 20, 1 / 60);
+      // the camera side on, a little above the hips, framing the arc ahead
+      const j = d.jumpState(), fx = Math.sin(l[2]), fz = Math.cos(l[2]), ahead = kind === 'run' ? 1.2 : 0;
       const cx = j.x + fx * ahead, cz = j.z + fz * ahead;
-      d.view([cx + fz * 4.2, 1.15, cz - fx * 4.2], [cx, 0.85, cz], 6);
-      d.jump('test');
+      d.view([cx + fz * 3.9, 1.1, cz - fx * 3.9], [cx, 0.85, cz], 6);
+      d.jump('test'); d.step(1, 0);
     }, [lane, kind]);
     // the clock from the press: the crouch, the push, rising, the top, falling, the touch down, the knees, standing
-    const times = kind === 'run' ? [0, 4, 8, 16, 24, 32, 38, 42, 50] : [0, 6, 10, 16, 24, 32, 40, 45, 54];
-    let f = 0;
+    const times = kind === 'run' ? [1, 4, 8, 16, 24, 32, 37, 41, 50] : [1, 6, 10, 16, 24, 32, 39, 43, 54];
+    let f = 1;
     for (const t of times) {
       if (t > f) { await p.evaluate(n => window.JG_STORY.debug.step(n, 1 / 60), t - f); f = t; }
       else await p.evaluate(() => window.JG_STORY.debug.step(0, 1 / 60));
@@ -1193,8 +1200,8 @@ async function jumpSheet(p, lane, label) {
     await p.evaluate(() => { const d = window.JG_STORY.debug; d.view(null); for (let i = 0; i < 40; i++) d.sim(1, 1 / 60); });
   }
   await p.evaluate(() => window.JG_STORY.debug.freeze(false));
-  const sp = await (await b.newContext({ viewport: { width: 1800, height: 900 } })).newPage();
-  const html = '<body style="margin:0;background:#0a0f0d;display:grid;grid-template-columns:repeat(9,1fr);gap:6px;padding:6px;font:11px sans-serif;color:#9a9890">' + files.map(([f, n]) => `<figure style="margin:0"><img src="data:image/png;base64,${fs.readFileSync(f).toString('base64')}" style="width:100%;height:330px;object-fit:cover;display:block"/><figcaption>${n}</figcaption></figure>`).join('') + '</body>';
+  const sp = await (await b.newContext({ viewport: { width: 2700, height: 800 } })).newPage();
+  const html = '<body style="margin:0;background:#0a0f0d;display:grid;grid-template-columns:repeat(9,1fr);align-content:start;gap:6px;padding:6px;font:13px sans-serif;color:#9a9890">' + files.map(([f, n]) => `<figure style="margin:0"><img src="data:image/png;base64,${fs.readFileSync(f).toString('base64')}" style="width:100%;display:block"/><figcaption>${n}</figcaption></figure>`).join('') + '</body>';
   await sp.setContent(html); await sp.waitForTimeout(300);
   await sp.screenshot({ path: path.join(OUT, 'jump-sheet.png'), fullPage: true });
   await sp.context().close();
@@ -1255,22 +1262,22 @@ async function padCheck(vname, w, h, mobile) {
   if (dyaw(back) > 0.15) errs.push(`${label}: the right stick's click left the camera ${dyaw(back).toFixed(2)} rad off behind you (was ${dyaw(off).toFixed(2)})`);
   else notes.push(`${label}: the right stick's click brings the camera from ${dyaw(off).toFixed(2)} rad off to ${dyaw(back).toFixed(2)} behind you`);
   // the pause menu: Menu opens it, the D-pad moves a visible focus, A goes into Settings, the D-pad's right moves a slider, B backs out twice
-  await press(9, 2);
+  await press(9, 2); await p.waitForTimeout(200);
   if ((await st(p)).phase !== 'pause') errs.push(`${label}: Menu didn't pause`);
   await press(13, 2); const f1 = await F(); await press(13, 2); const f2 = await F();
   if (!f1 || !f2 || !f1.inHost || f1.text === f2.text) errs.push(`${label}: the D-pad didn't move the focus in the pause menu (${JSON.stringify([f1, f2])})`);
   if (f2 && f2.outline === 'none') errs.push(`${label}: the pause menu's focus doesn't show`);
   for (let i = 0; i < 6; i++) { const f = await F(); if (f && f.text === STORY.ui.settings) break; await press(i < 3 ? 12 : 13, 2); }
-  await press(0, 3);
+  await press(0, 3); await p.waitForTimeout(200);
   const inSet = await p.evaluate(() => !!document.querySelector('.st-pause [data-mix]'));
   if (!inSet) errs.push(`${label}: A on Settings didn't open the settings`);
   else {
     const m0 = await p.evaluate(() => window.JG_STORY.debug.settings().mix);
-    let onSlider = false;
-    for (let i = 0; i < 6 && !onSlider; i++) { onSlider = await p.evaluate(() => document.activeElement && document.activeElement.matches('input[type=range]')); if (!onSlider) await press(13, 2); }
+    let onSlider = false; const path0 = [];
+    for (let i = 0; i < 8 && !onSlider; i++) { onSlider = await p.evaluate(() => document.activeElement && document.activeElement.matches('input[type=range]')); path0.push((await F() || {}).text); if (!onSlider) await press(13, 2); }
     await press(14, 2);
     const m1 = await p.evaluate(() => window.JG_STORY.debug.settings().mix);
-    if (!onSlider || JSON.stringify(m0) === JSON.stringify(m1)) errs.push(`${label}: the D-pad didn't move a mix slider (${onSlider})`);
+    if (!onSlider || JSON.stringify(m0) === JSON.stringify(m1)) errs.push(`${label}: the D-pad didn't move a mix slider (${onSlider}; focus went ${path0.join(' > ')})`);
     else notes.push(`${label}: the settings' sliders move on the D-pad (${Object.keys(m0).filter(k => m0[k] !== m1[k]).join(' ')})`);
     await press(15, 2);
     await press(1, 3);
@@ -1278,15 +1285,17 @@ async function padCheck(vname, w, h, mobile) {
   await press(1, 3);
   if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't back out of the pause menu (${(await st(p)).phase})`);
   // the journal: Y opens it, the D-pad goes along the tabs, A opens one, B closes it
-  await press(3, 4);
+  await press(3, 4); await p.waitForTimeout(200);
   if ((await st(p)).phase !== 'journal') errs.push(`${label}: Y didn't open the journal`);
   else {
     await press(15, 2); await press(0, 3);
     const tab = await p.evaluate(() => { const t = document.querySelector('.st-journal [aria-selected="true"]'); return t && t.dataset.tab; });
     if (tab === 'things') errs.push(`${label}: the D-pad and A didn't change the journal's tab`);
     else notes.push(`${label}: the journal's tabs move on the D-pad and open on A (${tab})`);
+    const r0 = await p.evaluate(() => window.__rumble.length);
     await press(1, 3);
     if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't close the journal`);
+    if (await p.evaluate(r0 => window.__rumble.length > r0, r0)) errs.push(`${label}: closing the journal (a cancel) rumbled`);
   }
   // a talk: A at Jason starts it, A moves the lines on, the D-pad moves through the choices, A picks
   await p.evaluate(() => window.JG_STORY.debug.freeze(false));
@@ -1300,6 +1309,7 @@ async function padCheck(vname, w, h, mobile) {
     for (let i = 0; i < 80 && !picked; i++) {
       const s = await st(p);
       if (s.choices) {
+        await p.waitForTimeout(200);
         await press(13, 2); const f = await F();
         const idx = await p.evaluate(() => [...document.querySelectorAll('.st-ch')].indexOf(document.activeElement));
         if (idx !== 1) errs.push(`${label}: the D-pad didn't move to the second choice (${idx})`);
@@ -1343,7 +1353,6 @@ async function padCheck(vname, w, h, mobile) {
     else notes.push(`${label}: the end screen's buttons take the focus from the D-pad (${e1.text}${e2 && e2.text !== e1.text ? ', then ' + e2.text : ''})`);
     const lg = (await J()).legend; if (!/Select/.test(lg)) errs.push(`${label}: the end screen's legend reads "${lg}"`);
   } else errs.push(`${label}: the end screen didn't show`);
-  // skips and cancels never rumble: B out of the journal, B out of the pause menu
   await textRules(p, label);
   await ctx.close();
 }

@@ -436,7 +436,7 @@ export function labelTex(text, o = {}) {
   const w = o.w || 512, h = o.h || 128, c = cv(w, h), g = c.getContext("2d");
   g.fillStyle = o.bg || "#e6dfd0"; g.fillRect(0, 0, w, h);
   g.fillStyle = o.fg || "#1b1d1a"; g.textAlign = "center"; g.textBaseline = "middle";
-  const font = o.font || ("600 % " + SERIF).replace("% ", "%px ");
+  const font = o.font || ("600 % " + SERIF); // (fit() puts the size in for the %)
   fit(g, text, font, o.size || Math.round(h * 0.55), w - 24);
   g.fillText(text, w / 2, h / 2 + 4);
   return tex(c);

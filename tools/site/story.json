@@ -8,7 +8,7 @@
   "voices_note": "Jason's lines are his own voice, synthesized from his recording with his permission. Dell, Renata, the caller, the voice agent and the library are fictional, voiced with stock Kokoro voices (open source). Your own thoughts are narrated in a stock Kokoro voice too.",
   "cast": {
     "jason": { "name": "Jason" },
-    "you": { "name": "", "voice": "af_heart,af_nicole", "speed": 0.9 },
+    "you": { "name": "", "voice": "af_heart,af_nicole" },
     "dell": { "name": "Dell", "tag": "Night porter, fictional", "voice": "am_onyx", "fictional": true },
     "renata": { "name": "Renata", "tag": "Buyer, fictional", "voice": "af_bella", "fictional": true },
     "caller": { "name": "A caller", "tag": "Fictional call", "voice": "af_nicole", "fictional": true },

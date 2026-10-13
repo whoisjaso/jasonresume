@@ -110,6 +110,8 @@ export function createVehicle(set, car, opts = {}) {
     shift: 0, revHold: 0, spinF: 0, spinR: 0, wheelspin: 0, slipF: 0, slipR: 0, hb: 0 };
   // the springs (visual): pitch, roll, heave, and each wheel's lift over a wheel stop
   const sp = { p: 0, pv: 0, r: 0, rv: 0, h: 0, hv: 0, lift: [0, 0, 0, 0], onBump: [false, false, false, false] };
+  // someone's weight on a seat: the body settles toward that side (k 0..1, side +1 the driver's)
+  const load = { r: 0, h: 0 };
   const engine = { on: !!car.engine, start() { if (!engine.on) { engine.on = true; st.rpm = IDLE + 400; if (st.gear === 0) st.gear = 1; } }, stop() { engine.on = false; st.rpm = 0; st.gear = 0; } };
   const light = { head: !!(car.lights && car.lights.head), tail: !!(car.lights && car.lights.tail), brake: 0, reverse: 0, cluster: !!(car.lights && car.lights.cluster) };
   let lamp = car.lamp || null;
@@ -137,13 +139,24 @@ export function createVehicle(set, car, opts = {}) {
     close(side) { doors.open(side, 0); },
     get: side => doorT[sideKey(side)],
     node: side => rig.doors[sideKey(side)],
-    handle(side) { const k = sideKey(side), n = rig.doors[k]; if (!n) return null; root.updateMatrixWorld(true); return handlePoint(k, 1).applyMatrix4(n.matrixWorld); },
-    inner(side) { const k = sideKey(side), n = rig.doors[k]; if (!n) return null; root.updateMatrixWorld(true); return handlePoint(k, -1).applyMatrix4(n.matrixWorld); }
+    handle(side, out) { const k = sideKey(side), n = rig.doors[k]; if (!n) return null; root.updateMatrixWorld(true); return handlePoint(k, 1, out).applyMatrix4(n.matrixWorld); },
+    inner(side, out) { const k = sideKey(side), n = rig.doors[k]; if (!n) return null; root.updateMatrixWorld(true); return handlePoint(k, -1, out).applyMatrix4(n.matrixWorld); },
+    // the top of the window frame near the back edge, from inside: where a hand holds an open door
+    frame(side, out) { const k = sideKey(side), n = rig.doors[k]; if (!n) return null; root.updateMatrixWorld(true); return handlePoint(k, 0, out).applyMatrix4(n.matrixWorld); },
+    // the swing in radians (0 shut, max fully open): set straight, so a caller can ease it its own way
+    angle(side, a) { const k = sideKey(side); if (a == null) return DOOR_MAX * easeDoor(doorT[k]); const e = clamp(a / DOOR_MAX, 0, 1); doors.open(side, 0.5 - Math.sin(Math.asin(1 - 2 * e) / 3)); },
+    max: DOOR_MAX, len: doorLen
   };
-  function handlePoint(k, out) {
-    // in the door's frame (its pivot is the hinge): the handle sits about 0.45 m back, below the belt
-    const n = rig.doors[k], s = k === "L" ? 1 : -1, belt = (meta.belt || [0.9, 0.95, 0.95])[1];
-    return new THREE.Vector3(out > 0 ? 0.03 * s : -0.13 * s, belt - 0.1 - n.position.y + (out > 0 ? 0 : -0.03), -0.45);
+  // the front door's length, from the hinge back to the B pillar
+  function doorLen() { const n = rig.doors.L || rig.doors.R; if (!n || !meta.pillars || !meta.pillars.length) return 1.1; return clamp(n.position.z - (meta.L / 2 - meta.pillars[0] - 0.03), 0.8, 1.4); }
+  function handlePoint(k, where, out) {
+    // in the door's frame (its pivot is the hinge): the outside handle a hand's width in from the back edge, below
+    // the belt; the inside pull a little further forward on the armrest; the window frame's top at the back
+    const n = rig.doors[k], s = k === "L" ? 1 : -1, b = meta.belt || [0.9, 0.95, 0.95], belt = b[1], L = doorLen();
+    const v = out || new THREE.Vector3();
+    if (where > 0) return v.set(0.03 * s, belt - 0.1 - n.position.y, -(L - 0.17));
+    if (where < 0) return v.set(-0.12 * s, belt - 0.14 - n.position.y, -(L - 0.3));
+    return v.set(-0.06 * s, belt + ((meta.H || 1.45) - belt) * 0.82 - n.position.y, -(L - 0.12));
   }
 
   /* ----- one step of the model ----- */
@@ -344,8 +357,8 @@ export function createVehicle(set, car, opts = {}) {
   function springs(dt) {
     const lf = (sp.lift[0] + sp.lift[1]) / 2, lr = (sp.lift[2] + sp.lift[3]) / 2, ll = (sp.lift[0] + sp.lift[2]) / 2, lrt = (sp.lift[1] + sp.lift[3]) / 2;
     const pT = clamp(-st.ax * 0.0055, -0.07, 0.07) + Math.atan2(lr - lf, Lw);   // nose up is negative x rotation
-    const rT = clamp(st.ay * 0.0085, -0.085, 0.085) * (S.cgH / 0.55) + Math.atan2(lrt - ll, track) * -1;
-    const hT = (lf + lr) / 2 * 0.8;
+    const rT = clamp(st.ay * 0.0085, -0.085, 0.085) * (S.cgH / 0.55) + Math.atan2(lrt - ll, track) * -1 + load.r;
+    const hT = (lf + lr) / 2 * 0.8 + load.h;
     const w = 11, z = 0.32;
     sp.pv += (-(w * w) * (sp.p - pT) - 2 * z * w * sp.pv) * dt; sp.p += sp.pv * dt;
     sp.rv += (-(w * w) * (sp.r - rT) - 2 * z * w * sp.rv) * dt; sp.r += sp.rv * dt;
@@ -430,6 +443,10 @@ export function createVehicle(set, car, opts = {}) {
     },
     reset(x, z, yaw) { Object.assign(st, { x, z, yaw, vx: 0, vy: 0, r: 0, ax: 0, ay: 0, delta: 0 }); place(); },
     park() { st.vx = st.vy = st.r = 0; st.hb = 1; place(); },
+    /* a body on a seat (k 0..1, side "driver" or "passenger"): the springs take it, so the car dips as you sit in */
+    weight(k, side = "driver") { const s = sideKey(side) === "L" ? 1 : -1; k = clamp(k || 0, 0, 1); load.r = -s * 0.011 * k * (1520 / S.mass); load.h = -0.009 * k * (1520 / S.mass); },
+    /* a knock on the body (a door shut): roll and heave, in rad/s and m/s, and the springs ring it out */
+    nudge(r = 0, h = 0) { sp.rv += r; sp.hv += h; },
     grips() {
       const n = rig.steer; if (!n) return null;
       root.updateMatrixWorld(true);
