@@ -13,13 +13,16 @@
     "renata": { "name": "Renata", "tag": "Buyer, fictional", "voice": "af_bella", "fictional": true },
     "caller": { "name": "A caller", "tag": "Fictional call", "voice": "af_nicole", "fictional": true },
     "agent": { "name": "The voice agent", "tag": "Fictional call", "voice": "af_heart", "fictional": true },
-    "library": { "name": "The library", "tag": "Fictional", "voice": "bf_emma", "fictional": true }
+    "library": { "name": "The library", "tag": "Fictional", "voice": "bf_emma", "fictional": true },
+    "marisol": { "name": "Marisol", "tag": "Buyer, fictional", "voice": "af_sarah", "fictional": true }
   },
   "scenes": {
     "lot": { "name": "The Lot", "card": "Houston, after close", "start": "lot-arrive" },
     "office": { "name": "The Office", "card": "Inside, out of the rain", "start": "office-arrive" },
     "memory": { "name": "A Memory", "card": "The library, late", "start": "mem-arrive" },
     "keys": { "name": "A Memory", "card": "August 2024", "start": "keys-arrive" },
+    "june": { "name": "A Memory", "card": "June 2025", "start": "june-arrive" },
+    "sale": { "name": "A Memory", "card": "The next morning", "start": "sale-arrive" },
     "decision": { "name": "Lamps On", "card": "Back out on the lot", "start": "dec-arrive" }
   },
   "objectives": {
@@ -30,6 +33,12 @@
     "book": "There's a book on the shelf behind the desk.",
     "pack": "Pack up the desk.",
     "keys": "Take the keys.",
+    "sit": "Sit with Jason.",
+    "june-look": "Look around the waiting room.",
+    "june-go": "Go with Jason.",
+    "sale": "Talk to the buyer.",
+    "drive": "Take her for a test drive. Around the block and back.",
+    "back": "Bring the car back to the lot.",
     "end": "Walk out with Jason."
   },
   "talks": {
@@ -314,8 +323,13 @@
       { "id": "mem-jason-4", "who": "jason", "t": "Dean's Honor List. A 3.63." }
     ], "do": ["unlock:deans-list", "journal:deans"] },
     "mem-brain": { "lines": [
-      { "id": "mem-jason-5", "who": "jason", "t": "Neuroscience at UT Austin. Expected 2028." }
+      { "id": "mem-jason-5", "who": "jason", "t": "Neuroscience at UT Austin. Expected 2028." },
+      { "id": "mem-jason-8", "who": "jason", "t": "After June 2025, the brain stopped being a chapter in a book." }
     ], "do": ["journal:brain"] },
+    "mem-psych": { "lines": [
+      { "id": "mem-jason-9", "who": "jason", "t": "Psychology. How people decide." },
+      { "id": "mem-jason-10", "who": "jason", "t": "Most of a sale is that. Listening for what someone actually wants." }
+    ], "do": ["journal:psych"] },
     "mem-lamp": {
       "lines": [
         { "id": "mem-you-1", "who": "you", "t": "The desk lamp hums. The rest of the floor has gone dark." }
@@ -333,7 +347,84 @@
     ], "do": ["obj:keys"] },
     "keys-take": { "lines": [
       { "id": "keys-jason-1", "who": "jason", "t": "August 2024. Owner and Operations Lead of Triple J, from that day on." }
-    ], "do": ["unlock:keys-to-the-lot", "journal:keys", "goto:decision"] },
+    ], "do": ["unlock:keys-to-the-lot", "journal:keys", "goto:june"] },
+
+    "june-arrive": { "lines": [
+      { "id": "june-you-1", "who": "you", "t": "A waiting room, late. The clock is loud. Nobody here wants to be here." }
+    ], "do": ["obj:sit"] },
+    "june-jason": {
+      "lines": [
+        { "id": "june-jason-1", "who": "jason", "t": "June 2025. My dad had a stroke." },
+        { "id": "june-jason-2", "who": "jason", "t": "I'd been taking my time with a lot of things. After that, I didn't have any." }
+      ],
+      "choices": [
+        { "t": "I'm sorry.", "go": "june-sorry", "set": { "june": "sorry" } },
+        { "t": "What did you do?", "go": "june-did", "set": { "june": "asked" } }
+      ]
+    },
+    "june-sorry": { "lines": [ { "id": "june-jason-3", "who": "jason", "t": "Thank you." } ], "next": "june-did" },
+    "june-did": { "lines": [
+      { "id": "june-jason-4", "who": "jason", "t": "The lot still had cars on it, and people calling about them." },
+      { "id": "june-jason-5", "who": "jason", "t": "So I started selling them myself. That month." }
+    ], "do": ["obj:june-look", "flag:sat=1", "journal:june"] },
+    "june-again": { "lines": [ { "id": "june-jason-11", "who": "jason", "t": "Take your time. I've got a minute." } ] },
+    "june-phone": { "lines": [
+      { "id": "june-you-2", "who": "you", "t": "Missed calls from the lot. People asking about cars." }
+    ] },
+    "june-window": { "lines": [
+      { "id": "june-jason-6", "who": "jason", "t": "I believe God puts us in situations that make us act." },
+      { "id": "june-jason-7", "who": "jason", "t": "Especially when we take too long on our own." }
+    ], "do": ["journal:faith"] },
+    "june-scan": { "lines": [
+      { "id": "june-jason-8", "who": "jason", "t": "A stroke happens in the brain. It's part of why I study neuroscience." },
+      { "id": "june-jason-9", "who": "jason", "t": "That, and how people decide." }
+    ] },
+    "june-go": { "lines": [
+      { "id": "june-jason-10", "who": "jason", "t": "Come on. There's a car to sell." }
+    ], "do": ["goto:sale"] },
+
+    "sale-arrive": { "lines": [
+      { "id": "sale-you-1", "who": "you", "t": "The next morning. The lot in daylight. A buyer by the first car." }
+    ], "do": ["obj:sale"] },
+    "sale-buyer": {
+      "lines": [
+        { "id": "sale-mar-1", "who": "marisol", "t": "I'm just looking. I've been burned before." },
+        { "id": "sale-jason-1", "who": "jason", "t": "Your call. What do I say?" }
+      ],
+      "choices": [
+        { "t": "Tell her about the car.", "go": "sale-pitch", "set": { "sale1": "pitch" } },
+        { "t": "Ask what happened last time.", "go": "sale-listen", "set": { "sale1": "listen" } },
+        { "t": "Knock something off the price.", "go": "sale-discount", "set": { "sale1": "discount" } }
+      ]
+    },
+    "sale-pitch": { "lines": [
+      { "id": "sale-mar-2", "who": "marisol", "t": "Everybody tells me about the car." },
+      { "id": "sale-jason-2", "who": "jason", "t": "She's heard it. Try again." }
+    ], "next": "sale-retry" },
+    "sale-discount": { "lines": [
+      { "id": "sale-mar-3", "who": "marisol", "t": "So it was overpriced?" },
+      { "id": "sale-jason-3", "who": "jason", "t": "Now she trusts it less. Try again." }
+    ], "next": "sale-retry" },
+    "sale-retry": {
+      "lines": [ { "id": "sale-jason-4", "who": "jason", "t": "What does she actually want?" } ],
+      "choices": [
+        { "t": "Ask what happened last time.", "go": "sale-listen" },
+        { "t": "Tell her about the car.", "go": "sale-pitch" },
+        { "t": "Knock something off the price.", "go": "sale-discount" }
+      ]
+    },
+    "sale-listen": { "lines": [
+      { "id": "sale-mar-4", "who": "marisol", "t": "The last car broke down a week after I bought it. Nobody answered the phone." },
+      { "id": "sale-jason-5", "who": "jason", "t": "I listen first. People decide with how they feel, then find the reasons." },
+      { "id": "sale-jason-6", "who": "jason", "t": "I like psychology. How people decide is most of a sale." },
+      { "id": "sale-mar-5", "who": "marisol", "t": "Can I drive it?" },
+      { "id": "sale-jason-7", "who": "jason", "t": "Keys are in it. Around the block and back." }
+    ], "do": ["obj:drive", "flag:testdrive=1"] },
+    "sale-done": { "lines": [
+      { "id": "sale-mar-6", "who": "marisol", "t": "It drives right. I'll take it." },
+      { "id": "sale-jason-8", "who": "jason", "t": "Since June 2025 I've personally closed 53 vehicle sales and collected $206,777 in sale proceeds." },
+      { "id": "sale-jason-9", "who": "jason", "t": "I still start every one the same way. I listen." }
+    ], "do": ["journal:sale", "goto:decision"] },
 
     "dec-arrive": {
       "lines": [
@@ -483,7 +574,17 @@
     "mem-brain": { "scene": "memory", "label": "Brain model", "verb": "Look", "talk": "mem-brain", "once": true },
     "mem-lamp": { "scene": "memory", "label": "Desk lamp", "verb": "Reach", "talk": "mem-lamp", "if": "packed" },
 
+    "mem-psych": { "scene": "memory", "label": "Paperback", "verb": "Read", "talk": "mem-psych", "once": true },
+
     "keys": { "scene": "keys", "label": "The keys", "verb": "Take", "talk": "keys-take" },
+
+    "june-jason": { "scene": "june", "label": "Jason", "verb": "Sit", "talk": "june-jason", "again": "june-again", "who": "jason" },
+    "june-phone": { "scene": "june", "label": "Phone", "verb": "Look", "talk": "june-phone", "if": "sat", "once": true, "pack": true },
+    "june-window": { "scene": "june", "label": "Window", "verb": "Look", "talk": "june-window", "if": "sat", "once": true, "pack": true },
+    "june-scan": { "scene": "june", "label": "Scan", "verb": "Look", "talk": "june-scan", "if": "sat", "once": true, "pack": true },
+    "june-door": { "scene": "june", "label": "Doors", "verb": "Go", "talk": "june-go", "if": "juned" },
+
+    "sale-buyer": { "scene": "sale", "label": "Marisol", "verb": "Talk", "talk": "sale-buyer", "who": "marisol", "once": true },
 
     "jason-end": { "scene": "decision", "label": "Jason", "verb": "Talk", "talk": "dec-arrive", "who": "jason", "once": true }
   },
@@ -513,7 +614,12 @@
     "associate": { "h": "The folder", "p": "Associate of Arts in Business, San Jacinto College, May 2026.", "sketch": "mem-folder", "trophy": "associate" },
     "deans": { "h": "The letter", "p": "Dean's Honor List, GPA 3.63.", "sketch": "mem-letter", "trophy": "deans-list" },
     "brain": { "h": "Brain model", "p": "Neuroscience, UT Austin, expected 2028.", "sketch": "mem-brain" },
-    "keys": { "h": "The keys", "p": "August 2024. Owner and Operations Lead of Triple J from then on.", "sketch": "keys", "trophy": "keys-to-the-lot" }
+    "keys": { "h": "The keys", "p": "August 2024. Owner and Operations Lead of Triple J from then on.", "sketch": "keys", "trophy": "keys-to-the-lot" },
+    "psych": { "h": "Psychology", "p": "How people decide. Most of a sale is listening for what someone actually wants.", "sketch": "mem-brain" },
+    "june": { "h": "June 2025", "p": "My dad had a stroke. I started selling the cars myself that month.", "sketch": "june" },
+    "faith": { "h": "The window", "p": "I believe God puts us in situations that make us act, especially when we take too long on our own.", "sketch": "june" },
+    "sale": { "h": "The next morning", "p": "Listen first. Since June 2025, 53 vehicle sales personally closed and $206,777 in sale proceeds.", "sketch": "sale" },
+    "tags": { "h": "Temp tags", "p": "Every lost temp tag on the lot, the street, the office and the library, found.", "sketch": "keys" }
   },
 
   "recap": {
@@ -524,6 +630,8 @@
       "deflect": "You kept your reason to yourself."
     },
     "said_late": "You told him why at the very end.",
+    "june": { "sorry": "In the waiting room, you told Jason you were sorry.", "asked": "In the waiting room, you asked Jason what he did next." },
+    "sale1": { "listen": "On the morning lot, you listened first.", "pitch": "On the morning lot, you pitched the car first.", "discount": "On the morning lot, you went to the price first." },
     "cluster": {
       "build": "You're hiring for software or data.",
       "ai": "You're hiring for AI and automation.",
@@ -684,6 +792,11 @@
     "to_office": "Into the office",
     "to_memory": "Into the library",
     "to_decision": "Out to the lot",
-    "to_keys": "Out to the lot"
+    "to_keys": "Out to the lot",
+    "to_june": "Through the doors",
+    "to_sale": "Out to the lot",
+    "tag": "Temp tag",
+    "tags_found": "found",
+    "tags_all": "Every temp tag found."
   }
 }

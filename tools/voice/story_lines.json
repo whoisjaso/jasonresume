@@ -233,6 +233,63 @@
    "speed": 0.9
   },
   {
+   "id": "june-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A waiting room, late. The clock is loud. Nobody here wants to be here.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-2",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Missed calls from the lot. People asking about cars.",
+   "speed": 0.9
+  },
+  {
+   "id": "sale-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The next morning. The lot in daylight. A buyer by the first car.",
+   "speed": 0.9
+  },
+  {
+   "id": "sale-mar-1",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "I'm just looking. I've been burned before."
+  },
+  {
+   "id": "sale-mar-2",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "Everybody tells me about the car."
+  },
+  {
+   "id": "sale-mar-3",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "So it was overpriced?"
+  },
+  {
+   "id": "sale-mar-4",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "The last car broke down a week after I bought it. Nobody answered the phone."
+  },
+  {
+   "id": "sale-mar-5",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "Can I drive it?"
+  },
+  {
+   "id": "sale-mar-6",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "It drives right. I'll take it."
+  },
+  {
    "id": "dec-dell-1",
    "who": "dell",
    "voice": "am_onyx",

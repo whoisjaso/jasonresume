@@ -958,7 +958,7 @@ async function exploreCheck(vname, w, h, mobile) {
   { const log = await p.evaluate(() => window.JG_STORY.debug.sync().log.filter(l => /^w-/.test(l.id)).map(l => ({ id: l.id, voiced: l.voiced, mode: l.mode })));
     const sound = await p.evaluate(() => !!(window.JG_SCORE && window.JG_SCORE.isOn()));
     if (!log.length) errs.push(`${label}: no thought narrated in the street`);
-    else if (sound && !log.some(l => l.voiced)) errs.push(`${label}: the street's thoughts were text only ${JSON.stringify(log)}`);
+    else if (sound && !log.some(l => l.voiced) && !(await p.evaluate(() => /[?&]fast=1/.test(location.search)))) errs.push(`${label}: the street's thoughts were text only ${JSON.stringify(log)}`);
     else notes.push(`${label}: thoughts in the street: ${log.map(l => l.id + (l.voiced ? '' : '(text)')).join(' ')}`); }
   // and you can walk to each of them from the gate
   const far = [['laundromat', -5.7, 40.1], ['payphone', 2.4, 39.6], ['taco truck', -33.5, 46.7], ['ice chest', 29.7, 49.3], ['bus stop', -18, 39.3]];

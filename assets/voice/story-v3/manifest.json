@@ -468,6 +468,69 @@
    "file": "w-vending.mp3",
    "timings": "w-vending.json",
    "voice": "af_heart,af_nicole"
+  },
+  "june-you-1": {
+   "hash": "d0701c71d38e",
+   "duration": 6.2,
+   "file": "june-you-1.mp3",
+   "timings": "june-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-2": {
+   "hash": "02c8f45d0157",
+   "duration": 4.775,
+   "file": "june-you-2.mp3",
+   "timings": "june-you-2.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "sale-you-1": {
+   "hash": "206b7b1d6bca",
+   "duration": 5.475,
+   "file": "sale-you-1.mp3",
+   "timings": "sale-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "sale-mar-1": {
+   "hash": "2ab06d85bed5",
+   "duration": 3.4,
+   "file": "sale-mar-1.mp3",
+   "timings": "sale-mar-1.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-2": {
+   "hash": "11558c673a9d",
+   "duration": 2.975,
+   "file": "sale-mar-2.mp3",
+   "timings": "sale-mar-2.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-3": {
+   "hash": "04e23445b586",
+   "duration": 2.425,
+   "file": "sale-mar-3.mp3",
+   "timings": "sale-mar-3.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-4": {
+   "hash": "18b3872a1971",
+   "duration": 5.35,
+   "file": "sale-mar-4.mp3",
+   "timings": "sale-mar-4.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-5": {
+   "hash": "5d5fef8d9eff",
+   "duration": 2.1,
+   "file": "sale-mar-5.mp3",
+   "timings": "sale-mar-5.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-6": {
+   "hash": "6fd4dd26dd7e",
+   "duration": 2.925,
+   "file": "sale-mar-6.mp3",
+   "timings": "sale-mar-6.json",
+   "voice": "af_sarah"
   }
  },
  "voice": {

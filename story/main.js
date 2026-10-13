@@ -334,7 +334,7 @@ function sayLine0(L) {
     saidEl.innerHTML = words.map(w => "<i>" + E(w) + "</i>").join(" ");
     capEl.hidden = false; requestAnimationFrame(() => capEl.classList.add("is-on"));
     const sp = speakerOf(L.who);
-    const textDur = S.holdLines ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052;
+    const textDur = S.holdLines && !L.ambient ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052; // a passing thought never waits to be skipped
     const base = { L, t: 0, mode: "text", clock: 0, vt: 0, dur: textDur, endAt: null, audio: null, v: null, words: null, est: null, resolve, sp, offs: [], k: -2, stallT: 0, waitT: 0, perf: performance.now() };
     base.est = estWords(L.t, 0.12, Math.max(0.5, Math.min(textDur, 1.1 + L.t.length * 0.052) - 0.55));
     if (curV) stopVoice();
@@ -429,7 +429,7 @@ function tickLine(dt) {
     }
   }
   if (l.mode === "text" && l.clock > l.dur) return endLine(false);
-  if (l.mode === "voice" && l.endAt != null && pnow >= l.endAt && S.phase !== "pause" && !S.holdLines) return endLine(false);
+  if (l.mode === "voice" && l.endAt != null && pnow >= l.endAt && S.phase !== "pause" && (!S.holdLines || l.L.ambient)) return endLine(false);
 }
 /* the voice picks up again after the pause menu or a hidden tab, if it was the clock */
 function resumeVoice() { if (line && line.audio && line.mode !== "text") { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); } }
