@@ -3324,7 +3324,7 @@ window.JG_STORY = {
     end: k => { ending(k || "passing"); return true; },
     focus: () => { const a = document.activeElement; if (!a || a === document.body) return null; const host = padHost(); return { tag: a.tagName.toLowerCase(), text: (a.getAttribute("aria-label") || a.textContent || "").trim().slice(0, 40), inHost: !!(host && host.contains(a)), outline: getComputedStyle(a).outlineStyle }; },
     /* step the walk with a fixed clock, so the harness doesn't depend on the frame rate */
-    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); } return me ? [me.pos.x, me.pos.z] : null; },
+    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updatePrompts(); } return me ? [me.pos.x, me.pos.z] : null; }, // a step is a frame: the prompt follows too
     put: (x, z, yaw) => { mv.path = null; me.pos.set(x, 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
     walk: (x, z) => { const ok = walkTo(new THREE.Vector3(x, 0, z)); return ok ? mv.path.map(p => [p.x, p.z]) : null; },
     walls: () => (set.userData.walls || []).map(w => [w.x0, w.x1, w.z0, w.z1]),

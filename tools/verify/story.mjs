@@ -1458,9 +1458,7 @@ async function padCheck(vname, w, h, mobile) {
   const stick = (ax, ay, n) => p.evaluate(([ax, ay, n]) => { const d = window.JG_STORY.debug; window.__pad.axes[0] = ax; window.__pad.axes[1] = ay; d.sim(n, 1 / 60); const s = d.jumpState(); return s; }, [ax, ay, n]);
   const J = () => p.evaluate(() => window.JG_STORY.debug.jumpState());
   const F = () => p.evaluate(() => window.JG_STORY.debug.focus());
-  console.log('PADDBG before', JSON.stringify(await p.evaluate(() => { const s = window.JG_STORY.debug.state(); return { phase: s.phase, near: s.near, me: s.me, talking: s.talking, line: s.line, scene: s.scene }; })));
   const lane = await quietLane(p, 5);
-  console.log('PADDBG lane', JSON.stringify(lane), JSON.stringify(await p.evaluate(() => { const s = window.JG_STORY.debug.state(); return { phase: s.phase, near: s.near, me: s.me }; })));
   if (!lane) errs.push(`${label}: no clear lane with nothing prompted`);
   if (lane) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
   // the device: any press makes the pad the last thing used; the legend and the glyphs follow
