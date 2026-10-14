@@ -20,6 +20,7 @@
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { paint as paint0, glow as glow0, coneMat as coneMat0, blobMat as blobMat0, pbr as pbr0, U } from "./paint.js";
 import * as TX from "./tex.js";
+import { plateMesh, plateMat, plateMounts, cellColor, CELL } from "./plates.js";
 import { mergeGeometries, mergeVertices } from "../vendor/three-0.184.0/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "../vendor/three-0.184.0/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "../vendor/meshopt-0.22.0/meshopt_decoder.module.js";
@@ -344,7 +345,10 @@ async function loadCars() {
     // drivable: each moving node on its own (its meshes in the car's space, so the paint's panel lines stay put)
     const nodes = {};
     gltf.scene.traverse(o => { if (MOVING.test(o.name) || o.name === "body" || /^seat_[DP]$/.test(o.name)) nodes[o.name] = o; });
-    carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 } };
+    const meta0 = meta || { L: 4.7, W: 1.85, H: 1.45, cab: [1.5, 2.3, 3.3, 4.0], sg: [1.7, 3.6], pillars: [2.9], axles: [1, 3.8], tr: 0.33 };
+    // the model's plate patches only say where the plates go: the plates themselves are story/plates.js's, one mesh for a whole set
+    const mounts = plateMounts(parts.plate, meta0); delete parts.plate;
+    carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta0, mounts };
   }));
 }
 /* panel lines, door handle recesses and the fuel door, drawn from the car's own measurements */
@@ -396,7 +400,6 @@ function carMats() {
     lamp_tail_in: pbr({ ...v, color: "#8a1410", rough: 0.3, wet: 0.3, emit: "#1c0201" }),
     lamp_head_in: pbr({ ...v, color: "#d8d8d0", metal: 0.9, rough: 0.12, wet: 0.3 }),
     lamp_amber: pbr({ ...v, color: "#7a3c06", rough: 0.08, wet: 1, emit: "#0a0400" }),
-    plate: pbr({ ...v, color: "#9a968c", map: TX.plateTex(), nmap: TX.plateTex(true), tri: 4, local: true, nk: 0.8, rough: 0.5, wet: 0.6 }),
     interior: pbr({ ...v, color: "#141414", rough: 0.85, wet: 0, spec: 0.4 }),
     seat: pbr({ ...v, color: "#1c1c1d", rough: 0.92, wet: 0, spec: 0.3 }),
     dash: pbr({ ...v, color: "#111213", rough: 0.6, wet: 0, spec: 0.6 }),
@@ -502,6 +505,20 @@ function parkCars(set, list) {
     cars.forEach((c, i) => { m4.compose(new THREE.Vector3(c.x, 0.012, c.z), q.setFromAxisAngle(up, c.yaw), new THREE.Vector3(meta.W + 0.5, 1, meta.L + 0.5)); sh.setMatrixAt(i, m4); slotOf(c, sh, i, blobLocal); });
     sh.layers.set(2); sh.renderOrder = 1; sh.userData.keep = true; set.add(sh); out.push(sh);
   }
+  // the plates, front and back on every car of every kind, each car its own letters (the same car keeps the same
+  // plate night and morning): one mesh, one draw
+  const order = list.slice().sort((a, b) => (!!a.idle - !!b.idle) || (Math.round(a.z) - Math.round(b.z)) || (a.x - b.x));
+  order.forEach((c, i) => { if (c.plateCell == null) c.plateCell = CELL.lot + i; });
+  const libOf = c => carLib[c.kind] || carLib[Object.keys(carLib)[0]];
+  let np = 0; for (const c of list) np += (libOf(c) || { mounts: [] }).mounts.length;
+  if (np) {
+    const pl = plateMesh(plateMat(TIER.carLo), np); let i = 0;
+    for (const c of list) for (const local of (libOf(c) || { mounts: [] }).mounts) {
+      m4.compose(new THREE.Vector3(c.x, c.y || 0, c.z), q.setFromAxisAngle(up, c.yaw), s1).multiply(local);
+      pl.setMatrixAt(i, m4); pl.setColorAt(i, cellColor(c.plateCell, TIER.carLo, col)); slotOf(c, pl, i, local); i++;
+    }
+    pl.name = "plates"; set.add(pl); out.push(pl);
+  }
   for (const im of out) { im.computeBoundingSphere(); im.frustumCulled = true; }
   return out;
 }
@@ -543,7 +560,11 @@ function buildRig(set, c) {
     parent.add(im); return im;
   };
   const body = new THREE.Group(); body.name = "body"; root.add(body);
-  for (const [name, geo] of Object.entries(nodeParts(lib.nodes.body))) inst(geo, name, body);
+  for (const [name, geo] of Object.entries(nodeParts(lib.nodes.body))) if (name !== "plate") inst(geo, name, body);
+  // its plates, front and back, the same faces it wears parked (one draw)
+  { const pl = plateMesh(plateMat(TIER.carLo), lib.mounts.length), cc = new THREE.Color();
+    lib.mounts.forEach((m, i) => { pl.setMatrixAt(i, m); pl.setColorAt(i, cellColor(c.plateCell != null ? c.plateCell : CELL.lot, TIER.carLo, cc)); });
+    pl.computeBoundingSphere(); pl.name = "plates"; body.add(pl); }
   const at = n => { const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(); n.matrixWorld.decompose(p, q, sc); return { p, q }; };
   const doors = {};
   for (const side of ["L", "R"]) {
@@ -1162,6 +1183,10 @@ function moreStreet(set, day, CO) {
     const lamps2 = (x, s) => mergeGeometries([-0.62, 0.62].map(z => new THREE.PlaneGeometry(0.26, 0.11).rotateY(s * Math.PI / 2).translate(x, 0.74, z)));
     const head = new THREE.Mesh(lamps2(2.21, 1), glow0("#fff4dc", { k: 3.2 })); car.add(head);
     const tail = new THREE.Mesh(lamps2(-2.21, -1), glow0("#ff3020", { k: 1.6 })); car.add(tail);
+    // its plates, front and back (story/plates.js)
+    { const pl = plateMesh(plateMat(TIER.carLo), 2), m4 = new THREE.Matrix4(), cc = cellColor(CELL.passing, TIER.carLo);
+      for (const s of [1, -1]) { pl.setMatrixAt(s > 0 ? 0 : 1, m4.makeRotationY(s * Math.PI / 2).setPosition(s * 2.201, 0.47, 0)); pl.setColorAt(s > 0 ? 0 : 1, cc); }
+      pl.computeBoundingSphere(); car.add(pl); }
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 2.2, 11, 16, 1, true), coneMat0("#fff0d0", 0.9)); beam.rotation.z = Math.PI / 2; beam.position.set(2.3 + 5.5, 0.62, 0); beam.layers.set(3); car.add(beam);
     const pc = { on: false, x: 0, z: 0, dir: 1, v: 0, cruise: 13, wait: 8 + Math.random() * 10 };
     const start = (x0, sp) => {
@@ -1696,9 +1721,9 @@ function cyl(rt, rb, h, mat, x, y, z, parent, seg = 16) { const m = new THREE.Me
 /* rain on a window: the view behind it (a texture) through clinging drops and runs that slide down, a little fogged */
 function rainGlassMat(map, k = 1, o = {}) {
   return new THREE.ShaderMaterial({
-    uniforms: { uMap: { value: map }, uTime: U.uTime, uK: { value: k }, uFog: U.uFog, uFogDen: U.uFogDen, uAsp: { value: o.aspect || 2 }, uRain: { value: o.rain != null ? o.rain : 1 } },
+    uniforms: { uMap: { value: map }, uTime: U.uTime, uK: { value: k }, uFog: U.uFog, uFogDen: U.uFogDen, uAsp: { value: o.aspect || 2 }, uRain: { value: o.rain != null ? o.rain : 1 }, uTint: { value: new THREE.Color(1, 1, 1) } },
     vertexShader: `varying vec2 vUv; varying vec3 vWP; void main(){ vUv = uv; vec4 wp = modelMatrix * vec4(position, 1.0); vWP = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }`,
-    fragmentShader: `uniform sampler2D uMap; uniform float uTime; uniform float uK; uniform float uAsp; uniform float uRain; varying vec2 vUv; varying vec3 vWP;
+    fragmentShader: `uniform sampler2D uMap; uniform float uTime; uniform float uK; uniform float uAsp; uniform float uRain; uniform vec3 uTint; varying vec2 vUv; varying vec3 vWP;
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       // static drops: a cell each, some empty
       vec3 still(vec2 uv, float sc){
@@ -1725,7 +1750,7 @@ function rainGlassMat(map, k = 1, o = {}) {
         vec2 uv = vUv + off;
         vec3 soft = (texture2D(uMap, uv + vec2(0.004, 0.0)).rgb + texture2D(uMap, uv - vec2(0.004, 0.0)).rgb + texture2D(uMap, uv + vec2(0.0, 0.006)).rgb + texture2D(uMap, uv - vec2(0.0, 0.006)).rgb) * 0.25;
         vec3 sharp = texture2D(uMap, uv - off * 2.0).rgb;
-        vec3 col = mix(soft, sharp, wet) * uK;
+        vec3 col = mix(soft, sharp, wet) * uK * uTint;
         col *= 1.0 - wet * 0.15; col += wet * 0.02;
         gl_FragColor = vec4(col, 1.0);
         #include <colorspace_fragment>
@@ -2131,6 +2156,11 @@ export function buildLibrary(o) {
   const brain = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 4), pbr({ color: "#c9908a", rough: 0.45, wet: 0 }));
   { const p = brain.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const v = V3(p.getX(i), p.getY(i), p.getZ(i)); const k = 1 + 0.07 * Math.sin(v.x * 90) * Math.sin(v.y * 80 + v.z * 70) + 0.03 * Math.sin(v.z * 200); v.multiplyScalar(k); v.y *= 0.8; v.z *= 1.2; p.setXYZ(i, v.x, v.y, v.z); } brain.geometry.computeVertexNormals(); }
   brain.position.set(1.4, 0.9, 3.05); set.add(brain); cyl(0.06, 0.07, 0.02, M.dark, 1.4, 0.825, 3.05, set, 16);
+  // a paperback on psychology, face down where it was left open (its cover a plain field, no words)
+  { const pb = new THREE.Group(); pb.position.set(-1.45, 0.815, 3.2); pb.rotation.y = 0.5; set.add(pb);
+    rbox(0.13, 0.012, 0.2, 0.003, pbr({ color: "#b8452f", rough: 0.6, wet: 0 }), -0.066, 0.01, 0, pb).rotation.z = 0.12;
+    rbox(0.13, 0.012, 0.2, 0.003, pbr({ color: "#b8452f", rough: 0.6, wet: 0 }), 0.066, 0.01, 0, pb).rotation.z = -0.12;
+    box(0.24, 0.008, 0.19, M.paper, 0, 0.004, 0, pb); }
   set.userData.deskLamp = set.userData.lamps.find(l => Math.abs(l.p.x - 1.1) < 0.01 && Math.abs(l.p.z - 3) < 0.01) || null;
   set.userData.spots["mem-laptop"] = { p: V3(-0.7, 0.95, 3.0), r: 1.4, stand: V3(-0.7, 0, 4.1) };
   set.userData.spots["mem-cert"] = { p: V3(0.2, 0.85, 3.25), r: 1.3, stand: V3(0.2, 0, 4.1) };
@@ -2138,6 +2168,7 @@ export function buildLibrary(o) {
   set.userData.spots["mem-letter"] = { p: V3(-0.2, 0.85, 2.8), r: 1.3, stand: V3(-0.2, 0, 4.1) };
   set.userData.spots["mem-brain"] = { p: V3(1.4, 0.95, 3.05), r: 1.3, stand: V3(1.4, 0, 4.1) };
   set.userData.spots["mem-lamp"] = { p: V3(1.1, 1.15, 3.0), r: 1.5, stand: V3(1.1, 0, 4.1) };
+  set.userData.spots["mem-psych"] = { p: V3(-1.45, 0.86, 3.2), r: 1.3, stand: V3(-1.45, 0, 4.1) };
   set.userData.walls.push({ x0: -12, x1: 12, z0: -9.4, z1: -8.9 }, { x0: -12, x1: 12, z0: 8.9, z1: 9.4 }, { x0: -12.4, x1: -11.9, z0: -9, z1: 9 }, { x0: 11.9, x1: 12.4, z0: -9, z1: 9 });
   // a reading room someone uses: chairs pulled out, stacks left open, a cart, a runner, a clock
   const rr = rng(23);
@@ -2187,6 +2218,262 @@ export function buildLibrary(o) {
   _debug.sets.memory = set;
   return set;
 }
+
+/* ================================================================
+   THE WAITING ROOM (a memory: June 2025, late at night)
+   A hospital waiting room after midnight: rows of linked chairs, the
+   reception window lit behind its glass, a snack machine and a coffee
+   machine humming, a wall clock you can hear, a television nobody turned
+   on, a light box with a scan on it, a water cooler, a window with the rain
+   on it and the car park's lights behind, the doors to the corridor, and
+   fluorescent panels, one of them failing. Everything shares the office's
+   materials and paint; the chairs, frames and fittings fold into a few
+   draws. Hooks for main.js: seats (where Jason sits and where you sit),
+   phoneBuzz(on), wipe(point) (a finger through the fog on the glass),
+   dropCup() (the coffee machine pours one and hands back the cup), and
+   dawn(k) (the window warms toward morning, 0..1).
+   ================================================================ */
+export function buildWaitingRoom(o = {}) {
+  const set = new THREE.Group(); set.name = "june";
+  set.userData = { lamps: [], spots: {}, walls: [], sounds: {} };
+  const ud = set.userData, W = ud.walls;
+  const ROOM = [-6, 6, -4.5, 4.5, 2.8];
+  const M = {
+    floor: pbr({ color: "#d4d0c4", map: TX.tileTex(8), tri: 0.5, rough: 0.3, wet: 0, room: ROOM }),
+    wall: rmat({ color: "#c7cec2", mapK: "plasC", nmapK: "plasN", tri: 0.45, nk: 0.5, rough: 0.9, wet: 0, room: ROOM }),
+    low: pbr({ color: "#7d8c86", rough: 0.55, wet: 0, room: ROOM }),
+    base: pbr({ color: "#2f3432", rough: 0.55, wet: 0, room: ROOM }),
+    ceil: pbr({ color: "#ffffff", map: TX.ceilTex(), tri: 1 / 0.61, rough: 0.95, wet: 0, room: ROOM }),
+    seat: pbr({ color: "#3d5a62", rough: 0.42, wet: 0, room: ROOM }),
+    frame: pbr({ color: "#9aa0a4", metal: 0.8, rough: 0.35, wet: 0 }),
+    dark: pbr({ color: "#1d2022", rough: 0.45, metal: 0.3, wet: 0 }),
+    white: pbr({ color: "#e6e4dd", rough: 0.4, wet: 0, room: ROOM }),
+    wood: rmat({ color: "#a58a6c", mapK: "woodC", nmapK: "woodN", tri: 0.9, nk: 0.5, rough: 0.5, wet: 0, room: ROOM }),
+    glass: pbr({ color: "#0b0f10", rough: 0.04, wet: 0, spec: 1 }),
+    paper: pbr({ color: "#ece8de", rough: 0.8, wet: 0 })
+  };
+  // the shell: tile floor, plaster walls over a painted lower band and a rail, a suspended ceiling
+  const fl = plane(12, 9, M.floor, set); fl.rotation.x = -Math.PI / 2;
+  const ce = plane(12, 9, M.ceil, set); ce.rotation.x = Math.PI / 2; ce.position.y = 2.8;
+  for (const [x, z, ry, w] of [[0, -4.5, 0, 12], [0, 4.5, Math.PI, 12], [-6, 0, Math.PI / 2, 9], [6, 0, -Math.PI / 2, 9]]) {
+    const up = plane(w, 1.9, M.wall, set); up.position.set(x, 1.85, z); up.rotation.y = ry;
+    const lo = plane(w, 0.9, M.low, set); lo.position.set(x, 0.45, z); lo.rotation.y = ry;
+    const along = ry === 0 || ry === Math.PI;
+    box(along ? w : 0.04, 0.05, along ? 0.04 : w, M.white, x, 0.92, z, set);
+    box(along ? w : 0.02, 0.1, along ? 0.02 : w, M.base, x, 0.05, z, set);
+  }
+  W.push({ x0: -6, x1: 6, z0: -4.9, z1: -4.5 }, { x0: -6, x1: 6, z0: 4.5, z1: 4.9 }, { x0: -6.4, x1: -6, z0: -4.5, z1: 4.5 }, { x0: 6, x1: 6.4, z0: -4.5, z1: 4.5 });
+
+  // the fluorescent panels: six in the grid, four of them the room's light; one by the doors is failing
+  const trof = glow("#eef4ee", { map: TX.troffTex(), k: 1.15 });
+  const bad = glow0("#eef4ee", { map: TX.troffTex(), k: 1.15 });
+  let badLamp = null;
+  for (const [x, z, lit] of [[-3, -2, 1], [0, -2, 0], [3, -2, 1], [-3, 1.8, 1], [0, 1.8, 0], [3, 1.8, 2]]) {
+    const p0 = plane(0.6, 1.2, lit === 2 ? bad : trof, set); p0.rotation.x = Math.PI / 2; p0.position.set(x, 2.795, z);
+    if (lit === 2) p0.userData.keep = true;
+    if (lit) { const L = { p: V3(x, 2.65, z), range: 7.5, col: [0.95, 1.05, 1.0], cone: 0, fixed: true }; ud.lamps.push(L); if (lit === 2) badLamp = L; }
+  }
+  ud.sounds.lamps = ud.lamps.map(l => ({ x: l.p.x, y: 2.75, z: l.p.z, kind: "fluorescent-hum" }));
+  // the failing tube: steady for a long while, then a stutter, a dip, and it catches again
+  { const k0 = bad.uniforms.uK.value, c0 = badLamp.col.slice(), st = { t: 6 + Math.random() * 6, f: 0 };
+    anim(set, dt => {
+      st.t -= dt;
+      if (st.t <= 0 && st.f <= 0) { st.f = 0.5 + Math.random() * 0.9; ud.flickN = (ud.flickN || 0) + 1; }
+      let v = 1;
+      if (st.f > 0) { st.f -= dt; v = Math.sin(st.f * 61) > 0.1 ? 1 : 0.18; if (st.f <= 0) { st.t = 9 + Math.random() * 14; v = 1; } }
+      bad.uniforms.uK.value = k0 * v; badLamp.col[0] = c0[0] * v; badLamp.col[1] = c0[1] * v; badLamp.col[2] = c0[2] * v;
+    }); }
+
+  /* the chairs: rows of linked seats on one steel beam, the arms between them; a row is n seats along its own x,
+     facing its own +z. Returns each seat's centre (world) */
+  const rows = [];
+  const row = (cx, cz, yaw, n) => {
+    const g = new THREE.Group(); g.position.set(cx, 0, cz); g.rotation.y = yaw; set.add(g);
+    const span = n * 0.62;
+    box(span + 0.1, 0.06, 0.08, M.frame, 0, 0.34, -0.02, g);
+    for (const lx of [-span / 2 + 0.12, span / 2 - 0.12]) { box(0.05, 0.34, 0.05, M.frame, lx, 0.17, -0.02, g); box(0.05, 0.03, 0.5, M.frame, lx, 0.015, -0.02, g); }
+    const seats = [];
+    for (let i = 0; i < n; i++) {
+      const lx = (i - (n - 1) / 2) * 0.62;
+      rbox(0.52, 0.07, 0.46, 0.03, M.seat, lx, 0.43, 0.02, g);
+      const bk = rbox(0.52, 0.44, 0.06, 0.03, M.seat, lx, 0.72, -0.22, g); bk.rotation.x = -0.12;
+      box(0.04, 0.08, 0.04, M.frame, lx, 0.38, -0.02, g);
+      g.updateMatrixWorld(true);
+      seats.push(g.localToWorld(V3(lx, 0.46, 0.02)));
+    }
+    for (let i = 0; i <= n; i++) { const lx = (i - n / 2) * 0.62; box(0.04, 0.22, 0.04, M.frame, lx, 0.55, 0.02, g); box(0.06, 0.03, 0.42, M.dark, lx, 0.67, 0.02, g); }
+    const sh = new THREE.Mesh(BLOB_GEO, blobMat(0.45, true)); sh.scale.set(span + 0.3, 1, 0.9); sh.position.y = 0.01; sh.layers.set(2); g.add(sh);
+    rows.push(seats); return seats;
+  };
+  // facing the doors, Jason's row; back to back with it, a row facing the reception window; along the west wall; under
+  // the front wall, facing in
+  const r1 = row(-0.31, 0.3, 0, 8), r2 = row(-0.31, -0.42, Math.PI, 8);
+  row(-5.35, -0.6, Math.PI / 2, 6); const r4 = row(-1.2, 3.95, Math.PI, 6);
+  W.push({ x0: -2.85, x1: 2.25, z0: -0.56, z1: 0.3 }, { x0: -5.75, x1: -5.2, z0: -2.55, z1: 1.35 }, { x0: -3.1, x1: 0.7, z0: 3.95, z1: 4.5 });
+  ud.seats = { jason: { p: r1[3].clone(), yaw: 0 }, you: { p: r1[4].clone(), yaw: 0 }, phone: r1[2].clone() };
+
+  // his phone, face up on the seat beside him; it buzzes on the plastic (phoneBuzz), its screen lighting each time
+  { const ph = new THREE.Group(); ph.position.copy(r1[2]).add(V3(0.02, 0.012, 0.04)); ph.rotation.y = 0.4; ph.userData.keep = true; set.add(ph);
+    rbox(0.075, 0.009, 0.152, 0.004, M.dark, 0, 0, 0, ph);
+    const scr = plane(0.066, 0.138, glow0("#dfe8ff", { k: 0.15 }), ph); scr.rotation.x = -Math.PI / 2; scr.position.y = 0.0055;
+    const st = { on: false, t: 0, k: 0.15 }, home = ph.position.clone();
+    anim(set, dt => {
+      st.t += dt;
+      const want = st.on ? (Math.sin(st.t * 9) > -0.2 ? 1.6 : 0.7) : 0.15;
+      st.k = easeTo(st.k, want, 10, dt); scr.material.uniforms.uK.value = st.k;
+      // the buzz: a quick shiver in bursts, and it creeps a little across the seat
+      const b = st.on && (st.t % 1.1) < 0.45;
+      ph.position.x = home.x + (b ? (Math.random() - 0.5) * 0.004 : 0); ph.position.z = home.z + (b ? (Math.random() - 0.5) * 0.003 : 0);
+      ph.rotation.y = 0.4 + (b ? (Math.random() - 0.5) * 0.03 : 0);
+    });
+    ud.phoneBuzz = on => { if (on && !st.on) st.t = 0; st.on = !!on; };
+    ud.phone = ph; }
+
+  // the reception window, lit behind its glass, a ledge in front and the bell on it; nobody at the desk this late
+  { const x = -3.4, z = -4.5;
+    const back = plane(1.84, 1.0, glow("#e9dcc0", { k: 0.75 }), set); back.position.set(x, 1.55, z + 0.012);
+    box(2.1, 0.08, 0.1, M.white, x, 2.1, z + 0.02, set); box(0.08, 1.15, 0.1, M.white, x - 1.0, 1.52, z + 0.02, set); box(0.08, 1.15, 0.1, M.white, x + 1.0, 1.52, z + 0.02, set);
+    box(2.1, 0.05, 0.4, M.wood, x, 1.0, z + 0.15, set);
+    const gl = plane(1.9, 1.05, pbr({ color: "#0b0f10", rough: 0.03, wet: 0, alpha: 0.16, glass: true, depthWrite: false, spec: 1, diff: 0.2 }), set); gl.position.set(x, 1.55, z + 0.03); gl.renderOrder = 2; gl.userData.keep = true;
+    // the desk behind the glass: a monitor's back, dark, against the light
+    box(0.5, 0.32, 0.04, M.dark, x + 0.35, 1.22, z + 0.05, set); box(0.06, 0.14, 0.04, M.dark, x + 0.35, 1.06, z + 0.05, set);
+    ud.lamps.push({ p: V3(x, 1.6, z + 0.6), range: 4.5, col: [1.35, 1.05, 0.7], cone: 0, fixed: true });
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), pbr({ color: "#c9ccd0", metal: 1, rough: 0.2, wet: 0 })); bell.position.set(x + 0.6, 1.03, z + 0.22); set.add(bell);
+    thing(set, "wr-bell", { kind: "press", label: "Bell", p: V3(x + 0.6, 1.08, z + 0.22), stand: V3(x + 0.6, 0, z + 1.05), r: 1.3 }); }
+
+  // the clock over the light box: a sweep hand that steps once a second (the audio ticks with it)
+  { const clk = new THREE.Group(); clk.position.set(-0.9, 2.38, -4.47); set.add(clk);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.018, 8, 32), M.dark); clk.add(rim);
+    const face = new THREE.Mesh(new THREE.CircleGeometry(0.195, 32), pbr({ map: TX.clockTex(12, 47), color: "#fff", rough: 0.4, wet: 0, ao: 0 })); face.position.z = 0.005; clk.add(face);
+    const hand = new THREE.Group(); hand.position.z = 0.012; hand.userData.keep = true; clk.add(hand);
+    box(0.004, 0.17, 0.002, pbr({ color: "#9b2a22", rough: 0.5, wet: 0 }), 0, 0.07, 0, hand);
+    let sec = 0; anim(set, (dt, ctx) => { const s = Math.floor(ctx.t); if (s !== sec) { sec = s; hand.rotation.z = -(s % 60) / 60 * Math.PI * 2; } });
+    ud.sounds.clock = { x: -0.9, y: 2.38, z: -4.4, kind: "clock-tick" }; }
+  // the light box, a scan clipped to it
+  { const x = -0.9, y = 1.5, z = -4.5;
+    box(0.78, 0.62, 0.06, M.white, x, y, z + 0.03, set);
+    const lb = plane(0.7, 0.54, glow("#ffffff", { map: TX.scanTex(), k: 1.1 }), set); lb.position.set(x, y, z + 0.065);
+    ud.lamps.push({ p: V3(x, y, z + 0.5), range: 2.6, col: [0.7, 0.8, 0.9], cone: 0, fixed: true }); }
+
+  // the machines against the back wall: snacks behind glass, and coffee, its cup tray lit
+  { const z = -4.08;
+    box(0.9, 1.85, 0.8, pbr({ color: "#2a3138", rough: 0.4, metal: 0.3, wet: 0 }), 1.3, 0.925, z, set);
+    const sf = plane(0.6, 1.15, glow("#e6eef0", { k: 0.9 }), set); sf.position.set(1.22, 1.15, z + 0.405);
+    for (let i = 0; i < 5; i++) box(0.6, 0.012, 0.03, M.dark, 1.22, 0.66 + i * 0.24, z + 0.41, set);
+    box(0.12, 0.5, 0.02, M.dark, 1.62, 1.1, z + 0.41, set);
+    box(0.7, 1.75, 0.7, pbr({ color: "#4a2a22", rough: 0.4, metal: 0.25, wet: 0 }), 2.25, 0.875, z + 0.05, set);
+    const cf = plane(0.5, 0.42, glow("#f3dcb4", { k: 0.8 }), set); cf.position.set(2.25, 1.35, z + 0.405);
+    box(0.32, 0.3, 0.12, M.dark, 2.25, 0.85, z + 0.36, set);
+    const tray = plane(0.26, 0.24, glow("#ffe8c4", { k: 0.7 }), set); tray.position.set(2.25, 0.87, z + 0.3);
+    W.push({ x0: 0.8, x1: 2.65, z0: -4.5, z1: -3.6 });
+    ud.lamps.push({ p: V3(1.8, 1.2, z + 1.0), range: 3.2, col: [0.55, 0.6, 0.58], cone: 0, fixed: true });
+    ud.sounds.vending = { x: 1.6, y: 1.0, z, kind: "fridge-hum" };
+    // a snack drops behind the glass when you press
+    const snack = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.03), pbr({ color: "#b8452f", rough: 0.5, wet: 0 })); snack.position.set(1.2, -1, z + 0.36); snack.userData.keep = true; set.add(snack);
+    const sst = { t: 0 }; anim(set, dt => { if (sst.t <= 0) return; sst.t -= dt; const u = Math.min(1, (1.6 - sst.t) / 0.4); snack.position.y = sst.t > 0 ? 1.42 - 1.0 * u * u : -1; });
+    thing(set, "wr-vending", { kind: "press", label: "Machine", p: V3(1.62, 1.1, z + 0.42), stand: V3(1.5, 0, z + 1.05), r: 1.3, use: () => { sst.t = 6; } });
+    // the cup: paper, hidden in the machine until it pours one
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.032, 0.095, 16), pbr({ color: "#efeae0", rough: 0.6, wet: 0 })); cup.userData.keep = true; cup.visible = false; set.add(cup);
+    const lid = new THREE.Mesh(new THREE.CircleGeometry(0.036, 14), pbr({ color: "#3a2416", rough: 0.2, wet: 0, spec: 1 })); lid.rotation.x = -Math.PI / 2; lid.position.y = 0.042; cup.add(lid);
+    ud.cupHome = V3(2.25, 0.79, z + 0.33);
+    ud.dropCup = () => { cup.position.copy(ud.cupHome); cup.quaternion.identity(); cup.visible = true; return cup; };
+    ud.cup = cup; }
+
+  // a television high on the west wall, off; the room in its black glass
+  { box(0.08, 0.66, 1.1, M.dark, -5.95, 2.05, -0.6, set);
+    const scr = plane(1.0, 0.56, pbr({ color: "#07090a", rough: 0.08, wet: 0, spec: 1.2 }), set); scr.rotation.y = Math.PI / 2; scr.position.set(-5.905, 2.05, -0.6);
+    box(0.06, 0.3, 0.06, M.dark, -5.97, 2.5, -0.6, set); }
+  // the water cooler in the corner, a sleeve of paper cones on its side
+  { const x = -5.45, z = 3.75;
+    box(0.36, 1.0, 0.36, M.white, x, 0.5, z, set);
+    const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.42, 20), pbr({ color: "#8fb4c4", rough: 0.05, wet: 0, alpha: 0.5, glass: true, depthWrite: false, spec: 1 })); bottle.position.set(x, 1.22, z); bottle.renderOrder = 2; bottle.userData.keep = true; set.add(bottle);
+    box(0.08, 0.06, 0.05, M.dark, x + 0.1, 0.84, z - 0.2, set);
+    cyl(0.03, 0.03, 0.26, M.white, x + 0.22, 0.95, z - 0.05, set, 10);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 10), M.paper); cone.rotation.x = Math.PI; cone.position.set(x + 0.22, 0.79, z - 0.05); cone.userData.keep = true; set.add(cone);
+    W.push({ x0: x - 0.3, x1: x + 0.35, z0: z - 0.3, z1: z + 0.3 });
+    thing(set, "cooler-cup", { kind: "pickup", label: "Cup", p: V3(x + 0.22, 0.8, z - 0.05), stand: V3(x + 0.6, 0, z - 0.75), r: 1.3, use: ({ on }) => { cone.visible = !on; ud.held = on ? "cup" : null; } }); }
+  // a low table by the west row with magazines on it; one to pick up
+  { const x = -5.35, z = 1.95;
+    box(0.55, 0.04, 0.55, M.wood, x, 0.42, z, set); for (const [lx, lz] of [[-0.23, -0.23], [0.23, -0.23], [-0.23, 0.23], [0.23, 0.23]]) box(0.04, 0.4, 0.04, M.frame, x + lx, 0.2, z + lz, set);
+    const cols = ["#6a7f8a", "#c9b48a", "#8a3b30"], r = rng(5);
+    for (let i = 0; i < 3; i++) { const m = box(0.21, 0.008, 0.28, pbr({ color: cols[i], rough: 0.5, wet: 0 }), x + (r() - 0.5) * 0.15, 0.445 + i * 0.008, z + (r() - 0.5) * 0.12, set); m.rotation.y = (r() - 0.5) * 0.8; }
+    const mag = box(0.21, 0.008, 0.28, pbr({ color: "#d8d2c4", rough: 0.5, wet: 0 }), x + 0.05, 0.47, z, set); mag.rotation.y = 0.3; mag.userData.keep = true;
+    W.push({ x0: x - 0.32, x1: x + 0.32, z0: z - 0.32, z1: z + 0.32 });
+    thing(set, "magazine", { kind: "pickup", label: "Magazine", p: V3(x + 0.05, 0.48, z), stand: V3(x + 0.85, 0, z), r: 1.3, use: ({ on }) => { mag.visible = !on; ud.held = on ? "magazine" : null; } }); }
+  // somewhere to sit by the front wall
+  thing(set, "wr-chair", { kind: "sit", label: "Chair", p: r4[1].clone().setY(0.5), stand: r4[1].clone().setY(0).add(V3(0, 0, -0.85)), seat: r4[1].clone(), yaw: Math.PI, r: 1.2 });
+  // a plant someone keeps watering, in the corner by the window
+  plantPot(5.4, 3.9, 1.2, set, 19);
+  W.push({ x0: 5.1, x1: 5.7, z0: 3.6, z1: 4.2 });
+
+  /* the window on the east wall: the car park at night through the rain, and fog on the inside of the glass that a
+     finger can write in (wipe), healing slowly; at the end it warms toward morning (dawn) */
+  { const x = 6, zc = -0.4, w = 4.0, h = 1.4, y = 1.6;
+    const win = plane(w, h, rainGlassMat(TX.nightTex(9), 0.95, { aspect: w / h }), set); win.position.set(x - 0.01, y, zc); win.rotation.y = -Math.PI / 2;
+    for (let i = 0; i <= 4; i++) box(0.06, h + 0.06, 0.08, M.frame, x - 0.03, y, zc - w / 2 + i * w / 4, set);
+    box(0.08, 0.06, w + 0.1, M.frame, x - 0.03, y + h / 2, zc, set); box(0.08, 0.05, w + 0.1, M.frame, x - 0.03, y - h / 2, zc, set);
+    box(0.24, 0.03, w + 0.2, M.white, x - 0.12, y - h / 2 - 0.02, zc, set);
+    // the fog: a small canvas, cleared where a finger passes, breathed back over a few seconds
+    const fc = TX.cv(128, 48);
+    const fg = fc.getContext("2d"); fg.fillStyle = "rgba(118,128,132,0.2)"; fg.fillRect(0, 0, 128, 48);
+    const ft = new THREE.CanvasTexture(fc); ft.colorSpace = THREE.SRGBColorSpace;
+    const fog = plane(w, h, new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, toneMapped: false }), set);
+    fog.position.set(x - 0.025, y, zc); fog.rotation.y = -Math.PI / 2; fog.renderOrder = 3; fog.userData.keep = true;
+    const tint = win.material.uniforms.uTint.value, dawnL = { p: V3(x - 1.2, y, zc), range: 7, col: [0, 0, 0], cone: 0, fixed: true };
+    ud.lamps.push(dawnL);
+    const wipe = { pts: [], t: 0, heal: 0 };
+    anim(set, dt => {
+      if (wipe.pts.length) {
+        wipe.t += dt; fg.globalCompositeOperation = "destination-out"; fg.lineCap = "round"; fg.lineWidth = 5; fg.strokeStyle = "rgba(0,0,0,1)";
+        while (wipe.pts.length && wipe.pts[0].at <= wipe.t) { const q = wipe.pts.shift(); if (q.from) { fg.beginPath(); fg.moveTo(q.from[0], q.from[1]); fg.lineTo(q.u, q.v); fg.stroke(); } }
+        fg.globalCompositeOperation = "source-over"; ft.needsUpdate = true; wipe.heal = 7;
+      } else if (wipe.heal > 0) {
+        wipe.heal -= dt; if ((wipe.hT = (wipe.hT || 0) + dt) > 0.25) { wipe.hT = 0; fg.fillStyle = "rgba(118,128,132,0.02)"; fg.fillRect(0, 0, 128, 48); ft.needsUpdate = true; }
+      }
+    });
+    // a finger through the fog at a point on the glass: a short curve drawn out over most of a second
+    ud.wipe = p => {
+      const u0 = clamp01((p.z - (zc - w / 2)) / w) * 128, v0 = clamp01(1 - (p.y - (y - h / 2)) / h) * 48;
+      let prev = null; wipe.t = 0; wipe.pts = [];
+      for (let i = 0; i <= 14; i++) { const k = i / 14, u = u0 - 9 + k * 18, v = v0 - 4 + Math.sin(k * Math.PI) * 6 + k * 5; wipe.pts.push({ u, v, from: prev, at: k * 0.7 }); prev = [u, v]; }
+    };
+    ud.dawn = k => { tint.setRGB(1 + k * 1.6, 1 + k * 1.05, 1 + k * 0.45); dawnL.col[0] = 2.4 * k; dawnL.col[1] = 1.55 * k; dawnL.col[2] = 0.8 * k; };
+    ud.sounds.window = { x: x - 0.1, y, z: zc, kind: "rain-glass", w };
+    ud.window = win; }
+
+  // the doors to the corridor: a pair, their narrow windows lit from the hall, the way out sign over them
+  { const x = 4.2, z = 4.5;
+    box(1.9, 0.12, 0.14, M.frame, x, 2.16, z - 0.03, set); for (const s of [-1, 1]) box(0.1, 2.16, 0.14, M.frame, x + s * 0.9, 1.08, z - 0.03, set);
+    for (const s of [-1, 1]) {
+      box(0.82, 2.08, 0.05, pbr({ color: "#8b9a96", rough: 0.45, wet: 0 }), x + s * 0.42, 1.04, z - 0.04, set);
+      const wn = plane(0.14, 0.7, glow("#e8efe9", { k: 0.85 }), set); wn.position.set(x + s * 0.62, 1.45, z - 0.07); wn.rotation.y = Math.PI;
+      box(0.3, 0.18, 0.012, pbr({ color: "#c9ccd0", metal: 1, rough: 0.25, wet: 0 }), x + s * 0.18, 1.1, z - 0.07, set);
+    }
+    const ex = plane(0.42, 0.16, glow("#ffffff", { map: TX.labelTex("EXIT", { bg: "#0c110f", fg: "#c4e6cf", w: 256, h: 96 }), k: 1.0 }), set); ex.position.set(x, 2.42, z - 0.02); ex.rotation.y = Math.PI;
+    ud.sounds.corridor = { x, y: 1.2, z: z + 1.5 };
+    ud.spots["june-door"] = { p: V3(x, 1.2, z - 0.1), r: 2.0, stand: V3(x, 0, z - 1.0) }; }
+
+  // the story's things here
+  ud.spots["june-jason"] = { who: "jason", r: 2.4 };
+  ud.spots["june-phone"] = { p: r1[2].clone().setY(0.5), r: 1.5, stand: r1[2].clone().setY(0).add(V3(0, 0, 0.85)) };
+  ud.spots["june-window"] = { p: V3(5.95, 1.55, -0.4), r: 1.8, stand: V3(5.25, 0, -0.4) };
+  ud.spots["june-scan"] = { p: V3(-0.9, 1.5, -4.43), r: 1.8, stand: V3(-0.9, 0, -3.5) };
+  ud.spots["june-coffee"] = { p: V3(2.25, 0.95, -3.7), r: 1.4, stand: V3(2.3, 0, -3.05) };
+  // the journal's drawing of the night: the empty seat beside his, in its row
+  ud.spots.june = { p: r1[4].clone().add(V3(0, 0.25, 0)), sketchR: 0.85 };
+  ud.marks = {};
+  mergeStatic(set);
+  envHook(set, V3(0, 1.4, 1.5));
+  ud.marks = { playerStart: V3(4.2, 0, 3.3), playerYaw: Math.PI, jason: ud.seats.jason.p.clone().setY(0), jasonYaw: 0 };
+  ud.bounds = { x0: -5.7, x1: 5.7, z0: -4.2, z1: 4.2 };
+  ud.ceilingY = 2.8;
+  ud.surfaceAt = () => "tile";
+  ud.fogDen = 0.008;
+  ud.ready = roomsReady;
+  _debug.sets.june = set;
+  return set;
+}
+const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /* the keys: a lockbox on the office door of the morning lot */
 export function addKeys(set) {

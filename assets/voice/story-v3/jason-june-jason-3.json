@@ -1,0 +1,17 @@
+{
+ "id": "jason-june-jason-3",
+ "text": "Thank you.",
+ "duration": 0.76,
+ "words": [
+  {
+   "w": "Thank",
+   "s": 0.17,
+   "e": 0.397
+  },
+  {
+   "w": "you.",
+   "s": 0.397,
+   "e": 0.581
+  }
+ ]
+}

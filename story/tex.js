@@ -1,8 +1,8 @@
 /* After Hours: textures, painted in code. Brush grain, the lot's ground as data
    over the tiled CC0 asphalt (patches, oil, worn lines, cracks, puddles, contact
-   shade, the lamps' baked shadows), chain-link, tiles, plates, ceilings, clocks,
-   paper, and every sign, screen and label in the episode, drawn on canvases in
-   the site's two typefaces. The photographic materials live in
+   shade, the lamps' baked shadows), chain-link, tiles, ceilings, clocks, paper,
+   the Texas license plates, and every sign, screen and label in the episode,
+   drawn on canvases in the site's two typefaces (the plates in a face of their own). The photographic materials live in
    assets/story/world/tex-v1 (Poly Haven, CC0). */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 
@@ -235,33 +235,6 @@ export function posterTex(seed = 1) {
   return tex(c);
 }
 
-/* a plate's face: an embossed rim and rows of raised marks that read as characters from a distance and as
-   nothing up close (no real plate numbers). nrm: the same as a normal map. Tiled in the car's own space. */
-let plateC = null;
-export function plateTex(nrm) {
-  if (!plateC) {
-    const c = cv(256, 256), g = c.getContext("2d"), r = rng(9);
-    g.fillStyle = "#808080"; g.fillRect(0, 0, 256, 256);
-    for (let row = 0; row < 4; row++) for (let i = 0; i < 7; i++) {
-      const x = 14 + i * 34, y = 18 + row * 62, w = 18 + r() * 8, hh = 34;
-      g.fillStyle = "#b8b8b8"; g.beginPath(); g.roundRect(x, y, w, hh, 5); g.fill();
-      g.fillStyle = "#808080"; g.beginPath(); g.roundRect(x + 5, y + 6 + r() * 8, w - 10, 6 + r() * 10, 3); g.fill();
-    }
-    plateC = c;
-  }
-  if (!nrm) { const t = tex(plateC, { repeat: true }); return t; }
-  // a normal map from the height in R
-  const s = plateC.getContext("2d").getImageData(0, 0, 256, 256).data, c2 = cv(256, 256), g2 = c2.getContext("2d"), im = g2.createImageData(256, 256);
-  const H = (x, y) => s[(((y + 256) % 256) * 256 + ((x + 256) % 256)) * 4] / 255;
-  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
-    const dx = (H(x + 1, y) - H(x - 1, y)) * 2.0, dy = (H(x, y + 1) - H(x, y - 1)) * 2.0, i = (y * 256 + x) * 4;
-    const n = [-dx, dy, 1], l = Math.hypot(...n);
-    im.data[i] = (n[0] / l * 0.5 + 0.5) * 255; im.data[i + 1] = (n[1] / l * 0.5 + 0.5) * 255; im.data[i + 2] = (n[2] / l * 0.5 + 0.5) * 255; im.data[i + 3] = 255;
-  }
-  g2.putImageData(im, 0, 0);
-  return tex(c2, { repeat: true, linear: true });
-}
-
 /* a suspended ceiling: 2 by 2 foot acoustic tiles in a white T-bar grid, fissured; tiled one tile per repeat */
 export function ceilTex() {
   const c = cv(256, 256), g = c.getContext("2d"), r = rng(41);
@@ -290,6 +263,27 @@ export function clockTex(h = 10, m = 8) {
   g.fillStyle = "#1b1d1a"; g.beginPath(); g.arc(128, 128, 7, 0, 7); g.fill();
   return tex(c);
 }
+/* a brain scan on a light box: four axial slices on a sheet of film, white folds on black, no labels */
+export function scanTex() {
+  const c = cv(256, 256), g = c.getContext("2d"), r = rng(17);
+  g.fillStyle = "#c8d4dc"; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = "#0c0f12"; g.fillRect(8, 8, 240, 240);
+  for (let k = 0; k < 4; k++) {
+    const cx = 68 + (k % 2) * 120, cy = 68 + ((k / 2) | 0) * 120, rx = 42 - k * 2, ry = 52 - k * 2;
+    g.save(); g.translate(cx, cy);
+    // the skull, the brain inside it, the fissure down the middle, the folds
+    g.strokeStyle = "rgba(235,240,244,0.9)"; g.lineWidth = 3; g.beginPath(); g.ellipse(0, 0, rx + 5, ry + 5, 0, 0, 7); g.stroke();
+    g.fillStyle = "rgba(150,160,168,0.75)"; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, 7); g.fill();
+    g.strokeStyle = "rgba(25,28,32,0.85)"; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -ry); g.lineTo(0, ry); g.stroke();
+    g.lineWidth = 1.2;
+    for (let i = 0; i < 26; i++) { const a = r() * Math.PI * 2, d = 0.35 + r() * 0.55; g.beginPath(); g.moveTo(Math.cos(a) * rx * d, Math.sin(a) * ry * d); g.quadraticCurveTo(Math.cos(a + 0.2) * rx * (d + 0.15), Math.sin(a + 0.2) * ry * (d + 0.15), Math.cos(a + 0.35) * rx * d, Math.sin(a + 0.35) * ry * d); g.stroke(); }
+    // the ventricles, dark at the centre
+    g.fillStyle = "rgba(20,22,26,0.9)"; g.beginPath(); g.ellipse(-7, -4, 5, 13, 0.2, 0, 7); g.ellipse(7, -4, 5, 13, -0.2, 0, 7); g.fill();
+    g.restore();
+  }
+  return tex(c);
+}
+
 /* night through a library's tall window: a dark campus, a few warm windows and lamps, out of focus */
 export function nightTex(seed = 3) {
   const c = cv(256, 512), g = c.getContext("2d"), r = rng(seed);
@@ -478,5 +472,172 @@ export function skylineTex() {
   // far windows and lamps, warm specks
   for (let i = 0; i < 140; i++) { g.fillStyle = r() < 0.7 ? "rgba(255,190,110," + (0.4 + r() * 0.6) + ")" : "rgba(200,220,255,0.6)"; g.fillRect(r() * 2048, 180 + r() * 70, 2, 2); }
   return tex(c);
+}
+/* the Texas standard plate, the black and white Lone Star design: a pale ground with a faint twisted ribbon down
+   each edge, TEXAS across the top, the star top left, The Lone Star State along the bottom and a small barcode,
+   and in the middle three letters, the state's outline and three more. Letters only, never a figure, so no plate
+   in the episode is a real plate number. The big characters and TEXAS come from a stroke alphabet of their own
+   (a heavy condensed plate face that looks the same on every device). Laid out in hundredths of an inch on a
+   12 by 6 inch plate; story/plates.js gives each car and each lost plate its own cell of the atlas below */
+const PL_INK = "#141617";
+// the alphabet: centre lines in a 100 by 160 box, stroked with flat ends and clipped to the box (a line that runs
+// past the box ends square on its edge; one that starts on another stroke starts inside its ink)
+const PL_GLYPH = {
+  A: "M10 160 L46 14 L54 14 L90 160 M27 102 L73 102",
+  B: "M14 78 L58 78 Q84 78 84 50 L84 40 Q84 14 58 14 L14 14 L14 146 L58 146 Q86 146 86 118 L86 106 Q86 78 58 78",
+  C: "M86 46 L86 42 Q86 14 58 14 L42 14 Q14 14 14 42 L14 118 Q14 146 42 146 L58 146 Q86 146 86 118 L86 114",
+  D: "M14 14 L14 146 L54 146 Q86 146 86 114 L86 46 Q86 14 54 14 Z",
+  E: "M104 14 L14 14 L14 146 L104 146 M14 80 L80 80",
+  F: "M104 14 L14 14 L14 164 M14 80 L80 80",
+  G: "M86 46 L86 42 Q86 14 58 14 L42 14 Q14 14 14 42 L14 118 Q14 146 42 146 L58 146 Q86 146 86 118 L86 84 L54 84",
+  H: "M14 -4 L14 164 M86 -4 L86 164 M14 80 L86 80",
+  I: "M22 14 L78 14 M50 14 L50 146 M22 146 L78 146",
+  J: "M86 -4 L86 118 Q86 146 58 146 L42 146 Q14 146 14 118 L14 108",
+  K: "M14 -4 L14 164 M100 -6 L20 92 M42 66 L100 168",
+  L: "M14 -4 L14 146 L104 146",
+  M: "M14 164 L14 14 L50 100 L86 14 L86 164",
+  N: "M14 164 L14 -4 M86 164 L86 -4 M14 14 L86 146",
+  O: "M42 14 L58 14 Q86 14 86 42 L86 118 Q86 146 58 146 L42 146 Q14 146 14 118 L14 42 Q14 14 42 14 Z",
+  P: "M14 164 L14 14 L58 14 Q86 14 86 42 L86 56 Q86 84 58 84 L14 84",
+  Q: "M42 14 L58 14 Q86 14 86 42 L86 118 Q86 146 58 146 L42 146 Q14 146 14 118 L14 42 Q14 14 42 14 Z M60 120 L94 164",
+  R: "M14 164 L14 14 L58 14 Q86 14 86 42 L86 56 Q86 84 58 84 L14 84 M50 84 L94 164",
+  S: "M86 46 L86 42 Q86 14 58 14 L42 14 Q14 14 14 40 L14 50 Q14 78 42 79 L58 81 Q86 82 86 110 L86 118 Q86 146 58 146 L42 146 Q14 146 14 118 L14 114",
+  T: "M-4 14 L104 14 M50 14 L50 164",
+  U: "M14 -4 L14 118 Q14 146 42 146 L58 146 Q86 146 86 118 L86 -4",
+  V: "M10 -4 L44 146 L56 146 L90 -4",
+  W: "M6 -4 L26 146 L50 56 L74 146 L94 -4",
+  X: "M10 -4 L90 164 M90 -4 L10 164",
+  Y: "M8 -4 L50 86 L92 -4 M50 80 L50 164",
+  Z: "M-4 14 L86 14 L14 146 L104 146"
+};
+// the glyphs at one size: centre lines mapped so the stroke's outer edge meets the box
+const plGlyphs = new Map();
+function plGlyph(ch, w, h, sw) {
+  const k = ch + w + "x" + h + "x" + sw;
+  if (!plGlyphs.has(k)) {
+    const a = (w - sw) / 72, d = (h - sw) / 132, p = new Path2D();
+    p.addPath(new Path2D(PL_GLYPH[ch] || ""), new DOMMatrix([a, 0, 0, d, sw / 2 - 14 * a, sw / 2 - 14 * d]));
+    plGlyphs.set(k, p);
+  }
+  return plGlyphs.get(k);
+}
+function plWord(g, text, x, y, w, h, sw, gap) {
+  g.lineWidth = sw; g.lineCap = "butt"; g.lineJoin = "miter"; g.miterLimit = 2.2;
+  for (let i = 0; i < text.length; i++) {
+    const x0 = x + i * (w + gap);
+    g.save(); g.beginPath(); g.rect(x0, y, w, h); g.clip(); g.translate(x0, y); g.stroke(plGlyph(text[i], w, h, sw)); g.restore();
+  }
+  return text.length * (w + gap) - gap;
+}
+// the state's outline (longitude, latitude), drawn into a box
+const PL_TX = [[-106.62, 32.0], [-103.06, 32.0], [-103.04, 36.5], [-100.0, 36.5], [-100.0, 34.56], [-99.4, 34.38], [-98.9, 34.16], [-98.4, 34.06], [-97.95, 33.88], [-97.4, 33.82], [-96.9, 33.95], [-96.4, 33.75], [-95.9, 33.86], [-95.3, 33.88], [-94.7, 33.68], [-94.04, 33.55], [-94.04, 32.0], [-93.82, 31.6], [-93.55, 31.18], [-93.52, 30.6], [-93.72, 30.06], [-93.86, 29.72], [-94.6, 29.48], [-95.0, 29.22], [-95.4, 28.95], [-96.1, 28.55], [-96.8, 28.2], [-97.2, 27.75], [-97.42, 27.25], [-97.38, 26.65], [-97.15, 25.96], [-97.55, 25.9], [-98.2, 26.06], [-98.8, 26.36], [-99.2, 26.9], [-99.5, 27.5], [-99.95, 27.95], [-100.35, 28.5], [-100.7, 29.1], [-101.05, 29.45], [-101.4, 29.77], [-101.9, 29.8], [-102.35, 29.85], [-102.7, 29.4], [-103.0, 29.0], [-103.4, 29.02], [-103.8, 29.28], [-104.3, 29.55], [-104.65, 30.05], [-104.95, 30.6], [-105.5, 31.1], [-106.1, 31.45], [-106.53, 31.78]];
+function plState(g, cx, cy, w) {
+  const k = Math.cos(31.5 * Math.PI / 180), x0 = -106.62 * k, x1 = -93.52 * k, s = w / (x1 - x0), h = (36.5 - 25.9) * s;
+  g.beginPath();
+  PL_TX.forEach(([lo, la], i) => { const x = cx - w / 2 + (lo * k - x0) * s, y = cy - h / 2 + (36.5 - la) * s; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.closePath(); g.fillStyle = PL_INK; g.fill();
+}
+// the Lone Star, outlined, each point split into a lit facet and a shaded one
+function plStar(g, cx, cy, R) {
+  const P = [];
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? R * 0.4 : R; P.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+  g.beginPath(); P.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = "#fbfcfc"; g.fill();
+  for (let i = 0; i < 10; i += 2) {
+    const t = P[i], b = P[(i + 1) % 10];
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(t[0], t[1]); g.lineTo(b[0], b[1]); g.closePath(); g.fillStyle = "#8f9aa3"; g.fill();
+  }
+  g.strokeStyle = PL_INK; g.lineJoin = "miter"; g.lineWidth = 3;
+  g.beginPath(); for (let i = 0; i < 10; i++) { g.moveTo(cx, cy); g.lineTo(P[i][0], P[i][1]); } g.stroke();
+  g.lineWidth = 8; g.beginPath(); P.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+}
+/* the plate without its characters: the ground, the ribbons, the rim, the slots, TEXAS, the star, the line along
+   the bottom and the barcode. g is in plate units (1200 by 600) */
+function plBase(g) {
+  const bg = g.createLinearGradient(0, 0, 0, 600); bg.addColorStop(0, "#f4f6f7"); bg.addColorStop(1, "#e8eef2");
+  g.fillStyle = bg; g.fillRect(-40, -40, 1280, 680);
+  // the twisted ribbon down each edge: a band whose width turns with its twist, its face and its back in two tints
+  for (const cx of [62, 1138]) for (let y = 8; y < 592; y += 2) {
+    const ph = (y + (cx > 600 ? 75 : 0)) * Math.PI * 2 / 150, c = Math.cos(ph), w = 34 * Math.abs(c) + 3, sx = Math.sin(ph) * 10;
+    g.fillStyle = c > 0 ? "rgba(150,170,188,0.36)" : "rgba(175,192,206,0.28)"; g.fillRect(cx + sx - w, y, w * 2, 2.4);
+  }
+  // the pressed rim takes a little shade along its foot
+  g.strokeStyle = "rgba(120,135,148,0.35)"; g.lineWidth = 5; g.beginPath(); g.roundRect(21.7, 21.7, 1156.6, 556.6, 18); g.stroke();
+  // the bolt slots (cut through in the model; this is their walls)
+  g.fillStyle = "#4a4f53";
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) { g.beginPath(); g.roundRect(600 + sx * 350 - 27.5, 300 + sy * 237.5 - 13, 55, 26, 13); g.fill(); }
+  g.strokeStyle = PL_INK; plWord(g, "TEXAS", 448, 40, 52, 82, 16, 11);
+  plStar(g, 148, 100, 60);
+  g.fillStyle = PL_INK; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.font = '700 64px Arial, "Helvetica Neue", Helvetica, "Hanken Grotesk", sans-serif';
+  const tw = g.measureText("The Lone Star State").width;
+  g.save(); g.translate(600, 556); if (tw > 600) g.scale(600 / tw, 1); g.fillText("The Lone Star State", 0, 0); g.restore();
+  // a small barcode, bottom right: bars only
+  const r = rng(31); let x = 1012;
+  while (x < 1118) { const w = 2 + Math.floor(r() * 3) * 2; if (r() < 0.62) g.fillRect(x, 512, w, 42); x += w + 2 + Math.floor(r() * 2) * 2; }
+}
+const PL_MID = { y: 166, h: 286, w: 128, sw: 38, gap: 16, mid: 128, pad: 30 };
+function plChars(g, a, b) {
+  const M = PL_MID, gw = 3 * M.w + 2 * M.gap, x0 = 600 - (2 * gw + 2 * M.pad + M.mid) / 2;
+  plWord(g, a, x0, M.y, M.w, M.h, M.sw, M.gap);
+  plWord(g, b, x0 + gw + 2 * M.pad + M.mid, M.y, M.w, M.h, M.sw, M.gap);
+  return x0 + gw + M.pad + M.mid / 2;
+}
+/* one plate face, flat, at w pixels across (tools/verify/out/plate-texture.png and the atlas both draw with it) */
+export function plateFace(a, b, w = 1200, base) {
+  const c = cv(w, w / 2), g = c.getContext("2d");
+  drawPlate(g, 0, 0, w, a, b, base);
+  return c;
+}
+function drawPlate(g, x, y, w, a, b, base) {
+  g.save(); g.translate(x, y); g.scale(w / 1200, w / 1200);
+  if (base) g.drawImage(base, 0, 0, 1200, 600); else plBase(g);
+  g.strokeStyle = PL_INK; const sx = plChars(g, a, b);
+  plState(g, sx, PL_MID.y + PL_MID.h / 2, PL_MID.mid);
+  g.restore();
+}
+/* the letter groups: consonants only (no words), none that reads as a slur or a crude abbreviation, never two plates
+   the same; the first is the pair from Jason's note */
+const PL_ABC = "BCDFGHJKLMNPRSTVWXYZ", PL_BAN = /GYP|FK|FC|FG|KK|SH|CN|NG|DK|DC|WTF|FML|KYS|SX|XX|TWT|PSS|PST|NSF|STD|BJ|DTF|FRK|MLF/;
+export function plateLetters(n, seed = 77) {
+  const r = rng(seed), out = [["TXJ", "LMR"]], seen = new Set(["TXJLMR"]);
+  const grp = () => { let g; do g = PL_ABC[Math.floor(r() * 20)] + PL_ABC[Math.floor(r() * 20)] + PL_ABC[Math.floor(r() * 20)]; while (PL_BAN.test(g)); return g; };
+  while (out.length < n) { const p = [grp(), grp()]; if (!seen.has(p[0] + p[1])) { seen.add(p[0] + p[1]); out.push(p); } }
+  return out;
+}
+/* the atlas: PLATE_COLS by PLATE_ROWS cells, each a plate face with a margin of its own ground (so the small mips
+   don't pull in a neighbour), 32 pixels to the inch (16 on phones), and the normal map of the embossed characters
+   at half that. cell(i) is where cell i's face starts in UV (top left, the textures aren't flipped) and scale its size */
+export const PLATE_COLS = 5, PLATE_ROWS = 10;
+const plAtlas = {};
+export function plateAtlas(lo) {
+  const key = lo ? "lo" : "hi"; if (plAtlas[key]) return plAtlas[key];
+  const s = lo ? 0.5 : 1, N = 2048 * s, fw = 384 * s, cw = 408 * s, ch = 204 * s, px = (cw - fw) / 2, py = (ch - fw / 2) / 2;
+  const n = PLATE_COLS * PLATE_ROWS, letters = plateLetters(n);
+  const base = cv(1200 * s, 600 * s); { const g = base.getContext("2d"); g.scale(s, s); plBase(g); }
+  const c = cv(N, N), g = c.getContext("2d");
+  g.fillStyle = "#eef2f4"; g.fillRect(0, 0, N, N);
+  // the height of the embossed characters, at half size: mid grey ground, the strokes raised and softened a little
+  const hN = N / 2, hc = cv(hN, hN), hg = hc.getContext("2d");
+  hg.fillStyle = "#000"; hg.fillRect(0, 0, hN, hN);
+  hg.filter = "blur(" + (1.2 * s) + "px)";
+  for (let i = 0; i < n; i++) {
+    const cx = (i % PLATE_COLS) * cw, cy = Math.floor(i / PLATE_COLS) * ch, [a, b] = letters[i];
+    g.fillStyle = "#eef2f4"; g.fillRect(cx, cy, cw, ch);
+    drawPlate(g, cx + px, cy + py, fw, a, b, base);
+    hg.save(); hg.translate((cx + px) / 2, (cy + py) / 2); hg.scale(fw / 2400, fw / 2400); hg.strokeStyle = "#fff"; plChars(hg, a, b); hg.restore();
+  }
+  hg.filter = "none";
+  // the normal map from the height (+u right, +v down the canvas)
+  const H = hg.getImageData(0, 0, hN, hN).data, nc = cv(hN, hN), ng = nc.getContext("2d"), im = ng.createImageData(hN, hN), D = im.data, K = 2.6 * s;
+  for (let y = 0; y < hN; y++) for (let x = 0; x < hN; x++) {
+    const xl = x > 0 ? x - 1 : x, xr = x < hN - 1 ? x + 1 : x, yu = y > 0 ? y - 1 : y, yd = y < hN - 1 ? y + 1 : y;
+    const dx = (H[(y * hN + xr) * 4] - H[(y * hN + xl) * 4]) / 255 * K, dy = (H[(yd * hN + x) * 4] - H[(yu * hN + x) * 4]) / 255 * K;
+    const l = Math.sqrt(dx * dx + dy * dy + 1), i = (y * hN + x) * 4;
+    D[i] = (-dx / l * 0.5 + 0.5) * 255; D[i + 1] = (-dy / l * 0.5 + 0.5) * 255; D[i + 2] = (1 / l * 0.5 + 0.5) * 255; D[i + 3] = 255;
+  }
+  ng.putImageData(im, 0, 0);
+  const map = tex(c), nmap = tex(nc, { linear: true });
+  map.flipY = nmap.flipY = false;
+  return (plAtlas[key] = { map, nmap, canvas: c, letters, scale: [fw / N, fw / 2 / N], cell: i => { i = ((i % n) + n) % n; return [((i % PLATE_COLS) * cw + px) / N, (Math.floor(i / PLATE_COLS) * ch + py) / N]; } });
 }
 export { cv };

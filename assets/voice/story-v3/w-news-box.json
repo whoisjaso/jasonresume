@@ -1,0 +1,37 @@
+{
+ "id": "w-news-box",
+ "text": "Yesterday's paper, damp at the corners.",
+ "duration": 3.525,
+ "words": [
+  {
+   "w": "Yesterday's",
+   "s": 0.339,
+   "e": 0.879
+  },
+  {
+   "w": "paper,",
+   "s": 0.879,
+   "e": 1.462
+  },
+  {
+   "w": "damp",
+   "s": 1.582,
+   "e": 1.883
+  },
+  {
+   "w": "at",
+   "s": 1.883,
+   "e": 1.949
+  },
+  {
+   "w": "the",
+   "s": 1.949,
+   "e": 2.024
+  },
+  {
+   "w": "corners.",
+   "s": 2.024,
+   "e": 2.888
+  }
+ ]
+}

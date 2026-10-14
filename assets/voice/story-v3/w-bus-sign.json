@@ -1,0 +1,32 @@
+{
+ "id": "w-bus-sign",
+ "text": "Bus stop. Nobody's waiting tonight.",
+ "duration": 3.4,
+ "words": [
+  {
+   "w": "Bus",
+   "s": 0.336,
+   "e": 0.53
+  },
+  {
+   "w": "stop.",
+   "s": 0.53,
+   "e": 1.046
+  },
+  {
+   "w": "Nobody's",
+   "s": 1.165,
+   "e": 1.68
+  },
+  {
+   "w": "waiting",
+   "s": 1.68,
+   "e": 2.013
+  },
+  {
+   "w": "tonight.",
+   "s": 2.013,
+   "e": 2.766
+  }
+ ]
+}

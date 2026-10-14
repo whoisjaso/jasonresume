@@ -1,0 +1,32 @@
+{
+ "id": "jason-sale-jason-4",
+ "text": "What does she actually want?",
+ "duration": 1.72,
+ "words": [
+  {
+   "w": "What",
+   "s": 0.1,
+   "e": 0.35
+  },
+  {
+   "w": "does",
+   "s": 0.35,
+   "e": 0.542
+  },
+  {
+   "w": "she",
+   "s": 0.542,
+   "e": 0.734
+  },
+  {
+   "w": "actually",
+   "s": 0.734,
+   "e": 1.137
+  },
+  {
+   "w": "want?",
+   "s": 1.137,
+   "e": 1.54
+  }
+ ]
+}

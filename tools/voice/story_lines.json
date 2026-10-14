@@ -233,10 +233,374 @@
    "speed": 0.9
   },
   {
+   "id": "june-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A waiting room, late. The clock is loud. Nobody here wants to be here.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-3",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "He hasn't looked up since you sat down.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-2",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Missed calls from the lot. People asking about cars.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-4",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "It's buzzing again.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-call-1",
+   "who": "caller",
+   "voice": "af_nicole",
+   "text": "Hi. Is the silver one on the lot still for sale?"
+  },
+  {
+   "id": "june-you-5",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Somebody still needs a car. The world doesn't wait.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-6",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "It rings out. It'll ring again in the morning.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-7",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Rain on the glass. The parking lights blur into one.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-8",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Bad coffee from the machine. You hand him one anyway.",
+   "speed": 0.9
+  },
+  {
+   "id": "june-you-9",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Somewhere past midnight, he's the one who stands up first.",
+   "speed": 0.9
+  },
+  {
+   "id": "sale-you-1",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The next morning. The lot in daylight. A buyer by the first car.",
+   "speed": 0.9
+  },
+  {
+   "id": "sale-mar-1",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "I'm just looking. I've been burned before."
+  },
+  {
+   "id": "sale-mar-2",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "Everybody tells me about the car."
+  },
+  {
+   "id": "sale-mar-3",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "So it was overpriced?"
+  },
+  {
+   "id": "sale-mar-4",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "The last car broke down a week after I bought it. Nobody answered the phone."
+  },
+  {
+   "id": "sale-mar-5",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "Can I drive it?"
+  },
+  {
+   "id": "sale-mar-6",
+   "who": "marisol",
+   "voice": "af_sarah",
+   "text": "It drives right. I'll take it."
+  },
+  {
+   "id": "sale-you-2",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "She drives off. He watches until the car turns the corner.",
+   "speed": 0.9
+  },
+  {
    "id": "dec-dell-1",
    "who": "dell",
    "voice": "am_onyx",
    "text": "Thanks again for the gate. Get home safe."
+  },
+  {
+   "id": "w-bike",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Somebody's bell. It still rings like it's new.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-bus-bench",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A cold bench. The rain keeps its own schedule here.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-bus-sign",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Bus stop. Nobody's waiting tonight.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-cart-book",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A book left open on the cart, like someone meant to come back.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-chair-2",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A chair by the desk. It takes the weight of a long day.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-curb-puddle",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Cold water over the shoes. Worth it.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-desk-lamp",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The lamp clicks on. The room gets smaller and warmer.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-drawer",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Pens, spare tags, a ring of keys. Every desk has a drawer like this.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-dumpster",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The lid bangs down louder than you meant it to.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-fridge",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A cold light and not much else.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-ice",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Ice, packed tight. Somebody fills it every morning.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-kiosk-door",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Locked. The pumps stand around in the rain.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-laundry-door",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Warm air and the smell of dryer sheets.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-laundry-sign",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Laundry. Open late. Somebody always is.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-lot-puddle",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The lamps break apart under your feet, then come back together.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-mailbox",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Empty. Whatever came today is already inside.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-mug",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Still warm. Somebody was here a minute ago.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-news-box",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Yesterday's paper, damp at the corners.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-office-lights",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The lights buzz once and settle.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-payphone",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A dial tone. Nobody to call, but it still works.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-radio",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Low music, mostly static. Enough to keep the room company.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-reading-lamps",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The long tables come up out of the dark.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-shop-door",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Nobody home. The rain answers instead.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-shop-shutter",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The shutter rattles all the way down the block.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-shop-sign",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Closed. Most of the street is, this late.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-showroom-glass",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Your own reflection knocks back.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-showroom-lights",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The showroom wakes up, one row at a time.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-taco-menu",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Tacos. Open late. The best kind of sign.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-truck-bell",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The bell dings over the hiss of the grill.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-vending",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Something drops with a thunk. Small victories.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-wr-vending",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Something drops behind the glass. Nobody here is hungry.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-wr-bell",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "A small bell on the ledge. Nobody comes. That's alright.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-wr-chair",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "The seat is cold. Everyone here sits like they're about to stand.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-magazine",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "An old magazine, soft from other people's hands.",
+   "speed": 0.9
+  },
+  {
+   "id": "w-cooler-cup",
+   "who": "you",
+   "voice": "af_heart,af_nicole",
+   "text": "Cold water in a paper cone. Something to hold on to.",
+   "speed": 0.9
   }
  ]
 }

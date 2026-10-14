@@ -56,7 +56,9 @@ export const LOOKS = {
   "jason-memory": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
   player: { skin: "#8a5d40", lip: "#7f4c3c", eyes: "#6a4a36", wide: 0.05, hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#6f6a62", hair: "#4a4640", brow: "#7d776e", wide: 0, cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true, tempo: 0.92 },
-  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#8a6248", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" }
+  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#8a6248", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" },
+  // a look on another body (make(name, { look })): Marisol, the morning's buyer, is Renata's body in her own colours
+  marisol: { skin: "#8d5f42", lip: "#94584a", hair: "#140e0b", brow: "#2a1c14", browTint: "#4a3324", wide: 0.08, cloth: { elegant: "#3f5f6e", shoes: "#1e1b19" }, keep: "#dcd6ca" }
 };
 
 export async function loadCast(base, o = {}) {
@@ -69,7 +71,9 @@ export async function loadCast(base, o = {}) {
     async make(name, o) {
       // every cast file ships under the cast's version, whatever version the caller asks for
       const file = name.replace(/-v\d+$/, "") + "-" + CAST_VER;
-      const g = cache[file] || (cache[file] = loader.loadAsync(base + file + ".glb"));
+      // a body worn with another look is its own copy (the paint replaces the materials it reads its cloth from)
+      const key = file + (o && o.look ? "#" + o.look : "");
+      const g = cache[key] || (cache[key] = loader.loadAsync(base + file + ".glb"));
       return new Person(file, (await g).scene, o || {}, motion);
     }
   };
@@ -204,7 +208,7 @@ const MASKS = {
    ================================================================ */
 class Person {
   constructor(name, scene, o, motion) {
-    this.name = name.replace(/-v\d+$/, ""); this.L = LOOKS[this.name] || LOOKS.player;
+    this.name = name.replace(/-v\d+$/, ""); this.L = LOOKS[(o && o.look) || this.name] || LOOKS.player;
     this.M = motion;
     this.group = new THREE.Group(); this.group.name = name;
     this.root = scene; this.group.add(scene);
@@ -692,6 +696,14 @@ class Person {
     if (this.jK > 0.001) this.jumpBody(hipC);
     // driving: reclined in the seat, ducking under the roof getting in and out, pushed about by the corners
     if (this.car) this.carBody(dt);
+    // the weight of a hard night (p.heavy 0..1): the back rounds, the shoulders come forward, the head goes down, and
+    // the breath is slower and deeper; it comes and goes over a couple of seconds
+    this.heavyK = damp(this.heavyK || 0, this.heavy || 0, 1.1, dt);
+    if (this.heavyK > 0.002) {
+      const hk = this.heavyK, deep = Math.sin(t * TAU * 0.14 + this.tempo * 5);
+      this.rot("spine_01", 0.1 * hk, 0, 0); this.rot("spine_02", 0.12 * hk, 0, 0); this.rot("spine_03", 0.1 * hk - deep * 0.022 * hk, 0, 0);
+      this.rot("clavicle_l", 0, 0.08 * hk, -0.05 * hk); this.rot("clavicle_r", 0, -0.08 * hk, 0.05 * hk);
+    }
 
     // ---- the head looks
     let wantY = 0, wantP = 0;
@@ -707,6 +719,8 @@ class Person {
       wantY = Math.abs(local) > 2.3 ? 0 : clamp(local, -1.2, 1.2);
       wantP = clamp(-Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.45, 0.5);
     }
+    // heavy, the head hangs a little lower whatever it looks at
+    if (this.heavyK > 0.002) wantP = Math.min(0.62, wantP + this.heavyK * 0.24);
     // the head turns slower than the eyes, and less when walking
     const lk = this.lookAtP ? 4 : 2.5;
     this.lookYaw = damp(this.lookYaw, wantY * (1 - this.locoW * 0.4), lk, dt); this.lookPitch = damp(this.lookPitch, wantP, lk, dt);

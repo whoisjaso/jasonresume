@@ -27,11 +27,12 @@ import { U, MAXL, blobMat } from "./paint.js";
 import * as TX from "./tex.js";
 import { loadCast, CAST_VER } from "./people.js";
 import * as WORLD from "./world.js";
-const { buildLot, buildOffice, buildLibrary, addKeys } = WORLD;
+const { buildLot, buildOffice, buildLibrary, addKeys, buildWaitingRoom } = WORLD;
 import { Post, GRADES, applyGrade } from "./post.js";
 import { createAudio } from "./audio.js";
 import { buildNav, pathLen } from "./nav.js";
 import { Guide } from "./guide.js";
+import { addLostPlates, syncLostPlates, takeLostPlate, tickLostPlates, LOST_IDS, lostGen } from "./tags.js";
 
 const root = document.documentElement, body = document.body;
 const D = JSON.parse(document.getElementById("story-data").textContent);
@@ -69,7 +70,7 @@ function angTo(a, b) { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; whil
 
 /* ---------- state ---------- */
 const S = {
-  open: false, scene: null, phase: "load", flags: {}, looked: {}, log: [], trophies: [], journal: [], obj: null,
+  open: false, scene: null, phase: "load", flags: {}, looked: {}, log: [], trophies: [], journal: [], obj: null, tags: [],
   talking: null, ending: null, t: 0, started: 0
 };
 /* the phase, kept honest under the menus: whatever finishes while the pause menu or the journal is open (a scene card,
@@ -91,7 +92,7 @@ function cond(c) {
 }
 function save() {
   if (!S.scene || S.ending) return;
-  store.set("jg_story", JSON.stringify({ v: 1, scene: S.scene, flags: S.flags, looked: S.looked, log: S.log, trophies: S.trophies, journal: S.journal, obj: S.obj || null, hint: S.hint || null, pos: me && S.phase === "explore" ? [+me.pos.x.toFixed(2), +me.pos.z.toFixed(2), +me.yaw.toFixed(2)] : null, t: Date.now() }));
+  store.set("jg_story", JSON.stringify({ v: 1, scene: S.scene, flags: S.flags, looked: S.looked, log: S.log, trophies: S.trophies, journal: S.journal, tags: S.tags, obj: S.obj || null, hint: S.hint || null, pos: me && S.phase === "explore" ? [+me.pos.x.toFixed(2), +me.pos.z.toFixed(2), +me.yaw.toFixed(2)] : null, t: Date.now() }));
 }
 function loadSave() { try { const s = JSON.parse(store.get("jg_story") || "null"); return s && s.v === 1 && s.scene ? s : null; } catch (e) { return null; } }
 
@@ -180,9 +181,12 @@ function getSet(name) {
   if (name === "lot" || name === "decision") s = sets.lot || buildLot({ wordmark, lowres: COARSE.matches });
   else if (name === "office") s = buildOffice({ lotArt: lotArt(), arcadeTex: arcadeVideo() });
   else if (name === "memory") s = buildLibrary({});
-  else if (name === "keys") { s = buildLot({ wordmark, day: true, lowres: true }); addKeys(s); }
+  // the morning lot: the keys and the sale share one set; where its drivable cars were parked is remembered
+  else if (name === "keys" || name === "sale") { s = sets.keys || sets.sale; if (!s) { s = buildLot({ wordmark, day: true, lowres: true }); addKeys(s); for (const c of s.userData.drivable || []) c.home = { x: c.x, z: c.z, yaw: c.yaw }; } }
+  else if (name === "june") s = buildWaitingRoom({});
+  if (name !== "keys" && name !== "sale" && name !== "june") addLostPlates(s, name === "decision" ? "lot" : name, UI.tag); // the lost license plates (story/tags.js)
   s.visible = false; world.add(s);
-  sets[name] = s; if (name === "lot") sets.decision = s; if (name === "decision") sets.lot = s;
+  sets[name] = s; if (name === "lot") sets.decision = s; if (name === "decision") sets.lot = s; if (name === "keys") sets.sale = s; if (name === "sale") sets.keys = s;
   return s;
 }
 let arcadeV = null;
@@ -265,10 +269,11 @@ document.addEventListener("jg:score", e => { AU.sound(!!(e.detail && e.detail.on
    ================================================================ */
 const VBASE = D.out || "assets/voice/story-v3";
 const VREV = "2";
-const have = { fict: {}, me: {} };
+const have = { fict: {}, me: {}, ready: 0 };
+let haveDone; const haveP = new Promise(r => (haveDone = r));
 // the manifests are fetched past the year-long asset cache: a line voiced later (your thoughts) still gets heard
-fetch(VBASE + "/manifest.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {});
-fetch(VBASE + "/manifest-jason.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {});
+fetch(VBASE + "/manifest.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.fict = j.lines; }).catch(() => {}).then(() => { if (++have.ready === 2) haveDone(); });
+fetch(VBASE + "/manifest-jason.json?v=" + VREV).then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.lines) have.me = j.lines; }).catch(() => {}).then(() => { if (++have.ready === 2) haveDone(); });
 let line = null; // { L, t, mode: "wait"|"voice"|"text", clock, vt, dur, endAt, audio, v, words, est, sp, resolve }
 let skipLine = null;
 const HOLD = 0.35, WAIT_MAX = 3.5, STALL_MAX = 6;
@@ -278,10 +283,23 @@ const syncLog = []; // for tools/verify/story.mjs: how each line began and ended
 function speakerOf(who) { return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
 function voiceId(L) { return L.who === "jason" ? "jason-" + L.id : L.id; }
 function voicedLine(L) { if (!L || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
+/* players a press has already started (silently): a phone lets them speak later, outside any press. The title
+   screen's Play leaves a few (intro.js); every press inside the episode tops the pool up */
+const VPOOL = window.JG_VPOOL || (window.JG_VPOOL = []);
+function blessVoices() {
+  if (!S.open || !window.JG_SILENT) return;
+  while (VPOOL.length < 6) {
+    const a = new Audio(); a.src = window.JG_SILENT; a._b = 1;
+    try { const p = a.play(); if (p && p.then) p.then(() => { if (a._b) a.pause(); }).catch(() => {}); } catch (e) {}
+    VPOOL.push(a);
+  }
+}
+addEventListener("pointerdown", blessVoices, true); addEventListener("keydown", blessVoices, true);
 function prepVoice(L) {
   const id = voiceId(L); let v = VC.get(id);
   if (v) { VC.delete(id); VC.set(id, v); return v; }
-  const a = new Audio(); a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3";
+  const a = VPOOL.shift() || new Audio(); a._b = 0; try { a.pause(); } catch (e) {}
+  a.preload = "auto"; a.src = VBASE + "/" + id + ".mp3";
   v = { id, a, words: null, dur: 0, routed: false };
   v.wp = fetch(VBASE + "/" + id + ".json").then(r => (r.ok ? r.json() : null)).then(j => { if (j && j.words) { v.words = j.words; v.dur = j.duration || 0; } }).catch(() => {});
   VC.set(id, v);
@@ -298,17 +316,31 @@ function estWords(text, t0, t1) {
   let t = t0; return ws.map((w, i) => { const s = t; t += wt[i] * k; return { w, s, e: s + Math.max(0.08, (wt[i] - (/[.?!,;:]$/.test(w) ? 2 : 0)) * k * 0.9) }; });
 }
 function lineWords(l) { return l.words || l.est; }
-function sayLine(L) {
+/* a thought out in the world: the narrator says it while you keep walking (no stop, no camera move); a talk that
+   starts cuts it short */
+const WTH = D.world_thoughts || {};
+function murmur(id, t) {
+  if (S.phase !== "explore" || (line && !line.L.ambient)) return;
+  sayLine({ id: "w-" + id, who: "you", t, ambient: true }).catch(() => {});
+}
+async function sayLine(L) {
+  if (have.ready < 2 && soundOn() && !FAST) await Promise.race([haveP, sleep(3000)]);
+  return sayLine0(L);
+}
+function sayLine0(L) {
+  if (line && line.L.ambient) endLine(true); // a passing thought gives way
   return new Promise(resolve => {
     const words = L.t.split(" ");
     const c = CAST[L.who] || { name: "" };
     whoEl.textContent = c.name || ""; tagEl.textContent = c.tag || ""; tagEl.hidden = !c.tag;
     capEl.classList.toggle("is-thought", L.who === "you");
     capEl.classList.toggle("is-me", L.who === "jason");
+    // a passing thought is read, not tapped: it never sits over the big button you use the next thing with
+    capEl.classList.toggle("is-passing", !!L.ambient);
     saidEl.innerHTML = words.map(w => "<i>" + E(w) + "</i>").join(" ");
     capEl.hidden = false; requestAnimationFrame(() => capEl.classList.add("is-on"));
     const sp = speakerOf(L.who);
-    const textDur = S.holdLines ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052;
+    const textDur = S.holdLines && !L.ambient ? 60 : FAST ? 0.05 : 1.1 + L.t.length * 0.052; // a passing thought never waits to be skipped
     const base = { L, t: 0, mode: "text", clock: 0, vt: 0, dur: textDur, endAt: null, audio: null, v: null, words: null, est: null, resolve, sp, offs: [], k: -2, stallT: 0, waitT: 0, perf: performance.now() };
     base.est = estWords(L.t, 0.12, Math.max(0.5, Math.min(textDur, 1.1 + L.t.length * 0.052) - 0.55));
     if (curV) stopVoice();
@@ -359,6 +391,9 @@ function endLine(skipped) {
   L.rec.end = performance.now(); L.rec.skipped = !!skipped;
   line = null; AU.duck(1);
   capEl.classList.remove("is-on"); ball.stop();
+  // no talk to put the caption away after a passing thought: it goes once it has faded (an empty caption left on
+  // the page still takes the taps meant for what's under it)
+  if (L.L.ambient) setTimeout(() => { if (!line) capEl.hidden = true; }, 360);
   L.resolve(skipped);
 }
 /* where the line is now, in the voice's own seconds; between the audio clock's ticks it runs on the frame clock */
@@ -403,7 +438,7 @@ function tickLine(dt) {
     }
   }
   if (l.mode === "text" && l.clock > l.dur) return endLine(false);
-  if (l.mode === "voice" && l.endAt != null && pnow >= l.endAt && S.phase !== "pause" && !S.holdLines) return endLine(false);
+  if (l.mode === "voice" && l.endAt != null && pnow >= l.endAt && S.phase !== "pause" && (!S.holdLines || l.L.ambient)) return endLine(false);
 }
 /* the voice picks up again after the pause menu or a hidden tab, if it was the clock */
 function resumeVoice() { if (line && line.audio && line.mode !== "text") { const p = line.audio.play(); if (p && p.catch) p.catch(() => {}); } }
@@ -585,12 +620,12 @@ function showTrophy() {
    PEOPLE IN THE SCENES
    ================================================================ */
 const personP = {};
-function person(key, name) {
+function person(key, name, o) {
   if (P[key]) return Promise.resolve(P[key]);
-  return personP[key] || (personP[key] = person0(key, name).finally(() => { delete personP[key]; }));
+  return personP[key] || (personP[key] = person0(key, name, o).finally(() => { delete personP[key]; }));
 }
-async function person0(key, name) {
-  const p = await cast.make(name + "-" + VER);
+async function person0(key, name, o) {
+  const p = await cast.make(name + "-" + VER, o);
   p.key = key; world.add(p.group);
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), blobMat(0.55)); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.015; sh.layers.set(2); world.add(sh); p.shadow = sh;
   P[key] = p; return p;
@@ -606,13 +641,15 @@ const SCENE_LIGHT = {
   decision: { sky: "#222a27", ground: "#0d0d0c", moon: "#302e29", rim: "#817968", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
   office: { sky: "#33363a", ground: "#1c1a17", moon: "#2a2927", rim: "#6b6a62", fog: "#141618", den: 0.01, wetAll: 0.25, sat: 1, moonDir: [0.3, 0.8, 0.5] },
   memory: { sky: "#463c34", ground: "#1d1712", moon: "#4a3826", rim: "#7c6a58", fog: "#1a1612", den: 0.014, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
-  keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] }
+  keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] },
+  june: { sky: "#2a3134", ground: "#191b1a", moon: "#23282a", rim: "#66706e", fog: "#111517", den: 0.012, wetAll: 0.12, sat: 0.8, moonDir: [0.6, 0.7, -0.2] },
+  sale: { sky: "#a9b9c4", ground: "#625849", moon: "#ffdcae", rim: "#ddd5c6", fog: "#d8ccb4", den: 0.0035, wetAll: 0.0, sat: 1, moonDir: [0.65, 0.5, 0.4] }
 };
 function lightScene(name) {
   const L = SCENE_LIGHT[name];
   U.uSky.value.set(L.sky); U.uGround.value.set(L.ground); U.uMoon.value.set(L.moon); U.uRim.value.set(L.rim); U.uFog.value.set(L.fog); U.uFogDen.value = L.den; U.uWetAll.value = L.wetAll; U.uSat.value = L.sat;
   U.uMoonDir.value.set(...L.moonDir).normalize();
-  if (name === "keys") { U.uMoon.value.multiplyScalar(1.5); }
+  if (name === "keys" || name === "sale") { U.uMoon.value.multiplyScalar(1.5); }
 }
 let set = null, rain = null;
 function makeRain() {
@@ -649,7 +686,13 @@ async function enter(name, o = {}) {
   applyGrade(post, GRADES[name]);
   ringOn = false;
   // who is here
-  for (const k of Object.keys(P)) hide(P[k]);
+  for (const k of Object.keys(P)) { const q = P[k]; if (q.car && q !== me) { try { q.driving = null; } catch (e) {} } hide(q); }
+  // whatever the last scene left on them: Jason sitting with his head down, a phone at your ear, a cup in a hand
+  if (P.jason) { P.jason.pose = "stand"; P.jason.heavy = 0; }
+  for (const q of Object.values(P)) { if (q.hold === "phone") q.hold = null; const C = q.carrying; if (C) for (const sd of ["l", "r"]) if (C[sd]) { C[sd] = null; try { q.release(sd); } catch (e) {} } }
+  if (P.you && P.you.car) { try { P.you.driving = null; } catch (e) {} }
+  AUTO = null; S.heldShot = null; S.busy = false; camState.juneIn = false; if (HOLDG) endHold(false);
+  if (name === "sale") courseReset();
   const M = set.userData.marks;
   if (name === "lot") {
     await person("you", "player"); await person("jason", "jason"); await person("dell", "dell");
@@ -669,6 +712,21 @@ async function enter(name, o = {}) {
   } else if (name === "keys") {
     await person("jason", "jason");
     place(P.jason, new THREE.Vector3(10.2, 0, -12.6), Math.PI * 0.9);
+  } else if (name === "june") {
+    // past midnight: Jason in the row facing the doors, elbows in, the weight of it on him
+    await person("you", "player"); await person("jason", "jason");
+    place(P.you, M.playerStart, M.playerYaw); place(P.jason, M.jason, M.jasonYaw); P.jason.pose = "sit"; P.jason.heavy = 1;
+    buzzT = 6;
+  } else if (name === "sale") {
+    // the next morning: Marisol by the first car, Jason a step back, you coming up the lane
+    await person("you", "player"); await person("jason", "jason"); await person("marisol", "renata", { look: "marisol" });
+    saleCarHome();
+    const c = saleCar() || { x: -1.6, z: 4.5, yaw: 0 };
+    const mp = carLocal(c, -1.3, -1.7), jp = carLocal(c, 1.7, -3.6), yp = carLocal(c, 0.3, -6.4);
+    place(P.you, yp, Math.atan2(mp.x - yp.x, mp.z - yp.z)); place(P.marisol, mp, Math.atan2(yp.x - mp.x, yp.z - mp.z)); place(P.jason, jp, Math.atan2(mp.x - jp.x, mp.z - jp.z));
+    set.userData.spots["sale-buyer"] = set.userData.spots["sale-keys"] = { who: "marisol", r: 2.6 };
+    // the journal's drawing of the morning: the car, wherever it is
+    if (!set.userData.spots.sale) Object.defineProperty(set.userData.spots, "sale", { value: { get p() { const k = saleCar(); return k ? new THREE.Vector3(k.x, 0.75, k.z) : new THREE.Vector3(-1.6, 0.75, 4.5); }, sketchR: 2.2 }, enumerable: false });
   } else if (name === "decision") {
     await person("you", "player"); await person("jason", "jason"); await person("dell", "dell");
     place(P.you, M.decisionPlayer, Math.PI * 0.9); place(P.jason, M.decisionJason, Math.PI * 0.2); place(P.dell, M.dellGate, Math.PI);
@@ -680,18 +738,21 @@ async function enter(name, o = {}) {
   // come in through an exit: you arrive at the way back to where you were
   if (me && o.from) { const ex = Object.values(set.userData.spots || {}).find(x => x && x.kind === "exit" && (x.to === o.from || (o.from === "decision" && x.to === "lot") || (o.from === "lot" && x.to === "decision"))); if (ex) { const q = ex.stand || ex.p || ex.at; if (q) { me.pos.set(q.x, 0, q.z); const f = ex.p || ex.at; if (f && f !== q) me.yaw = me.wantYaw = Math.atan2(q.x - f.x, q.z - f.z); } } }
   if (me && !o.cold) unstick(me);
-  if (name === "decision" && S.obj === "keys") objective(null);
+  if (name === "decision" && ["keys", "sale", "drive", "back"].includes(S.obj)) objective(null);
   // the rain: hard on the lot, gentler at the end, none inside or in the morning
   if (!rain) { rain = makeRain(); scene.add(rain); }
   rain.visible = name === "lot" || name === "decision";
   rain.material.uniforms.uK.value = name === "decision" ? 0.55 : 1;
-  if (set.userData.groundMat) set.userData.groundMat.uniforms.uRain.value = name === "decision" ? 0.5 : name === "keys" ? 0 : 1;
+  if (set.userData.groundMat) set.userData.groundMat.uniforms.uRain.value = name === "decision" ? 0.5 : name === "keys" || name === "sale" ? 0 : 1;
+  if (set.userData.keys) set.userData.keys.visible = name === "keys"; // the lockbox is the keys morning's, not the sale's
   AU.scene(name, set);
   nav = null; navFor = null; guideRoute = null;
   // the desk lamp in the memory remembers what you chose
   if (S.scene === "decision" && S.flags.lamp === "off") { const l = sets.lot.userData.lamps[5]; if (l) { l.col = [0.6, 0.38, 0.18]; l.glow.material.uniforms.uK.value = 0.7; } }
   // the score: the title's layer for where you are
-  if (SC() && SC().focus) SC().focus({ lot: "triple-j", decision: "triple-j", office: "lead-to-title", memory: "neuroscience", keys: "triple-j" }[name]);
+  if (SC() && SC().focus) SC().focus({ lot: "triple-j", decision: "triple-j", office: "lead-to-title", memory: "neuroscience", keys: "triple-j", june: "bed", sale: "triple-j" }[name]);
+  // the waiting room takes the score almost all the way down; the morning gives it back, warm
+  AU.scoreLevel(name === "june" ? 0.1 : 1, name === "june" ? 4 : 6);
   camState.yaw = me ? me.yaw + Math.PI : 0; camState.init = true;
   save();
   T("story_scene", { scene: name, from: prev || "" });
@@ -716,6 +777,9 @@ function headOf(p) { return p ? p.headWorld(new THREE.Vector3()) : new THREE.Vec
 function shotFor(L) {
   if (S.phase === "close") return; // the close-up holds its frame while the notes are read
   if (S.phase !== "talk") return;
+  // a shot the scene is holding (the car driving away), or the slow close one beside him in the waiting room
+  if (S.heldShot) { camState.shot = S.heldShot; return; }
+  if (S.scene === "june" && me && me.seated && S.partner === P.jason && P.jason) { juneShot(L); return; }
   const sp = speakerOf(L.who);
   const other = S.partner;
   const you = me;
@@ -799,12 +863,12 @@ function updateCamera(dt) {
   }
   if ((S.phase === "talk" || S.phase === "close") && camState.shot) {
     const s = camState.shot; camState.shotT += dt;
-    const push = s.push * Math.min(1, camState.shotT / 4);
+    const push = s.push * Math.min(1, camState.shotT / (s.dur || 4));
     const pos = s.pos.clone().lerp(s.look, push);
     if (camState.cut) { camera.position.copy(pos); camState.look.copy(s.look); camState.cut = false; }
     else { camera.position.lerp(pos, 1 - Math.exp(-3 * dt)); camState.look.lerp(s.look, 1 - Math.exp(-3 * dt)); }
     camera.lookAt(camState.look);
-    post.comp.u.uFocus.value = s.focus || camera.position.distanceTo(camState.look); post.comp.u.uRange.value = 1.6; post.comp.u.uDofK.value = quality >= 2 ? 0.9 : 0;
+    post.comp.u.uFocus.value = s.focus || camera.position.distanceTo(camState.look); post.comp.u.uRange.value = s.range || 1.6; post.comp.u.uDofK.value = quality >= 2 ? (s.range && s.range < 1.2 ? 1 : 0.9) : 0;
     return;
   }
   if (!me) return;
@@ -933,7 +997,7 @@ const runHeld = () => (SET.runToggle ? mv.runLatch : !!keys[SET.keys.run]);
 /* how fast for a push: a dead zone, a walk that grows with the push, then a clear step up to a run */
 function speedFor(m) { return m <= 0 ? 0 : m >= RUN_AT ? RUN : WALK * (0.28 + 0.72 * Math.min(1, m / (RUN_AT - 0.04))); }
 function wantInput() {
-  if (S.phase !== "explore") return null;
+  if (S.phase !== "explore" || S.busy) return null;
   const kx = (keyOn("right") || keys.arrowright ? 1 : 0) - (keyOn("left") || keys.arrowleft ? 1 : 0);
   const kz = (keyOn("down") || keys.arrowdown ? 1 : 0) - (keyOn("up") || keys.arrowup ? 1 : 0);
   if (kx || kz) { const l = Math.hypot(kx, kz); return { x: kx / l, z: kz / l, m: runHeld() ? 1 : RUN_AT - 0.04, src: "keys" }; }
@@ -1019,7 +1083,7 @@ const JUMP = { vx: 0, vz: 0, dip: 0, dipT: 1, dipA: 0, n: 0, at: { x: 0, y: 0.05
 /* the floor under a point: the world can give heights (set.userData.heightAt); the sets are flat otherwise */
 function groundY(x, z) { const h = set && set.userData.heightAt; return typeof h === "function" ? h(x, z) || 0 : 0; }
 function canJump() {
-  return !!(me && me.jump && S.open && S.phase === "explore" && !DRV.state && !me.inCar && !me.jumping && !S.skipOpen && !choosing && me.group.visible &&
+  return !!(me && me.jump && S.open && S.phase === "explore" && !S.busy && !HOLDG && !DRV.state && !me.inCar && !me.jumping && !S.skipOpen && !choosing && me.group.visible &&
     !(me.reaches && (me.reaches.l || me.reaches.r)) && !(me.shot));
 }
 function jump(how) {
@@ -1249,13 +1313,27 @@ function spotsHere() {
   spotsFrame = frameNo; spotsMemo = spotsHere0();
   return spotsMemo;
 }
+/* a once-only thing you've already looked at: its narrated thought, said again (no trophy, journal or step twice) */
+const thoughtMemo = {};
+const dotEls = new Map(); let dotGen = 0;
+function clearDots() { if (dotEls.size) { for (const b of dotEls.values()) b.remove(); dotEls.clear(); } if (dotsEl.firstChild) dotsEl.innerHTML = ""; }
+function thoughtOf(id) {
+  if (id in thoughtMemo) return thoughtMemo[id];
+  const o = OBJ[id], T0 = o && o.talk && TALK[o.talk];
+  return (thoughtMemo[id] = T0 && !T0.choices && !T0.next ? (T0.lines || []).filter(L => L.who === "you") : null);
+}
+async function sayAgain(lines) {
+  setPhase("talk"); promptEl.hidden = true; actEl.hidden = true; objEl.classList.add("is-dim"); el.classList.add("is-talking");
+  for (const L of lines) { if (cond(L.if)) { await sayLine(L); if (!FAST) await sleep(120); } }
+  if (S.phase === "talk") endTalk();
+}
 function spotsHere0() {
   const out = [];
   for (const [id, o] of Object.entries(OBJ)) {
     const sceneOk = o.scene === S.scene || (o.scene === "lot" && S.scene === "lot");
     if (!sceneOk) continue;
     if (o.if && !cond(o.if)) continue;
-    if (o.once && S.looked[id] && !o.again) continue;
+    if (o.once && S.looked[id] && !o.again && !thoughtOf(id)) continue; // looked at: only a thought you can have again stays
     const sp = set.userData.spots[id]; if (!sp) continue;
     let p = sp.p;
     if (sp.who) { const who = P[sp.who]; if (!who || !who.group.visible) continue; p = headOf(who).add(new THREE.Vector3(0, -0.15, 0)); }
@@ -1271,13 +1349,17 @@ const worldSpotCache = new WeakMap();
 function worldSpots() {
   const sp = set && set.userData.spots; if (!sp) return [];
   // a story object with the same id wins where the story uses it (the lot's office door); elsewhere the world's own
-  const key = S.scene, store0 = worldSpotCache.get(set) || {};
+  // (a lost plate found, or a door in front of one opened or shut, starts the list again)
+  let store0 = worldSpotCache.get(set);
+  if (!store0 || store0.gen !== lostGen.n) { store0 = { gen: lostGen.n }; worldSpotCache.set(set, store0); }
+  const key = S.scene;
   let c = store0[key];
   if (!c) {
     c = [];
     for (const [id, x] of Object.entries(sp)) {
       if (!x || !x.kind || !WORLD_KINDS.includes(x.kind)) continue;
       if (OBJ[id] && OBJ[id].scene === S.scene && S.scene !== "decision") continue;
+      if (x.tag && (S.tags.includes(id) || (x.when && !x.when()))) continue;
       const p = x.p || x.at; if (!p) continue;
       const pv = p.isVector3 ? p : new THREE.Vector3(p.x, p.y || 1, p.z);
       c.push({ id, o: { verb: UI["v_" + x.kind] || UI.act, label: x.label || (x.kind === "exit" ? (UI["to_" + x.to] || x.to) : ""), world: x.kind }, sp: Object.assign(x, { r: x.r || 1.8 }), p: pv });
@@ -1288,6 +1370,7 @@ function worldSpots() {
 }
 async function useWorld(s, how) {
   const x = s.sp, kind = x.kind, at = s.p;
+  if (x.tag) { pickPlate(s, how); return; }
   mv.path = null; mv.after = null; guide.clearRing(); progress();
   T("story_use", { id: s.id, kind, scene: S.scene, how: how || "" });
   if (kind === "exit") { FX("arrive"); AU.use("exit", at); hap("tap"); await roam(x.to); return; }
@@ -1299,7 +1382,10 @@ async function useWorld(s, how) {
     x.on = !x.on;
     FX("arrive"); if (kind !== "knock") AU.use(kind, at, x.on); hap("tap");
     try { if (typeof x.use === "function") x.use({ kind, on: x.on, who: me }); } catch (e) {}
-    if (kind === "read" && x.text) toast(x.text);
+    // the first time, your thought about it, said as you carry on (a sign's own words are in it); after that, the sign
+    const th = WTH[s.id];
+    if (th && S.looked[s.id] === 1) murmur(s.id, th);
+    else if (kind === "read" && x.text) toast(x.text);
     document.dispatchEvent(new CustomEvent("jg:story-use", { detail: { id: s.id, kind, on: x.on } }));
   };
   const safety = () => setTimeout(feel, FAST ? 0 : 2500); // a move that never lands still gets its answer
@@ -1335,6 +1421,41 @@ async function useWorld(s, how) {
   } catch (e) {}
   feel();
 }
+/* the lost license plates (story/tags.js): walk up to one and pick it up, or tap it. The metal's clink and a soft
+   chime, the haptic and the plate lifting off where it lay land in one frame, and a bar of marks shows how many you
+   have (marks, not figures: no number on the page). The last one leaves a note, the score's sting and a page in the
+   journal. No trophy: trophies are the record. Found plates ride in the save (as "tags"); Restart clears them */
+let tagsEl = null, tagT = null, tagSeen = null, tagSeenGen = -1;
+function plateBar(fresh) {
+  let h = ""; const n = S.tags.length;
+  for (let i = 0; i < LOST_IDS.length; i++) h += i < n ? (fresh && i === n - 1 ? '<i class="is-on is-new"></i>' : '<i class="is-on"></i>') : "<i></i>";
+  return '<span class="st-marks" aria-hidden="true">' + h + "</span>";
+}
+function plateCount() {
+  if (!tagsEl) { tagsEl = document.createElement("div"); tagsEl.className = "st-tags"; tagsEl.setAttribute("role", "status"); tagsEl.hidden = true; el.appendChild(tagsEl); }
+  tagsEl.innerHTML = '<span class="st-tags__k">' + E(UI.tag) + "</span>" + plateBar(true) + '<span class="st-tags__f">' + E(UI.tags_found) + "</span>";
+  tagsEl.hidden = false; tagsEl.classList.remove("is-on"); void tagsEl.offsetWidth; tagsEl.classList.add("is-on");
+  clearTimeout(tagT); tagT = setTimeout(() => { tagsEl.classList.remove("is-on"); tagT = setTimeout(() => (tagsEl.hidden = true), 450); }, FAST ? 2500 : 3200);
+}
+function pickPlate(s, how) {
+  if (S.tags.includes(s.id)) return;
+  mv.path = null; mv.after = null; guide.clearRing(); progress();
+  S.tags.push(s.id);
+  const at = s.p, all = S.tags.length >= LOST_IDS.length;
+  me.wantYaw = Math.atan2(at.x - me.pos.x, at.z - me.pos.z);
+  AU.use("tag", at); hap("tap"); takeLostPlate(set, s.id, still()); plateCount();
+  if (me.reachTo) { try { const r = me.reachTo(at.clone(), { hold: "pinch" }); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  T("story_tag", { id: s.id, scene: S.scene, how: how || "", all });
+  if (all) setTimeout(() => { notice(UI.tags_all); FX("unlock"); addJournal("tags"); save(); }, FAST ? 0 : 900);
+  save();
+}
+function platesTick(dt) {
+  if (!set || !set.userData.tags) return;
+  if (tagSeen !== set || tagSeenGen !== lostGen.n) { syncLostPlates(set, S.tags); tagSeen = set; tagSeenGen = lostGen.n; }
+  tickLostPlates(set, me && S.phase === "explore" ? me.pos : null, S.t, dt);
+}
+// a door in front of a lost plate opened or shut: what you can reach has changed
+document.addEventListener("jg:story-use", () => { lostGen.n++; });
 /* free roam between sets: the story's arrival talk plays only the first time; the way keeps pointing at the next step */
 async function roam(to) {
   if (!to || !D.scenes[to] && to !== "lot") return;
@@ -1357,8 +1478,9 @@ async function roam(to) {
 let near = null;
 const v2 = new THREE.Vector3();
 function project(p) { v2.copy(p).project(camera); return { x: (v2.x * 0.5 + 0.5) * VW, y: (-v2.y * 0.5 + 0.5) * VH, on: v2.z < 1 && Math.abs(v2.x) < 1.05 && Math.abs(v2.y) < 1.05 }; }
+let nearLost = 0, lastNear = null;
 function updatePrompts() {
-  if (S.phase !== "explore" || !me) { promptEl.hidden = true; actEl.hidden = true; if (dotsEl.firstChild) dotsEl.innerHTML = ""; near = null; return; }
+  if (S.phase !== "explore" || !me || S.busy) { promptEl.hidden = true; actEl.hidden = true; clearDots(); near = null; lastNear = null; return; }
   const list = spotsHere();
   let best = null, bd = 1e9;
   for (const s of list) {
@@ -1370,22 +1492,40 @@ function updatePrompts() {
     // and standing on a thing's own spot, facing it, means that thing (the radio under the whiteboard), whatever's beside
     // it; seated, the seat you're on (its prompt is how you get up)
     const st = s.sp.stand, own = me.seated ? (s.o.world === "sit" ? 2 : 0) : st && a < 0.7 ? Math.max(0, 1 - Math.hypot(st.x - me.pos.x, st.z - me.pos.z) / 0.6) : 0;
-    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - own;
-    if (d < r && score < bd) { best = s; bd = score; }
+    // the thing that already has the prompt keeps it a little longer and a little further, so it doesn't flicker
+    // between two things or go out under your thumb; on a touch screen every reach is a little longer
+    const keep = s === near || (near && s.id === near.id);
+    // (standing on a lost plate's own spot, facing it, it edges out the thing beside it: the laundromat's open door)
+    const score = d + a * 0.35 - (OBJ[s.id] && !S.looked[s.id] ? 0.8 : 0) - (s.sp.tag && own > 0.5 ? 0.5 : 0) - own - (keep ? 0.3 : 0);
+    const reach = r * (keep ? 1.3 : 1) + (dev === "touch" ? 0.4 : 0);
+    if (d < reach && score < bd) { best = s; bd = score; }
   }
-  if (best !== near && best) progress();
-  near = best;
+  if (best && (!near || best.id !== near.id)) progress();
+  if (best) { near = best; lastNear = best; nearLost = 0; }
+  else { if (near) nearLost = performance.now(); near = null; } // (the moment it went, not every frame since: the hold runs out)
+  if (!best && lastNear && !list.some(s => s.id === lastNear.id)) lastNear = null; // (gone: picked up, or its set left behind)
   // faint dots on what's interactable nearby; things you haven't looked at yet shimmer when you're close; the nearest gets the full prompt
-  let html = "";
+  dotGen++;
   for (const s of list) {
     if (s === best) continue;
-    const d = Math.hypot(s.p.x - me.pos.x, s.p.z - me.pos.z); if (d > 11) continue;
+    // (a lost plate gets its dot only up close: from across the lot, it's the glint you look for)
+    const d = Math.hypot(s.p.x - me.pos.x, s.p.z - me.pos.z); if (d > (s.sp.tag ? 4.5 : 11)) continue;
     const q = project(s.p); if (!q.on) continue;
     const fresh = !S.looked[s.id] && !s.o.who && d < 7;
-    html += '<button type="button" class="st-dot' + (fresh ? " is-new" : "") + '" data-spot="' + s.id + '" style="transform:translate(' + q.x.toFixed(0) + "px," + q.y.toFixed(0) + 'px)" aria-label="' + E(s.o.verb + " " + s.o.label) + '"><i></i></button>';
+    let b = dotEls.get(s.id);
+    if (!b) { b = document.createElement("button"); b.type = "button"; b.className = "st-dot"; b.dataset.spot = s.id; b.innerHTML = "<i></i>"; b.setAttribute("aria-label", s.o.verb + " " + s.o.label); dotsEl.appendChild(b); dotEls.set(s.id, b); }
+    b._gen = dotGen;
+    if (b._fresh !== fresh) { b._fresh = fresh; b.classList.toggle("is-new", fresh); }
+    const tx = "translate(" + q.x.toFixed(0) + "px," + q.y.toFixed(0) + "px)";
+    if (b._tx !== tx) { b._tx = tx; b.style.transform = tx; }
   }
-  if (html !== dotsEl._html) { dotsEl.innerHTML = html; dotsEl._html = html; }
-  if (!best) { promptEl.hidden = true; actEl.hidden = true; return; }
+  for (const [id, b] of dotEls) if (b._gen !== dotGen) { b.remove(); dotEls.delete(id); }
+  if (!best) {
+    promptEl.hidden = true;
+    // the big button stays a moment after you drift out of reach: a press then walks you back to the thing and uses it
+    actEl.hidden = !(dev === "touch" && lastNear && performance.now() - nearLost < 900);
+    return;
+  }
   const q = project(best.p);
   // a thing above or beside the frame (the pylon sign seen up close on a phone) keeps its prompt at the edge of the screen
   if (v2.z >= 1) { q.x = VW / 2 - 60; q.y = 90; }
@@ -1402,15 +1542,29 @@ function updatePrompts() {
   // on a touch screen, the thing you're next to also gets a big button under your right thumb
   actEl.hidden = dev !== "touch";
 }
-promptEl.addEventListener("click", e => { e.stopPropagation(); if (near) interact(near.id, "click"); });
-dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); goInteract(b.dataset.spot); });
+/* a press acts the moment the finger or button comes down, on what had the prompt then: a click arriving later
+   (after the prompt moved, or went for a frame) would find nothing; the click that follows a press is swallowed */
+let pressT = 0;
+function pressUse(how) {
+  if (S.phase !== "explore" || S.busy || HOLDG) return;
+  pressT = performance.now();
+  if (near) { interact(near.id, how); return; }
+  // just out of reach (you drifted a step): walk back to it and use it
+  if (lastNear && performance.now() - nearLost < 900) goInteract(lastNear.id);
+}
+promptEl.addEventListener("pointerdown", e => { if (e.button > 0) return; e.preventDefault(); e.stopPropagation(); pressUse("click"); });
+// a click only counts from a keyboard (Enter or Space on the focused button): a pointer acts on the press itself, and a
+// stray click (left over when something above closes under a finger) must never use whatever is underneath
+promptEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) pressUse("click"); });
+dotsEl.addEventListener("pointerdown", e => { const b = e.target.closest("[data-spot]"); if (!b || e.button > 0) return; e.preventDefault(); e.stopPropagation(); pressT = performance.now(); goInteract(b.dataset.spot); });
+dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) goInteract(b.dataset.spot); });
 function goInteract(id) {
   const s = spotsHere().find(x => x.id === id); if (!s) return;
   const stand = s.sp.stand || (s.sp.who ? P[s.sp.who].pos.clone().add(me.pos.clone().sub(P[s.sp.who].pos).setY(0).normalize().multiplyScalar(1.2)) : s.p);
   if (!walkTo(stand, () => interact(id, "walk"))) interact(id, "walk");
 }
 async function interact(id, how) {
-  if (S.phase !== "explore") return;
+  if (S.phase !== "explore" || S.busy || HOLDG) return;
   if (id.startsWith("car:")) { const c = drivables().find(x => "car:" + x.id === id); if (c) enterCar(c, how); return; }
   { const w = worldSpots().find(x => x.id === id); if (w) { await useWorld(w, how); return; } }
   const o = OBJ[id]; if (!o) return;
@@ -1419,13 +1573,23 @@ async function interact(id, how) {
   const at = s.who && P[s.who] ? headOf(P[s.who]) : s.p ? s.p.clone() : me.pos.clone();
   if (o.go) { FX("arrive"); AU.thing(id, at); T("story_object", { id, scene: S.scene }); await travel(o.go); return; }
   const first = !S.looked[id];
+  // sitting down beside him is a hold: the ring fills under your thumb, or nothing happens
+  if (id === "june-jason" && first) {
+    if (!(await holdTo(how))) return;
+    S.looked[id] = 1; T("story_object", { id, scene: S.scene, first });
+    await sitBeside();
+    S.partner = P.jason; S.focusPoint = null;
+    await runTalk(o.talk); return;
+  }
   S.looked[id] = (S.looked[id] || 0) + 1;
   if (S.hint && S.hint.id === id) S.hint = null;
   T("story_object", { id, scene: S.scene, first });
+  // the coffee: from the machine, into his hand, then the words
+  if (id === "june-coffee" && first) { await coffeeRun(s.p ? { p: s.p, sp: s } : { p: me.pos.clone(), sp: {} }); S.partner = P.jason; S.focusPoint = null; await runTalk(o.talk); return; }
   // reach for the things you can touch: the sound, the haptic and the motion land when the hand does
   let fired = false;
-  const feel = () => { if (fired) return; fired = true; FX("arrive"); AU.thing(id, at); };
-  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|arcade|mem-(folder|letter|cert|laptop|lamp))$/.test(id) && s.p;
+  const feel = () => { if (fired) return; fired = true; FX("arrive"); AU.thing(id, at); if (id === "june-window" && set.userData.wipe) set.userData.wipe(s.p); };
+  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|arcade|mem-(folder|letter|cert|laptop|lamp|psych)|june-(window|phone|scan))$/.test(id) && s.p;
   // the arcade cabinet plays The Run: the episode steps aside, and comes back to this spot in the office when the run closes
   if (o.play) {
     if (!S.journal.includes("arcade")) { try { await doAct("journal:arcade"); } catch (e) {} }
@@ -1451,24 +1615,29 @@ async function interact(id, how) {
   const target = s.who ? P[s.who] : null;
   const tp = target ? target.pos : s.p;
   if (tp) me.wantYaw = Math.atan2(tp.x - me.pos.x, tp.z - me.pos.z);
-  S.partner = target || (S.scene === "office" && ["cabinet", "laptop", "ledger", "board", "book"].includes(id) ? P.jason : S.scene === "lot" && id === "sold" ? P.jason : null);
+  S.partner = target || (S.scene === "office" && ["cabinet", "laptop", "ledger", "board", "book"].includes(id) ? P.jason : S.scene === "lot" && id === "sold" ? P.jason : S.scene === "june" && ["june-window", "june-scan", "june-door"].includes(id) ? P.jason : null);
   S.focusPoint = s.p || null;
   const talk = !first && o.again ? o.again : o.talk;
   if (s.close) return;
+  if (!first && o.once && !o.again) { const th = thoughtOf(id); if (th && th.length) await sayAgain(th); return; }
   await runTalk(talk);
 }
 async function runTalk(id) {
   if (DRV.state) exitCar("talk", true); // nobody talks to you through the glass: out first
   if (me) me.group.visible = true;
-  setPhase("talk"); promptEl.hidden = true; dotsEl.innerHTML = ""; objEl.classList.add("is-dim");
+  setPhase("talk"); promptEl.hidden = true; clearDots(); objEl.classList.add("is-dim");
   el.classList.add("is-talking");
   const partner = S.partner;
-  if (partner && me) { partner.lookAtP = headOf(me); me.lookAtP = headOf(partner); partner.wantYaw = Math.atan2(me.pos.x - partner.pos.x, me.pos.z - partner.pos.z); me.wantYaw = Math.atan2(partner.pos.x - me.pos.x, partner.pos.z - me.pos.z); }
+  if (partner && me) { partner.lookAtP = headOf(me); me.lookAtP = headOf(partner); if (partner.pose !== "sit") partner.wantYaw = Math.atan2(me.pos.x - partner.pos.x, me.pos.z - partner.pos.z); if (!me.seated) me.wantYaw = Math.atan2(partner.pos.x - me.pos.x, partner.pos.z - me.pos.z); }
+  // in the waiting room he keeps his eyes on the floor in front of him
+  if (S.scene === "june" && partner === P.jason && P.jason.pose === "sit") partner.lookAtP = P.jason.pos.clone().add(new THREE.Vector3(Math.sin(P.jason.yaw) * 1.3, 0.15, Math.cos(P.jason.yaw) * 1.3));
   let cur = id;
   let guard = 0;
   while (cur && guard++ < 40) {
     const T0 = TALK[cur]; if (!T0) break;
     S.talking = cur; hintFrom(cur);
+    if (cur === "sale-done") { S.flags.droven = 1; S.flags.testdrive = 1; }
+    if (cur === "june-phone" && S.scene === "june") phoneBuzz(true, 2);
     if (T0.branch) { const b = T0.branch.find(x => cond(x.if)); cur = b ? b.go : null; continue; }
     if (T0.set) Object.assign(S.flags, T0.set);
     const lines = (T0.lines || []).filter(L => cond(L.if));
@@ -1477,7 +1646,13 @@ async function runTalk(id) {
       // the next recording loads while this one plays; at the last line, the first of each way on
       if (lines[li + 1]) preloadLine(lines[li + 1]);
       else for (const g of (T0.choices || []).filter(c => cond(c.if)).map(c => c.go).concat(T0.next || [])) { const n = TALK[g] && (TALK[g].lines || []).find(x => cond(x.if)); if (n) preloadLine(n); }
+      await beat(L.id, 0);
+      // he's the one who stands up first; and she drives away while the line is said
+      if (L.id === "june-you-9" && P.jason) { P.jason.pose = "stand"; P.jason.heavy = 0.35; }
+      const off = L.id === "sale-you-2" ? driveOff() : null;
       await sayLine(L);
+      if (off) { await raceT(off, FAST ? 300 : 14000); S.heldShot = null; }
+      await beat(L.id, 1);
       if (!FAST) await sleep(120);
     }
     let next = T0.next || null;
@@ -1485,6 +1660,7 @@ async function runTalk(id) {
       const c = await choose(T0);
       if (c.set) Object.assign(S.flags, c.set);
       if (c.set && c.set.gate === "helped" && set.userData.gate) { const g = set.userData.gate.position; AU.gate({ x: g.x, y: 1.2, z: g.z }); }
+      if (c.set && c.set.phone2 && S.scene === "june") phoneChoice(c.set.phone2);
       S.log.push({ talk: cur, choice: c.t });
       if (c.note) notice(c.note);
       if (c.hold && !FAST && !still()) await sleep(500);
@@ -1502,7 +1678,7 @@ function endTalk() {
   capEl.classList.remove("is-on"); setTimeout(() => { if (!line) capEl.hidden = true; }, 300);
   for (const p of Object.values(P)) { if (p !== me) p.lookAtP = null; }
   if (me) me.lookAtP = null;
-  camState.shot = null; S.partner = null; S.focusPoint = null;
+  camState.shot = null; S.partner = null; S.focusPoint = null; camState.juneIn = false;
   setPhase("explore");
   camState.yaw = me ? me.yaw + Math.PI : camState.yaw; camState.reframe = true; setTimeout(() => (camState.reframe = false), 80);
   save();
@@ -1528,8 +1704,16 @@ function afterTalk() {
   if (S.scene === "office" && S.flags.desked && S.flags.called && !S.flags.hinted) setTimeout(() => { if (S.phase === "explore" && !S.flags.hinted) { S.partner = P.jason; runTalk("book-hint"); } }, FAST ? 50 : 2200);
   // the memory: pack the desk, then the lamp
   if (S.scene === "memory" && !S.flags.packed) {
-    const pack = Object.entries(OBJ).filter(([, o]) => o.pack).map(([id]) => id);
+    const pack = Object.entries(OBJ).filter(([, o]) => o.pack && o.scene === "memory").map(([id]) => id);
     if (pack.every(id => S.looked[id])) { S.flags.packed = 1; objective(null); toast(D.objects["mem-lamp"].label); }
+  }
+  // the waiting room: the phone back on the seat after a call; once you've seen it all, he's ready to go
+  if (S.scene === "june") {
+    if (me && me.hold === "phone") setTimeout(() => { if (me.hold === "phone") { me.hold = null; if (set.userData.phone) set.userData.phone.visible = true; } }, FAST ? 30 : 500);
+    if (S.flags.sat && !S.flags.juned) {
+      const pack = Object.entries(OBJ).filter(([, o]) => o.pack && o.scene === "june").map(([id]) => id);
+      if (pack.every(id => S.looked[id])) { S.flags.juned = 1; objective("june-go"); }
+    }
   }
 }
 function startRing() {
@@ -1562,12 +1746,14 @@ function officeDoor(to, ms) {
   return new Promise(res => { const step = () => { const u = Math.min(1, (performance.now() - t0) / dur); d.t = from + (to - from) * EZ(u); try { d.open(d.t); } catch (e) {} if (u < 1) requestAnimationFrame(step); else res(); }; step(); });
 }
 async function travel(to) {
-  setPhase("cinematic"); promptEl.hidden = true; dotsEl.innerHTML = "";
+  setPhase("cinematic"); promptEl.hidden = true; clearDots();
   if (S.scene === "lot" && to === "office") officeDoor(1, 520);
-  const memoryIn = to === "memory" || to === "keys";
+  const memoryIn = to === "memory" || to === "keys" || to === "june" || to === "sale";
   if (to === "memory") { fadeEl.classList.add("is-memory"); await fade(1, 1400, "#e9dfc8"); }
   else if (to === "keys") await fade(1, 1200, "#f3ead6");
-  else if (S.scene === "keys") await fade(1, 1400, "#f3ead6");
+  else if (S.scene === "june" && to === "sale") { await dawnBreak(); await fade(1, 1600, "#f6e7cc"); } // the morning arrives as relief
+  else if (to === "june") await fade(1, 1600, "#05070a");
+  else if (S.scene === "keys" || S.scene === "sale") await fade(1, 1400, "#f3ead6");
   else await fade(1, 700);
   await enter(to, { quiet: true });
   officeDoor(0, 10);
@@ -1662,7 +1848,7 @@ function sketch(key) {
   const J = D.journal[key]; if (!J || sketches[key]) return;
   let p = null, r = 0.5;
   const sp = set.userData.spots[J.sketch] || set.userData.spots[key];
-  if (sp && sp.p) { p = sp.p.clone(); r = 0.55; }
+  if (sp && sp.p) { p = sp.p.clone(); r = sp.sketchR || 0.55; }
   const who = { jason: P.jason, dell: P.dell, renata: P.renata }[J.sketch];
   if (who && who.group.visible) { p = headOf(who).add(new THREE.Vector3(0, -0.12, 0)); r = 0.32; }
   if (!p) return;
@@ -1718,10 +1904,12 @@ function closeJournal() { journalEl.classList.remove("is-on"); setTimeout(() => 
 function renderJournal() {
   const people = ["jason", "dell", "renata"].filter(k => (k === "jason" && S.flags.met) || (k === "dell" && S.looked.dell) || (k === "renata" && S.flags.desked));
   const things = S.journal.filter(k => !["jason", "dell", "renata"].includes(k));
-  const entry = k => { const J = D.journal[k]; const sk = sketches[k] || sketches[J.sketch]; return '<li class="jr-e">' + (sk ? '<img src="' + sk + '" alt="" />' : '<span class="jr-e__blank" aria-hidden="true"></span>') + "<div><h4>" + E(J.h) + (J.fictional ? ' <small>' + E(UI.fictional) + "</small>" : "") + "</h4><p>" + E(J.p) + "</p></div></li>"; };
+  const entry = k => { const J = D.journal[k]; const sk = sketches[k] || sketches[J.sketch]; return '<li class="jr-e">' + (sk ? '<img src="' + sk + '" alt="" />' : '<span class="jr-e__blank" aria-hidden="true"></span>') + "<div><h4>" + E(J.h) + (J.fictional ? ' <small>' + E(UI.fictional) + "</small>" : "") + "</h4><p>" + E(J.p) + "</p>" + (k === "tags" ? plateBar() : "") + "</div></li>"; };
+  // the lost plates found so far, as marks, until the last one gives them their own page
+  const tagRow = S.tags.length && !things.includes("tags") ? '<li class="jr-e jr-tags"><span class="jr-e__blank" aria-hidden="true"></span><div><h4>' + E(UI.tag) + "</h4>" + plateBar() + "<p>" + E(UI.tags_found) + "</p></div></li>" : "";
   const tabs = [["things", UI.j_things], ["people", UI.j_people], ["trophies", UI.j_trophies], ["choices", UI.j_choices]];
   let inner = "";
-  if (jTab === "things") inner = things.length ? '<ul class="jr-list">' + things.map(entry).join("") + "</ul>" : '<p class="jr-empty">' + E(UI.j_empty) + "</p>";
+  if (jTab === "things") inner = things.length || tagRow ? '<ul class="jr-list">' + things.map(entry).join("") + tagRow + "</ul>" : '<p class="jr-empty">' + E(UI.j_empty) + "</p>";
   else if (jTab === "people") inner = people.length ? '<ul class="jr-list">' + people.map(entry).join("") + "</ul>" : '<p class="jr-empty">' + E(UI.j_empty) + "</p>";
   else if (jTab === "trophies") inner = S.trophies.length ? '<ul class="jr-tro">' + S.trophies.map(s => { const t = LIB.trophies[s]; return '<li><img src="assets/game/medals/' + s + '-160.webp" alt="" width="48" height="48" /><div><b>' + E(t.name) + "</b><p>" + E(t.desc) + "</p></div></li>"; }).join("") + "</ul>" : '<p class="jr-empty">' + E(UI.j_empty) + "</p>";
   else inner = '<ul class="jr-ch">' + recapLines().map(t => "<li>" + E(t) + "</li>").join("") + "</ul>";
@@ -1744,8 +1932,11 @@ function recapLines() {
   if (f.desk) out.push(R.desk[f.desk]);
   if (f.phone) out.push(R.phone[f.phone]);
   if (f.lamp) out.push(R.lamp[f.lamp]);
-  const things = Object.keys(S.looked).filter(k => OBJ[k] && !OBJ[k].who && !OBJ[k].go && !k.startsWith("note-")).map(k => (OBJ[k].recap || OBJ[k].label).toLowerCase()).filter((t, i, a) => a.indexOf(t) === i);
-  if (things.length) out.push(R.looked + " " + listOf(things.map(t => (/^(dell|jason|renata)$/i.test(t) ? t : (t.startsWith("the ") ? t : "the " + t)))) + ".");
+  if (f.june && R.june) out.push(R.june[f.june]);
+  if (f.phone2 && R.phone2) out.push(R.phone2[f.phone2]);
+  if (f.sale1 && R.sale1) out.push(R.sale1[f.sale1]);
+  const things = Object.keys(S.looked).filter(k => OBJ[k] && !OBJ[k].who && !OBJ[k].go && OBJ[k].verb !== "Go" && !k.startsWith("note-")).map(k => (OBJ[k].recap || OBJ[k].label).toLowerCase()).map(t => (/^(dell|jason|renata)$/i.test(t) ? t : (t.startsWith("the ") ? t : "the " + t))).filter((t, i, a) => a.indexOf(t) === i);
+  if (things.length) out.push(R.looked + " " + listOf(things) + ".");
   else out.push(R.none);
   return out.filter(Boolean);
 }
@@ -1762,7 +1953,7 @@ function readOf() {
 }
 async function ending(kind) {
   S.ending = kind; setPhase("end");
-  promptEl.hidden = true; dotsEl.innerHTML = ""; objective(null);
+  promptEl.hidden = true; clearDots(); objective(null);
   T("story_ending", { ending: kind, role: S.flags.role || "", lot: S.flags.lot || "", why: S.flags.why || "" });
   // the ending's build: the card and the page for a role, the lot's card for a dealer
   let b = null;
@@ -1803,7 +1994,7 @@ endEl.addEventListener("click", e => {
    ================================================================ */
 let pzView = "main";
 /* behind a menu the prompt, the dots, the big button and the arrow step out of the way */
-function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; dotsEl.innerHTML = ""; dotsEl._html = ""; wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
+function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; clearDots(); wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
 function pause() {
   if (S.phase === "end" || S.phase === "load" || S.phase === "pause") return;
   if (S.phase === "explore") save();
@@ -1818,7 +2009,7 @@ function pause() {
 const ACTS = [["up", "k_up"], ["down", "k_down"], ["left", "k_left"], ["right", "k_right"], ["run", "k_run"], ["act", "k_act"], ["journal", "k_journal"]];
 function pauseView(v) {
   pzView = v;
-  const reached = ["lot", "office", "memory", "decision"].filter(n => S.visited && S.visited[n]);
+  const reached = ["lot", "office", "memory", "june", "sale", "decision"].filter(n => S.visited && S.visited[n]);
   const tog = (k, a, b) => '<button type="button" class="pz-tog" data-c="' + k + '" aria-pressed="' + !!SET[k] + '"><span>' + E(SET[k] ? b : a) + "</span></button>";
   const sl = k => '<label class="pz-sl"><span>' + E(UI["mix_" + k]) + '</span><input type="range" min="0" max="100" step="1" data-mix="' + k + '" value="' + Math.round(AU.mix[k] * 100) + '" aria-label="' + E(UI["mix_" + k]) + '" /></label>';
   let h = "";
@@ -1827,7 +2018,7 @@ function pauseView(v) {
       '<li><button type="button" data-p="resume">' + E(UI.resume) + "</button></li>" +
       '<li><button type="button" data-p="journal">' + E(UI.journal) + "</button></li>" +
       '<li><button type="button" data-p="settings">' + E(UI.settings) + "</button></li>" +
-      (reached.length > 1 ? '<li class="pz-ch"><span>' + E(UI.chapters) + "</span>" + reached.map(n => '<button type="button" data-p="go" data-s="' + n + '">' + E(D.scenes[n].name) + "</button>").join("") + "</li>" : "") +
+      (reached.length > 1 ? '<li class="pz-ch"><span>' + E(UI.chapters) + "</span>" + reached.map(n => '<button type="button" data-p="go" data-s="' + n + '">' + E(n === "june" || n === "sale" ? D.scenes[n].card : D.scenes[n].name) + "</button>").join("") + "</li>" : "") +
       '<li><button type="button" data-p="restart">' + E(UI.restart) + "</button></li>" +
       '<li><button type="button" data-p="library">' + E(UI.library) + "</button></li></ul>" +
       '<p class="pz-fine">' + E(D.voices_note) + " " + E(UI.captions) + "</p></div>";
@@ -1884,7 +2075,7 @@ pauseEl.addEventListener("click", async e => {
   else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh("lot"); }
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
-function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
+function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.tags = []; lostGen.n++; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
 async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); setPhase("explore"); if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
@@ -1918,7 +2109,9 @@ function act(k) {
   if (k === "a") {
     if (S.phase === "pause" || S.phase === "journal") { const a = document.activeElement; if (a && a.click && (pauseEl.contains(a) || journalEl.contains(a))) a.click(); return; }
     if (choosing) { const bs = $$(".st-ch", choicesOl); const i = Math.max(0, bs.indexOf(document.activeElement)); pick(i, "pad"); return; }
-    if (line) { endLine(true); return; }
+    // a passing thought doesn't stand between you and the next thing: the press uses what's prompted (the thought
+    // gives way to whatever that says); with nothing prompted, it skips the thought
+    if (line && !(line.L.ambient && S.phase === "explore" && near)) { endLine(true); return; }
     if (S.phase === "explore" && near) interact(near.id, "key");
   }
 }
@@ -1974,7 +2167,7 @@ cv.addEventListener("pointerdown", e => {
   if (S.skipOpen) return;
   if (S.phase === "talk" && line && !choosing) { endLine(true); return; } // a skip: silent
   if (S.phase === "drive") { if (DRV.state !== "drive" && DRV.skip) { DRV.skip(); return; } if (DRV.state === "drive") { ptrs.set(e.pointerId, { role: "dlook", x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), moved: false, button: e.button, touch }); try { cv.setPointerCapture(e.pointerId); } catch (x) {} } return; }
-  if (S.phase !== "explore") return;
+  if (S.phase !== "explore" || S.busy || HOLDG) return;
   if (!touch && SET.lock && document.pointerLockElement !== cv && e.button === 0) { try { cv.requestPointerLock(); } catch (x) {} }
   if (document.pointerLockElement === cv) { if (e.button === 0 && near) interact(near.id, "click"); return; }
   const hasStick = [...ptrs.values()].some(p => p.role === "stick");
@@ -2059,7 +2252,8 @@ function padLegend() {
   legendEl.innerHTML = mode === "menu" ? g("A", "Select") + g("B", "Back") : mode === "end" ? g("A", "Select") : mode === "choose" ? g("A", "Choose") :
     mode === "walk" ? g("A", "Jump") + g("Y", UI.journal) : mode === "near" ? g("X", "Jump") + g("Y", UI.journal) : "";
 }
-actEl.addEventListener("click", e => { e.stopPropagation(); if (near && S.phase === "explore") interact(near.id, "tap"); });
+actEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); pressUse("tap"); });
+actEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) pressUse("tap"); });
 skipEl.addEventListener("click", e => { e.stopPropagation(); if (S.skipOpen) S.skipOpen(); });
 el.addEventListener("click", e => {
   const b = e.target.closest("[data-st]"); if (!b) return;
@@ -2084,11 +2278,13 @@ function vehMod() {
   return DRV.modP;
 }
 function drivables() {
-  if (!set || (S.scene !== "lot" && S.scene !== "keys") || S.ending) return [];
+  // the morning of the sale: only her car, and only once she's asked to drive it
+  const sale = S.scene === "sale";
+  if (!set || (S.scene !== "lot" && S.scene !== "keys" && !(sale && S.flags.testdrive && !S.flags.droven)) || S.ending) return [];
   const list = set.userData.drivable; if (!list || !list.length) return [];
   if (!DRV.tried) vehMod();
   if (!DRV.mod) return [];
-  return list.filter(c => c.object && c.object.userData.rig);
+  return list.filter(c => c.object && c.object.userData.rig && (!sale || c.id === "car"));
 }
 function carMeta(c) { const r = c.object.userData.rig; return (r && r.meta) || { W: 1.8, L: 4.6 }; }
 /* the driver's door handle and where to stand for it, from the car where it is now */
@@ -2190,6 +2386,8 @@ async function enterCar(c, how) {
   if (DRV.state !== "enter") return;
   if (v.engine && !v.engine.on) { v.engine.start(); if (DRV.au) DRV.au.start(); }
   DRV.state = "drive"; DRV.blend = 0; DRV.camInit = true; DRV.look = 0;
+  // the test drive: Marisol in the passenger seat, and the clock (from where it was, if you'd got out)
+  if (S.scene === "sale" && courseLive()) { if (P.marisol && P.marisol.group.visible && !P.marisol.inCar) { try { P.marisol.drive(v, "passenger"); } catch (e) {} } if (COURSE.i === 0 && COURSE.t === 0) COURSE.hits0 = DRV.hits; }
   if (DRV.au) DRV.au.inside(DRV.cam === "car");
   if (DRV.cam === "car" && me.inCar) me.group.visible = false;
   drvEl.hidden = false; driveGlyphs();
@@ -2243,6 +2441,12 @@ async function exitCar(how, instant) {
   if (!c.engine && v.engine && v.engine.on) { try { v.engine.stop(); } catch (e) {} }
   try { v.dispose(); } catch (e) {}
   DRV.veh = null; navFor = null; camWallsFor = null; if (set) set.userData.navDirty = false;
+  // Marisol gets out too, and waits on her side
+  if (S.scene === "sale" && P.marisol && P.marisol.inCar && P.marisol.car && P.marisol.car.v === v) {
+    try { P.marisol.driving = null; } catch (e) {}
+    const q = c.object.localToWorld(new THREE.Vector3(-(carMeta(c).W / 2 + 0.75), 0, 0.3)); q.y = 0;
+    place(P.marisol, q, Math.atan2(me.pos.x - q.x, me.pos.z - q.z));
+  }
   DRV.state = null; DRV.entry = null; DRV.touch = { steer: 0, gas: 0, brake: 0, hb: 0 };
   el.classList.remove("is-driving");
   post.comp.u.uDofK.value = 0;
@@ -2376,6 +2580,246 @@ function driveView(dt) {
 }
 
 /* ================================================================
+   JUNE 2025, AND THE NEXT MORNING. The waiting room: sitting down beside
+   him is a hold (a ring fills under your thumb with a heartbeat in the
+   sound and the haptic; let go early and nothing happens), his phone
+   buzzes on the seat until you answer it or let it ring, a coffee from the
+   machine goes from your hand into his, a finger leaves a line in the fog
+   on the window, and on the way out the window warms toward dawn. The
+   morning lot: Marisol, the test drive around the block through the
+   guide's ring and chevrons on a gentle clock (never a fail), and the car
+   driving off while Jason watches. Nothing here allocates per frame.
+   ================================================================ */
+/* a beat of silence before and after a line, in ms: the lines that need room */
+const BEATS = { "june-you-3": [700, 300], "june-jason-1": [1500, 500], "june-jason-2": [0, 1900], "june-jason-3": [500, 900], "june-jason-5": [0, 900], "june-jason-7": [0, 900], "june-you-9": [600, 400], "sale-jason-9": [0, 500] };
+const beat = (id, i) => { const b = BEATS[id]; return b && b[i] && !FAST ? sleep(still() ? Math.min(b[i], 700) : b[i]) : null; };
+
+/* ---------- the hold ---------- */
+el.insertAdjacentHTML("beforeend", '<div class="st-hold" aria-hidden="true" hidden><svg viewBox="0 0 64 64"><circle class="st-hold__bg" cx="32" cy="32" r="28"/><circle class="st-hold__fg" cx="32" cy="32" r="28"/></svg></div>');
+const holdEl = $(".st-hold", el), holdFg = $(".st-hold__fg", holdEl);
+const HELD = { key: false, ptr: false };
+const holdKey = k => k === SET.keys.act || k === "enter" || k === " ";
+addEventListener("keydown", e => { if (holdKey(e.key.toLowerCase())) HELD.key = true; }, true);
+addEventListener("keyup", e => { if (holdKey(e.key.toLowerCase())) HELD.key = false; }, true);
+addEventListener("pointerdown", () => { HELD.ptr = true; }, true);
+for (const ev of ["pointerup", "pointercancel", "blur"]) addEventListener(ev, () => { HELD.ptr = false; HELD.key = false; }, true);
+const heldNow = () => HELD.key || HELD.ptr || pb(0);
+let HOLDG = null;
+/* resolves true once the ring has filled; false if you let go first (silently). A walk that brought you here, or a
+   press already over, fills on its own: nobody has to hold a button they've let go of */
+function holdTo(how) {
+  return new Promise(res => {
+    const host = dev === "touch" && !actEl.hidden ? actEl : promptEl, r = host.getBoundingClientRect();
+    holdEl.style.transform = "translate(" + Math.round(host === actEl ? r.left + r.width / 2 : r.left + 22) + "px," + Math.round(r.top + r.height / 2) + "px)";
+    holdFg.style.strokeDashoffset = "176"; holdEl.hidden = false; void holdEl.offsetWidth; holdEl.classList.add("is-on");
+    HOLDG = { t: 0, beat: 0, auto: how === "debug" || how === "walk" ? true : null, dur: FAST ? 0.9 : still() ? 0.8 : 1.3, res, id: near ? near.id : null };
+  });
+}
+function holdTick(dt) {
+  const H = HOLDG; if (!H) return;
+  if (H.auto === null) H.auto = !heldNow(); // decided a frame in, once the press that started it has registered
+  if ((!H.auto && !heldNow()) || S.phase !== "explore" || (near && H.id && near.id !== H.id)) { endHold(false); return; }
+  H.t += dt; H.beat -= dt;
+  const u = Math.min(1, H.t / H.dur);
+  holdFg.style.strokeDashoffset = (176 * (1 - u)).toFixed(1);
+  // the pulse: a heartbeat in the sound and the hand, quickening a little as the ring fills
+  if (H.beat <= 0) { H.beat = 0.62 - u * 0.16; AU.heart(0.6 + u * 0.6); hap("heart"); holdEl.classList.remove("is-beat"); void holdEl.offsetWidth; holdEl.classList.add("is-beat"); }
+  if (u >= 1) endHold(true);
+}
+function endHold(ok) { const H = HOLDG; HOLDG = null; holdEl.classList.remove("is-on", "is-beat"); setTimeout(() => { if (!HOLDG) holdEl.hidden = true; }, 260); if (H) H.res(ok); }
+
+/* a walk the episode takes for you (you can't steer it; S.busy keeps the controls and the prompts out of it) */
+function walkAwait(v, ms = 12000) { return new Promise(res => { const t = setTimeout(() => res(false), FAST ? 40000 : ms); /* (the harness's software clock is slow) */ if (!walkTo(v, () => { clearTimeout(t); res(true); }, { ring: false })) { clearTimeout(t); res(false); } }); }
+const raceT = (p, ms) => Promise.race([p || Promise.resolve(), new Promise(r => setTimeout(r, ms))]); // (a real cap: sleep() is cut short under the harness)
+
+/* sitting down beside him: to the front of the seat, turn, sit */
+async function sitBeside() {
+  const st = set.userData.seats && set.userData.seats.you; if (!st || !me || !me.sitDown) return;
+  S.busy = true; hideWorldUI(); mv.path = null;
+  try {
+    const ap = me.seatApproach ? me.seatApproach(st.p, st.yaw) : st.p;
+    if (Math.hypot(ap.x - me.pos.x, ap.z - me.pos.z) > 0.7) await walkAwait(new THREE.Vector3(ap.x, 0, ap.z));
+    FX("arrive"); hap("heart"); AU.use("sit", st.p);
+    await raceT(me.sitDown(st.p, st.yaw, FAST ? { dur: 0.3, speed: 3 } : {}), FAST ? 40000 : 9000);
+    // (the body settles a beat after the sequence hands back: the talk starts once you're really down)
+    for (let t0 = performance.now(); !me.seated && me.car && performance.now() - t0 < (FAST ? 40000 : 3000);) await new Promise(r => setTimeout(r, 50));
+  } catch (e) {}
+  S.busy = false;
+}
+/* the coffee: the machine, a cup into the tray, picked up, carried over, and his hand takes it from yours */
+async function coffeeRun(s) {
+  const ud = set.userData, J = P.jason;
+  S.busy = true; hideWorldUI(); mv.path = null;
+  try {
+    if (me.seated && me.standUp) await raceT(me.standUp(), FAST ? 90000 : 3000);
+    const stand = s.sp.stand;
+    if (stand && Math.hypot(stand.x - me.pos.x, stand.z - me.pos.z) > 0.5) await walkAwait(stand);
+    me.wantYaw = Math.atan2(s.p.x - me.pos.x, s.p.z - me.pos.z);
+    const btn = s.p.clone().add(new THREE.Vector3(0.12, 0.42, 0.06));
+    let pressed = false; const press = () => { if (pressed) return; pressed = true; FX("arrive"); AU.thing("june-coffee", s.p); hap("tap"); };
+    await raceT(me.press ? me.press(btn, { hand: "r", onContact: press }) : null, FAST ? 90000 : 3000); press();
+    await sleep(FAST ? 50 : 1700);
+    const cup = ud.dropCup ? ud.dropCup() : null;
+    let picked = null;
+    if (cup && me.pickUp) await raceT(me.pickUp(cup, { hold: "cup", hand: "l", onContact: () => { AU.use("pickup", cup.position); hap("tap"); } }).then(v => (picked = v)), FAST ? 90000 : 6000);
+    const side = me.carrying ? (me.carrying.l && me.carrying.l.obj === cup ? "l" : me.carrying.r && me.carrying.r.obj === cup ? "r" : null) : null;
+    S.cof = { side, cup: !!cup, picked, carry: me.carrying ? Object.keys(me.carrying).filter(k => me.carrying[k]) : null };
+    // across to him; the camera takes the two of you in for the hand-over
+    await walkAwait(J.pos.clone().add(new THREE.Vector3(0.12, 0, 0.78)));
+    me.wantYaw = Math.atan2(J.pos.x - me.pos.x, J.pos.z - me.pos.z);
+    J.lookAtP = headOf(me);
+    S.partner = J; setPhase("talk"); shotChoices();
+    await sleep(FAST ? 50 : 450);
+    if (cup && side && J.pickUp) {
+      // his hand comes up to the cup; yours lets go as his closes on it
+      const give = () => { if (me.carrying && me.carrying[side]) { me.carrying[side] = null; try { me.release(side); } catch (e) {} } hap("tap"); AU.use("pickup", cup.position); };
+      S.cof.took = await raceT(J.pickUp(cup, { hold: "cup", onContact: give }), FAST ? 90000 : 6000); give();
+    } else if (cup) cup.visible = false;
+  } catch (e) {}
+  S.busy = false;
+}
+/* the phone: buzzing on the seat now and then until you've looked at it; answered, it goes to your ear */
+let buzzT = 6;
+function phoneBuzz(on, n = 2) {
+  const ud = set && set.userData; if (!ud || !ud.phoneBuzz) return;
+  ud.phoneBuzz(on);
+  if (on) {
+    const at = ud.phone.position; AU.buzz({ x: at.x, y: at.y, z: at.z }, n);
+    if (me && Math.hypot(at.x - me.pos.x, at.z - me.pos.z) < 3.5) hap("tap");
+    clearTimeout(phoneBuzz.t); phoneBuzz.t = setTimeout(() => { if (ud.phoneBuzz) ud.phoneBuzz(false); }, n * 1100);
+  }
+}
+function phoneChoice(k) {
+  const ud = set.userData;
+  if (k === "answered") { if (ud.phoneBuzz) ud.phoneBuzz(false); if (ud.phone) ud.phone.visible = false; me.hold = "phone"; S.phoneEar = (S.phoneEar || 0) + 1; AU.use("pickup", ud.phone ? ud.phone.position : me.pos); hap("tap"); }
+  else phoneBuzz(true, 3);
+}
+function juneTick(dt) {
+  if (S.scene !== "june") return;
+  const ud = set.userData;
+  // a buzz every so often once you've sat with him, until you look
+  if (S.flags.sat && !S.looked["june-phone"] && S.phase === "explore" && (buzzT -= dt) <= 0) { buzzT = 11 + Math.random() * 5; phoneBuzz(true, 2); }
+}
+/* on the way out: the window warms toward morning before the cut */
+function dawnBreak() {
+  const ud = set.userData; if (!ud.dawn) return Promise.resolve();
+  const sp = ud.spots["june-window"];
+  if (sp) { const from = new THREE.Vector3(2.2, 1.45, 1.9); camState.shot = { pos: from, look: sp.p.clone().add(new THREE.Vector3(0, -0.05, 0)), push: still() ? 0 : 0.12, dur: 5, focus: from.distanceTo(sp.p), range: 3 }; camState.shotT = 0; camState.cut = false; }
+  const dur = (FAST ? 0.15 : still() ? 1.4 : 4.2) * 1000, t0 = performance.now();
+  return new Promise(res => { const step = () => { const u = Math.min(1, (performance.now() - t0) / dur); ud.dawn(u * u * (3 - 2 * u)); if (u < 1) requestAnimationFrame(step); else res(); }; step(); });
+}
+/* the close, slow camera beside him: low, near shoulder height, the background soft */
+function juneShot(L) {
+  const J = P.jason, jh = headOf(J), yh = headOf(me), mid = jh.clone().lerp(yh, 0.5), reduced = still();
+  const fwd = new THREE.Vector3(Math.sin(J.yaw), 0, Math.cos(J.yaw)), side = new THREE.Vector3(fwd.z, 0, -fwd.x);
+  if (L.who === "jason") {
+    // on him, from just in front of your shoulder, the lens at his eye line looking a little up
+    const pos = yh.clone().addScaledVector(fwd, 0.62).addScaledVector(side, -0.08).add(new THREE.Vector3(0, -0.2, 0));
+    camState.shot = { pos, look: jh.clone().add(new THREE.Vector3(0, -0.05, 0)), push: reduced ? 0 : 0.14, dur: 12, focus: pos.distanceTo(jh), range: 1.1 };
+  } else {
+    // the two of you on the row, from low in front, the room falling away behind
+    const pos = mid.clone().addScaledVector(fwd, 1.7).addScaledVector(side, 0.55).add(new THREE.Vector3(0, -0.28, 0));
+    camState.shot = { pos, look: mid.clone().add(new THREE.Vector3(0, -0.12, 0)), push: reduced ? 0 : 0.1, dur: 12, focus: pos.distanceTo(mid), range: 1.7 };
+  }
+  camState.shotT = 0; camState.cut = !camState.juneIn; camState.juneIn = true;
+}
+
+/* ---------- the morning: the car, the course, the drive away ---------- */
+function saleCar() { return set && set.userData.drivable ? set.userData.drivable.find(c => c.id === "car") || null : null; }
+/* a point beside the car in its own frame (x to its left, the driver's side; z ahead) */
+function carLocal(c, x, z) { const cs = Math.cos(c.yaw), sn = Math.sin(c.yaw); return new THREE.Vector3(c.x + x * cs + z * sn, 0, c.z - x * sn + z * cs); }
+/* the car back where it was parked, should anything have moved it (a chapter replayed, the keys morning) */
+function saleCarHome() {
+  const c = saleCar(); if (!c || !c.home) return;
+  const h = c.home, v = DRV.vehs.get(c);
+  if (Math.abs(c.x - h.x) + Math.abs(c.z - h.z) + Math.abs(c.yaw - h.yaw) > 0.01) { if (v) { try { v.reset(h.x, h.z, h.yaw); v.dispose(); } catch (e) {} } else Object.assign(c, { x: h.x, z: h.z, yaw: h.yaw }); navFor = null; camWallsFor = null; }
+  if (c.object) c.object.visible = false;
+  if (set.userData.showRig) set.userData.showRig(c, false);
+}
+const COURSE = { i: 0, t: 0, hits0: 0, shown: false, par: 80, path: [new THREE.Vector3(), new THREE.Vector3()],
+  // round the lamp, out of the gate, west along the road past the laundromat, round through the empty lot by the taco
+  // truck, back east, in at the gate, and park in front of it
+  pts: [[-3.4, 11.2, 3.0], [0, 23.4, 3.6], [-10, 30.4, 4.4], [-28.5, 41.5, 4.8], [-12, 28.6, 4.4], [0, 27.4, 3.8], [0.4, 19.5, 3.4], [0.8, 13.2, 3.4]] };
+const courseG = new Guide(world); courseG.ringMesh.scale.set(4.2, 1, 4.2);
+el.insertAdjacentHTML("beforeend", '<div class="st-course" aria-hidden="true" hidden><i class="st-course__t"><b></b></i><span class="st-course__pips">' + COURSE.pts.map(() => "<b></b>").join("") + "</span></div>");
+const courseEl = $(".st-course", el), courseBar = $(".st-course__t b", courseEl), coursePips = $$(".st-course__pips b", courseEl);
+const courseLive = () => S.open && S.scene === "sale" && !!S.flags.testdrive && !S.flags.droven;
+function courseReset() { COURSE.i = 0; COURSE.t = 0; COURSE.shown = false; courseG.clearRing(); courseG.trail(null, 0); coursePips.forEach(b => b.classList.remove("is-on")); courseEl.classList.remove("is-on"); courseEl.hidden = true; }
+function courseTick(dt) {
+  if (!courseLive()) { if (COURSE.shown) { COURSE.shown = false; courseG.clearRing(); courseG.trail(null, 0); courseEl.classList.remove("is-on"); } courseG.tick(dt, S.t, still()); return; }
+  const pt = COURSE.pts[COURSE.i];
+  // the next checkpoint stays on the ground whether you're in the car or not
+  if (!COURSE.shown) { courseG.ring(pt[0], pt[1]); COURSE.shown = true; courseEl.hidden = false; }
+  const v = DRV.state === "drive" && DRV.veh;
+  if (v) {
+    const p = v.pose, d = Math.hypot(pt[0] - p.x, pt[1] - p.z);
+    COURSE.t += dt;
+    const fx = Math.sin(p.yaw), fz = Math.cos(p.yaw);
+    COURSE.path[0].set(p.x + fx * 2.2, 0, p.z + fz * 2.2); COURSE.path[1].set(pt[0], 0, pt[1]);
+    courseG.trail(d > 6 ? COURSE.path : null, clamp((d - 6) / 6, 0, 1) * 0.8);
+    courseBar.style.transform = "scaleX(" + clamp(1 - COURSE.t / COURSE.par, 0, 1).toFixed(3) + ")";
+    if (d < pt[2]) coursePass();
+  } else courseG.trail(null, 0);
+  courseEl.classList.toggle("is-on", !!v);
+  courseG.tick(dt, S.t, still());
+}
+function coursePass() {
+  const i = COURSE.i++;
+  // the ring closes as you go through it: the sound, the buzz and the motion in the same frame
+  courseG.land(); AU.ui("land"); FX("key"); hap("tap");
+  if (coursePips[i]) coursePips[i].classList.add("is-on");
+  if (COURSE.i === 4) objective("back"); // turned round by the taco truck: home now
+  if (COURSE.i >= COURSE.pts.length) { courseFinish(); return; }
+  const n = COURSE.pts[COURSE.i]; setTimeout(() => { if (courseLive() && COURSE.pts[COURSE.i] === n) courseG.ring(n[0], n[1]); }, FAST ? 30 : 380);
+}
+async function courseFinish() {
+  S.flags.droven = 1;
+  const hits = DRV.hits - COURSE.hits0, k = COURSE.t > COURSE.par || hits > 2 ? "scenic" : hits === 0 && COURSE.t < COURSE.par * 0.55 ? "fast" : hits === 0 ? "smooth" : "scenic";
+  S.flags.drove = k; T("story_testdrive", { result: k, t: Math.round(COURSE.t), hits });
+  courseEl.classList.remove("is-on"); setTimeout(() => { courseEl.hidden = true; }, 400);
+  FX("arrive"); hap("success"); AU.ui("notice"); toast(UI["drive_" + k] || "");
+  await sleep(FAST ? 50 : 900);
+  await exitCar("course");
+  await sleep(FAST ? 50 : 400);
+  if (S.scene === "sale" && !S.ending) { S.partner = P.marisol; await runTalk("sale-done"); }
+}
+/* the drive away: Marisol at the wheel, out of the gate and right along the road until the corner takes her; the camera
+   holds wide over Jason's shoulder while he watches */
+let AUTO = null;
+async function driveOff() {
+  const c = saleCar(), M0 = P.marisol; if (!c || !M0) return;
+  const mod = await vehMod(); if (!mod || S.scene !== "sale") return;
+  let v = DRV.vehs.get(c);
+  if (!v) { try { v = mod.createVehicle(set, c, { quality }); } catch (e) { return; } DRV.vehs.set(c, v); }
+  else { if (set.userData.showRig) set.userData.showRig(c, true); const cols = set.userData.colliders || [], i = c.collider ? cols.indexOf(c.collider) : -1; if (i >= 0) cols.splice(i, 1); }
+  if (v.engine && !v.engine.on) { try { v.engine.start(); } catch (e) {} }
+  const p0 = v.pose, pts = [[-2.8, 8.5], [0, 18], [0.3, 25.6], [7, 29.4], [44, 29.4]].filter(q => q[1] > p0.z + 1.5 || q[0] > 5);
+  // the camera: wide, behind Jason, the gate and the road in front of him
+  const J = P.jason, jh = headOf(J), toG = new THREE.Vector3(0.5 - J.pos.x, 0, 27 - J.pos.z).normalize(), side = new THREE.Vector3(toG.z, 0, -toG.x);
+  const pos = jh.clone().addScaledVector(toG, -2.6).addScaledVector(side, 0.9).add(new THREE.Vector3(0, 0.35, 0));
+  S.heldShot = { pos, look: new THREE.Vector3(1.5, 1.3, 25), push: still() ? 0 : 0.05, dur: 10, focus: 12, range: 30 };
+  if (S.phase === "talk") { camState.shot = S.heldShot; camState.shotT = 0; camState.cut = true; }
+  // she gets in on the cut, so the wide shot opens with her at the wheel
+  try { M0.drive(v, "driver"); } catch (e) {}
+  return new Promise(res => { AUTO = { v, c, pts, i: 0, t: 0, done: res }; });
+}
+function autoTick(dt) {
+  const A = AUTO; if (!A) return;
+  A.t += dt;
+  const p = A.v.pose, q = A.pts[A.i];
+  if (q && Math.hypot(q[0] - p.x, q[1] - p.z) < 3.2) A.i++;
+  const tgt = A.pts[Math.min(A.i, A.pts.length - 1)];
+  const err = angTo(p.yaw, Math.atan2(tgt[0] - p.x, tgt[1] - p.z));
+  A.v.update(dt, { throttle: Math.abs(A.v.speed) < (A.i >= 3 ? 7 : 4) ? 0.5 : 0, brake: 0, steer: clamp(-err * 1.8, -1, 1), handbrake: 0 });
+  if (P.jason) { const lk = A.lk || (A.lk = new THREE.Vector3()); P.jason.lookAtP = lk.set(p.x, 1.2, p.z); }
+  if ((A.i >= A.pts.length - 1 && p.x > 24) || A.t > (FAST ? 4 : 26)) {
+    // round the corner: gone
+    AUTO = null; A.c.object.visible = false;
+    if (P.marisol) { try { P.marisol.driving = null; } catch (e) {} hide(P.marisol); }
+    A.done();
+  }
+}
+/* ================================================================
    LAMPS: the eight that matter, nearest the camera
    ================================================================ */
 /* the lamps the shaders light with: re-ranked only when the camera has moved a metre and a half (or the set or its
@@ -2392,7 +2836,7 @@ function updateLamps() {
   }
   const L = lampOrder;
   const n = Math.min(MAXL, L.length);
-  const day = S.scene === "keys";
+  const day = S.scene === "keys" || S.scene === "sale";
   for (let i = 0; i < MAXL; i++) {
     const l = L[i];
     if (!l || i >= n) { U.uLampPos.value[i].set(0, -100, 0, 1); U.uLampCol.value[i].set(0, 0, 0, 0); continue; }
@@ -2447,16 +2891,20 @@ function wayTarget() {
   else if (o === "phone") s = spot("phone");
   else if (o === "book") s = spot("book");
   else if (o === "keys") s = spot("keys");
+  else if (o === "sit") s = spot("june-jason");
+  else if (o === "june-go") s = spot("june-door");
+  else if (o === "sale") s = spot("sale-buyer");
+  else if ((o === "drive" || o === "back") && S.scene === "sale" && courseLive()) s = here.find(x => x.id === "car:car") || null;
   // 2. the place the last thing said pointed to
   if (!s && S.hint && !S.looked[S.hint.id]) {
     if (S.hint.scene === S.scene) s = spot(S.hint.id);
     else { const x = exitToward(S.hint.scene); if (x) s = here.find(h => h.id === x.id) || { id: x.id, sp: x.sp, p: x.p, o: {} }; }
   }
   // 3. the nearest thing you haven't looked at
-  if (!s && (o === "pack" || o === "look")) {
+  if (!s && (o === "pack" || o === "look" || o === "june-look")) {
     let bd = 1e9; soft = o === "look";
     for (const c of here) {
-      if (S.looked[c.id] || c.o.who || c.o.go || c.o.car || c.o.world || c.id === "phone" || c.id === "book" || (o === "pack" && !c.o.pack)) continue;
+      if (S.looked[c.id] || c.o.who || c.o.go || c.o.car || c.o.world || c.id === "phone" || c.id === "book" || ((o === "pack" || o === "june-look") && !c.o.pack)) continue;
       const d = Math.hypot(c.p.x - me.pos.x, c.p.z - me.pos.z); if (d < bd) { bd = d; s = c; }
     }
   }
@@ -2464,6 +2912,8 @@ function wayTarget() {
   if (!s) {
     if (S.scene === "lot") s = F.met ? spot("door") : spot("jason-lot");
     else if (S.scene === "office") s = !F.desked ? spot("renata") : F.ringing && !F.called ? spot("phone") : F.hinted && !S.looked.book ? spot("book") : null;
+    else if (S.scene === "june") s = !F.sat ? spot("june-jason") : F.juned ? spot("june-door") : null;
+    else if (S.scene === "sale") s = !F.testdrive ? spot("sale-buyer") : null;
   }
   if (!s || !s.p) return null;
   let st = (s.sp && s.sp.stand) || s.p;
@@ -2552,7 +3002,7 @@ function frame(now) {
   S.t += dt; U.uTime.value = S.t;
   const tA = performance.now();
   if (!over) {
-    tickLine(dt); tickChoices(dt); ringTick(dt);
+    tickLine(dt); tickChoices(dt); ringTick(dt); holdTick(dt); juneTick(dt); courseTick(dt); autoTick(dt);
     if (DRV.veh) tickDrive(dt);
     drvEl.classList.toggle("is-on", S.phase === "drive" && DRV.state === "drive");
     if (!DRV.state) moveMe(dt);
@@ -2563,13 +3013,13 @@ function frame(now) {
     perf.people = performance.now() - tP;
     updateCamera(dt);
     const tU = performance.now();
-    updatePrompts(); updateWay(dt); arcadeWatch(dt);
+    updatePrompts(); updateWay(dt); arcadeWatch(dt); platesTick(dt);
     guide.tick(dt, S.t, still());
     perf.prompts = performance.now() - tU;
     // the ear is the camera; the lamps that buzz are the ones nearest you
     camera.getWorldDirection(camFwd); AU.listen(camera.position, camFwd);
     const typist = S.scene === "office" && P.jason && P.jason.group.visible && !P.jason.path && P.jason.speed < 0.1 && S.phase === "explore" && set.userData.marks && P.jason.pos.distanceTo(set.userData.marks.jason) < 0.6 ? { x: -0.7, y: 0.8, z: -1.75 } : null;
-    AU.update(dt, { ear: me ? me.pos : camera.position, day: S.scene === "keys", typist });
+    AU.update(dt, { ear: me ? me.pos : camera.position, day: S.scene === "keys" || S.scene === "sale", typist });
   }
   perf.update = performance.now() - tA;
   if (set) {
@@ -2733,14 +3183,14 @@ async function boot() {
   // warm the shaders on the first frames, behind the loading screen
   await person("you", "player"); setLoad(0.8); await person("jason", "jason"); await person("dell", "dell"); setLoad(0.86);
   // every set's shaders and textures, behind the loading screen: no hitch on the first step into the office, the library or a car
-  if (typeof WORLD.warmSet === "function") { for (const n of ["lot", "office", "memory"]) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.02 * ["lot", "office", "memory"].indexOf(n)); } }
+  if (typeof WORLD.warmSet === "function") { const W0 = ["lot", "office", "memory", "june"]; for (const n of W0) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.015 * W0.indexOf(n)); } }
   setLoad(0.92);
   raf = requestAnimationFrame(frame);
   // build the rest while you play, and compile its shaders off the main path (parallel where the GPU allows), so the
   // first step into the office or the library never hitches on a shader
-  if (typeof WORLD.warmSet !== "function") setTimeout(() => warmSets(["office", "memory"]), FAST ? 400 : 2500);
+  if (typeof WORLD.warmSet !== "function") setTimeout(() => warmSets(["office", "memory", "june"]), FAST ? 400 : 2500);
   // the people you meet later, loaded (and kept out of sight) while you're on the lot
-  setTimeout(async () => { for (const [k, n] of [["renata", "renata"], ["memory", "jason-memory"]]) { if (P[k]) continue; try { const q = await person(k, n); const here = (S.scene === "office" && k === "renata") || (S.scene === "memory" && k === "memory"); if (!here) hide(q); } catch (e) {} } }, FAST ? 300 : 3000);
+  setTimeout(async () => { for (const [k, n, lo] of [["renata", "renata"], ["memory", "jason-memory"], ["marisol", "renata", { look: "marisol" }]]) { if (P[k]) continue; try { const q = await person(k, n, lo); const here = (S.scene === "office" && k === "renata") || (S.scene === "memory" && k === "memory") || (S.scene === "sale" && k === "marisol"); if (!here) hide(q); } catch (e) {} } }, FAST ? 300 : 3000);
 }
 
 async function warmSets(names) {
@@ -2773,7 +3223,7 @@ async function open(sceneName, how) {
   const saved = loadSave();
   const fresh = !sceneName && !saved;
   if (fresh || sceneName) resetState();
-  if (saved && !sceneName) { Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [], obj: saved.obj || null, hint: saved.hint || null }); }
+  if (saved && !sceneName) { lostGen.n++; Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [], tags: (saved.tags || []).filter(id => LOST_IDS.includes(id)), obj: saved.obj || null, hint: saved.hint || null }); }
   T("story_started", { how: how || "", scene: sceneName || (saved ? saved.scene : "lot"), cont: !!(saved && !sceneName) });
   await boot();
   setLoad(1);
@@ -2819,7 +3269,7 @@ document.addEventListener("jg:run-closed", () => {
 window.JG_STORY = {
   open, close, isOpen: () => S.open, hasSave: () => !!loadSave(),
   debug: {
-    state: () => ({ open: S.open, scene: S.scene, phase: S.phase, flags: { ...S.flags }, looked: { ...S.looked }, trophies: S.trophies.slice(), journal: S.journal.slice(), talking: S.talking, line: line ? line.L.id : null, choices: choosing ? choosing.list.map(c => c.t) : null, ending: S.ending, near: near ? near.id : null, me: me ? [me.pos.x, me.pos.z] : null, quality, pixelRatio, fps: fpsLog.slice(-5), obj: S.obj }),
+    state: () => ({ open: S.open, scene: S.scene, phase: S.phase, flags: { ...S.flags }, looked: { ...S.looked }, trophies: S.trophies.slice(), journal: S.journal.slice(), talking: S.talking, line: line ? line.L.id : null, choices: choosing ? choosing.list.map(c => c.t) : null, ending: S.ending, near: near ? near.id : null, me: me ? [me.pos.x, me.pos.z] : null, busy: !!S.busy, quality, pixelRatio, fps: fpsLog.slice(-5), obj: S.obj }),
     skip: () => { if (line) endLine(true); },
     flag: (k, v) => { S.flags[k] = v; },
     choose: i => pick(i, "debug"),
@@ -2828,6 +3278,7 @@ window.JG_STORY = {
       const s = spotsHere().find(x => x.id === id); if (!s) return false;
       let st = s.sp.stand || s.p;
       if (s.sp.who) { const w = P[s.sp.who]; st = w.pos.clone().add(new THREE.Vector3(Math.sin(w.yaw), 0, Math.cos(w.yaw)).multiplyScalar(1.35)); }
+      if (me.car && !DRV.state) { try { me.driving = null; } catch (e) {} } // (seated: the harness stands you up to move you)
       mv.path = null; mv.after = null; guide.clearRing(); me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
     },
     interact: id => interact(id, "debug"),
@@ -2873,7 +3324,7 @@ window.JG_STORY = {
     end: k => { ending(k || "passing"); return true; },
     focus: () => { const a = document.activeElement; if (!a || a === document.body) return null; const host = padHost(); return { tag: a.tagName.toLowerCase(), text: (a.getAttribute("aria-label") || a.textContent || "").trim().slice(0, 40), inHost: !!(host && host.contains(a)), outline: getComputedStyle(a).outlineStyle }; },
     /* step the walk with a fixed clock, so the harness doesn't depend on the frame rate */
-    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); } return me ? [me.pos.x, me.pos.z] : null; },
+    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updatePrompts(); } return me ? [me.pos.x, me.pos.z] : null; }, // a step is a frame: the prompt follows too
     put: (x, z, yaw) => { mv.path = null; me.pos.set(x, 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
     walk: (x, z) => { const ok = walkTo(new THREE.Vector3(x, 0, z)); return ok ? mv.path.map(p => [p.x, p.z]) : null; },
     walls: () => (set.userData.walls || []).map(w => [w.x0, w.x1, w.z0, w.z1]),
@@ -2921,6 +3372,9 @@ window.JG_STORY = {
     hint: talk => { if (talk == null) { S.hint = null; return null; } hintFrom(talk); return S.hint; },
     hints: () => ({ ...HINTS }),
     seated: () => !!(me && me.seated),
+    /* the lost license plates (tools/verify/story.mjs --tags) */
+    tags: () => { const T0 = set && set.userData.tags; return { found: S.tags.slice(), total: LOST_IDS.length, noted: S.log.some(x => x.note === UI.tags_all), here: T0 ? T0.list.map(e => e.id) : [], glint: !!(T0 && T0.gl.visible), fly: !!(T0 && T0.fly.visible), draws: T0 ? [T0.im, T0.gl, T0.fly].filter(o => o.visible).length : 0, meshes: T0 ? set.children.filter(o => o === T0.im || o === T0.gl || o === T0.fly).length : 0, counter: tagsEl && !tagsEl.hidden ? { on: tagsEl.classList.contains("is-on"), text: tagsEl.textContent, marks: tagsEl.querySelectorAll(".st-marks i").length, filled: tagsEl.querySelectorAll(".st-marks i.is-on").length } : null }; },
+    tagAt: id => { const sp = set && set.userData.spots[id]; return sp && sp.tag ? { p: [sp.p.x, sp.p.y, sp.p.z], stand: [sp.stand.x, sp.stand.z], open: !sp.when || sp.when() } : null; },
     obj: k => { objective(k || null); return S.obj; },
     unlook: id => { delete S.looked[id]; },
     skipCar: () => { if (DRV.skip) { DRV.skip(); return true; } return false; },
@@ -2934,6 +3388,9 @@ window.JG_STORY = {
       if (ground && quality >= 1) post.reflect(scene, camera, world, ground);
       post.render(scene, camera, S.t); return true;
     },
-    you: () => me, veh: () => DRV.veh
+    you: () => me, veh: () => DRV.veh,
+    /* the waiting room and the test drive (tools/verify/story.mjs) */
+    june: () => ({ seated: !!(me && me.seated), sitMode: me && me.car ? me.car.mode : null, at: me ? [+me.pos.x.toFixed(2), +me.pos.z.toFixed(2)] : null, jasonSit: !!(P.jason && P.jason.pose === "sit"), hold: !!HOLDG, busy: !!S.busy, phoneEar: !!(me && me.hold === "phone"), answered: S.phoneEar || 0, cof: S.cof || null, cup: !!(set && set.userData.cup && set.userData.cup.visible), jasonCup: !!(P.jason && P.jason.carrying && (P.jason.carrying.l || P.jason.carrying.r)), meshes: (() => { let n = 0; if (set) set.traverse(o => { if (o.isMesh && o.visible) n++; }); return n; })() }),
+    course: () => ({ live: courseLive(), i: COURSE.i, n: COURSE.pts.length, t: +COURSE.t.toFixed(2), pts: COURSE.pts.map(p => p.slice()), ring: courseG.ringMesh.visible, ui: courseEl.classList.contains("is-on"), marisol: !!(P.marisol && P.marisol.inCar), drove: S.flags.drove || null, auto: !!AUTO })
   }
 };

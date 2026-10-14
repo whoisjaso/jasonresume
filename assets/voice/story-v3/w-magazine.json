@@ -1,0 +1,47 @@
+{
+ "id": "w-magazine",
+ "text": "An old magazine, soft from other people's hands.",
+ "duration": 4.525,
+ "words": [
+  {
+   "w": "An",
+   "s": 0.33,
+   "e": 0.465
+  },
+  {
+   "w": "old",
+   "s": 0.465,
+   "e": 0.802
+  },
+  {
+   "w": "magazine,",
+   "s": 0.802,
+   "e": 1.747
+  },
+  {
+   "w": "soft",
+   "s": 1.905,
+   "e": 2.31
+  },
+  {
+   "w": "from",
+   "s": 2.31,
+   "e": 2.445
+  },
+  {
+   "w": "other",
+   "s": 2.445,
+   "e": 2.67
+  },
+  {
+   "w": "people's",
+   "s": 2.67,
+   "e": 3.03
+  },
+  {
+   "w": "hands.",
+   "s": 3.03,
+   "e": 3.862
+  }
+ ]
+}

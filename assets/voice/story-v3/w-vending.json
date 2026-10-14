@@ -1,0 +1,42 @@
+{
+ "id": "w-vending",
+ "text": "Something drops with a thunk. Small victories.",
+ "duration": 4.075,
+ "words": [
+  {
+   "w": "Something",
+   "s": 0.286,
+   "e": 0.648
+  },
+  {
+   "w": "drops",
+   "s": 0.648,
+   "e": 1.021
+  },
+  {
+   "w": "with",
+   "s": 1.021,
+   "e": 1.134
+  },
+  {
+   "w": "a",
+   "s": 1.134,
+   "e": 1.235
+  },
+  {
+   "w": "thunk.",
+   "s": 1.235,
+   "e": 1.936
+  },
+  {
+   "w": "Small",
+   "s": 2.128,
+   "e": 2.501
+  },
+  {
+   "w": "victories.",
+   "s": 2.501,
+   "e": 3.45
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+{
+ "id": "jason-mem-jason-9",
+ "text": "Psychology. How people decide.",
+ "duration": 2.44,
+ "words": [
+  {
+   "w": "Psychology.",
+   "s": 0.04,
+   "e": 0.785
+  },
+  {
+   "w": "How",
+   "s": 1.18,
+   "e": 1.333
+  },
+  {
+   "w": "people",
+   "s": 1.333,
+   "e": 1.75
+  },
+  {
+   "w": "decide.",
+   "s": 1.75,
+   "e": 2.342
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+{
+ "id": "w-wr-vending",
+ "text": "Something drops behind the glass. Nobody here is hungry.",
+ "duration": 5.175,
+ "words": [
+  {
+   "w": "Something",
+   "s": 0.299,
+   "e": 0.652
+  },
+  {
+   "w": "drops",
+   "s": 0.652,
+   "e": 1.074
+  },
+  {
+   "w": "behind",
+   "s": 1.074,
+   "e": 1.428
+  },
+  {
+   "w": "the",
+   "s": 1.428,
+   "e": 1.507
+  },
+  {
+   "w": "glass.",
+   "s": 1.507,
+   "e": 2.419
+  },
+  {
+   "w": "Nobody",
+   "s": 2.624,
+   "e": 3.16
+  },
+  {
+   "w": "here",
+   "s": 3.16,
+   "e": 3.513
+  },
+  {
+   "w": "is",
+   "s": 3.513,
+   "e": 3.673
+  },
+  {
+   "w": "hungry.",
+   "s": 3.673,
+   "e": 4.494
+  }
+ ]
+}

@@ -258,6 +258,377 @@
    "file": "keys-you-1.mp3",
    "timings": "keys-you-1.json",
    "voice": "af_heart,af_nicole"
+  },
+  "w-bike": {
+   "hash": "6ea7a34cf738",
+   "duration": 4.075,
+   "file": "w-bike.mp3",
+   "timings": "w-bike.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-bus-bench": {
+   "hash": "8ce11305d147",
+   "duration": 4.575,
+   "file": "w-bus-bench.mp3",
+   "timings": "w-bus-bench.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-bus-sign": {
+   "hash": "a8c10eab2055",
+   "duration": 3.4,
+   "file": "w-bus-sign.mp3",
+   "timings": "w-bus-sign.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-cart-book": {
+   "hash": "82450f897f3a",
+   "duration": 5.025,
+   "file": "w-cart-book.mp3",
+   "timings": "w-cart-book.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-chair-2": {
+   "hash": "0727c85d54c8",
+   "duration": 4.6,
+   "file": "w-chair-2.mp3",
+   "timings": "w-chair-2.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-curb-puddle": {
+   "hash": "0f11d13aed62",
+   "duration": 3.55,
+   "file": "w-curb-puddle.mp3",
+   "timings": "w-curb-puddle.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-desk-lamp": {
+   "hash": "45e1b89cb18b",
+   "duration": 4.675,
+   "file": "w-desk-lamp.mp3",
+   "timings": "w-desk-lamp.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-drawer": {
+   "hash": "38b34f81e347",
+   "duration": 6.575,
+   "file": "w-drawer.mp3",
+   "timings": "w-drawer.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-dumpster": {
+   "hash": "7a2156ed3a10",
+   "duration": 3.775,
+   "file": "w-dumpster.mp3",
+   "timings": "w-dumpster.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-fridge": {
+   "hash": "93cc46a95c2e",
+   "duration": 2.975,
+   "file": "w-fridge.mp3",
+   "timings": "w-fridge.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-ice": {
+   "hash": "ab284963e04d",
+   "duration": 4.45,
+   "file": "w-ice.mp3",
+   "timings": "w-ice.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-kiosk-door": {
+   "hash": "d21408e1da10",
+   "duration": 3.525,
+   "file": "w-kiosk-door.mp3",
+   "timings": "w-kiosk-door.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-laundry-door": {
+   "hash": "8fa13fbb57d6",
+   "duration": 3.45,
+   "file": "w-laundry-door.mp3",
+   "timings": "w-laundry-door.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-laundry-sign": {
+   "hash": "baedebb94710",
+   "duration": 3.925,
+   "file": "w-laundry-sign.mp3",
+   "timings": "w-laundry-sign.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-lot-puddle": {
+   "hash": "759a0dbe79dc",
+   "duration": 5.0,
+   "file": "w-lot-puddle.mp3",
+   "timings": "w-lot-puddle.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-mailbox": {
+   "hash": "f8f069a44477",
+   "duration": 4.35,
+   "file": "w-mailbox.mp3",
+   "timings": "w-mailbox.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-mug": {
+   "hash": "e575bb0bd9bb",
+   "duration": 3.8,
+   "file": "w-mug.mp3",
+   "timings": "w-mug.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-news-box": {
+   "hash": "ba3cbdc2b361",
+   "duration": 3.525,
+   "file": "w-news-box.mp3",
+   "timings": "w-news-box.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-office-lights": {
+   "hash": "266eb179896b",
+   "duration": 2.775,
+   "file": "w-office-lights.mp3",
+   "timings": "w-office-lights.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-payphone": {
+   "hash": "b184bc86eb59",
+   "duration": 4.475,
+   "file": "w-payphone.mp3",
+   "timings": "w-payphone.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-radio": {
+   "hash": "fe94f6175fc5",
+   "duration": 5.3,
+   "file": "w-radio.mp3",
+   "timings": "w-radio.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-reading-lamps": {
+   "hash": "80929ca029c1",
+   "duration": 3.325,
+   "file": "w-reading-lamps.mp3",
+   "timings": "w-reading-lamps.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-shop-door": {
+   "hash": "0a4e1f08cd30",
+   "duration": 3.9,
+   "file": "w-shop-door.mp3",
+   "timings": "w-shop-door.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-shop-shutter": {
+   "hash": "23fb0d58fd34",
+   "duration": 3.85,
+   "file": "w-shop-shutter.mp3",
+   "timings": "w-shop-shutter.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-shop-sign": {
+   "hash": "fc3361007cec",
+   "duration": 3.6,
+   "file": "w-shop-sign.mp3",
+   "timings": "w-shop-sign.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-showroom-glass": {
+   "hash": "669637749bfa",
+   "duration": 2.85,
+   "file": "w-showroom-glass.mp3",
+   "timings": "w-showroom-glass.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-showroom-lights": {
+   "hash": "1688ae094392",
+   "duration": 3.675,
+   "file": "w-showroom-lights.mp3",
+   "timings": "w-showroom-lights.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-taco-menu": {
+   "hash": "05ec5514c40d",
+   "duration": 4.075,
+   "file": "w-taco-menu.mp3",
+   "timings": "w-taco-menu.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-truck-bell": {
+   "hash": "f175254cda0c",
+   "duration": 3.3,
+   "file": "w-truck-bell.mp3",
+   "timings": "w-truck-bell.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-vending": {
+   "hash": "68333515e23e",
+   "duration": 4.075,
+   "file": "w-vending.mp3",
+   "timings": "w-vending.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-1": {
+   "hash": "d0701c71d38e",
+   "duration": 6.2,
+   "file": "june-you-1.mp3",
+   "timings": "june-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-2": {
+   "hash": "02c8f45d0157",
+   "duration": 4.775,
+   "file": "june-you-2.mp3",
+   "timings": "june-you-2.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "sale-you-1": {
+   "hash": "206b7b1d6bca",
+   "duration": 5.475,
+   "file": "sale-you-1.mp3",
+   "timings": "sale-you-1.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "sale-mar-1": {
+   "hash": "2ab06d85bed5",
+   "duration": 3.4,
+   "file": "sale-mar-1.mp3",
+   "timings": "sale-mar-1.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-2": {
+   "hash": "11558c673a9d",
+   "duration": 2.975,
+   "file": "sale-mar-2.mp3",
+   "timings": "sale-mar-2.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-3": {
+   "hash": "04e23445b586",
+   "duration": 2.425,
+   "file": "sale-mar-3.mp3",
+   "timings": "sale-mar-3.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-4": {
+   "hash": "18b3872a1971",
+   "duration": 5.35,
+   "file": "sale-mar-4.mp3",
+   "timings": "sale-mar-4.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-5": {
+   "hash": "5d5fef8d9eff",
+   "duration": 2.1,
+   "file": "sale-mar-5.mp3",
+   "timings": "sale-mar-5.json",
+   "voice": "af_sarah"
+  },
+  "sale-mar-6": {
+   "hash": "6fd4dd26dd7e",
+   "duration": 2.925,
+   "file": "sale-mar-6.mp3",
+   "timings": "sale-mar-6.json",
+   "voice": "af_sarah"
+  },
+  "june-you-3": {
+   "hash": "a1f0a2c3fa4f",
+   "duration": 2.975,
+   "file": "june-you-3.mp3",
+   "timings": "june-you-3.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-4": {
+   "hash": "29b8ee6b12ac",
+   "duration": 2.125,
+   "file": "june-you-4.mp3",
+   "timings": "june-you-4.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-call-1": {
+   "hash": "cd16928f560c",
+   "duration": 5.225,
+   "file": "june-call-1.mp3",
+   "timings": "june-call-1.json",
+   "voice": "af_nicole"
+  },
+  "june-you-5": {
+   "hash": "1d17ee54bfae",
+   "duration": 4.375,
+   "file": "june-you-5.mp3",
+   "timings": "june-you-5.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-6": {
+   "hash": "8ae2d58c3370",
+   "duration": 3.925,
+   "file": "june-you-6.mp3",
+   "timings": "june-you-6.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-7": {
+   "hash": "21816bb8856b",
+   "duration": 4.675,
+   "file": "june-you-7.mp3",
+   "timings": "june-you-7.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-8": {
+   "hash": "05ed6c04ed70",
+   "duration": 4.4,
+   "file": "june-you-8.mp3",
+   "timings": "june-you-8.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "june-you-9": {
+   "hash": "6c4026d818a2",
+   "duration": 4.775,
+   "file": "june-you-9.mp3",
+   "timings": "june-you-9.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "sale-you-2": {
+   "hash": "4979162e6491",
+   "duration": 5.175,
+   "file": "sale-you-2.mp3",
+   "timings": "sale-you-2.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-wr-vending": {
+   "hash": "6e5055f3006f",
+   "duration": 5.175,
+   "file": "w-wr-vending.mp3",
+   "timings": "w-wr-vending.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-wr-bell": {
+   "hash": "d47a639f1cb2",
+   "duration": 5.025,
+   "file": "w-wr-bell.mp3",
+   "timings": "w-wr-bell.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-wr-chair": {
+   "hash": "8fdf70e1f44d",
+   "duration": 5.55,
+   "file": "w-wr-chair.mp3",
+   "timings": "w-wr-chair.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-magazine": {
+   "hash": "9b9023ad33d2",
+   "duration": 4.525,
+   "file": "w-magazine.mp3",
+   "timings": "w-magazine.json",
+   "voice": "af_heart,af_nicole"
+  },
+  "w-cooler-cup": {
+   "hash": "313563aa8f77",
+   "duration": 4.625,
+   "file": "w-cooler-cup.mp3",
+   "timings": "w-cooler-cup.json",
+   "voice": "af_heart,af_nicole"
   }
  },
  "voice": {

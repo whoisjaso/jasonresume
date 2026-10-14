@@ -36,6 +36,14 @@ for tid, t in story["talks"].items():
                 fl["speed"] = sp  # a line that needs saying slower to be clear, and your thoughts, unhurried
             fict.append(fl)
 
+# your thoughts out in the world: the first time you use a thing (the bench, the payphone, the taco truck's bell)
+for wid, t in story.get("world_thoughts", {}).items():
+    lid = "w-" + wid
+    if lid in seen:
+        raise SystemExit("story_voice: duplicate line id " + lid)
+    seen.add(lid)
+    fict.append({"id": lid, "who": "you", "voice": cast["you"]["voice"], "text": t, "speed": THOUGHT_SPEED})
+
 (ROOT / "tools/voice/story_lines.json").write_text(json.dumps({
     "_about": "Written by tools/site/story_voice.py from tools/site/story.json. The fictional cast of After Hours in stock Kokoro voices. Render: /root/kvenv/bin/python -I tools/voice/narrate_free.py tools/voice/story_lines.json",
     "out": out, "lines": fict}, indent=1, ensure_ascii=False) + "\n")

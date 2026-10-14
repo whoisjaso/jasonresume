@@ -174,8 +174,23 @@
 
   /* Play from the title screen: the score starts with the press, then straight into the episode */
   var storyAfter = false;
+  /* the episode's voices: a few players started (silently) by this press, so a phone lets the first line speak
+     when it comes, long after the press, once the lot has loaded */
+  window.JG_SILENT = "data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2ZjYxLjEuMTAwAAAAAAAAAAAAAAD/83DAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAACWAB6enp6enp6enp6enp6enp6enp6enp6enqmpqampqampqampqampqampqampqampqam09PT09PT09PT09PT09PT09PT09PT09PT0/////////////////////////////////8AAAAATGF2YzYxLjMuAAAAAAAAAAAAAAAAJAJxAAAAAAAAAlj7+g1ZAAAAAAAAAAAAAAAAAP/zQMQAAAADSAAAAABMQU1FMy4xMDBVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxFsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
+  function blessVoices() {
+    try {
+      var pool = window.JG_VPOOL = window.JG_VPOOL || [];
+      while (pool.length < 4) {
+        var a = new Audio(); a.src = window.JG_SILENT; a._b = 1;
+        var pr = a.play();
+        if (pr && pr.then) pr.then((function (x) { return function () { if (x._b) x.pause(); }; })(a)).catch(function () {});
+        pool.push(a);
+      }
+    } catch (x) {}
+  }
   function playFromTitle(how) {
     if (phase !== "title") return;
+    blessVoices();
     if (S()) { S().set(true, "intro"); setTimeout(function () { S().sting("start"); }, 120); }
     T("intro_started", { sound: true, how: "play" });
     if (attract) attract.pause();
