@@ -1553,9 +1553,11 @@ function pressUse(how) {
   if (lastNear && performance.now() - nearLost < 900) goInteract(lastNear.id);
 }
 promptEl.addEventListener("pointerdown", e => { if (e.button > 0) return; e.preventDefault(); e.stopPropagation(); pressUse("click"); });
-promptEl.addEventListener("click", e => { e.stopPropagation(); if (performance.now() - pressT > 600) pressUse("click"); });
+// a click only counts from a keyboard (Enter or Space on the focused button): a pointer acts on the press itself, and a
+// stray click (left over when something above closes under a finger) must never use whatever is underneath
+promptEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) pressUse("click"); });
 dotsEl.addEventListener("pointerdown", e => { const b = e.target.closest("[data-spot]"); if (!b || e.button > 0) return; e.preventDefault(); e.stopPropagation(); pressT = performance.now(); goInteract(b.dataset.spot); });
-dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); if (performance.now() - pressT > 600) goInteract(b.dataset.spot); });
+dotsEl.addEventListener("click", e => { const b = e.target.closest("[data-spot]"); if (!b) return; e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) goInteract(b.dataset.spot); });
 function goInteract(id) {
   const s = spotsHere().find(x => x.id === id); if (!s) return;
   const stand = s.sp.stand || (s.sp.who ? P[s.sp.who].pos.clone().add(me.pos.clone().sub(P[s.sp.who].pos).setY(0).normalize().multiplyScalar(1.2)) : s.p);
@@ -2251,7 +2253,7 @@ function padLegend() {
     mode === "walk" ? g("A", "Jump") + g("Y", UI.journal) : mode === "near" ? g("X", "Jump") + g("Y", UI.journal) : "";
 }
 actEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); pressUse("tap"); });
-actEl.addEventListener("click", e => { e.stopPropagation(); if (performance.now() - pressT > 600) pressUse("tap"); });
+actEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) pressUse("tap"); });
 skipEl.addEventListener("click", e => { e.stopPropagation(); if (S.skipOpen) S.skipOpen(); });
 el.addEventListener("click", e => {
   const b = e.target.closest("[data-st]"); if (!b) return;

@@ -1248,6 +1248,22 @@ async function toExploreJ(p) {
   return { ok: false, refusedInTalk };
 }
 /* a clear straight run on this set, off the puddles: [x, z, yaw] */
+/* a clear lane where nothing has the prompt (a press there jumps rather than uses): findLane, then step on until
+   nothing is in reach */
+const quietLane = (p, len) => p.evaluate(len => {
+  const d = window.JG_STORY.debug, me = d.state().me;
+  for (let r = 0; r <= 24; r += 1.5) for (let a = 0; a < 16; a++) {
+    const x = me[0] + Math.sin(a / 16 * Math.PI * 2) * r, z = me[1] + Math.cos(a / 16 * Math.PI * 2) * r;
+    for (let k = 0; k < 8; k++) {
+      const yaw = k * Math.PI / 4; let ok = true;
+      for (let t = -0.6; t <= len && ok; t += 0.2) { const px = x + Math.sin(yaw) * t, pz = z + Math.cos(yaw) * t; if (d.blocked(px, pz) || d.blocked(px + 0.5, pz) || d.blocked(px - 0.5, pz) || d.surface(px, pz) === 'puddle') ok = false; }
+      if (!ok) continue;
+      d.put(x, z, yaw); d.sim(3, 1 / 60);
+      if (!d.state().near) return [x, z, yaw];
+    }
+  }
+  return null;
+}, len);
 const findLane = (p, len) => p.evaluate(len => {
   const d = window.JG_STORY.debug, me = d.state().me;
   for (let r = 0; r <= 14; r += 1) for (let a = 0; a < 16; a++) {
@@ -1442,7 +1458,10 @@ async function padCheck(vname, w, h, mobile) {
   const stick = (ax, ay, n) => p.evaluate(([ax, ay, n]) => { const d = window.JG_STORY.debug; window.__pad.axes[0] = ax; window.__pad.axes[1] = ay; d.sim(n, 1 / 60); const s = d.jumpState(); return s; }, [ax, ay, n]);
   const J = () => p.evaluate(() => window.JG_STORY.debug.jumpState());
   const F = () => p.evaluate(() => window.JG_STORY.debug.focus());
-  const lane = await findLane(p, 5);
+  console.log('PADDBG before', JSON.stringify(await p.evaluate(() => { const s = window.JG_STORY.debug.state(); return { phase: s.phase, near: s.near, me: s.me, talking: s.talking, line: s.line, scene: s.scene }; })));
+  const lane = await quietLane(p, 5);
+  console.log('PADDBG lane', JSON.stringify(lane), JSON.stringify(await p.evaluate(() => { const s = window.JG_STORY.debug.state(); return { phase: s.phase, near: s.near, me: s.me }; })));
+  if (!lane) errs.push(`${label}: no clear lane with nothing prompted`);
   if (lane) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
   // the device: any press makes the pad the last thing used; the legend and the glyphs follow
   await press(4);
