@@ -750,13 +750,16 @@ async function drive(vname, w, h, mobile) {
     });
     await p.keyboard.down('Shift'); await p.keyboard.down('w');
     // (on the fixed clock, a frame a step: software GL is too slow to judge a stride in real time)
-    const seen = []; let bad = null, ran = 0;
+    // (if the camera came to rest looking past you, the run starts with a turn toward where it looks: the facing is
+    // judged once that turn is done, and from then on it holds the way the run goes, with no drift)
+    const seen = []; let bad = null, ran = 0, turned = false;
     await p.evaluate(() => window.JG_STORY.debug.freeze(true));
-    for (let i = 0; i < 30 && ran < 12; i++) {
+    for (let i = 0; i < 45 && ran < 12; i++) {
       await p.evaluate(() => window.JG_STORY.debug.step(2, 1 / 30, false));
       const r = await RS(); seen.push(r);
-      if (r.sp > 2) ran++;
-      if (Math.abs(r.drawn) > 0.02 || r.tilt > 0.01 || r.holds || r.car || (r.sp > 2 && (Math.abs(r.move) > 0.2 || Math.abs(r.want) > 0.2))) { bad = r; break; }
+      if (Math.abs(r.want) < 0.05) turned = true;
+      if (turned && r.sp > 2) ran++;
+      if (Math.abs(r.drawn) > 0.02 || r.tilt > 0.01 || r.holds || r.car || (turned && r.sp > 2 && (Math.abs(r.move) > 0.2 || Math.abs(r.want) > 0.2))) { bad = r; break; }
     }
     await p.keyboard.up('w'); await p.keyboard.up('Shift');
     await p.evaluate(() => window.JG_STORY.debug.freeze(false));
