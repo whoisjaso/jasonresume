@@ -2053,7 +2053,7 @@ function pause() {
 }
 const ACTS = [["up", "k_up"], ["down", "k_down"], ["left", "k_left"], ["right", "k_right"], ["run", "k_run"], ["act", "k_act"], ["journal", "k_journal"]];
 function pauseView(v, focus) {
-  pzView = v;
+  pzView = v; if (v !== "pad") padCap = null;
   const reached = ["lot", "office", "memory", "june", "sale", "decision"].filter(n => S.visited && S.visited[n]);
   const tog = (k, a, b) => '<button type="button" class="pz-tog" data-c="' + k + '" aria-pressed="' + !!SET[k] + '"><span>' + E(SET[k] ? b : a) + "</span></button>";
   const sl = k => '<label class="pz-sl"><span>' + E(UI["mix_" + k]) + '</span><input type="range" min="0" max="100" step="1" data-mix="' + k + '" value="' + Math.round(AU.mix[k] * 100) + '" aria-label="' + E(UI["mix_" + k]) + '" /></label>';
@@ -2089,7 +2089,9 @@ function pauseView(v, focus) {
       '<p class="pz-fine">' + E(padText(UI.c_pad_fine)) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-pad">' + E(UI.c_pad_reset) + "</button></div></div>";
   }
   pauseEl.innerHTML = h;
-  setTimeout(() => { if (dev === "touch") return; const b = (focus && $(focus, pauseEl)) || $(v === "main" ? "button" : "input, button", pauseEl); if (b) b.focus({ preventScroll: true }); }, 40);
+  // a screen drawn again under the focus (a binding, a wait let go of) keeps it where it was, at once
+  const keep = focus && dev !== "touch" && $(focus, pauseEl); if (keep) { keep.focus({ preventScroll: true }); return; }
+  setTimeout(() => { if (dev === "touch") return; const b = $(v === "main" ? "button" : "input, button", pauseEl); if (b) b.focus({ preventScroll: true }); }, 40);
 }
 /* a pad action onto a button: one another action in the same set already uses takes this one's old button, so every
    action keeps one. A choice: the tick, the tap and the button's pulse in one frame; then every glyph follows */
@@ -2525,7 +2527,7 @@ async function exitCar(how, instant) {
     if (v.doors) v.doors.open("driver", 0);
     const st = doorStand(c);
     me.pos.set(st.x, 0, st.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.PI / 2; me.speed = 0;
-    if (blocked(me.pos.x, me.pos.z, 0.2)) { c.object.updateMatrixWorld(true); const W = carMeta(c).W / 2 + 0.62, L = carMeta(c).L / 2 + 0.6; for (const [lx, lz] of [[-W, 0.1], [0, -L], [0, L], [W, -1.2]]) { const q = c.object.localToWorld(new THREE.Vector3(lx, 0, lz)); if (!blocked(q.x, q.z, 0.2)) { me.pos.set(q.x, 0, q.z); break; } } }
+    if (blocked(me.pos.x, me.pos.z, 0.2)) { c.object.updateMatrixWorld(true); const W = carMeta(c).W / 2 + 0.62, L = carMeta(c).L / 2 + 0.6; for (const [lx, lz] of [[-W, 0.1], [0, -L], [0, L], [W, -1.2]]) { const q = c.object.localToWorld(new THREE.Vector3(lx, 0, lz)); if (!blocked(q.x, q.z, 0.2)) { me.pos.set(q.x, 0, q.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.atan2(lx, lz); break; } } } // facing out from that side, not into the car
   }
   me.group.visible = true; if (me.shadow) me.shadow.visible = true;
   if (DRV.au) { DRV.au.stop(instant ? 0.1 : 1.2); DRV.au = null; }
@@ -2545,7 +2547,9 @@ async function exitCar(how, instant) {
   if (S.phase === "drive") setPhase("explore");
   else if (S.prevPhase === "drive") S.prevPhase = "explore";
   DRV.doorOpen = null;
-  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true; setTimeout(() => { camState.reframe = false; }, 1200);
+  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true;
+  // the camera looks round for room for a moment, but not once you move: the way ahead (camera relative) holds still under a run
+  const reT = performance.now(), reEnd = () => { if (!camState.reframe) return; if (performance.now() - reT > 1200 || wantInput()) camState.reframe = false; else requestAnimationFrame(reEnd); }; reEnd();
   camera.fov = innerWidth / innerHeight < 1 ? 62 : 48; camera.updateProjectionMatrix();
 }
 function driveCam() {
