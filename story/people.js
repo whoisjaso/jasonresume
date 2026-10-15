@@ -524,7 +524,8 @@ class Person {
     // standing turns are slower than walking ones, and start and stop softly
     const turnRate = moving ? 6 : this.sitK > 0.3 ? 0 : 3.2 * sstep(0.02, 0.35, Math.abs(dy)) + 0.6;
     this.yaw += clamp(dy, -turnRate * dt, turnRate * dt);
-    this.group.rotation.y = this.yaw; this.group.updateMatrix();
+    // (upright: seated, carPlace gave the group the car's pitch and roll, and a decompose can write a yaw as x = z = pi)
+    this.group.rotation.set(0, this.yaw, 0); this.group.updateMatrix();
     if (seated) this.carPlace();
     this.yawRate = damp(this.yawRate, dt > 0 ? angDiff(prevYaw, this.yaw) / dt : 0, 8, dt);
     // forward speed along the facing (strafing during a sharp turn counts less)
@@ -1204,6 +1205,8 @@ class Person {
     if (c.v && c.v.weight) c.v.weight(0, c.side);
     this.car = null; this.carK = 0; this.taskLook = null; this.wheelHands = null;
     this.feet.l.init = this.feet.r.init = false; this.lastPos = null;
+    // on the ground again, upright, whatever the car was doing when it last placed the body
+    this.pos.y = 0; this.group.rotation.set(0, this.yaw, 0); this.group.updateMatrix();
   }
 
   /* build and run a sequence; resolves when it ends. In: walk up behind the handle, take it, pull the door open
@@ -1408,7 +1411,7 @@ class Person {
      from where the clip would put them */
   carUp() {
     const c = this.car;
-    const w = this.carW(c.root, _f1); this.pos.set(w.x, this.pos.y, w.z);
+    const w = this.carW(c.root, _f1); this.pos.set(w.x, 0, w.z);
     this.yaw = this.wantYaw = this.carYaw() + c.yaw; this.speed = 0;
     c.seated = false; c.feetW = 0; c.hipW = 0; c.sitW = 0; c.duck = 0; c.roll = 0;
     for (const s of ["l", "r"]) { const F = this.feet[s]; this.carW(c.feet[s], F.pos); F.yaw = this.yaw; F.lock = true; F.w = 1; F.step = 0; F.init = true; }

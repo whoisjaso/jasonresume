@@ -63,6 +63,18 @@ const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { ret
 const KEYS0 = { up: "w", down: "s", left: "a", right: "d", run: "shift", act: "e", journal: "j" };
 const SET = Object.assign({ runToggle: false, lock: false, invert: false, look: 1 }, (() => { try { return JSON.parse(store.get("jg_story_controls") || "null") || {}; } catch (e) { return {}; } })());
 SET.keys = Object.assign({}, KEYS0, SET.keys || {});
+/* the pad's buttons (the standard mapping's indices), one per action, in two sets that never meet: on your feet and in
+   the car (where RT and LT are the pedals). A binding a set can't use (Menu, the guide button, a pedal, a repeat)
+   puts that whole set back to its defaults */
+const PAD_FOOT = ["jump", "act", "enter", "back", "journal", "run", "recenter"], PAD_CAR = ["hb", "cam", "out"];
+const PAD0 = { jump: 0, act: 2, enter: 3, back: 1, journal: 8, run: 10, recenter: 11, hb: 0, cam: 2, out: 3 };
+const PADNAME = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "View", "Menu", "L3", "R3", "Up", "Down", "Left", "Right", "Home"];
+const padFree = (i, car) => Number.isInteger(i) && i >= 0 && i < 16 && i !== 9 && !(car && (i === 6 || i === 7));
+SET.pad = Object.assign({}, PAD0, SET.pad || {});
+for (const [set, car] of [[PAD_FOOT, false], [PAD_CAR, true]]) {
+  const v = set.map(a => SET.pad[a]);
+  if (v.some(i => !padFree(i, car)) || new Set(v).size !== v.length) for (const a of set) SET.pad[a] = PAD0[a];
+}
 function saveSet() { store.set("jg_story_controls", JSON.stringify(SET)); }
 const AU = createAudio({ soundOn: () => !!(window.JG_SCORE && window.JG_SCORE.isOn()), store, base: "assets/story/sfx/", mobile: matchMedia("(pointer: coarse)").matches });
 const still = () => RM.matches;
@@ -1146,13 +1158,15 @@ function jumpTick(dt) {
 /* ---------- gamepad, on the standard mapping, in Xbox letters (a PlayStation pad's cross, circle, square, triangle
    are the same buttons). Walking: the left stick, on a curve so a light push is an easy stroll and all the way over
    runs (click it to keep running until you let go); the right stick looks (click it to put the camera back behind
-   you). A uses what's prompted and jumps when nothing is, X jumps any time, B backs out, Y or View opens the journal,
-   Menu pauses. Every menu, the choices, the journal, the board, the phone and the end: the D-pad or the left stick
-   moves the focus, A chooses, B goes back. In the car: RT gas, LT brake, the left stick steers, A the handbrake,
-   X the camera, B out. The pad rumbles wherever a haptic fires (skips and cancels have none, so they never rumble).
-   Nothing here allocates per frame ---------- */
+   you). By default, as in a street game: A jumps (only ever jumps), X uses what's prompted, Y goes in and out (a
+   door, a way to somewhere else, a car: in it and out again), B backs out, View opens the journal, Menu pauses.
+   Every menu, the choices, a talk's lines, the journal, the board, the phone and the end: the D-pad or the left stick
+   moves the focus, A chooses (B, if Back has taken A), Back's button goes back. In the car: RT gas, LT brake, the left
+   stick steers, A the handbrake, X the camera, Y or Back's button out. Every action but the pedals, the sticks and
+   Menu is rebindable (SET.pad, the pause menu's Controller screen). The pad rumbles wherever a haptic fires (skips and
+   cancels have none, so they never rumble). Nothing here allocates per frame ---------- */
 const padPrev = new Array(17).fill(false);
-let padSeen = false, padGP = null;
+let padSeen = false, padGP = null, legendMode = "";
 const PADN = { dir: 0, t: 0, run: false, rc: 0, any: false };
 /* the response curve: gentle at the bottom of the throw, so the slowest walk is easy to hold, and full at the top */
 const padCurve = k => k * (0.25 + 0.75 * k);
@@ -1179,6 +1193,7 @@ function padPoll(dt) {
   jumpUI();
   const gp = padNow(); padGP = gp;
   if (!gp) { pad.x = pad.y = pad.mag = 0; return; }
+  padSeen = true;
   const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, m = Math.hypot(ax, ay);
   // the left stick: a radial dead zone, then the curve; clicked, it runs until it comes back to centre
   if (m > DEAD) { const k = Math.min(1, (m - DEAD) / (1 - DEAD - 0.05)); pad.x = ax / m; pad.y = ay / m; pad.mag = PADN.run ? 1 : padCurve(k); }
@@ -1193,32 +1208,62 @@ function padPoll(dt) {
   for (let i = 0; i < gp.buttons.length && !any; i++) if (gp.buttons[i].pressed) any = true;
   if (any) { setDev("pad"); mv.idle = 0; }
   const dir = padDir(dt);
-  // in the car: RT gas, LT brake, the left stick steers, A the handbrake, X the camera, B out
+  // in the car: RT gas, LT brake, the left stick steers, the handbrake on its button (A unless rebound)
   pad.drive = S.phase === "drive" ? (pad.driveO || (pad.driveO = { rt: 0, lt: 0, sx: 0, a: 0 })) : null;
-  if (pad.drive) { const d = pad.drive; d.rt = pv(7); d.lt = pv(6); d.sx = Math.abs(ax) > DEAD ? Math.sign(ax) * Math.min(1, (Math.abs(ax) - DEAD) / (1 - DEAD - 0.05)) : 0; d.a = pv(0); }
-  const host = padHost();
-  if (S.phase === "drive") { if (DRV.state !== "drive" && DRV.skip && (pe(0) || pe(1))) DRV.skip(); else if (pe(1)) exitCar("pad"); if (pe(2)) driveCam(); if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; } }
-  else if (S.skipOpen) { if (pe(0) || pe(1)) act("a"); }
+  if (pad.drive) { const d = pad.drive; d.rt = pv(7); d.lt = pv(6); d.sx = Math.abs(ax) > DEAD ? Math.sign(ax) * Math.min(1, (Math.abs(ax) - DEAD) / (1 - DEAD - 0.05)) : 0; d.a = pv(SET.pad.hb); }
+  const host = padHost(), B = SET.pad, ok = padOK(), carHas = i => i === B.hb || i === B.cam || i === B.out;
+  // the Controller screen waiting for a button: the next one pressed is the binding (Back's button cancels, silently)
+  if (padCap) {
+    for (let i = 0; i < 16; i++) if (i !== 9 && pe(i)) { if (i === B.back) padCancel(); else padBind(padCap, i); break; }
+  }
+  else if (S.phase === "drive") {
+    if (DRV.state !== "drive" && DRV.skip && (pe(ok) || pe(B.back) || pe(B.out))) DRV.skip();
+    else if (pe(B.out) || (pe(B.back) && !carHas(B.back))) exitCar("pad");
+    if (pe(B.cam)) driveCam();
+    if (pe(B.journal) && !carHas(B.journal)) act("journal");
+    if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; }
+  }
+  else if (S.skipOpen) { if (pe(ok) || pe(B.back)) act("a"); }
   else if (host && (S.phase === "pause" || S.phase === "journal" || !choosing)) {
     if (dir) padMove(host, dir);
-    if (pe(0)) padPress(host);
-    if (pe(1)) act("b");
+    if (pe(ok)) padPress(host);
+    if (pe(B.back)) act("b");
+    else if (pe(B.journal) && B.journal !== ok && S.phase === "journal") act("journal");
     // the journal (or a long end) scrolls on the right stick
     if (Math.abs(ry) > 0.2) { const sc = padScroller(host); if (sc) sc.scrollTop += ry * 900 * dt; }
   }
-  else if (choosing) { if (dir === 1) moveChoice(-1); else if (dir === 2) moveChoice(1); if (pe(0)) act("a"); }
-  else {
-    if (pe(0)) { if (S.phase === "explore" && !near) jump("pad"); else act("a"); }
-    if (pe(2)) jump("pad");
-    if (pe(1)) act("b");
-    if (pe(10) && S.phase === "explore") PADN.run = !PADN.run;
-    if (pe(11) && S.phase === "explore" && me) PADN.rc = 0.45;
+  else if (choosing) { if (dir === 1) moveChoice(-1); else if (dir === 2) moveChoice(1); if (pe(ok)) act("a"); }
+  else if (S.phase === "explore") {
+    // on your feet: each button its one job; the jump never uses anything, and the way in or out is Y's
+    if (pe(B.jump)) jump("pad");
+    if (pe(B.act)) padUse(false);
+    if (pe(B.enter)) padUse(true);
+    if (pe(B.back)) act("b");
+    if (pe(B.journal)) act("journal");
+    if (pe(B.run)) PADN.run = !PADN.run;
+    if (pe(B.recenter) && me) PADN.rc = 0.45;
   }
-  if (pe(9)) act("pause"); if (pe(3) || pe(8)) act("journal");
+  else {
+    // a talk or a scene playing: the chooser moves the lines on, Back's button backs out, and nothing else listens
+    if (pe(ok)) act("a");
+    if (pe(B.back)) act("b");
+    else if (pe(B.journal) && B.journal !== ok) act("journal");
+  }
+  if (pe(9)) act("pause");
   // the right stick's click: the camera swings back behind you
   if (PADN.rc > 0 && me) { PADN.rc -= dt; camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-12 * dt)); camState.pitch = damp(camState.pitch, 0.2, 12, dt); camState.drag = 0.2; }
   padLegend();
   for (let i = 0; i < padPrev.length; i++) padPrev[i] = pb(i);
+}
+/* in menus the chooser is A, unless Back has been put on A: then the button Back left (B) chooses */
+function padOK() { return SET.pad.back === 0 ? 1 : 0; }
+/* a way somewhere else: a door, an exit, the doors out of June, a car */
+function isWay(s) { return !!s && (s.id.startsWith("car:") || s.o.world === "exit" || !!(OBJ[s.id] && (OBJ[s.id].go || s.id === "june-door"))); }
+/* X (use) works on anything prompted; Y (in and out) only on a way. A spoken line that isn't a passing thought is
+   skipped by either; with nothing prompted the press does nothing */
+function padUse(way) {
+  if (near && (!way || isWay(near))) { act("a"); return; }
+  if (line && !line.L.ambient) endLine(true);
 }
 /* what the pad is driving: the menu or the screen that's up, or nothing (the world) */
 function padHost() {
@@ -1535,7 +1580,7 @@ function updatePrompts() {
   const verb = best.o.world === "sit" && me.seated ? UI.v_stand || best.o.verb : best.o.verb;
   if (promptEl.dataset.spot !== best.id || promptEl.dataset.verb !== verb) {
     $(".st-prompt__verb", promptEl).textContent = verb; $(".st-prompt__label", promptEl).textContent = best.o.label;
-    promptEl.dataset.spot = best.id; promptEl.dataset.verb = verb;
+    promptEl.dataset.spot = best.id; promptEl.dataset.verb = verb; promptKey();
     $(".st-act__verb", actEl).textContent = verb; actEl.setAttribute("aria-label", verb + " " + best.o.label);
   }
   promptEl.style.transform = "translate(" + Math.round(q.x) + "px," + Math.round(q.y) + "px)";
@@ -2007,8 +2052,8 @@ function pause() {
   AU.veil(true);
 }
 const ACTS = [["up", "k_up"], ["down", "k_down"], ["left", "k_left"], ["right", "k_right"], ["run", "k_run"], ["act", "k_act"], ["journal", "k_journal"]];
-function pauseView(v) {
-  pzView = v;
+function pauseView(v, focus) {
+  pzView = v; if (v !== "pad") padCap = null;
   const reached = ["lot", "office", "memory", "june", "sale", "decision"].filter(n => S.visited && S.visited[n]);
   const tog = (k, a, b) => '<button type="button" class="pz-tog" data-c="' + k + '" aria-pressed="' + !!SET[k] + '"><span>' + E(SET[k] ? b : a) + "</span></button>";
   const sl = k => '<label class="pz-sl"><span>' + E(UI["mix_" + k]) + '</span><input type="range" min="0" max="100" step="1" data-mix="' + k + '" value="' + Math.round(AU.mix[k] * 100) + '" aria-label="' + E(UI["mix_" + k]) + '" /></label>';
@@ -2029,15 +2074,40 @@ function pauseView(v) {
       '<div class="pz-row pz-kb"><span>' + E(UI.c_run) + "</span>" + tog("runToggle", UI.c_run_hold, UI.c_run_toggle) + "</div>" +
       '<div class="pz-row pz-kb"><span>' + E(UI.c_look) + "</span>" + tog("lock", UI.c_look_drag, UI.c_look_lock) + "</div>" +
       '<div class="pz-row"><span>' + E(UI.c_invert) + "</span>" + tog("invert", UI.c_normal, UI.c_inverted) + "</div>" +
-      '<div class="pz-foot pz-kb"><button type="button" class="pz-link" data-p="keys">' + E(UI.c_keys) + "</button></div></div>";
+      '<div class="pz-foot"><button type="button" class="pz-link pz-kb" data-p="keys">' + E(UI.c_keys) + "</button>" +
+      (padSeen || dev === "pad" ? '<button type="button" class="pz-link" data-p="pad">' + E(UI.c_pad) + "</button>" : "") + "</div></div>";
   } else if (v === "keys") {
     h = '<div class="pz pz--set"><div class="pz-top"><h3 class="pz-h">' + E(UI.c_keys) + '</h3><button type="button" class="pz-done" data-p="settings">' + E(UI.done) + '</button></div><div class="pz-keys">' +
       ACTS.map(([a, l]) => '<div class="pz-row"><span>' + E(UI[l]) + '</span><button type="button" class="pz-key" data-key="' + a + '">' + E(rebinding === a ? UI.c_press : keyLabel(SET.keys[a])) + "</button></div>").join("") +
       '</div><p class="pz-fine">' + E(UI.c_keys_fine) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-keys">' + E(UI.c_reset) + "</button></div></div>";
+  } else if (v === "pad") {
+    // the Controller screen: every action and its button, drawn as the pad's own glyph; the D-pad moves, A waits for a button
+    const row = (a, l) => '<div class="pz-row"><span>' + E(l) + '</span><button type="button" class="pz-key pz-btn' + (padCap === a ? " is-wait" : "") + '" data-padkey="' + a + '" aria-label="' + E(l + ", " + (padCap === a ? UI.c_pad_press : PADNAME[SET.pad[a]])) + '">' + (padCap === a ? E(UI.c_pad_press) : glyph(PADNAME[SET.pad[a]])) + "</button></div>";
+    h = '<div class="pz pz--set pz-pads"><div class="pz-top"><h3 class="pz-h">' + E(UI.c_pad) + '</h3><button type="button" class="pz-done" data-p="settings">' + E(UI.done) + "</button></div>" +
+      '<p class="pz-sub">' + E(UI.c_pad_foot) + "</p>" + PAD_FOOT.map(a => row(a, UI["p_" + a])).join("") +
+      '<p class="pz-sub">' + E(UI.c_pad_car) + "</p>" + PAD_CAR.map(a => row(a, UI["p_" + a])).join("") +
+      '<p class="pz-fine">' + E(padText(UI.c_pad_fine)) + '</p><div class="pz-foot"><button type="button" class="pz-link" data-p="reset-pad">' + E(UI.c_pad_reset) + "</button></div></div>";
   }
   pauseEl.innerHTML = h;
+  // a screen drawn again under the focus (a binding, a wait let go of) keeps it where it was, at once
+  const keep = focus && dev !== "touch" && $(focus, pauseEl); if (keep) { keep.focus({ preventScroll: true }); return; }
   setTimeout(() => { if (dev === "touch") return; const b = $(v === "main" ? "button" : "input, button", pauseEl); if (b) b.focus({ preventScroll: true }); }, 40);
 }
+/* a pad action onto a button: one another action in the same set already uses takes this one's old button, so every
+   action keeps one. A choice: the tick, the tap and the button's pulse in one frame; then every glyph follows */
+let padCap = null;
+function padBind(a, i) {
+  const set = PAD_FOOT.includes(a) ? PAD_FOOT : PAD_CAR;
+  if (!padFree(i, set === PAD_CAR)) return;
+  const other = set.find(x => x !== a && SET.pad[x] === i);
+  if (other) SET.pad[other] = SET.pad[a];
+  SET.pad[a] = i; padCap = null; saveSet(); AU.ui("toggle"); hap("tap");
+  pauseView("pad", "[data-padkey='" + a + "']");
+  const nb = $("[data-padkey='" + a + "']", pauseEl); if (nb && !still()) nb.classList.add("is-set");
+  glyphs();
+}
+/* a wait let go of (Back's button, Esc, leaving the menu): silent */
+function padCancel() { const a = padCap; padCap = null; if (pzView === "pad") pauseView("pad", "[data-padkey='" + a + "']"); }
 function rebind(a, k) {
   // a key already in use moves to where the old one was, so nothing ends up on two actions
   const other = Object.keys(SET.keys).find(x => x !== a && SET.keys[x] === k);
@@ -2045,7 +2115,7 @@ function rebind(a, k) {
   SET.keys[a] = k; rebinding = null; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("keys"); glyphs();
 }
 function unpause() {
-  pauseEl.classList.remove("is-on"); el.classList.remove("is-paused"); setTimeout(() => { if (S.phase !== "pause") pauseEl.hidden = true; }, 250); S.phase = S.prevPhase || "explore"; rebinding = null;
+  pauseEl.classList.remove("is-on"); el.classList.remove("is-paused"); setTimeout(() => { if (S.phase !== "pause") pauseEl.hidden = true; }, 250); S.phase = S.prevPhase || "explore"; rebinding = null; padCap = null;
   AU.veil(false);
   resumeVoice();
   if (SET.lock && dev === "kbm" && S.phase === "explore") { try { cv.requestPointerLock(); } catch (e) {} }
@@ -2062,12 +2132,16 @@ pauseEl.addEventListener("click", async e => {
   if (c) { SET[c.dataset.c] = !SET[c.dataset.c]; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("settings"); const nb = $("[data-c='" + c.dataset.c + "']", pauseEl); if (nb) nb.focus({ preventScroll: true }); return; }
   const kb = e.target.closest("[data-key]");
   if (kb) { rebinding = kb.dataset.key; kb.textContent = UI.c_press; kb.classList.add("is-wait"); return; }
+  const pk = e.target.closest("[data-padkey]");
+  if (pk) { padCap = pk.dataset.padkey; pauseView("pad", "[data-padkey='" + padCap + "']"); return; }
   const b = e.target.closest("[data-p]"); if (!b) return;
   const k = b.dataset.p;
   if (k === "resume") unpause();
   else if (k === "journal") { unpause(); openJournal(); }
   else if (k === "settings") { if (pzView === "main") { AU.ui("open"); hap("tap"); } pauseView("settings"); }
   else if (k === "keys") { AU.ui("open"); hap("tap"); pauseView("keys"); }
+  else if (k === "pad") { AU.ui("open"); hap("tap"); pauseView("pad"); }
+  else if (k === "reset-pad") { SET.pad = Object.assign({}, PAD0); padCap = null; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("pad", "[data-p='reset-pad']"); glyphs(); }
   else if (k === "back") pauseView("main");
   else if (k === "reset-keys") { SET.keys = Object.assign({}, KEYS0); saveSet(); AU.ui("toggle"); hap("tap"); pauseView("keys"); glyphs(); }
   else if (k === "sound") { if (SC()) SC().toggle("story"); AU.sound(soundOn()); FX("choice"); AU.ui("toggle"); pauseView("settings"); const nb = $("[data-p='sound']", pauseEl); if (nb) nb.focus({ preventScroll: true }); }
@@ -2089,15 +2163,23 @@ function setDev(d) {
   if (dev === d) return;
   dev = d; el.dataset.dev = d; glyphs(); driveGlyphs(); padLegend(); jumpUI();
 }
+/* a line that names pad buttons: {jump}, {act}, {back} and the rest become the buttons they're bound to now */
+const padText = t => String(t).replace(/\{(\w+)\}/g, (m, a) => a === "ok" ? PADNAME[padOK()] : a in SET.pad ? PADNAME[SET.pad[a]] : m);
 function glyphs() {
-  const key = $(".st-prompt__key", promptEl);
-  key.hidden = dev === "touch"; key.textContent = dev === "pad" ? "A" : keyLabel(SET.keys.act); key.classList.toggle("is-pad", dev === "pad");
+  promptKey(); padGlyphs();
   $$(".st-ch kbd", choicesOl).forEach((k, i) => { k.textContent = dev === "pad" ? "" : String(i + 1); });
   if (!hintEl.hidden) hintEl.textContent = hintText();
 }
+/* the prompt's key: on a pad, the way in or out's button at a door or a car, the use button at anything else */
+function promptKey() {
+  const key = $(".st-prompt__key", promptEl), pk = PADNAME[SET.pad[isWay(near) ? "enter" : "act"]];
+  const t = dev === "pad" ? pk : keyLabel(SET.keys.act);
+  key.hidden = dev === "touch"; if (key.textContent !== t) key.textContent = t;
+  key.classList.toggle("is-pad", dev === "pad"); key.classList.toggle("is-w", dev === "pad" && pk.length > 1);
+}
 function hintText() {
   if (dev === "touch") return UI.walk_touch;
-  if (dev === "pad") return UI.walk_pad + " X to jump.";
+  if (dev === "pad") return padText(UI.walk_pad);
   const K = SET.keys, wasd = [K.up, K.left, K.down, K.right].every(k => k.length === 1);
   return UI.walk_pointer.replace("{move}", wasd ? (K.up + K.left + K.down + K.right).toUpperCase() : "The arrow keys").replace("{run}", keyLabel(K.run)).replace("{act}", keyLabel(K.act)).replace("{journal}", keyLabel(K.journal)) + " Space to jump.";
 }
@@ -2105,7 +2187,7 @@ function act(k) {
   if (S.skipOpen && (k === "a" || k === "pause" || k === "b")) { S.skipOpen(); return; }
   if (k === "pause") { if (S.phase === "pause") unpause(); else if (S.phase === "journal") closeJournal(); else pause(); return; }
   if (k === "journal") { if (S.phase === "journal") closeJournal(); else if (S.phase === "explore" || S.phase === "talk" || (S.phase === "drive" && DRV.state === "drive")) openJournal(); return; }
-  if (k === "b") { if (S.phase === "journal") closeJournal(); else if (S.phase === "pause") { if (pzView !== "main") pauseView("main"); else unpause(); } else if (S.phase === "close" && S.closeFinish) S.closeFinish(); else if (S.phase === "sheet" && S.deskFinish) S.deskFinish(false); return; }
+  if (k === "b") { if (S.phase === "journal") closeJournal(); else if (S.phase === "pause") { if (pzView === "keys" || pzView === "pad") pauseView("settings", "[data-p='" + pzView + "']"); else if (pzView !== "main") pauseView("main"); else unpause(); } else if (S.phase === "close" && S.closeFinish) S.closeFinish(); else if (S.phase === "sheet" && S.deskFinish) S.deskFinish(false); return; }
   if (k === "a") {
     if (S.phase === "pause" || S.phase === "journal") { const a = document.activeElement; if (a && a.click && (pauseEl.contains(a) || journalEl.contains(a))) a.click(); return; }
     if (choosing) { const bs = $$(".st-ch", choicesOl); const i = Math.max(0, bs.indexOf(document.activeElement)); pick(i, "pad"); return; }
@@ -2119,6 +2201,7 @@ let rebinding = null;
 addEventListener("keydown", e => {
   if (!S.open || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
+  if (padCap && k === "escape") { e.preventDefault(); e.stopPropagation(); padCancel(); return; }
   if (rebinding) { e.preventDefault(); e.stopPropagation(); if (k === "escape") { rebinding = null; pauseView("keys"); } else if (!["tab", "p", "m", "1", "2", "3", "4", "enter", " ", "meta"].includes(k)) rebind(rebinding, k); return; }
   setDev("kbm"); mv.idle = 0;
   if (S.phase === "sheet") { if (k === "escape") { e.preventDefault(); S.deskFinish && S.deskFinish(false); } return; }
@@ -2231,10 +2314,20 @@ capEl.addEventListener("click", () => { if (line) endLine(true); });
    Jump button under the right thumb on a touch screen, only while you're on your feet exploring */
 el.insertAdjacentHTML("beforeend", '<button class="st-jump" type="button" hidden aria-label="Jump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg><span class="st-jump__verb">Jump</span></button><div class="st-legend" aria-hidden="true" hidden></div>');
 const jumpEl = $(".st-jump", el), legendEl = $(".st-legend", el);
-const glyph = k => '<kbd class="st-glyph" aria-hidden="true">' + k + "</kbd>";
+const glyph = k => '<kbd class="st-glyph' + (k.length > 1 ? " st-glyph--w" : "") + '" aria-hidden="true">' + k + "</kbd>";
 $$(".st-back", el).forEach(b => b.insertAdjacentHTML("beforeend", glyph("B")));
 skipEl.insertAdjacentHTML("beforeend", glyph("A"));
-{ const jb = $("[data-st='journal']", el); if (jb) jb.insertAdjacentHTML("beforeend", glyph("Y")); }
+{ const jb = $("[data-st='journal']", el); if (jb) jb.insertAdjacentHTML("beforeend", glyph("View")); }
+/* the glyphs on the screen's own buttons follow the bindings: Back's on the backs, the chooser on Skip, the journal's */
+function setGlyph(k, n) { if (k && k.textContent !== n) { k.textContent = n; k.classList.toggle("st-glyph--w", n.length > 1); } }
+function padGlyphs() {
+  $$(".st-back > .st-glyph", el).forEach(k => setGlyph(k, PADNAME[SET.pad.back]));
+  setGlyph($(".st-glyph", skipEl), PADNAME[padOK()]);
+  setGlyph($("[data-st='journal'] > .st-glyph", el), PADNAME[SET.pad.journal]);
+  el.style.setProperty("--pad-ok", '"' + PADNAME[padOK()] + '"');
+  legendMode = "";
+}
+padGlyphs();
 jumpEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); jump("touch"); });
 jumpEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0) jump("key"); });
 let jumpShown = false;
@@ -2242,15 +2335,16 @@ function jumpUI() {
   const on = dev === "touch" && S.open && S.phase === "explore" && !DRV.state && !!me && !me.inCar;
   if (on !== jumpShown) { jumpShown = on; jumpEl.hidden = !on; }
 }
-let legendMode = "";
 function padLegend() {
   const ph = S.phase;
-  const mode = dev !== "pad" || !S.open ? "" : ph === "pause" || ph === "journal" || ph === "sheet" || ph === "close" ? "menu" : ph === "end" ? "end" : choosing ? "choose" : ph === "explore" ? (near ? "near" : "walk") : "";
+  const mode = dev !== "pad" || !S.open ? "" : ph === "pause" || ph === "journal" || ph === "sheet" || ph === "close" ? "menu" : ph === "end" ? "end" : choosing ? "choose" : ph === "explore" ? (near ? (isWay(near) ? "way" : "near") : "walk") : "";
   if (mode === legendMode) return;
   legendMode = mode; legendEl.hidden = !mode;
+  const B = SET.pad, n = i => PADNAME[i], ok = n(padOK());
   const g = (k, t) => "<span>" + glyph(k) + E(t) + "</span>";
-  legendEl.innerHTML = mode === "menu" ? g("A", "Select") + g("B", "Back") : mode === "end" ? g("A", "Select") : mode === "choose" ? g("A", "Choose") :
-    mode === "walk" ? g("A", "Jump") + g("Y", UI.journal) : mode === "near" ? g("X", "Jump") + g("Y", UI.journal) : "";
+  legendEl.innerHTML = mode === "menu" ? g(ok, "Select") + g(n(B.back), "Back") : mode === "end" ? g(ok, "Select") : mode === "choose" ? g(ok, "Choose") :
+    mode === "walk" ? g(n(B.jump), "Jump") + g(n(B.journal), UI.journal) : mode === "near" ? g(n(B.act), UI.p_act) + g(n(B.jump), "Jump") + g(n(B.journal), UI.journal) :
+    mode === "way" ? g(n(B.enter), UI.p_enter) + g(n(B.jump), "Jump") + g(n(B.journal), UI.journal) : "";
 }
 actEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); pressUse("tap"); });
 actEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0 && performance.now() - pressT > 600) pressUse("tap"); });
@@ -2345,10 +2439,10 @@ function driveGlyphs() {
   if (!DRV.state) return;
   drvEl.dataset.dev = dev;
   const K = SET.keys, out = $('[data-drv="out"] kbd', drvEl), cam = $('[data-drv="cam"] kbd', drvEl);
-  out.textContent = dev === "pad" ? "B" : keyLabel(K.act); cam.textContent = dev === "pad" ? "X" : "C";
+  out.textContent = dev === "pad" ? PADNAME[SET.pad.out] : keyLabel(K.act); cam.textContent = dev === "pad" ? PADNAME[SET.pad.cam] : "C";
   out.hidden = cam.hidden = dev === "touch";
   const wasd = [K.up, K.left, K.down, K.right].every(k => k.length === 1);
-  drvHint.textContent = dev === "touch" ? UI.drive_touch : dev === "pad" ? UI.drive_pad : UI.drive_pointer.replace("{gas}", wasd ? K.up.toUpperCase() : "Up").replace("{brake}", wasd ? K.down.toUpperCase() : "Down").replace("{left}", wasd ? K.left.toUpperCase() : "Left").replace("{right}", wasd ? K.right.toUpperCase() : "Right").replace("{act}", keyLabel(K.act));
+  drvHint.textContent = dev === "touch" ? UI.drive_touch : dev === "pad" ? padText(UI.drive_pad).replace("{outs}", [SET.pad.out, SET.pad.back].filter((v, i, a) => a.indexOf(v) === i).map(i => PADNAME[i]).join(" or ")) : UI.drive_pointer.replace("{gas}", wasd ? K.up.toUpperCase() : "Up").replace("{brake}", wasd ? K.down.toUpperCase() : "Down").replace("{left}", wasd ? K.left.toUpperCase() : "Left").replace("{right}", wasd ? K.right.toUpperCase() : "Right").replace("{act}", keyLabel(K.act));
 }
 
 /* in: walk to the door, reach for the handle, the door opens, you sit, pull it shut, and the engine catches.
@@ -2433,7 +2527,7 @@ async function exitCar(how, instant) {
     if (v.doors) v.doors.open("driver", 0);
     const st = doorStand(c);
     me.pos.set(st.x, 0, st.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.PI / 2; me.speed = 0;
-    if (blocked(me.pos.x, me.pos.z, 0.2)) { c.object.updateMatrixWorld(true); const W = carMeta(c).W / 2 + 0.62, L = carMeta(c).L / 2 + 0.6; for (const [lx, lz] of [[-W, 0.1], [0, -L], [0, L], [W, -1.2]]) { const q = c.object.localToWorld(new THREE.Vector3(lx, 0, lz)); if (!blocked(q.x, q.z, 0.2)) { me.pos.set(q.x, 0, q.z); break; } } }
+    if (blocked(me.pos.x, me.pos.z, 0.2)) { c.object.updateMatrixWorld(true); const W = carMeta(c).W / 2 + 0.62, L = carMeta(c).L / 2 + 0.6; for (const [lx, lz] of [[-W, 0.1], [0, -L], [0, L], [W, -1.2]]) { const q = c.object.localToWorld(new THREE.Vector3(lx, 0, lz)); if (!blocked(q.x, q.z, 0.2)) { me.pos.set(q.x, 0, q.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.atan2(lx, lz); break; } } } // facing out from that side, not into the car
   }
   me.group.visible = true; if (me.shadow) me.shadow.visible = true;
   if (DRV.au) { DRV.au.stop(instant ? 0.1 : 1.2); DRV.au = null; }
@@ -2453,7 +2547,9 @@ async function exitCar(how, instant) {
   if (S.phase === "drive") setPhase("explore");
   else if (S.prevPhase === "drive") S.prevPhase = "explore";
   DRV.doorOpen = null;
-  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true; setTimeout(() => { camState.reframe = false; }, 1200);
+  camState.yaw = me.yaw + Math.PI; camState.init = !!instant; camState.reframe = true;
+  // the camera looks round for room for a moment, but not once you move: the way ahead (camera relative) holds still under a run
+  const reT = performance.now(), reEnd = () => { if (!camState.reframe) return; if (performance.now() - reT > 1200 || wantInput()) camState.reframe = false; else requestAnimationFrame(reEnd); }; reEnd();
   camera.fov = innerWidth / innerHeight < 1 ? 62 : 48; camera.updateProjectionMatrix();
 }
 function driveCam() {
@@ -2603,7 +2699,7 @@ addEventListener("keydown", e => { if (holdKey(e.key.toLowerCase())) HELD.key = 
 addEventListener("keyup", e => { if (holdKey(e.key.toLowerCase())) HELD.key = false; }, true);
 addEventListener("pointerdown", () => { HELD.ptr = true; }, true);
 for (const ev of ["pointerup", "pointercancel", "blur"]) addEventListener(ev, () => { HELD.ptr = false; HELD.key = false; }, true);
-const heldNow = () => HELD.key || HELD.ptr || pb(0);
+const heldNow = () => HELD.key || HELD.ptr || pb(SET.pad.act) || pb(SET.pad.enter);
 let HOLDG = null;
 /* resolves true once the ring has filled; false if you let go first (silently). A walk that brought you here, or a
    press already over, fills on its own: nobody has to hold a button they've let go of */
@@ -3342,7 +3438,7 @@ window.JG_STORY = {
       return { n: pts.filter(([x, z]) => !blocked(x, z, 0.28)).length * 48, bad };
     },
     audio: () => AU.debug(),
-    settings: () => ({ ...SET, keys: { ...SET.keys }, mix: { ...AU.mix } }),
+    settings: () => ({ ...SET, keys: { ...SET.keys }, pad: { ...SET.pad }, mix: { ...AU.mix } }),
     surface: (x, z) => surfaceAt(x, z),
     hold: v => { S.holdLines = !!v; },
     /* the voice clock: the caption's clock against the recording's own, and how many voices are sounding */

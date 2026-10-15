@@ -739,6 +739,34 @@ async function drive(vname, w, h, mobile) {
   if (!out) errs.push(`${label}: never got out (${JSON.stringify(dOut)})`);
   else if (!dOut.visible || dOut.inCar) errs.push(`${label}: out of the car but not on your feet (${JSON.stringify(dOut)}, you at ${JSON.stringify((await st(p)).me)})`);
   else notes.push(`${label}: got out on your feet; the walk is back`);
+  // and a run straight on from there is the run you had before you got in: upright, facing the way it goes, no hand
+  // left on the door or the roof (the body drawn where it faces; nothing of the car's tilt or its heading left over)
+  if (out && dOut.visible && !dOut.inCar) {
+    const RS = () => p.evaluate(() => {
+      const me = window.JG_STORY.debug.you(), q = me.group.quaternion, v = me.vel;
+      const drawn = Math.atan2(2 * (q.w * q.y + q.x * q.z), 1 - 2 * (q.y * q.y + q.x * q.x)), w = a => Math.atan2(Math.sin(a), Math.cos(a));
+      return { drawn: +w(drawn - me.yaw).toFixed(3), want: +w(drawn - me.wantYaw).toFixed(3), move: +w(drawn - Math.atan2(v.x, v.z)).toFixed(3), sp: +Math.hypot(v.x, v.z).toFixed(2),
+        tilt: +Math.acos(Math.min(1, 1 - 2 * (q.x * q.x + q.z * q.z))).toFixed(4), holds: me.reaches ? ['l', 'r'].filter(s => me.reaches[s]).join('') : '', car: !!me.car, phase: window.JG_STORY.debug.state().phase, cam: window.JG_STORY.debug.jumpState().cam };
+    });
+    await p.keyboard.down('Shift'); await p.keyboard.down('w');
+    // (on the fixed clock, a frame a step: software GL is too slow to judge a stride in real time)
+    // (if the camera came to rest looking past you, the run starts with a turn toward where it looks: the facing is
+    // judged once that turn is done, and from then on it holds the way the run goes, with no drift)
+    const seen = []; let bad = null, ran = 0, turned = false;
+    await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+    for (let i = 0; i < 45 && ran < 12; i++) {
+      await p.evaluate(() => window.JG_STORY.debug.step(2, 1 / 30, false));
+      const r = await RS(); seen.push(r);
+      if (Math.abs(r.want) < 0.05) turned = true;
+      if (turned && r.sp > 2) ran++;
+      if (Math.abs(r.drawn) > 0.02 || r.tilt > 0.01 || r.holds || r.car || (turned && r.sp > 2 && (Math.abs(r.move) > 0.2 || Math.abs(r.want) > 0.2))) { bad = r; break; }
+    }
+    await p.keyboard.up('w'); await p.keyboard.up('Shift');
+    await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+    if (bad) errs.push(`${label}: the run after getting out isn't the run from before (${JSON.stringify(bad)})`);
+    else if (!ran) notes.push(`${label}: (the run after getting out never got up to speed: ${JSON.stringify(seen.slice(-1)[0] || null)})`);
+    else notes.push(`${label}: ran on after getting out: upright, facing the way it goes, hands free`);
+  }
   await ctx.close();
 }
 /* ---------- the test drive: the morning by deep link, Marisol, then around the block through every ring (each leg
@@ -1444,6 +1472,61 @@ async function jumpSheet(p, lane, label) {
 /* ---------- the pad: a standard-mapping pad injected through navigator.getGamepads; walking on its curve, run and camera
    clicks, A and X jumping, the pause menu, the settings' sliders, the journal's tabs, a talk's choices, the desk's phone
    and the end, all from the pad with the focus always shown; and rumbles wherever a haptic fires ---------- */
+/* Y, in and out: through the office door and back, then into a car and out (Y), in again on X and out on B. The
+   frames run for real here (a door is a scene change, a car a sequence): a press is held across two frames */
+async function ways(p, label, press) {
+  const rf = () => p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+  const tap = async i => { await p.evaluate(i => { const B = window.__pad.buttons[i]; B.pressed = true; B.value = 1; }, i); await rf(); await rf(); await p.evaluate(i => { const B = window.__pad.buttons[i]; B.pressed = false; B.value = 0; }, i); await rf(); };
+  const key = () => p.evaluate(() => { const k = document.querySelector('.st-prompt__key'); return k && !document.querySelector('.st-prompt').hidden ? k.textContent : null; });
+  await p.evaluate(() => window.JG_STORY.debug.freeze(false));
+  const at = async (id, ms = 15000) => (await p.evaluate(id => window.JG_STORY.debug.warp(id), id)) && until(p, id => window.JG_STORY.debug.state().near === id, id, ms);
+  if (await at('door')) {
+    const k = await key();
+    if (k !== 'Y') errs.push(`${label}: the office door's prompt shows ${k}, not Y`);
+    await tap(3);
+    const inOffice = await until(p, () => window.JG_STORY.debug.state().scene === 'office', null, 120000);
+    if (!inOffice) errs.push(`${label}: Y at the office door didn't go in (${JSON.stringify(await st(p)).slice(0, 160)})`);
+    else {
+      await toExploreJ(p);
+      if (await at('office-exit')) {
+        const k2 = await key(); if (k2 !== 'Y') errs.push(`${label}: the way out of the office shows ${k2}, not Y`);
+        await tap(3);
+        const out = await until(p, () => window.JG_STORY.debug.state().scene === 'lot', null, 120000);
+        if (!out) errs.push(`${label}: Y at the office's door didn't go back out`);
+        else notes.push(`${label}: Y through the office door (the prompt shows Y) and back out to the lot`);
+      } else errs.push(`${label}: no way out of the office to stand at`);
+    }
+  } else notes.push(`${label}: the office door wasn't open yet; the door check was skipped`);
+  await toExploreJ(p);
+  // a car: Y in (a press while it plays skips to seated), Y out; X in, B out
+  await until(p, () => window.JG_STORY.debug.cars().length > 0, null, 90000);
+  const cars = await p.evaluate(() => window.JG_STORY.debug.cars());
+  const car = cars.find(c => c.id !== 'idle') || cars[0];
+  if (!car) { errs.push(`${label}: no drivable car on the lot (${JSON.stringify(await st(p)).slice(0, 120)})`); return; }
+  const D = () => p.evaluate(() => window.JG_STORY.debug.drive());
+  const ride = async (inBtn, outBtn) => {
+    await p.evaluate(([x, z, cx, cz]) => window.JG_STORY.debug.put(x, z, Math.atan2(cx - x, cz - z)), [car.stand[0], car.stand[1], car.x, car.z]);
+    if (!(await until(p, id => window.JG_STORY.debug.state().near === id, 'car:' + car.id, 15000))) return `no Drive prompt at ${car.id}`;
+    const k = await key(); if (k !== 'Y') return `the car's prompt shows ${k}, not Y`;
+    await tap(inBtn);
+    if (!(await until(p, () => !!window.JG_STORY.debug.drive().state, null, 15000))) return `the press didn't start getting in`;
+    for (let i = 0; i < 40 && (await D()).state !== 'drive'; i++) { if ((await D()).skip) await tap(inBtn === 3 ? 3 : 0); else await p.waitForTimeout(250); }
+    if (!(await until(p, () => window.JG_STORY.debug.drive().state === 'drive', null, 60000))) return `never got in (${JSON.stringify(await D()).slice(0, 120)})`;
+    const hint = await p.evaluate(() => (document.querySelector('.st-drive__hint') || {}).textContent || '');
+    await p.waitForTimeout(300); await tap(outBtn);
+    if (!(await until(p, () => !window.JG_STORY.debug.drive().state && window.JG_STORY.debug.state().phase === 'explore', null, 60000))) return `the press didn't get out (${JSON.stringify(await D()).slice(0, 120)})`;
+    return { hint };
+  };
+  const r1 = await ride(3, 3);
+  if (typeof r1 === 'string') errs.push(`${label}: car, Y in and Y out: ${r1}`);
+  else {
+    if (r1.hint && !/A for the handbrake, X for the camera, Y or B to get out/.test(r1.hint)) errs.push(`${label}: the drive hint on a pad reads "${r1.hint}"`);
+    const r2 = await ride(2, 1);
+    if (typeof r2 === 'string') errs.push(`${label}: car, X in and B out: ${r2}`);
+    else notes.push(`${label}: into ${car.id} on Y (the prompt shows Y) and out on Y, in on X and out on B; the hint: "${r1.hint}"`);
+  }
+  await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+}
 async function padCheck(vname, w, h, mobile) {
   const label = `${vname} pad`;
   const ctx = await storyCtx(w, h, mobile, true);
@@ -1465,7 +1548,7 @@ async function padCheck(vname, w, h, mobile) {
   await press(4);
   let j = await J();
   if (j.dev !== 'pad') errs.push(`${label}: the pad wasn't taken as the device (${j.dev})`);
-  if (!/Jump/.test(j.legend)) errs.push(`${label}: no pad legend while exploring ("${j.legend}")`);
+  if (!/AJump/.test(j.legend) || !/View/.test(j.legend)) errs.push(`${label}: the pad legend while exploring reads "${j.legend}" (want A to jump, View for the journal)`);
   // walking: a light push strolls, all the way runs, a click of the stick runs on a light push
   const slow = await stick(0, -0.35, 40), full = await stick(0, -1, 60);
   await stick(0, 0, 30);
@@ -1475,17 +1558,19 @@ async function padCheck(vname, w, h, mobile) {
   if (!(full.speed > 2.2)) errs.push(`${label}: a full push only reached ${full.speed} m/s`);
   if (!(latched.speed > 2.2)) errs.push(`${label}: the stick's click didn't run on a light push (${latched.speed} m/s)`);
   notes.push(`${label}: the stick's curve: a light push ${slow.speed} m/s, all the way ${full.speed} m/s, clicked and light ${latched.speed} m/s`);
-  // A with nothing to use jumps, X jumps; the landing rumbles
+  // A jumps; X and Y with nothing prompted do nothing at all; the landing rumbles
   if (lane) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
   await p.evaluate(() => window.JG_STORY.debug.sim(20, 1 / 60));
   const n0 = (await J()).n;
   await press(0, 80); const ja = await J();
-  await press(2, 80); const jx = await J();
+  const s0 = await st(p);
+  await press(2, 20); await press(3, 20); const jx = await J(), sx = await st(p);
   if (ja.n !== n0 + 1 || ja.how !== 'pad') errs.push(`${label}: A with nothing prompted didn't jump (${ja.n - n0}, ${ja.how})`);
-  if (jx.n !== n0 + 2) errs.push(`${label}: X didn't jump`);
-  const rum = await p.evaluate(t => window.__rumble.filter(r => Math.abs(r.t - t) < 4), jx.last ? jx.last.t : 0);
+  if (jx.n !== ja.n) errs.push(`${label}: X or Y jumped`);
+  if (sx.phase !== 'explore' || sx.scene !== s0.scene || sx.near) errs.push(`${label}: X or Y with nothing prompted did something (${sx.phase}, ${sx.scene}, near ${sx.near})`);
+  const rum = await p.evaluate(t => window.__rumble.filter(r => Math.abs(r.t - t) < 4), ja.last ? ja.last.t : 0);
   if (!rum.length) errs.push(`${label}: no rumble on the landing`);
-  else notes.push(`${label}: A (nothing prompted) and X jump; the landing rumbles (${rum[0].type}, strong ${rum[0].strongMagnitude.toFixed(2)}, weak ${rum[0].weakMagnitude.toFixed(2)}, ${rum[0].duration} ms)`);
+  else notes.push(`${label}: A jumps, X and Y with nothing prompted do nothing; the landing rumbles (${rum[0].type}, strong ${rum[0].strongMagnitude.toFixed(2)}, weak ${rum[0].weakMagnitude.toFixed(2)}, ${rum[0].duration} ms)`);
   // the right stick's click puts the camera back behind you
   await p.evaluate(() => { window.__pad.axes[2] = 1; window.JG_STORY.debug.sim(30, 1 / 60); window.__pad.axes[2] = 0; window.JG_STORY.debug.sim(5, 1 / 60); });
   const off = (await J()).cam;
@@ -1517,9 +1602,11 @@ async function padCheck(vname, w, h, mobile) {
   }
   await press(1, 3);
   if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't back out of the pause menu (${(await st(p)).phase})`);
-  // the journal: Y opens it, the D-pad goes along the tabs, A opens one, B closes it
+  // the journal: View opens it (Y doesn't), the D-pad goes along the tabs, A opens one, B closes it
   await press(3, 4); await p.waitForTimeout(200);
-  if ((await st(p)).phase !== 'journal') errs.push(`${label}: Y didn't open the journal`);
+  if ((await st(p)).phase === 'journal') { errs.push(`${label}: Y opened the journal`); await press(1, 3); }
+  await press(8, 4); await p.waitForTimeout(200);
+  if ((await st(p)).phase !== 'journal') errs.push(`${label}: View didn't open the journal`);
   else {
     await press(15, 2); await press(0, 3);
     const tab = await p.evaluate(() => { const t = document.querySelector('.st-journal [aria-selected="true"]'); return t && t.dataset.tab; });
@@ -1530,14 +1617,94 @@ async function padCheck(vname, w, h, mobile) {
     if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't close the journal`);
     if (await p.evaluate(r0 => window.__rumble.length > r0, r0)) errs.push(`${label}: closing the journal (a cancel) rumbled`);
   }
-  // a talk: A at Jason starts it, A moves the lines on, the D-pad moves through the choices, A picks
+  // the Controller screen, from the pad alone: Menu, the D-pad to Settings, A, the D-pad to Controller, A; then a
+  // wait let go of with B (silent), and Jump put on X by pressing X (Interact takes A); it works at once and the glyphs follow
+  const toPadScreen = async () => {
+    await press(9, 2); await p.waitForTimeout(200);
+    for (let i = 0; i < 8; i++) { const f = await F(); if (f && f.text === STORY.ui.settings) break; await press(13, 2); }
+    await press(0, 3); await p.waitForTimeout(200);
+    for (let i = 0; i < 16; i++) { const f = await F(); if (f && f.text === STORY.ui.c_pad) break; await press(13, 2); }
+    await press(0, 3); await p.waitForTimeout(200);
+    return p.evaluate(() => !!document.querySelector('.st-pause [data-padkey]'));
+  };
+  const padKey = () => p.evaluate(() => { const a = document.activeElement; return a && a.dataset ? a.dataset.padkey || null : null; });
+  const toRow = async a => { for (let i = 0; i < 16; i++) { if (await padKey() === a) return true; await press(13, 2); } return false; };
+  const rowText = a => p.evaluate(a => { const b = document.querySelector(`.st-pause [data-padkey="${a}"]`); return b ? b.textContent.trim() : null; }, a);
+  const PADS = () => p.evaluate(() => window.JG_STORY.debug.settings().pad);
+  const D0 = { jump: 0, act: 2, enter: 3, back: 1, journal: 8, run: 10, recenter: 11, hb: 0, cam: 2, out: 3 };
+  if (!(await toPadScreen())) errs.push(`${label}: the D-pad and A didn't reach the Controller screen`);
+  else {
+    const rows = await p.evaluate(() => [...document.querySelectorAll('.st-pause [data-padkey]')].map(b => b.dataset.padkey + ' ' + b.textContent.trim()));
+    notes.push(`${label}: the Controller screen: ${rows.join(', ')}`);
+    if (rows.join() !== 'jump A,act X,enter Y,back B,journal View,run L3,recenter R3,hb A,cam X,out Y') errs.push(`${label}: the Controller screen's defaults read ${rows.join(', ')}`);
+    if (!(await toRow('jump'))) errs.push(`${label}: the D-pad didn't reach the Jump row`);
+    await press(0, 3);
+    const wait = await p.evaluate(() => { const b = document.querySelector('.st-pause [data-padkey="jump"]'); return b && b.classList.contains('is-wait') && b.textContent.trim(); });
+    if (wait !== STORY.ui.c_pad_press) errs.push(`${label}: A on the Jump row didn't wait for a button (${wait})`);
+    const q0 = await p.evaluate(() => [window.__rumble.length, window.__vib.length]);
+    await press(1, 3);
+    const q1 = await p.evaluate(() => [window.__rumble.length, window.__vib.length]);
+    if ((await st(p)).phase !== 'pause' || await rowText('jump') !== 'A' || (await PADS()).jump !== 0) errs.push(`${label}: B didn't let go of the wait (${(await st(p)).phase}, ${await rowText('jump')})`);
+    if (q1[0] !== q0[0] || q1[1] !== q0[1]) errs.push(`${label}: letting go of a wait rumbled or buzzed`);
+    if (await padKey() !== 'jump') errs.push(`${label}: the focus left the Jump row after a wait was let go (${await padKey()})`);
+    await press(0, 3); await press(2, 3);
+    const b1 = await PADS(), q2 = await p.evaluate(() => [window.__rumble.length, window.__vib.length]);
+    if (b1.jump !== 2 || b1.act !== 0) errs.push(`${label}: X on the Jump row didn't swap Jump and Interact (${JSON.stringify(b1)})`);
+    if (await rowText('jump') !== 'X' || await rowText('act') !== 'A') errs.push(`${label}: the rows read ${await rowText('jump')} and ${await rowText('act')} after the swap`);
+    if (q2[0] <= q1[0] && q2[1] <= q1[1]) errs.push(`${label}: a new binding (a choice) had no haptic`);
+    if (await padKey() !== 'jump') errs.push(`${label}: the focus left the Jump row after the binding (${await padKey()})`);
+    await shot0(p, 'pad-bindings');
+    await press(1, 3); await press(1, 3); await press(1, 3);
+    if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't back out of the Controller screen to play (${(await st(p)).phase})`);
+    // in play: X jumps now and A doesn't; the legend reads X for the jump
+    if (lane) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane);
+    await p.evaluate(() => window.JG_STORY.debug.sim(20, 1 / 60));
+    const m0 = (await J()).n; await press(0, 30); const m1 = (await J()).n; await press(2, 80); const m2 = await J();
+    if (m1 !== m0 || m2.n !== m0 + 1) errs.push(`${label}: after the swap A jumped ${m1 - m0}, X jumped ${m2.n - m1}`);
+    if (!/XJump/.test(m2.legend)) errs.push(`${label}: the legend didn't follow the swap ("${m2.legend}")`);
+    // a reload keeps it
+    await p.reload(); await openStory(p, mobile);
+    const ex2 = await toExploreJ(p); await turnAway(p);
+    if (!ex2.ok) errs.push(`${label}: never got back to explore after the reload`);
+    await p.evaluate(() => window.JG_STORY.debug.freeze && window.JG_STORY.debug.freeze(true));
+    const b2 = await PADS();
+    const lane2 = await quietLane(p, 5);
+    if (lane2) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane2);
+    await press(4); await p.evaluate(() => window.JG_STORY.debug.sim(20, 1 / 60));
+    const r0 = (await J()).n; await press(2, 80); const r1 = await J();
+    if (b2.jump !== 2 || b2.act !== 0 || r1.n !== r0 + 1) errs.push(`${label}: the binding didn't survive a reload (${JSON.stringify(b2)}, X jumped ${r1.n - r0})`);
+    else notes.push(`${label}: Jump put on X from the pad (Interact took A), at once in play, the legend read "${m2.legend}", and after a reload X still jumps`);
+    // Reset puts every button back
+    if (!(await toPadScreen())) errs.push(`${label}: the Controller screen didn't open again`);
+    for (let i = 0; i < 20; i++) { const f = await F(); if (f && f.text === STORY.ui.c_pad_reset) break; await press(13, 2); }
+    await press(0, 3);
+    const b3 = await PADS();
+    if (JSON.stringify(b3) !== JSON.stringify(D0)) errs.push(`${label}: Reset left ${JSON.stringify(b3)}`);
+    else if (await rowText('jump') !== 'A') errs.push(`${label}: the Jump row reads ${await rowText('jump')} after Reset`);
+    else notes.push(`${label}: Reset puts every button back`);
+    await press(1, 3); await press(1, 3); await press(1, 3);
+    if ((await st(p)).phase !== 'explore') errs.push(`${label}: B didn't back out after Reset (${(await st(p)).phase})`);
+    if (lane2) await p.evaluate(l => window.JG_STORY.debug.put(l[0], l[1], l[2]), lane2);
+    await p.evaluate(() => window.JG_STORY.debug.sim(20, 1 / 60));
+    const z0 = (await J()).n; await press(0, 80); if ((await J()).n !== z0 + 1) errs.push(`${label}: A didn't jump again after Reset`);
+  }
+  // a talk: X at Jason starts it (A there only jumps), A moves the lines on, the D-pad moves through the choices, A picks
   await p.evaluate(() => window.JG_STORY.debug.freeze(false));
   const warped = await p.evaluate(() => window.JG_STORY.debug.warp('jason-lot'));
   if (warped && await until(p, () => window.JG_STORY.debug.state().near === 'jason-lot', null, 15000)) {
     await p.evaluate(() => window.JG_STORY.debug.freeze(true));
+    // the prompt shows X; A next to him jumps and starts nothing
+    const pk = await p.evaluate(() => document.querySelector('.st-prompt__key').textContent);
+    if (pk !== 'X') errs.push(`${label}: the prompt at Jason shows ${pk}, not X`);
     const before = await J();
-    await press(0, 3);
-    if ((await J()).n !== before.n) errs.push(`${label}: A jumped with a prompt showing`);
+    await press(0, 80);
+    const aj = await J(), as = await st(p);
+    if (aj.n !== before.n + 1) errs.push(`${label}: A didn't jump with a prompt showing`);
+    if (as.phase !== 'explore' || as.line) errs.push(`${label}: A with a prompt showing used it (${as.phase})`);
+    await p.evaluate(() => window.JG_STORY.debug.sim(20, 1 / 60));
+    if ((await st(p)).near === 'jason-lot') await press(2, 3);
+    else { await p.evaluate(() => window.JG_STORY.debug.warp('jason-lot')); await p.evaluate(() => window.JG_STORY.debug.sim(3, 1 / 60)); await press(2, 3); }
+    { const s2 = await st(p); if (s2.phase !== 'talk' && !s2.line && !s2.choices) errs.push(`${label}: X at Jason didn't start the talk (${s2.phase})`); }
     let picked = false;
     for (let i = 0; i < 80 && !picked; i++) {
       const s = await st(p);
@@ -1548,7 +1715,7 @@ async function padCheck(vname, w, h, mobile) {
         if (idx !== 1) errs.push(`${label}: the D-pad didn't move to the second choice (${idx})`);
         await press(0, 3);
         picked = !(await st(p)).choices;
-        if (picked) notes.push(`${label}: a talk on A, lines moved on with A, the second choice reached on the D-pad and picked with A`);
+        if (picked) notes.push(`${label}: A next to Jason jumps, X starts the talk, lines moved on with A, the second choice reached on the D-pad and picked with A`);
         else errs.push(`${label}: A didn't pick the choice`);
         break;
       }
@@ -1559,6 +1726,8 @@ async function padCheck(vname, w, h, mobile) {
     const tx = await toExploreJ(p); if (!tx.ok) errs.push(`${label}: never back to explore after the talk`);
     await p.evaluate(() => window.JG_STORY.debug.freeze(true));
   } else notes.push(`${label}: Jason wasn't on the lot to talk to; the choices check was skipped`);
+  // Y goes in and out: the office door (its prompt shows Y), and back out through the office's own door
+  await ways(p, label, press);
   // the desk's phone: A finds the main button, A presses it, the D-pad reaches a car, A picks it, B backs out
   const opened = await p.evaluate(() => window.JG_STORY.debug.sheet());
   if (opened) {
