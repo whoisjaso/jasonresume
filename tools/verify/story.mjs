@@ -746,18 +746,20 @@ async function drive(vname, w, h, mobile) {
       const me = window.JG_STORY.debug.you(), q = me.group.quaternion, v = me.vel;
       const drawn = Math.atan2(2 * (q.w * q.y + q.x * q.z), 1 - 2 * (q.y * q.y + q.x * q.x)), w = a => Math.atan2(Math.sin(a), Math.cos(a));
       return { drawn: +w(drawn - me.yaw).toFixed(3), want: +w(drawn - me.wantYaw).toFixed(3), move: +w(drawn - Math.atan2(v.x, v.z)).toFixed(3), sp: +Math.hypot(v.x, v.z).toFixed(2),
-        tilt: +Math.acos(Math.min(1, 1 - 2 * (q.x * q.x + q.z * q.z))).toFixed(4), holds: me.reaches ? ['l', 'r'].filter(s => me.reaches[s]).join('') : '', car: !!me.car, phase: window.JG_STORY.debug.state().phase };
+        tilt: +Math.acos(Math.min(1, 1 - 2 * (q.x * q.x + q.z * q.z))).toFixed(4), holds: me.reaches ? ['l', 'r'].filter(s => me.reaches[s]).join('') : '', car: !!me.car, phase: window.JG_STORY.debug.state().phase, cam: window.JG_STORY.debug.jumpState().cam };
     });
     await p.keyboard.down('Shift'); await p.keyboard.down('w');
     // (on the fixed clock, a frame a step: software GL is too slow to judge a stride in real time)
     const seen = []; let bad = null, ran = 0;
+    await p.evaluate(() => window.JG_STORY.debug.freeze(true));
     for (let i = 0; i < 30 && ran < 12; i++) {
-      await p.evaluate(() => window.JG_STORY.debug.sim(2, 1 / 30));
+      await p.evaluate(() => window.JG_STORY.debug.step(2, 1 / 30, false));
       const r = await RS(); seen.push(r);
       if (r.sp > 2) ran++;
       if (Math.abs(r.drawn) > 0.02 || r.tilt > 0.01 || r.holds || r.car || (r.sp > 2 && (Math.abs(r.move) > 0.2 || Math.abs(r.want) > 0.2))) { bad = r; break; }
     }
     await p.keyboard.up('w'); await p.keyboard.up('Shift');
+    await p.evaluate(() => window.JG_STORY.debug.freeze(false));
     if (bad) errs.push(`${label}: the run after getting out isn't the run from before (${JSON.stringify(bad)})`);
     else if (!ran) notes.push(`${label}: (the run after getting out never got up to speed: ${JSON.stringify(seen.slice(-1)[0] || null)})`);
     else notes.push(`${label}: ran on after getting out: upright, facing the way it goes, hands free`);
