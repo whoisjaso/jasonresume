@@ -29,6 +29,9 @@ const MIX_KEY = "jg_story_mix";
 export const MIX0 = { master: 1, music: 0.8, voice: 1, sfx: 0.85 };
 /* the levels, as linear gains, before the sliders; tuned so a voice sits about
    9 dB over the rain and footsteps sit between them */
+/* every rain sound at one level (the open lot, the canopy, the cars' roofs, the glass, the car's roof from inside):
+   present under everything, never over the voices */
+export const RAIN = 0.32;
 export const LEVELS = { voice: 1.0, sfx: 0.62, amb: 0.42, ui: 0.5, verb: 0.22 };
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -250,7 +253,7 @@ export function createAudio(o) {
     if (!A.ctx) return;
     clearAmb();
     const N = A.nodes, t = now(), outside = name === "lot" || name === "decision" || name === "keys" || name === "sale";
-    const rain = name === "lot" ? 1 : name === "decision" ? 0.6 : name === "office" ? 1 : 0;
+    const rain = (name === "lot" ? 1 : name === "decision" ? 0.6 : name === "office" ? 1 : 0) * RAIN;
     // the glass: wide open outside, a murmur inside
     N.outLp.frequency.cancelScheduledValues(t); N.outLp.frequency.setTargetAtTime(outside ? 16000 : name === "office" ? 640 : 300, t, 0.3);
     ramp(N.out.gain, outside ? 1 : name === "office" ? 0.5 : 0, 1);
@@ -303,8 +306,8 @@ export function createAudio(o) {
       lamps(set, "tube");
       if (SN.vending) loop(A.brown, { name: "hum-vending", filters: HUM["fridge-hum"].f, gain: 0.07, at: SN.vending, ref: 1.2, roll: 1.4 });
       const win = SN.window || { x: 5.9, y: 1.6, z: -0.4 };
-      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2200, 0.6]], gain: 0.3, at: win, ref: 1.8, roll: 1.1 }); if (win.w) A.lines.push({ n: A.window, src: { ...win, w: 0 }, zSpan: win.w / 2 });
-      loop(A.brown, { name: "rain-far", filters: [["lowpass", 420]], gain: 0.06 });
+      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2200, 0.6]], gain: 0.3 * RAIN, at: win, ref: 1.8, roll: 1.1 }); if (win.w) A.lines.push({ n: A.window, src: { ...win, w: 0 }, zSpan: win.w / 2 });
+      loop(A.brown, { name: "rain-far", filters: [["lowpass", 420]], gain: 0.06 * RAIN });
       A.clock = SN.clock || { x: -0.9, y: 2.4, z: -4.4 };
       A.clockOn = true; A.tickT = t + 0.4; A.clockGain = 0.11;
       A.corridor = SN.corridor || { x: 4.2, y: 1.2, z: 6 };
@@ -318,7 +321,7 @@ export function createAudio(o) {
       lamps(set, "tube");
       // the window, with the rain on it
       const win = SN.window || ((set.userData.spots && set.userData.spots.window) ? set.userData.spots.window.p : { x: 0, y: 1.6, z: 4.8 });
-      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2400, 0.6]], gain: 0.22, at: { x: win.x, y: win.y, z: win.z + 0.1 }, ref: 1.6, roll: 1.2 }); if (win.w) A.lines.push({ n: A.window, src: win });
+      A.window = loop(A.drops, { name: "window", filters: [["bandpass", 2400, 0.6]], gain: 0.22 * RAIN, at: { x: win.x, y: win.y, z: win.z + 0.1 }, ref: 1.6, roll: 1.2 }); if (win.w) A.lines.push({ n: A.window, src: win });
       // the laptop's fan, the fridge under the coffee counter
       if (SN.laptop) loop(A.pink, { name: "laptop-fan", filters: [["bandpass", 1100, 1.2]], gain: 0.012, at: SN.laptop, ref: 0.6, roll: 1.6 });
       if (SN.coffee) { osc("sine", 120, { name: "fridge", gain: 0.01, at: SN.coffee, ref: 0.8, roll: 1.5 }); loop(A.brown, { name: "fridge-body", filters: [["lowpass", 160]], gain: 0.05, at: SN.coffee, ref: 0.8, roll: 1.5 }); }
@@ -332,7 +335,7 @@ export function createAudio(o) {
       loop(A.pink, { name: "hush", filters: [["lowpass", 900], ["highpass", 90]], gain: 0.07 });
       loop(A.brown, { name: "far-air", filters: [["lowpass", 160]], gain: 0.1 });
       // rain on the tall windows, and a slow clock high on the wall
-      if (SN.windows) { const n = loop(A.drops, { name: "rain-glass", rate: 0.8, filters: [["bandpass", 2000, 0.7]], gain: 0.14, at: SN.windows, ref: 3, roll: 1 }); A.lines.push({ n, src: SN.windows }); }
+      if (SN.windows) { const n = loop(A.drops, { name: "rain-glass", rate: 0.8, filters: [["bandpass", 2000, 0.7]], gain: 0.14 * RAIN, at: SN.windows, ref: 3, roll: 1 }); A.lines.push({ n, src: SN.windows }); }
       if (SN.clock) { A.clock = SN.clock; A.clockOn = true; A.tickT = t + 0.7; }
       A.nextHush = t + rnd(4, 9);
     }
@@ -664,7 +667,7 @@ export function createAudio(o) {
     const srcs = [o1, o2, o3, wob, intake, sq, sqT, sqV, road, spray, roof];
     srcs.forEach(n => n.start(t0 + 0.01));
     ramp(out.gain, 1, 0.4);
-    const rain = o.rain == null ? 1 : o.rain;
+    const rain = (o.rain == null ? 1 : o.rain) * RAIN;
     const D = { rpm: 0, on: !!o.running, inside: false, dip: 0, last: {}, gearT: 0 };
     log("car", "drive");
     if (!D.on && o.start !== false) start();
