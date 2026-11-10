@@ -71,7 +71,7 @@
       { "id": "night-fire-3", "who": "fire", "t": "We'll take it from here. Follow us in." },
       { "id": "night-jason-7", "who": "jason", "t": "He was treated at the hospital." },
       { "id": "night-jason-8", "who": "jason", "t": "My dad handled the lot day to day. After that night, it fell to me." },
-      { "id": "night-jason-9", "who": "jason", "t": "Triple J. Three J names in my family. Mine is one of them." }
+      { "id": "night-jason-9", "who": "jason", "t": "Triple J. Jason, Jonathan and Joy. My brother, my sister and me." }
     ], "do": ["journal:night", "goto:lot"] },
     "lot-arrive": {
       "lines": [
