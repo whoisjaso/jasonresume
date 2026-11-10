@@ -151,6 +151,8 @@ function plane(w, h, mat, parent) { const m = new THREE.Mesh(new THREE.PlaneGeom
 function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
 /* ---------- the wet ground: puddles, ripples, the lamps' pools and their streaked reflections ---------- */
+/* how many moving things the ground can shade at once (phones take fewer) */
+export const SHADE = { cap: WQ === "lo" ? 2 : 4, box: WQ === "lo" ? 1 : 3 };
 export function groundMat(g, o = {}) {
   const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
   const flat = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1); flat.needsUpdate = true;
@@ -162,7 +164,15 @@ export function groundMat(g, o = {}) {
       uAsC: { value: T.asphC || grey }, uAsN: { value: T.asphN || flat }, uAsR: { value: T.asphR || arm0 },
       uCoC: { value: T.concC || grey }, uCoN: { value: T.concN || flat }, uCoR: { value: T.concR || arm0 },
       uSh0: { value: o.sh ? o.sh[0] : white }, uSh1: { value: o.sh ? o.sh[1] : white }, uShLamp: { value: (o.shLamps || []).concat(Array(8).fill(new THREE.Vector3(0, -999, 0))).slice(0, 8) },
-      uTile: { value: 3.6 }, uDay: { value: o.day ? 1 : 0 } },
+      uTile: { value: 3.6 }, uDay: { value: o.day ? 1 : 0 }, uSunSh: { value: o.sunSh ? 1 : 0 },
+      // what moves and still has to stand on the ground: people as upright capsules (x, z, radius, height), the cars you can
+      // drive as boxes (x, z, cos, sin of the yaw; half width, half length, top, underside). main.js writes them each frame
+      uCap: { value: Array.from({ length: SHADE.cap }, () => new THREE.Vector4(0, 0, 0.2, 0)) }, uCapN: { value: 0 },
+      // headlights and tail lights on the ground, for the idling car and the one you drive: the car's centre and heading
+      // (sin, cos of its yaw), then how lit the heads are, how lit the tails, and half its length
+      uBeam: { value: [new THREE.Vector4(0, 0, 0, 1), new THREE.Vector4(0, 0, 0, 1)] }, uBeamK: { value: [new THREE.Vector3(), new THREE.Vector3()] },
+      uBoxP: { value: Array.from({ length: SHADE.box }, () => new THREE.Vector4(0, 0, 1, 0)) }, uBoxS: { value: Array.from({ length: SHADE.box }, () => new THREE.Vector4(1, 2, 1.4, 0.2)) }, uBoxN: { value: 0 } },
+    defines: { NCAP: SHADE.cap, NBOX: SHADE.box },
     vertexShader: `varying vec3 vWP; varying vec2 vUv; void main(){ vUv = uv; vec4 wp = modelMatrix * vec4(position, 1.0); vWP = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }`,
     fragmentShader: `
       #define PI_ 3.14159265
@@ -170,7 +180,9 @@ export function groundMat(g, o = {}) {
       uniform vec4 uLampPos[8]; uniform vec4 uLampCol[8]; uniform int uLampN; uniform vec3 uFog; uniform float uFogDen; uniform float uSat;
       uniform sampler2D uDetail; uniform sampler2D uMask; uniform sampler2D uRefl; uniform vec2 uRes; uniform vec2 uSize; uniform float uRain; uniform float uWet; uniform float uReflK;
       uniform sampler2D uAsC; uniform sampler2D uAsN; uniform sampler2D uAsR; uniform sampler2D uCoC; uniform sampler2D uCoN; uniform sampler2D uCoR;
-      uniform sampler2D uSh0; uniform sampler2D uSh1; uniform vec3 uShLamp[8]; uniform float uTile; uniform float uDay;
+      uniform sampler2D uSh0; uniform sampler2D uSh1; uniform vec3 uShLamp[8]; uniform float uTile; uniform float uDay; uniform float uSunSh;
+      uniform vec4 uBeam[2]; uniform vec3 uBeamK[2];
+      uniform vec4 uCap[NCAP]; uniform int uCapN; uniform vec4 uBoxP[NBOX]; uniform vec4 uBoxS[NBOX]; uniform int uBoxN;
       uniform samplerCube uEnv; uniform float uEnvOn; uniform float uEnvMax;
       varying vec3 vWP; varying vec2 vUv;
       float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -197,6 +209,28 @@ export function groundMat(g, o = {}) {
       float shadowOf(vec3 lp, vec4 s0, vec4 s1){
         for (int k = 0; k < 8; k++) { if (distance(lp, uShLamp[k]) < 0.05) { return k < 4 ? s0[k] : s1[k - 4]; } }
         return 1.0;
+      }
+      // how much of a light at lp reaches this point past the people and the driven cars: a soft, stretched shadow that
+      // meets the feet and the tyres and widens and fades away from them
+      float occl(vec3 g, vec3 lp){
+        float s = 1.0; vec3 D = lp - g;
+        for (int k = 0; k < NCAP; k++) {
+          if (k >= uCapN) break;
+          vec2 P = uCap[k].xy - g.xz; float t = clamp(dot(P, D.xz) / max(dot(D.xz, D.xz), 1e-4), 0.0, 1.0);
+          float dh = length(P - D.xz * t), far = length(P);
+          float o = (1.0 - smoothstep(uCap[k].z * 0.55, uCap[k].z * 1.25 + far * 0.14, dh)) * (1.0 - smoothstep(uCap[k].w - 0.2, uCap[k].w + 0.12, g.y + t * D.y)) / (1.0 + far * 0.22);
+          s *= 1.0 - o * 0.9;
+        }
+        for (int k = 0; k < NBOX; k++) {
+          if (k >= uBoxN) break;
+          vec4 b = uBoxP[k], e = uBoxS[k]; vec2 q = g.xz - b.xy;
+          if (dot(q, q) > 400.0) continue;
+          vec3 o3 = vec3(q.x * b.z - q.y * b.w, g.y, q.x * b.w + q.y * b.z), v = vec3(D.x * b.z - D.z * b.w, D.y, D.x * b.w + D.z * b.z) + 1e-5;
+          vec3 ta = (vec3(-e.x, e.w, -e.y) - o3) / v, tb = (vec3(e.x, e.z, e.y) - o3) / v, t0 = min(ta, tb), t1 = max(ta, tb);
+          float n0 = max(max(t0.x, t0.y), max(t0.z, 0.0)), n1 = min(min(t1.x, t1.y), min(t1.z, 1.0));
+          s *= 1.0 - smoothstep(0.0, 0.35 / max(length(D), 1.0), n1 - n0) * 0.92;
+        }
+        return s;
       }
       void main(){
         vec2 wuv = vWP.xz / uTile;
@@ -231,7 +265,9 @@ export function groundMat(g, o = {}) {
         float nv = max(dot(N, V), 1e-3);
         vec4 s0 = texture2D(uSh0, (vWP.xz + uSize * 0.5) / uSize), s1 = texture2D(uSh1, (vWP.xz + uSize * 0.5) / uSize);
         // light: sky and ground fill, the moon, the lamps with their baked shadows
-        vec3 dif = mix(uGround, uSky, 0.55) * ao + uMoon * max(dot(N, uMoonDir), 0.0) * 0.6;
+        float sunV = mix(1.0, s0.r, uSunSh) * occl(vWP, vWP + uMoonDir * 60.0);
+        // (under a person or a car the sky is hidden too: a little of the fill goes with the light)
+        vec3 dif = mix(uGround, uSky, 0.55) * ao * mix(0.72, 1.0, sunV) + uMoon * max(dot(N, uMoonDir), 0.0) * 0.6 * sunV;
         vec3 spec = vec3(0.0);
         float a = max(rough * rough, 0.002);
         for (int i = 0; i < 8; i++) {
@@ -240,6 +276,8 @@ export function groundMat(g, o = {}) {
           float att = clamp(1.0 - d / uLampPos[i].w, 0.0, 1.0); att *= att;
           float cone = 1.0; if (uLampCol[i].w > 0.0) cone = smoothstep(uLampCol[i].w, uLampCol[i].w + 0.25, dot(-L, vec3(0.0, -1.0, 0.0)));
           vec3 lc = uLampCol[i].rgb * att * cone * shadowOf(uLampPos[i].xyz, s0, s1);
+          if (dot(lc, lc) < 1e-6) continue;
+          lc *= occl(vWP, uLampPos[i].xyz);
           float nl = max(dot(N, L), 0.0);
           dif += lc * nl;
           // the lamp's highlight: GGX, widened by the lamp's size; wet asphalt stretches it toward you
@@ -247,6 +285,16 @@ export function groundMat(g, o = {}) {
           vec3 H = normalize(L + V); float nh = max(dot(N, H), 0.0), vh = max(dot(V, H), 0.0);
           float F = 0.03 + 0.97 * pow(1.0 - vh, 5.0);
           spec += lc * D_GGX(ap, nh) * V_Smith(ap, nv, nl) * nl * F * PI_ * (a * a / max(ap * ap, 1e-4) * 0.7 + 0.3) * (0.4 + 0.6 * damp);
+        }
+        // a car's lamps on the road: two throws ahead of the nose that widen and die away, and the tails' red behind
+        for (int k = 0; k < 2; k++) {
+          vec3 bk = uBeamK[k]; if (bk.x + bk.y <= 0.0) continue;
+          vec2 dir = uBeam[k].zw, rel = vWP.xz - uBeam[k].xy; float al = dot(rel, dir), sd = dot(rel, vec2(dir.y, -dir.x));
+          float fa = al - bk.z, w = 0.7 + max(fa, 0.0) * 0.3;
+          float hp = smoothstep(-0.2, 1.8, fa) * exp(-max(fa, 0.0) / 9.5) * (exp(-pow((sd - 0.55) / w, 2.0)) + exp(-pow((sd + 0.55) / w, 2.0))) * 0.5 * bk.x;
+          if (hp > 0.004) { vec2 nose = uBeam[k].xy + dir * (bk.z + 0.1); hp *= occl(vWP, vec3(nose.x, 0.68, nose.y)); dif += vec3(1.0, 0.93, 0.8) * hp * 2.0; spec += vec3(1.0, 0.93, 0.8) * hp * damp * 0.05; }
+          float ra = -al - bk.z;
+          dif += vec3(1.0, 0.07, 0.03) * smoothstep(-0.3, 0.5, ra) * exp(-max(ra, 0.0) / 1.5) * exp(-pow(sd / 1.25, 2.0)) * bk.y * 0.9;
         }
         vec3 col = alb * dif * (1.0 - pud * 0.25) + spec;
         // the reflection: the mirrored scene, sharp in puddles, smeared downward on wet asphalt
@@ -792,9 +840,9 @@ function palm(x, z, h, set, r) {
    the city's edge on the horizon (buildings, towers, a few lit windows and beacons) */
 function skyDome(o) {
   return new THREE.Mesh(new THREE.SphereGeometry(150, 48, 24, 0, Math.PI * 2, 0, Math.PI * 0.62), new THREE.ShaderMaterial({
-    uniforms: { uTime: U.uTime, uFog: U.uFog, uDay: { value: o.day ? 1 : 0 }, uMap: { value: TX.skylineTex() } },
+    uniforms: { uTime: U.uTime, uFog: U.uFog, uMoonDir: U.uMoonDir, uDay: { value: o.day ? 1 : 0 }, uMap: { value: TX.skylineTex() } },
     vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `uniform float uTime; uniform float uDay; uniform vec3 uFog; uniform sampler2D uMap; varying vec3 vD;
+    fragmentShader: `uniform float uTime; uniform float uDay; uniform vec3 uFog; uniform vec3 uMoonDir; uniform sampler2D uMap; varying vec3 vD;
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
       float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * n(p); p = p * 2.03 + 7.1; a *= 0.5; } return s; }
@@ -804,15 +852,24 @@ function skyDome(o) {
         vec2 cp = d.xz / max(d.y + 0.08, 0.04) * 0.35 + vec2(uTime * 0.004, uTime * 0.002);
         float cl = smoothstep(0.35, 0.8, fbm(cp));
         // the haze at the horizon is the scene's fog, so the ground meets the sky without a seam
-        vec3 night = mix(uFog * 1.15 + vec3(0.012, 0.008, 0.004), vec3(0.006, 0.008, 0.011), smoothstep(0.0, 0.45, y));
-        night += vec3(0.034, 0.021, 0.012) * cl * (1.0 - smoothstep(0.0, 0.6, y)) + vec3(0.008, 0.006, 0.005) * cl;
-        vec3 day = mix(vec3(0.66, 0.66, 0.62), vec3(0.3, 0.45, 0.62), smoothstep(0.0, 0.5, y)) * mix(1.0, 1.15, cl);
+        vec3 night = mix(uFog * 1.15 + vec3(0.012, 0.008, 0.004), vec3(0.006, 0.009, 0.014), smoothstep(0.0, 0.45, y));
+        // the city under the cloud: sodium light thrown up from the horizon, brighter on the deck's underside, and the deck's own shapes
+        float cl2 = fbm(cp * 2.7 + 3.1);
+        float lowk = 1.0 - smoothstep(0.0, 0.55, y);
+        night += vec3(0.085, 0.048, 0.024) * (0.25 + 0.75 * cl) * lowk * lowk * smoothstep(0.0, 0.06, y);
+        night += vec3(0.022, 0.019, 0.02) * cl * mix(0.5, 1.0, cl2) + vec3(0.004, 0.006, 0.01) * (1.0 - cl);
+        // the morning: a clear blue that pales to the horizon, cumulus with lit tops and grey bases, the sun's glare
+        vec3 sd = normalize(uMoonDir); float sun = max(dot(d, sd), 0.0);
+        vec3 day = mix(vec3(0.4, 0.53, 0.68), vec3(0.1, 0.25, 0.55), pow(smoothstep(0.0, 0.7, y), 0.6));
+        float cd = smoothstep(0.42, 0.72, fbm(cp * 1.3)), cs = smoothstep(0.3, 0.75, fbm(cp * 1.3 + sd.xz * 0.06));
+        day = mix(day, mix(vec3(0.5, 0.54, 0.6), vec3(1.0, 0.97, 0.9), clamp(1.0 - cs * 0.9 + sun * 0.3, 0.0, 1.0)), cd * smoothstep(0.02, 0.2, y) * 0.92);
+        day += vec3(1.0, 0.85, 0.6) * (pow(sun, 24.0) * 0.35 + pow(sun, 900.0) * 6.0);
         vec3 c = mix(night, day, uDay);
         // the skyline on the horizon
         float az = atan(d.z, d.x) / 6.2831853 + 0.5;
         float sy = d.y / 0.09;
-        if (sy > 0.0 && sy < 1.0) { vec4 s = texture2D(uMap, vec2(fract(az * 3.0), sy)); c = mix(c, s.rgb * mix(1.0, 0.0, uDay) + mix(vec3(0.0), vec3(0.42, 0.45, 0.46), uDay), s.a); }
-        if (d.y < 0.0) c = mix(c, vec3(0.03, 0.025, 0.022) * (1.0 - uDay) + vec3(0.45, 0.44, 0.4) * uDay, smoothstep(0.0, -0.05, d.y));
+        if (sy > 0.0 && sy < 1.0) { vec4 s = texture2D(uMap, vec2(fract(az * 3.0), sy)); c = mix(c, s.rgb * mix(1.0, 0.0, uDay) + mix(vec3(0.0), vec3(0.2, 0.26, 0.33), uDay), s.a); }
+        if (d.y < 0.0) c = mix(c, vec3(0.03, 0.025, 0.022) * (1.0 - uDay) + vec3(0.17, 0.18, 0.18) * uDay, smoothstep(0.0, -0.05 + 0.036 * uDay, d.y));
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
       }`, side: THREE.BackSide, depthWrite: false, fog: false
@@ -1583,7 +1640,7 @@ export function buildLot(o) {
     for (const dz of [-0.08, 0.08]) { const l = plane(160, 0.1, yel, set); l.rotation.x = -Math.PI / 2; l.position.set(0, -0.005, 31 + dz); }
     const sw = plane(160, 3.4, rmat({ color: "#a9a59c", mapK: "concC", tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw.rotation.x = -Math.PI / 2; sw.position.set(0, -0.01, 23.4);
     const sw2 = plane(160, 3, rmat({ color: "#a9a59c", mapK: "concC", tri: 0.6, rough: 0.8, wet: day ? 0 : 0.9 }), set); sw2.rotation.x = -Math.PI / 2; sw2.position.set(0, -0.01, 39.5);
-    // cobra-head street lights along the far side, glowing (their light is the lens and its halo; the lot's lamps do the lighting)
+    // cobra-head street lights along the far side
     const pole = pbr({ color: "#6f7376", metal: 0.8, rough: 0.5, wet: 1 });
     const lensM = glow0(day ? "#c8c4b8" : "#ffcc80", { k: day ? 0.1 : 4.0 });
     for (let x = -60; x <= 60; x += 30) {
@@ -1591,6 +1648,8 @@ export function buildLot(o) {
       const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), pole); a.rotation.x = Math.PI / 2; a.position.set(x, 8.9, 37.4); set.add(a);
       const hd = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.8), pole); hd.position.set(x, 8.85, 36.1); set.add(hd);
       const ln = plane(0.3, 0.6, lensM, set); ln.rotation.x = Math.PI / 2; ln.position.set(x, 8.76, 36.1); ln.userData.keep = true;
+      // each one lights the road and both walks under it (it joins the nearest lamps when you are out here)
+      if (!day) set.userData.lamps.push({ p: V3(x, 8.7, 36.1), range: 27, col: [2.5, 1.62, 0.8], cone: 0.1, street: true });
     }
     // power poles and their wires, along the lot's side of the road
     const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });
@@ -1603,7 +1662,7 @@ export function buildLot(o) {
       }
     }
     // across the road: a strip of low buildings, dark at this hour, a few signs and windows still lit
-    const bldg = rmat({ color: "#3a3936", rough: 0.9, wet: 0.6, mapK: "concC", tri: 0.25 });
+    const bldg = rmat({ color: day ? "#8f8a80" : "#3a3936", rough: 0.9, wet: 0.6, mapK: "concC", tri: 0.25 });
     const rb = rng(77);
     // (the places you can walk or drive to across the road keep their ground: the empty lot, the shop, the gas station)
     const RESERVED = [[-40, -22], [6, 22], [24, 46]];
@@ -1631,10 +1690,14 @@ export function buildLot(o) {
     const g = TX.lotGround(W, H, px, { puddles: [[-1.5, 11.2, 1.9, 1.3], [-0.6, 10.2, 0.8, 0.6]], lines, cars: carsG, conc, dry: [[-12.4, -17.9, 16.4, -16.0]], ao: [[-11.4, -18.0, 15.4, -17.6, 0.7, 0.9], [-12.4, -15.75, 16.4, -15.55, 0.35, 0.25], [-34, 21.4, 34, 21.6, 0.3, 0.3]].concat(set.userData.lamps.filter(l => l.coneMesh).map(l => [l.p.x - 0.82 - 0.3, l.p.z - 0.3, l.p.x - 0.82 + 0.3, l.p.z + 0.3, 0.6, 0.45])) });
     const shBoxes = parked.map(c => { const [w, l] = carSize(c.kind); const m = carLib[c.kind] && carLib[c.kind].meta; return { x: c.x, z: c.z, yaw: c.yaw, hw: w / 2 - 0.05, hl: l / 2 - 0.15, h: (m ? m.H : 1.45) - 0.1, y0: 0.18 }; })
       .concat([{ x: 2, z: -22.6, hw: 13.3, hl: 3.7, h: 5.6, yaw: 0 }, { x: -15, z: -9, hw: 1.9, hl: 0.2, h: 6.5, y0: 5.3, yaw: 0 }, { x: 2, z: -16.9, hw: 13.6, hl: 0.95, h: 4.1, y0: 3.87, yaw: 0 }]);
-    const shL = set.userData.lamps.filter(l => !l.car).slice(0, 8);
-    const sh = day ? null : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, shL.map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range })), shBoxes);
-    const gm = groundMat(g, { wet: day ? 0 : 1, rain: day ? 0 : 1, sh, shLamps: shL.map(l => l.p.clone()), day });
+    const shL = set.userData.lamps.filter(l => !l.car && !l.street).slice(0, 8);
+    // at night each lamp's shadows; in the morning the sun's, baked the same way from a lamp a long way off (the posts throw theirs too)
+    const SUN = V3(0.65, 0.5, 0.4).normalize().multiplyScalar(400);
+    const posts = day ? set.userData.lamps.filter(l => l.coneMesh).map(l => ({ x: l.p.x - 0.82, z: l.p.z, hw: 0.1, hl: 0.1, h: l.p.y + 0.2, yaw: 0 })) : [];
+    const sh = day ? TX.lampShadows(W, H, o.lowres ? 2.5 : 4, [{ x: SUN.x, y: SUN.y, z: SUN.z, range: 1e5 }], shBoxes.concat(posts)) : TX.lampShadows(W, H, o.lowres ? 2.5 : 4, shL.map(l => ({ x: l.p.x, y: l.p.y, z: l.p.z, range: l.range })), shBoxes);
+    const gm = groundMat(g, { wet: day ? 0 : 1, rain: day ? 0 : 1, sh, shLamps: day ? [] : shL.map(l => l.p.clone()), day, sunSh: day });
     ground.material = gm; set.userData.groundMat = gm;
+    if (idleCar) { gm.uniforms.uBeam.value[0].set(idleCar.x, idleCar.z, Math.sin(idleCar.yaw), Math.cos(idleCar.yaw)); gm.uniforms.uBeamK.value[0].set(1, 0.22, carSize(idleCar.kind)[1] / 2); }
     // textures that were not in yet when the lot was built
     lotReady.then(() => { const u = gm.uniforms; for (const [k, t] of [["uAsC", "asphC"], ["uAsN", "asphN"], ["uAsR", "asphR"], ["uCoC", "concC"], ["uCoN", "concN"], ["uCoR", "concR"]]) if (T[t] && u[k].value !== T[t]) u[k].value = T[t]; });
     // what's underfoot, for footsteps: puddle, concrete, wet asphalt (dry in the morning), tile inside the showroom

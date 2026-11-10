@@ -36,6 +36,8 @@ node tools/verify/resume.mjs     # ten PDFs and .txt copies (assets/ and assets/
 node tools/verify/match.test.mjs # the listing match on realistic listings and lookalike phrases
 node tools/verify/run-bot.mjs    # After Hours: The Run played by a bot, every level, desktop keys and phone touches
 node tools/verify/story.mjs      # After Hours, the episode: every branch through real keys, clicks and taps, desktop and phone both ways
+node tools/verify/story.mjs desktop --hud   # the round map, the title cards, the passers-by and the horn (it also runs after --explore)
+node tools/verify/gta-stills.mjs after      # the look in stills at real resolution (tools/verify/out/gta-after-*.png), with each view's draw calls
 ```
 
 ## The run, played by a bot

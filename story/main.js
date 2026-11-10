@@ -25,10 +25,11 @@
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { U, MAXL, blobMat } from "./paint.js";
 import * as TX from "./tex.js";
-import { loadCast, CAST_VER } from "./people.js";
+import { loadCast, CAST_VER, LOOKS } from "./people.js";
 import * as WORLD from "./world.js";
 const { buildLot, buildOffice, buildLibrary, addKeys, buildWaitingRoom } = WORLD;
 import { Post, GRADES, applyGrade } from "./post.js";
+import { createCrowd } from "./crowd.js";
 import { createAudio } from "./audio.js";
 import { buildNav, pathLen } from "./nav.js";
 import { Guide } from "./guide.js";
@@ -66,8 +67,8 @@ SET.keys = Object.assign({}, KEYS0, SET.keys || {});
 /* the pad's buttons (the standard mapping's indices), one per action, in two sets that never meet: on your feet and in
    the car (where RT and LT are the pedals). A binding a set can't use (Menu, the guide button, a pedal, a repeat)
    puts that whole set back to its defaults */
-const PAD_FOOT = ["jump", "act", "enter", "back", "journal", "run", "recenter"], PAD_CAR = ["hb", "cam", "out"];
-const PAD0 = { jump: 0, act: 2, enter: 3, back: 1, journal: 8, run: 10, recenter: 11, hb: 0, cam: 2, out: 3 };
+const PAD_FOOT = ["jump", "act", "enter", "back", "journal", "run", "recenter"], PAD_CAR = ["hb", "cam", "out", "horn"];
+const PAD0 = { jump: 0, act: 2, enter: 3, back: 1, journal: 8, run: 10, recenter: 11, hb: 0, cam: 2, out: 3, horn: 10 };
 const PADNAME = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "View", "Menu", "L3", "R3", "Up", "Down", "Left", "Right", "Home"];
 const padFree = (i, car) => Number.isInteger(i) && i >= 0 && i < 16 && i !== 9 && !(car && (i === 6 || i === 7));
 SET.pad = Object.assign({}, PAD0, SET.pad || {});
@@ -163,8 +164,9 @@ let quality = COARSE.matches ? 1 : 2;
 { const m = location.search.match(/[?&]sq=(\d)/); if (DEBUG && m) quality = +m[1]; }
 const post = new Post(renderer, { quality });
 // a phone starts at a modest resolution (its screen is small and dense; the post chain hides the difference) and earns more if there's room
-const PR_MAX = COARSE.matches ? 1.25 : 1.75, PR_MIN = COARSE.matches ? 0.75 : 0.7;
-let pixelRatio = Math.min(devicePixelRatio || 1, PR_MAX);
+// (a desktop draws at the screen's own density up to two; a phone can earn one and a half, and starts a step under it)
+const PR_MAX = COARSE.matches ? 1.5 : 2, PR_MIN = COARSE.matches ? 0.75 : 0.7;
+let pixelRatio = Math.min(devicePixelRatio || 1, COARSE.matches ? 1.25 : PR_MAX);
 let VW = innerWidth, VH = innerHeight; // the viewport, read once per resize, never per frame
 { const m = location.search.match(/[?&]pr=([\d.]+)/); if (DEBUG && m) { pixelRatio = +m[1]; S.lockQ = true; } }
 function resize() {
@@ -602,7 +604,7 @@ function notice(text) {
 let toastT = null;
 function toast(text) { toastEl.textContent = text; toastEl.hidden = false; toastEl.classList.add("is-on"); clearTimeout(toastT); toastT = setTimeout(() => { toastEl.classList.remove("is-on"); setTimeout(() => (toastEl.hidden = true), 400); }, FAST ? 200 : 2200); }
 function objective(k) {
-  if (k !== S.obj) progress();
+  if (k !== S.obj) { progress(); hudObjective(S.obj, k); }
   S.obj = k; const t = k && D.objectives[k];
   if (!t) { objEl.classList.remove("is-on"); setTimeout(() => { if (!S.obj) objEl.hidden = true; }, 400); return; }
   objEl.textContent = t; objEl.hidden = false; objEl.classList.remove("is-on"); void objEl.offsetWidth; objEl.classList.add("is-on");
@@ -649,19 +651,19 @@ function hide(p) { if (p) { p.group.visible = false; if (p.shadow) p.shadow.visi
    SCENES
    ================================================================ */
 const SCENE_LIGHT = {
-  lot: { sky: "#1f2724", ground: "#0c0c0b", moon: "#2e2c27", rim: "#7d7565", fog: "#0b1115", den: 0.028, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
-  decision: { sky: "#222a27", ground: "#0d0d0c", moon: "#302e29", rim: "#817968", fog: "#0d1418", den: 0.022, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
+  lot: { sky: "#223044", ground: "#0e1014", moon: "#27303c", rim: "#66788a", fog: "#0a1018", den: 0.017, wetAll: 0.75, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
+  decision: { sky: "#243246", ground: "#0f1115", moon: "#2a323d", rim: "#6b7c8c", fog: "#0c131a", den: 0.014, wetAll: 0.65, sat: 1, moonDir: [-0.4, 0.7, -0.55] },
   office: { sky: "#33363a", ground: "#1c1a17", moon: "#2a2927", rim: "#6b6a62", fog: "#141618", den: 0.01, wetAll: 0.25, sat: 1, moonDir: [0.3, 0.8, 0.5] },
   memory: { sky: "#463c34", ground: "#1d1712", moon: "#4a3826", rim: "#7c6a58", fog: "#1a1612", den: 0.014, wetAll: 0.2, sat: 0.85, moonDir: [0.2, 0.8, -0.6] },
-  keys: { sky: "#9db1c2", ground: "#5e564a", moon: "#ffe7c2", rim: "#cfd9e2", fog: "#c9cfcf", den: 0.006, wetAll: 0.0, sat: 1, moonDir: [0.55, 0.6, 0.45] },
+  keys: { sky: "#7f99b6", ground: "#524b40", moon: "#ffe7c2", rim: "#8c98a2", fog: "#9db0c0", den: 0.0035, wetAll: 0.0, sat: 1, moonDir: [0.65, 0.5, 0.4] },
   june: { sky: "#2a3134", ground: "#191b1a", moon: "#23282a", rim: "#66706e", fog: "#111517", den: 0.012, wetAll: 0.12, sat: 0.8, moonDir: [0.6, 0.7, -0.2] },
-  sale: { sky: "#a9b9c4", ground: "#625849", moon: "#ffdcae", rim: "#ddd5c6", fog: "#d8ccb4", den: 0.0035, wetAll: 0.0, sat: 1, moonDir: [0.65, 0.5, 0.4] }
+  sale: { sky: "#7693b4", ground: "#4f493e", moon: "#ffe0b4", rim: "#7f8b95", fog: "#8da4b8", den: 0.002, wetAll: 0.0, sat: 1, moonDir: [0.65, 0.5, 0.4] }
 };
 function lightScene(name) {
   const L = SCENE_LIGHT[name];
   U.uSky.value.set(L.sky); U.uGround.value.set(L.ground); U.uMoon.value.set(L.moon); U.uRim.value.set(L.rim); U.uFog.value.set(L.fog); U.uFogDen.value = L.den; U.uWetAll.value = L.wetAll; U.uSat.value = L.sat;
   U.uMoonDir.value.set(...L.moonDir).normalize();
-  if (name === "keys" || name === "sale") { U.uMoon.value.multiplyScalar(1.5); }
+  if (name === "keys" || name === "sale") { U.uMoon.value.multiplyScalar(2.1); }
 }
 let set = null, rain = null;
 function makeRain() {
@@ -745,7 +747,8 @@ async function enter(name, o = {}) {
     P.dell.hold = "umbrella";
     set.userData.gate.position.x = S.flags.gate === "helped" ? 3.2 : -0.6;
   }
-  for (const p of Object.values(P)) if (p.shadow) p.shadow.visible = p.group.visible;
+  // (the soft disc under the feet is lighter where the ground draws the real shadow)
+  for (const p of Object.values(P)) if (p.shadow) { p.shadow.visible = p.group.visible; p.shadow.material.uniforms.uK.value = set.userData.groundMat ? 0.3 : 0.55; }
   me = name === "memory" ? P.memory : name === "keys" ? P.jason : P.you;
   // come in through an exit: you arrive at the way back to where you were
   if (me && o.from) { const ex = Object.values(set.userData.spots || {}).find(x => x && x.kind === "exit" && (x.to === o.from || (o.from === "decision" && x.to === "lot") || (o.from === "lot" && x.to === "decision"))); if (ex) { const q = ex.stand || ex.p || ex.at; if (q) { me.pos.set(q.x, 0, q.z); const f = ex.p || ex.at; if (f && f !== q) me.yaw = me.wantYaw = Math.atan2(q.x - f.x, q.z - f.z); } } }
@@ -759,6 +762,7 @@ async function enter(name, o = {}) {
   if (set.userData.keys) set.userData.keys.visible = name === "keys"; // the lockbox is the keys morning's, not the sale's
   AU.scene(name, set);
   nav = null; navFor = null; guideRoute = null;
+  ambEnter(name);
   // the desk lamp in the memory remembers what you chose
   if (S.scene === "decision" && S.flags.lamp === "off") { const l = sets.lot.userData.lamps[5]; if (l) { l.col = [0.6, 0.38, 0.18]; l.glow.material.uniforms.uK.value = 0.7; } }
   // the score: the title's layer for where you are
@@ -862,10 +866,15 @@ function framePenalty(pos, pts) {
   return pen;
 }
 const ray = new THREE.Raycaster();
+function sprintFov() {
+  const f = (VW / VH < 1 ? 62 : 48) + 4.5 * (camState.runK || 0);
+  if (Math.abs(camera.fov - f) > 0.02) { camera.fov = f; camera.updateProjectionMatrix(); }
+}
 function updateCamera(dt) {
   if (DRV.state === "drive" && DRV.veh && !camState.view && !camState.rail && S.phase === "drive" && driveView(dt)) return;
   if (camState.view) { camera.position.copy(camState.view.p); camera.lookAt(camState.view.t); post.comp.u.uFocus.value = camState.view.p.distanceTo(camState.view.t); post.comp.u.uRange.value = camState.view.r || 6; post.comp.u.uDofK.value = quality >= 2 ? 0.8 : 0; return; }
   const k = still() ? 1 : 1 - Math.exp(-6 * dt);
+  if (camState.runK > 0.001 && (camState.rail || S.phase !== "explore")) { camState.runK = damp(camState.runK, 0, 5, dt); sprintFov(); }
   if (camState.rail) {
     const r = camState.rail; r.t += dt / r.dur; const u = clamp(r.t, 0, 1), e = u * u * (3 - 2 * u);
     camera.position.copy(r.pos.getPoint(e)); camState.look.copy(r.look.getPoint(e)); camera.lookAt(camState.look);
@@ -880,14 +889,19 @@ function updateCamera(dt) {
     if (camState.cut) { camera.position.copy(pos); camState.look.copy(s.look); camState.cut = false; }
     else { camera.position.lerp(pos, 1 - Math.exp(-3 * dt)); camState.look.lerp(s.look, 1 - Math.exp(-3 * dt)); }
     camera.lookAt(camState.look);
-    post.comp.u.uFocus.value = s.focus || camera.position.distanceTo(camState.look); post.comp.u.uRange.value = s.range || 1.6; post.comp.u.uDofK.value = quality >= 2 ? (s.range && s.range < 1.2 ? 1 : 0.9) : 0;
+    post.comp.u.uFocus.value = s.focus || camera.position.distanceTo(camState.look); post.comp.u.uRange.value = (s.range || 1.6) * 1.7; post.comp.u.uDofK.value = quality >= 2 ? (s.range && s.range < 1.2 ? 0.8 : 0.62) : 0; // (a lens that separates the two of you from the lot, not one that smears it)
     return;
   }
   if (!me) return;
   post.comp.u.uDofK.value = 0; post.comp.u.uRange.value = 9; // depth of field is for conversations; walking, the lot stays sharp
   const { want, look } = followView(dt, false);
   if (camState.init) { camera.position.copy(want); camState.look.copy(look); camState.init = false; }
-  camera.position.lerp(want, k); camState.look.lerp(look, k);
+  // at a run the camera hangs back a touch and the lens opens a little; both ease in and out
+  const run = S.phase === "explore" && mv.running && me.speed > 1.9 && !still() ? 1 : 0;
+  camState.runK = damp(camState.runK || 0, run, run ? 2.4 : 3.6, dt);
+  const kr = still() ? 1 : 1 - Math.exp(-(6 - 1.6 * camState.runK) * dt);
+  camera.position.lerp(want, kr); camState.look.lerp(look, k);
+  sprintFov();
   camera.lookAt(camState.look);
   post.comp.u.uFocus.value = camera.position.distanceTo(camState.look);
 }
@@ -984,7 +998,7 @@ function rail(points, looks, dur) {
    ================================================================ */
 const keys = {};
 const WALK = 1.45, RUN = 2.6, RUN_AT = 0.82, DEAD = 0.14;
-const mv = { x: 0, z: 0, mag: 0, runLatch: false, path: null, pi: 1, after: null, stuck: 0, idle: 0, running: false, src: "" };
+const mv = { x: 0, z: 0, mag: 0, runLatch: false, path: null, pi: 1, after: null, stuck: 0, idle: 0, running: false, src: "", v: 0, dx: 0, dz: 1 };
 const pad = { x: 0, y: 0, mag: 0 };
 let nav = null, navFor = null;
 function navNow() { if (!set) return null; if (navFor !== set) { nav = buildNav(set); navFor = set; } return nav; }
@@ -1047,7 +1061,11 @@ function moveMe(dt) {
   if (dir && speed > 0) {
     me.wantYaw = Math.atan2(dir.x, dir.z);
     const turn = Math.abs(angTo(me.yaw, me.wantYaw));
-    const sp = speed * (turn > 1.6 ? 0.25 : 1);
+    // from a standstill you turn most of the way before you set off; on the move a hard turn only checks your stride
+    const want = speed * (prevSpeed < 0.5 ? clamp(1 - (turn - 0.7) / 1.3, 0.12, 1) : turn > 1.6 ? 0.25 : 1);
+    // under the stick or the keys the body has weight: it gathers speed over a few strides (a tap's walk keeps its own ease)
+    const sp = inp ? (mv.v = damp(mv.v, want, want > mv.v ? 9 : 14, dt)) : (mv.v = want);
+    mv.dx = dir.x; mv.dz = dir.z;
     let nx = me.pos.x + dir.x * sp * dt, nz = me.pos.z + dir.z * sp * dt;
     let moved = true;
     if (!blocked(nx, nz) || blocked(me.pos.x, me.pos.z)) { me.pos.x = nx; me.pos.z = nz; } // stuck inside something: let them walk out
@@ -1065,6 +1083,12 @@ function moveMe(dt) {
     if (clothT <= 0 && ((prevSpeed < 0.25 && me.speed > 0.25) || turn > 1.3)) { AU.cloth(footAt(me), turn > 1.3 ? 0.9 : 0.6); clothT = 0.9; }
   } else {
     if (prevSpeed > 1.2 && clothT <= 0) { AU.cloth(footAt(me), 0.5); clothT = 0.9; }
+    // letting go, the last half stride carries you on (never through anything)
+    if (mv.v > 0.05 && !mv.path && S.phase === "explore") {
+      mv.v = damp(mv.v, 0, 11, dt);
+      const nx = me.pos.x + mv.dx * mv.v * dt, nz = me.pos.z + mv.dz * mv.v * dt;
+      if (!blocked(nx, nz)) { me.pos.x = nx; me.pos.z = nz; } else mv.v = 0;
+    } else mv.v = 0;
     me.speed = damp(me.speed, 0, 12, dt);
   }
 }
@@ -1211,7 +1235,7 @@ function padPoll(dt) {
   // in the car: RT gas, LT brake, the left stick steers, the handbrake on its button (A unless rebound)
   pad.drive = S.phase === "drive" ? (pad.driveO || (pad.driveO = { rt: 0, lt: 0, sx: 0, a: 0 })) : null;
   if (pad.drive) { const d = pad.drive; d.rt = pv(7); d.lt = pv(6); d.sx = Math.abs(ax) > DEAD ? Math.sign(ax) * Math.min(1, (Math.abs(ax) - DEAD) / (1 - DEAD - 0.05)) : 0; d.a = pv(SET.pad.hb); }
-  const host = padHost(), B = SET.pad, ok = padOK(), carHas = i => i === B.hb || i === B.cam || i === B.out;
+  const host = padHost(), B = SET.pad, ok = padOK(), carHas = i => i === B.hb || i === B.cam || i === B.out || i === B.horn;
   // the Controller screen waiting for a button: the next one pressed is the binding (Back's button cancels, silently)
   if (padCap) {
     for (let i = 0; i < 16; i++) if (i !== 9 && pe(i)) { if (i === B.back) padCancel(); else padBind(padCap, i); break; }
@@ -1220,6 +1244,7 @@ function padPoll(dt) {
     if (DRV.state !== "drive" && DRV.skip && (pe(ok) || pe(B.back) || pe(B.out))) DRV.skip();
     else if (pe(B.out) || (pe(B.back) && !carHas(B.back))) exitCar("pad");
     if (pe(B.cam)) driveCam();
+    HORN.pad = DRV.state === "drive" && pb(B.horn);
     if (pe(B.journal) && !carHas(B.journal)) act("journal");
     if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; }
   }
@@ -1384,7 +1409,7 @@ function spotsHere0() {
     if (sp.who) { const who = P[sp.who]; if (!who || !who.group.visible) continue; p = headOf(who).add(new THREE.Vector3(0, -0.15, 0)); }
     out.push({ id, o, sp, p });
   }
-  return (S.scene === "decision" ? out.filter(s => s.id === "jason-end") : out).concat(worldSpots(), carSpots());
+  return (S.scene === "decision" ? out.filter(s => s.id === "jason-end") : out).concat(worldSpots(), carSpots(), AMB.spots());
 }
 /* the world's own spots (tools/story/HANDOFF-explore.md): { kind, label, p | at, stand, to } that aren't story
    objects. Exits take you to another set; the rest are things to use: switch, open, sit, press, pick up, read,
@@ -1611,6 +1636,7 @@ function goInteract(id) {
 async function interact(id, how) {
   if (S.phase !== "explore" || S.busy || HOLDG) return;
   if (id.startsWith("car:")) { const c = drivables().find(x => "car:" + x.id === id); if (c) enterCar(c, how); return; }
+  if (id.startsWith("amb:")) { ambTalk(id, how); return; }
   { const w = worldSpots().find(x => x.id === id); if (w) { await useWorld(w, how); return; } }
   const o = OBJ[id]; if (!o) return;
   const s = set.userData.spots[id] || {};
@@ -2403,7 +2429,7 @@ drvEl.className = "st-drive"; drvEl.hidden = true;
 drvEl.innerHTML =
   '<div class="st-drive__steer" aria-label="' + E(UI.drive_steer) + '"><span class="st-drive__wheel" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="4.5"/><path d="M5.5 22h14M28.5 22h14M24 28.5V43"/></svg></span></div>' +
   '<div class="st-drive__pedals"><button type="button" class="st-drive__pedal" data-drv="brake" aria-label="' + E(UI.drive_brake) + '"><span>' + E(UI.drive_brake) + '</span></button><button type="button" class="st-drive__pedal is-gas" data-drv="gas" aria-label="' + E(UI.drive_gas) + '"><span>' + E(UI.drive_gas) + "</span></button></div>" +
-  '<div class="st-drive__top"><button type="button" class="st-drive__btn" data-drv="hb"><span>' + E(UI.drive_hb) + '</span></button><button type="button" class="st-drive__btn" data-drv="cam"><kbd>C</kbd><span>' + E(UI.drive_cam) + '</span></button><button type="button" class="st-drive__btn is-out" data-drv="out"><kbd>E</kbd><span>' + E(UI.drive_out) + "</span></button></div>" +
+  '<div class="st-drive__top"><button type="button" class="st-drive__btn" data-drv="hb"><span>' + E(UI.drive_hb) + '</span></button><button type="button" class="st-drive__btn" data-drv="horn"><kbd>H</kbd><span>' + E(UI.horn) + '</span></button><button type="button" class="st-drive__btn" data-drv="cam"><kbd>C</kbd><span>' + E(UI.drive_cam) + '</span></button><button type="button" class="st-drive__btn is-out" data-drv="out"><kbd>E</kbd><span>' + E(UI.drive_out) + "</span></button></div>" +
   '<p class="st-drive__hint"></p>';
 el.appendChild(drvEl);
 const drvSteer = $(".st-drive__steer", drvEl), drvWheel = $(".st-drive__wheel", drvEl), drvHint = $(".st-drive__hint", drvEl);
@@ -2427,9 +2453,9 @@ const steerEnd = e => { if (!steerPtr || e.pointerId !== steerPtr.id) return; st
 drvSteer.addEventListener("pointerup", steerEnd); drvSteer.addEventListener("pointercancel", steerEnd);
 for (const b of $$("[data-drv]", drvEl)) {
   const k = b.dataset.drv;
-  if (k === "gas" || k === "brake" || k === "hb") {
-    const on = e => { e.preventDefault(); e.stopPropagation(); setDev(e.pointerType === "mouse" ? dev : "touch"); try { b.setPointerCapture(e.pointerId); } catch (x) {} DRV.touch[k] = 1; b.classList.add("is-on"); };
-    const off = e => { DRV.touch[k] = 0; b.classList.remove("is-on"); };
+  if (k === "gas" || k === "brake" || k === "hb" || k === "horn") {
+    const on = e => { e.preventDefault(); e.stopPropagation(); setDev(e.pointerType === "mouse" ? dev : "touch"); try { b.setPointerCapture(e.pointerId); } catch (x) {} if (k === "horn") HORN.touch = true; else DRV.touch[k] = 1; b.classList.add("is-on"); };
+    const off = e => { if (k === "horn") HORN.touch = false; else DRV.touch[k] = 0; b.classList.remove("is-on"); };
     b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); b.addEventListener("lostpointercapture", off);
     b.addEventListener("click", e => e.preventDefault());
   } else b.addEventListener("click", e => { e.stopPropagation(); if (k === "out") exitCar("button"); else if (k === "cam") driveCam(); });
@@ -2440,7 +2466,8 @@ function driveGlyphs() {
   drvEl.dataset.dev = dev;
   const K = SET.keys, out = $('[data-drv="out"] kbd', drvEl), cam = $('[data-drv="cam"] kbd', drvEl);
   out.textContent = dev === "pad" ? PADNAME[SET.pad.out] : keyLabel(K.act); cam.textContent = dev === "pad" ? PADNAME[SET.pad.cam] : "C";
-  out.hidden = cam.hidden = dev === "touch";
+  const hk = $('[data-drv="horn"] kbd', drvEl); hk.textContent = dev === "pad" ? PADNAME[SET.pad.horn] : "H";
+  out.hidden = cam.hidden = hk.hidden = dev === "touch";
   const wasd = [K.up, K.left, K.down, K.right].every(k => k.length === 1);
   drvHint.textContent = dev === "touch" ? UI.drive_touch : dev === "pad" ? padText(UI.drive_pad).replace("{outs}", [SET.pad.out, SET.pad.back].filter((v, i, a) => a.indexOf(v) === i).map(i => PADNAME[i]).join(" or ")) : UI.drive_pointer.replace("{gas}", wasd ? K.up.toUpperCase() : "Up").replace("{brake}", wasd ? K.down.toUpperCase() : "Down").replace("{left}", wasd ? K.left.toUpperCase() : "Left").replace("{right}", wasd ? K.right.toUpperCase() : "Right").replace("{act}", keyLabel(K.act));
 }
@@ -2541,7 +2568,7 @@ async function exitCar(how, instant) {
     const q = c.object.localToWorld(new THREE.Vector3(-(carMeta(c).W / 2 + 0.75), 0, 0.3)); q.y = 0;
     place(P.marisol, q, Math.atan2(me.pos.x - q.x, me.pos.z - q.z));
   }
-  DRV.state = null; DRV.entry = null; DRV.touch = { steer: 0, gas: 0, brake: 0, hb: 0 };
+  DRV.state = null; DRV.entry = null; DRV.touch = { steer: 0, gas: 0, brake: 0, hb: 0 }; HORN.on = HORN.pad = HORN.touch = false;
   el.classList.remove("is-driving");
   post.comp.u.uDofK.value = 0;
   if (S.phase === "drive") setPhase("explore");
@@ -2573,8 +2600,19 @@ function driveInput(dt) {
   DRV.steer = steer === 0 ? damp(DRV.steer, 0, 8, dt) : Math.abs(steer) < 1 ? steer : damp(DRV.steer, steer, 7, dt);
   return { throttle: DRV.thr, brake: DRV.brk, steer: DRV.steer, handbrake: hb };
 }
+/* the horn: H, the pad's button (L3 unless rebound) or the small button on a phone, for as long as it is held. The
+   sound, the haptic and the passers-by's turn of the head start in the same frame; letting go is silent */
+const HORN = { pad: false, touch: false, on: false, n: 0 };
+function hornTick() {
+  const on = DRV.state === "drive" && S.phase === "drive" && (!!keys.h || HORN.pad || HORN.touch);
+  if (on === HORN.on) return;
+  HORN.on = on;
+  if (DRV.au && DRV.au.horn) DRV.au.horn(on);
+  if (on) { HORN.n++; hap("tap"); rumble("tap", 1.4); if (DRV.entry) ambHonk(DRV.entry.x, DRV.entry.z); }
+}
 function tickDrive(dt) {
   const v = DRV.veh; if (!v || !DRV.state) return;
+  hornTick();
   // getting out it brakes to a stop, then holds on the handbrake (a held brake at a standstill would select reverse)
   const rolling = DRV.state === "exit" && Math.abs(v.speed || 0) > 0.4;
   const inp = DRV.state === "drive" && S.phase === "drive" ? driveInput(dt) : { throttle: 0, brake: rolling ? 1 : 0, steer: 0, handbrake: rolling ? 0.3 : 1 };
@@ -2944,6 +2982,237 @@ function updateLamps() {
   U.uLampN.value = n;
 }
 
+/* what stands on the lot's ground and moves throws its own shadow there: the ground's material takes a few people
+   (the nearest to the camera, you first) and the cars you can drive, and shades each lamp and the sun by them.
+   Indoors and off the lot's slab the soft disc under the feet does the job alone */
+const shadeBest = [null, null, null, null], shadeD = [0, 0, 0, 0];
+let shadeN = 0, shadeMax = 0;
+function shadeOffer(p) {
+  if (!p || !p.group.visible || p.inCar) return;
+  const c = camera.position, d = p === me ? -1 : (p.pos.x - c.x) * (p.pos.x - c.x) + (p.pos.z - c.z) * (p.pos.z - c.z);
+  if (d > 1600) return;
+  let i;
+  if (shadeN < shadeMax) i = shadeN++; else if (d >= shadeD[shadeMax - 1]) return; else i = shadeMax - 1;
+  while (i > 0 && shadeD[i - 1] > d) { shadeBest[i] = shadeBest[i - 1]; shadeD[i] = shadeD[i - 1]; i--; }
+  shadeBest[i] = p; shadeD[i] = d;
+}
+function shadeTick() {
+  const gm = set.userData.groundMat; if (!gm || !gm.uniforms.uCap) return;
+  const u = gm.uniforms, cap = u.uCap.value;
+  shadeN = 0; shadeMax = cap.length;
+  for (const k in P) shadeOffer(P[k]);
+  if (AMB.on) for (let i = 0; i < AMB.list.length; i++) shadeOffer(AMB.list[i].p);
+  const n = shadeN;
+  for (let i = 0; i < n; i++) { const p = shadeBest[i], sit = p.pose === "sit" || p.seated; cap[i].set(p.pos.x, p.pos.z, sit ? 0.34 : 0.25, (sit ? 1.25 : 1.74) + p.pos.y); }
+  u.uCapN.value = n;
+  const bp = u.uBoxP.value, bs = u.uBoxS.value, list = set.userData.drivable;
+  let m = 0;
+  if (list) for (let i = 0; i < list.length && m < bp.length; i++) {
+    const car = bp.length === 1 && DRV.entry ? DRV.entry : list[i]; if (!car.object) continue;
+    const rg = car.object.userData.rig, mt = rg && rg.meta;
+    bp[m].set(car.x, car.z, Math.cos(car.yaw), Math.sin(car.yaw)); bs[m].set((mt ? mt.W : 1.8) / 2 - 0.04, (mt ? mt.L : 4.6) / 2 - 0.12, (mt && mt.H ? mt.H : 1.45) - 0.08, 0.2); m++;
+  }
+  u.uBoxN.value = m;
+}
+
+/* ================================================================
+   THE PASSERS-BY (story/crowd.js): fictional people with routines on the
+   road and the lot. Here: who they are (story.json's "ambient"), where they
+   are allowed (not in the night, the waiting room, the library, the office,
+   the keys or the last scene), the caption a remark shows as (they have no
+   recorded voice yet, so it is a small card over the speaker's head, name
+   and "Fictional" first), and the horn they turn to.
+   ================================================================ */
+const AMB_OFF = { night: 1, june: 1, memory: 1, office: 1, keys: 1, decision: 1 };
+let ambBlob = null;
+const AMB = createCrowd({
+  get cast() { return cast; }, world, LOOKS, defs: (D.ambient && D.ambient.people) || [], max: COARSE.matches ? 4 : 8, far: COARSE.matches ? 34 : 52, lite: COARSE.matches, verb: UI.amb_talk,
+  blob: () => { const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), ambBlob || (ambBlob = blobMat(0.3))); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.016; sh.layers.set(2); return sh; },
+  onBump: () => { hap("tap"); rumble("tap"); }
+});
+const ambEl = document.createElement("div"); ambEl.className = "st-amb"; ambEl.setAttribute("role", "status"); ambEl.hidden = true;
+ambEl.innerHTML = '<p class="st-amb__who"><b></b><small></small></p><p class="st-amb__said"></p>'; el.appendChild(ambEl);
+const ambSay = { n: null, t: 0, text: "", count: 0 }, ambCar = { x: 0, z: 0, speed: 0 };
+const ambCtx = { me: null, head: new THREE.Vector3(), cam: camera, fwd: null, car: null, calm: false, blocked: (x, z, r) => blocked(x, z, r) };
+function ambEnter(name) {
+  ambHide();
+  AMB.enter(set, { day: name === "keys" || name === "sale", nav: navNow(), off: !!AMB_OFF[name] || !!set.userData.noCrowd });
+}
+function ambHide() { if (ambSay.n) { ambSay.n = null; ambSay.t = 0; ambEl.classList.remove("is-on"); ambEl.hidden = true; } }
+/* a remark: they stop and face you, the card comes up over their head; the sound, the haptic and the motion together */
+function ambTalk(id, how) {
+  if (S.phase !== "explore" || S.busy) return false;
+  const r = AMB.say(id); if (!r) return false;
+  mv.path = null; mv.after = null; guide.clearRing(); progress();
+  if (me) me.wantYaw = Math.atan2(r.n.p.pos.x - me.pos.x, r.n.p.pos.z - me.pos.z);
+  $("b", ambEl).textContent = r.name; $("small", ambEl).textContent = UI.fictional; $(".st-amb__said", ambEl).textContent = r.text;
+  ambSay.n = r.n; ambSay.t = FAST ? Math.max(r.secs, 4) : r.secs; ambSay.text = r.text; ambSay.count++;
+  ambEl.hidden = false; ambEl.classList.remove("is-on"); void ambEl.offsetWidth; ambEl.classList.add("is-on");
+  hap("tap"); rumble("tap"); AU.ui("choice");
+  return true;
+}
+function ambHonk(x, z) { AMB.honk(x, z); }
+function ambTick(dt) {
+  if (!AMB.on) return;
+  const c = ambCtx; c.me = me; c.fwd = camFwd; if (me) me.headWorld(c.head);
+  { const n = navNow(); if (n && AMB.nav !== n) AMB.nav = n; } // (the grid is rebuilt when a car moves)
+  if (DRV.veh && DRV.state === "drive" && DRV.entry) { ambCar.x = DRV.entry.x; ambCar.z = DRV.entry.z; ambCar.speed = DRV.veh.speed || 0; c.car = ambCar; } else c.car = null;
+  c.calm = S.phase === "talk" || S.phase === "close";
+  AMB.tick(dt, c);
+  if (ambSay.n) {
+    ambSay.t -= dt;
+    if (ambSay.t <= 0 || S.phase !== "explore" || !ambSay.n.shown) { ambHide(); return; }
+    v2.copy(ambSay.n.spot.p); v2.y += 0.42; v2.project(camera);
+    const x = clamp((v2.x * 0.5 + 0.5) * VW, 130, VW - 130), y = clamp((-v2.y * 0.5 + 0.5) * VH, 96, VH - 150);
+    ambEl.style.transform = "translate(" + Math.round(x) + "px," + Math.round(y) + "px) translate(-50%, -100%)";
+  }
+}
+
+/* ================================================================
+   THE HUD, OUT IN THE OPEN: a round map bottom left (top left under a thumb),
+   your heading up: the lot, the road and what stands on them drawn once per
+   set from its walls and bounds, then turned under you; the place the story
+   wants as a ring, the ways in and out as small squares, the cars you can
+   drive as small cars, people as dots. Lost plates are not on it. It shows
+   while you walk or drive and goes in talks, cinematics and menus. A title
+   card when a chain of objectives starts and a quiet line when one is done,
+   with the sound, the haptic and the motion in the same frame. Scenes opt
+   out by name (HUD_OFF) or with set.userData.noHud.
+   ================================================================ */
+const HUD_OFF = { night: 1, june: 1, memory: 1 };
+const hudHere = () => !!set && !HUD_OFF[S.scene] && !set.userData.noHud;
+const mapEl = document.createElement("div"); mapEl.className = "st-map"; mapEl.setAttribute("aria-hidden", "true"); mapEl.innerHTML = "<canvas></canvas>"; el.appendChild(mapEl);
+const MAP = { cv: $("canvas", mapEl), g: null, px: 0, dpr: 1, base: null, baseFor: null, X0: 0, Z0: 0, K: 3, doors: [], on: false, zoom: 2.4, sx: 0, sy: 0, fx: 0, fz: 1, cx: 0, cz: 0, R: 0, t: 0 };
+MAP.g = MAP.cv.getContext("2d");
+function mapBase() {
+  const ud = set.userData, rects = (ud.driveBounds && ud.driveBounds.rects) || [];
+  let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+  for (const r of rects) { x0 = Math.min(x0, r.x0); x1 = Math.max(x1, r.x1); z0 = Math.min(z0, r.z0); z1 = Math.max(z1, r.z1); }
+  x0 -= 8; z0 -= 8; x1 += 8; z1 += 14;
+  const K = MAP.K = Math.min(3, 1400 / (x1 - x0)), c = MAP.base || document.createElement("canvas"), g = c.getContext("2d");
+  c.width = Math.ceil((x1 - x0) * K); c.height = Math.ceil((z1 - z0) * K); MAP.X0 = x0; MAP.Z0 = z0;
+  const R = (r, pad = 0) => g.fillRect((r.x0 - pad - x0) * K, (r.z0 - pad - z0) * K, (r.x1 - r.x0 + pad * 2) * K, (r.z1 - r.z0 + pad * 2) * K);
+  g.clearRect(0, 0, c.width, c.height);
+  // the ground you can cover: the road a shade lighter than the lot, a broken line down its middle
+  for (const r of rects) { g.fillStyle = r.name === "road" ? "#27332e" : "#1c3229"; R(r); }
+  const road = rects.find(r => r.name === "road");
+  if (road) { g.strokeStyle = "rgba(237,231,219,.28)"; g.lineWidth = 1; g.setLineDash([6, 7]); g.beginPath(); g.moveTo((road.x0 - x0) * K, ((road.z0 + road.z1) / 2 - z0) * K); g.lineTo((road.x1 - x0) * K, ((road.z0 + road.z1) / 2 - z0) * K); g.stroke(); g.setLineDash([]); }
+  // what stands on it: buildings as blocks with a pale edge, cars and posts as small marks (the cars you can drive are drawn live)
+  const own = new Set((ud.drivable || []).map(d => d.wall).filter(Boolean));
+  for (const w of ud.walls || []) {
+    if (own.has(w)) continue;
+    const a = (w.x1 - w.x0) * (w.z1 - w.z0);
+    if (a > 40) { g.fillStyle = "#46584f"; R(w); g.strokeStyle = "rgba(237,231,219,.5)"; g.lineWidth = 1; g.strokeRect((w.x0 - x0) * K + 0.5, (w.z0 - z0) * K + 0.5, (w.x1 - w.x0) * K - 1, (w.z1 - w.z0) * K - 1); }
+    else { g.fillStyle = a > 3 ? "#5d6a63" : "#3d4a44"; R(w); }
+  }
+  MAP.doors.length = 0;
+  for (const id in ud.spots) { const sp = ud.spots[id]; if (sp && sp.kind === "exit" && (sp.p || sp.stand)) MAP.doors.push(sp.stand || sp.p); }
+  MAP.base = c; MAP.baseFor = set;
+}
+function mapSize() {
+  const px = mapEl.clientWidth || 132, dpr = Math.min(devicePixelRatio || 1, 2);
+  if (px !== MAP.px || dpr !== MAP.dpr) { MAP.px = px; MAP.dpr = dpr; MAP.cv.width = MAP.cv.height = Math.round(px * dpr); }
+}
+// a place in the world, on the map (into MAP.sx, MAP.sy); false when it is off the disc
+function mapAt(x, z, clampIn) {
+  const dx = x - MAP.cx, dz = z - MAP.cz, c = MAP.px / 2;
+  let rx = (-dx * MAP.fz + dz * MAP.fx) * MAP.zoom, ry = -(dx * MAP.fx + dz * MAP.fz) * MAP.zoom;
+  const d = Math.hypot(rx, ry), lim = c - 7;
+  if (d > lim) { if (!clampIn) return false; rx *= lim / d; ry *= lim / d; }
+  MAP.sx = c + rx; MAP.sy = c + ry; return true;
+}
+function mapTick(dt) {
+  const show = hudHere() && !!set.userData.driveBounds && !!me && (S.phase === "explore" || (S.phase === "drive" && DRV.state === "drive")) && !S.ending && !S.skipOpen;
+  if (show !== MAP.on) { MAP.on = show; mapEl.classList.toggle("is-on", show); }
+  if (!show) return;
+  if (MAP.baseFor !== set) mapBase();
+  mapSize();
+  const g = MAP.g, px = MAP.px, c = px / 2, car = DRV.state === "drive" && DRV.entry ? DRV.entry : null;
+  MAP.t += dt;
+  const fl = Math.hypot(camFwd.x, camFwd.z) || 1; MAP.fx = camFwd.x / fl; MAP.fz = camFwd.z / fl;
+  MAP.cx = car ? car.x : me.pos.x; MAP.cz = car ? car.z : me.pos.z;
+  MAP.zoom = damp(MAP.zoom, (car ? 1.5 : 2.4) * px / 132, 3, dt);
+  const z = MAP.zoom, k = z / MAP.K, d = MAP.dpr;
+  g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, px, px);
+  g.save(); g.beginPath(); g.arc(c, c, c - 1, 0, 6.2832); g.clip();
+  g.fillStyle = "rgba(10,15,13,.88)"; g.fillRect(0, 0, px, px);
+  // the set's plan, turned so your heading is up
+  const ox = MAP.X0 - MAP.cx, oz = MAP.Z0 - MAP.cz;
+  g.setTransform(-k * MAP.fz * d, -k * MAP.fx * d, k * MAP.fx * d, -k * MAP.fz * d, (c + z * (-MAP.fz * ox + MAP.fx * oz)) * d, (c - z * (MAP.fx * ox + MAP.fz * oz)) * d);
+  g.drawImage(MAP.base, 0, 0);
+  g.setTransform(d, 0, 0, d, 0, 0);
+  // ways in and out
+  g.strokeStyle = "rgba(237,231,219,.75)"; g.lineWidth = 1.2;
+  for (let i = 0; i < MAP.doors.length; i++) if (mapAt(MAP.doors[i].x, MAP.doors[i].z)) g.strokeRect(MAP.sx - 2.5, MAP.sy - 2.5, 5, 5);
+  // the cars you can drive
+  const list = set.userData.drivable;
+  if (list && (S.scene !== "sale" || (S.flags.testdrive && !S.flags.droven))) for (let i = 0; i < list.length; i++) {
+    const cr = list[i]; if (!cr.object || (S.scene === "sale" && cr.id !== "car") || !mapAt(cr.x, cr.z)) continue;
+    const a = Math.atan2(MAP.fx, MAP.fz) - cr.yaw;
+    g.save(); g.translate(MAP.sx, MAP.sy); g.rotate(a); g.fillStyle = cr === car ? "#ede7db" : "rgba(237,231,219,.62)"; g.fillRect(-2 * z / 2.4, -4.4 * z / 2.4, 4 * z / 2.4, 8.8 * z / 2.4); g.restore();
+  }
+  // people: the cast a little brighter than the passers-by
+  g.fillStyle = "rgba(237,231,219,.8)";
+  for (const key in P) { const q = P[key]; if (q === me || !q.group.visible || q.inCar || !mapAt(q.pos.x, q.pos.z)) continue; g.beginPath(); g.arc(MAP.sx, MAP.sy, 2.2, 0, 6.2832); g.fill(); }
+  if (AMB.on) { g.fillStyle = "rgba(154,152,144,.8)"; for (let i = 0; i < AMB.list.length; i++) { const q = AMB.list[i].p; if (!q.group.visible || !mapAt(q.pos.x, q.pos.z)) continue; g.beginPath(); g.arc(MAP.sx, MAP.sy, 1.6, 0, 6.2832); g.fill(); } }
+  // where the story wants you: a ring that breathes, held at the rim when it is off the disc
+  let has = false;
+  if (car && courseLive() && COURSE.shown) { const r = courseG.ringMesh.position; has = true; mapAt(r.x, r.z, true); }
+  else if (way.has && !car) { has = true; mapAt(way.tx, way.tz, true); }
+  if (has) {
+    const pulse = still() ? 0 : 0.5 + 0.5 * Math.sin(MAP.t * 3.2);
+    g.strokeStyle = "#ede7db"; g.lineWidth = 1.6; g.beginPath(); g.arc(MAP.sx, MAP.sy, 4.2 + pulse * 1.6, 0, 6.2832); g.stroke();
+    g.fillStyle = "#ede7db"; g.beginPath(); g.arc(MAP.sx, MAP.sy, 1.7, 0, 6.2832); g.fill();
+  }
+  // you, in the middle: an arrow the way you face
+  const yaw = car ? car.yaw : me.yaw, a = Math.atan2(MAP.fx, MAP.fz) - yaw;
+  g.save(); g.translate(c, c); g.rotate(a); g.fillStyle = "#ede7db"; g.strokeStyle = "rgba(10,15,13,.9)"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, -6.5); g.lineTo(4.6, 5); g.lineTo(0, 2.6); g.lineTo(-4.6, 5); g.closePath(); g.fill(); g.stroke(); g.restore();
+  g.restore();
+  // the rim, and north (the showroom's side of the lot) riding round it
+  g.strokeStyle = "rgba(237,231,219,.42)"; g.lineWidth = 1.5; g.beginPath(); g.arc(c, c, c - 1.25, 0, 6.2832); g.stroke();
+  const nx = c - MAP.fx * (c - 9), ny = c + MAP.fz * (c - 9);
+  g.fillStyle = "rgba(10,15,13,.92)"; g.beginPath(); g.arc(nx, ny, 6.5, 0, 6.2832); g.fill();
+  g.fillStyle = "#ede7db"; g.font = "600 9px 'Hanken Grotesk', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("N", nx, ny + 0.5);
+}
+
+/* the title card for a chain of objectives, and the line when one is done. One at a time, in order; nothing queues
+   up behind a talk for long (a stale one is dropped), and a scene that opts out of the HUD shows neither */
+const hudCardEl = document.createElement("div"); hudCardEl.className = "st-mission"; hudCardEl.setAttribute("role", "status"); hudCardEl.hidden = true;
+hudCardEl.innerHTML = '<p class="st-mission__k"></p><p class="st-mission__h"></p><i class="st-mission__rule" aria-hidden="true"></i>'; el.appendChild(hudCardEl);
+const hudK = $(".st-mission__k", hudCardEl), hudH = $(".st-mission__h", hudCardEl);
+const HUDQ = { list: [], busy: false, last: "" };
+function hudCard(kind, text) {
+  if (!text || !hudHere() || S.ending) return;
+  HUDQ.list.push({ kind, text, at: performance.now() }); if (!HUDQ.busy) hudNext();
+}
+async function hudNext() {
+  HUDQ.busy = true;
+  while (HUDQ.list.length) {
+    const it = HUDQ.list.shift();
+    // wait for the open world (a talk or a cinematic holds it back); too late is not at all
+    for (let i = 0; i < 60 && S.open && !(S.phase === "explore" || S.phase === "drive"); i++) await new Promise(r => setTimeout(r, 200));
+    if (!S.open || !hudHere() || performance.now() - it.at > 14000 || !(S.phase === "explore" || S.phase === "drive")) continue;
+    const done = it.kind === "done";
+    hudK.textContent = done ? UI.hud_done : UI.hud_next; hudH.textContent = it.text;
+    hudCardEl.classList.toggle("is-done", done); hudCardEl.hidden = false; hudCardEl.classList.remove("is-on"); void hudCardEl.offsetWidth;
+    // sound, haptic and motion in the same frame
+    hudCardEl.classList.add("is-on"); HUDQ.last = it.kind + ":" + it.text;
+    if (done) { hap("success"); rumble("success", 0.6); if (!(SC() && SC().sting && SC().sting("level-clear"))) AU.ui("notice"); }
+    else { hap("arrive"); rumble("arrive"); AU.ui("notice"); }
+    await new Promise(r => setTimeout(r, FAST ? 260 : done ? 2400 : 3400));
+    hudCardEl.classList.remove("is-on"); await new Promise(r => setTimeout(r, FAST ? 40 : 520)); hudCardEl.hidden = true;
+  }
+  HUDQ.busy = false;
+}
+/* an objective changed: the one before it is done when a chain ends (the next has its own title, or there is none); a
+   chain starts with its title */
+function hudObjective(was, now) {
+  const M = UI.missions || {};
+  if (was && was !== now && D.objectives[was] && (!now || M[now])) hudCard("done", D.objectives[was]);
+  if (now && now !== was && M[now]) hudCard("next", M[now]);
+}
+
 /* ================================================================
    THE WAY: where the story wants you next. Chevrons on the ground along
    the route (guide.js), an arrow at the edge of the screen when the place
@@ -3023,7 +3292,7 @@ function progress() { progT = 0; progWalk = 0; }
 const way = { show: false, x: 0, y: 0, ang: 0, k: 0, id: null, d: 0 };
 function updateWay(dt) {
   const tgt = S.phase === "explore" && !S.skipOpen ? wayTarget() : null;
-  way.id = tgt ? tgt.id : null;
+  way.id = tgt ? tgt.id : null; way.has = !!tgt; if (tgt) { way.tx = tgt.stand.x; way.tz = tgt.stand.z; }
   if (!tgt) { guide.trail(null, 0); if (way.show) { way.show = false; wayEl.classList.remove("is-on"); } lastPos = null; return; }
   const d = Math.hypot(tgt.stand.x - me.pos.x, tgt.stand.z - me.pos.z); way.d = d;
   wayT -= dt;
@@ -3102,7 +3371,7 @@ function frame(now) {
     if (DRV.veh) tickDrive(dt);
     drvEl.classList.toggle("is-on", S.phase === "drive" && DRV.state === "drive");
     if (!DRV.state) moveMe(dt);
-    movePeople(dt);
+    movePeople(dt); ambTick(dt);
     const tP = performance.now();
     for (const p of Object.values(P)) if (p.group.visible) p.update(dt);
     feet();
@@ -3114,12 +3383,13 @@ function frame(now) {
     perf.prompts = performance.now() - tU;
     // the ear is the camera; the lamps that buzz are the ones nearest you
     camera.getWorldDirection(camFwd); AU.listen(camera.position, camFwd);
+    mapTick(dt);
     const typist = S.scene === "office" && P.jason && P.jason.group.visible && !P.jason.path && P.jason.speed < 0.1 && S.phase === "explore" && set.userData.marks && P.jason.pos.distanceTo(set.userData.marks.jason) < 0.6 ? { x: -0.7, y: 0.8, z: -1.75 } : null;
     AU.update(dt, { ear: me ? me.pos : camera.position, day: S.scene === "keys" || S.scene === "sale", typist });
   }
   perf.update = performance.now() - tA;
   if (set) {
-    updateLamps();
+    updateLamps(); shadeTick();
     if (rain && rain.visible) { rain.material.uniforms.uCam.value.copy(camera.position); const base = S.scene === "decision" ? 0.55 : 1; rain.material.uniforms.uK.value = damp(rain.material.uniforms.uK.value, S.phase === "talk" || S.phase === "close" ? base * 0.45 : base, 2, dt); }
     camera.updateMatrixWorld();
     const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
@@ -3399,6 +3669,21 @@ window.JG_STORY = {
       const ground = set.children.find(m => m.material === set.userData.groundMat); post.reflect(scene, camera, world, ground); post.render(scene, camera, t); return true;
     },
     perf: () => ({ ...perf, prog: renderer.info.programs ? renderer.info.programs.length : 0 }),
+    /* a whole frame's draws: the mirror, the scene and the lens together, and the scene's pass on its own */
+    stats: () => {
+      const i = renderer.info, ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
+      i.autoReset = false; i.reset(); updateLamps(); camera.updateMatrixWorld();
+      if (ground && quality >= 1) post.reflect(scene, camera, world, ground);
+      const mirror = i.render.calls; post.render(scene, camera, S.t);
+      const all = i.render.calls, tris = i.render.triangles; i.reset(); renderer.setRenderTarget(post.main); renderer.render(scene, camera); const sc = i.render.calls; renderer.setRenderTarget(null);
+      i.autoReset = true; post.render(scene, camera, S.t);
+      return { calls: all, mirror, scene: sc, tris };
+    },
+    /* the HUD, the passers-by and the horn (tools/verify/story.mjs) */
+    hud: () => ({ map: MAP.on, shown: mapEl.classList.contains("is-on") && getComputedStyle(mapEl).opacity > 0.5, px: MAP.px, doors: MAP.doors.length, target: way.has ? [way.tx, way.tz] : null, card: hudCardEl.hidden ? null : hudK.textContent + ": " + hudH.textContent, last: HUDQ.last, off: !hudHere() }),
+    amb: () => ({ on: AMB.on, n: AMB.list.length, list: AMB.list.map(n => ({ id: n.id, live: n.live, shown: n.shown, x: +n.p.pos.x.toFixed(2), z: +n.p.pos.z.toFixed(2), back: n.back > 0, look: n.lookT > 0, lod: n.lod })), cap: ambSay.n ? { id: ambSay.n.id, name: $("b", ambEl).textContent, tag: $("small", ambEl).textContent, text: ambSay.text, on: ambEl.classList.contains("is-on") } : null, count: ambSay.count }),
+    horn: () => ({ on: HORN.on, n: HORN.n, btn: !!$('[data-drv="horn"]', drvEl), pad: SET.pad.horn }),
+    cam: (yaw, pitch) => { if (yaw != null) camState.yaw = yaw; if (pitch != null) camState.pitch = pitch; camState.init = true; },
     bench: () => {
       const gl = renderer.getContext(), t = f => { const a = performance.now(); for (let i = 0; i < 3; i++) { f(); gl.finish(); } return +((performance.now() - a) / 3).toFixed(1); };
       const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
@@ -3477,9 +3762,9 @@ window.JG_STORY = {
     /* the getting in and out stills (tools/verify/car-sheet.mjs): stop the loop, then step whole frames on a fixed clock and draw */
     freeze: on => { S.attract = !!on; last = performance.now(); return S.attract; },
     step: (n, dt, draw = true) => {
-      for (let i = 0; i < n; i++) { S.t += dt; if (DRV.veh) tickDrive(dt); if (!DRV.state) moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updateCamera(dt); }
+      for (let i = 0; i < n; i++) { S.t += dt; if (DRV.veh) tickDrive(dt); if (!DRV.state) moveMe(dt); movePeople(dt); ambTick(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updateCamera(dt); }
       if (!draw) return true;
-      updateLamps(); camera.updateMatrixWorld();
+      updateLamps(); shadeTick(); camera.updateMatrixWorld(); camera.getWorldDirection(camFwd); mapTick(dt);
       const ground = set.userData.groundMat ? set.children.find(m => m.material === set.userData.groundMat) : null;
       if (ground && quality >= 1) post.reflect(scene, camera, world, ground);
       post.render(scene, camera, S.t); return true;

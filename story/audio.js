@@ -735,13 +735,25 @@ export function createAudio(o) {
       else { tone({ f: 85, to: 45, glide: 0.08, decay: 0.16, gain: 0.22, at, ref: 2 }); sprite("latch", { at, ref: 2, gain: 0.35, rate: 0.9 }); burst({ type: "lowpass", f: 700, gain: 0.12, decay: 0.08, at, buf: A.brown }); }
       log("car", open ? "door-open" : "door-close");
     }
+    // the horn: two reeds a third apart, on for as long as it is held (it sounds whether or not the engine runs)
+    let hornG = null, hornOn = false;
+    function horn(on) {
+      on = !!on; if (on === hornOn) return; hornOn = on;
+      if (!hornG) {
+        hornG = C.createGain(); hornG.gain.value = 0;
+        const hl = C.createBiquadFilter(); hl.type = "lowpass"; hl.frequency.value = 2300; hl.connect(hornG); hornG.connect(N.sfx);
+        for (const f of [415, 494]) { const o = C.createOscillator(), g = C.createGain(); o.type = "square"; o.frequency.value = f; g.gain.value = 0.5; o.connect(g); g.connect(hl); o.start(); srcs.push(o); }
+      }
+      ramp(hornG.gain, on ? 0.15 : 0, on ? 0.02 : 0.07);
+      if (on) log("car", "horn");
+    }
     function stop(secs = 0.5) {
-      inside(false);
+      inside(false); if (hornG) ramp(hornG.gain, 0, 0.05);
       ramp(out.gain, 0, secs); const t = now() + secs + 0.05; srcs.forEach(n => { try { n.stop(t); } catch (e) {} });
       if (A.drv === api) A.drv = null;
       log("car", "stop");
     }
-    const api = { start, update, shift, inside, impact, door, stop, get on() { return D.on; }, get state() { return { on: D.on, inside: D.inside, rpm: D.rpm, eng: eng.gain.value, squeal: sg.gain.value, roof: roofG.gain.value, out: N.outLp.frequency.value }; } };
+    const api = { start, update, shift, inside, impact, door, horn, stop, get on() { return D.on; }, get state() { return { on: D.on, inside: D.inside, rpm: D.rpm, eng: eng.gain.value, squeal: sg.gain.value, roof: roofG.gain.value, out: N.outLp.frequency.value }; } };
     A.drv = api;
     return api;
   }

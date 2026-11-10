@@ -201,7 +201,11 @@ void main(){
   // skin scatters: a softer, lower highlight than a wet surface's
   spec *= mix(1.0, 0.6, uSkin);
   light = mix(light, light * vec3(1.06, 0.98, 0.92) + vec3(0.03, 0.015, 0.008), uSkin);
+  // a shoulder on strong light (the morning sun), so skin and cloth keep their colour instead of burning to one flat tone
+  light *= 1.0 / (1.0 + 0.6 * max(dot(light, vec3(0.3333)) - 0.8, 0.0));
   vec3 col = alb * light * ao + spec + uRim * fr * uRimK * (0.5 + br) * mix(1.0, 0.45, uSkin);
+  // skin under sodium light keeps some of its own colour
+  col = mix(col, sat(col, 0.78), uSkin);
   col += uEmit;
   #ifdef USE_EMAP
   col += texture2D(uEMap, vUv).rgb * uTone;
@@ -360,14 +364,15 @@ vec3 beads(vec3 p, out float m){
   vec2 o = vec2(h12(c), h12(c + 7.3)) - 0.5; float r = 0.08 + 0.18 * h12(c + 2.1);
   vec2 d = f - o * 0.4; float l = length(d);
   m = smoothstep(r, r * 0.6, l) * step(0.45, h12(c + 9.7));
-  return vec3(d.x, 0.0, d.y) / max(r, 1e-3) * m * 1.4;
+  return vec3(d.x, 0.0, d.y) / max(r, 1e-3) * m * 0.6;
 }
 // specular from one lamp or the moon: GGX, widened by the lamp's size at this distance
 vec3 specL(vec3 N, vec3 V, vec3 L, float a, vec3 f0, float dist){
   float ap = clamp(a + 0.18 / max(dist * 2.0, 0.5), 0.0, 1.0);
   vec3 H = normalize(L + V); float nl = max(dot(N, L), 0.0), nv = max(dot(N, V), 1e-3), nh = max(dot(N, H), 0.0), vh = max(dot(V, H), 0.0);
   float norm = (a * a) / max(ap * ap, 1e-4);
-  return F_Sch(f0, vh) * D_GGX(ap, nh) * V_Smith(ap, nv, nl) * nl * norm * PI_;
+  // (held under a ceiling: a lamp in chrome or a wet rim is a hot glint, not a second lamp)
+  return min(F_Sch(f0, vh) * D_GGX(ap, nh) * V_Smith(ap, nv, nl) * nl * norm * PI_, vec3(1.8));
 }
 void main(){
   vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
@@ -581,10 +586,26 @@ export function coneMat(color, k = 1) {
     vertexShader: `varying vec3 vN; varying vec3 vWP; varying float vH; void main(){ vH = uv.y; vec4 wp = modelMatrix * vec4(position,1.0); vWP = wp.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * wp; }`,
     fragmentShader: `uniform vec3 uC; uniform float uK; uniform float uTime; varying vec3 vN; varying vec3 vWP; varying float vH;
       float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
-      void main(){ vec3 V = normalize(cameraPosition - vWP); float edge = pow(abs(dot(normalize(vN), V)), 1.6);
-        float fall = smoothstep(0.0, 0.9, vH) * smoothstep(1.0, 0.82, vH);
+      void main(){ vec3 V = normalize(cameraPosition - vWP); float edge = pow(abs(dot(normalize(vN), V)), 2.4);
+        // brightest under the head, thinning toward the ground, so it reads as light in wet air and not as a solid shape
+        float fall = smoothstep(0.0, 0.9, vH) * smoothstep(1.0, 0.82, vH); fall *= 0.35 + 0.65 * fall;
         float rain = 0.85 + 0.15 * h(floor(vec2(vWP.x * 30.0 + vWP.z * 30.0, vWP.y * 6.0 + uTime * 40.0)));
-        gl_FragColor = vec4(uC * uK * edge * fall * 0.16 * rain, 1.0); }`,
+        gl_FragColor = vec4(uC * uK * edge * fall * 0.12 * rain, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  });
+}
+
+/* a headlight's beam in wet air: additive, brightest at the lamp, thinning along its length, soft whichever way you look at it */
+export function beamMat(color, k = 1) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uC: { value: new THREE.Color(color) }, uK: { value: k }, uTime: U.uTime },
+    vertexShader: `varying vec3 vN; varying vec3 vWP; varying float vH; void main(){ vH = uv.y; vec4 wp = modelMatrix * vec4(position,1.0); vWP = wp.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * wp; }`,
+    fragmentShader: `uniform vec3 uC; uniform float uK; uniform float uTime; varying vec3 vN; varying vec3 vWP; varying float vH;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+      void main(){ vec3 V = normalize(cameraPosition - vWP); float face = abs(dot(normalize(vN), V));
+        float along = vH * vH * smoothstep(1.0, 0.94, vH);
+        float rain = 0.8 + 0.2 * h(floor(vec2(vWP.x * 24.0 + vWP.z * 24.0, vWP.y * 8.0 + uTime * 40.0)));
+        gl_FragColor = vec4(uC * uK * along * (0.3 + 0.7 * face * face) * 0.1 * rain, 1.0); }`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
   });
 }

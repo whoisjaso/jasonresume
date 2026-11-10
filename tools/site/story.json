@@ -761,6 +761,19 @@
     "magazine": "An old magazine, soft from other people's hands.",
     "cooler-cup": "Cold water in a paper cone. Something to hold on to."
   },
+  "ambient": {
+    "_about": "The passers-by on the road and the lot. Every one of them is fictional and says so where they speak. Small talk only: the rain, the bus, the tacos, the cars. Nothing about Jason, no figures. They have no recorded voice yet, so their lines are captions.",
+    "people": [
+      { "id": "walker", "name": "A man walking home", "fictional": true, "body": "dell", "night": ["Some rain, huh.", "It was dry when I left the house.", "Get home safe."], "day": ["Nice out, after all that rain.", "Morning. Just passing through.", "You have a good one."] },
+      { "id": "rider", "name": "A woman at the bus stop", "fictional": true, "body": "renata", "night": ["The bus is late again.", "It always comes right after you give up on it.", "At least the bench is dry."], "day": ["Still waiting on the bus.", "It runs when it feels like it.", "Could be worse. Could be raining."] },
+      { "id": "wash", "name": "A man at the laundromat", "fictional": true, "body": "player", "night": ["Every machine is taken tonight.", "I come late so it's quiet. Everyone had the same idea.", "The dryer on the end runs hot. That's the good one."], "day": ["Mornings are quiet in there.", "Forgot my soap. Again.", "The dryer on the end runs hot. That's the good one."] },
+      { "id": "taco", "name": "A woman at the taco truck", "fictional": true, "body": "renata", "night": ["Get the pastor. Trust me.", "Worth standing in the rain for.", "Extra green salsa. Always."], "day": ["Breakfast tacos. Best thing on this road.", "Get the potato and egg. Trust me.", "Extra green salsa. Always."] },
+      { "id": "looker", "name": "A man looking at cars", "fictional": true, "body": "dell", "night": ["Just looking.", "My brother says buy the truck. My brother doesn't pay for gas.", "They all look good in the rain."], "day": ["Just looking.", "My brother says buy the truck. My brother doesn't pay for gas.", "Easier to see the paint in daylight."] },
+      { "id": "jogger", "name": "A woman out walking", "fictional": true, "body": "renata", "night": ["I like it out here when it rains. Quiet.", "Watch the puddle by the curb.", "Good night."], "day": ["Lovely morning for it.", "Watch the curb there.", "Have a good day."] },
+      { "id": "smoker", "name": "A man on his break", "fictional": true, "body": "player", "night": ["Long shift.", "Rain was supposed to stop an hour ago.", "The tacos are the only thing keeping me going."], "day": ["Long shift ahead.", "Coffee first. Then people.", "The tacos are the only thing keeping me going."] },
+      { "id": "late", "name": "A man who missed the bus", "fictional": true, "body": "dell", "night": ["Missed it by a minute.", "Next one's a while. Might as well walk.", "You waiting on the bus too?"], "day": ["Missed it by a minute.", "Next one's a while. Might as well walk.", "You waiting on the bus too?"] }
+    ]
+  },
   "ui": {
     "play": "Play",
     "continue": "Continue",
@@ -853,8 +866,8 @@
     "drive_gas": "Gas",
     "drive_brake": "Brake",
     "drive_steer": "Steer",
-    "drive_pointer": "{gas} to drive, {brake} to brake and reverse, {left} and {right} to steer. Space for the handbrake, C for the camera, {act} to get out.",
-    "drive_pad": "RT to drive, LT to brake and reverse, the left stick steers. {hb} for the handbrake, {cam} for the camera, {outs} to get out.",
+    "drive_pointer": "{gas} to drive, {brake} to brake and reverse, {left} and {right} to steer. Space for the handbrake, C for the camera, H for the horn, {act} to get out.",
+    "drive_pad": "RT to drive, LT to brake and reverse, the left stick steers. {hb} for the handbrake, {cam} for the camera, {horn} for the horn, {outs} to get out.",
     "drive_touch": "Steer with your left thumb. Gas and brake are on the right; hold brake to reverse.",
     "v_exit": "Go",
     "v_toggle": "Switch",
@@ -878,6 +891,25 @@
     "drive_scenic": "The scenic route. She didn't mind.",
     "tag": "Lost plate",
     "tags_found": "found",
-    "tags_all": "Every lost plate found."
+    "tags_all": "Every lost plate found.",
+    "later": "Later",
+    "hud_next": "Up next",
+    "hud_done": "Done",
+    "missions": {
+      "find": "The Man Under the Lamp",
+      "look": "The Office",
+      "keys": "The Keys",
+      "sale": "The Buyer",
+      "drive": "Around the Block",
+      "end": "Lamps On"
+    },
+    "horn": "Horn",
+    "p_horn": "Horn",
+    "amb_talk": "Talk",
+    "carry_pointer": "Hold {up} to carry him down. Go slow.",
+    "carry_touch": "Hold anywhere on the screen to carry him down. Go slow.",
+    "carry_pad": "Hold the left stick forward to carry him down. Go slow.",
+    "carry_slow": "Steady. Slow on the stairs.",
+    "v_carry": "Carry"
   }
 }
