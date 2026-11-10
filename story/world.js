@@ -2538,6 +2538,395 @@ export function buildWaitingRoom(o = {}) {
 }
 const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
 
+/* ================================================================
+   THE NIGHT (the first chapter: June 2025, around two in the morning)
+   A house asleep and the street outside it. Upstairs: a bedroom (you
+   wake on the edge of the bed, a clock's glow, the night at the window),
+   a hall with a line of light under the door at its end, and the room
+   behind that door: a shape under a blanket seen from behind, a hand, a
+   lamp. No face anywhere in him, no name. A staircase down the back of a
+   tall entry, the front door, a porch, a lawn, a short street of dark
+   houses with nothing on them that says where this is: no street sign, no
+   house number, no name on anything. A fire engine and an ambulance come
+   up the street (ud.rig), their bars pulsing slowly on the houses.
+
+   One plan, two floors: nothing walkable upstairs lies over anything
+   walkable downstairs, so the walls, the nav grid and the camera stay flat
+   and ud.heightAt gives the floor under a point (the upper floor, the
+   stairs' slope, the ground). The house's solid parts are the blocks left
+   between its rooms: each is a wall in ud.walls and a box you can see.
+   ================================================================ */
+export const NIGHT = { H: 2.9, CEIL: 5.6, XS0: -1.6, XS1: 2.4, ZS0: 1.0, ZS1: 2.25, STEPS: 16 };
+export function buildNight(o = {}) {
+  const set = new THREE.Group(); set.name = "night";
+  set.userData = { lamps: [], spots: {}, walls: [], sounds: {}, signs: [], wallsV: 0 };
+  const ud = set.userData, W = ud.walls, { H, CEIL, XS0, XS1, ZS0, ZS1, STEPS } = NIGHT;
+  const RISE = H / STEPS, TREAD = (XS1 - XS0) / STEPS;
+  // the rooms you can walk: [x0, x1, z0, z1]; up: on the upper floor
+  const R = {
+    bed: [-1.4, 3.4, -5.2, 0.7, 1], bdoor: [-1.6, -1.4, -3.4, -2.0, 1], hall: [-8.0, -1.6, -3.4, -2.0, 1], cor: [-3.0, -1.6, -2.0, 1.0, 1],
+    land: [-3.0, -1.6, ZS0, ZS1, 1], stair: [XS0, XS1, ZS0, ZS1, 0], foot: [XS1, 3.9, ZS0, 2.35, 0], foyer: [-3.0, 3.9, 2.35, 5.9, 0],
+    ddoor: [-8.2, -8.0, -3.4, -2.0, 1], dad: [-13.0, -8.2, -5.4, 0.0, 1], fdoor: [0.2, 1.4, 5.9, 6.1, 0], rail: [-3.0, XS1, ZS1, 2.35, 0]
+  };
+  const HB = [-13.3, 4.2, -5.7, 6.1]; // the house
+  ud.heightAt = (x, z) => (z >= 6.1 || x > 4.2 || x < -13.3 || z < -5.7 ? 0 : z < ZS0 ? H : z < ZS1 && x < XS1 ? (x < XS0 ? H : H * clamp01((XS1 - TREAD - x) / (XS1 - XS0 - TREAD))) : 0);
+  ud.ceilAt = (x, z) => (z < 6.1 && x > HB[0] && x < HB[1] && z > HB[2] ? CEIL - 0.1 : 60);
+  ud.inside = (x, z) => z < 6.05 && x > HB[0] && x < HB[1] && z > HB[2];
+  const M = {
+    wall: rmat({ color: "#b9b4a8", mapK: "plasC", nmapK: "plasN", tri: 0.45, nk: 0.4, rough: 0.92, wet: 0 }),
+    ceil: pbr({ color: "#c9c6bd", rough: 0.95, wet: 0 }),
+    wood: rmat({ color: "#7a5a40", mapK: "woodC", nmapK: "woodN", tri: 0.8, nk: 0.5, rough: 0.5, wet: 0 }),
+    carpet: rmat({ color: "#6f6a62", mapK: "carpC", nmapK: "carpN", tri: 0.8, nk: 0.6, rough: 0.95, wet: 0 }),
+    tile: pbr({ color: "#8f8a7e", map: TX.tileTex(6), tri: 0.5, rough: 0.35, wet: 0 }),
+    trim: pbr({ color: "#d8d4c8", rough: 0.6, wet: 0 }),
+    door: pbr({ color: "#cfcabd", rough: 0.55, wet: 0 }),
+    dark: pbr({ color: "#1d1f21", rough: 0.5, metal: 0.3, wet: 0 }),
+    steel: pbr({ color: "#9aa0a4", metal: 0.85, rough: 0.35, wet: 0 }),
+    brass: pbr({ color: "#b49a5e", metal: 0.9, rough: 0.35, wet: 0 }),
+    sheet: pbr({ color: "#9aa3ad", rough: 0.9, wet: 0 }),
+    blanket: pbr({ color: "#a8a294", rough: 0.95, wet: 0 }),
+    duvet: pbr({ color: "#3f4d5c", rough: 0.95, wet: 0 }),
+    pillow: pbr({ color: "#d2cec4", rough: 0.9, wet: 0 }),
+    skin: pbr({ color: "#4d2e1c", rough: 0.6, wet: 0.05 }),
+    brick: pbr({ color: "#5c4338", rough: 0.9, wet: 0.2 }),
+    siding: pbr({ color: "#8b897f", rough: 0.85, wet: 0.2 }),
+    roof: pbr({ color: "#2b2c2e", rough: 0.9, wet: 0.3 }),
+    glassN: pbr({ color: "#07090c", rough: 0.06, wet: 0, spec: 1.1 }),
+    lawn: pbr({ color: "#1f2a1c", rough: 0.98, wet: 0.1 }),
+    road: rmat({ color: "#4a4a48", mapK: "asphC", nmapK: "asphN", tri: 0.5, nk: 0.8, rough: 0.8, wet: 0.35 }),
+    conc: rmat({ color: "#8d8a82", mapK: "concC", nmapK: "concN", tri: 0.6, nk: 0.6, rough: 0.85, wet: 0.2 }),
+    bark: pbr({ color: "#2a211a", rough: 0.95, wet: 0.1 }),
+    leaf: pbr({ color: "#16241a", rough: 0.95, wet: 0.2 })
+  };
+  const inR = (r, x, z) => x > r[0] && x < r[1] && z > r[2] && z < r[3];
+  const flat = (r, y, mat, dy = 0) => { const p = plane(r[1] - r[0], r[3] - r[2], mat, set); p.rotation.x = -Math.PI / 2; p.position.set((r[0] + r[1]) / 2, y + dy, (r[2] + r[3]) / 2); return p; };
+
+  // ---- the house's solid parts: what is left of it between the rooms, row by row
+  { const xs = [...new Set([HB[0], HB[1]].concat(...Object.values(R).map(r => [r[0], r[1]])))].sort((a, b) => a - b);
+    const zs = [...new Set([HB[2], HB[3]].concat(...Object.values(R).map(r => [r[2], r[3]])))].sort((a, b) => a - b);
+    const rooms = Object.values(R);
+    for (let j = 0; j + 1 < zs.length; j++) {
+      let run = null;
+      for (let i = 0; i + 1 < xs.length; i++) {
+        const cx = (xs[i] + xs[i + 1]) / 2, cz = (zs[j] + zs[j + 1]) / 2, open = rooms.some(r => inR(r, cx, cz));
+        if (!open) { if (run) run.x1 = xs[i + 1]; else run = { x0: xs[i], x1: xs[i + 1], z0: zs[j], z1: zs[j + 1], h: 99 }; }
+        if ((open || i + 2 === xs.length) && run) { W.push(run); box(run.x1 - run.x0, CEIL + 0.3, run.z1 - run.z0, M.wall, (run.x0 + run.x1) / 2, (CEIL + 0.3) / 2, (run.z0 + run.z1) / 2, set); run = null; }
+      }
+    } }
+  // floors, ceilings, the lintels over the doors
+  flat(R.bed, H, M.carpet); flat(R.dad, H, M.carpet); flat([-8.2, -1.4, -3.4, -2.0], H, M.wood, 0.002); flat(R.cor, H, M.wood, 0.001); flat(R.land, H, M.wood);
+  flat([-3.0, 3.9, 2.25, 6.1], 0, M.tile, 0.004); flat(R.foot, 0, M.tile, 0.003);
+  { const c = plane(HB[1] - HB[0], HB[3] - HB[2], M.ceil, set); c.rotation.x = Math.PI / 2; c.position.set((HB[0] + HB[1]) / 2, CEIL, (HB[2] + HB[3]) / 2); }
+  for (const [r, y0] of [[R.bdoor, H + 2.08], [R.ddoor, H + 2.08], [R.fdoor, 2.14]]) box(r[1] - r[0], CEIL - y0, r[3] - r[2], M.wall, (r[0] + r[1]) / 2, (CEIL + y0) / 2, (r[2] + r[3]) / 2, set);
+  // a runner down the hall
+  { const rug = flat([-7.6, -3.3, -3.05, -2.35], H, pbr({ color: "#4a2f2a", rough: 0.98, wet: 0 }), 0.006); rug.userData.rug = 1; }
+
+  // ---- the stairs: steps down the back of the entry, a closed side under them, a rail above
+  for (let i = 0; i < STEPS - 1; i++) { const top = H - (i + 1) * RISE; box(TREAD + 0.02, top, ZS1 - ZS0, M.wood, XS0 + (i + 0.5) * TREAD, top / 2, (ZS0 + ZS1) / 2, set); }
+  { const sh = new THREE.Shape(); sh.moveTo(-3.0, 0); sh.lineTo(XS1, 0); sh.lineTo(XS1, 0.14); sh.lineTo(XS0, H + 0.14); sh.lineTo(-3.0, H + 0.14); sh.closePath();
+    const sk = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.1, bevelEnabled: false }), M.wall); sk.position.z = ZS1; set.add(sk);
+    const run = Math.hypot(XS1 - XS0, H), ang = Math.atan2(H, XS1 - XS0);
+    const hr = box(run + 0.1, 0.05, 0.07, M.wood, (XS0 + XS1) / 2, H / 2 + 0.98, ZS1 + 0.05, set); hr.rotation.z = -ang;
+    box(1.45, 0.05, 0.07, M.wood, -2.3, H + 0.98, ZS1 + 0.05, set);
+    for (let x = -2.85; x < XS1; x += 0.25) { const y = x < XS0 ? H : H * (XS1 - x) / (XS1 - XS0); box(0.028, 0.86, 0.028, M.trim, x, y + 0.14 + 0.43, ZS1 + 0.05, set); }
+    box(0.1, 1.1, 0.1, M.wood, XS1 + 0.02, 0.55, ZS1 + 0.05, set);
+    W.push({ x0: -3.0, x1: XS1, z0: ZS1, z1: 2.35, h: H + 1.1 }); }
+
+  // ---- doors: a leaf on its hinge, the block that stops you while it is shut, the leaf standing open after
+  const doors = {};
+  const door = (name, hx, hy, hz, w, h, along, openTo, shut, leafWall) => {
+    const g = new THREE.Group(); g.position.set(hx, hy, hz); g.userData.keep = true; set.add(g);
+    const lf = along === "x" ? box(w, h, 0.045, M.door, w / 2, h / 2, 0, g) : box(0.045, h, w, M.door, 0, h / 2, w / 2, g);
+    const kn = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), M.brass); kn.scale.set(1, 1, 1); g.add(kn);
+    if (along === "x") kn.position.set(w - 0.09, 1.0, -0.06); else kn.position.set(0.06, 1.0, w - 0.09);
+    const kn2 = kn.clone(); if (along === "x") kn2.position.z = 0.06; else kn2.position.x = -0.06; g.add(kn2);
+    const sw = swinger(set, g, "y", openTo, 3.2);
+    const d = doors[name] = { g, sw, open: false, shut, leafWall, knob: kn, openTo };
+    if (shut) W.push(shut);
+    return d;
+  };
+  ud.door = (name, open, snap) => {
+    const d = doors[name]; if (!d || d.open === !!open) return false;
+    d.open = !!open; d.sw.goal = open ? 1 : 0; if (snap) { d.sw.v = d.sw.goal; d.g.rotation.y = d.sw.v * d.openTo; }
+    if (d.shut) { const i = W.indexOf(d.shut); if (open && i >= 0) W.splice(i, 1); if (!open && i < 0) W.push(d.shut); }
+    if (d.leafWall) { const i = W.indexOf(d.leafWall); if (open && i < 0) W.push(d.leafWall); if (!open && i >= 0) W.splice(i, 1); }
+    ud._nav = null; ud.wallsV++; return true;
+  };
+  ud.doorOpen = name => !!(doors[name] && doors[name].open);
+  // your own door stands open (the leaf against the bedroom wall)
+  { const g = new THREE.Group(); g.position.set(-1.4, H, -3.46); set.add(g); box(1.3, 2.05, 0.045, M.door, 0.65, 1.025, 0, g); W.push({ x0: -1.4, x1: -0.1, z0: -3.52, z1: -3.44, h: H + 2.05 }); }
+  door("dad", -8.1, H, -3.4, 1.38, 2.05, "z", -1.5, { x0: -8.2, x1: -8.0, z0: -3.4, z1: -2.0, h: 99 }, { x0: -9.5, x1: -8.2, z0: -3.5, z1: -3.42, h: H + 2.05 });
+  door("front", 0.2, 0, 6.0, 1.2, 2.12, "x", 1.5, { x0: 0.2, x1: 1.4, z0: 5.9, z1: 6.1, h: 99 }, { x0: 0.12, x1: 0.2, z0: 4.7, z1: 5.9, h: 2.12 });
+  // the light under his door, and what it puts on the hall floor
+  { const strip = plane(1.3, 0.028, glow0("#ffd9a0", { k: 2.2 }), set); strip.rotation.y = Math.PI / 2; strip.position.set(-7.985, H + 0.016, -2.7); strip.userData.keep = true;
+    const L = { p: V3(-7.55, H + 0.1, -2.7), range: 2.6, col: [1.5, 0.95, 0.45], cone: 0 }; ud.lamps.push(L);
+    ud.strip = { mesh: strip, lamp: L }; }
+
+  // ---- your room: the bed you wake on the edge of, a clock's glow, the night at the window
+  { const bx = 1.75, bz = -4.15;
+    box(1.6, 0.3, 2.1, M.dark, bx, H + 0.15, bz, set); rbox(1.56, 0.26, 2.06, 0.06, M.sheet, bx, H + 0.43, bz, set);
+    box(1.66, 0.95, 0.08, M.wood, bx, H + 0.6, bz - 1.07, set);
+    const pl = rbox(0.62, 0.14, 0.4, 0.06, M.pillow, bx - 0.1, H + 0.62, bz - 0.78, set); pl.rotation.y = 0.12;
+    // the duvet thrown back toward the wall side
+    const dv = rbox(0.95, 0.16, 1.5, 0.07, M.duvet, bx + 0.32, H + 0.63, bz + 0.2, set); dv.rotation.z = -0.08; rbox(0.5, 0.2, 0.7, 0.08, M.duvet, bx + 0.25, H + 0.72, bz - 0.25, set).rotation.y = 0.5;
+    W.push({ x0: 0.97, x1: 2.55, z0: -5.2, z1: -3.1, h: H + 0.6 });
+    // the nightstand and the clock: a glow, nothing you can read
+    box(0.45, 0.52, 0.4, M.wood, 0.55, H + 0.26, -4.95, set); W.push({ x0: 0.32, x1: 0.78, z0: -5.2, z1: -4.75, h: H + 0.55 });
+    box(0.16, 0.07, 0.07, M.dark, 0.55, H + 0.555, -4.95, set);
+    const cg = plane(0.13, 0.045, glow0("#ff3a22", { k: 1.6 }), set); cg.position.set(0.55, H + 0.556, -4.912); cg.userData.keep = true;
+    ud.lamps.push({ p: V3(0.6, H + 0.75, -4.6), range: 2.6, col: [0.5, 0.07, 0.04], cone: 0 });
+    // the window and the night in it; a thin curtain that the air moves
+    const wz = -1.6, wn = plane(1.5, 1.3, glow("#8fa4c4", { map: TX.nightTex(5), k: 0.55 }), set); wn.rotation.y = -Math.PI / 2; wn.position.set(3.395, H + 1.45, wz);
+    for (const s of [-1, 0, 1]) box(0.05, 1.36, 0.05, M.trim, 3.38, H + 1.45, wz + s * 0.75, set);
+    box(0.05, 0.05, 1.56, M.trim, 3.38, H + 2.12, wz, set); box(0.1, 0.04, 1.62, M.trim, 3.36, H + 0.78, wz, set);
+    const cur = plane(0.8, 1.7, pbr({ color: "#aab2bd", rough: 0.9, wet: 0, alpha: 0.5, depthWrite: false, side: THREE.DoubleSide, diff: 1.2 }), set); cur.rotation.y = -Math.PI / 2; cur.position.set(3.3, H + 1.35, wz - 0.55); cur.renderOrder = 2; cur.userData.keep = true;
+    anim(set, (dt, c) => { const t = c.t; cur.rotation.y = -Math.PI / 2 + Math.sin(t * 0.7) * 0.07 + Math.sin(t * 1.9) * 0.02; cur.position.x = 3.3 - (0.5 + 0.5 * Math.sin(t * 0.7)) * 0.05; });
+    ud.lamps.push({ p: V3(2.7, H + 1.6, wz), range: 6.5, col: [0.2, 0.26, 0.4], cone: 0 });
+    // a dresser, a chair with yesterday on it, a rug
+    box(1.3, 0.85, 0.45, M.wood, 1.9, H + 0.425, 0.43, set); W.push({ x0: 1.2, x1: 2.6, z0: 0.18, z1: 0.7, h: H + 0.9 });
+    box(0.44, 0.04, 0.44, M.wood, -0.7, H + 0.46, -0.2, set); box(0.44, 0.5, 0.04, M.wood, -0.7, H + 0.7, 0.0, set); for (const [a, b] of [[-0.9, -0.4], [-0.5, -0.4], [-0.9, -0.02], [-0.5, -0.02]]) box(0.035, 0.46, 0.035, M.wood, a, H + 0.23, b, set);
+    rbox(0.4, 0.07, 0.36, 0.03, M.duvet, -0.7, H + 0.51, -0.2, set).rotation.y = 0.3;
+    W.push({ x0: -0.95, x1: -0.45, z0: -0.45, z1: 0.05, h: H + 0.95 });
+    flat([-0.9, 0.9, -4.6, -2.6], H, pbr({ color: "#3a3f47", rough: 0.98, wet: 0 }), 0.006);
+    thing(set, "night-bed", { kind: "sit", label: "Bed", p: V3(1.06, H + 0.6, -3.9), stand: V3(0.5, 0, -3.9), seat: V3(1.06, H + 0.56, -3.9), yaw: -Math.PI / 2, r: 1.2 });
+    ud.sounds.window = { x: 3.3, y: H + 1.4, z: wz }; }
+
+  // ---- the hall: a small light low on the wall by the stairs, frames with nothing in them you can read, a table
+  { ud.lamps.push({ p: V3(-2.3, H + 0.3, -1.9), range: 3.4, col: [0.3, 0.2, 0.1], cone: 0 });
+    const nl = plane(0.05, 0.07, glow0("#ffd9a0", { k: 1.4 }), set); nl.position.set(-2.3, H + 0.3, -1.995); nl.rotation.y = Math.PI; nl.userData.keep = true;
+    for (const [x, w] of [[-4.2, 0.5], [-5.3, 0.36], [-6.3, 0.5]]) { box(w + 0.06, 0.46, 0.02, M.dark, x, H + 1.55, -3.39, set); const pic = plane(w, 0.4, pbr({ color: "#2b3138", rough: 0.3, wet: 0 }), set); pic.position.set(x, H + 1.55, -3.375); }
+    box(0.9, 0.04, 0.26, M.wood, -5.0, H + 0.78, -2.14, set); for (const s of [-0.4, 0.4]) box(0.04, 0.78, 0.22, M.wood, -5.0 + s, H + 0.39, -2.14, set);
+    W.push({ x0: -5.47, x1: -4.53, z0: -2.28, z1: -2.0, h: H + 0.82 }); }
+
+  // ---- his room: the bed along the far wall, a shape under the blanket turned away from the door, a hand, a lamp.
+  // (No head, no face: nothing here is a head. tools/verify/story.mjs holds that.)
+  { const bx = -12.15, bz = -4.3;
+    box(1.66, 0.3, 2.14, M.dark, bx, H + 0.15, bz, set); rbox(1.6, 0.26, 2.08, 0.06, M.sheet, bx, H + 0.43, bz, set);
+    box(1.72, 1.05, 0.08, M.wood, bx, H + 0.62, bz - 1.09, set);
+    W.push({ x0: -13.0, x1: -11.28, z0: -5.4, z1: -3.2, h: H + 0.62 });
+    rbox(0.66, 0.15, 0.42, 0.06, M.pillow, bx - 0.25, H + 0.63, bz - 0.8, set).rotation.y = -0.1;
+    const dad = new THREE.Group(); dad.name = "night-dad-bed"; dad.userData.dad = true; dad.userData.keep = true; dad.position.set(bx, H + 0.56, bz); set.add(dad);
+    // the blanket over him, one piece shaped by what lies under it: shoulder, side, hip, the knees drawn up, the feet;
+    // bunched at the pillow where it has been pulled up. It hangs off the far side and the foot of the bed, and rides up
+    // on the door's side where his arm has come out from under it
+    { const g = new THREE.PlaneGeometry(1.76, 2.0, 30, 38); g.rotateX(-Math.PI / 2);
+      const B = [[-0.14, -0.86, 0.27, 0.2, 0.25], [-0.12, -0.57, 0.3, 0.25, 0.41], [-0.1, -0.22, 0.27, 0.3, 0.3], [-0.06, 0.15, 0.3, 0.27, 0.38], [-0.22, 0.48, 0.27, 0.28, 0.27], [-0.04, 0.78, 0.22, 0.24, 0.2], [0.05, 0.99, 0.16, 0.14, 0.15]];
+      const q = g.attributes.position;
+      for (let i = 0; i < q.count; i++) {
+        let x = q.getX(i), z = q.getZ(i) + 0.08, h = 0;
+        for (const [cx, cz, rx, rz, hh] of B) { const dx = (x - cx) / rx, dz = (z - cz) / rz; h += Math.pow(hh * Math.exp(-(dx * dx + dz * dz) * 0.9), 3); }
+        let y = 0.02 + Math.cbrt(h) + Math.sin(x * 23 + z * 11) * 0.004 + Math.sin(z * 31 - x * 7) * 0.003;
+        const ex = z < 0.0 ? 0.42 + Math.max(0, z + 0.5) * 0.5 : 0.8;
+        if (x > ex) { const o2 = x - ex; y -= Math.min(z < 0 ? 0.02 : 0.32, o2 * 3.2); x = ex + o2 * (z < 0 ? 0.25 : 0.12); }
+        if (x < -0.8) { const o2 = -0.8 - x; y -= Math.min(0.32, o2 * 3.2); x = -0.8 - o2 * 0.12; }
+        if (z > 1.0) { const o2 = z - 1.0; y -= Math.min(0.3, o2 * 3.2); z = 1.0 + o2 * 0.12; }
+        q.setXYZ(i, x, y, z);
+      }
+      g.computeVertexNormals();
+      const bl = new THREE.Mesh(g, pbr({ color: "#a8a294", rough: 0.95, wet: 0, side: THREE.DoubleSide })); bl.name = "blanket"; dad.add(bl); }
+    // his arm, out from under it, the hand off the edge of the mattress on the door's side
+    { const A = V3(0.34, 0.075, -0.4), Bp = V3(0.73, 0.045, -0.29), arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, A.distanceTo(Bp), 4, 10), M.skin); arm.name = "forearm";
+      arm.position.copy(A).lerp(Bp, 0.5); arm.quaternion.setFromUnitVectors(V3(0, 1, 0), Bp.clone().sub(A).normalize()); dad.add(arm);
+      const hand = rbox(0.085, 0.1, 0.032, 0.014, M.skin, 0.815, -0.02, -0.275, dad); hand.name = "hand"; hand.rotation.set(0.1, Math.PI / 2 - 0.2, 0); hand.rotation.z = 0.35;
+      for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.CapsuleGeometry(0.0095, 0.036, 3, 6), M.skin); f.name = "finger"; f.position.set(0.836, -0.085 - (i % 3 ? 0.004 : 0), -0.308 + i * 0.0205); f.rotation.z = 0.2; dad.add(f); } }
+    mergeStatic(dad); dad.traverse(m => { if (m.isMesh && !m.name) m.name = "arm"; });
+    ud.dadBed = dad;
+    // the lamp by the bed: low until the door opens
+    box(0.45, 0.55, 0.4, M.wood, -11.0, H + 0.275, -5.12, set); W.push({ x0: -11.25, x1: -10.75, z0: -5.4, z1: -4.9, h: H + 0.6 });
+    cyl(0.02, 0.05, 0.3, M.brass, -11.0, H + 0.7, -5.12, set, 10);
+    const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 0.2, 16, 1, true), glow0("#ffd9a8", { k: 1.5 })); shade.position.set(-11.0, H + 0.94, -5.12); shade.userData.keep = true; set.add(shade);
+    const L = { p: V3(-11.05, H + 1.0, -4.85), range: 7.5, col: [0.2, 0.13, 0.06], cone: 0 }; ud.lamps.push(L);
+    ud.dadLamp = { L, shade, on: [1.9, 1.25, 0.62], off: [0.2, 0.13, 0.06] };
+    // a chair, a dresser, slippers by the bed, a window with the blinds down
+    box(1.4, 0.9, 0.48, M.wood, -9.3, H + 0.45, -0.26, set); W.push({ x0: -10.05, x1: -8.55, z0: -0.52, z1: 0.0, h: H + 0.95 });
+    box(0.5, 0.05, 0.5, M.wood, -12.5, H + 0.45, -1.2, set); box(0.05, 0.55, 0.5, M.wood, -12.76, H + 0.72, -1.2, set); for (const [a, b] of [[-12.72, -1.42], [-12.28, -1.42], [-12.72, -0.98], [-12.28, -0.98]]) box(0.04, 0.45, 0.04, M.wood, a, H + 0.225, b, set);
+    W.push({ x0: -12.8, x1: -12.2, z0: -1.5, z1: -0.9, h: H + 1.0 });
+    for (const s of [0, 0.13]) rbox(0.1, 0.05, 0.26, 0.02, M.dark, -11.05 + s, H + 0.03, -3.6, set).rotation.y = 0.1 + s;
+    const bl = plane(1.3, 1.2, pbr({ color: "#6f6a5c", rough: 0.8, wet: 0 }), set); bl.position.set(-10.6, H + 1.5, -5.39);
+    for (let i = 0; i < 9; i++) box(1.3, 0.012, 0.012, M.dark, -10.6, H + 0.96 + i * 0.135, -5.38, set);
+    flat([-11.2, -9.2, -4.2, -1.9], H, pbr({ color: "#4b4038", rough: 0.98, wet: 0 }), 0.006); }
+
+  // ---- the entry: a table by the door, a narrow window beside it, shoes
+  { box(0.9, 0.04, 0.3, M.wood, -2.2, 0.8, 5.72, set); for (const s of [-0.4, 0.4]) box(0.04, 0.8, 0.26, M.wood, -2.2 + s, 0.4, 5.72, set); W.push({ x0: -2.67, x1: -1.73, z0: 5.55, z1: 5.9, h: 0.85 });
+    const sl = plane(0.3, 1.7, glow("#8fa4c4", { map: TX.nightTex(7), k: 0.5 }), set); sl.position.set(1.72, 1.2, 5.895); sl.rotation.y = Math.PI;
+    for (const s of [0, 0.14, 0.4]) rbox(0.1, 0.06, 0.27, 0.02, M.dark, 2.6 + s, 0.03, 5.6, set).rotation.y = s;
+    flat([0.0, 1.7, 4.2, 5.8], 0, pbr({ color: "#3d3a36", rough: 0.98, wet: 0 }), 0.008);
+    ud.lamps.push({ p: V3(1.3, 2.6, 4.9), range: 6, col: [0.16, 0.2, 0.3], cone: 0 });
+    thing(set, "night-front", { kind: "open", label: "Front door", p: V3(1.28, 1.02, 5.9), stand: V3(0.86, 0, 5.2), r: 1.7, way: true, use: () => ud.door("front", true) });
+    ud.frontSpot = ud.spots["night-front"]; delete ud.spots["night-front"]; }
+
+  // ---- outside: brick below, boards above, a roof; dark windows; a porch and its light; a garage; nothing with a number on it
+  const hip = (cx, cz, w, d, y, h) => { const m = new THREE.Mesh(new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1), M.roof); m.rotation.y = Math.PI / 4; const g = new THREE.Group(); g.add(m); g.scale.set(w + 0.8, h, d + 0.8); g.position.set(cx, y + h / 2, cz); set.add(g); };
+  const win = (x, y, z, w, h, ry, lit) => { const p = plane(w, h, lit ? glow(lit, { k: 0.55 }) : M.glassN, set); p.position.set(x, y, z); p.rotation.y = ry; const f = box(w + 0.12, h + 0.12, 0.04, M.trim, x, y, z, set); f.rotation.y = ry; f.translateZ(-0.03); };
+  { const fz = 6.115;
+    const lo = plane(HB[1] - HB[0], 3.0, M.brick, set); lo.position.set((HB[0] + HB[1]) / 2, 1.5, fz);
+    const up = plane(HB[1] - HB[0], CEIL + 0.3 - 3.0, M.siding, set); up.position.set((HB[0] + HB[1]) / 2, 3.0 + (CEIL - 2.7) / 2, fz);
+    // the door's own opening: the cladding stops either side of it
+    lo.scale.x = (0.2 - HB[0]) / (HB[1] - HB[0]); lo.position.x = (HB[0] + 0.2) / 2;
+    const lo2 = plane(HB[1] - 1.4, 3.0, M.brick, set); lo2.position.set((HB[1] + 1.4) / 2, 1.5, fz);
+    const lo3 = plane(1.2, 3.0 - 2.14, M.brick, set); lo3.position.set(0.8, 2.14 + (3.0 - 2.14) / 2, fz);
+    for (const [x, y, w, h] of [[-10.5, 1.5, 1.8, 1.4], [-6.2, 1.5, 1.8, 1.4], [-10.5, 4.3, 1.4, 1.3], [-6.2, 4.3, 1.4, 1.3], [-2.2, 4.3, 1.2, 1.3], [2.4, 4.3, 1.2, 1.3]]) win(x, y, fz + 0.012, w, h, 0);
+    for (const [xw, s] of [[HB[0] - 0.015, -1], [HB[1] + 0.015, 1]]) { const sd = plane(HB[3] - HB[2], CEIL + 0.3, M.siding, set); sd.rotation.y = s * Math.PI / 2; sd.position.set(xw, (CEIL + 0.3) / 2, (HB[2] + HB[3]) / 2); }
+    hip((HB[0] + HB[1]) / 2, (HB[2] + HB[3]) / 2, HB[1] - HB[0], HB[3] - HB[2], CEIL + 0.3, 2.3);
+    // the porch: a slab, two posts, a small roof, the light by the door
+    box(3.4, 0.06, 1.7, M.conc, 0.8, 0.0, 6.95, set); for (const s of [-1.55, 1.55]) box(0.16, 2.6, 0.16, M.trim, 0.8 + s, 1.3, 7.6, set);
+    W.push({ x0: -0.83, x1: -0.67, z0: 7.52, z1: 7.68, h: 2.6 }, { x0: 2.27, x1: 2.43, z0: 7.52, z1: 7.68, h: 2.6 });
+    const pr = box(3.7, 0.14, 1.9, M.roof, 0.8, 2.72, 7.0, set); pr.rotation.x = 0.1;
+    const pg = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), glow0("#ffe2b0", { k: 2.4 })); pg.position.set(1.75, 2.0, 6.2); pg.userData.keep = true; set.add(pg);
+    ud.lamps.push({ p: V3(1.7, 2.05, 6.7), range: 8, col: [1.5, 1.05, 0.55], cone: 0 });
+    // the garage, to the east: one wide door, shut
+    box(6.4, 3.0, 5.9, M.brick, 7.4, 1.5, 3.15, set); hip(7.4, 3.15, 6.4, 5.9, 3.0, 1.5);
+    const gd = plane(4.9, 2.2, pbr({ color: "#b5b1a6", rough: 0.6, wet: 0.2 }), set); gd.position.set(7.4, 1.1, 6.112);
+    for (let i = 1; i < 4; i++) box(4.9, 0.02, 0.02, M.dark, 7.4, i * 0.55, 6.12, set);
+    W.push({ x0: 4.2, x1: 10.6, z0: 0.2, z1: 6.1, h: 99 }, { x0: -40, x1: HB[0], z0: -9, z1: 6.1, h: 99 }, { x0: 10.6, x1: 40, z0: -9, z1: 6.1, h: 99 }, { x0: 4.2, x1: 10.6, z0: -9, z1: 0.2, h: 99 }); }
+  // the ground: the road, the lawns, the walks, the drive, the kerbs
+  { flat([-41, 49, -14, 6.1], 0, M.lawn, -0.008);
+    const g0 = plane(90, 40, M.road, set); g0.rotation.x = -Math.PI / 2; g0.position.set(4, -0.012, 22);
+    flat([-41, 49, 6.1, 12.4], 0, M.lawn, -0.004); flat([-41, 49, 22.6, 42], 0, M.lawn, -0.004);
+    flat([-41, 49, 12.4, 13.9], 0, M.conc, 0.004); flat([-41, 49, 21.1, 22.6], 0, M.conc, 0.004);
+    flat([0.15, 1.45, 7.8, 12.4], 0, M.conc, 0.006); flat([4.9, 9.9, 6.1, 12.4], 0, M.conc, 0.006); flat([4.9, 9.9, 13.9, 14.0], 0, M.conc, 0.006);
+    box(90, 0.14, 0.16, M.conc, 4, 0.05, 13.98, set); box(90, 0.14, 0.16, M.conc, 4, 0.05, 21.02, set);
+    // the neighbours' drives
+    flat([-22.5, -18.5, 6.1, 12.4], 0, M.conc, 0.006); flat([17.5, 21.5, 6.1, 12.4], 0, M.conc, 0.006); }
+  // the houses along the street: dark, asleep, one window lit far down
+  const house = (cx, cz, w, d, h, face, lit) => {
+    box(w, h, d, face > 0 ? M.siding : M.brick, cx, h / 2, cz, set); hip(cx, cz, w, d, h, 2.0);
+    const fz = cz + (face * d) / 2 + face * 0.02, ry = face > 0 ? 0 : Math.PI;
+    win(cx - w * 0.28, 1.5, fz, 1.6, 1.3, ry); win(cx + w * 0.28, 1.5, fz, 1.6, 1.3, ry, lit);
+    if (h > 4) { win(cx - w * 0.28, 4.2, fz, 1.3, 1.2, ry); win(cx + w * 0.28, 4.2, fz, 1.3, 1.2, ry); }
+    const dr = plane(1.0, 2.1, M.dark, set); dr.position.set(cx, 1.05, fz); dr.rotation.y = ry;
+  };
+  house(-24.5, 0.6, 11, 10.5, 5.6, 1); house(22.5, 1.0, 12, 10, 3.4, 1, "#d9b98a");
+  house(-27, 30.5, 12, 10, 3.4, -1); house(-10, 31, 13, 10.5, 5.6, -1); house(6.5, 30.5, 12, 10, 3.4, -1, "#9fb4d4"); house(23, 31, 13, 10.5, 5.6, -1);
+  // trees, a letter box with nothing on it, the bins by the garage
+  const tree = (x, z, h, r) => { cyl(0.16, 0.22, h, M.bark, x, h / 2, z, set, 8); for (const [dx, dy, dz, k] of [[0, 0, 0, 1], [0.9, -0.5, 0.3, 0.7], [-0.8, -0.3, -0.5, 0.75], [0.1, 0.7, -0.2, 0.65]]) { const b = new THREE.Mesh(new THREE.IcosahedronGeometry(r * k, 1), M.leaf); b.position.set(x + dx * r * 0.7, h + r * 0.5 + dy * r * 0.6, z + dz * r * 0.7); set.add(b); } W.push({ x0: x - 0.3, x1: x + 0.3, z0: z - 0.3, z1: z + 0.3, h: h }); };
+  tree(-6.5, 9.6, 3.4, 2.3); tree(13.5, 10.2, 3.0, 2.0); tree(-17, 26.5, 3.6, 2.4); tree(15, 26.2, 3.2, 2.2); tree(-30, 9.8, 3.4, 2.2);
+  { box(0.09, 1.05, 0.09, M.bark, -1.6, 0.52, 13.2, set); rbox(0.2, 0.2, 0.44, 0.07, M.dark, -1.6, 1.12, 13.2, set); W.push({ x0: -1.75, x1: -1.45, z0: 13.0, z1: 13.4, h: 1.3 });
+    for (const s of [0, 0.75]) { box(0.6, 1.05, 0.7, pbr({ color: s ? "#27402f" : "#2a2c2f", rough: 0.6, wet: 0.2 }), 10.25 - 0.0, 0.525, 6.6 + s, set); } W.push({ x0: 9.95, x1: 10.6, z0: 6.2, z1: 7.75, h: 1.1 }); }
+  // the street's own lamps: one each way along our side, one across; the house sits in the dark between them
+  lampPost(-13.5, 13.15, 6.4, set, { k: 0.62 }); lampPost(19.5, 13.15, 6.4, set, { k: 0.62 }); lampPost(12.5, 21.85, 6.4, set, { k: 0.6 });
+  // the cars asleep on the street and in the drive, each with its Texas plate
+  { const cars = [
+      { kind: "suv", x: 7.4, z: 9.3, yaw: Math.PI, color: "#2b3038", metal: true },
+      { kind: "sedan", x: -19.5, z: 20.0, yaw: Math.PI / 2, color: "#6a1f1c", metal: true },
+      { kind: "sedan", x: 19.6, z: 9.2, yaw: Math.PI, color: "#9a9c9e", metal: true },
+      { kind: "suv", x: 27.5, z: 20.0, yaw: Math.PI / 2, color: "#14161a", metal: false } ];
+    const land = () => { if (!Object.keys(carLib).length) return false; parkCars(set, cars); return true; };
+    for (const c of cars) { const [w, l] = [2.0, 4.9], along = Math.abs(Math.sin(c.yaw)) > 0.5; W.push({ x0: c.x - (along ? l : w) / 2, x1: c.x + (along ? l : w) / 2, z0: c.z - (along ? w : l) / 2, z1: c.z + (along ? w : l) / 2, h: 1.7 }); }
+    if (!land()) lotReady.then(land); }
+  set.add(skyDome({ day: false }));
+
+  /* ---- the engine and the ambulance. Each is one group that moves along the street (main.js places it: ud.rig.place);
+     its bar and its two lamps pulse slowly, red against white, never faster than a little over once a second, and
+     hold steady under reduced motion. Nothing is written on them. */
+  const vehicle = (name, parts, bar, tint) => {
+    const g = new THREE.Group(); g.name = name; g.userData.keep = true;
+    const body = new THREE.Group(); g.add(body); parts(body); mergeStatic(body);
+    const red = glow0("#ff2414", { k: 0 }), white = glow0("#eef2ff", { k: 0 });
+    const lights = [];
+    for (const [x, y, z, w, d, m] of bar) { const b = box(w, 0.13, d, m ? white : red, x, y, z, g); b.userData.keep = true; lights.push(b); }
+    const LR = { p: V3(0, 3.2, 0), range: 26, col: [0, 0, 0], cone: 0 }, LW = { p: V3(0, 3.2, 0), range: 26, col: [0, 0, 0], cone: 0 };
+    ud.lamps.push(LR, LW);
+    g.position.set(120, 0, 15.7); set.add(g);
+    return { g, red, white, LR, LW, on: 0, tint, barY: bar[0][1], barX: bar[0][0] };
+  };
+  const tyre = pbr({ color: "#0d0d0e", rough: 0.9, wet: 0.2 }), chrome = pbr({ color: "#c9ccd0", metal: 1, rough: 0.2, wet: 0.3 }), glassV = pbr({ color: "#06080a", rough: 0.05, wet: 0.2, spec: 1.2 });
+  const wheel = (g, x, z, r) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.34, 18), tyre); w.rotation.x = Math.PI / 2; w.position.set(x, r, z); g.add(w); const hb = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.5, r * 0.5, 0.36, 12), chrome); hb.rotation.x = Math.PI / 2; hb.position.set(x, r, z); g.add(hb); };
+  const engine = vehicle("engine", g => {
+    const redP = pbr({ color: "#8a1a14", rough: 0.32, wet: 0.4, coat: 0.6 }), grey = pbr({ color: "#8f9499", rough: 0.4, metal: 0.6, wet: 0.3 }), pale = pbr({ color: "#d8d6cc", rough: 0.5, wet: 0.3 });
+    rbox(2.5, 2.3, 2.5, 0.12, redP, -3.35, 1.72, 0, g); box(2.5, 0.5, 2.52, pale, -3.35, 2.62, 0, g);      // the cab, its pale roof band
+    box(0.04, 0.85, 2.2, glassV, -4.615, 2.05, 0, g); for (const s of [-1, 1]) { box(1.6, 0.7, 0.03, glassV, -3.5, 2.1, s * 1.262, g); box(0.7, 1.5, 0.035, grey, -2.75, 1.45, s * 1.262, g); }
+    box(1.0, 2.2, 2.5, grey, -1.6, 1.65, 0, g);                                                                 // the pump panel
+    box(5.7, 2.25, 2.5, redP, 1.75, 1.7, 0, g); box(5.7, 0.12, 2.52, pale, 1.75, 1.35, 0, g);                   // the body and its one pale stripe
+    for (const s of [-1, 1]) for (const x of [0.1, 1.75, 3.4]) box(1.45, 1.25, 0.03, grey, x, 2.05, s * 1.262, g); // the lockers' shutters
+    for (const s of [-0.45, 0.45]) box(5.2, 0.07, 0.07, grey, 1.9, 3.05, s, g); for (let i = 0; i < 9; i++) box(0.05, 0.05, 0.9, grey, -0.4 + i * 0.6, 3.05, 0, g); // the ladder on its rack
+    box(0.3, 0.5, 2.56, chrome, -4.75, 0.72, 0, g); box(9.3, 0.3, 2.3, tyre, 0, 0.5, 0, g);
+    wheel(g, -3.3, 1.1, 0.52); wheel(g, -3.3, -1.1, 0.52); wheel(g, 2.7, 1.1, 0.52); wheel(g, 2.7, -1.1, 0.52);
+    const hl = glow("#fff2d6", { k: 2.2 }); for (const s of [-0.85, 0.85]) { const h = plane(0.3, 0.2, hl, g); h.rotation.y = -Math.PI / 2; h.position.set(-4.91, 1.0, s); }
+  }, [[-3.6, 3.0, -0.55, 0.34, 0.9, 0], [-3.6, 3.0, 0.55, 0.34, 0.9, 1], [4.55, 2.95, -0.8, 0.12, 0.5, 0], [4.55, 2.95, 0.8, 0.12, 0.5, 0]]);
+  const amb = vehicle("ambulance", g => {
+    const white = pbr({ color: "#d9d7cf", rough: 0.4, wet: 0.4, coat: 0.4 }), band = pbr({ color: "#a8431f", rough: 0.45, wet: 0.3 });
+    rbox(1.9, 1.7, 2.1, 0.14, white, -2.35, 1.3, 0, g); box(0.04, 0.7, 1.8, glassV, -3.3, 1.72, 0, g); for (const s of [-1, 1]) box(1.1, 0.6, 0.03, glassV, -2.5, 1.75, s * 1.062, g);
+    box(4.7, 2.4, 2.3, white, 0.95, 1.68, 0, g); for (const s of [-1, 1]) box(4.72, 0.3, 0.02, band, 0.95, 1.25, s * 1.162, g); box(1.92, 0.3, 2.12, band, -2.35, 1.25, 0, g);
+    box(0.25, 0.4, 2.2, chrome, -3.4, 0.6, 0, g); box(6.4, 0.3, 2.0, tyre, 0, 0.45, 0, g); box(0.6, 0.12, 2.2, chrome, 3.5, 0.42, 0, g);
+    wheel(g, -2.3, 1.0, 0.42); wheel(g, -2.3, -1.0, 0.42); wheel(g, 1.8, 1.0, 0.42); wheel(g, 1.8, -1.0, 0.42);
+    const hl = glow("#fff2d6", { k: 2.0 }); for (const s of [-0.75, 0.75]) { const h = plane(0.26, 0.18, hl, g); h.rotation.y = -Math.PI / 2; h.position.set(-3.53, 0.95, s); }
+    // inside, lit: what you see when the doors stand open
+    const inn = plane(2.0, 1.9, glow("#e9dcc0", { k: 0.42 }), g); inn.rotation.y = Math.PI / 2; inn.position.set(3.304, 1.75, 0);
+    const dk = pbr({ color: "#23272b", rough: 0.6, wet: 0 }); box(0.01, 0.5, 0.62, dk, 3.31, 1.08, -0.66, g); box(0.01, 1.0, 0.5, dk, 3.31, 2.15, 0.72, g); box(0.01, 0.05, 1.9, dk, 3.31, 2.62, 0, g); box(0.01, 0.06, 2.0, dk, 3.31, 0.84, 0, g);
+  }, [[-2.3, 2.26, -0.5, 0.3, 0.8, 0], [-2.3, 2.26, 0.5, 0.3, 0.8, 1], [3.25, 2.8, -0.85, 0.1, 0.4, 0], [3.25, 2.8, 0.85, 0.1, 0.4, 0]]);
+  // the ambulance's back doors: two leaves that swing out
+  { const whiteD = pbr({ color: "#d9d7cf", rough: 0.4, wet: 0.4 }); amb.doors = [];
+    for (const s of [-1, 1]) { const h = new THREE.Group(); h.position.set(3.345, 0.55, s * 1.12); h.userData.keep = true; amb.g.add(h); box(0.05, 2.2, 1.1, whiteD, 0, 1.1, -s * 0.55, h); box(0.02, 0.6, 0.6, glassV, 0.03, 1.6, -s * 0.55, h); amb.doors.push({ h, s }); }
+    amb.doorK = 0; amb.inLamp = { p: V3(0, 1.8, 0), range: 5.5, col: [0, 0, 0], cone: 0 }; ud.lamps.push(amb.inLamp); }
+  const rig = ud.rig = {
+    engine, amb, flash: 1, lampK: 1, still: false,
+    place(v, x, z) { v.g.position.x = x; if (z != null) v.g.position.z = z; },
+    doors(k) { amb.doorK = k; for (const d of amb.doors) d.h.rotation.y = d.s * k * 1.75; },
+    // where things are, in the world
+    rear: () => V3(amb.g.position.x + 3.4, 0, amb.g.position.z), cab: v => V3(v.g.position.x + (v === engine ? -3.4 : -2.4), 0, v.g.position.z - (v === engine ? 1.95 : 1.75))
+  };
+  anim(set, (dt, c) => {
+    const t = c.t;
+    for (const v of [engine, amb]) {
+      const ph = v === amb ? 0.37 : 0, a = rig.still ? 0.5 : Math.pow(0.5 + 0.5 * Math.sin((t * 1.15 + ph) * Math.PI * 2), 2), b = rig.still ? 0.5 : Math.pow(0.5 - 0.5 * Math.sin((t * 1.15 + ph) * Math.PI * 2), 2), k = v.on * rig.flash;
+      v.red.uniforms.uK.value = (0.25 + 3.2 * a) * k; v.white.uniforms.uK.value = (0.15 + 2.6 * b) * k;
+      const gx = v.g.position.x + v.barX, gz = v.g.position.z, sw = rig.still ? 0 : t * 1.15 * Math.PI * 2;
+      v.LR.p.set(gx + Math.cos(sw) * 1.6, v.barY + 0.5, gz + Math.sin(sw) * 1.6 - 0.6); v.LW.p.set(gx - Math.cos(sw) * 1.6, v.barY + 0.5, gz - Math.sin(sw) * 1.6 + 0.6);
+      const lk = k * rig.lampK; v.LR.col[0] = 2.3 * a * lk; v.LR.col[1] = 0.16 * a * lk; v.LR.col[2] = 0.1 * a * lk;
+      v.LW.col[0] = 1.7 * b * lk; v.LW.col[1] = 1.8 * b * lk; v.LW.col[2] = 2.1 * b * lk;
+    }
+    const ik = amb.doorK * amb.on; amb.inLamp.p.set(amb.g.position.x + 3.9, 1.7, amb.g.position.z); amb.inLamp.col[0] = 1.3 * ik; amb.inLamp.col[1] = 1.15 * ik; amb.inLamp.col[2] = 0.9 * ik;
+  });
+
+  /* ---- the chair they carry him down on: a frame on two wheels, handles above for whoever is behind and at the
+     feet for whoever goes first, and him on it under the blanket, drawn up and over. Its own +x is the way it travels.
+     (Nothing in it is a head or a face.) */
+  { const ch = new THREE.Group(); ch.name = "night-chair"; ch.userData.keep = true; ch.rotation.order = "YZX"; ch.visible = false; set.add(ch);
+    const fr = new THREE.Group(); ch.add(fr);
+    const seatM = pbr({ color: "#b8922a", rough: 0.7, wet: 0 }), strap = pbr({ color: "#141516", rough: 0.8, wet: 0 });
+    const tube = (a, b, r = 0.016) => { const A = V3(...a), B = V3(...b), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, A.distanceTo(B), 8), M.steel); m.position.copy(A).lerp(B, 0.5); m.quaternion.setFromUnitVectors(V3(0, 1, 0), B.clone().sub(A).normalize()); fr.add(m); };
+    for (const s of [-0.22, 0.22]) { tube([-0.04, 0.07, s], [-0.3, 1.2, s]); tube([-0.3, 1.2, s], [-0.5, 1.34, s * 0.92]); tube([-0.12, 0.5, s], [0.4, 0.5, s]); tube([0.4, 0.5, s], [0.44, 0.14, s]); tube([0.4, 0.46, s], [0.66, 0.42, s * 0.92]);
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.04, 14), tyre); w.rotation.x = Math.PI / 2; w.position.set(-0.04, 0.075, s * 1.12); fr.add(w); }
+    tube([-0.3, 1.2, -0.22], [-0.3, 1.2, 0.22]); tube([0.44, 0.14, -0.22], [0.44, 0.14, 0.22]); box(0.2, 0.02, 0.44, M.steel, 0.5, 0.13, 0, fr);
+    box(0.46, 0.03, 0.44, seatM, 0.16, 0.5, 0, fr); const bk = box(0.03, 0.62, 0.44, seatM, -0.2, 0.84, 0, fr); bk.rotation.z = 0.23;
+    mergeStatic(fr);
+    const dad = new THREE.Group(); dad.name = "night-dad-chair"; dad.userData.dad = true; ch.add(dad);
+    const BL = new THREE.SphereGeometry(1, 16, 12);
+    const wrap = (sx, sy, sz, x, y, z, rz) => { const m = new THREE.Mesh(BL, M.blanket); m.scale.set(sx, sy, sz); m.position.set(x, y, z); m.rotation.z = rz || 0; m.name = "blanket"; dad.add(m); return m; };
+    wrap(0.19, 0.36, 0.25, -0.07, 0.86, 0, 0.2);    // the body, back against the chair
+    wrap(0.3, 0.13, 0.24, 0.17, 0.63, 0);            // the lap
+    wrap(0.13, 0.27, 0.21, 0.41, 0.4, 0, -0.1);      // the legs down to the rest
+    wrap(0.17, 0.09, 0.19, 0.5, 0.2, 0);             // the feet under it
+    wrap(0.2, 0.2, 0.29, -0.15, 1.15, 0, 0.3);       // the blanket up round his shoulders
+    wrap(0.165, 0.185, 0.17, -0.2, 1.37, 0, 0.3);    // and up over, the way you wrap someone against the night air
+    wrap(0.16, 0.1, 0.2, -0.12, 1.27, 0, 0.9);       // the fold of it at the front
+    for (const y of [0.78, 1.0]) { const s = box(0.34, 0.035, 0.48, strap, -0.07, y, 0, dad); s.rotation.z = 0.2; s.name = "strap"; }
+    mergeStatic(dad); dad.traverse(m => { if (m.isMesh && !m.name) m.name = m.material === M.blanket ? "blanket" : "strap"; });
+    const pt = (x, y, z) => { const o3 = new THREE.Object3D(); o3.position.set(x, y, z); ch.add(o3); return o3; };
+    ud.chair = ch; ud.chairPts = { topL: pt(-0.5, 1.34, 0.2), topR: pt(-0.5, 1.34, -0.2), footL: pt(0.66, 0.42, -0.2), footR: pt(0.66, 0.42, 0.2), mid: pt(0, 0.8, 0) }; }
+
+  // where things happen (main.js)
+  ud.marks = {
+    bedSeat: V3(1.06, H + 0.56, -3.9), bedYaw: -Math.PI / 2, bedStand: V3(0.5, H, -3.9), dadBed: V3(-12.1, H + 0.72, -4.3), dadIn: V3(-9.6, H, -2.8), dadDoor: V3(-7.4, H, -2.7),
+    foyer: V3(0.86, 0, 4.6), porch: V3(0.8, 0, 7.0), meet: V3(0.8, 0, 11.2), meet2: V3(-0.6, 0, 12.0), amb: V3(4.5, 0, 15.65), engine: V3(-7.5, 0, 15.75), away: 120,
+    carry: [[-2.62, 1.62], [2.95, 1.62], [2.95, 3.95]], wheel: [[2.95, 3.0], [2.5, 4.4], [0.8, 5.3], [0.8, 12.6], [1.6, 13.2], [9.2, 13.3], [10.3, 14.3], [10.3, 15.65], [9.2, 15.65]],
+    openCam: [[-0.75, H + 1.62, -0.35], [-0.6, H + 1.5, -1.6], [-0.35, H + 1.3, -2.75]], openLook: [[3.2, H + 1.45, -1.7], [2.2, H + 1.0, -3.6], [1.1, H + 1.05, -3.95]]
+  };
+  ud.spots["night-door"] = { p: V3(-7.94, H + 1.0, -2.14), r: 1.7, stand: V3(-7.3, 0, -2.6) };
+  ud.spots["night-fire"] = { who: "fire", r: 3.0 };
+  ud.spots.night = { p: V3(-12.1, H + 0.75, -4.3), sketchR: 1.3 };
+  mergeStatic(set);
+  envHook(set, V3(0.8, 1.6, 10));
+  ud.bounds = { x0: -34, x1: 42, z0: -5.7, z1: 20.7 };
+  ud.nav = { x0: -34, x1: 42, z0: -5.7, z1: 20.7, cell: 0.2 };
+  ud.surfaceAt = (x, z) => (ud.inside(x, z) ? (z < ZS0 ? (inR(R.bed, x, z) || inR(R.dad, x, z) ? "carpet" : "wood") : z < ZS1 && x < XS1 ? "wood" : "tile") : z < 12.4 ? ((x > 0.15 && x < 1.45) || (x > 4.9 && x < 9.9) || z < 7.8 && x > -0.9 && x < 2.5 ? "concrete" : "carpet") : z < 14 ? "concrete" : "asphalt");
+  ud.fogDen = 0.01;
+  ud.ready = roomsReady;
+  _debug.sets.night = set;
+  return set;
+}
+
 /* the keys: a lockbox on the office door of the morning lot */
 export function addKeys(set) {
   const g = new THREE.Group(); g.position.set(13.8, 1.3, -17.88); set.add(g);

@@ -4,6 +4,7 @@
 //   --pad: the whole episode's controls from a standard-mapping pad injected through navigator.getGamepads
 //   --hud: the round map, the title cards, the passers-by and the horn (also run after --explore)
 //   --tags: the lost license plates, every one picked up (tools/verify/out/tags-glint.png, tags-counter-portrait.png)
+//   --night: the first chapter's stills (tools/verify/out/night-bedroom.png, night-street.png, night-carry.png, night-ambulance.png)
 //
 // For each viewport (desktop 1440x900, a phone sideways 844x390 and upright 390x844) it
 // plays every major branch with the keyboard, clicks or taps: hiring (and the role's
@@ -16,6 +17,13 @@
 // that isn't in llms.txt (the desk's fictional figures are labelled and excluded, as
 // in library.mjs). Long walks use the debug hook (?debug=story) to stand you at a
 // spot; everything you do there goes through real keys, clicks and taps.
+// Every path starts where a fresh Play starts: the night (June 2025, the first chapter). The first path of each
+// viewport plays all of it (up from the bed, the door at the end of the hall, out to the street, the crew flagged
+// down and led up, the carry down the stairs on the keyboard or by touch, the walk to the ambulance); the others take
+// it from the walk to the ambulance. Each checks that nothing in my dad's form is a head or a face, that nothing
+// written in the scene has a digit or reads as an address, that the scene stays under its draw budget on a phone held
+// upright, and that it ends on the lot. The other checks (feel, sync, drive and the rest) start on the lot with
+// &night=0, a debug-only way past it; #story/lot does the same for a visitor.
 // With --shots it also renders stills of every scene and key moment at full
 // resolution and writes contact sheets to tools/verify/out/story-sheet-*.png.
 import { chromium } from 'playwright';
@@ -142,7 +150,7 @@ async function start(ctx, label, q = '') {
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message} ${(e.stack || '').split('\n').slice(1, 3).join(' ').trim()}`; if (!errs.includes(m)) errs.push(m); log(m); });
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR|404/.test(m.text())) errs.push(`${label} console: ${m.text().slice(0, 200)}`); });
-  await p.goto(URL0 + '?debug=story&fast=1&pr=' + (SHOTS ? '1' : '0.3') + q);
+  await p.goto(URL0 + '?debug=story&fast=1&pr=' + (SHOTS ? '1' : '0.3') + q); // (no night=0: every path starts with the night)
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   const label0 = await p.textContent('[data-title-play]');
@@ -150,6 +158,112 @@ async function start(ctx, label, q = '') {
   const up = await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().open, null, 60000);
   if (!up) errs.push(`${label}: Play did not open the episode`);
   return { p, label0: (label0 || '').trim() };
+}
+
+/* ---------- the night: the first chapter, from the edge of the bed to the lot ---------- */
+const NIGHT_ADDR = /\b(st|street|rd|road|ave|avenue|dr|drive|ln|lane|blvd|boulevard|ct|court|pkwy|parkway|hwy|highway|apt|suite)\b\.?/i;
+async function night(p, mobile, o, label) {
+  const N = () => p.evaluate(() => window.JG_STORY.debug.night());
+  await until(p, () => !!window.JG_STORY.debug.state().scene, null, 300000);
+  const s0 = await st(p);
+  if (!s0 || s0.scene !== 'night') { errs.push(`${label}: a fresh Play did not start with the night (${s0 && s0.scene})`); return false; }
+  if (!(await phase(p, 'explore', 300000))) { errs.push(`${label}: the night's opening never handed over ${JSON.stringify(await st(p))}`); return false; }
+  let n = await N();
+  // my dad: nothing in him is a head or a face, in the bed or on the chair, at any stage
+  const dadOK = async where => { const d = (await N()).dad; if (!d.meshes.length) errs.push(`${label}: no form for him ${where}`); if (d.bad.length) errs.push(`${label}: a head or a face on him ${where}: ${d.bad.join(' ')}`); if (d.meshes.some(m => !/^(blanket|arm|strap)$/.test(m))) errs.push(`${label}: something unexpected in his form ${where}: ${d.meshes.join(' ')}`); };
+  await dadOK('at the start');
+  // nothing written in the scene says where this is: no digits, nothing that reads as an address
+  const txt = n.texts.join(' | ');
+  if (/\d/.test(txt) || NIGHT_ADDR.test(txt)) errs.push(`${label}: the night's signs and labels carry a digit or an address: ${txt}`);
+  if (!n.seated || (await st(p)).obj !== 'night-wake') errs.push(`${label}: the night should begin on the edge of the bed with something to find ${JSON.stringify({ seated: n.seated, obj: (await st(p)).obj })}`);
+  if (n.box < 0.2) errs.push(`${label}: the night plays without its letterbox (${n.box})`);
+  const calls = async where => { if (!mobile || p.viewportSize().width > p.viewportSize().height) return; const c = await p.evaluate(() => window.JG_STORY.debug.drawCalls()); if (c.calls > 260) errs.push(`${label}: ${c.calls} draws ${where} (the budget upright is 260)`); else notes.push(`${label}: ${c.calls} draws ${where}`); };
+  await calls('in the bedroom');
+  if (o.full) {
+    // up from the bed: the seat's own prompt, pressed
+    await until(p, () => window.JG_STORY.debug.state().near === 'night-bed', null, 20000);
+    if (mobile) await p.tap('.st-act', { force: true }).catch(() => p.keyboard.press('e')); else await p.keyboard.press('e');
+    if (!(await until(p, () => { const n = window.JG_STORY.debug.night(); return !n.seated && n.stage === 'hall'; }, null, 90000))) { errs.push(`${label}: could not get up from the bed ${JSON.stringify(await N())}`); return false; }
+    if (Math.abs((await N()).y - 2.9) > 0.1) errs.push(`${label}: the bedroom floor is not upstairs (${(await N()).y})`);
+    // the door at the end of the hall
+    await use(p, mobile, 'night-door', label);
+    if (!(await until(p, () => window.JG_STORY.debug.night().doors.dad, null, 20000))) errs.push(`${label}: the door at the end of the hall did not open`);
+    await dadOK('with the door open');
+    await finishTalk(p, label);
+    n = await N(); const s1 = await st(p);
+    if (!s1.flags.found || s1.obj !== 'night-out' || n.stage !== 'out' || !n.front) errs.push(`${label}: after the door, the night should send you out ${JSON.stringify({ found: s1.flags.found, obj: s1.obj, stage: n.stage, front: n.front })}`);
+    // the stairs carry your height: half way down them you are half way down
+    await p.evaluate(() => window.JG_STORY.debug.put(0.4, 1.62, Math.PI / 2)); await p.waitForTimeout(700);
+    { const y = (await N()).y; if (!(y > 0.9 && y < 2.2)) errs.push(`${label}: on the stairs your height is ${y}`); }
+    // the front door (a way: Y on a pad), then out
+    await use(p, mobile, 'night-front', label);
+    if (!(await until(p, () => window.JG_STORY.debug.night().doors.front, null, 20000))) errs.push(`${label}: the front door did not open`);
+    await phase(p, 'explore', 60000);
+    await p.evaluate(() => window.JG_STORY.debug.put(0.8, 8.8, 0));
+    if (!(await until(p, () => { const n = window.JG_STORY.debug.night(); return n.veh >= 1 && n.crew && window.JG_STORY.debug.spots().includes('night-fire'); }, null, 240000))) { errs.push(`${label}: the engine and the ambulance never arrived ${JSON.stringify(await N())}`); return false; }
+    n = await N();
+    if (!n.engine[1] || !n.amb[1] || n.inside) errs.push(`${label}: out on the street the bars should be lit ${JSON.stringify([n.engine, n.amb, n.inside])}`);
+    await calls('on the street with the engine and the ambulance');
+    { const ev = await p.evaluate(() => (window.JG_STORY.debug.audio().events || []).filter(e => e.kind === 'night').map(e => e.name)); if (!ev.includes('airbrake')) errs.push(`${label}: no air brakes as they pulled up (${ev.join(' ')})`); }
+    await use(p, mobile, 'night-fire', label); await finishTalk(p, label);
+    if ((await N()).stage !== 'lead' || (await st(p)).obj !== 'night-lead') errs.push(`${label}: flagged down, they should follow you ${JSON.stringify(await N())}`);
+    // lead them up: a few real steps toward the house and they come after you
+    { const c0 = (await N()).crewAt[0]; await p.evaluate(() => window.JG_STORY.debug.put(0.8, 7.2, Math.PI)); await p.evaluate(() => window.JG_STORY.debug.sim(60, 0.05)); await p.evaluate(() => window.JG_STORY.debug.put(0.8, 4.2, Math.PI)); await p.evaluate(() => window.JG_STORY.debug.sim(80, 0.05)); const c1 = (await N()).crewAt[0], me = (await st(p)).me;
+      if (!c1 || Math.hypot(c1[0] - me[0], c1[2] - me[1]) > 4.5) errs.push(`${label}: the crew did not follow you in (${JSON.stringify([c0, c1, me])})`); else notes.push(`${label}: the crew follow you into the house`); }
+    await p.evaluate(() => window.JG_STORY.debug.put(-9.4, -2.8, -Math.PI / 2));
+    if (!(await until(p, () => { const n = window.JG_STORY.debug.night(), s = window.JG_STORY.debug.state(); return n.carry.on && s.phase === 'explore'; }, null, 240000))) { errs.push(`${label}: in the room, the carry never began ${JSON.stringify(await N())}`); return false; }
+    await dadOK('on the chair');
+    n = await N();
+    if (n.dad.bed || !n.chair.vis || !n.carry.ring || n.hands < 2) errs.push(`${label}: the carry should begin with him on the chair and your hands on it ${JSON.stringify({ bed: n.dad.bed, chair: n.chair, ring: n.carry.ring, hands: n.hands })}`);
+    if (o.shots) { await p.waitForTimeout(1500); await shot(p, `${o.tag}-night-carry`); }
+    await calls('on the stairs');
+    const done = () => until(p, () => !window.JG_STORY.debug.night().carry.on, null, 420000);
+    if (!mobile) {
+      // hurrying it (Shift held) rocks the chair, and it will not move again until you ease off; then W alone takes it down
+      await p.keyboard.down('Shift'); await p.keyboard.down('w');
+      const rocked = await until(p, () => window.JG_STORY.debug.night().carry.steady, null, 120000);
+      if (!rocked) errs.push(`${label}: hurrying the carry never rocked the chair ${JSON.stringify((await N()).carry)}`);
+      else { await p.waitForTimeout(2000); const u0 = (await N()).carry.u; await p.waitForTimeout(2500); const c1 = (await N()).carry; if (c1.on && c1.u - u0 > 0.012) errs.push(`${label}: the chair kept going while it rocked (${u0} to ${c1.u})`); else notes.push(`${label}: hurry the carry and the chair rocks until you steady it; nothing fails`); }
+      await p.keyboard.up('Shift');
+      const ok = await done(); await p.keyboard.up('w');
+      if (!ok) { errs.push(`${label}: the carry did not finish on the keyboard ${JSON.stringify((await N()).carry)}`); return false; }
+      notes.push(`${label}: the carry completes on the keyboard`);
+    } else {
+      // a finger held anywhere on the screen
+      const cdp = await p.context().newCDPSession(p), vs = p.viewportSize();
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: Math.round(vs.width * 0.6), y: Math.round(vs.height * 0.55), id: 9 }] });
+      const moving = await until(p, () => window.JG_STORY.debug.night().carry.u > 0.04, null, 120000);
+      if (!moving) errs.push(`${label}: holding the screen did not move the carry ${JSON.stringify((await N()).carry)}`);
+      const ok = await done();
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      if (!ok) { errs.push(`${label}: the carry did not finish by touch ${JSON.stringify((await N()).carry)}`); return false; }
+      if ((await N()).carry.rocks) errs.push(`${label}: a steady hold rocked the chair`);
+      notes.push(`${label}: the carry completes by touch`);
+    }
+    { const ev = await p.evaluate(() => (window.JG_STORY.debug.audio().events || []).map(e => e.name)); if (!ev.includes('heart')) errs.push(`${label}: no heartbeat under the carry`); }
+    await finishTalk(p, label);
+    const s2 = await st(p);
+    if (!s2.flags.carried || s2.obj !== 'night-doors') errs.push(`${label}: at the bottom of the stairs ${JSON.stringify({ carried: s2.flags.carried, obj: s2.obj })}`);
+  } else {
+    // the rest of the paths take the night from the bottom of the stairs
+    await p.evaluate(() => window.JG_STORY.debug.nightGo('wheel'));
+    await phase(p, 'explore', 60000);
+  }
+  await dadOK('on the way to the ambulance');
+  // beside the chair to the ambulance; the doors; the lights away down the street; then the lot
+  if ((await N()).stage !== 'wheel') errs.push(`${label}: the walk to the ambulance did not begin ${JSON.stringify(await N())}`);
+  await p.evaluate(() => window.JG_STORY.debug.put(10.9, 13.9, 2.5));
+  if (!(await until(p, () => { const n = window.JG_STORY.debug.night(); return !n || n.stage === 'doors'; }, null, 300000))) { errs.push(`${label}: the chair never reached the ambulance ${JSON.stringify(await N())}`); return false; }
+  if (o.shots) { await p.waitForTimeout(1200); await shot(p, `${o.tag}-night-doors`); }
+  const shut = await until(p, () => { const n = window.JG_STORY.debug.night(); return !n || n.shut; }, null, 120000);
+  if (!shut) errs.push(`${label}: the ambulance doors never shut ${JSON.stringify(await N())}`);
+  else { const ev = await p.evaluate(() => (window.JG_STORY.debug.audio().events || []).map(e => e.name)); if (!ev.includes('slam')) errs.push(`${label}: the doors shut without a sound`); }
+  const onLot = await until(p, () => window.JG_STORY.debug.state().scene === 'lot', null, 300000);
+  if (!onLot) { errs.push(`${label}: the night did not end on the lot ${JSON.stringify(await st(p))}`); return false; }
+  const s3 = await st(p);
+  if (!s3.journal.includes('night')) errs.push(`${label}: the night left no page in the journal`);
+  notes.push(`${label}: the night ends on the lot${o.full ? ', played all the way through' : ''}`);
+  return true;
 }
 
 /* ---------- the lot: arrive, Dell, Jason (the why), optional looks, the gate ---------- */
@@ -403,7 +517,7 @@ async function feel(vname, w, h, mobile) {
   });
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
-  await p.goto(URL0 + '?debug=story&fast=1&pr=0.4');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&pr=0.4');
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForTimeout(1500);
   const before = await p.evaluate(() => window.__ac.length);
@@ -458,7 +572,8 @@ async function feel(vname, w, h, mobile) {
     await p.waitForTimeout(200);
     const lite = await p.evaluate(() => window.JG_STORY.debug.input());
     if (!lite.stick || lite.run || !(lite.want > 0.3 && lite.want < 1.46)) errs.push(`${label}: a light push should walk (${JSON.stringify(lite)})`);
-    await T0('touchMove', bx, by - 58); await p.waitForTimeout(200);
+    // (touch moves are delivered with the next frame: at software-GL frame rates that can be most of a second)
+    await T0('touchMove', bx, by - 58); await until(p, () => window.JG_STORY.debug.input().mag > 0.9, null, 5000); await p.waitForTimeout(200);
     const full = await p.evaluate(() => window.JG_STORY.debug.input());
     if (!full.run || !full.stickRun || full.want < 2.5) errs.push(`${label}: a full push should run (${JSON.stringify(full)})`);
     await p.evaluate(() => window.JG_STORY.debug.sim(45, 1 / 30));
@@ -627,7 +742,7 @@ async function drive(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
-  await p.goto(URL0 + '?debug=story&fast=1&sq=' + (SHOTS ? '1' : '0') + '&pr=' + (SHOTS ? '0.8' : '0.3'));
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=' + (SHOTS ? '1' : '0') + '&pr=' + (SHOTS ? '0.8' : '0.3'));
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
@@ -777,7 +892,7 @@ async function saleDrive(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
-  await p.goto(URL0 + '?debug=story&fast=1&sq=' + (SHOTS || vname === 'desktop' ? '1' : '0') + '&pr=' + (vname === 'desktop' ? '0.8' : '0.3') + '#story/sale');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=' + (SHOTS || vname === 'desktop' ? '1' : '0') + '&pr=' + (vname === 'desktop' ? '0.8' : '0.3') + '#story/sale');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
   await p.click('#intro [data-intro-skip]');
   if (!(await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'sale', null, 240000))) { errs.push(`${label}: #story/sale didn't open the morning`); await ctx.close(); return; }
@@ -844,7 +959,7 @@ async function ballCheck(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
-  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.5');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.5');
   await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
@@ -889,7 +1004,7 @@ async function resume(vname, w, h, mobile) {
   const ctx = await ctxFor(w, h, mobile);
   const p = await ctx.newPage();
   p.on('pageerror', e => { const m = `${label} pageerror: ${e.message}`; if (!errs.includes(m)) errs.push(m); });
-  const go = async () => { await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3'); await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); };
+  const go = async () => { await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3'); await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); };
   const press = async () => { if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); };
   // to explore: skip lines; at choices take the first
   const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
@@ -956,7 +1071,7 @@ async function resume(vname, w, h, mobile) {
   await canMove('closed and reopened');
   // 7: the office, by its link, then Continue
   await p.goto('about:blank');
-  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3#story/office');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
   await p.click('#intro [data-intro-skip]').catch(() => {});
   await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
@@ -984,7 +1099,7 @@ async function wayCheck(vname, w, h, mobile) {
     return true;
   };
   // the lot: after meeting Jason, an office hint leads to the door
-  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3');
   await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
   await toExplore(); await turnAway(p);
@@ -993,7 +1108,7 @@ async function wayCheck(vname, w, h, mobile) {
   for (const t of ['hire-build', 'lot-paperwork', 'lot-come-in']) if (await check(t, 'door', 'lot')) n++;
   // the office: each hint leads to its own thing
   await p.goto('about:blank');
-  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/office');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3#story/office');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
   await p.click('#intro [data-intro-skip]').catch(() => {});
   await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
@@ -1092,7 +1207,7 @@ async function exploreCheck(vname, w, h, mobile) {
   const toExplore = async () => until(p, () => { if (!window.JG_STORY) return false; const d = window.JG_STORY.debug, s = d.state(); if (s.line) d.skip(); else if (s.choices) d.choose(0); else if (s.phase === 'sheet') d.desk(); else if (s.phase === 'close') d.closeAll(); return s.phase === 'explore'; }, null, 300000);
   const open = async hash => {
     await p.goto('about:blank');
-    await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3' + (hash || ''));
+    await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3' + (hash || ''));
     if (hash) { await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {}); await p.click('#intro [data-intro-skip]').catch(() => {}); }
     else { await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {}); if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]'); }
     await toExplore(); await turnAway(p);
@@ -1391,7 +1506,7 @@ async function storyCtx(w, h, mobile, pad) {
   return ctx;
 }
 async function openStory(p, mobile) {
-  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3');
   await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 });
   await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
@@ -1991,7 +2106,7 @@ async function tagsCheck(vname, w, h, mobile) {
   };
   // the library first (a deep link starts the episode fresh), then out to the office, then out to the lot
   await p.goto('about:blank');
-  await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3#story/memory');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3#story/memory');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }).catch(() => {}); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {});
   if (mobile) await p.tap('#intro [data-intro-skip]').catch(() => p.click('#intro [data-intro-skip]').catch(() => {})); else await p.click('#intro [data-intro-skip]').catch(() => {});
   await scene('memory', ['tag-table', 'tag-stacks', 'tag-sill']);
@@ -2052,6 +2167,40 @@ async function tagsCheck(vname, w, h, mobile) {
 function cxOr(car, d) { return car ? (car[0] + car[1]) / 2 : d; }
 async function shot0(p, name) { await p.screenshot({ path: path.join(OUT, `${name}.png`) }); }
 
+/* ---------- --night: the first chapter's stills, at full resolution ---------- */
+async function nightStills() {
+  const ctx = await ctxFor(1280, 720, false);
+  const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`night stills pageerror: ${e.message}`));
+  await p.goto(URL0 + '?debug=story&fast=1&sq=2&wq=hi&pr=1');
+  await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+  await p.click('[data-title-play]');
+  if (!(await until(p, () => { const s = window.JG_STORY && window.JG_STORY.debug.state(); return !!s && s.scene === 'night' && s.phase === 'explore'; }, null, 600000))) { errs.push('night stills: the night never opened'); await ctx.close(); return; }
+  const H = 2.9, go = st => p.evaluate(st => window.JG_STORY.debug.nightGo(st), st), put = (x, z, yaw) => p.evaluate(a => window.JG_STORY.debug.put(...a), [x, z, yaw]);
+  const view = (a, b2, r) => p.evaluate(v => window.JG_STORY.debug.view(v[0], v[1], v[2]), [a, b2, r || 6]);
+  const snap = async name => { await p.waitForTimeout(6000); await shot0(p, name); notes.push(`still: tools/verify/out/${name}.png`); };
+  // the bedroom, as the chapter hands over: on the edge of the bed, the clock's glow, the night at the window
+  await view([-0.75, H + 1.42, -2.2], [1.25, H + 1.02, -3.95], 2.6); await snap('night-bedroom');
+  // the street: out of the front door as the engine and the ambulance stand at the kerb and the crew come up the lawn
+  await go('out'); await put(1.0, 9.4, 0.25); await view([2.3, 1.72, 7.5], [-1.2, 1.45, 14.2], 9); await snap('night-street');
+  // the carry: half way down the stairs, as it is played
+  await view(null); await go('carry'); await p.evaluate(() => window.JG_STORY.debug.nightCarry(0.42)); await snap('night-carry');
+  // the ambulance: the chair coming up to the open doors, me beside it
+  await go('wheel'); await put(10.9, 13.0, 2.9);
+  await until(p, () => window.JG_STORY.debug.night().wheel > 0.8, null, 300000);
+  // (held there: under the harness's fast clock the doors would be shut a moment later)
+  await p.evaluate(() => window.JG_STORY.debug.freeze(true)); await view([13.4, 1.75, 12.0], [8.8, 1.15, 15.3], 7);
+  await p.evaluate(() => window.JG_STORY.debug.step(2, 0.016, true)); await p.waitForTimeout(800); await shot0(p, 'night-ambulance'); notes.push('still: tools/verify/out/night-ambulance.png');
+  await ctx.close();
+}
+if (process.argv.includes('--night')) {
+  try { await nightStills(); } catch (e) { errs.push(`night stills: ${e.message.split('\n')[0]}`); }
+  await b.close();
+  console.log(notes.map(n => 'ok  ' + n).join('\n'));
+  if (errs.length) { console.log('\n' + errs.length + ' problems:\n' + errs.map(e => '  ' + e).join('\n')); process.exit(1); }
+  console.log('\nstory: the night\'s stills written');
+  process.exit(0);
+}
+
 const VIEWS = [['desktop', 1440, 900, false], ['landscape', 844, 390, true], ['portrait', 390, 844, true]];
 let RAN_PORTRAIT = false;
 const ALL_MEDALS = Object.keys(LIB.trophies).filter(s => s !== LIB.platinum);
@@ -2091,6 +2240,8 @@ for (const [vname, w, h, mobile] of VIEWS) {
     const t0 = Date.now();
     const { p } = await start(ctx, label);
     try {
+      if (!(await night(p, mobile, { ...o, full: P0 === paths[0] }, label))) throw new Error('the night did not play through');
+      await textRules(p, `${label} night`);
       await lot(p, mobile, o, label);
       await textRules(p, `${label} lot`);
       // persistence: reload in the office, the start screen says Continue, the flags are kept
@@ -2117,11 +2268,33 @@ for (const [vname, w, h, mobile] of VIEWS) {
   }
 }
 
+// deep links: #story/night opens the first chapter on the edge of the bed, and #story/lot goes past it to the lot
+if (!only || only === 'desktop') {
+  for (const [hash, scene] of [['#story/night', 'night'], ['#story/lot', 'lot']]) {
+    const ctx = await ctxFor(1280, 800, false);
+    const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`deeplink ${hash} pageerror: ${e.message}`));
+    await p.goto(URL0 + '?debug=story&fast=1&pr=0.3' + hash);
+    await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {}); await p.click('#intro [data-intro-skip]');
+    const ok = await until(p, sc => { const s = window.JG_STORY && window.JG_STORY.debug.state(); return !!s && s.scene === sc && s.phase === 'explore'; }, scene, 300000);
+    if (!ok) errs.push(`${hash} did not open ${scene} ${JSON.stringify(await st(p).catch(() => null))}`);
+    else if (scene === 'night') {
+      const n = await p.evaluate(() => window.JG_STORY.debug.night());
+      if (!n.seated || n.stage !== 'wake') errs.push(`#story/night should begin on the edge of the bed ${JSON.stringify({ seated: n.seated, stage: n.stage })}`); else notes.push('#story/night opens the first chapter on the edge of the bed');
+      // the pause menu lists it first, and Restart begins there
+      await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+      const ch = await p.evaluate(() => [...document.querySelectorAll('.st-pause [data-p="go"]')].map(b => b.dataset.s));
+      await p.keyboard.press('Escape');
+      if (ch.length && ch[0] !== 'night') errs.push(`the chapters menu does not list the night first (${ch.join(' ')})`);
+    } else notes.push('#story/lot opens the lot, past the night');
+    await ctx.close();
+  }
+}
+
 // deep links: #story/office opens the office after the title screen
 if (!only || only === 'desktop') {
   const ctx = await ctxFor(1280, 800, false);
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`deeplink pageerror: ${e.message}`));
-  await p.goto(URL0 + '?debug=story&fast=1&pr=0.3#story/office');
+  await p.goto(URL0 + '?debug=story&fast=1&night=0&pr=0.3#story/office');
   await p.waitForSelector('#intro [data-intro-skip]', { timeout: 60000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 60000 }).catch(() => {}); await p.click('#intro [data-intro-skip]');
   const ok = await until(p, () => window.JG_STORY && window.JG_STORY.debug.state().scene === 'office', null, 240000);
   if (!ok) errs.push('#story/office did not open the office'); else notes.push('#story/office opens the office');

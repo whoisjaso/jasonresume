@@ -27,7 +27,7 @@ import { U, MAXL, blobMat } from "./paint.js";
 import * as TX from "./tex.js";
 import { loadCast, CAST_VER, LOOKS } from "./people.js";
 import * as WORLD from "./world.js";
-const { buildLot, buildOffice, buildLibrary, addKeys, buildWaitingRoom } = WORLD;
+const { buildLot, buildOffice, buildLibrary, addKeys, buildWaitingRoom, buildNight } = WORLD;
 import { Post, GRADES, applyGrade } from "./post.js";
 import { createCrowd } from "./crowd.js";
 import { createAudio } from "./audio.js";
@@ -198,7 +198,8 @@ function getSet(name) {
   // the morning lot: the keys and the sale share one set; where its drivable cars were parked is remembered
   else if (name === "keys" || name === "sale") { s = sets.keys || sets.sale; if (!s) { s = buildLot({ wordmark, day: true, lowres: true }); addKeys(s); for (const c of s.userData.drivable || []) c.home = { x: c.x, z: c.z, yaw: c.yaw }; } }
   else if (name === "june") s = buildWaitingRoom({});
-  if (name !== "keys" && name !== "sale" && name !== "june") addLostPlates(s, name === "decision" ? "lot" : name, UI.tag); // the lost license plates (story/tags.js)
+  else if (name === "night") s = buildNight({});
+  if (name !== "keys" && name !== "sale" && name !== "june" && name !== "night") addLostPlates(s, name === "decision" ? "lot" : name, UI.tag); // the lost license plates (story/tags.js)
   s.visible = false; world.add(s);
   sets[name] = s; if (name === "lot") sets.decision = s; if (name === "decision") sets.lot = s; if (name === "keys") sets.sale = s; if (name === "sale") sets.keys = s;
   return s;
@@ -294,7 +295,7 @@ const HOLD = 0.35, WAIT_MAX = 3.5, STALL_MAX = 6;
 const VC = new Map(); // id -> { a, words, dur, routed, wp }
 let curV = null;
 const syncLog = []; // for tools/verify/story.mjs: how each line began and ended
-function speakerOf(who) { return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
+function speakerOf(who) { if (who === "jason" && S.scene === "night") return null; /* the night: my lines are said over it */ return P[who === "jason" && S.scene === "memory" ? "memory" : who] || null; }
 function voiceId(L) { return L.who === "jason" ? "jason-" + L.id : L.id; }
 function voicedLine(L) { if (!L || !soundOn() || FAST) return false; const id = voiceId(L); return !!(L.who === "jason" ? have.me[id] : have.fict[id]); }
 /* players a press has already started (silently): a phone lets them speak later, outside any press. The title
@@ -697,7 +698,7 @@ async function enter(name, o = {}) {
   Object.values(sets).forEach(s => (s.visible = false));
   set = getSet(name); set.visible = true; applyTier();
   lightScene(name);
-  applyGrade(post, GRADES[name]);
+  applyGrade(post, GRADES[name] || NIGHT_GRADE);
   ringOn = false;
   // who is here
   for (const k of Object.keys(P)) { const q = P[k]; if (q.car && q !== me) { try { q.driving = null; } catch (e) {} } hide(q); }
@@ -741,6 +742,8 @@ async function enter(name, o = {}) {
     set.userData.spots["sale-buyer"] = set.userData.spots["sale-keys"] = { who: "marisol", r: 2.6 };
     // the journal's drawing of the morning: the car, wherever it is
     if (!set.userData.spots.sale) Object.defineProperty(set.userData.spots, "sale", { value: { get p() { const k = saleCar(); return k ? new THREE.Vector3(k.x, 0.75, k.z) : new THREE.Vector3(-1.6, 0.75, 4.5); }, sketchR: 2.2 }, enumerable: false });
+  } else if (name === "night") {
+    await nightEnter();
   } else if (name === "decision") {
     await person("you", "player"); await person("jason", "jason"); await person("dell", "dell");
     place(P.you, M.decisionPlayer, Math.PI * 0.9); place(P.jason, M.decisionJason, Math.PI * 0.2); place(P.dell, M.dellGate, Math.PI);
@@ -749,7 +752,7 @@ async function enter(name, o = {}) {
   }
   // (the soft disc under the feet is lighter where the ground draws the real shadow)
   for (const p of Object.values(P)) if (p.shadow) { p.shadow.visible = p.group.visible; p.shadow.material.uniforms.uK.value = set.userData.groundMat ? 0.3 : 0.55; }
-  me = name === "memory" ? P.memory : name === "keys" ? P.jason : P.you;
+  me = name === "memory" ? P.memory : name === "keys" ? P.jason : name === "night" ? P.night : P.you;
   // come in through an exit: you arrive at the way back to where you were
   if (me && o.from) { const ex = Object.values(set.userData.spots || {}).find(x => x && x.kind === "exit" && (x.to === o.from || (o.from === "decision" && x.to === "lot") || (o.from === "lot" && x.to === "decision"))); if (ex) { const q = ex.stand || ex.p || ex.at; if (q) { me.pos.set(q.x, 0, q.z); const f = ex.p || ex.at; if (f && f !== q) me.yaw = me.wantYaw = Math.atan2(q.x - f.x, q.z - f.z); } } }
   if (me && !o.cold) unstick(me);
@@ -766,9 +769,10 @@ async function enter(name, o = {}) {
   // the desk lamp in the memory remembers what you chose
   if (S.scene === "decision" && S.flags.lamp === "off") { const l = sets.lot.userData.lamps[5]; if (l) { l.col = [0.6, 0.38, 0.18]; l.glow.material.uniforms.uK.value = 0.7; } }
   // the score: the title's layer for where you are
-  if (SC() && SC().focus) SC().focus({ lot: "triple-j", decision: "triple-j", office: "lead-to-title", memory: "neuroscience", keys: "triple-j", june: "bed", sale: "triple-j" }[name]);
+  if (SC() && SC().focus) SC().focus({ lot: "triple-j", decision: "triple-j", office: "lead-to-title", memory: "neuroscience", keys: "triple-j", june: "bed", sale: "triple-j", night: "bed" }[name]);
   // the waiting room takes the score almost all the way down; the morning gives it back, warm
-  AU.scoreLevel(name === "june" ? 0.1 : 1, name === "june" ? 4 : 6);
+  AU.scoreLevel(name === "night" ? 0.06 : name === "june" ? 0.1 : 1, name === "june" || name === "night" ? 4 : 6);
+  if (prev === "night" && name !== "night") { post.comp.u.uBox.value = 0; if (CAR.on) carryStop(true); guide.ground = null; }
   camState.yaw = me ? me.yaw + Math.PI : 0; camState.init = true;
   save();
   T("story_scene", { scene: name, from: prev || "" });
@@ -872,6 +876,7 @@ function sprintFov() {
 }
 function updateCamera(dt) {
   if (DRV.state === "drive" && DRV.veh && !camState.view && !camState.rail && S.phase === "drive" && driveView(dt)) return;
+  if (NT.swayOn) { camera.position.sub(NT.sway); NT.swayOn = false; } // (the night's handheld drift is laid over the frame, never into it)
   if (camState.view) { camera.position.copy(camState.view.p); camera.lookAt(camState.view.t); post.comp.u.uFocus.value = camState.view.p.distanceTo(camState.view.t); post.comp.u.uRange.value = camState.view.r || 6; post.comp.u.uDofK.value = quality >= 2 ? 0.8 : 0; return; }
   const k = still() ? 1 : 1 - Math.exp(-6 * dt);
   if (camState.runK > 0.001 && (camState.rail || S.phase !== "explore")) { camState.runK = damp(camState.runK, 0, 5, dt); sprintFov(); }
@@ -893,7 +898,9 @@ function updateCamera(dt) {
     return;
   }
   if (!me) return;
+  if (S.scene === "night" && nightCam(dt)) return;
   post.comp.u.uDofK.value = 0; post.comp.u.uRange.value = 9; // depth of field is for conversations; walking, the lot stays sharp
+  if (S.scene === "night") { post.comp.u.uDofK.value = quality >= 2 ? 0.5 : 0; post.comp.u.uRange.value = 4.2; } // (the night keeps a shallow focus on foot too)
   const { want, look } = followView(dt, false);
   if (camState.init) { camera.position.copy(want); camState.look.copy(look); camState.init = false; }
   // at a run the camera hangs back a touch and the lens opens a little; both ease in and out
@@ -909,27 +916,27 @@ function updateCamera(dt) {
    pulled in along the line to your head whenever a wall, a car, a pole or the room's edge would be in the way */
 // outside, a car is as good as a wall (a camera skimming a roof sees nothing but paint); in a room the desks and tables are low enough to look over
 const camWalls = () => (set.userData.walls || []).map(w => ({ ...w, src: w, h: w.h != null ? w.h : (set.userData.bounds && (w.x1 - w.x0) > 1.2 && (w.z1 - w.z0) > 1.0 && (w.x1 - w.x0) * (w.z1 - w.z0) < 14 ? 1.1 : 99) }));
-let camWallsFor = null, camWallList = [];
+let camWallsFor = null, camWallList = [], camWallsV = 0;
 function insideAny(x, y, z, pad, list) {
-  if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
+  if (camWallsFor !== set || camWallsV !== (set.userData.wallsV || 0)) { camWallList = camWalls(); camWallsFor = set; camWallsV = set.userData.wallsV || 0; }
   for (const w of list || camWallList) if (y < w.h + pad && x > w.x0 - pad && x < w.x1 + pad && z > w.z0 - pad && z < w.z1 + pad) return true;
   // people, and Dell's umbrella, are solid too
-  for (const k in P) { const q = P[k]; if (q === me || !q.group.visible) continue; const r = (q.hold === "umbrella" ? 0.72 : 0.42) + pad * 0.5; if (y < 2.35 && (x - q.pos.x) ** 2 + (z - q.pos.z) ** 2 < r * r) return true; }
-  const b = set.userData.bounds; if (b && (x < b.x0 + pad * 0.5 || x > b.x1 - pad * 0.5 || z < b.z0 + pad * 0.5 || z > b.z1 - pad * 0.5 || y > (set.userData.ceilingY || (S.scene === "memory" ? 6.2 : 2.95)) - pad * 0.5)) return true;
-  return y < 0.15;
+  for (const k in P) { const q = P[k]; if (q === me || !q.group.visible) continue; const r = (q.hold === "umbrella" ? 0.72 : 0.42) + pad * 0.5; if (y < q.pos.y + 2.35 && (x - q.pos.x) ** 2 + (z - q.pos.z) ** 2 < r * r) return true; }
+  const b = set.userData.bounds; if (b && (x < b.x0 + pad * 0.5 || x > b.x1 - pad * 0.5 || z < b.z0 + pad * 0.5 || z > b.z1 - pad * 0.5 || y > (set.userData.ceilAt ? set.userData.ceilAt(x, z) : set.userData.ceilingY || (S.scene === "memory" ? 6.2 : 2.95)) - pad * 0.5)) return true;
+  return y < groundY(x, z) + 0.15;
 }
 /* scratch vectors for the cameras: nothing allocated per frame */
 const _head = new THREE.Vector3(), _off = new THREE.Vector3(), _right = new THREE.Vector3(), _aim = new THREE.Vector3(), _pivot = new THREE.Vector3(), _o2 = new THREE.Vector3(), _want = new THREE.Vector3(), _look = new THREE.Vector3(), _tmp = new THREE.Vector3();
 const _fv = { want: _want, look: _look }, _near = [];
 function followView(dt, probe) {
   // a jump: the camera goes half way up with you, and dips with the landing
-  const head = _head.copy(me.pos); head.y += me.height * 0.86 - me.pos.y * 0.5 - JUMP.dip;
+  const head = _head.copy(me.pos); head.y += me.height * 0.86 - (me.pos.y - groundY(me.pos.x, me.pos.z)) * 0.5 - JUMP.dip;
   // drift behind the walker unless the visitor is steering the camera
   if (!probe) {
     if (me.speed > 0.4 && camState.drag <= 0) camState.yaw += angTo(camState.yaw, me.yaw + Math.PI) * (1 - Math.exp(-(mv.path ? 1.0 : 1.6) * dt));
     camState.drag -= dt;
   }
-  const inside = S.scene === "office" || S.scene === "memory", mem = S.scene === "memory", upright = VW < VH;
+  const inside = S.scene === "office" || S.scene === "memory" || (S.scene === "night" && NT.inside), mem = S.scene === "memory", upright = VW < VH;
   const dist = (mem ? 2.2 : inside ? 2.7 : 3.6) * (camState.zoom || 1) * (upright ? 1.12 : 1);
   // close to a wall, the camera rises and looks down over you rather than sit behind your head
   const pitch = camState.pitch + (mem ? -0.06 : inside ? 0.08 : 0) + (probe ? 0 : (camState.lift || 0) + (camState.close || 0));
@@ -945,7 +952,7 @@ function followView(dt, probe) {
   // the pivot: the shoulder, pulled toward the head if the shoulder itself would be inside something
   const pivot = _pivot.copy(head).addScaledVector(right, sh);
   // only the walls within reach of the camera this frame (the march below asks many times)
-  if (camWallsFor !== set) { camWallList = camWalls(); camWallsFor = set; }
+  if (camWallsFor !== set || camWallsV !== (set.userData.wallsV || 0)) { camWallList = camWalls(); camWallsFor = set; camWallsV = set.userData.wallsV || 0; }
   _near.length = 0; const rr = dist + 0.6;
   for (const w of camWallList) if (pivot.x > w.x0 - rr && pivot.x < w.x1 + rr && pivot.z > w.z0 - rr && pivot.z < w.z1 + rr) _near.push(w);
   if (insideAny(pivot.x, pivot.y, pivot.z, 0.18, _near)) pivot.copy(head);
@@ -1001,7 +1008,7 @@ const WALK = 1.45, RUN = 2.6, RUN_AT = 0.82, DEAD = 0.14;
 const mv = { x: 0, z: 0, mag: 0, runLatch: false, path: null, pi: 1, after: null, stuck: 0, idle: 0, running: false, src: "", v: 0, dx: 0, dz: 1 };
 const pad = { x: 0, y: 0, mag: 0 };
 let nav = null, navFor = null;
-function navNow() { if (!set) return null; if (navFor !== set) { nav = buildNav(set); navFor = set; } return nav; }
+function navNow() { if (!set) return null; if (navFor !== set || nav !== set.userData._nav) { nav = buildNav(set); navFor = set; } return nav; } // (a door opening clears the set's grid: it is built again)
 /* if a placement (a restore, a scene change, getting out of a car) left you inside something or outside the set,
    step to the nearest clear ground, on a widening ring */
 function unstick(p) {
@@ -1015,7 +1022,7 @@ function unstick(p) {
 function blocked(x, z, r = 0.28) {
   for (const w of set.userData.walls) if (x > w.x0 - r && x < w.x1 + r && z > w.z0 - r && z < w.z1 + r) return true;
   const b = set.userData.bounds; if (b && (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1)) return true;
-  for (const k of Object.keys(P)) { const p = P[k]; if (p === me || !p.group.visible) continue; if (Math.hypot(p.pos.x - x, p.pos.z - z) < 0.55) return true; }
+  for (const k of Object.keys(P)) { const p = P[k]; if (p === me || !p.group.visible || p.ghost) continue; if (Math.hypot(p.pos.x - x, p.pos.z - z) < 0.55) return true; }
   return false;
 }
 const keyOn = name => !!keys[SET.keys[name]];
@@ -1283,7 +1290,7 @@ function padPoll(dt) {
 /* in menus the chooser is A, unless Back has been put on A: then the button Back left (B) chooses */
 function padOK() { return SET.pad.back === 0 ? 1 : 0; }
 /* a way somewhere else: a door, an exit, the doors out of June, a car */
-function isWay(s) { return !!s && (s.id.startsWith("car:") || s.o.world === "exit" || !!(OBJ[s.id] && (OBJ[s.id].go || s.id === "june-door"))); }
+function isWay(s) { return !!s && (s.id.startsWith("car:") || s.o.world === "exit" || !!(OBJ[s.id] && (OBJ[s.id].go || OBJ[s.id].way || s.id === "june-door")) || !!(s.sp && s.sp.way)); }
 /* X (use) works on anything prompted; Y (in and out) only on a way. A spoken line that isn't a passing thought is
    skipped by either; with nothing prompted the press does nothing */
 function padUse(way) {
@@ -1659,8 +1666,8 @@ async function interact(id, how) {
   if (id === "june-coffee" && first) { await coffeeRun(s.p ? { p: s.p, sp: s } : { p: me.pos.clone(), sp: {} }); S.partner = P.jason; S.focusPoint = null; await runTalk(o.talk); return; }
   // reach for the things you can touch: the sound, the haptic and the motion land when the hand does
   let fired = false;
-  const feel = () => { if (fired) return; fired = true; FX("arrive"); AU.thing(id, at); if (id === "june-window" && set.userData.wipe) set.userData.wipe(s.p); };
-  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|arcade|mem-(folder|letter|cert|laptop|lamp|psych)|june-(window|phone|scan))$/.test(id) && s.p;
+  const feel = () => { if (fired) return; fired = true; FX("arrive"); AU.thing(id, at); if (id === "june-window" && set.userData.wipe) set.userData.wipe(s.p); if (id === "night-door") nightDoor(); };
+  const touchable = /^(ledger|phone|keys|cabinet|book|laptop|door|arcade|mem-(folder|letter|cert|laptop|lamp|psych)|june-(window|phone|scan)|night-door)$/.test(id) && s.p;
   // the arcade cabinet plays The Run: the episode steps aside, and comes back to this spot in the office when the run closes
   if (o.play) {
     if (!S.journal.includes("arcade")) { try { await doAct("journal:arcade"); } catch (e) {} }
@@ -1674,7 +1681,7 @@ async function interact(id, how) {
   }
   if (me && touchable && me.reachTo) {
     try {
-      const r = me.reachTo(s.p.clone(), { hold: id === "keys" ? "pinch" : /^(cabinet|door)$/.test(id) ? "grip" : "touch", onContact: feel });
+      const r = me.reachTo(s.p.clone(), { hold: id === "keys" ? "pinch" : /^(cabinet|door|night-door)$/.test(id) ? "grip" : "touch", onContact: feel });
       if (r && r.catch) r.catch(feel);
       setTimeout(feel, FAST ? 0 : 1200); // a reach that never lands still gets its answer
     } catch (e) { feel(); }
@@ -1689,6 +1696,7 @@ async function interact(id, how) {
   S.partner = target || (S.scene === "office" && ["cabinet", "laptop", "ledger", "board", "book"].includes(id) ? P.jason : S.scene === "lot" && id === "sold" ? P.jason : S.scene === "june" && ["june-window", "june-scan", "june-door"].includes(id) ? P.jason : null);
   S.focusPoint = s.p || null;
   const talk = !first && o.again ? o.again : o.talk;
+  if (id === "night-door") { S.focusPoint = set.userData.marks.dadBed; nightDadShot(); }
   if (s.close) return;
   if (!first && o.once && !o.again) { const th = thoughtOf(id); if (th && th.length) await sayAgain(th); return; }
   await runTalk(talk);
@@ -1718,6 +1726,7 @@ async function runTalk(id) {
       if (lines[li + 1]) preloadLine(lines[li + 1]);
       else for (const g of (T0.choices || []).filter(c => cond(c.if)).map(c => c.go).concat(T0.next || [])) { const n = TALK[g] && (TALK[g].lines || []).find(x => cond(x.if)); if (n) preloadLine(n); }
       await beat(L.id, 0);
+      { const nl = nightLine(L); if (nl) await raceT(nl, FAST ? 6000 : 9000); } // (the night: what a line sets going)
       // he's the one who stands up first; and she drives away while the line is said
       if (L.id === "june-you-9" && P.jason) { P.jason.pose = "stand"; P.jason.heavy = 0.35; }
       const off = L.id === "sale-you-2" ? driveOff() : null;
@@ -1771,6 +1780,7 @@ async function doAct(d) {
   return null;
 }
 function afterTalk() {
+  if (S.scene === "night") { nightAfterTalk(); return; }
   // the office: once the desk and the call are done, Jason points at the book
   if (S.scene === "office" && S.flags.desked && S.flags.called && !S.flags.hinted) setTimeout(() => { if (S.phase === "explore" && !S.flags.hinted) { S.partner = P.jason; runTalk("book-hint"); } }, FAST ? 50 : 2200);
   // the memory: pack the desk, then the lamp
@@ -1817,6 +1827,7 @@ function officeDoor(to, ms) {
   return new Promise(res => { const step = () => { const u = Math.min(1, (performance.now() - t0) / dur); d.t = from + (to - from) * EZ(u); try { d.open(d.t); } catch (e) {} if (u < 1) requestAnimationFrame(step); else res(); }; step(); });
 }
 async function travel(to) {
+  if (S.scene === "night" && to === "lot") { await nightToLot(); return; }
   setPhase("cinematic"); promptEl.hidden = true; clearDots();
   if (S.scene === "lot" && to === "office") officeDoor(1, 520);
   const memoryIn = to === "memory" || to === "keys" || to === "june" || to === "sale";
@@ -2080,7 +2091,7 @@ function pause() {
 const ACTS = [["up", "k_up"], ["down", "k_down"], ["left", "k_left"], ["right", "k_right"], ["run", "k_run"], ["act", "k_act"], ["journal", "k_journal"]];
 function pauseView(v, focus) {
   pzView = v; if (v !== "pad") padCap = null;
-  const reached = ["lot", "office", "memory", "june", "sale", "decision"].filter(n => S.visited && S.visited[n]);
+  const reached = ["night", "lot", "office", "memory", "june", "sale", "decision"].filter(n => S.visited && S.visited[n]);
   const tog = (k, a, b) => '<button type="button" class="pz-tog" data-c="' + k + '" aria-pressed="' + !!SET[k] + '"><span>' + E(SET[k] ? b : a) + "</span></button>";
   const sl = k => '<label class="pz-sl"><span>' + E(UI["mix_" + k]) + '</span><input type="range" min="0" max="100" step="1" data-mix="' + k + '" value="' + Math.round(AU.mix[k] * 100) + '" aria-label="' + E(UI["mix_" + k]) + '" /></label>';
   let h = "";
@@ -2172,11 +2183,11 @@ pauseEl.addEventListener("click", async e => {
   else if (k === "reset-keys") { SET.keys = Object.assign({}, KEYS0); saveSet(); AU.ui("toggle"); hap("tap"); pauseView("keys"); glyphs(); }
   else if (k === "sound") { if (SC()) SC().toggle("story"); AU.sound(soundOn()); FX("choice"); AU.ui("toggle"); pauseView("settings"); const nb = $("[data-p='sound']", pauseEl); if (nb) nb.focus({ preventScroll: true }); }
   else if (k === "library") { T("story_quit", { scene: S.scene }); close("quit"); }
-  else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh("lot"); }
+  else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh(FIRST); }
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
 function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.tags = []; lostGen.n++; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
-async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } await fade(1, 500); await enter(name, { quiet: true }); await fade(0, 600); setPhase("explore"); if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
+async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } S.heldShot = null; if (name === "night") nightFlagsOff(); await fade(1, 500); await enter(name, { quiet: true }); if (name === "night") { await nightOpen(); return; } await fade(0, 600); setPhase("explore"); if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
 /* ================================================================
    INPUT: keys (remappable), mouse, touch, pad; the glyphs follow the last one used
@@ -2332,7 +2343,7 @@ function tapAt(x, y) {
   if (best) { if (near && near.id === best.id) interact(best.id, "tap"); else goInteract(best.id); return; }
   const nd = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
   ray.setFromCamera(nd, camera);
-  const t = -ray.ray.origin.y / ray.ray.direction.y;
+  const t = ((me ? groundY(me.pos.x, me.pos.z) : 0) - ray.ray.origin.y) / ray.ray.direction.y; // (the floor you stand on)
   if (t > 0 && t < 60) { const p = ray.ray.origin.clone().addScaledVector(ray.ray.direction, t); if (walkTo(p)) FX("key"); }
 }
 capEl.addEventListener("click", () => { if (line) endLine(true); });
@@ -2725,7 +2736,8 @@ function driveView(dt) {
    driving off while Jason watches. Nothing here allocates per frame.
    ================================================================ */
 /* a beat of silence before and after a line, in ms: the lines that need room */
-const BEATS = { "june-you-3": [700, 300], "june-jason-1": [1500, 500], "june-jason-2": [0, 1900], "june-jason-3": [500, 900], "june-jason-5": [0, 900], "june-jason-7": [0, 900], "june-you-9": [600, 400], "sale-jason-9": [0, 500] };
+const BEATS = { "night-jason-1": [700, 500], "night-jason-2": [0, 900], "night-jason-3": [1100, 800], "night-jason-4": [0, 400], "night-fire-1": [300, 250], "night-jason-5": [0, 300], "night-fire-2": [500, 400], "night-jason-6": [400, 700], "night-fire-3": [0, 500], "night-jason-7": [900, 1500], "night-jason-8": [700, 1000], "night-jason-9": [300, 2400],
+  "june-you-3": [700, 300], "june-jason-1": [1500, 500], "june-jason-2": [0, 1900], "june-jason-3": [500, 900], "june-jason-5": [0, 900], "june-jason-7": [0, 900], "june-you-9": [600, 400], "sale-jason-9": [0, 500] };
 const beat = (id, i) => { const b = BEATS[id]; return b && b[i] && !FAST ? sleep(still() ? Math.min(b[i], 700) : b[i]) : null; };
 
 /* ---------- the hold ---------- */
@@ -2856,6 +2868,481 @@ function juneShot(L) {
     camState.shot = { pos, look: mid.clone().add(new THREE.Vector3(0, -0.12, 0)), push: reduced ? 0 : 0.1, dur: 12, focus: pos.distanceTo(mid), range: 1.7 };
   }
   camState.shotT = 0; camState.cut = !camState.juneIn; camState.juneIn = true;
+}
+
+/* ================================================================
+   THE NIGHT: the first chapter. June 2025, around two in the morning.
+   Here, and only here, you are me: the body is mine as I was woken, and
+   my lines are the voice of someone remembering, said over what you do.
+   You wake on the edge of the bed; there is a line of light under the
+   door at the end of the hall; behind it, my dad (a shape under a blanket
+   seen from behind, a hand: never his face, never his name). Down the
+   stairs and out to the street as an engine and an ambulance pull up; you
+   flag the crew down and lead them up; you take one end of the chair and
+   carry him down the stairs, slowly (hold forward: too fast and the chair
+   rocks until you steady it; nothing fails); you walk beside it to the
+   ambulance; the doors shut, the lights pull away, and it is quiet. Then
+   the lot, later.
+
+   The house and the street are story/world.js (buildNight): one plan, two
+   floors, the floor's height from set.userData.heightAt. The stages follow
+   the flags the script sets (found, met-fire, lifting, carried), so a
+   Continue lands where you were. Nothing here allocates per frame.
+   ================================================================ */
+const SKIP_NIGHT = DEBUG && /[?&]night=0/.test(location.search); // (the harness's other checks start on the lot, as they always did)
+const FIRST = SKIP_NIGHT ? "lot" : "night";
+const NF = FAST ? 6 : 1; // the harness's clock is slow: the night's own clocks run faster under it
+SCENE_LIGHT.night = { sky: "#1a222e", ground: "#0d0d0f", moon: "#262e3c", rim: "#5e6c82", fog: "#070a10", den: 0.0095, wetAll: 0.18, sat: 0.92, moonDir: [0.35, 0.75, 0.55] };
+const NIGHT_GRADE = { tone: 0.5, con: 0.35, exp: 1.16, lift: [0.007, 0.009, 0.013], gamma: [1.0, 1.0, 1.02], gain: [1.03, 1.0, 0.97], sat: 0.88, bloom: 0.85, vig: 0.95, grain: 0.045, mem: 0.1, sh: [-0.16, 0.04, 0.24], hi: [0.24, 0.1, -0.08] };
+const NIGHT_FLAGS = ["found", "met-fire", "lifting", "carried", "out", "done-night"];
+const CREW = ["fire", "fire2", "fire3"], NIGHT_CAST = ["night", "fire", "fire2", "fire3"];
+const NT = { stage: "", t: 0, veh: 0, braked: false, crew: false, inside: true, sat: false, trail: [], radioT: 5, leave: -1, load: -1, loadRes: null, shut: false, doorK: 0, ws: 0, cyaw: 0, sway: new THREE.Vector3(), swayOn: false, carryPath: null, carryLen: 0, wheelPath: null, wheelLen: 0, hintT: 0, engAt: { x: 0, y: 1.2, z: 0 }, ambAt: { x: 0, y: 1.2, z: 0 } };
+const CAR = { on: false, u: 0, s0: 0, s1: 0, v: 0, rock: 0, wob: 0, beat: 0, step: -1, steady: false, dip: 0, rocks: 0, ring: "" };
+const _n1 = new THREE.Vector3(), _n2 = new THREE.Vector3(), _n3 = new THREE.Vector3(), _nw = new THREE.Vector3(), _nl = new THREE.Vector3();
+const nightOn = () => S.scene === "night" && !!set && set.name === "night";
+const _pa = { x: 0, z: 0, dx: 0, dz: 1 }, _pb = { x: 0, z: 0, dx: 0, dz: 1 }, _pc = { x: 0, z: 0, dx: 0, dz: 1 };
+/* the point a distance along a path, and the way it runs there (into o) */
+function pAt(p, d, o) {
+  for (let i = 1; i < p.length; i++) {
+    const sx = p[i].x - p[i - 1].x, sz = p[i].z - p[i - 1].z, s = Math.hypot(sx, sz);
+    if (d <= s || i === p.length - 1) { const t = s ? clamp(d / s, 0, 1) : 0; o.x = p[i - 1].x + sx * t; o.z = p[i - 1].z + sz * t; o.dx = sx / (s || 1); o.dz = sz / (s || 1); return o; }
+    d -= s;
+  }
+  return o;
+}
+const sm01 = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function nightFlagsOff() { for (const k of NIGHT_FLAGS) delete S.flags[k]; delete S.looked["night-door"]; delete S.looked["night-fire"]; delete S.looked["night-front"]; }
+/* the front door can be used once you know why you are going out; opened, it stays open */
+function frontSpot(on) { const ud = set.userData; if (on) ud.spots["night-front"] = ud.frontSpot; else delete ud.spots["night-front"]; lostGen.n++; }
+function dadLit(on) { const ud = set.userData, d = ud.dadLamp, c = on ? d.on : d.off; d.L.col[0] = c[0]; d.L.col[1] = c[1]; d.L.col[2] = c[2]; d.shade.material.uniforms.uK.value = on ? 1.5 : 0.5; ud.strip.mesh.visible = !on; const k = on ? 0 : 1; ud.strip.lamp.col[0] = 1.5 * k; ud.strip.lamp.col[1] = 0.95 * k; ud.strip.lamp.col[2] = 0.45 * k; }
+/* the engine and the ambulance along the street: 0 away, 1 at the kerb */
+function vehSet(k) {
+  const ud = set.userData, R = ud.rig, M = ud.marks, e = v => 1 - Math.pow(1 - clamp(v, 0, 1), 2.4);
+  R.place(R.engine, lerp(M.engine.x + 70, M.engine.x, e(k * 1.1)), M.engine.z); R.place(R.amb, lerp(M.amb.x + 86, M.amb.x, e(k)), M.amb.z);
+  R.engine.on = R.amb.on = k > 0 ? 1 : 0;
+}
+function crewGo(p, pts, sp, done) { p.route = pts; p.ri = 0; p.rsp = (sp || 1.6) * (FAST ? 2 : 1); p.rdone = done || null; p.follow = 0; }
+function crewTo(p, x, z, sp, done) { const n = navNow(); crewGo(p, (n && n.path(p.pos.x, p.pos.z, x, z)) || [{ x, z }], sp, done); }
+function crewMove(p, dt) {
+  const r = p.route; if (!r) return;
+  let q = r[p.ri], dx = q.x - p.pos.x, dz = q.z - p.pos.z, d = Math.hypot(dx, dz);
+  while (d < 0.18 && p.ri < r.length - 1) { p.ri++; q = r[p.ri]; dx = q.x - p.pos.x; dz = q.z - p.pos.z; d = Math.hypot(dx, dz); }
+  if (d < 0.1) { p.route = null; const f = p.rdone; p.rdone = null; if (f) f(); return; }
+  const st = Math.min(d, p.rsp * dt); p.pos.x += dx / d * st; p.pos.z += dz / d * st; p.wantYaw = Math.atan2(dx, dz);
+}
+/* the crew step down at the kerb and come up the lawn toward the house */
+function crewOut(instant) {
+  const ud = set.userData, M = ud.marks, R = ud.rig; NT.crew = true;
+  const c = R.cab(R.engine), a = R.cab(R.amb), rear = R.rear();
+  place(P.fire, _n1.set(c.x, 0, c.z), 0); place(P.fire2, _n1.set(c.x + 1.3, 0, c.z - 0.2), 0); place(P.fire3, _n1.set(a.x, 0, a.z), 0);
+  for (const k of CREW) { P[k].ghost = false; P[k].follow = 0; P[k].route = null; if (P[k].shadow) P[k].shadow.visible = true; }
+  if (instant) { place(P.fire, M.meet, Math.PI); place(P.fire2, M.meet2, Math.PI); place(P.fire3, _n1.set(rear.x + 1.0, 0, rear.z - 1.7), Math.PI / 2); return; }
+  crewGo(P.fire, [{ x: M.meet.x, z: M.meet.z }], 2.2); crewGo(P.fire2, [{ x: M.meet2.x, z: M.meet2.z }], 2.0); crewGo(P.fire3, [{ x: rear.x + 1.0, z: rear.z - 1.7 }], 1.5);
+  AU.night("radio", headOf(P.fire));
+}
+/* the point a distance back along the way you came */
+const _tb = { x: 0, z: 0 };
+function trailBack(D) {
+  let px = me.pos.x, pz = me.pos.z, acc = 0;
+  for (let i = NT.trail.length - 1; i >= 0; i--) { const q = NT.trail[i], d = Math.hypot(q.x - px, q.z - pz); if (acc + d >= D) { const t = (D - acc) / (d || 1); _tb.x = px + (q.x - px) * t; _tb.z = pz + (q.z - pz) * t; return _tb; } acc += d; px = q.x; pz = q.z; }
+  return null;
+}
+/* someone following you: straight for the place behind you when the way is clear, round the walls on the grid when not */
+function follow(p, D, dt) {
+  const g = trailBack(D); if (!g) return;
+  const d = Math.hypot(g.x - p.pos.x, g.z - p.pos.z);
+  // left far behind (or the harness moved you): they are with you again, behind you
+  if (d > 9 || (FAST && d > 4)) { p.pos.x = g.x; p.pos.z = g.z; p.pos.y = groundY(g.x, g.z); p.nav = null; return; }
+  if (d < 0.12) return;
+  p.navT = (p.navT || 0) - dt;
+  if (p.navT <= 0) { p.navT = 0.45; const n = navNow(); p.nav = n && d > 0.8 && !n.clear(p.pos.x, p.pos.z, g.x, g.z) ? n.path(p.pos.x, p.pos.z, g.x, g.z) : null; p.ni = 1; }
+  let tx = g.x, tz = g.z;
+  if (p.nav && p.nav.length > 1) { while (p.ni < p.nav.length - 1 && Math.hypot(p.nav[p.ni].x - p.pos.x, p.nav[p.ni].z - p.pos.z) < 0.3) p.ni++; tx = p.nav[p.ni].x; tz = p.nav[p.ni].z; }
+  const ex = tx - p.pos.x, ez = tz - p.pos.z, e = Math.hypot(ex, ez); if (e < 0.02) return;
+  const st = Math.min(e, Math.min(RUN + 0.25, d * 2.4) * dt); p.pos.x += ex / e * st; p.pos.z += ez / e * st; p.wantYaw = Math.atan2(ex, ez);
+}
+/* on the edge of the bed, as you were woken */
+async function nightSit() {
+  const J = P.night, M = set.userData.marks; if (!J || !J.sitDown || J.seated) { NT.sat = !!(J && J.seated); return; }
+  try {
+    await raceT(J.sitDown(M.bedSeat, M.bedYaw, { dur: 0.3, speed: 3 }), FAST ? 40000 : 6000);
+    for (let t0 = performance.now(); !J.seated && J.car && performance.now() - t0 < (FAST ? 40000 : 3000);) await new Promise(r => setTimeout(r, 50));
+  } catch (e) {}
+  J.heavy = 0.7; NT.sat = true;
+}
+/* who is where when the night begins, or begins again from a save: the stage follows the flags */
+async function nightEnter() {
+  await person("night", "jason-memory", { look: "jason-night" });
+  await person("fire", "player", { look: "fire" }); await person("fire2", "player", { look: "fire2" }); await person("fire3", "player", { look: "fire3" });
+  const ud = set.userData, M = ud.marks, F = S.flags, J = P.night, H = ud.heightAt(M.bedStand.x, M.bedStand.z);
+  me = J; // (before anything here that moves you: enter() names you again after)
+  if (J.car) { try { J.driving = null; } catch (e) {} } // (on your feet: a chapter begun again from the edge of the bed)
+  for (const k of CREW) { hide(P[k]); P[k].route = null; P[k].follow = 0; P[k].ghost = false; P[k].nav = null; }
+  if (CAR.on) carryStop(true);
+  Object.assign(NT, { stage: "", t: 0, veh: 0, braked: false, crew: false, inside: true, sat: false, radioT: 5, leave: -1, load: -1, loadRes: null, shut: false, doorK: 0, ws: 0, swayOn: false });
+  NT.trail.length = 0;
+  NT.carryPath = M.carry.map(q => ({ x: q[0], z: q[1] })); NT.carryLen = pathLen(NT.carryPath); NT.wheelPath = M.wheel.map(q => ({ x: q[0], z: q[1] })); NT.wheelLen = pathLen(NT.wheelPath);
+  guide.ground = groundY;
+  ud.chair.visible = false; ud.dadBed.visible = !F.lifting; ud.rig.doors(0); ud.rig.still = still();
+  ud.door("dad", !!F.found, true); ud.door("front", !!(F.out || F["met-fire"]), true); dadLit(!!F.found);
+  frontSpot(!!F.found && !ud.doorOpen("front"));
+  J.heavy = 0; J.lookAtP = null;
+  if (!F.found) { place(J, M.bedStand, M.bedYaw); J.pos.y = H; NT.stage = "wake"; vehSet(0); }
+  else if (!F["met-fire"]) { place(J, M.foyer, 0); NT.stage = "out"; NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); }
+  else if (!F.lifting) {
+    place(J, M.foyer, Math.PI); NT.stage = "lead"; NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true);
+    place(P.fire, M.porch, Math.PI); place(P.fire2, _n1.set(M.porch.x - 0.5, 0, M.porch.z + 1.4), Math.PI); P.fire.ghost = P.fire2.ghost = true; P.fire.follow = 1.5; P.fire2.follow = 2.7;
+    NT.trail.push({ x: M.porch.x - 0.5, z: M.porch.z + 1.4 }, { x: M.porch.x, z: M.porch.z });
+  } else if (!F.carried) { place(J, M.dadIn, 0); J.pos.y = H; NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); await carrySetup(true); }
+  else { place(J, _n1.set(2.1, 0, 3.4), Math.PI / 2); NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); ud.door("front", true, true); wheelSetup(); }
+}
+/* the cold open: black, the card, a slow move through the dark room to you on the edge of the bed, my two lines over
+   it; then it is yours. Skip (Esc, Enter, A) goes straight there, without a sound */
+async function nightOpen() {
+  setPhase("cinematic"); el.classList.add("is-cinema"); post.comp.u.uBox.value = 1;
+  fadeEl.style.transitionDuration = "0ms"; fadeEl.style.background = "#000"; fadeEl.classList.add("is-on");
+  const ud = set.userData, M = ud.marks, sc = D.scenes.night, v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
+  let skipped = false;
+  const skipP = new Promise(r => { S.skipOpen = () => { if (skipped) return; skipped = true; if (line) endLine(true); r(); }; });
+  skipEl.hidden = false; requestAnimationFrame(() => skipEl.classList.add("is-on"));
+  camState.rail = null; camState.shot = null; camera.position.copy(v3(M.openCam[0])); camState.look.copy(v3(M.openLook[0])); camera.lookAt(camState.look);
+  const seq = (async () => {
+    const sat = nightSit();
+    await sleep(700); if (skipped) return;
+    $(".st-card__ep", cardEl).textContent = D.title; $(".st-card__h", cardEl).textContent = sc.name; $(".st-card__sub", cardEl).textContent = sc.card;
+    cardEl.classList.remove("is-title"); cardEl.hidden = false; void cardEl.offsetWidth; cardEl.classList.add("is-on");
+    FX("arrive");
+    await sleep(3200); if (skipped) return;
+    cardEl.classList.remove("is-on"); await sleep(800); if (skipped) return; cardEl.hidden = true;
+    await raceT(sat, FAST ? 40000 : 6000); if (skipped) return;
+    const p = rail(M.openCam.map(v3), M.openLook.map(v3), 14);
+    fade(0, 2800);
+    await sleep(3000); if (skipped) return;
+    for (const L of TALK["night-arrive"].lines) { await beat(L.id, 0); if (skipped) return; await sayLine(L); if (skipped) return; await beat(L.id, 1); if (skipped) return; }
+    await p;
+  })();
+  await Promise.race([seq, skipP]);
+  S.skipOpen = null; skipEl.classList.remove("is-on"); setTimeout(() => (skipEl.hidden = true), 300);
+  if (skipped) T("story_skip", { what: "night_open" });
+  await fade(1, skipped ? 200 : 450);
+  camState.rail = null; cardEl.classList.remove("is-on"); cardEl.hidden = true; setTimeout(() => { if (!line) capEl.hidden = true; }, 360);
+  await nightSit();
+  camState.yaw = me.yaw + Math.PI * 0.72; camState.pitch = 0.14; camState.init = true;
+  el.classList.remove("is-cinema");
+  for (const d of TALK["night-arrive"].do || []) await doAct(d);
+  S.flags["done-night"] = 1;
+  await fade(0, skipped ? 400 : 700);
+  showHint(); setPhase("explore"); save();
+}
+/* the door at the end of the hall: it swings in, the lamp in the room comes up, and the frame goes past my shoulder */
+function nightDoor() {
+  const ud = set.userData, sp = ud.spots["night-door"];
+  if (ud.door("dad", true)) { AU.night("door", sp.p); hap("select"); }
+  dadLit(true);
+}
+function nightShot(pos, look, o) { S.heldShot = Object.assign({ pos, look, push: still() ? 0 : 0.1, dur: 8 }, o || {}); S.heldShot.focus = S.heldShot.focus || pos.distanceTo(look); camState.shotT = 0; camState.cut = true; if (S.phase === "talk" && line) camState.shot = S.heldShot; }
+function nightDadShot() {
+  const M = set.userData.marks, H = M.dadBed.y - 0.72;
+  nightShot(new THREE.Vector3(me.pos.x + 1.15, H + 1.66, me.pos.z - 0.28), new THREE.Vector3(-11.7, H + 0.78, -4.1), { push: still() ? 0 : 0.07, dur: 10, range: 3.2 });
+  me.lookAtP = M.dadBed;
+}
+/* what a line sets going before it is said. Returns a promise when the line should wait for it */
+function nightLine(L) {
+  if (!nightOn()) return null;
+  if (L.id === "night-fire-3") return nightLoad();
+  if (L.id === "night-jason-7") nightLeave();
+  else if (L.id === "night-jason-8") nightAlone();
+  return null;
+}
+function nightAfterTalk() {
+  const F = S.flags;
+  if (S.heldShot && NT.stage !== "doors") S.heldShot = null;
+  if ((NT.stage === "wake" || NT.stage === "hall") && F.found) { NT.stage = "out"; frontSpot(!set.userData.doorOpen("front")); }
+  if (NT.stage === "out" && F["met-fire"]) { NT.stage = "lead"; NT.trail.length = 0; P.fire.ghost = P.fire2.ghost = true; P.fire.follow = 1.5; P.fire2.follow = 2.7; P.fire.route = P.fire2.route = null; }
+}
+/* in the room: they go to him; then the chair is at the top of the stairs and one end of it is yours */
+async function nightRoom() {
+  const ud = set.userData, M = ud.marks, H = M.dadIn.y;
+  NT.stage = "room"; mv.path = null; mv.after = null; guide.clearRing();
+  for (const k of ["fire", "fire2"]) { const p = P[k]; p.follow = 0; p.ghost = true; if (Math.hypot(p.pos.x - me.pos.x, p.pos.z - me.pos.z) > 4) { const g = trailBack(k === "fire" ? 1.4 : 2.4); if (g) { p.pos.x = g.x; p.pos.z = g.z; p.pos.y = groundY(g.x, g.z); } } }
+  crewTo(P.fire, -10.75, -3.75, 1.5, () => { P.fire.wantYaw = -Math.PI / 2; }); crewTo(P.fire2, -10.6, -2.75, 1.4, () => { P.fire2.wantYaw = -Math.PI / 2 - 0.3; });
+  S.partner = null; S.focusPoint = M.dadBed; me.wantYaw = Math.atan2(M.dadBed.x - me.pos.x, M.dadBed.z - me.pos.z);
+  nightShot(new THREE.Vector3(-8.75, H + 1.62, -0.75), new THREE.Vector3(-11.5, H + 0.85, -4.0), { push: still() ? 0 : 0.08, dur: 9, range: 3.4 });
+  await runTalk("night-room");
+  if (!nightOn()) return;
+  S.heldShot = null;
+  await carrySetup(false);
+}
+/* ---------- the carry ---------- */
+const HANDLE = { topL: new THREE.Vector3(), topR: new THREE.Vector3(), footL: new THREE.Vector3(), footR: new THREE.Vector3() };
+const handleAt = k => () => set.userData.chairPts[k].getWorldPosition(HANDLE[k]);
+function carryHands(top, foot) {
+  const ud = set.userData; ud.chair.updateMatrixWorld(true);
+  // (whoever is behind it has the handle on the chair's right in their left hand; whoever faces it, the other way about)
+  for (const [p, l, r] of [[top, "topR", "topL"], [foot, "footR", "footL"]]) {
+    if (!p || !p.reachTo) continue;
+    try { for (const [k, hand] of [[l, "l"], [r, "r"]]) { const q = p.reachTo(handleAt(k), { hand, hold: "grip", stay: true, dur: 0.5 }); if (q && q.catch) q.catch(() => {}); } } catch (e) {}
+  }
+}
+function carryHint() {
+  const t = dev === "touch" ? UI.carry_touch : dev === "pad" ? UI.carry_pad : UI.carry_pointer.replace("{up}", keyLabel(SET.keys.up));
+  hintEl.textContent = t; hintEl.hidden = false; hintEl.classList.add("is-on");
+  clearTimeout(NT.hintT); NT.hintT = setTimeout(() => { hintEl.classList.remove("is-on"); setTimeout(() => { if (!hintEl.classList.contains("is-on")) hintEl.hidden = true; }, 600); }, FAST ? 300 : 9000);
+}
+async function carrySetup(instant) {
+  const ud = set.userData, M = ud.marks;
+  S.busy = true; setPhase("cinematic"); hideWorldUI();
+  if (!instant) await fade(1, 600);
+  ud.dadBed.visible = false; ud.chair.visible = true; ud.door("front", true, true); frontSpot(false);
+  for (const k of ["fire", "fire2"]) { const p = P[k]; p.route = null; p.follow = 0; p.ghost = true; p.group.visible = true; if (p.shadow) p.shadow.visible = true; }
+  Object.assign(CAR, { on: true, s0: 0.86, s1: NT.carryLen - 0.96, v: 0, rock: 0, wob: 0, beat: 0.4, step: -1, steady: false, dip: 0, ring: "" });
+  CAR.u = 0; NT.stage = "carry";
+  // the second of them goes ahead to hold the front door
+  place(P.fire2, _n1.set(2.05, 0, 5.05), Math.PI * 0.9);
+  carryPose(0, true);
+  for (const p of [me, P.fire]) { p.pos.y = groundY(p.pos.x, p.pos.z); p.lookAtP = null; }
+  carryHands(me, P.fire);
+  camState.yaw = me.yaw + Math.PI; camState.init = true; NT.camInit = true;
+  holdEl.hidden = false; holdEl.classList.add("is-on"); holdEl.style.transform = "translate(" + Math.round(VW / 2) + "px," + Math.round(VH - (VW < VH ? 170 : 92)) + "px)"; holdFg.style.strokeDashoffset = "176";
+  if (!instant) { await sleep(350); await fade(0, 800); }
+  setPhase("explore"); // (S.busy keeps the walk and the prompts out of it: the carry has the controls)
+  FX("arrive"); carryHint(); save();
+}
+function carryStop(quiet) {
+  CAR.on = false; holdEl.classList.remove("is-on", "is-beat"); setTimeout(() => { if (!HOLDG && !CAR.on) holdEl.hidden = true; }, 260);
+  if (quiet) { S.busy = false; for (const k of ["night", "fire"]) { const p = P[k]; if (p && p.reaches) { try { p.release(); } catch (e) {} } } }
+}
+/* how hard you are pushing: 0 nothing, 1 a steady hold (a key, the stick, a finger held down), 2 hurrying */
+function carryInput() {
+  if (S.phase !== "explore") return 0;
+  const k = keyOn("up") || keyOn("down") || keyOn("left") || keyOn("right") || keys.arrowup || keys.arrowdown || keys.arrowleft || keys.arrowright;
+  if ((k && runHeld()) || mv.mag >= RUN_AT || pad.mag >= RUN_AT || PADN.run) return 2;
+  return k || mv.mag > 0 || pad.mag > 0 || heldNow() ? 1 : 0;
+}
+/* the chair, and the two of you either end of it, for where it is along the way down */
+function carryPose(dt, snap) {
+  const ud = set.userData, ch = ud.chair, Pt = NT.carryPath, s = lerp(CAR.s0, CAR.s1, CAR.u);
+  const c = pAt(Pt, s, _pc), cx = c.x, cz = c.z, ty = Math.atan2(-c.dz, c.dx);
+  NT.cyaw = snap ? ty : NT.cyaw + angTo(NT.cyaw, ty) * (1 - Math.exp(-4 * dt));
+  const a = pAt(Pt, s - 0.82, _pa), ax = a.x, az = a.z, b = pAt(Pt, s + 0.94, _pb), bx = b.x, bz = b.z;
+  const slope = clamp((groundY(ax, az) - groundY(bx, bz)) / 1.2, 0, 1), gy = groundY(cx, cz);
+  ch.position.set(cx, snap ? gy : damp(ch.position.y, gy, 14, dt), cz);
+  ch.rotation.set(Math.sin(S.t * 13) * 0.07 * CAR.wob + Math.sin(S.t * 2.1) * 0.006 * Math.min(1, CAR.v), NT.cyaw, lerp(0.2, 0.46, slope));
+  const J = me, F = P.fire;
+  J.pos.x = ax; J.pos.z = az; J.wantYaw = Math.atan2(cx - ax, cz - az); if (snap) J.yaw = J.wantYaw;
+  F.pos.x = bx; F.pos.z = bz; F.wantYaw = Math.atan2(cx - bx, cz - bz); if (snap) F.yaw = F.wantYaw;
+  F.lookAtP = null;
+}
+function carryTick(dt) {
+  const ud = set.userData, inp = carryInput();
+  mv.idle = 0;
+  if (CAR.steady && inp < 2) CAR.steady = false; // eased off: it settles
+  const want = CAR.steady || CAR.wob > 0.25 ? 0 : inp === 2 ? 0.95 : inp === 1 ? 0.44 : 0;
+  CAR.v = damp(CAR.v, want, want > CAR.v ? 2.4 : 6, dt);
+  // step by step: each tread is taken, not rolled over
+  const s = lerp(CAR.s0, CAR.s1, CAR.u), c = pAt(NT.carryPath, s, _pc), N = WORLD.NIGHT;
+  const on = c.z < N.ZS1 && c.x > N.XS0 && c.x < N.XS1, sx = (c.x - N.XS0) / ((N.XS1 - N.XS0) / N.STEPS), st = on ? Math.floor(sx) : -1;
+  const pace = on ? 0.55 + 0.45 * Math.sin((sx - Math.floor(sx)) * Math.PI) : 1;
+  CAR.u = Math.min(1, CAR.u + CAR.v * pace * (FAST ? 3 : 1) * dt / (CAR.s1 - CAR.s0));
+  if (st !== CAR.step) { CAR.step = st; if (st >= 0 && CAR.v > 0.05) { AU.night("clunk", ud.chair.position); CAR.dip = still() ? 0 : 0.022; } }
+  CAR.dip = damp(CAR.dip, 0, 7, dt);
+  // hurrying it: the chair starts to rock; let it rock too far and you have to steady before it will move again
+  if (inp === 2 && !CAR.steady) CAR.rock += dt * 0.95; else CAR.rock = Math.max(0, CAR.rock - dt * 0.9);
+  if (CAR.rock > 1) { CAR.rock = 0; CAR.steady = true; CAR.wob = 1; CAR.v *= 0.25; CAR.rocks++; AU.night("rock", ud.chair.position); hap("select"); rumble("select"); toast(UI.carry_slow); }
+  CAR.wob = Math.max(0, CAR.wob - dt * 0.9);
+  // the pulse, in the ear and the hand, a little quicker toward the bottom
+  if (CAR.v > 0.06) { CAR.beat -= dt; if (CAR.beat <= 0) { CAR.beat = 0.74 - CAR.u * 0.2; AU.heart(0.6 + CAR.u * 0.6); hap("heart"); holdEl.classList.remove("is-beat"); void holdEl.offsetWidth; holdEl.classList.add("is-beat"); } }
+  const ring = (176 * (1 - CAR.u)).toFixed(0); if (ring !== CAR.ring) { CAR.ring = ring; holdFg.style.strokeDashoffset = ring; }
+  carryPose(dt, false);
+  if (CAR.u >= 1) carryEnd();
+}
+async function carryEnd() {
+  const ud = set.userData;
+  carryStop(false); NT.stage = "down";
+  FX("arrive"); AU.night("clunk", ud.chair.position);
+  // the bottom: my hands come off it, he takes the handles behind, and I am beside it
+  try { me.release(); P.fire.release(); } catch (e) {}
+  const c = ud.chair.position;
+  me.pos.set(c.x - 0.85, 0, c.z + 0.35); me.yaw = me.wantYaw = Math.PI / 2;
+  wheelSetup();
+  S.busy = false; S.partner = null; S.focusPoint = null;
+  const h = me.pos;
+  nightShot(new THREE.Vector3(h.x + 0.2, 1.52, h.z + 1.25), new THREE.Vector3(h.x, 1.5, h.z), { push: still() ? 0 : 0.12, dur: 8, range: 1.1 });
+  await runTalk("night-down");
+  S.heldShot = null;
+}
+/* ---------- to the ambulance: he wheels it, you walk beside it; it waits for you ---------- */
+function wheelSetup() {
+  const ud = set.userData;
+  NT.stage = "wheel"; NT.ws = 0; NT.doorK = 0; NT.load = -1; NT.shut = false;
+  ud.dadBed.visible = false; ud.chair.visible = true;
+  for (const k of ["fire", "fire2"]) { const p = P[k]; p.route = null; p.follow = 0; p.ghost = true; p.group.visible = true; if (p.shadow) p.shadow.visible = true; }
+  if (Math.hypot(P.fire2.pos.x - 2.05, P.fire2.pos.z - 5.05) > 3) place(P.fire2, _n1.set(2.05, 0, 5.05), Math.PI * 0.9);
+  wheelPose(0, true);
+  carryHands(P.fire, null);
+}
+function wheelPose(dt, snap) {
+  const ud = set.userData, ch = ud.chair, c = pAt(NT.wheelPath, NT.ws, _pc), ty = Math.atan2(-c.dz, c.dx);
+  NT.cyaw = snap ? ty : NT.cyaw + angTo(NT.cyaw, ty) * (1 - Math.exp(-5 * dt));
+  ch.position.set(c.x, 0, c.z); ch.rotation.set(0, NT.cyaw, 0.2);
+  const F = P.fire, fx = Math.cos(NT.cyaw), fz = -Math.sin(NT.cyaw);
+  F.pos.x = c.x - fx * 0.84; F.pos.z = c.z - fz * 0.84; F.wantYaw = Math.atan2(fx, fz); if (snap) { F.yaw = F.wantYaw; F.pos.y = 0; }
+}
+function wheelTick(dt) {
+  const ud = set.userData, R = ud.rig, L = NT.wheelLen, ch = ud.chair.position, end = NT.wheelPath[NT.wheelPath.length - 1];
+  const dMe = Math.hypot(me.pos.x - ch.x, me.pos.z - ch.z), ahead = Math.hypot(me.pos.x - end.x, me.pos.z - end.z) + 0.5 < Math.hypot(ch.x - end.x, ch.z - end.z);
+  if (NT.ws < L && (dMe < 3.8 || ahead)) NT.ws = Math.min(L, NT.ws + Math.min(1.2, (L - NT.ws) * 1.5 + 0.25) * NF * dt);
+  wheelPose(dt, false);
+  P.fire.lookAtP = NT.ws < L && !(dMe < 3.8 || ahead) ? _nl.set(me.pos.x, me.pos.y + 1.55, me.pos.z) : null; // he waits for you
+  // the one holding the door comes out after it and goes ahead to the street
+  if (NT.ws > 6 && !P.fire2.route && !P.fire2.went) { P.fire2.went = true; crewGo(P.fire2, [{ x: 0.8, z: 5.2 }, { x: 0.8, z: 12.6 }, { x: 8.6, z: 13.6 }], 2.3); }
+  // the back doors open as it comes
+  const near = Math.hypot(ch.x - end.x, ch.z - end.z) < 13;
+  if (near && NT.doorK === 0) AU.night("door", R.rear());
+  if (near && NT.doorK < 1) { NT.doorK = Math.min(1, NT.doorK + dt * NF / 1.3); R.doors(sm01(0, 1, NT.doorK)); }
+  if (NT.ws >= L && dMe < 4.6 && S.phase === "explore" && !S.busy) { NT.stage = "doors"; mv.path = null; mv.after = null; guide.clearRing(); S.partner = P.fire; S.focusPoint = null; runTalk("night-doors"); }
+}
+/* lifted in, and the doors shut: the sound, the haptic and the doors meeting in one frame */
+function nightLoad() {
+  try { P.fire.release(); } catch (e) {}
+  NT.load = 0; P.fire.lookAtP = null;
+  return new Promise(res => { NT.loadRes = res; });
+}
+function loadTick(dt) {
+  const ud = set.userData, R = ud.rig, ch = ud.chair, rear = R.rear();
+  const u0 = NT.load; NT.load = Math.min(1, NT.load + dt * NF / 2.8); const u = NT.load;
+  const k = sm01(0, 0.6, u), end = NT.wheelPath[NT.wheelPath.length - 1];
+  ch.position.set(lerp(end.x, rear.x - 1.3, k), lerp(0, 0.72, sm01(0, 0.35, u)), end.z); ch.rotation.z = lerp(0.2, 0.04, k);
+  if (u0 < 0.62 && u >= 0.62) { ch.visible = false; }
+  if (u > 0.62) R.doors(1 - sm01(0.62, 1, u));
+  if (u >= 1 && !NT.shut) {
+    NT.shut = true; NT.doorK = 0; R.doors(0);
+    AU.night("slam", rear); hap("select"); rumble("select"); FX("arrive");
+    P.fire.wantYaw = Math.atan2(me.pos.x - P.fire.pos.x, me.pos.z - P.fire.pos.z);
+    const a = R.cab(R.amb); crewTo(P.fire3, a.x, a.z, 2.2, () => hide(P.fire3));
+    const f = NT.loadRes; NT.loadRes = null; if (f) f();
+  }
+}
+/* they go: the crew to their doors, the engine and then the ambulance away down the street, and me watching */
+function nightLeave() {
+  const ud = set.userData, R = ud.rig, a = R.cab(R.amb), e = R.cab(R.engine);
+  crewTo(P.fire, a.x + 0.9, a.z, 2.6, () => hide(P.fire)); crewTo(P.fire2, e.x, e.z, 2.8, () => hide(P.fire2));
+  NT.leave = 0;
+  me.wantYaw = -Math.PI / 2; me.lookAtP = _nl.set(me.pos.x - 30, 1.4, 15.6);
+  nightShot(new THREE.Vector3(me.pos.x + 2.5, 1.38, me.pos.z + 0.8), new THREE.Vector3(me.pos.x - 7, 1.55, 15.4), { push: still() ? 0 : 0.05, dur: 10, focus: 2.7, range: 4.5 });
+}
+function nightAlone() {
+  const h = headOf(me);
+  nightShot(new THREE.Vector3(h.x - 1.55, h.y - 0.04, h.z + 0.8), new THREE.Vector3(h.x, h.y - 0.03, h.z), { push: still() ? 0 : 0.16, dur: 16, focus: 1.7, range: 1.0 });
+  me.lookAtP = _nl.set(me.pos.x - 30, 1.2, 15.6);
+}
+function leaveGo(R, v, x0, t0) { const t = Math.max(0, NT.leave - t0), d = t < 7 ? 1.15 * t * t : 1.15 * 49 + 16.1 * (t - 7); R.place(v, x0 - d, null); if (d > 150) v.on = 0; }
+function leaveTick(dt) {
+  const ud = set.userData, R = ud.rig, M = ud.marks;
+  NT.leave += dt * (FAST ? 3 : 1);
+  leaveGo(R, R.engine, M.engine.x, 1.6); leaveGo(R, R.amb, M.amb.x, 3.0);
+  // anyone not aboard when their door goes is aboard
+  if (NT.leave > 1.6 && P.fire2.group.visible) { P.fire2.route = null; hide(P.fire2); }
+  if (NT.leave > 3.0) for (const k of ["fire", "fire3"]) if (P[k].group.visible) { P[k].route = null; hide(P[k]); }
+}
+/* the night to the lot: a slow fade on the street, a card that says only that it is later, then the lot's own opening */
+async function nightToLot() {
+  setPhase("cinematic"); hideWorldUI(); el.classList.add("is-cinema");
+  await fade(1, 2600);
+  S.heldShot = null; camState.shot = null; if (line) endLine(true);
+  capEl.classList.remove("is-on"); capEl.hidden = true; el.classList.remove("is-talking"); objEl.classList.remove("is-dim");
+  objective(null);
+  post.comp.u.uBox.value = 0;
+  await enter("lot", { quiet: true, cold: true });
+  $(".st-card__ep", cardEl).textContent = ""; $(".st-card__h", cardEl).textContent = UI.later; $(".st-card__sub", cardEl).textContent = D.scenes.lot.card;
+  cardEl.classList.remove("is-title"); cardEl.hidden = false; void cardEl.offsetWidth; cardEl.classList.add("is-on");
+  await sleep(2600);
+  cardEl.classList.remove("is-on"); await sleep(700); cardEl.hidden = true;
+  fade(0, 1600);
+  await coldOpen();
+}
+/* where the night wants you next (the way's chevrons and its arrow) */
+const _wayN = { id: "", stand: new THREE.Vector3(), p: new THREE.Vector3(), soft: false };
+function nightWay(spot) {
+  const ud = set.userData, M = ud.marks, F = S.flags, W0 = _wayN;
+  const to = (id, st, p) => { W0.id = id; W0.stand.set(st.x, 0, st.z); W0.p.copy(p); return W0; };
+  if (CAR.on || NT.stage === "room" || NT.stage === "doors" || me.seated) return null;
+  if (!F.found) { const s = spot("night-door"); return s ? to(s.id, s.sp.stand, s.p) : null; }
+  if (!F["met-fire"]) {
+    if (!ud.doorOpen("front")) { const s = spot("night-front"); return s ? to(s.id, s.sp.stand, s.p) : null; }
+    if (P.fire && P.fire.group.visible) { const w = P.fire, d = _n3.copy(me.pos).sub(w.pos).setY(0); if (d.length() < 0.01) d.set(0, 0, -1); d.normalize(); return to("night-fire", _n2.copy(w.pos).addScaledVector(d, 1.25), headOf(w)); }
+    return to("night-out", M.meet, _n2.set(M.meet.x, 1.2, M.meet.z));
+  }
+  if (!F.lifting) return to("night-room", M.dadIn, M.dadBed);
+  if (NT.stage === "wheel") { const e = NT.wheelPath[NT.wheelPath.length - 1]; return to("night-amb", _n2.set(e.x + 0.9, 0, e.z - 1.5), _n3.set(e.x, 1.2, e.z)); }
+  return null;
+}
+/* every frame of the night */
+function nightTick(dt) {
+  if (!nightOn() || !me) return;
+  const ud = set.userData, M = ud.marks, F = S.flags, R = ud.rig, J = P.night;
+  NT.t += dt; R.still = still();
+  // the crew: on their way somewhere, or behind you
+  for (let i = 0; i < CREW.length; i++) { const p = P[CREW[i]]; if (!p || !p.group.visible) continue; if (p.route) crewMove(p, dt); else if (p.follow > 0 && NT.stage === "lead") follow(p, p.follow, dt); }
+  if (NT.stage === "lead") { const n = NT.trail.length, q = n ? NT.trail[n - 1] : null; if (!q || Math.hypot(q.x - me.pos.x, q.z - me.pos.z) > 0.35) { if (n > 240) NT.trail.splice(0, 120); NT.trail.push({ x: me.pos.x, z: me.pos.z }); } }
+  if (CAR.on && dt > 0) carryTick(dt);
+  else if (NT.stage === "wheel" && dt > 0) wheelTick(dt);
+  if (NT.load >= 0 && NT.load < 1 || (NT.load >= 1 && !NT.shut)) loadTick(dt);
+  if (NT.leave >= 0) leaveTick(dt);
+  // the floor under everyone: the upper floor, the stairs, the ground
+  for (let i = 0; i < NIGHT_CAST.length; i++) {
+    const p = P[NIGHT_CAST[i]]; if (!p || !p.group.visible) continue;
+    const gy = groundY(p.pos.x, p.pos.z);
+    if (!p.jumping && !p.inCar) p.pos.y = Math.abs(p.pos.y - gy) > 1.2 || dt === 0 ? gy : damp(p.pos.y, gy, 16, dt);
+    if (p.shadow) p.shadow.position.y = gy + 0.015;
+  }
+  // inside or out; the bars across the frame; the engines at the kerb
+  const ins = ud.inside(me.pos.x, me.pos.z); NT.inside = ins; AU.nightWhere(ins);
+  if (dt > 0) R.lampK = damp(R.lampK, ins ? (ud.doorOpen("front") ? 0.5 : 0.22) : 1, 4, dt); // (through the walls the bars are a pulse at the glass, no more)
+  if (dt > 0) { const u = post.comp.u.uBox, cin = S.phase === "cinematic" || S.phase === "talk"; u.value = damp(u.value, cin ? 1 : CAR.on ? 0.8 : 0.45, 3, dt); }
+  const eg = R.engine.g.position, ag = R.amb.g.position;
+  NT.engAt.x = eg.x; NT.engAt.z = eg.z; NT.ambAt.x = ag.x; NT.ambAt.z = ag.z;
+  AU.nightEngine("engine", NT.engAt, R.engine.on && Math.abs(eg.x - me.pos.x) < 110 ? 1 : 0); AU.nightEngine("amb", NT.ambAt, R.amb.on && Math.abs(ag.x - me.pos.x) < 110 ? 1 : 0);
+  // ---- the stages
+  if (NT.stage === "wake") { if (NT.sat && !J.inCar) { NT.stage = "hall"; J.heavy = 0; AU.night("wake", footAt(J)); } return; }
+  if (NT.stage === "out") {
+    // downstairs: they are coming up the street
+    if (NT.veh === 0 && me.pos.y < 0.5) NT.veh = 0.0001;
+    if (NT.veh > 0 && NT.veh < 1) {
+      NT.veh = Math.min(1, NT.veh + dt * NF / 8.5); vehSet(NT.veh);
+      if (NT.veh > 0.9 && !NT.braked) { NT.braked = true; AU.night("airbrake", NT.engAt); if (!ins) { hap("tap"); rumble("tap"); } }
+      if (NT.veh >= 1) { AU.night("airbrake", NT.ambAt, 0.7); crewOut(false); }
+    }
+    if (!F.out && me.pos.z > 6.5) { F.out = 1; save(); }
+  }
+  if (NT.crew && NT.leave < 0 && S.phase === "explore" && !line && (NT.radioT -= dt) <= 0) { NT.radioT = 8 + Math.random() * 7; if (P.fire.group.visible) AU.night("radio", headOf(P.fire), 0.8); }
+  if (NT.stage === "lead" && S.phase === "explore" && !S.busy && !me.jumping) {
+    const inRoom = me.pos.x < -8.35 && me.pos.y > 1, atDoor = me.pos.x < -7.0 && me.pos.y > 1;
+    if (inRoom || (atDoor && Math.hypot(P.fire.pos.x - me.pos.x, P.fire.pos.z - me.pos.z) < 3.2)) nightRoom();
+  }
+}
+/* the camera's part of the night: its own frame for the carry; the hand that holds it; a shallow focus on foot */
+function nightCam(dt) {
+  if (!CAR.on || S.phase !== "explore") return false;
+  // out over the rail on the open side (my right going down), a little behind and above me: my shoulder, the chair
+  // from behind, his face coming down backwards ahead of it
+  const yaw = me.yaw, fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -Math.cos(yaw), lz = Math.sin(yaw), ch = set.userData.chair.position, N = WORLD.NIGHT;
+  const tall = VW < VH, side = tall ? 1.55 : 1.3, back = tall ? 1.0 : 0.55;
+  _nw.set(me.pos.x - fx * back + lx * side, me.pos.y + me.height * 0.86 + (tall ? 0.6 : 0.42) - CAR.dip, me.pos.z - fz * back + lz * side);
+  _nw.x = clamp(_nw.x, -2.7, 3.55); _nw.z = clamp(_nw.z, N.ZS0 + 0.35, 5.5); // (in the stairwell's air or the entry's: never in a wall)
+  _n3.set(ch.x + fx * 0.55, ch.y + 0.9, ch.z + fz * 0.55);
+  const k = NT.camInit || still() ? 1 : 1 - Math.exp(-3.5 * dt); NT.camInit = false;
+  camera.position.lerp(_nw, k); camState.look.lerp(_n3, k); camera.lookAt(camState.look);
+  const u = post.comp.u; u.uFocus.value = camera.position.distanceTo(_n3); u.uRange.value = 2.4; u.uDofK.value = quality >= 2 ? 0.7 : 0;
+  camState.yaw = yaw + Math.PI;
+  return true;
+}
+function nightSway(dt) {
+  if (still() || dt <= 0) return;
+  const t = S.t, moving = me ? Math.min(1, me.speed / RUN) : 0, a = (CAR.on ? 1.5 : S.phase === "talk" ? 0.7 : 1) * (0.55 + 0.6 * moving);
+  NT.sway.set((Math.sin(t * 0.83) + Math.sin(t * 1.71 + 1.3) * 0.5) * 0.012 * a, (Math.sin(t * 1.07 + 0.6) + Math.sin(t * 2.3) * 0.4) * 0.009 * a, (Math.sin(t * 0.61 + 2.1)) * 0.008 * a);
+  camera.position.add(NT.sway); NT.swayOn = true;
+  camera.rotateZ((Math.sin(t * 0.47) * 0.5 + Math.sin(t * 1.13 + 0.8) * 0.25) * 0.008 * a);
 }
 
 /* ---------- the morning: the car, the course, the drive away ---------- */
@@ -3246,6 +3733,7 @@ function exitToward(scene) {
 function wayTarget() {
   if (!me) return null;
   const here = spotsHere(), spot = id => here.find(x => x.id === id) || null;
+  if (S.scene === "night") return nightWay(spot);
   const o = S.obj, F = S.flags;
   let s = null, soft = false;
   // 1. what the episode needs now
@@ -3372,11 +3860,13 @@ function frame(now) {
     drvEl.classList.toggle("is-on", S.phase === "drive" && DRV.state === "drive");
     if (!DRV.state) moveMe(dt);
     movePeople(dt); ambTick(dt);
+    nightTick(dt);
     const tP = performance.now();
     for (const p of Object.values(P)) if (p.group.visible) p.update(dt);
     feet();
     perf.people = performance.now() - tP;
     updateCamera(dt);
+    if (S.scene === "night") nightSway(dt);
     const tU = performance.now();
     updatePrompts(); updateWay(dt); arcadeWatch(dt); platesTick(dt);
     guide.tick(dt, S.t, still());
@@ -3549,7 +4039,7 @@ async function boot() {
   // warm the shaders on the first frames, behind the loading screen
   await person("you", "player"); setLoad(0.8); await person("jason", "jason"); await person("dell", "dell"); setLoad(0.86);
   // every set's shaders and textures, behind the loading screen: no hitch on the first step into the office, the library or a car
-  if (typeof WORLD.warmSet === "function") { const W0 = ["lot", "office", "memory", "june"]; for (const n of W0) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.015 * W0.indexOf(n)); } }
+  if (typeof WORLD.warmSet === "function") { const W0 = (SKIP_NIGHT ? [] : ["night"]).concat(["lot", "office", "memory", "june"]); for (const n of W0) { try { await WORLD.warmSet(renderer, camera, getSet(n)); } catch (e) {} setLoad(0.86 + 0.015 * W0.indexOf(n)); } }
   setLoad(0.92);
   raf = requestAnimationFrame(frame);
   // build the rest while you play, and compile its shaders off the main path (parallel where the GPU allows), so the
@@ -3590,10 +4080,10 @@ async function open(sceneName, how) {
   const fresh = !sceneName && !saved;
   if (fresh || sceneName) resetState();
   if (saved && !sceneName) { lostGen.n++; Object.assign(S, { flags: saved.flags || {}, looked: saved.looked || {}, log: saved.log || [], trophies: saved.trophies || [], journal: saved.journal || [], tags: (saved.tags || []).filter(id => LOST_IDS.includes(id)), obj: saved.obj || null, hint: saved.hint || null }); }
-  T("story_started", { how: how || "", scene: sceneName || (saved ? saved.scene : "lot"), cont: !!(saved && !sceneName) });
+  T("story_started", { how: how || "", scene: sceneName || (saved ? saved.scene : FIRST), cont: !!(saved && !sceneName) });
   await boot();
   setLoad(1);
-  const target = sceneName || (saved ? saved.scene : "lot");
+  const target = sceneName || (saved ? saved.scene : FIRST);
   // the address keeps whatever brought you here; a deep link is consumed, so a reload meets the start screen (and Continue)
   if (/^#story/.test(location.hash) && history.replaceState) history.replaceState(null, "", location.pathname + location.search);
   await enter(target, { quiet: true, cold: target === "lot" && fresh });
@@ -3602,14 +4092,15 @@ async function open(sceneName, how) {
   el.classList.remove("is-loading"); loadEl.classList.add("is-gone");
   setTimeout(() => (loadEl.hidden = true), 900);
   if (target === "lot" && fresh) { await coldOpen(); return; }
+  if (target === "night" && !S.flags.found) { await nightOpen(); return; } // the night begins (or begins again) on the edge of the bed
   await fade(0, 10);
   if (how !== "arcade") { FX("arrive"); await sceneCard(target); }
-  if (saved && !sceneName && saved.scene === target && saved.pos && me && target !== "memory" && target !== "keys") { me.pos.set(saved.pos[0], 0, saved.pos[1]); me.yaw = me.wantYaw = saved.pos[2] || 0; unstick(me); camState.yaw = me.yaw + Math.PI; camState.init = true; }
+  if (saved && !sceneName && saved.scene === target && saved.pos && me && target !== "memory" && target !== "keys" && target !== "night") { me.pos.set(saved.pos[0], 0, saved.pos[1]); me.yaw = me.wantYaw = saved.pos[2] || 0; unstick(me); camState.yaw = me.yaw + Math.PI; camState.init = true; }
   setPhase("explore");
   if (S.obj) objective(S.obj);
   const st = D.scenes[target].start;
   if (target === "lot" && !S.flags.met) runTalk("lot-arrive");
-  else if (target !== "lot" && st && !(saved && saved.scene === target && !sceneName && target !== "decision" && S.flags["done-" + target])) { S.partner = P.jason; startTalk(target); }
+  else if (target !== "lot" && target !== "night" && st && !(saved && saved.scene === target && !sceneName && target !== "decision" && S.flags["done-" + target])) { S.partner = P.jason; startTalk(target); }
 }
 function close(how) {
   if (!S.open) return;
@@ -3705,7 +4196,7 @@ window.JG_STORY = {
     end: k => { ending(k || "passing"); return true; },
     focus: () => { const a = document.activeElement; if (!a || a === document.body) return null; const host = padHost(); return { tag: a.tagName.toLowerCase(), text: (a.getAttribute("aria-label") || a.textContent || "").trim().slice(0, 40), inHost: !!(host && host.contains(a)), outline: getComputedStyle(a).outlineStyle }; },
     /* step the walk with a fixed clock, so the harness doesn't depend on the frame rate */
-    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updatePrompts(); } return me ? [me.pos.x, me.pos.z] : null; }, // a step is a frame: the prompt follows too
+    sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); nightTick(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updatePrompts(); } return me ? [me.pos.x, me.pos.z] : null; }, // a step is a frame: the prompt follows too
     put: (x, z, yaw) => { mv.path = null; me.pos.set(x, 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
     walk: (x, z) => { const ok = walkTo(new THREE.Vector3(x, 0, z)); return ok ? mv.path.map(p => [p.x, p.z]) : null; },
     walls: () => (set.userData.walls || []).map(w => [w.x0, w.x1, w.z0, w.z1]),
@@ -3770,6 +4261,33 @@ window.JG_STORY = {
       post.render(scene, camera, S.t); return true;
     },
     you: () => me, veh: () => DRV.veh,
+    /* how many draws the scene itself takes, from where the camera is */
+    drawCalls: () => { const i = renderer.info, a = i.autoReset; i.autoReset = false; i.reset(); const rt = renderer.getRenderTarget(); renderer.setRenderTarget(null); renderer.render(scene, camera); const c = i.render.calls, t = i.render.triangles; renderer.setRenderTarget(rt); i.autoReset = a; return { calls: c, tris: t }; },
+    /* the night (tools/verify/story.mjs) */
+    night: () => {
+      const ud = S.scene === "night" && set ? set.userData : null; if (!ud) return null;
+      const dad = [], bad = [], texts = (ud.signs || []).slice();
+      set.traverse(o => { if (o.userData && o.userData.dad) o.traverse(m => { if (m.isMesh) { dad.push(m.name || "?"); if (m.isSkinnedMesh || /head|face|eye|mouth|nose|hair|skull/i.test(m.name || "")) bad.push(m.name || "skinned"); } }); });
+      for (const [id, sp] of Object.entries(ud.spots)) if (sp && sp.label) texts.push(sp.label);
+      for (const [id, o] of Object.entries(OBJ)) if (o.scene === "night") texts.push(o.label, o.verb);
+      const ch = ud.chair.position, R = ud.rig, J = P.night;
+      return { stage: NT.stage, veh: +NT.veh.toFixed(3), crew: NT.crew, inside: NT.inside, seated: !!(J && J.seated), sat: NT.sat, y: me ? +me.pos.y.toFixed(2) : 0, box: +post.comp.u.uBox.value.toFixed(2),
+        doors: { dad: ud.doorOpen("dad"), front: ud.doorOpen("front"), amb: +R.amb.doorK.toFixed(2) }, front: !!ud.spots["night-front"],
+        carry: { on: CAR.on, u: +CAR.u.toFixed(3), v: +CAR.v.toFixed(2), steady: CAR.steady, wob: +CAR.wob.toFixed(2), rocks: CAR.rocks, ring: !holdEl.hidden && holdEl.classList.contains("is-on") },
+        chair: { vis: ud.chair.visible, at: [+ch.x.toFixed(2), +ch.y.toFixed(2), +ch.z.toFixed(2)] }, wheel: +(NT.wheelLen ? NT.ws / NT.wheelLen : 0).toFixed(3), load: +NT.load.toFixed(2), shut: NT.shut, leave: +NT.leave.toFixed(2),
+        dad: { meshes: dad, bad, bed: ud.dadBed.visible }, texts, lamps: ud.lamps.length,
+        crewAt: CREW.map(k => P[k] && P[k].group.visible ? [+P[k].pos.x.toFixed(1), +P[k].pos.y.toFixed(1), +P[k].pos.z.toFixed(1)] : null), hands: J && J.reaches ? Object.keys(J.reaches).filter(k => J.reaches[k]).length : 0,
+        engine: [+R.engine.g.position.x.toFixed(1), R.engine.on], amb: [+R.amb.g.position.x.toFixed(1), R.amb.on], first: FIRST };
+    },
+    /* start the night again from a stage: wake, out, lead, carry, wheel */
+    nightGo: async st => {
+      nightFlagsOff(); const F = S.flags;
+      if (st !== "wake") F.found = 1; if (st === "lead" || st === "carry" || st === "wheel") { F["met-fire"] = 1; F.out = 1; } if (st === "carry" || st === "wheel") F.lifting = 1; if (st === "wheel") F.carried = 1;
+      F["done-night"] = 1; S.heldShot = null; if (line) endLine(true);
+      await enter("night", { quiet: true }); if (st === "wake") await nightSit();
+      objective({ wake: "night-wake", out: "night-out", lead: "night-lead", carry: "night-carry", wheel: "night-doors" }[st]); fadeEl.classList.remove("is-on"); setPhase("explore"); return NT.stage;
+    },
+    nightCarry: u => { if (!CAR.on) return false; CAR.u = clamp(u, 0, 0.999); return true; },
     /* the waiting room and the test drive (tools/verify/story.mjs) */
     june: () => ({ seated: !!(me && me.seated), sitMode: me && me.car ? me.car.mode : null, at: me ? [+me.pos.x.toFixed(2), +me.pos.z.toFixed(2)] : null, jasonSit: !!(P.jason && P.jason.pose === "sit"), hold: !!HOLDG, busy: !!S.busy, phoneEar: !!(me && me.hold === "phone"), answered: S.phoneEar || 0, cof: S.cof || null, cup: !!(set && set.userData.cup && set.userData.cup.visible), jasonCup: !!(P.jason && P.jason.carrying && (P.jason.carrying.l || P.jason.carrying.r)), meshes: (() => { let n = 0; if (set) set.traverse(o => { if (o.isMesh && o.visible) n++; }); return n; })() }),
     course: () => ({ live: courseLive(), i: COURSE.i, n: COURSE.pts.length, t: +COURSE.t.toFixed(2), pts: COURSE.pts.map(p => p.slice()), ring: courseG.ringMesh.visible, ui: courseEl.classList.contains("is-on"), marisol: !!(P.marisol && P.marisol.inCar), drove: S.flags.drove || null, auto: !!AUTO })

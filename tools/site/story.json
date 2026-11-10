@@ -600,6 +600,8 @@
   },
 
   "objects": {
+    "night-door": { "scene": "night", "label": "The door", "verb": "Open", "talk": "night-dad", "if": "!found", "once": true, "way": true },
+    "night-fire": { "scene": "night", "label": "Firefighter", "verb": "Flag down", "talk": "night-street", "who": "fire", "if": "found,!met-fire", "once": true },
     "dell": { "scene": "lot", "label": "Dell", "verb": "Talk", "talk": "dell-hello", "again": "dell-again", "who": "dell" },
     "jason-lot": { "scene": "lot", "label": "Jason", "verb": "Talk", "talk": "jason-hello", "again": "jason-wait", "who": "jason" },
     "gate": { "scene": "lot", "label": "The gate", "verb": "Help", "talk": "gate", "if": "met", "once": true },

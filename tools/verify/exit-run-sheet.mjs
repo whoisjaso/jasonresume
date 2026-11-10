@@ -22,7 +22,7 @@ await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'applica
 const p = await ctx.newPage();
 const errs = [];
 p.on('pageerror', e => errs.push(e.message));
-await p.goto(URL0 + '?debug=story&fast=1&sq=0&pr=0.3');
+await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3');
 await p.waitForSelector('#intro [data-title-play]', { timeout: 20000 });
 await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
 await p.click('[data-title-play]');
