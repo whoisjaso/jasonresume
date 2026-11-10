@@ -2517,7 +2517,7 @@ async function enterCar(c, how) {
   DRV.skip = null;
   if (DRV.state !== "enter") return;
   if (v.engine && !v.engine.on) { v.engine.start(); if (DRV.au) DRV.au.start(); }
-  DRV.state = "drive"; DRV.blend = 0; DRV.camInit = true; DRV.look = 0;
+  DRV.state = "drive"; DRV.blend = 0; DRV.camInit = true; DRV.look = 0; meInMirror(false);
   // the test drive: Marisol in the passenger seat, and the clock (from where it was, if you'd got out)
   if (S.scene === "sale" && courseLive()) { if (P.marisol && P.marisol.group.visible && !P.marisol.inCar) { try { P.marisol.drive(v, "passenger"); } catch (e) {} } if (COURSE.i === 0 && COURSE.t === 0) COURSE.hits0 = DRV.hits; }
   if (DRV.au) DRV.au.inside(DRV.cam === "car");
@@ -2567,7 +2567,7 @@ async function exitCar(how, instant) {
     me.pos.set(st.x, 0, st.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.PI / 2; me.speed = 0;
     if (blocked(me.pos.x, me.pos.z, 0.2)) { c.object.updateMatrixWorld(true); const W = carMeta(c).W / 2 + 0.62, L = carMeta(c).L / 2 + 0.6; for (const [lx, lz] of [[-W, 0.1], [0, -L], [0, L], [W, -1.2]]) { const q = c.object.localToWorld(new THREE.Vector3(lx, 0, lz)); if (!blocked(q.x, q.z, 0.2)) { me.pos.set(q.x, 0, q.z); me.yaw = me.wantYaw = (v.pose ? v.pose.yaw : c.yaw) + Math.atan2(lx, lz); break; } } } // facing out from that side, not into the car
   }
-  me.group.visible = true; if (me.shadow) me.shadow.visible = true;
+  me.group.visible = true; if (me.shadow) me.shadow.visible = true; meInMirror(true);
   if (DRV.au) { DRV.au.stop(instant ? 0.1 : 1.2); DRV.au = null; }
   // the car stays where you left it, a parked car the walk and the camera go round
   if (!c.engine && v.engine && v.engine.on) { try { v.engine.stop(); } catch (e) {} }
@@ -2611,6 +2611,8 @@ function driveInput(dt) {
   DRV.steer = steer === 0 ? damp(DRV.steer, 0, 8, dt) : Math.abs(steer) < 1 ? steer : damp(DRV.steer, steer, 7, dt);
   return { throttle: DRV.thr, brake: DRV.brk, steer: DRV.steer, handbrake: hb };
 }
+/* on a phone the driver behind the glass is left out of the wet ground's mirror while you drive (layer 4 is not in that pass) */
+function meInMirror(on) { if (!COARSE.matches || !me) return; for (const m of me.meshes) { if (on) { m.layers.set(0); m.layers.enable(1); } else m.layers.set(4); } }
 /* the horn: H, the pad's button (L3 unless rebound) or the small button on a phone, for as long as it is held. The
    sound, the haptic and the passers-by's turn of the head start in the same frame; letting go is silent */
 const HORN = { pad: false, touch: false, on: false, n: 0 };
@@ -3513,7 +3515,7 @@ function shadeTick() {
 const AMB_OFF = { night: 1, june: 1, memory: 1, office: 1, keys: 1, decision: 1 };
 let ambBlob = null;
 const AMB = createCrowd({
-  get cast() { return cast; }, world, LOOKS, defs: (D.ambient && D.ambient.people) || [], max: COARSE.matches ? 4 : 8, far: COARSE.matches ? 34 : 52, lite: COARSE.matches, verb: UI.amb_talk,
+  get cast() { return cast; }, world, LOOKS, defs: (D.ambient && D.ambient.people) || [], max: COARSE.matches ? 4 : 8, far: COARSE.matches ? 34 : 52, lite: COARSE.matches, short: COARSE.matches && Math.min(innerWidth, innerHeight) < 520, verb: UI.amb_talk, // (on a phone the prompt is the verb alone; the name is on the card)
   blob: () => { const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), ambBlob || (ambBlob = blobMat(0.3))); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.016; sh.layers.set(2); return sh; },
   onBump: () => { hap("tap"); rumble("tap"); }
 });

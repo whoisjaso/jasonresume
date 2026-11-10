@@ -76,7 +76,7 @@ export function createCrowd(o) {
       const sh = o.blob ? o.blob() : null; if (sh) { sh.visible = false; o.world.add(sh); }
       const small = p.meshes.filter(m => SMALL.test(m.userData.role || ""));
       const n = { def: d, id: d.id, p, sh, small, steps: [], i: 0, path: null, pi: 0, wait: 0, face: [0, 0], faceOn: false, look: new THREE.Vector3(), lookT: 0, back: 0, bx: 0, bz: 0, say: 0, line: 0, live: false, shown: false, lod: 0, acc: 0, stuck: 0,
-        spot: { id: "amb:" + d.id, o: { verb: o.verb || "Talk", label: d.name, who: "amb", amb: true }, sp: { r: 2.1, amb: true }, p: new THREE.Vector3() } };
+        spot: { id: "amb:" + d.id, o: { verb: o.verb || "Talk", label: o.short ? "" : d.name, who: "amb", amb: true }, sp: { r: 2.1, amb: true }, p: new THREE.Vector3() } };
       list.push(n);
       if (C.on && C.set) place(n);
       await new Promise(r => setTimeout(r, 120)); // one at a time, between frames

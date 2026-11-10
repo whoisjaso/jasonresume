@@ -1649,7 +1649,7 @@ export function buildLot(o) {
       const hd = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.8), pole); hd.position.set(x, 8.85, 36.1); set.add(hd);
       const ln = plane(0.3, 0.6, lensM, set); ln.rotation.x = Math.PI / 2; ln.position.set(x, 8.76, 36.1); ln.userData.keep = true;
       // each one lights the road and both walks under it (it joins the nearest lamps when you are out here)
-      if (!day) set.userData.lamps.push({ p: V3(x, 8.7, 36.1), range: 27, col: [2.5, 1.62, 0.8], cone: 0.1, street: true });
+      if (!day) set.userData.lamps.push({ p: V3(x, 8.7, 36.1), range: 34, col: [3.0, 1.95, 0.95], cone: 0.06, street: true });
     }
     // power poles and their wires, along the lot's side of the road
     const wood = pbr({ color: "#3b3027", rough: 0.9, wet: 0.8 });

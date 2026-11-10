@@ -126,7 +126,18 @@ export function createVehicle(set, car, opts = {}) {
   let beams = null;
   if (night) {
     const m = beamMat("#ffe9c4", 1);
-    beams = [1, -1].map(sd => { const b = new THREE.Mesh(BEAM_GEO, m); b.position.set(sd * (meta.W / 2 - 0.34), 0.64, meta.L / 2 - 0.1); b.rotation.x = 0.05; b.rotation.y = sd * 0.03; b.layers.set(3); b.visible = false; b.userData.keep = true; root.add(b); return b; });
+    // (both lamps' cones in one mesh: one draw)
+    const off = meta.W / 2 - 0.34, pos = [], nor = [], uv = [], idx = [];
+    for (const sd of [1, -1]) {
+      const g = BEAM_GEO.clone().rotateY(sd * 0.03).translate(sd * off, 0, 0), base = pos.length / 3;
+      pos.push(...g.attributes.position.array); nor.push(...g.attributes.normal.array); uv.push(...g.attributes.uv.array);
+      for (const i of g.index.array) idx.push(i + base);
+      g.dispose();
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+    const bm = new THREE.Mesh(geo, m); bm.position.set(0, 0.64, meta.L / 2 - 0.1); bm.rotation.x = 0.05; bm.layers.set(3); bm.visible = false; bm.userData.keep = true; bm.frustumCulled = false; root.add(bm);
+    beams = [bm, bm];
   }
   const lights = {
     auto: true,

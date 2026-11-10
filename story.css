@@ -485,7 +485,7 @@ html[data-still] .st-course__pips b.is-on { animation: none; }
 .story.is-cinema .st-map, .story.is-paused .st-map, .story.is-loading .st-map, .story.is-close .st-map, .story.is-talking .st-map, .story.has-choices .st-map { opacity: 0 !important; }
 .story.is-still .st-map, .story.is-still .st-mission { visibility: hidden; }
 /* one HUD: the objective line sits on the same dark as the map's disc, so it reads over a bright morning too */
-.st-obj { text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 1px 12px rgba(0, 0, 0, .85); }
+.st-obj { padding: 7px 15px 7px 12px; margin-left: -8px; border-radius: 999px; background: rgba(10, 15, 13, .6); text-shadow: 0 1px 2px rgba(0, 0, 0, .9); }
 .st-mission { position: absolute; right: max(26px, calc(env(safe-area-inset-right) + 18px)); bottom: max(120px, calc(env(safe-area-inset-bottom) + 112px)); z-index: 8; max-width: min(420px, 78vw); text-align: right; pointer-events: none; opacity: 0; transform: translateY(8px); transition: opacity .5s var(--ease), transform .7s var(--ease); }
 .st-mission.is-on { opacity: 1; transform: none; }
 .st-mission__k { margin: 0 0 8px; font: 600 11px/1 var(--sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ash, #9a9890); text-shadow: 0 1px 8px rgba(0, 0, 0, .9); }
