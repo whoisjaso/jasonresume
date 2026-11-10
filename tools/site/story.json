@@ -14,9 +14,11 @@
     "caller": { "name": "A caller", "tag": "Fictional call", "voice": "af_nicole", "fictional": true },
     "agent": { "name": "The voice agent", "tag": "Fictional call", "voice": "af_heart", "fictional": true },
     "library": { "name": "The library", "tag": "Fictional", "voice": "bf_emma", "fictional": true },
+    "fire": { "name": "Firefighter", "tag": "Words reconstructed", "voice": "am_fenrir", "fictional": true },
     "marisol": { "name": "Marisol", "tag": "Buyer, fictional", "voice": "af_sarah", "fictional": true }
   },
   "scenes": {
+    "night": { "name": "The Night", "card": "June 2025, around 2 a.m.", "start": "night-arrive" },
     "lot": { "name": "The Lot", "card": "Houston, after close", "start": "lot-arrive" },
     "office": { "name": "The Office", "card": "Inside, out of the rain", "start": "office-arrive" },
     "memory": { "name": "A Memory", "card": "The library, late", "start": "mem-arrive" },
@@ -26,6 +28,11 @@
     "decision": { "name": "Lamps On", "card": "Back out on the lot", "start": "dec-arrive" }
   },
   "objectives": {
+    "night-wake": "Find out what woke you.",
+    "night-out": "Go outside. Meet the firefighters.",
+    "night-lead": "Take them upstairs.",
+    "night-carry": "Help carry him down the stairs.",
+    "night-doors": "Walk him to the ambulance.",
     "find": "Find Jason by the showroom.",
     "office": "Go into the office.",
     "look": "Look around the office.",
@@ -42,6 +49,30 @@
     "end": "Walk out with Jason."
   },
   "talks": {
+    "night-arrive": { "lines": [
+      { "id": "night-jason-1", "who": "jason", "t": "June 2025. Around two in the morning." },
+      { "id": "night-jason-2", "who": "jason", "t": "Something woke me. I didn't know what yet." }
+    ], "do": ["obj:night-wake"] },
+    "night-dad": { "lines": [
+      { "id": "night-jason-3", "who": "jason", "t": "My dad. He was having a stroke." },
+      { "id": "night-jason-4", "who": "jason", "t": "Help was on the way. I went out to meet it." }
+    ], "do": ["obj:night-out", "flag:found=1"] },
+    "night-street": { "lines": [
+      { "id": "night-fire-1", "who": "fire", "t": "Where is he?" },
+      { "id": "night-jason-5", "who": "jason", "t": "Upstairs. I'll show you." }
+    ], "do": ["obj:night-lead", "flag:met-fire=1"] },
+    "night-room": { "lines": [
+      { "id": "night-fire-2", "who": "fire", "t": "We've got him. Take that side. Slow on the stairs." }
+    ], "do": ["obj:night-carry", "flag:lifting=1"] },
+    "night-down": { "lines": [
+      { "id": "night-jason-6", "who": "jason", "t": "We carried him down the stairs." }
+    ], "do": ["obj:night-doors", "flag:carried=1"] },
+    "night-doors": { "lines": [
+      { "id": "night-fire-3", "who": "fire", "t": "We'll take it from here. Follow us in." },
+      { "id": "night-jason-7", "who": "jason", "t": "He was treated at the hospital." },
+      { "id": "night-jason-8", "who": "jason", "t": "My dad handled the lot day to day. After that night, it fell to me." },
+      { "id": "night-jason-9", "who": "jason", "t": "Triple J. Three J names in my family. Mine is one of them." }
+    ], "do": ["journal:night", "goto:lot"] },
     "lot-arrive": {
       "lines": [
         { "id": "lot-you-1", "who": "you", "t": "Almeda Genoa Road. The lot's closed, and the lamps are still on." }
@@ -639,6 +670,7 @@
     "deans": { "h": "The letter", "p": "Dean's Honor List, GPA 3.63.", "sketch": "mem-letter", "trophy": "deans-list" },
     "brain": { "h": "Brain model", "p": "Neuroscience, UT Austin, expected 2028.", "sketch": "mem-brain" },
     "keys": { "h": "The keys", "p": "August 2024. Owner and Operations Lead of Triple J from then on.", "sketch": "keys", "trophy": "keys-to-the-lot" },
+    "night": { "h": "The night", "p": "June 2025, around two in the morning. My dad had a stroke at home. I met the firefighters outside, and we carried him down the stairs. He was treated at the hospital.", "sketch": "june" },
     "psych": { "h": "Psychology", "p": "How people decide. Most of a sale is listening for what someone actually wants.", "sketch": "mem-brain" },
     "june": { "h": "June 2025", "p": "My dad had a stroke. I started selling the cars myself that month.", "sketch": "june" },
     "faith": { "h": "The window", "p": "I believe God puts us in situations that make us act, especially when we take too long on our own.", "sketch": "june" },

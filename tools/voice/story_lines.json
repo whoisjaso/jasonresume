@@ -3,6 +3,24 @@
  "out": "assets/voice/story-v3",
  "lines": [
   {
+   "id": "night-fire-1",
+   "who": "fire",
+   "voice": "am_fenrir",
+   "text": "Where is he?"
+  },
+  {
+   "id": "night-fire-2",
+   "who": "fire",
+   "voice": "am_fenrir",
+   "text": "We've got him. Take that side. Slow on the stairs."
+  },
+  {
+   "id": "night-fire-3",
+   "who": "fire",
+   "voice": "am_fenrir",
+   "text": "We'll take it from here. Follow us in."
+  },
+  {
    "id": "lot-you-1",
    "who": "you",
    "voice": "af_heart,af_nicole",
