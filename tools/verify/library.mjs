@@ -575,7 +575,7 @@ if (!only || only === 'desktop') {
   await ctx.close();
 }
 
-// The start screen: a plain visit meets one thing to press, Play, over real play, and nothing else
+// The start screen: a plain visit meets a game's title menu over real play: the way in (New game) and Library (the skip), and nothing else
 for (const [vw, vh, mob] of [[1440, 900, false], [844, 390, true], [390, 844, true]]) {
   const ctx = await ctxFor(vw, vh, mob);
   await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"on":false}' }));
@@ -583,7 +583,7 @@ for (const [vw, vh, mob] of [[1440, 900, false], [844, 390, true], [390, 844, tr
   await p.goto(URL0); await p.waitForSelector('#intro'); await p.waitForSelector('#boot', { state: 'detached', timeout: 12000 }).catch(() => errs.push(`start ${vw}: the loading screen never left`));
   const st = await p.evaluate(() => { const sc = document.querySelector('#intro [data-scene="title"]'); return { play: !!document.querySelector('#intro.intro--play [data-title-play]'), buttons: sc ? sc.querySelectorAll('button, a').length : -1, foot: !!document.querySelector('.intro__foot, .boot__foot'), skip: !!document.querySelector('#intro [data-intro-skip]') }; });
   if (!st.play) errs.push(`start ${vw}: no Play on the start screen`);
-  if (st.buttons !== 1) errs.push(`start ${vw}: the start screen has ${st.buttons} things to press, not one`);
+  if (st.buttons !== 2) errs.push(`start ${vw}: the start screen has ${st.buttons} things to press, not two (New game and Library)`);
   if (st.foot) errs.push(`start ${vw}: links along the bottom are back`);
   if (!st.skip) errs.push(`start ${vw}: no Skip`);
   await p.click('[data-title-play]');
