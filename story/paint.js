@@ -88,12 +88,22 @@ const vert = /* glsl */`
 attribute float cidx;
 varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying float vC; varying vec3 vObj; varying vec3 vCol;
 uniform mat3 uUvM;
-#if defined(USE_VCOL) || defined(USE_HAIRLINE)
+#if defined(USE_VCOL) || defined(USE_HAIRLINE) || defined(USE_SKINAO)
 attribute vec3 color;
+#endif
+#ifdef USE_BODY
+// a body you can shape (the visitor's own): uObj takes the mesh to the body's rest space; uBody.x is the build in
+// metres along the normal, .y the height of the neck; the face's own landmarks and how far each feature is pushed
+uniform vec4 uObj; uniform vec4 uBody; uniform vec3 uNose; uniform vec3 uMouth; uniform vec4 uFaceA; uniform vec4 uFaceB;
+float bell(vec3 q, vec3 r){ q /= r; return exp(-dot(q, q)); }
+#endif
+#ifdef USE_GROW
+// a shell of hair that can be worn closer or fuller: each vertex knows the way back to the scalp
+attribute vec3 _scalp; uniform float uGrow;
 #endif
 void main(){
   vUv = (uUvM * vec3(uv, 1.0)).xy; vC = cidx; vObj = position;
-  #if defined(USE_VCOL) || defined(USE_HAIRLINE)
+  #if defined(USE_VCOL) || defined(USE_HAIRLINE) || defined(USE_SKINAO)
   vCol = color;
   #else
   vCol = vec3(1.0);
@@ -108,6 +118,28 @@ void main(){
   #include <skinnormal_vertex>
   #include <begin_vertex>
   #include <morphtarget_vertex>
+  #ifdef USE_GROW
+  transformed += _scalp * (1.0 - uGrow);
+  #endif
+  #ifdef USE_BODY
+  { vec3 rp = transformed * uObj.w + uObj.xyz, d = vec3(0.0), nn = normalize(objectNormal);
+    // the build: everything below the neck but the hands and feet, most round the middle
+    float wb = smoothstep(uBody.y + 0.02, uBody.y - 0.07, rp.y) * smoothstep(0.05, 0.16, rp.y) * (1.0 - smoothstep(0.36, 0.47, abs(rp.x)));
+    float mid = 1.0 + 0.9 * exp(-pow((rp.y - uBody.y * 0.74) / 0.16, 2.0)) * (1.0 - smoothstep(0.22, 0.32, abs(rp.x)));
+    d += nn * uBody.x * wb * mid * mix(0.5, 1.0, smoothstep(uBody.y * 0.45, uBody.y * 0.62, rp.y));
+    #ifdef USE_FACE
+    vec3 q = rp - uNose;
+    d.x += q.x * 0.55 * uFaceA.x * bell(q - vec3(0.0, 0.004, -0.014), vec3(0.026, 0.026, 0.028));
+    float gt = bell(q, vec3(0.02, 0.022, 0.024)); d.z += 0.011 * uFaceA.y * gt; d.y -= 0.004 * uFaceA.y * gt;
+    vec3 m = rp - uMouth;
+    // (narrower and thinner go half as far as wider and fuller: the teeth behind stay where they are)
+    d.x += m.x * (uFaceA.z > 0.0 ? 0.34 : 0.15) * uFaceA.z * bell(m, vec3(0.042, 0.02, 0.036));
+    d += nn * (uFaceA.w > 0.0 ? 0.0036 : 0.0012) * uFaceA.w * bell(m, vec3(0.03, 0.013, 0.022));
+    vec3 j = m - vec3(0.0, -0.04, -0.035);
+    d.x += j.x * 0.22 * uFaceB.x * bell(j, vec3(0.085, 0.045, 0.07));
+    #endif
+    transformed += d / uObj.w; }
+  #endif
   #include <skinning_vertex>
   vec4 wp = modelMatrix * vec4(transformed, 1.0);
   #ifdef USE_INSTANCING
@@ -122,7 +154,7 @@ void main(){
 const frag = /* glsl */`
 ${common}
 uniform vec3 uColor; uniform vec3 uEmit; uniform float uWet; uniform float uAo; uniform float uRimK; uniform float uAlpha; uniform float uTone; uniform float uAlphaTest; uniform float uSkin; uniform vec3 uKeep; uniform float uCurlK; uniform vec3 uTie;
-uniform vec3 uPal[16];
+uniform vec3 uPal[16]; uniform vec4 uObj;
 #ifdef USE_TMAP
 uniform sampler2D uMap;
 #endif
@@ -131,6 +163,12 @@ uniform sampler2D uEMap;
 #endif
 #ifdef USE_MASK
 uniform sampler2D uMask; uniform vec3 uBeard; uniform vec3 uLip;
+#endif
+#ifdef USE_EYE
+uniform vec2 uEye; uniform vec4 uIris;
+#endif
+#ifdef USE_CROP
+uniform vec4 uCrop;
 #endif
 varying vec3 vWP; varying vec3 vN; varying vec2 vUv; varying float vC; varying vec3 vObj; varying vec3 vCol;
 void main(){
@@ -151,9 +189,11 @@ void main(){
   #ifdef USE_CURL
   // the crown's silhouette breaks up into curls: where the shell turns away from the eye, small-scale noise cuts it
   float ndv = abs(dot(normalize(vN), V)), edge = smoothstep(0.2, 0.6, vCol.g);
-  if (edge > 0.0 && ndv < 0.4 && vnoise(cp * 0.9) * edge > 0.12 + ndv * 1.6) discard;
+  if (edge > 0.0 && ndv < 0.24 && vnoise(cp * 0.9) * edge > 0.12 + ndv * 2.6) discard;
   #endif
   vec3 alb = mix(uKeep, uColor, smoothstep(0.5, 0.75, vCol.r) * mix(0.75, 1.0, vCol.g));
+  #elif defined(USE_SKINAO)
+  vec3 alb = uColor;
   #else
   vec3 alb = uColor * vCol;
   #endif
@@ -170,9 +210,13 @@ void main(){
   alb = mix(rc, uKeep * clamp(lum * 1.15, 0.0, 1.2), smoothstep(0.42, 0.62, lum));
   // a region marked red in the texture (a tie) takes its own colour
   float tk = smoothstep(0.12, 0.22, tx.r - max(tx.g, tx.b));
-  alb = mix(alb, uTie * clamp(tx.r * 2.0, 0.0, 1.5), tk);
+  alb = mix(alb, uTie * mix(1.0, clamp(tx.r * 2.0, 0.0, 1.5), 0.3), tk);
   #else
   alb *= tx.rgb;
+  #ifdef USE_FEATHER
+  // a brow thins into the skin at its edge instead of ending in a line
+  alb = mix(uKeep * 0.8, alb, smoothstep(uAlphaTest, uAlphaTest + 0.5, tx.a));
+  #endif
   #endif
   aout *= tx.a;
   if (aout < uAlphaTest) discard;
@@ -182,7 +226,8 @@ void main(){
   vec4 fm = texture2D(uMask, vUv);
   // lips: the upper at half strength in the mask and a little darker, the lower fuller and rosier
   vec3 lipC = mix(uLip * vec3(0.78, 0.72, 0.72), uLip, smoothstep(0.55, 0.95, fm.g));
-  alb = mix(alb, lipC, smoothstep(0.04, 0.45, fm.g) * 0.9);
+  float lipK = smoothstep(0.1, 0.6, fm.g);
+  alb = mix(alb, lipC, lipK * 0.82);
   alb *= 1.0 + fm.b * vec3(0.18, 0.03, -0.03);
   // the cooler, thinner skin under the eyes (A: 1 none, lower cooler)
   alb *= mix(vec3(0.9, 0.93, 1.0), vec3(1.0), fm.a);
@@ -190,6 +235,38 @@ void main(){
   alb = mix(alb, uBeard, clamp(stub * 1.15, 0.0, 1.0));
   #endif
   alb *= mix(0.86, 1.12, br) * curl;
+  #ifdef USE_CLOTH
+  // cloth: a fine weave in the colour, so wool and cotton never read as one moulded surface
+  vec3 wp_ = (vObj * uObj.w + uObj.xyz) * 900.0;
+  alb *= mix(0.9, 1.07, vnoise(vec3(wp_.x + wp_.z, wp_.y * 2.6, wp_.z - wp_.x)));
+  #ifdef USE_BANDS
+  // turnout gear: reflective bands round the chest, the hem, the cuffs and the ankles (the body's own rest space)
+  vec3 rp = vObj * uObj.w + uObj.xyz; float ax_ = abs(rp.x);
+  float arm = distance(vec3(ax_, rp.y, rp.z), vec3(0.175, 1.285, 0.018));
+  float bd = 0.0;
+  if (ax_ < 0.31) bd = max(step(abs(rp.y - 1.19), 0.03), step(abs(rp.y - 0.86), 0.03));
+  if (ax_ > 0.33) bd = max(bd, step(abs(arm - 0.385), 0.028));
+  bd = max(bd, step(abs(rp.y - 0.2), 0.03));
+  float mid = 0.0;
+  if (ax_ < 0.31) mid = max(step(abs(rp.y - 1.19), 0.011), step(abs(rp.y - 0.86), 0.011));
+  if (ax_ > 0.33) mid = max(mid, step(abs(arm - 0.385), 0.01));
+  mid = max(mid, step(abs(rp.y - 0.2), 0.011));
+  alb = mix(alb, mix(vec3(0.78, 0.8, 0.22), vec3(0.74, 0.76, 0.78), mid), bd);
+  #endif
+  #endif
+  #ifdef USE_CROP
+  // hair worn cropped: whatever of it hangs clear of the head is not drawn (uCrop: the head's middle, and how far out)
+  if (uCrop.w > 0.0 && distance(vObj * uObj.w + uObj.xyz, uCrop.xyz) > uCrop.w) discard;
+  #endif
+  #ifdef USE_EYE
+  // an iris of another colour: the texture's own brown gives way to it, its light and its dark ring kept (uIris.a: how much)
+  { float mx = max(alb.r, max(alb.g, alb.b)), mn = min(alb.r, min(alb.g, alb.b));
+    float ik = smoothstep(0.3, 0.5, (mx - mn) / max(mx, 0.02) * step(0.02, mx)) * uIris.a;
+    alb = mix(alb, uIris.rgb * clamp(mx * 3.4, 0.0, 1.5), ik); }
+  // the eye: the lid's shadow across the top of the ball, a darker ring where the white meets the lid
+  float ey = (vObj.y * uObj.w + uObj.y - uEye.x) / uEye.y;
+  alb *= mix(1.0, 0.5, smoothstep(0.1, 0.85, ey)) * mix(1.0, 0.82, smoothstep(-0.2, -0.9, ey));
+  #endif
   float wet = uWet * uWetAll;
   vec3 spec;
   vec3 light = lightAt(vWP, N, V, br, wet, spec);
@@ -200,6 +277,45 @@ void main(){
   light += uSkin * vec3(0.11, 0.05, 0.03) * (1.0 - smoothstep(-0.3, 0.6, dot(N, uMoonDir)));
   // skin scatters: a softer, lower highlight than a wet surface's
   spec *= mix(1.0, 0.6, uSkin);
+  #ifdef USE_SKIN
+  // light goes a little way into skin and comes back red: a warm band along every terminator; and skin has its own
+  // sheen, broad and low, on the brow, the bridge of the nose and the cheekbones
+  { vec3 sss = vec3(0.0), sheen = vec3(0.0);
+    vec3 L0 = vec3(uMoonDir.x, uMoonDir.y * (uMirror > 0.5 ? -1.0 : 1.0), uMoonDir.z);
+    float t0 = dot(N, L0);
+    sss += uMoon * smoothstep(-0.4, 0.05, t0) * (1.0 - smoothstep(0.05, 0.55, t0));
+    sheen += uMoon * pow(max(dot(N, normalize(L0 + V)), 0.0), 18.0) * smoothstep(-0.1, 0.3, t0);
+    for (int i = 0; i < ${MAXL}; i++) {
+      if (i >= uLampN) break;
+      vec3 lp = uLampPos[i].xyz; if (uMirror > 0.5) lp.y = -lp.y;
+      vec3 L = lp - vWP; float d = length(L); L /= d;
+      float att = clamp(1.0 - d / uLampPos[i].w, 0.0, 1.0); att *= att;
+      if (uLampCol[i].w > 0.0) att *= smoothstep(uLampCol[i].w, uLampCol[i].w + 0.25, dot(-L, vec3(0.0, uMirror > 0.5 ? 1.0 : -1.0, 0.0)));
+      float nl = dot(N, L);
+      sss += uLampCol[i].rgb * att * smoothstep(-0.4, 0.05, nl) * (1.0 - smoothstep(0.05, 0.55, nl));
+      sheen += uLampCol[i].rgb * att * pow(max(dot(N, normalize(L + V)), 0.0), 18.0) * smoothstep(-0.1, 0.3, nl);
+    }
+    // the sky's own soft sheen on what faces up and toward the eye
+    sheen += mix(uGround, uSky, 0.5 + 0.5 * reflect(-V, N).y) * pow(1.0 - max(dot(N, V), 0.0), 2.0) * 0.5;
+    light += sss * vec3(0.3, 0.07, 0.03);
+    #ifdef USE_MASK
+    float gloss = 1.0 + lipK * 1.6;
+    #else
+    float gloss = 1.0;
+    #endif
+    spec += sheen * 0.085 * gloss * mix(0.7, 1.2, br);
+  }
+  #endif
+  #ifdef USE_SKINAO
+  // the skin's baked shade: creases go a deep warm brown, never grey
+  { float k = pow(smoothstep(0.12, 0.97, vCol.r), 1.25); k = mix(k, 1.0, 0.1);
+    vec3 sh = mix(vec3(0.2, 0.085, 0.06), vec3(1.0), k);
+    light *= sh; spec *= k * k; }
+  #endif
+  #ifdef USE_CLOTH
+  // cloth catches light at its edge: a soft sheen in its own colour instead of a hard rim
+  light += light * fr * 0.55;
+  #endif
   light = mix(light, light * vec3(1.06, 0.98, 0.92) + vec3(0.03, 0.015, 0.008), uSkin);
   // a shoulder on strong light (the morning sun), so skin and cloth keep their colour instead of burning to one flat tone
   light *= 1.0 / (1.0 + 0.6 * max(dot(light, vec3(0.3333)) - 0.8, 0.0));
@@ -213,6 +329,10 @@ void main(){
   col = sat(col, uSat);
   // keep every value finite and inside half-float range, so the blur passes never spread a bad pixel
   col = clamp(col, 0.0, 24.0);
+  #ifdef USE_SOLID
+  // a cut-out that is not blended is solid where it is drawn (a part-clear pixel washes pale when the frame is composited)
+  aout = 1.0;
+  #endif
   gl_FragColor = vec4(fogged(col, vWP), aout);
   #include <colorspace_fragment>
 }`;
@@ -234,6 +354,8 @@ export function paint(o = {}) {
     uKeep: { value: new THREE.Color(o.keep || "#e9e6de") },
     uCurlK: { value: o.curlK || 900 },
     uUvM: { value: new THREE.Matrix3() },
+    // the mesh's own space to the body's rest space: xyz an offset, w a scale (a quantized mesh's node transform)
+    uObj: { value: new THREE.Vector4(0, 0, 0, 1) },
     uTie: { value: new THREE.Color(o.tie || "#1d4434") },
     uPal: { value: Array.from({ length: 16 }, (_, i) => new THREE.Color((o.pal && o.pal[i]) || "#ff00ff")) }
   };
@@ -248,6 +370,16 @@ export function paint(o = {}) {
   if (o.curl) defines.USE_CURL = "";
   if (o.hairline) defines.USE_HAIRLINE = "";
   if (o.vcol) defines.USE_VCOL = "";
+  if (o.skin) defines.USE_SKIN = "";
+  if (o.skinAo) defines.USE_SKINAO = "";
+  if (o.cloth) defines.USE_CLOTH = "";
+  if (o.feather) defines.USE_FEATHER = "";
+  if (o.bands) defines.USE_BANDS = "";
+  if (o.eye) { defines.USE_EYE = ""; uniforms.uEye = { value: new THREE.Vector2(o.eye[0], o.eye[1]) }; uniforms.uIris = { value: new THREE.Vector4(0, 0, 0, 0) }; }
+  if (o.body) { defines.USE_BODY = ""; uniforms.uBody = { value: new THREE.Vector4(0, 1.38, 0, 0) }; uniforms.uNose = { value: new THREE.Vector3(0, 1.55, 0.12) }; uniforms.uMouth = { value: new THREE.Vector3(0, 1.5, 0.1) }; uniforms.uFaceA = { value: new THREE.Vector4() }; uniforms.uFaceB = { value: new THREE.Vector4() }; if (o.face) defines.USE_FACE = ""; }
+  if (o.grow) { defines.USE_GROW = ""; uniforms.uGrow = { value: 1 }; }
+  if (o.crop) { defines.USE_CROP = ""; uniforms.uCrop = { value: new THREE.Vector4(0, 0, 0, 0) }; }
+  if (o.alphaTest && !o.transparent && !(o.alpha != null && o.alpha < 1)) defines.USE_SOLID = "";
   const m = new THREE.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: frag, defines, side: o.side || THREE.FrontSide, transparent: !!o.transparent || (o.alpha != null && o.alpha < 1), depthWrite: o.depthWrite != null ? o.depthWrite : true });
   m.userData.paint = true;
   return m;

@@ -38,7 +38,9 @@ import { MeshoptDecoder } from "../vendor/meshopt-0.22.0/meshopt_decoder.module.
 import { paint } from "./paint.js";
 
 /* the cast's version: assets/story/cast/<name>-<CAST_VER>.glb and clips-<CAST_VER>.glb */
-export const CAST_VER = "v2";
+export const CAST_VER = "v3";
+/* the clips are their own file and did not change with the bodies */
+const CLIPS_VER = "v2";
 /* switches for the cast lab (tools/story/lab.html) */
 export const DEBUG = { ik: true };
 
@@ -52,36 +54,103 @@ const G = 9.81;
 
 /* each character's colours. Cloth textures keep their folds and light, recoloured */
 export const LOOKS = {
-  jason: { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, pocket: true, nose: true, hair: "#19130f", brow: "#0d0b0b", tie: "#1f4a38", cloth: { suit: "#2a4c3a", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
+  jason: { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, pocket: true, nose: true, hair: "#19130f", brow: "#0d0b0b", tie: "#1c4433", cloth: { suit: "#35604a", shoes: "#16110e" }, keep: "#ece9e1", glasses: "browline", studs: true, goatee: true },
   "jason-memory": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#4d5a6a", shoes: "#d9d3c7" }, keep: "#b9bfc6", glasses: "browline", goatee: true },
   player: { skin: "#8a5d40", lip: "#7f4c3c", eyes: "#6a4a36", wide: 0.05, hair: "#22170f", brow: "#22170f", cloth: { casual: "#8a6428", shoes: "#d6d0c4" }, keep: "#ddd6c8" },
   dell: { skin: "#6e4631", beard: "#6f6a62", hair: "#4a4640", brow: "#7d776e", wide: 0, cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true, tempo: 0.92 },
-  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#8a6248", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" },
+  renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#8a6248", browCut: 0.08, wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" },
   // a look on another body (make(name, { look })): Marisol, the morning's buyer, is Renata's body in her own colours
-  marisol: { skin: "#8d5f42", lip: "#94584a", hair: "#140e0b", brow: "#2a1c14", browTint: "#4a3324", wide: 0.08, cloth: { elegant: "#3f5f6e", shoes: "#1e1b19" }, keep: "#dcd6ca" },
+  marisol: { skin: "#8d5f42", lip: "#94584a", hair: "#140e0b", brow: "#2a1c14", browTint: "#4a3324", browCut: 0.08, wide: 0.08, cloth: { elegant: "#3f5f6e", shoes: "#1e1b19" }, keep: "#dcd6ca" },
   // the night (June 2025): me as I was woken, on the memory's body; and the crew, in turnout gear and helmets, on the visitor's
   "jason-night": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#3b4046", shoes: "#24211f" }, keep: "#8b9199", glasses: "browline", goatee: true },
-  fire: { skin: "#7a5238", lip: "#7f4c3c", eyes: "#5a4636", wide: 0.06, hair: "#1c1612", brow: "#1c1612", cloth: { casual: "#8f7a45", shoes: "#16130f" }, keep: "#cfc58c", helmet: "#1b1b19", tempo: 1.04 },
-  fire2: { skin: "#c29676", lip: "#9a6253", eyes: "#5a4636", wide: 0.03, hair: "#3a2a1c", brow: "#3a2a1c", cloth: { casual: "#8f7a45", shoes: "#16130f" }, keep: "#cfc58c", helmet: "#b9a233", tempo: 1.02 },
+  fire: { skin: "#7a5238", lip: "#7f4c3c", eyes: "#5a4636", wide: 0.06, hair: "#1c1612", brow: "#1c1612", cloth: { casual: "#8f7a45", shoes: "#16130f" }, keep: "#cfc58c", helmet: "#1b1b19", bands: true, tempo: 1.04 },
+  fire2: { skin: "#c29676", lip: "#9a6253", eyes: "#5a4636", wide: 0.03, hair: "#3a2a1c", brow: "#3a2a1c", cloth: { casual: "#8f7a45", shoes: "#16130f" }, keep: "#cfc58c", helmet: "#b9a233", bands: true, tempo: 1.02 },
   fire3: { skin: "#5d3a26", lip: "#7a4a40", eyes: "#4a3526", wide: 0.06, hair: "#15100d", brow: "#15100d", cloth: { casual: "#1f2a3a", shoes: "#141312" }, keep: "#c9cdd2" }
 };
 
 export async function loadCast(base, o = {}) {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const motion = new Motion(await loader.loadAsync(o.clips || base + "clips-" + CAST_VER + ".glb"));
+  const motion = new Motion(await loader.loadAsync(o.clips || base + "clips-" + CLIPS_VER + ".glb"));
   const cache = {};
-  return {
+  const api = {
     motion,
+    /* a body of its own, loaded again and scaled to a height: for the visitor's look (Person.setLook) */
+    async body(file, k) { const g = await loader.loadAsync(base + file + ".glb"); scaleBody(g.scene, k); return g.scene; },
     async make(name, o) {
       // every cast file ships under the cast's version, whatever version the caller asks for
       const file = name.replace(/-v\d+$/, "") + "-" + CAST_VER;
       // a body worn with another look is its own copy (the paint replaces the materials it reads its cloth from)
       const key = file + (o && o.look ? "#" + o.look : "");
       const g = cache[key] || (cache[key] = loader.loadAsync(base + file + ".glb"));
-      return new Person(file, (await g).scene, o || {}, motion);
+      const p = new Person(file, (await g).scene, o || {}, motion); p.cast = api;
+      return p;
     }
   };
+  return api;
+}
+
+/* ================================================================
+   THE VISITOR'S LOOK: the one character you make your own. Everything the
+   character creator can set, its ranges and its presets (lookOptions), and the
+   look a body starts with (defaultLook). Person.setLook applies one.
+   ================================================================ */
+const BODIES = { a: { file: "player", label: "Body A", height: 1.66, outfit: "earth", hair: "short" }, b: { file: "renata", label: "Body B", height: 1.6, outfit: "wine", hair: "ponytail" } };
+const OUTFITS = [
+  { id: "earth", label: "Earth", main: "#8a6428", keep: "#ddd6c8", shoes: "#d6d0c4" },
+  { id: "wine", label: "Wine", main: "#7a3b30", keep: "#e3dccd", shoes: "#2a1f1a" },
+  { id: "charcoal", label: "Charcoal", main: "#3c4046", keep: "#cfd2d6", shoes: "#1c1a18" },
+  { id: "navy", label: "Navy", main: "#2a3a58", keep: "#d9d4c6", shoes: "#3a2a1e" },
+  { id: "olive", label: "Olive", main: "#525a38", keep: "#d8d2bf", shoes: "#2a211a" },
+  { id: "teal", label: "Teal", main: "#2f5f62", keep: "#dcd6ca", shoes: "#1e1b19" },
+  { id: "sand", label: "Sand", main: "#b3a383", keep: "#efe9dc", shoes: "#4a3626" },
+  { id: "black", label: "Black", main: "#1d1d20", keep: "#b9b9b4", shoes: "#111111" }
+];
+const HAIR_STYLES = { a: [{ id: "bald", label: "Shaved" }, { id: "buzz", label: "Buzz" }, { id: "short", label: "Short" }, { id: "full", label: "Full" }], b: [{ id: "bald", label: "Shaved" }, { id: "cropped", label: "Cropped" }, { id: "ponytail", label: "Ponytail" }] };
+const GROW = { buzz: 0.25, short: 1, full: 2.3 };
+const unit = { min: -1, max: 1, step: 0.05, default: 0 };
+export function defaultLook(body = "a") {
+  const B = BODIES[body] || BODIES.a;
+  return { body: BODIES[body] ? body : "a", height: B.height, build: 0, skin: body === "b" ? "#b78a66" : "#8a5d40", hair: { style: B.hair, color: body === "b" ? "#24170f" : "#22170f" }, eyes: { color: "#5a3a26" },
+    nose: { width: 0, length: 0 }, mouth: { width: 0, fullness: 0 }, brows: 0, jaw: 0, outfit: B.outfit };
+}
+export function lookOptions() {
+  return {
+    bodies: Object.entries(BODIES).map(([id, b]) => ({ id, label: b.label, height: b.height })),
+    height: { min: 1.5, max: 1.92, step: 0.01, unit: "m" },
+    build: { ...unit },
+    skin: ["#f0cdb0", "#e0b08c", "#c99672", "#b78a66", "#a37350", "#8a5d40", "#74492f", "#5d3a26", "#472a1b", "#33200f"],
+    hair: { styles: { a: HAIR_STYLES.a.map(x => ({ ...x })), b: HAIR_STYLES.b.map(x => ({ ...x })) }, colors: ["#0f0c0a", "#22170f", "#3a2616", "#5a3a20", "#7a5230", "#a37a42", "#c9a35a", "#8c8880", "#d8d4cc", "#7a2e1c"] },
+    eyes: { colors: ["#3a2416", "#5a3a26", "#7a5a36", "#6e7a3a", "#4a6e4a", "#4a6a8a", "#7a94aa", "#6a6e72"] },
+    nose: { width: { ...unit }, length: { ...unit } },
+    mouth: { width: { ...unit }, fullness: { ...unit } },
+    brows: { ...unit }, jaw: { ...unit },
+    outfits: OUTFITS.map(x => ({ id: x.id, label: x.label, color: x.main })),
+    defaults: { a: defaultLook("a"), b: defaultLook("b") }
+  };
+}
+const HEX = /^#[0-9a-f]{6}$/i;
+/* a whole, safe look from whatever was passed: missing parts from the look it had, numbers kept inside their ranges */
+function wholeLook(cur, next) {
+  const n = next || {}, body = BODIES[n.body] ? n.body : cur.body, d = body === cur.body ? cur : { ...cur, height: BODIES[body].height, hair: { ...cur.hair, style: BODIES[body].hair } };
+  const u = (v, f) => (typeof v === "number" && isFinite(v) ? clamp(v, -1, 1) : f), hex = (v, f) => (typeof v === "string" && HEX.test(v) ? v.toLowerCase() : f);
+  const hs = n.hair && n.hair.style, style = HAIR_STYLES[body].some(x => x.id === hs) ? hs : HAIR_STYLES[body].some(x => x.id === d.hair.style) ? d.hair.style : BODIES[body].hair;
+  return { body, height: typeof n.height === "number" && isFinite(n.height) ? clamp(n.height, 1.5, 1.92) : d.height, build: u(n.build, d.build), skin: hex(n.skin, d.skin),
+    hair: { style, color: hex(n.hair && n.hair.color, d.hair.color) }, eyes: { color: hex(n.eyes && n.eyes.color, d.eyes.color) },
+    nose: { width: u(n.nose && n.nose.width, d.nose.width), length: u(n.nose && n.nose.length, d.nose.length) },
+    mouth: { width: u(n.mouth && n.mouth.width, d.mouth.width), fullness: u(n.mouth && n.mouth.fullness, d.mouth.fullness) },
+    brows: u(n.brows, d.brows), jaw: u(n.jaw, d.jaw), outfit: OUTFITS.some(x => x.id === n.outfit) ? n.outfit : d.outfit };
+}
+/* a body at another height: every bone's place and every bind matrix scaled, so the rest pose, the stride and the
+   reach are all measured on the body as it now stands (a scaled node would leave them on the old one) */
+function scaleBody(scene, k) {
+  if (!k || Math.abs(k - 1) < 1e-4) return;
+  const seen = new Set(), S = new THREE.Matrix4().makeScale(k, k, k);
+  scene.traverse(o => {
+    if (o.isBone) o.position.multiplyScalar(k);
+    else if (!o.isMesh && o.children.some(c => c.isBone)) o.position.multiplyScalar(k);
+    if (o.isSkinnedMesh && !seen.has(o.skeleton)) { seen.add(o.skeleton); for (const m of o.skeleton.boneInverses) m.premultiply(S); }
+  });
 }
 
 /* ================================================================
@@ -214,6 +283,8 @@ const MASKS = {
 class Person {
   constructor(name, scene, o, motion) {
     this.name = name.replace(/-v\d+$/, ""); this.L = LOOKS[(o && o.look) || this.name] || LOOKS.player;
+    // the visitor's own character is the one you can make your own (setLook); everyone else is as they are
+    this.custom = this.L === LOOKS.player; this.look = this.custom ? (o && o._look) || defaultLook(this.name === "renata" ? "b" : "a") : null;
     this.M = motion;
     this.group = new THREE.Group(); this.group.name = name;
     this.root = scene; this.group.add(scene);
@@ -250,7 +321,77 @@ class Person {
     this.tempo = (this.L.tempo || 1) * (0.96 + Math.random() * 0.08);
     this.lod = 0; this._hip = new THREE.Vector3();
     // the debug view (?debug=story) can reach the cast from the console and the harness
-    if (typeof location !== "undefined" && /debug=story/.test(location.search)) (window.__people || (window.__people = {}))[this.name] = this;
+    if (typeof location !== "undefined" && /debug=story/.test(location.search)) (window.__people || (window.__people = {}))[(o && o._as) || this.name] = this;
+    if (this.custom) this.applyLook();
+  }
+
+  /* ---- the visitor's look (tools/story/HANDOFF-look.md) ----
+     setLook(part of a look) changes what it names and keeps the rest; it resolves to the whole look now worn, or to
+     null on anyone but the visitor. Colours, the face, the build, the hair and the outfit change at once; another
+     body or height builds the body again in place (the same object, where it stands), so set those while standing. */
+  getLook() { return this.look ? JSON.parse(JSON.stringify(this.look)) : null; }
+  async setLook(next) {
+    if (!this.custom) return null;
+    const want = wholeLook(this.look, next);
+    // the newest call wins: one that was overtaken while its body loaded steps aside
+    const turn = (this._lookTurn = (this._lookTurn || 0) + 1);
+    if (want.body !== this.look.body || Math.abs(want.height - this.look.height) > 1e-4) {
+      let scene = null;
+      try { scene = await this.cast.body(BODIES[want.body].file + "-" + CAST_VER, want.height / BODIES[want.body].height); } catch (e) { console.warn("[people] body", e && e.message); }
+      if (turn !== this._lookTurn) return this.getLook();
+      if (scene) this.rebody(scene, want); else { want.body = this.look.body; want.height = this.look.height; }
+    }
+    this.look = want; this.applyLook();
+    return this.getLook();
+  }
+  /* take a new body in place: everything this file keeps about a body comes from a person built on the new one; what
+     the episode set on this one (where it stands, what it holds, its key, its shadow) stays */
+  rebody(scene, look) {
+    const KEEP = ["name", "group", "pos", "yaw", "wantYaw", "speed", "lookAtP", "talk", "nod", "brow", "smile", "hold", "t", "cast", "custom", "look", "idleStyle", "showPhone", "_lookTurn"];
+    const np = new Person(BODIES[look.body].file, scene, { look: "player", _look: look, _as: this.name }, this.M);
+    const old = this.root;
+    for (const m of this.meshes) if (m.material && m.material.dispose) m.material.dispose();
+    for (const k of Object.keys(this)) if (INTERNAL.has(k) && !KEEP.includes(k)) delete this[k];
+    for (const k of Object.keys(np)) if (!KEEP.includes(k)) this[k] = np[k];
+    this.group.remove(old); for (const c of [...np.group.children]) this.group.add(c);
+    this.lastPos = null;
+    if (typeof window !== "undefined" && window.__people) for (const k of Object.keys(window.__people)) if (window.__people[k] === np) window.__people[k] = this;
+  }
+  /* where the features are, in the body's rest space (before any change of height): the tip of the nose, the middle
+     of the mouth, the neck, the middle of the head */
+  marks() {
+    if (this._marks) return this._marks;
+    const k = this.look ? this.look.height / BODIES[this.look.body].height : 1, R = this.rest;
+    const out = { neck: (R.neck_01 ? R.neck_01.at.y : 1.38) / k, head: R.head ? R.head.at.clone().divideScalar(k) : new THREE.Vector3(0, 1.48, 0.04), nose: new THREE.Vector3(0, 1.55, 0.13), mouth: new THREE.Vector3(0, 1.5, 0.11) };
+    const teeth = this.meshes.find(m => m.userData.role === "teeth"), eyes = this.meshes.find(m => m.userData.role === "eyes"), skin = this.morph;
+    const box = m => { const b = new THREE.Box3().setFromBufferAttribute(m.geometry.attributes.position), s = m.scale.x || 1; b.min.multiplyScalar(s).add(m.position); b.max.multiplyScalar(s).add(m.position); return b; };
+    if (teeth) { const b = box(teeth); out.mouth.set((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z + 0.006); }
+    if (skin && eyes) {
+      // the nose's tip: the skin furthest forward on the middle line between the mouth and the eyes
+      const e = box(eyes), P = skin.geometry.attributes.position, s = skin.scale.x || 1, o = skin.position; let bz = -1e9;
+      for (let i = 0; i < P.count; i++) { const x = P.getX(i) * s + o.x, y = P.getY(i) * s + o.y, z = P.getZ(i) * s + o.z; if (Math.abs(x) < 0.006 && y > out.mouth.y + 0.012 && y < e.min.y && z > bz) { bz = z; out.nose.set(0, y, z); } }
+    }
+    return (this._marks = out);
+  }
+  applyLook() {
+    const K = this.look, M = this.marks(), O = OUTFITS.find(x => x.id === K.outfit) || OUTFITS[0];
+    const skin = new THREE.Color(K.skin), hair = new THREE.Color(K.hair.color);
+    const lip = skin.clone().lerp(new THREE.Color("#8a3f3c"), 0.42).multiplyScalar(0.92), brow = hair.clone().multiplyScalar(0.8);
+    for (const m of this.meshes) {
+      const r = m.userData.role, u = m.material.uniforms; if (!u) continue;
+      if (u.uBody) { u.uBody.value.set(K.build * (K.build > 0 ? 0.024 : 0.012), M.neck, 0, 0); u.uNose.value.copy(M.nose); u.uMouth.value.copy(M.mouth); u.uFaceA.value.set(K.nose.width, K.nose.length, K.mouth.width, K.mouth.fullness); u.uFaceB.value.set(K.jaw, 0, 0, 0); }
+      if (r === "skin") { u.uColor.value.copy(skin); if (u.uLip) u.uLip.value.copy(lip); if (u.uBeard) u.uBeard.value.copy(hair); }
+      else if (r === "hair") {
+        u.uColor.value.copy(hair); if (m.material.defines.USE_HAIRLINE != null) u.uKeep.value.copy(skin);
+        m.visible = K.hair.style !== "bald";
+        if (u.uGrow) u.uGrow.value = GROW[K.hair.style] != null ? GROW[K.hair.style] : 1;
+        if (u.uCrop) u.uCrop.value.set(M.head.x, M.head.y + 0.085, M.head.z - 0.012, K.hair.style === "cropped" ? 0.118 : 0);
+      }
+      else if (r === "brow") { u.uColor.value.copy(brow); u.uKeep.value.copy(skin); u.uAlphaTest.value = clamp((K.body === "b" ? 0.1 : 0.2) - K.brows * 0.09, 0.02, 0.4); }
+      else if (r === "lash") { u.uColor.value.copy(brow); u.uKeep.value.copy(brow); }
+      else if (r === "eyes" && u.uIris) { const c = new THREE.Color(K.eyes.color); u.uIris.value.set(c.r, c.g, c.b, 1); }
+      else if (r && r.startsWith("cloth")) { const shoe = r.includes("shoes"); u.uColor.value.set(shoe ? O.shoes : O.main); u.uKeep.value.set(shoe ? O.shoes : O.keep); }
+    }
   }
 
   /* map the source skeleton onto this body: per bone, the constant K with  T_world = S_world * K */
@@ -364,24 +505,28 @@ class Person {
       const map = m.material && m.material.map;
       if (map) map.colorSpace = THREE.SRGBColorSpace;
       let mat;
-      if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, rim: 0.55, wet: 0.015, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
-      else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 1100 * (m.scale.x || 1), rim: 0.15, wet: 0.0, hairline: !!m.geometry.attributes.color, keep: L.skin });
+      if (name === "skin") { if (map) map.colorSpace = THREE.NoColorSpace; mat = paint({ color: L.skin, skin: true, skinAo: !!m.geometry.attributes.color, body: this.custom, face: this.custom, rim: 0.3, wet: 0.015, mask: map || null, beard: L.beard || L.hair, lip: L.lip || "#5e342b", curlK: 1400 * (m.scale.x || 1) }); this.morph = m; this.skinMat = mat; }
+      else if (name === "hair" && !map) mat = paint({ color: L.hair, curl: true, curlK: 1100 * (m.scale.x || 1), rim: 0.15, wet: 0.0, hairline: !!m.geometry.attributes.color, keep: L.skin, grow: this.custom && !!m.geometry.attributes._scalp });
       // card hair, painted as one mass: the strand texture's cut-outs shimmer into a grid of cards at a distance, so the
       // cards are drawn solid with the painted strand grain on them instead
-      else if (name === "hair") mat = paint({ color: L.hair, curl: true, curlK: 700 * (m.scale.x || 1), rim: 0.3, wet: 0.12, side: THREE.DoubleSide });
-      else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.4, wet: 0.2 });
+      else if (name === "hair") mat = paint({ color: L.hair, curl: true, curlK: 700 * (m.scale.x || 1), rim: 0.3, wet: 0.12, side: THREE.DoubleSide, crop: this.custom });
+      else if (name === "goatee") mat = paint({ color: L.hair, curl: true, curlK: 1400 * (m.scale.x || 1), rim: 0.08, wet: 0.0 });
       // brows: the strand texture tinted (not recoloured) so a lighter brow keeps its hairs and tapers where the texture thins
-      else if (name === "brow") mat = paint({ color: L.browTint || L.brow, map, alphaTest: 0.22, rim: 0, wet: 0, side: THREE.DoubleSide, transparent: false });
+      else if (name === "brow") mat = paint({ color: L.browTint || L.brow, map, alphaTest: L.browCut || 0.2, feather: true, keep: L.skin, rim: 0, wet: 0, side: THREE.DoubleSide, transparent: false });
       // lashes: drawn before the brows and without writing depth (drawn after them, the lash cards wash the brows out pale)
       else if (name === "lash") { mat = paint({ color: L.brow, map, alphaTest: 0.5, rim: 0, wet: 0, side: THREE.DoubleSide, recolor: true, keep: L.brow, depthWrite: false }); m.renderOrder = -1; }
-      else if (name === "teeth") mat = paint({ color: "#d6cfc1", rim: 0 });
+      // (teeth sit in the mouth's own shade: at full brightness they draw a white line between lips that are only just parted)
+      else if (name === "teeth") mat = paint({ color: "#8e877b", rim: 0, wet: 0.3 });
       // the eye texture carries its own white and brown iris: a near-white tint keeps the whites white
-      else if (name === "eyes") mat = paint({ color: "#e8e6e2", map, wet: 2.6, rim: 0.1 });
+      // (the lid's shadow falls across the top of the ball: where the eyes sit and how tall they are, in the body's rest space)
+      else if (name === "eyes") { const bb = new THREE.Box3().setFromBufferAttribute(m.geometry.attributes.position), s = m.scale.y || 1; mat = paint({ color: "#f1eee8", map, wet: 3.2, rim: 0.1, eye: [(bb.min.y + bb.max.y) / 2 * s + m.position.y, (bb.max.y - bb.min.y) / 2 * s] }); }
       else if (name.startsWith("cloth")) {
         const key = Object.keys(L.cloth).find(k => name.includes(k)) || Object.keys(L.cloth)[0];
         // wool and cotton are matte: no wet sheen, a soft rim at grazing angles only; shoes keep a little polish
-        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: key === "shoes" ? 0.4 : 0.22, wet: key === "shoes" ? 0.35 : 0.0 });
+        mat = paint({ color: L.cloth[key], map, recolor: !!map, keep: key === "shoes" ? L.cloth.shoes : L.keep, tie: key === "suit" ? L.tie : null, rim: key === "shoes" ? 0.4 : 0.1, wet: key === "shoes" ? 0.35 : 0.0, cloth: key !== "shoes", bands: !!L.bands && key !== "shoes", body: this.custom });
       } else mat = paint({ color: "#777" });
+      // a packed mesh keeps its vertices as integers: this takes them back to the body's rest space
+      mat.uniforms.uObj.value.set(m.position.x, m.position.y, m.position.z, m.scale.x || 1);
       m.material = mat; m.userData.role = name;
     }
     this.fx = {};
@@ -399,6 +544,8 @@ class Person {
       const eyes = this.meshes.find(m => m.userData.role === "eyes");
       if (eyes) {
         const bb = new THREE.Box3().setFromBufferAttribute(eyes.geometry.attributes.position).applyMatrix4(eyes.matrixWorld);
+        // (a body built at another height: its meshes are still the size they were packed, its bones are not)
+        if (this.look) { const k = this.look.height / BODIES[this.look.body].height; bb.min.multiplyScalar(k); bb.max.multiplyScalar(k); }
         const r = (bb.max.y - bb.min.y) / 2;
         ex = (bb.max.x - bb.min.x) / 2 - r; ey = (bb.max.y + bb.min.y) / 2 - hs.at.y; ez = bb.max.z - hs.at.z + 0.011; R = r * 1.45;
         this.eyeR = r; this.noseY = ey - 0.04; this.noseZ = bb.max.z - hs.at.z + 0.001;
@@ -408,14 +555,15 @@ class Person {
     if (L.glasses === "browline") {
       const g = new THREE.Group(); this.glasses = g; head.add(g);
       const black = paint({ color: "#0a0a0a", wet: 1.6, rim: 0.5 }), gold = paint({ color: "#c9a96a", wet: 2.4, rim: 0.4, emit: "#150f05" });
-      const lens = new THREE.MeshBasicMaterial({ color: "#a9bccb", transparent: true, opacity: 0.08, depthWrite: false });
+      // the lenses take the scene's light (an unlit pane glows white in a dark room): nearly clear, a glint where a lamp finds them
+      const lens = paint({ color: "#a9bccb", alpha: 0.07, wet: 3.2, rim: 0.5, depthWrite: false });
       // squarer and wider, like his: a straight black brow bar across the top, thin gold rims round the sides and bottom
-      const Rw = R * 1.18, Rh = R * 0.82, bridgeY = ey + Rh * 0.55;
+      const Rw = R * 1.3, Rh = R * 0.98, bridgeY = ey + Rh * 0.6;
       const rrect = (cx, cy, w, h, rr, n, from, to) => { const pts = []; for (let i = 0; i <= n; i++) { const a = from + (to - from) * i / n, c = Math.cos(a), s2 = Math.sin(a); const px = Math.sign(c) * Math.pow(Math.abs(c), 0.4) * w, py = Math.sign(s2) * Math.pow(Math.abs(s2), 0.4) * h; pts.push(new THREE.Vector3(cx + px, cy + py, ez - Math.max(0, -s2) * 0.002)); } return pts; };
       for (const side of [1, -1]) {
-        const cx = (ex + R * 0.12) * side, cy = ey - Rh * 0.08;
+        const cx = (ex + R * 0.2) * side, cy = ey - Rh * 0.1;
         const top = new THREE.CatmullRomCurve3([new THREE.Vector3(cx - Rw * 1.02, cy + Rh * 0.78, ez - 0.002), new THREE.Vector3(cx, cy + Rh * 1.0, ez + 0.001), new THREE.Vector3(cx + Rw * 1.04, cy + Rh * 0.82, ez - 0.004)]);
-        g.add(new THREE.Mesh(new THREE.TubeGeometry(top, 12, 0.0032, 6), black));
+        { const bar = new THREE.Mesh(new THREE.TubeGeometry(top, 12, 0.0034, 6), black); bar.scale.y = 1.25; bar.position.y = -(cy + Rh * 0.9) * 0.25; g.add(bar); }
         g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rrect(cx, cy, Rw, Rh, 0.3, 24, Math.PI * 1.02, Math.PI * 1.98)), 24, 0.0008, 4), gold));
         const lm = new THREE.Mesh(new THREE.PlaneGeometry(Rw * 2, Rh * 1.9), lens); lm.position.set(cx, cy, ez - 0.0015); g.add(lm);
         const arm = new THREE.CatmullRomCurve3([new THREE.Vector3(cx + side * Rw * 1.04, cy + Rh * 0.8, ez - 0.004), new THREE.Vector3(side * 0.071, cy + Rh * 0.75, ez - 0.05), new THREE.Vector3(side * 0.073, cy + Rh * 0.3, ez - 0.1)]);
@@ -430,14 +578,15 @@ class Person {
     if (L.studs) {
       const st = paint({ color: "#eef3f6", wet: 3, emit: "#2a2e33" });
       this.studs = [];
-      // a diamond stud in his left ear only
-      const s1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.0032, 0), st); s1.position.copy(at(0.074, 0.032, 0.014)); head.add(s1); this.studs.push(s1);
+      // a small diamond stud in each ear
+      for (const side of [1, -1]) { const s1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.0036, 0), st); s1.position.copy(at(0.074 * side, 0.032, 0.014)); head.add(s1); this.studs.push(s1); }
     }
     if (this.eyeR) {
       // a catchlight in each eye, on the eye itself when it has a bone so it moves with the look
-      const cl = new THREE.MeshBasicMaterial({ color: "#f3e9d8", transparent: true, opacity: 0.55, depthWrite: false });
+      // (lit by the scene, so it is bright in daylight and all but gone in a dark room)
+      const cl = paint({ color: "#fffaf0", alpha: 0.85, wet: 0, rim: 0, depthWrite: false });
       for (const side of [1, -1]) {
-        const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.07, 6, 4), cl);
+        const d = new THREE.Mesh(new THREE.SphereGeometry(this.eyeR * 0.09, 6, 4), cl);
         const eb = this.bones[side > 0 ? "eye_l" : "eye_r"];
         const p = at(this.eyeX * side - this.eyeR * 0.12, this.eyeY + this.eyeR * 0.14, this.eyeZ + 0.0004);
         if (eb) { const r = this.rest[eb.name]; const pw = p.clone().applyQuaternion(hs.w).add(hs.at); d.position.copy(pw.sub(r.at).applyQuaternion(r.wi)); eb.add(d); }
@@ -465,11 +614,13 @@ class Person {
       // a fire helmet: the dome, the brim that runs long behind the neck, a ridge over the top and a pale band round it
       const hm = new THREE.Group(); head.add(hm); hm.quaternion.copy(hs.wi); this.helmet = hm;
       const sh = paint({ color: L.helmet, wet: 1.4, rim: 0.5 }), band = paint({ color: "#d9dc9a", wet: 1.0, rim: 0.3, emit: "#2a2c12" });
-      const top = this.height - hs.at.y - 0.18, cy = top + 0.085;
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.128, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), sh); dome.scale.set(1, 1.06, 1.12); dome.position.set(0, cy, 0.005); hm.add(dome);
-      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.146, 0.152, 0.012, 24), sh); brim.scale.set(1, 1, 1.34); brim.position.set(0, cy - 0.004, -0.042); brim.rotation.x = -0.14; hm.add(brim);
-      const ridge = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.008, 6, 20, Math.PI), sh); ridge.rotation.y = Math.PI / 2; ridge.scale.set(1.12, 1.06, 1); ridge.position.set(0, cy, 0.005); hm.add(ridge);
-      const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.1295, 0.1295, 0.016, 24, 1, true), band); bd.scale.set(1, 1, 1.12); bd.position.set(0, cy + 0.02, 0.005); hm.add(bd);
+      const top = this.height - hs.at.y - 0.18, cy = top + 0.068;
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), sh); dome.scale.set(1, 1.06, 1.12); dome.position.set(0, cy, 0.005); hm.add(dome);
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.113, 0.118, 0.012, 24), sh); brim.scale.set(1, 1, 1.4); brim.position.set(0, cy - 0.004, -0.04); brim.rotation.x = -0.14; hm.add(brim);
+      const ridge = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.007, 6, 20, Math.PI), sh); ridge.rotation.y = Math.PI / 2; ridge.scale.set(1.12, 1.06, 1); ridge.position.set(0, cy, 0.005); hm.add(ridge);
+      const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.1015, 0.1015, 0.016, 24, 1, true), band); bd.scale.set(1, 1, 1.12); bd.position.set(0, cy + 0.02, 0.005); hm.add(bd);
+      // the shield on its front
+      const fs = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.05, 0.005), paint({ color: "#17130f", wet: 0.8, rim: 0.3 })); fs.position.set(0, cy + 0.056, 0.099); fs.rotation.x = -0.52; hm.add(fs);
     }
     if (L.umbrella && this.bones.hand_r) {
       // a long umbrella, held by its hook at about chest height; the shaft runs down through the fist and the canopy rides above the head
@@ -2087,6 +2238,8 @@ class Person {
     this.setFx("mouthSmileLeft", this.smileK * 0.5); this.setFx("mouthSmileRight", this.smileK * 0.5);
   }
 }
+/* every name this file sets on a person: what a new body replaces (Person.rebody) */
+const INTERNAL = new Set([...Person.toString().matchAll(/this\.([A-Za-z_]\w*)\s*=[^=]/g)].map(m => m[1]));
 function t0(p) { return p.t; }
 /* a steering wheel's turning axis: the thinnest axis of its meshes in its own frame */
 function rimAxisOf(W) {

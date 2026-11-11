@@ -645,4 +645,23 @@ export function plateAtlas(lo) {
   map.flipY = nmap.flipY = false;
   return (plAtlas[key] = { map, nmap, canvas: c, letters, scale: [fw / N, fw / 2 / N], cell: i => { i = ((i % n) + n) % n; return [((i % PLATE_COLS) * cw + px) / N, (Math.floor(i / PLATE_COLS) * ch + py) / N]; } });
 }
+/* brick: a running bond of mixed tan, rose and brown in a pale mortar (the house on the night street); one tile is 1.2 m */
+export function brickTex() {
+  const c = cv(512, 512), g = c.getContext("2d"), r = rng(57), cols = 6, rows = 16, bw = 512 / cols, bh = 512 / rows;
+  g.fillStyle = "#b9b0a2"; g.fillRect(0, 0, 512, 512);
+  const pal = [[150, 104, 82], [168, 124, 96], [132, 88, 72], [176, 140, 112], [120, 84, 74], [158, 112, 90]];
+  for (let j = 0; j < rows; j++) for (let i = -1; i < cols; i++) {
+    const p = pal[(r() * pal.length) | 0], v = 0.88 + r() * 0.24, x = (i + (j % 2) * 0.5) * bw;
+    g.fillStyle = `rgb(${(p[0] * v) | 0},${(p[1] * v) | 0},${(p[2] * v) | 0})`; g.fillRect(x + 2, j * bh + 2, bw - 4, bh - 4);
+    if (x + bw > 512) g.fillRect(x - 512 + 2, j * bh + 2, bw - 4, bh - 4);
+  }
+  const t = tex(c, { repeat: true }); t.anisotropy = 8; return t;
+}
+/* lapped boards: six to the metre, each with the shadow of the one above along its top edge */
+export function sidingTex() {
+  const c = cv(64, 512), g = c.getContext("2d"), n = 6, h = 512 / n;
+  g.fillStyle = "#d9d6cc"; g.fillRect(0, 0, 64, 512);
+  for (let j = 0; j < n; j++) { const gr = g.createLinearGradient(0, j * h, 0, (j + 1) * h); gr.addColorStop(0, "rgba(0,0,0,0.45)"); gr.addColorStop(0.14, "rgba(0,0,0,0.06)"); gr.addColorStop(1, "rgba(255,255,255,0.05)"); g.fillStyle = gr; g.fillRect(0, j * h, 64, h); }
+  return tex(c, { repeat: true });
+}
 export { cv };

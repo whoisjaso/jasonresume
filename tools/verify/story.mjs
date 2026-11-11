@@ -4,7 +4,9 @@
 //   --pad: the whole episode's controls from a standard-mapping pad injected through navigator.getGamepads
 //   --hud: the round map, the title cards, the passers-by and the horn (also run after --explore)
 //   --tags: the lost license plates, every one picked up (tools/verify/out/tags-glint.png, tags-counter-portrait.png)
-//   --night: the first chapter's stills (tools/verify/out/night-bedroom.png, night-street.png, night-carry.png, night-ambulance.png)
+//   --look: the character creator (keyboard, touch and a pad; tools/verify/out/creator-desktop.png, creator-face.png, creator-portrait.png)
+//   --night: the first chapter's stills (tools/verify/out/night-bedroom.png, night-street.png, night-carry.png, night-ambulance.png,
+//   and the house itself: night-house-exterior.png, -living, -kitchen, -entry, -hall, -stairs)
 //
 // For each viewport (desktop 1440x900, a phone sideways 844x390 and upright 390x844) it
 // plays every major branch with the keyboard, clicks or taps: hiring (and the role's
@@ -139,7 +141,11 @@ async function use(p, mobile, id, label) {
     // and touch up and the browser drops the click; tap once it has stopped moving, as a person would
     let last = null;
     for (let i = 0; i < 40; i++) { const r = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return null; const q = b.getBoundingClientRect(); return [Math.round(q.left), Math.round(q.top)]; }); if (r && last && r[0] === last[0] && r[1] === last[1]) break; last = r; await p.waitForTimeout(250); }
-    await p.evaluate(() => { window.__pc = 0; const b = document.querySelector('.st-prompt'); if (b && !b.__pc) { b.__pc = 1; b.addEventListener('click', () => window.__pc++, true); } }); await p.tap('.st-prompt', { force: true }); } else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt', { force: true });
+    await p.evaluate(() => { window.__pc = 0; const b = document.querySelector('.st-prompt'); if (b && !b.__pc) { b.__pc = 1; b.addEventListener('click', () => window.__pc++, true); } }); await p.tap('.st-prompt', { force: true }); } else if (Math.random() < 0.5) await p.keyboard.press('e'); else {
+    // (a click needs the prompt to have stopped moving too: after a warp the camera is still easing out behind you)
+    let last = null;
+    for (let i = 0; i < 40; i++) { const r = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return null; const q = b.getBoundingClientRect(); return [Math.round(q.left), Math.round(q.top)]; }); if (r && last && r[0] === last[0] && r[1] === last[1]) break; last = r; await p.waitForTimeout(250); }
+    await p.click('.st-prompt', { force: true }); }
   const on = await until(p, ([id, n]) => { const s = window.JG_STORY.debug.state(); return s.phase !== 'explore' || (s.looked[id] || 0) > n || s.scene !== window.__scene; }, [id, n0], 20000);
   if (!on) { const why = await p.evaluate(() => { const s = window.JG_STORY.debug.state(); const b = document.querySelector('.st-prompt'); return { phase: s.phase, scene: s.scene, near: s.near, prompt: b && !b.hidden ? b.textContent.trim() : null, me: s.me, clicks: window.__pc, turn: !!document.querySelector('.st-turn'), talking: s.talking }; }).catch(() => null); errs.push(`${label}: ${id} did not respond ${JSON.stringify(why)}`); }
   return on;
@@ -193,7 +199,7 @@ async function night(p, mobile, o, label) {
     n = await N(); const s1 = await st(p);
     if (!s1.flags.found || s1.obj !== 'night-out' || n.stage !== 'out' || !n.front) errs.push(`${label}: after the door, the night should send you out ${JSON.stringify({ found: s1.flags.found, obj: s1.obj, stage: n.stage, front: n.front })}`);
     // the stairs carry your height: half way down them you are half way down
-    await p.evaluate(() => window.JG_STORY.debug.put(0.4, 1.62, Math.PI / 2)); await p.waitForTimeout(700);
+    await p.evaluate(() => window.JG_STORY.debug.put(-0.75, 0.5, Math.PI, 1.4)); await p.waitForTimeout(700);
     { const y = (await N()).y; if (!(y > 0.9 && y < 2.2)) errs.push(`${label}: on the stairs your height is ${y}`); }
     // the front door (a way: Y on a pad), then out
     await use(p, mobile, 'night-front', label);
@@ -210,7 +216,7 @@ async function night(p, mobile, o, label) {
     // lead them up: a few real steps toward the house and they come after you
     { const c0 = (await N()).crewAt[0]; await p.evaluate(() => window.JG_STORY.debug.put(0.8, 7.2, Math.PI)); await p.evaluate(() => window.JG_STORY.debug.sim(60, 0.05)); await p.evaluate(() => window.JG_STORY.debug.put(0.8, 4.2, Math.PI)); await p.evaluate(() => window.JG_STORY.debug.sim(80, 0.05)); const c1 = (await N()).crewAt[0], me = (await st(p)).me;
       if (!c1 || Math.hypot(c1[0] - me[0], c1[2] - me[1]) > 4.5) errs.push(`${label}: the crew did not follow you in (${JSON.stringify([c0, c1, me])})`); else notes.push(`${label}: the crew follow you into the house`); }
-    await p.evaluate(() => window.JG_STORY.debug.put(-9.4, -2.8, -Math.PI / 2));
+    await p.evaluate(() => window.JG_STORY.debug.put(-4.2, 3.2, -Math.PI / 2, 2.9));
     if (!(await until(p, () => { const n = window.JG_STORY.debug.night(), s = window.JG_STORY.debug.state(); return n.carry.on && s.phase === 'explore'; }, null, 240000))) { errs.push(`${label}: in the room, the carry never began ${JSON.stringify(await N())}`); return false; }
     await dadOK('on the chair');
     n = await N();
@@ -252,7 +258,7 @@ async function night(p, mobile, o, label) {
   await dadOK('on the way to the ambulance');
   // beside the chair to the ambulance; the doors; the lights away down the street; then the lot
   if ((await N()).stage !== 'wheel') errs.push(`${label}: the walk to the ambulance did not begin ${JSON.stringify(await N())}`);
-  await p.evaluate(() => window.JG_STORY.debug.put(10.9, 13.9, 2.5));
+  await p.evaluate(() => window.JG_STORY.debug.put(-1.5, 14.4, -2.5));
   if (!(await until(p, () => { const n = window.JG_STORY.debug.night(); return !n || n.stage === 'doors'; }, null, 300000))) { errs.push(`${label}: the chair never reached the ambulance ${JSON.stringify(await N())}`); return false; }
   if (o.shots) { await p.waitForTimeout(1200); await shot(p, `${o.tag}-night-doors`); }
   const shut = await until(p, () => { const n = window.JG_STORY.debug.night(); return !n || n.shut; }, null, 120000);
@@ -262,6 +268,17 @@ async function night(p, mobile, o, label) {
   if (!onLot) { errs.push(`${label}: the night did not end on the lot ${JSON.stringify(await st(p))}`); return false; }
   const s3 = await st(p);
   if (!s3.journal.includes('night')) errs.push(`${label}: the night left no page in the journal`);
+  // who walks onto the lot: asked once, on the way there; the way on keeps the body you were given, and saves it
+  if (!(await until(p, () => window.JG_STORY.debug.creator().open, null, 120000))) errs.push(`${label}: the lot never asked who walks onto it ${JSON.stringify(await st(p))}`);
+  else {
+    const c = await p.evaluate(() => window.JG_STORY.debug.creator());
+    if (c.mode !== 'first') errs.push(`${label}: after the night the creator says "${c.mode}"`);
+    await p.waitForTimeout(900);
+    if (o.shots) await shot(p, `${o.tag}-who`);
+    await textRules(p, `${label} who`);
+    if (mobile) await p.tap('.st-look [data-cr="done"]'); else if (o.full) { await p.focus('.st-look [data-cr="done"]'); await p.keyboard.press('Enter'); } else await p.click('.st-look [data-cr="done"]');
+    if (!(await until(p, () => { const k = window.JG_STORY.debug.creator(); return !k.open && !k.live && !!k.stored; }, null, 30000))) errs.push(`${label}: the way on did not close the creator and keep the look`);
+  }
   notes.push(`${label}: the night ends on the lot${o.full ? ', played all the way through' : ''}`);
   return true;
 }
@@ -2175,22 +2192,293 @@ async function nightStills() {
   await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   await p.click('[data-title-play]');
   if (!(await until(p, () => { const s = window.JG_STORY && window.JG_STORY.debug.state(); return !!s && s.scene === 'night' && s.phase === 'explore'; }, null, 600000))) { errs.push('night stills: the night never opened'); await ctx.close(); return; }
+  await p.addStyleTag({ content: '.st-prompt, .st-dots, .st-act, .st-way { visibility: hidden !important; }' }); // (a still is the picture: no prompts over it)
   const H = 2.9, go = st => p.evaluate(st => window.JG_STORY.debug.nightGo(st), st), put = (x, z, yaw) => p.evaluate(a => window.JG_STORY.debug.put(...a), [x, z, yaw]);
   const view = (a, b2, r) => p.evaluate(v => window.JG_STORY.debug.view(v[0], v[1], v[2]), [a, b2, r || 6]);
   const snap = async name => { await p.waitForTimeout(6000); await shot0(p, name); notes.push(`still: tools/verify/out/${name}.png`); };
   // the bedroom, as the chapter hands over: on the edge of the bed, the clock's glow, the night at the window
-  await view([-0.75, H + 1.42, -2.2], [1.25, H + 1.02, -3.95], 2.6); await snap('night-bedroom');
+  await view([3.15, H + 1.42, 4.35], [4.45, H + 1.02, 2.05], 2.6); await snap('night-bedroom');
+  // the house, inside and out, as it stands before anyone comes: the front from the street, the living room and the kitchen from
+  // each other, the entry hall to the front door, the hall upstairs to the door at its end, the stairs from the landing
+  await view([1.6, 1.75, 20.0], [-0.6, 2.8, 7.6], 14); await snap('night-house-exterior');
+  await view([1.3, 1.62, -5.3], [-5.4, 0.9, -2.6], 6); await snap('night-house-living');
+  await view([-2.4, 1.62, -5.2], [5.0, 0.9, -3.4], 6); await snap('night-house-kitchen');
+  await view([0.8, 1.62, -1.2], [0.85, 1.15, 5.9], 6); await snap('night-house-entry');
+  await view([1.35, H + 1.6, 3.35], [-2.6, H + 0.9, 3.3], 4); await snap('night-house-hall');
+  await view([-0.75, H + 1.75, 3.7], [-0.75, 0.5, -1.5], 5); await snap('night-house-stairs');
   // the street: out of the front door as the engine and the ambulance stand at the kerb and the crew come up the lawn
-  await go('out'); await put(1.0, 9.4, 0.25); await view([2.3, 1.72, 7.5], [-1.2, 1.45, 14.2], 9); await snap('night-street');
+  await go('out'); await put(0.6, 9.0, 0.25); await view([1.35, 1.72, 6.6], [-1.6, 1.4, 14.6], 9); await snap('night-street');
   // the carry: half way down the stairs, as it is played
   await view(null); await go('carry'); await p.evaluate(() => window.JG_STORY.debug.nightCarry(0.42)); await snap('night-carry');
   // the ambulance: the chair coming up to the open doors, me beside it
-  await go('wheel'); await put(10.9, 13.0, 2.9);
+  await go('wheel'); await put(-1.4, 13.9, -2.6);
   await until(p, () => window.JG_STORY.debug.night().wheel > 0.8, null, 300000);
   // (held there: under the harness's fast clock the doors would be shut a moment later)
-  await p.evaluate(() => window.JG_STORY.debug.freeze(true)); await view([13.4, 1.75, 12.0], [8.8, 1.15, 15.3], 7);
+  await p.evaluate(() => window.JG_STORY.debug.freeze(true)); await view([-0.5, 1.75, 13.9], [-4.3, 1.15, 15.5], 7);
   await p.evaluate(() => window.JG_STORY.debug.step(2, 0.016, true)); await p.waitForTimeout(800); await shot0(p, 'night-ambulance'); notes.push('still: tools/verify/out/night-ambulance.png');
   await ctx.close();
+}
+/* ---------- the character (--look): who walks onto the lot ----------
+   From the pause menu, Character opens the creator (story/creator.js). One option is changed in every group it shows,
+   by the keyboard on a desktop, by touch on a phone and from a pad; each time the body in the world must wear the
+   change (it reports its look where it can; an older body shows it in its colours), with a haptic on the choice and
+   none on Back. The look outlives Done, a change of scene and a reload; Reset puts back the body you were given. The
+   screen shows no digit and nothing wider than the screen. Stills: tools/verify/out/creator-desktop.png,
+   creator-face.png, creator-portrait.png. */
+const LOOKC = process.argv.includes('--look');
+async function lookCheck(vname, w, h, mobile) {
+  const label = `${vname} look`;
+  const C = p => p.evaluate(() => window.JG_STORY.debug.creator());
+  const live = p => until(p, () => window.JG_STORY.debug.creator().open, null, 90000);
+  /* the body in the world (and the one in the studio) wears what the screen holds */
+  const worn = p => until(p, () => {
+    const c = window.JG_STORY.debug.creator();
+    const eq = (a, b) => (typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 0.003 : a && b && typeof a === 'object' && typeof b === 'object' ? Object.keys(b).every(k => eq(a[k], b[k])) : String(a).toLowerCase() === String(b).toLowerCase());
+    if (!c.you || c.pending) return false;
+    if (c.real) return !!c.you.reported && eq(c.you.reported, c.out) && (!c.doll || eq(c.doll.reported, c.out));
+    return c.you.skin === c.look.skin.toLowerCase() && c.you.hair === c.look.hair.color.toLowerCase() && Math.abs(c.you.scale - (0.93 + 0.14 * c.look.height)) < 0.003;
+  }, null, 45000);
+  const rules = async (p, where) => {
+    // (measured at rest: a group slides in from the side it is on)
+    await p.evaluate(() => Promise.race([Promise.all(document.querySelector('.st-look').getAnimations({ subtree: true }).map(a => a.finished.catch(() => {}))), new Promise(r => setTimeout(r, 1500))]));
+    const r = await p.evaluate(() => {
+      const s = document.querySelector('.st-look'), iw = innerWidth;
+      const text = s.innerText + ' ' + [...s.querySelectorAll('[aria-label],[title],[aria-valuetext]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('aria-valuetext')].filter(Boolean).join(' ')).join(' ');
+      const wide = [...s.querySelectorAll('*')].filter(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.right > iw + 1 || b.left < -1); }).map(e => e.className || e.tagName).slice(0, 4);
+      const small = [...s.querySelectorAll('button, input')].filter(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.height < 40 || b.width < 40); }).map(e => (e.className || e.dataset.cr || e.dataset.k || e.tagName) + ' ' + Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height)).slice(0, 4);
+      return { text, wide, small, sw: document.documentElement.scrollWidth, iw, stage: window.JG_STORY.debug.creator().rect };
+    });
+    if (/\d/.test(r.text)) errs.push(`${label}: a digit on the screen (${where}): ${(r.text.match(/.{0,20}\d.{0,20}/) || [''])[0]}`);
+    if (/[—–%]/.test(r.text)) errs.push(`${label}: a dash or a percent sign (${where})`);
+    if (r.sw > r.iw || r.wide.length) errs.push(`${label}: wider than the screen (${where}): ${r.sw} of ${r.iw} ${r.wide.join(', ')}`);
+    if (r.small.length) errs.push(`${label}: a control too small to press (${where}): ${r.small.join(', ')}`);
+    if (r.stage.h < 150 || r.stage.w < 150) errs.push(`${label}: the body has no room (${where}): ${JSON.stringify(r.stage)}`);
+  };
+  const vib = p => p.evaluate(() => window.__vib.length);
+  const still = async (p, name) => {
+    const q = await p.evaluate(() => { const d = window.JG_STORY.debug, q = d.qa(); d.quality(q.quality, 1); return [q.quality, q.pixelRatio]; });
+    await p.waitForTimeout(2600);
+    await p.screenshot({ path: path.join(OUT, name), timeout: 240000 });
+    await p.evaluate(q => window.JG_STORY.debug.quality(q[0], q[1]), q);
+    notes.push(`still: tools/verify/out/${name}`);
+  };
+  const openPause = async p => { if (mobile) await p.tap('[data-st="pause"]', { force: true }); else await p.keyboard.press('Escape'); return until(p, () => window.JG_STORY.debug.state().phase === 'pause', null, 20000); };
+  const openLook = async p => {
+    if (!(await openPause(p))) { errs.push(`${label}: the pause menu did not open ${JSON.stringify(await st(p))}`); return false; }
+    await p.waitForTimeout(350);
+    if (!(await p.$('.st-pause [data-p="look"]'))) { errs.push(`${label}: the pause menu has no Character`); return false; }
+    if (mobile) await p.evaluate(() => { const b = document.querySelector('.st-pause [data-p="look"]'); b.scrollIntoView({ block: 'center' }); });
+    if (mobile) await p.tap('.st-pause [data-p="look"]', { force: true }); else { await p.focus('.st-pause [data-p="look"]'); await p.keyboard.press('Enter'); }
+    if (!(await live(p))) { errs.push(`${label}: Character did not open the creator ${JSON.stringify(await st(p))}`); return false; }
+    await p.waitForTimeout(500);
+    return true;
+  };
+  const active = p => p.evaluate(() => { const a = document.activeElement, s = document.querySelector('.st-look'); if (!a || !s.contains(a)) return null; const cs = getComputedStyle(a); return { tag: a.tagName.toLowerCase(), range: a.type === 'range', pressed: a.getAttribute('aria-pressed'), k: a.dataset.k || '', v: a.dataset.v || '', cr: a.dataset.cr || '', ring: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0 }; });
+  const done = async p => { if (mobile) await p.tap('.st-look [data-cr="done"]'); else { await p.focus('.st-look [data-cr="done"]'); await p.keyboard.press('Enter'); } return until(p, () => window.JG_STORY.debug.state().phase === 'pause' && !window.JG_STORY.debug.creator().open, null, 20000); };
+
+  // ----- the keyboard (desktop) or touch (a phone)
+  {
+    const ctx = await storyCtx(w, h, mobile, false);
+    const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`${label} pageerror: ${e.message}`));
+    await openStory(p, mobile);
+    if (!(await toExploreJ(p)).ok) { errs.push(`${label}: never got to explore`); await ctx.close(); return; }
+    await turnAway(p);
+    if (!(await openLook(p))) { await ctx.close(); return; }
+    const c0 = await C(p);
+    if (c0.mode !== 'pause') errs.push(`${label}: opened from the pause menu, the creator says "${c0.mode}"`);
+    if (!c0.cats.length) errs.push(`${label}: the creator shows no group`);
+    if (!c0.real) notes.push(`${label}: this body has no setLook yet; the creator shows what it can change (${c0.shown.join(', ')})`);
+    else for (const g of ['body', 'face', 'hair', 'outfit']) if (!c0.cats.includes(g)) errs.push(`${label}: no ${g} group`);
+    if (JSON.stringify(c0.look) !== JSON.stringify(c0.def)) errs.push(`${label}: a first visit does not start from the body you were given`);
+    await rules(p, 'opened');
+    if (!mobile) { const a = await active(p); if (!a) errs.push(`${label}: nothing has the focus when the creator opens`); else if (!a.ring) errs.push(`${label}: the focus is not drawn when the creator opens`); }
+    // stills, of the body you are given (its own hair and clothes), before anything is changed
+    if (vname === 'desktop') {
+      await still(p, 'creator-desktop.png');
+      if (c0.cats.includes('face')) { await p.click('.st-look [data-cr="cat"][data-cat="face"]'); await still(p, 'creator-face.png'); await p.click(`.st-look [data-cr="cat"][data-cat="${c0.cats[0]}"]`); await p.waitForTimeout(400); }
+      await p.focus('.st-look [data-cr="cat"][aria-selected="true"]');
+    } else if (vname === 'portrait') await still(p, 'creator-portrait.png');
+    const changed = [];
+    for (let i = 0; i < c0.cats.length; i++) {
+      const cat = c0.cats[i];
+      if (mobile) await p.tap(`.st-look [data-cr="cat"][data-cat="${cat}"]`); else if (i > 0) await p.keyboard.press('e');
+      await p.waitForTimeout(450);
+      const c1 = await C(p);
+      if (c1.cat !== cat) { errs.push(`${label}: ${mobile ? 'a tap on its tab' : 'E'} did not open ${cat} (${c1.cat})`); continue; }
+      await rules(p, cat);
+      const v0 = await vib(p), t0 = await p.evaluate(() => performance.now());
+      let how = '';
+      if (mobile) {
+        // touch: the first thing that isn't chosen yet; a group of sliders takes a tap along its first one
+        const tile = await p.$('.st-look .cr-body [data-k][data-v][aria-pressed="false"]');
+        if (tile && cat !== 'face') { await tile.scrollIntoViewIfNeeded(); await tile.tap(); how = 'a tap on a choice'; }
+        else { const sl = await p.$('.st-look .cr-body input[type=range]'); if (sl) { await sl.scrollIntoViewIfNeeded(); const b = await sl.boundingBox(); await p.touchscreen.tap(b.x + b.width * 0.82, b.y + b.height / 2); how = 'a tap along a slider'; } }
+      } else {
+        await p.keyboard.press('ArrowDown'); await p.waitForTimeout(120);
+        let a = await active(p);
+        if (!a || a.cr === 'cat') { errs.push(`${label}: Down did not move the focus into ${cat} ${JSON.stringify(a)}`); continue; }
+        if (!a.ring && !a.range) errs.push(`${label}: the focus is not drawn in ${cat}`);
+        if (a.range) { await p.keyboard.press('ArrowRight'); await p.keyboard.press('ArrowRight'); how = 'Right on a slider'; }
+        else {
+          if (a.pressed === 'true') { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(80); const b = await active(p); if (b && b.v === a.v) { await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(80); } }
+          await p.keyboard.press('Enter'); how = 'Enter on a choice';
+        }
+      }
+      await p.waitForTimeout(250);
+      const c2 = await C(p);
+      if (JSON.stringify(c2.look) === JSON.stringify(c1.look)) { errs.push(`${label}: ${how || 'nothing'} changed nothing in ${cat}`); continue; }
+      if ((await vib(p)) <= v0) errs.push(`${label}: a choice in ${cat} came without a haptic`);
+      const snd = await p.evaluate(t => { const a = window.JG_STORY.debug.audio(); return { on: a.built && a.loaded && !!(window.JG_SCORE && window.JG_SCORE.isOn()), ui: (a.events || []).filter(e => e.kind === 'ui' && e.t >= t).length }; }, t0);
+      if (snd.on && !snd.ui) errs.push(`${label}: a choice in ${cat} came without its tick`);
+      if (!(await worn(p))) { errs.push(`${label}: the body does not wear the change in ${cat} ${JSON.stringify({ out: c2.out, you: (await C(p)).you })}`); continue; }
+      changed.push(`${cat} (${how})`);
+    }
+    if (changed.length === c0.cats.length) notes.push(`${label}: one change in every group, each worn by the body in the world at once: ${changed.join(', ')}`);
+    // a second kind of control where the first was a choice: a slider and a swatch, by the same hands
+    if (mobile && c0.shown.includes('skin')) {
+      await p.tap('.st-look [data-cr="cat"][data-cat="body"]'); await p.waitForTimeout(400);
+      const b0 = (await C(p)).look.skin; const sw = await p.$('.st-look .cr-body [data-k="skin"][aria-pressed="false"]'); await sw.scrollIntoViewIfNeeded(); await sw.tap(); await p.waitForTimeout(200);
+      if ((await C(p)).look.skin === b0) errs.push(`${label}: a tap on a skin tone changed nothing`); else if (!(await worn(p))) errs.push(`${label}: the body does not wear the new skin tone`);
+    }
+    // turning and zooming: a drag turns the body; the wheel (or the Face button) comes in close
+    {
+      const r = (await C(p)).rect, y0 = (await C(p)).base;
+      if (mobile) await p.tap('.st-look [data-cr="zoom"][data-z="1"]');
+      else { await p.mouse.move(r.x + r.w / 2, r.y + r.h / 2); await p.mouse.down(); await p.mouse.move(r.x + r.w / 2 + 120, r.y + r.h / 2, { steps: 6 }); await p.mouse.up(); await p.mouse.wheel(0, -300); await p.mouse.wheel(0, -300); await p.mouse.wheel(0, -300); }
+      await p.waitForTimeout(300);
+      const c = await C(p);
+      if (!mobile && Math.abs(c.base - y0) < 0.3) errs.push(`${label}: a drag on the body did not turn it`);
+      if (c.zoomTo < 0.9) errs.push(`${label}: ${mobile ? 'Face' : 'the wheel'} did not come in close (${c.zoomTo})`);
+      if (mobile) await p.tap('.st-look [data-cr="zoom"][data-z="0"]');
+      else {
+        // a double click turns it to face you again
+        await p.mouse.wheel(0, 900); await p.mouse.dblclick(r.x + r.w / 2, r.y + r.h * 0.3); await p.waitForTimeout(200);
+        if (Math.abs((await C(p)).base - y0) > 0.05) errs.push(`${label}: a double click did not turn the body to face you again`);
+      }
+    }
+    const kept = (await C(p)).look;
+    // Back (Esc) leaves without a sound or a haptic, and keeps what you made; Done is an arrival
+    if (!mobile) {
+      const v0 = await vib(p);
+      await p.keyboard.press('Escape');
+      if (!(await until(p, () => window.JG_STORY.debug.state().phase === 'pause', null, 15000))) errs.push(`${label}: Esc did not go back to the pause menu ${JSON.stringify(await st(p))}`);
+      await p.waitForTimeout(200);
+      if ((await vib(p)) !== v0) errs.push(`${label}: Esc out of the creator fired a haptic`);
+      const f = await p.evaluate(() => document.activeElement && document.activeElement.dataset.p);
+      if (f !== 'look') errs.push(`${label}: back on the pause menu the focus is not on Character (${f})`);
+      await p.keyboard.press('Escape'); await phase(p, 'explore', 15000);
+      if (!(await openLook(p))) { await ctx.close(); return; }
+    }
+    {
+      const v0 = await vib(p);
+      if (!(await done(p))) errs.push(`${label}: Done did not go back to the pause menu ${JSON.stringify(await st(p))}`);
+      await p.waitForTimeout(200);
+      if ((await vib(p)) <= v0) errs.push(`${label}: Done came without a haptic`);
+      const c = await C(p);
+      if (JSON.stringify(c.stored) !== JSON.stringify(kept)) errs.push(`${label}: the look was not saved as it was made`);
+    }
+    if (mobile) await p.tap('.st-pause [data-p="resume"]'); else await p.keyboard.press('Escape');
+    await phase(p, 'explore', 15000);
+    // a change of scene: the same body walks in
+    await p.evaluate(() => { window.JG_STORY.debug.go('office'); });
+    if (!(await until(p, () => { const s = window.JG_STORY.debug.state(); return s.scene === 'office' && (s.phase === 'talk' || s.phase === 'explore'); }, null, 120000))) errs.push(`${label}: could not get to the office ${JSON.stringify(await st(p))}`);
+    if (!(await worn(p)) || JSON.stringify((await C(p)).look) !== JSON.stringify(kept)) errs.push(`${label}: the look did not come along to the office`);
+    else notes.push(`${label}: the look comes along to the next scene`);
+    // a reload: Continue, and the body is the one you made before it is ever seen
+    await p.goto(URL0 + '?debug=story&fast=1&night=0&sq=0&pr=0.3');
+    await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
+    if (mobile) await p.tap('[data-title-play]'); else await p.click('[data-title-play]');
+    await until(p, () => window.JG_STORY && window.JG_STORY.isOpen() && !!window.JG_STORY.debug.state().scene, null, 180000);
+    const c3 = await C(p);
+    if (JSON.stringify(c3.look) !== JSON.stringify(kept)) errs.push(`${label}: the look did not survive a reload ${JSON.stringify(c3.look)}`);
+    else if (!(await worn(p))) errs.push(`${label}: after a reload the body does not wear the saved look ${JSON.stringify(c3.you)}`);
+    else notes.push(`${label}: the look survives a reload`);
+    if (!(await toExploreJ(p)).ok) errs.push(`${label}: never got to explore after the reload`);
+    await turnAway(p);
+    // Randomize, then Reset: the body you were given, on the screen, on the body and in the save
+    if (await openLook(p)) {
+      const tapOr = async sel => { if (mobile) await p.tap(sel); else { await p.focus(sel); await p.keyboard.press('Enter'); } await p.waitForTimeout(300); };
+      const a = (await C(p)).look;
+      await tapOr('.st-look [data-cr="random"]');
+      const b2 = (await C(p)).look;
+      if (JSON.stringify(a) === JSON.stringify(b2)) errs.push(`${label}: Randomize changed nothing`); else if (!(await worn(p))) errs.push(`${label}: the body does not wear the random look`);
+      await rules(p, 'randomized');
+      await tapOr('.st-look [data-cr="reset"]');
+      const c = await C(p);
+      if (JSON.stringify(c.look) !== JSON.stringify(c.def)) errs.push(`${label}: Reset did not put the defaults back ${JSON.stringify(c.look)}`);
+      else if (!(await worn(p))) errs.push(`${label}: after Reset the body does not wear the defaults ${JSON.stringify(c.you)}`);
+      else if (JSON.stringify(c.stored) !== JSON.stringify(c.def)) errs.push(`${label}: Reset was not saved`);
+      else notes.push(`${label}: Randomize makes a new body; Reset puts back the one you were given, on the screen, on the body and in the save`);
+      await done(p);
+    }
+    await ctx.close();
+  }
+
+  // ----- a pad (desktop): Menu, down to Character, A; RB through the groups, a change in each; B back, silently
+  if (!mobile) {
+    const ctx = await storyCtx(w, h, false, true);
+    const p = await ctx.newPage(); p.on('pageerror', e => errs.push(`${label} pad pageerror: ${e.message}`));
+    await openStory(p, false);
+    if (!(await toExploreJ(p)).ok) { errs.push(`${label} pad: never got to explore`); await ctx.close(); return; }
+    const press = (i, n = 2) => p.evaluate(([i, n]) => { const d = window.JG_STORY.debug, B = window.__pad.buttons[i]; B.pressed = true; B.value = 1; d.sim(1, 1 / 60); B.pressed = false; B.value = 0; d.sim(n, 1 / 60); }, [i, n]);
+    await press(9);
+    if (!(await until(p, () => window.JG_STORY.debug.state().phase === 'pause', null, 15000))) errs.push(`${label} pad: Menu did not pause`);
+    let onLook = false;
+    for (let i = 0; i < 8 && !onLook; i++) { onLook = await p.evaluate(() => !!document.activeElement && document.activeElement.dataset.p === 'look'); if (!onLook) await press(13, 3); }
+    if (!onLook) errs.push(`${label} pad: the D-pad never reached Character`);
+    await press(0);
+    if (!(await live(p))) { errs.push(`${label} pad: A on Character did not open the creator`); await ctx.close(); return; }
+    await p.waitForTimeout(500);
+    const c0 = await C(p), gl = await p.evaluate(() => [...document.querySelectorAll('.st-look .cr-tabs .st-glyph')].map(g => g.textContent + (getComputedStyle(g).display === 'none' ? ' hidden' : '')));
+    if (gl.join(' ') !== 'LB RB') errs.push(`${label} pad: the group tabs do not show LB and RB (${gl.join(' ')})`);
+    const changed = [];
+    for (let i = 0; i < c0.cats.length; i++) {
+      const cat = c0.cats[i];
+      if (i > 0) await press(5);
+      const c1 = await C(p);
+      if (c1.cat !== cat) { errs.push(`${label} pad: RB did not open ${cat} (${c1.cat})`); continue; }
+      const r0 = await p.evaluate(() => window.__rumble.length);
+      await press(13, 3);
+      const a = await active(p);
+      if (!a || a.cr === 'cat') { errs.push(`${label} pad: Down did not move the focus into ${cat} ${JSON.stringify(a)}`); continue; }
+      if (!a.ring && !a.range) errs.push(`${label} pad: the focus is not drawn in ${cat}`);
+      if (a.range) { await press(15, 3); await press(15, 3); }
+      else { if (a.pressed === 'true') { await press(15, 3); const b = await active(p); if (b && b.v === a.v) await press(14, 3); } await press(0); }
+      const c2 = await C(p);
+      if (JSON.stringify(c2.look) === JSON.stringify(c1.look)) { errs.push(`${label} pad: nothing changed in ${cat}`); continue; }
+      if ((await p.evaluate(() => window.__rumble.length)) <= r0) errs.push(`${label} pad: a choice in ${cat} came without a rumble`);
+      if (!(await worn(p))) { errs.push(`${label} pad: the body does not wear the change in ${cat}`); continue; }
+      changed.push(cat);
+    }
+    // LB goes back a group; the right stick turns the body, the right trigger comes in close
+    await press(4);
+    if (c0.cats.length > 1 && (await C(p)).cat !== c0.cats[c0.cats.length - 2]) errs.push(`${label} pad: LB did not go back a group`);
+    const y0 = (await C(p)).base;
+    await p.evaluate(() => { const d = window.JG_STORY.debug; window.__pad.axes[2] = 1; d.sim(20, 1 / 60); window.__pad.axes[2] = 0; const T = window.__pad.buttons[7]; T.pressed = true; T.value = 1; d.sim(50, 1 / 60); T.pressed = false; T.value = 0; d.sim(2, 1 / 60); });
+    const cz = await C(p);
+    if (Math.abs(cz.base - y0) < 0.3) errs.push(`${label} pad: the right stick did not turn the body`);
+    if (cz.zoomTo < 0.9) errs.push(`${label} pad: the right trigger did not come in close (${cz.zoomTo})`);
+    // B: back to the pause menu, on Character, without a rumble
+    const r1 = await p.evaluate(() => window.__rumble.length);
+    await press(1, 4);
+    const back = await p.evaluate(() => ({ ph: window.JG_STORY.debug.state().phase, open: window.JG_STORY.debug.creator().open, f: document.activeElement && document.activeElement.dataset.p, r: window.__rumble.length }));
+    if (back.ph !== 'pause' || back.open) errs.push(`${label} pad: B did not go back to the pause menu ${JSON.stringify(back)}`);
+    else if (back.r !== r1) errs.push(`${label} pad: B out of the creator rumbled`);
+    else if (back.f !== 'look') errs.push(`${label} pad: back on the pause menu the focus is not on Character (${back.f})`);
+    else if (changed.length === c0.cats.length) notes.push(`${label}: a pad opens it from the pause menu, RB and LB walk the groups, the D-pad and A change one thing in each (${changed.join(', ')}) with a rumble, the right stick turns, the trigger zooms, and B leaves without one`);
+    await ctx.close();
+  }
+}
+if (LOOKC) {
+  for (const [vname, w, h, mobile] of [['desktop', 1440, 900, false], ['landscape', 844, 390, true], ['portrait', 390, 844, true]]) {
+    if (only && only !== vname) continue;
+    try { await lookCheck(vname, w, h, mobile); } catch (e) { errs.push(`${vname} look: ${e.message.split('\n')[0]}`); }
+  }
+  await b.close();
+  console.log(notes.map(n => 'ok  ' + n).join('\n'));
+  if (errs.length) { console.log('\n' + errs.length + ' problems:\n' + errs.map(e => '  ' + e).join('\n')); process.exit(1); }
+  console.log('\nstory: the character creator checked, no problems');
+  process.exit(0);
 }
 if (process.argv.includes('--night')) {
   try { await nightStills(); } catch (e) { errs.push(`night stills: ${e.message.split('\n')[0]}`); }
