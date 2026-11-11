@@ -1127,7 +1127,7 @@ function walkTo(v, then, o = {}) {
    rumble, and the camera's dip. Nothing here allocates per frame ---------- */
 const JUMP = { vx: 0, vz: 0, dip: 0, dipT: 1, dipA: 0, n: 0, at: { x: 0, y: 0.05, z: 0 } };
 /* the floor under a point: the world can give heights (set.userData.heightAt); the sets are flat otherwise */
-function groundY(x, z) { const h = set && set.userData.heightAt; return typeof h === "function" ? h(x, z) || 0 : 0; }
+function groundY(x, z, y) { const h = set && set.userData.heightAt; return typeof h === "function" ? h(x, z, y) || 0 : 0; } // (y: whose floor, where a set has one over another)
 function canJump() {
   return !!(me && me.jump && S.open && S.phase === "explore" && !S.busy && !HOLDG && !DRV.state && !me.inCar && !me.jumping && !S.skipOpen && !choosing && me.group.visible &&
     !(me.reaches && (me.reaches.l || me.reaches.r)) && !(me.shot));
@@ -2919,8 +2919,9 @@ function juneShot(L) {
    ambulance; the doors shut, the lights pull away, and it is quiet. Then
    the lot, later.
 
-   The house and the street are story/world.js (buildNight): one plan, two
-   floors, the floor's height from set.userData.heightAt. The stages follow
+   The house and the street are story/world.js (buildNight): two floors,
+   one over the other, the walls those of the floor you are on
+   (set.userData.floor), the floor's height from set.userData.heightAt. The stages follow
    the flags the script sets (found, met-fire, lifting, carried), so a
    Continue lands where you were. Nothing here allocates per frame.
    ================================================================ */
@@ -2953,7 +2954,7 @@ function dadLit(on) { const ud = set.userData, d = ud.dadLamp, c = on ? d.on : d
 /* the engine and the ambulance along the street: 0 away, 1 at the kerb */
 function vehSet(k) {
   const ud = set.userData, R = ud.rig, M = ud.marks, e = v => 1 - Math.pow(1 - clamp(v, 0, 1), 2.4);
-  R.place(R.engine, lerp(M.engine.x + 70, M.engine.x, e(k * 1.1)), M.engine.z); R.place(R.amb, lerp(M.amb.x + 86, M.amb.x, e(k)), M.amb.z);
+  R.place(R.amb, lerp(M.amb.x + 70, M.amb.x, e(k * 1.1)), M.amb.z); R.place(R.engine, lerp(M.engine.x + 86, M.engine.x, e(k)), M.engine.z); // (the ambulance leads: it stops past the drive, the engine behind it)
   R.engine.on = R.amb.on = k > 0 ? 1 : 0;
 }
 function crewGo(p, pts, sp, done) { p.route = pts; p.ri = 0; p.rsp = (sp || 1.6) * (FAST ? 2 : 1); p.rdone = done || null; p.follow = 0; }
@@ -3009,7 +3010,7 @@ async function nightSit() {
 async function nightEnter() {
   await person("night", "jason-memory", { look: "jason-night" });
   await person("fire", "player", { look: "fire" }); await person("fire2", "player", { look: "fire2" }); await person("fire3", "player", { look: "fire3" });
-  const ud = set.userData, M = ud.marks, F = S.flags, J = P.night, H = ud.heightAt(M.bedStand.x, M.bedStand.z);
+  const ud = set.userData, M = ud.marks, F = S.flags, J = P.night, H = M.bedStand.y;
   me = J; // (before anything here that moves you: enter() names you again after)
   if (J.car) { try { J.driving = null; } catch (e) {} } // (on your feet: a chapter begun again from the edge of the bed)
   for (const k of CREW) { hide(P[k]); P[k].route = null; P[k].follow = 0; P[k].ghost = false; P[k].nav = null; }
@@ -3022,6 +3023,7 @@ async function nightEnter() {
   ud.door("dad", !!F.found, true); ud.door("front", !!(F.out || F["met-fire"]), true); dadLit(!!F.found);
   frontSpot(!!F.found && !ud.doorOpen("front"));
   J.heavy = 0; J.lookAtP = null;
+  ud.floor(!F.found || (F.lifting && !F.carried) ? H : 0); // (the walls of the floor you begin on)
   if (!F.found) { place(J, M.bedStand, M.bedYaw); J.pos.y = H; NT.stage = "wake"; vehSet(0); }
   else if (!F["met-fire"]) { place(J, M.foyer, 0); NT.stage = "out"; NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); }
   else if (!F.lifting) {
@@ -3029,7 +3031,7 @@ async function nightEnter() {
     place(P.fire, M.porch, Math.PI); place(P.fire2, _n1.set(M.porch.x - 0.5, 0, M.porch.z + 1.4), Math.PI); P.fire.ghost = P.fire2.ghost = true; P.fire.follow = 1.5; P.fire2.follow = 2.7;
     NT.trail.push({ x: M.porch.x - 0.5, z: M.porch.z + 1.4 }, { x: M.porch.x, z: M.porch.z });
   } else if (!F.carried) { place(J, M.dadIn, 0); J.pos.y = H; NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); await carrySetup(true); }
-  else { place(J, _n1.set(2.1, 0, 3.4), Math.PI / 2); NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); ud.door("front", true, true); wheelSetup(); }
+  else { place(J, _n1.set(M.wheel[0][0] + M.down[0], 0, M.wheel[0][1] + M.down[1]), M.down[2]); NT.veh = 1; NT.braked = true; vehSet(1); crewOut(true); ud.door("front", true, true); wheelSetup(); }
 }
 /* the cold open: black, the card, a slow move through the dark room to you on the edge of the bed, my two lines over
    it; then it is yours. Skip (Esc, Enter, A) goes straight there, without a sound */
@@ -3078,7 +3080,7 @@ function nightDoor() {
 function nightShot(pos, look, o) { S.heldShot = Object.assign({ pos, look, push: still() ? 0 : 0.1, dur: 8 }, o || {}); S.heldShot.focus = S.heldShot.focus || pos.distanceTo(look); camState.shotT = 0; camState.cut = true; if (S.phase === "talk" && line) camState.shot = S.heldShot; }
 function nightDadShot() {
   const M = set.userData.marks, H = M.dadBed.y - 0.72;
-  nightShot(new THREE.Vector3(me.pos.x + 1.15, H + 1.66, me.pos.z - 0.28), new THREE.Vector3(-11.7, H + 0.78, -4.1), { push: still() ? 0 : 0.07, dur: 10, range: 3.2 });
+  nightShot(new THREE.Vector3(me.pos.x + 1.15, H + 1.66, me.pos.z - 0.28), M.dadLook.clone(), { push: still() ? 0 : 0.07, dur: 10, range: 3.2 });
   me.lookAtP = M.dadBed;
 }
 /* what a line sets going before it is said. Returns a promise when the line should wait for it */
@@ -3100,9 +3102,9 @@ async function nightRoom() {
   const ud = set.userData, M = ud.marks, H = M.dadIn.y;
   NT.stage = "room"; mv.path = null; mv.after = null; guide.clearRing();
   for (const k of ["fire", "fire2"]) { const p = P[k]; p.follow = 0; p.ghost = true; if (Math.hypot(p.pos.x - me.pos.x, p.pos.z - me.pos.z) > 4) { const g = trailBack(k === "fire" ? 1.4 : 2.4); if (g) { p.pos.x = g.x; p.pos.z = g.z; p.pos.y = groundY(g.x, g.z); } } }
-  crewTo(P.fire, -10.75, -3.75, 1.5, () => { P.fire.wantYaw = -Math.PI / 2; }); crewTo(P.fire2, -10.6, -2.75, 1.4, () => { P.fire2.wantYaw = -Math.PI / 2 - 0.3; });
+  { const [a, b] = M.crewAt; crewTo(P.fire, a[0], a[1], 1.5, () => { P.fire.wantYaw = a[2]; }); crewTo(P.fire2, b[0], b[1], 1.4, () => { P.fire2.wantYaw = b[2]; }); }
   S.partner = null; S.focusPoint = M.dadBed; me.wantYaw = Math.atan2(M.dadBed.x - me.pos.x, M.dadBed.z - me.pos.z);
-  nightShot(new THREE.Vector3(-8.75, H + 1.62, -0.75), new THREE.Vector3(-11.5, H + 0.85, -4.0), { push: still() ? 0 : 0.08, dur: 9, range: 3.4 });
+  nightShot(M.roomCam.clone(), M.roomLook.clone(), { push: still() ? 0 : 0.08, dur: 9, range: 3.4 });
   await runTalk("night-room");
   if (!nightOn()) return;
   S.heldShot = null;
@@ -3133,7 +3135,7 @@ async function carrySetup(instant) {
   Object.assign(CAR, { on: true, s0: 0.86, s1: NT.carryLen - 0.96, v: 0, rock: 0, wob: 0, beat: 0.4, step: -1, steady: false, dip: 0, ring: "" });
   CAR.u = 0; NT.stage = "carry";
   // the second of them goes ahead to hold the front door
-  place(P.fire2, _n1.set(2.05, 0, 5.05), Math.PI * 0.9);
+  place(P.fire2, M.hold, M.holdYaw);
   carryPose(0, true);
   for (const p of [me, P.fire]) { p.pos.y = groundY(p.pos.x, p.pos.z); p.lookAtP = null; }
   carryHands(me, P.fire);
@@ -3175,8 +3177,8 @@ function carryTick(dt) {
   const want = CAR.steady || CAR.wob > 0.25 ? 0 : inp === 2 ? 0.95 : inp === 1 ? 0.44 : 0;
   CAR.v = damp(CAR.v, want, want > CAR.v ? 2.4 : 6, dt);
   // step by step: each tread is taken, not rolled over
-  const s = lerp(CAR.s0, CAR.s1, CAR.u), c = pAt(NT.carryPath, s, _pc), N = WORLD.NIGHT;
-  const on = c.z < N.ZS1 && c.x > N.XS0 && c.x < N.XS1, sx = (c.x - N.XS0) / ((N.XS1 - N.XS0) / N.STEPS), st = on ? Math.floor(sx) : -1;
+  const s = lerp(CAR.s0, CAR.s1, CAR.u), c = pAt(NT.carryPath, s, _pc);
+  const sx = ud.stepAt(c.x, c.z), on = sx >= 0, st = on ? Math.floor(sx) : -1;
   const pace = on ? 0.55 + 0.45 * Math.sin((sx - Math.floor(sx)) * Math.PI) : 1;
   CAR.u = Math.min(1, CAR.u + CAR.v * pace * (FAST ? 3 : 1) * dt / (CAR.s1 - CAR.s0));
   if (st !== CAR.step) { CAR.step = st; if (st >= 0 && CAR.v > 0.05) { AU.night("clunk", ud.chair.position); CAR.dip = still() ? 0 : 0.022; } }
@@ -3198,11 +3200,12 @@ async function carryEnd() {
   // the bottom: my hands come off it, he takes the handles behind, and I am beside it
   try { me.release(); P.fire.release(); } catch (e) {}
   const c = ud.chair.position;
-  me.pos.set(c.x - 0.85, 0, c.z + 0.35); me.yaw = me.wantYaw = Math.PI / 2;
+  const D0 = ud.marks.down, C0 = ud.marks.downCam;
+  me.pos.set(c.x + D0[0], 0, c.z + D0[1]); me.yaw = me.wantYaw = D0[2];
   wheelSetup();
   S.busy = false; S.partner = null; S.focusPoint = null;
   const h = me.pos;
-  nightShot(new THREE.Vector3(h.x + 0.2, 1.52, h.z + 1.25), new THREE.Vector3(h.x, 1.5, h.z), { push: still() ? 0 : 0.12, dur: 8, range: 1.1 });
+  nightShot(new THREE.Vector3(h.x + C0[0], 1.52, h.z + C0[1]), new THREE.Vector3(h.x, 1.5, h.z), { push: still() ? 0 : 0.12, dur: 8, range: 1.1 });
   await runTalk("night-down");
   S.heldShot = null;
 }
@@ -3212,7 +3215,7 @@ function wheelSetup() {
   NT.stage = "wheel"; NT.ws = 0; NT.doorK = 0; NT.load = -1; NT.shut = false;
   ud.dadBed.visible = false; ud.chair.visible = true;
   for (const k of ["fire", "fire2"]) { const p = P[k]; p.route = null; p.follow = 0; p.ghost = true; p.group.visible = true; if (p.shadow) p.shadow.visible = true; }
-  if (Math.hypot(P.fire2.pos.x - 2.05, P.fire2.pos.z - 5.05) > 3) place(P.fire2, _n1.set(2.05, 0, 5.05), Math.PI * 0.9);
+  { const h = ud.marks.hold; if (Math.hypot(P.fire2.pos.x - h.x, P.fire2.pos.z - h.z) > 3) place(P.fire2, h, ud.marks.holdYaw); }
   wheelPose(0, true);
   carryHands(P.fire, null);
 }
@@ -3230,7 +3233,7 @@ function wheelTick(dt) {
   wheelPose(dt, false);
   P.fire.lookAtP = NT.ws < L && !(dMe < 3.8 || ahead) ? _nl.set(me.pos.x, me.pos.y + 1.55, me.pos.z) : null; // he waits for you
   // the one holding the door comes out after it and goes ahead to the street
-  if (NT.ws > 6 && !P.fire2.route && !P.fire2.went) { P.fire2.went = true; crewGo(P.fire2, [{ x: 0.8, z: 5.2 }, { x: 0.8, z: 12.6 }, { x: 8.6, z: 13.6 }], 2.3); }
+  if (NT.ws > 6 && !P.fire2.route && !P.fire2.went) { P.fire2.went = true; crewGo(P.fire2, ud.marks.ahead.map(q => ({ x: q[0], z: q[1] })), 2.3); }
   // the back doors open as it comes
   const near = Math.hypot(ch.x - end.x, ch.z - end.z) < 13;
   if (near && NT.doorK === 0) AU.night("door", R.rear());
@@ -3258,7 +3261,7 @@ function loadTick(dt) {
     const f = NT.loadRes; NT.loadRes = null; if (f) f();
   }
 }
-/* they go: the crew to their doors, the engine and then the ambulance away down the street, and me watching */
+/* they go: the crew to their doors, the ambulance and then the engine away down the street, and me watching */
 function nightLeave() {
   const ud = set.userData, R = ud.rig, a = R.cab(R.amb), e = R.cab(R.engine);
   crewTo(P.fire, a.x + 0.9, a.z, 2.6, () => hide(P.fire)); crewTo(P.fire2, e.x, e.z, 2.8, () => hide(P.fire2));
@@ -3275,10 +3278,10 @@ function leaveGo(R, v, x0, t0) { const t = Math.max(0, NT.leave - t0), d = t < 7
 function leaveTick(dt) {
   const ud = set.userData, R = ud.rig, M = ud.marks;
   NT.leave += dt * (FAST ? 3 : 1);
-  leaveGo(R, R.engine, M.engine.x, 1.6); leaveGo(R, R.amb, M.amb.x, 3.0);
+  leaveGo(R, R.amb, M.amb.x, 2.4); leaveGo(R, R.engine, M.engine.x, 3.6);
   // anyone not aboard when their door goes is aboard
-  if (NT.leave > 1.6 && P.fire2.group.visible) { P.fire2.route = null; hide(P.fire2); }
-  if (NT.leave > 3.0) for (const k of ["fire", "fire3"]) if (P[k].group.visible) { P[k].route = null; hide(P[k]); }
+  if (NT.leave > 3.6 && P.fire2.group.visible) { P.fire2.route = null; hide(P.fire2); }
+  if (NT.leave > 2.4) for (const k of ["fire", "fire3"]) if (P[k].group.visible) { P[k].route = null; hide(P[k]); }
 }
 /* the night to the lot: a slow fade on the street, a card that says only that it is later, then the lot's own opening */
 async function nightToLot() {
@@ -3302,7 +3305,7 @@ async function nightToLot() {
 const _wayN = { id: "", stand: new THREE.Vector3(), p: new THREE.Vector3(), soft: false };
 function nightWay(spot) {
   const ud = set.userData, M = ud.marks, F = S.flags, W0 = _wayN;
-  const to = (id, st, p) => { W0.id = id; W0.stand.set(st.x, 0, st.z); W0.p.copy(p); return W0; };
+  const to = (id, st, p) => { const q = ud.via(st); W0.id = id; W0.stand.set(q.x, 0, q.z); W0.p.copy(p); return W0; }; // (on the other floor: by the stairs)
   if (CAR.on || NT.stage === "room" || NT.stage === "doors" || me.seated) return null;
   if (!F.found) { const s = spot("night-door"); return s ? to(s.id, s.sp.stand, s.p) : null; }
   if (!F["met-fire"]) {
@@ -3319,6 +3322,7 @@ function nightTick(dt) {
   if (!nightOn() || !me) return;
   const ud = set.userData, M = ud.marks, F = S.flags, R = ud.rig, J = P.night;
   NT.t += dt; R.still = still();
+  ud.floor(me.pos.y); // (the walls are those of the floor you are on)
   // the crew: on their way somewhere, or behind you
   for (let i = 0; i < CREW.length; i++) { const p = P[CREW[i]]; if (!p || !p.group.visible) continue; if (p.route) crewMove(p, dt); else if (p.follow > 0 && NT.stage === "lead") follow(p, p.follow, dt); }
   if (NT.stage === "lead") { const n = NT.trail.length, q = n ? NT.trail[n - 1] : null; if (!q || Math.hypot(q.x - me.pos.x, q.z - me.pos.z) > 0.35) { if (n > 240) NT.trail.splice(0, 120); NT.trail.push({ x: me.pos.x, z: me.pos.z }); } }
@@ -3329,7 +3333,7 @@ function nightTick(dt) {
   // the floor under everyone: the upper floor, the stairs, the ground
   for (let i = 0; i < NIGHT_CAST.length; i++) {
     const p = P[NIGHT_CAST[i]]; if (!p || !p.group.visible) continue;
-    const gy = groundY(p.pos.x, p.pos.z);
+    const gy = groundY(p.pos.x, p.pos.z, p.pos.y);
     if (!p.jumping && !p.inCar) p.pos.y = Math.abs(p.pos.y - gy) > 1.2 || dt === 0 ? gy : damp(p.pos.y, gy, 16, dt);
     if (p.shadow) p.shadow.position.y = gy + 0.015;
   }
@@ -3350,23 +3354,23 @@ function nightTick(dt) {
       if (NT.veh > 0.9 && !NT.braked) { NT.braked = true; AU.night("airbrake", NT.engAt); if (!ins) { hap("tap"); rumble("tap"); } }
       if (NT.veh >= 1) { AU.night("airbrake", NT.ambAt, 0.7); crewOut(false); }
     }
-    if (!F.out && me.pos.z > 6.5) { F.out = 1; save(); }
+    if (!F.out && !ins && me.pos.z > 6.5) { F.out = 1; save(); }
   }
   if (NT.crew && NT.leave < 0 && S.phase === "explore" && !line && (NT.radioT -= dt) <= 0) { NT.radioT = 8 + Math.random() * 7; if (P.fire.group.visible) AU.night("radio", headOf(P.fire), 0.8); }
   if (NT.stage === "lead" && S.phase === "explore" && !S.busy && !me.jumping) {
-    const inRoom = me.pos.x < -8.35 && me.pos.y > 1, atDoor = me.pos.x < -7.0 && me.pos.y > 1;
+    const dz = me.pos.y > 1 ? ud.inDad(me.pos.x, me.pos.z) : 0, inRoom = dz > 1, atDoor = dz > 0;
     if (inRoom || (atDoor && Math.hypot(P.fire.pos.x - me.pos.x, P.fire.pos.z - me.pos.z) < 3.2)) nightRoom();
   }
 }
 /* the camera's part of the night: its own frame for the carry; the hand that holds it; a shallow focus on foot */
 function nightCam(dt) {
   if (!CAR.on || S.phase !== "explore") return false;
-  // out over the rail on the open side (my right going down), a little behind and above me: my shoulder, the chair
-  // from behind, his face coming down backwards ahead of it
-  const yaw = me.yaw, fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -Math.cos(yaw), lz = Math.sin(yaw), ch = set.userData.chair.position, N = WORLD.NIGHT;
+  // behind and above me, to my right, as far as the stairwell has room: my shoulder, the chair from behind, his face
+  // coming down backwards ahead of it
+  const yaw = me.yaw, fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -Math.cos(yaw), lz = Math.sin(yaw), ch = set.userData.chair.position;
   const tall = VW < VH, side = tall ? 1.55 : 1.3, back = tall ? 1.0 : 0.55;
   _nw.set(me.pos.x - fx * back + lx * side, me.pos.y + me.height * 0.86 + (tall ? 0.6 : 0.42) - CAR.dip, me.pos.z - fz * back + lz * side);
-  _nw.x = clamp(_nw.x, -2.7, 3.55); _nw.z = clamp(_nw.z, N.ZS0 + 0.35, 5.5); // (in the stairwell's air or the entry's: never in a wall)
+  set.userData.carryCam(_nw); // (in the stairwell's air: never in a wall)
   _n3.set(ch.x + fx * 0.55, ch.y + 0.9, ch.z + fz * 0.55);
   const k = NT.camInit || still() ? 1 : 1 - Math.exp(-3.5 * dt); NT.camInit = false;
   camera.position.lerp(_nw, k); camState.look.lerp(_n3, k); camera.lookAt(camState.look);
@@ -4179,7 +4183,7 @@ window.JG_STORY = {
       let st = s.sp.stand || s.p;
       if (s.sp.who) { const w = P[s.sp.who]; st = w.pos.clone().add(new THREE.Vector3(Math.sin(w.yaw), 0, Math.cos(w.yaw)).multiplyScalar(1.35)); }
       if (me.car && !DRV.state) { try { me.driving = null; } catch (e) {} } // (seated: the harness stands you up to move you)
-      mv.path = null; mv.after = null; guide.clearRing(); me.pos.set(st.x, 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
+      mv.path = null; mv.after = null; guide.clearRing(); me.pos.set(st.x, set.userData.floor ? st.y || 0 : 0, st.z); me.wantYaw = me.yaw = Math.atan2(s.p.x - st.x, s.p.z - st.z); camState.yaw = me.yaw + Math.PI; camState.init = true; return true;
     },
     interact: id => interact(id, "debug"),
     desk: () => S.deskFinish && S.deskFinish(true),
@@ -4240,7 +4244,7 @@ window.JG_STORY = {
     focus: () => { const a = document.activeElement; if (!a || a === document.body) return null; const host = padHost(); return { tag: a.tagName.toLowerCase(), text: (a.getAttribute("aria-label") || a.textContent || "").trim().slice(0, 40), inHost: !!(host && host.contains(a)), outline: getComputedStyle(a).outlineStyle }; },
     /* step the walk with a fixed clock, so the harness doesn't depend on the frame rate */
     sim: (n, dt) => { for (let i = 0; i < n; i++) { padPoll(dt); moveMe(dt); movePeople(dt); nightTick(dt); for (const p of Object.values(P)) if (p.group.visible) p.update(dt); feet(); updatePrompts(); } return me ? [me.pos.x, me.pos.z] : null; }, // a step is a frame: the prompt follows too
-    put: (x, z, yaw) => { mv.path = null; me.pos.set(x, 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
+    put: (x, z, yaw, y) => { mv.path = null; me.pos.set(x, y || 0, z); me.yaw = me.wantYaw = yaw || 0; camState.yaw = me.yaw + Math.PI; camState.init = true; return true; },
     walk: (x, z) => { const ok = walkTo(new THREE.Vector3(x, 0, z)); return ok ? mv.path.map(p => [p.x, p.z]) : null; },
     walls: () => (set.userData.walls || []).map(w => [w.x0, w.x1, w.z0, w.z1]),
     blocked: (x, z) => blocked(x, z, 0.2),

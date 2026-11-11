@@ -5,7 +5,8 @@
 //   --hud: the round map, the title cards, the passers-by and the horn (also run after --explore)
 //   --tags: the lost license plates, every one picked up (tools/verify/out/tags-glint.png, tags-counter-portrait.png)
 //   --look: the character creator (keyboard, touch and a pad; tools/verify/out/creator-desktop.png, creator-face.png, creator-portrait.png)
-//   --night: the first chapter's stills (tools/verify/out/night-bedroom.png, night-street.png, night-carry.png, night-ambulance.png)
+//   --night: the first chapter's stills (tools/verify/out/night-bedroom.png, night-street.png, night-carry.png, night-ambulance.png,
+//   and the house itself: night-house-exterior.png, -living, -kitchen, -entry, -hall, -stairs)
 //
 // For each viewport (desktop 1440x900, a phone sideways 844x390 and upright 390x844) it
 // plays every major branch with the keyboard, clicks or taps: hiring (and the role's
@@ -140,7 +141,11 @@ async function use(p, mobile, id, label) {
     // and touch up and the browser drops the click; tap once it has stopped moving, as a person would
     let last = null;
     for (let i = 0; i < 40; i++) { const r = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return null; const q = b.getBoundingClientRect(); return [Math.round(q.left), Math.round(q.top)]; }); if (r && last && r[0] === last[0] && r[1] === last[1]) break; last = r; await p.waitForTimeout(250); }
-    await p.evaluate(() => { window.__pc = 0; const b = document.querySelector('.st-prompt'); if (b && !b.__pc) { b.__pc = 1; b.addEventListener('click', () => window.__pc++, true); } }); await p.tap('.st-prompt', { force: true }); } else if (Math.random() < 0.5) await p.keyboard.press('e'); else await p.click('.st-prompt', { force: true });
+    await p.evaluate(() => { window.__pc = 0; const b = document.querySelector('.st-prompt'); if (b && !b.__pc) { b.__pc = 1; b.addEventListener('click', () => window.__pc++, true); } }); await p.tap('.st-prompt', { force: true }); } else if (Math.random() < 0.5) await p.keyboard.press('e'); else {
+    // (a click needs the prompt to have stopped moving too: after a warp the camera is still easing out behind you)
+    let last = null;
+    for (let i = 0; i < 40; i++) { const r = await p.evaluate(() => { const b = document.querySelector('.st-prompt'); if (!b || b.hidden) return null; const q = b.getBoundingClientRect(); return [Math.round(q.left), Math.round(q.top)]; }); if (r && last && r[0] === last[0] && r[1] === last[1]) break; last = r; await p.waitForTimeout(250); }
+    await p.click('.st-prompt', { force: true }); }
   const on = await until(p, ([id, n]) => { const s = window.JG_STORY.debug.state(); return s.phase !== 'explore' || (s.looked[id] || 0) > n || s.scene !== window.__scene; }, [id, n0], 20000);
   if (!on) { const why = await p.evaluate(() => { const s = window.JG_STORY.debug.state(); const b = document.querySelector('.st-prompt'); return { phase: s.phase, scene: s.scene, near: s.near, prompt: b && !b.hidden ? b.textContent.trim() : null, me: s.me, clicks: window.__pc, turn: !!document.querySelector('.st-turn'), talking: s.talking }; }).catch(() => null); errs.push(`${label}: ${id} did not respond ${JSON.stringify(why)}`); }
   return on;
@@ -194,7 +199,7 @@ async function night(p, mobile, o, label) {
     n = await N(); const s1 = await st(p);
     if (!s1.flags.found || s1.obj !== 'night-out' || n.stage !== 'out' || !n.front) errs.push(`${label}: after the door, the night should send you out ${JSON.stringify({ found: s1.flags.found, obj: s1.obj, stage: n.stage, front: n.front })}`);
     // the stairs carry your height: half way down them you are half way down
-    await p.evaluate(() => window.JG_STORY.debug.put(0.4, 1.62, Math.PI / 2)); await p.waitForTimeout(700);
+    await p.evaluate(() => window.JG_STORY.debug.put(-0.75, 0.5, Math.PI, 1.4)); await p.waitForTimeout(700);
     { const y = (await N()).y; if (!(y > 0.9 && y < 2.2)) errs.push(`${label}: on the stairs your height is ${y}`); }
     // the front door (a way: Y on a pad), then out
     await use(p, mobile, 'night-front', label);
@@ -211,7 +216,7 @@ async function night(p, mobile, o, label) {
     // lead them up: a few real steps toward the house and they come after you
     { const c0 = (await N()).crewAt[0]; await p.evaluate(() => window.JG_STORY.debug.put(0.8, 7.2, Math.PI)); await p.evaluate(() => window.JG_STORY.debug.sim(60, 0.05)); await p.evaluate(() => window.JG_STORY.debug.put(0.8, 4.2, Math.PI)); await p.evaluate(() => window.JG_STORY.debug.sim(80, 0.05)); const c1 = (await N()).crewAt[0], me = (await st(p)).me;
       if (!c1 || Math.hypot(c1[0] - me[0], c1[2] - me[1]) > 4.5) errs.push(`${label}: the crew did not follow you in (${JSON.stringify([c0, c1, me])})`); else notes.push(`${label}: the crew follow you into the house`); }
-    await p.evaluate(() => window.JG_STORY.debug.put(-9.4, -2.8, -Math.PI / 2));
+    await p.evaluate(() => window.JG_STORY.debug.put(-4.2, 3.2, -Math.PI / 2, 2.9));
     if (!(await until(p, () => { const n = window.JG_STORY.debug.night(), s = window.JG_STORY.debug.state(); return n.carry.on && s.phase === 'explore'; }, null, 240000))) { errs.push(`${label}: in the room, the carry never began ${JSON.stringify(await N())}`); return false; }
     await dadOK('on the chair');
     n = await N();
@@ -253,7 +258,7 @@ async function night(p, mobile, o, label) {
   await dadOK('on the way to the ambulance');
   // beside the chair to the ambulance; the doors; the lights away down the street; then the lot
   if ((await N()).stage !== 'wheel') errs.push(`${label}: the walk to the ambulance did not begin ${JSON.stringify(await N())}`);
-  await p.evaluate(() => window.JG_STORY.debug.put(10.9, 13.9, 2.5));
+  await p.evaluate(() => window.JG_STORY.debug.put(-1.5, 14.4, -2.5));
   if (!(await until(p, () => { const n = window.JG_STORY.debug.night(); return !n || n.stage === 'doors'; }, null, 300000))) { errs.push(`${label}: the chair never reached the ambulance ${JSON.stringify(await N())}`); return false; }
   if (o.shots) { await p.waitForTimeout(1200); await shot(p, `${o.tag}-night-doors`); }
   const shut = await until(p, () => { const n = window.JG_STORY.debug.night(); return !n || n.shut; }, null, 120000);
@@ -2191,16 +2196,24 @@ async function nightStills() {
   const view = (a, b2, r) => p.evaluate(v => window.JG_STORY.debug.view(v[0], v[1], v[2]), [a, b2, r || 6]);
   const snap = async name => { await p.waitForTimeout(6000); await shot0(p, name); notes.push(`still: tools/verify/out/${name}.png`); };
   // the bedroom, as the chapter hands over: on the edge of the bed, the clock's glow, the night at the window
-  await view([-0.75, H + 1.42, -2.2], [1.25, H + 1.02, -3.95], 2.6); await snap('night-bedroom');
+  await view([3.15, H + 1.42, 4.35], [4.45, H + 1.02, 2.05], 2.6); await snap('night-bedroom');
+  // the house, inside and out, as it stands before anyone comes: the front from the street, the living room and the kitchen from
+  // each other, the entry hall to the front door, the hall upstairs to the door at its end, the stairs from the landing
+  await view([1.6, 1.75, 20.0], [-0.6, 2.8, 7.6], 14); await snap('night-house-exterior');
+  await view([1.3, 1.62, -5.3], [-5.4, 0.9, -2.6], 6); await snap('night-house-living');
+  await view([-2.4, 1.62, -5.2], [5.0, 0.9, -3.4], 6); await snap('night-house-kitchen');
+  await view([0.8, 1.62, -1.2], [0.85, 1.15, 5.9], 6); await snap('night-house-entry');
+  await view([1.35, H + 1.6, 3.35], [-2.6, H + 0.9, 3.3], 4); await snap('night-house-hall');
+  await view([-0.75, H + 1.75, 3.7], [-0.75, 0.5, -1.5], 5); await snap('night-house-stairs');
   // the street: out of the front door as the engine and the ambulance stand at the kerb and the crew come up the lawn
-  await go('out'); await put(1.0, 9.4, 0.25); await view([2.3, 1.72, 7.5], [-1.2, 1.45, 14.2], 9); await snap('night-street');
+  await go('out'); await put(0.6, 9.0, 0.25); await view([1.35, 1.72, 6.6], [-1.6, 1.4, 14.6], 9); await snap('night-street');
   // the carry: half way down the stairs, as it is played
   await view(null); await go('carry'); await p.evaluate(() => window.JG_STORY.debug.nightCarry(0.42)); await snap('night-carry');
   // the ambulance: the chair coming up to the open doors, me beside it
-  await go('wheel'); await put(10.9, 13.0, 2.9);
+  await go('wheel'); await put(-1.4, 13.9, -2.6);
   await until(p, () => window.JG_STORY.debug.night().wheel > 0.8, null, 300000);
   // (held there: under the harness's fast clock the doors would be shut a moment later)
-  await p.evaluate(() => window.JG_STORY.debug.freeze(true)); await view([13.4, 1.75, 12.0], [8.8, 1.15, 15.3], 7);
+  await p.evaluate(() => window.JG_STORY.debug.freeze(true)); await view([-0.5, 1.75, 13.9], [-4.3, 1.15, 15.5], 7);
   await p.evaluate(() => window.JG_STORY.debug.step(2, 0.016, true)); await p.waitForTimeout(800); await shot0(p, 'night-ambulance'); notes.push('still: tools/verify/out/night-ambulance.png');
   await ctx.close();
 }
