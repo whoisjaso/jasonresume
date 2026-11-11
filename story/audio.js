@@ -296,6 +296,16 @@ export function createAudio(o) {
       for (const k of Object.keys(SN)) { const s0 = SN[k], h = s0 && HUM[s0.kind]; if (h) loop(A.brown, { name: "hum-" + k, bus: N.out, filters: h.f, gain: h.g, at: s0, ref: h.ref, roll: 1.4, max: 60 }); }
     }
     if (name === "keys" || name === "sale") { A.nextBird = t + 1; A.nextCar = t + rnd(3, 8); }
+    if (name === "night") {
+      // a house asleep: its own air, a low drone under everything, and outside the insects of a June night (on the
+      // outside bus: a murmur through the walls until you step out; nightWhere opens it)
+      loop(A.brown, { name: "house-air", filters: [["lowpass", 150]], gain: 0.1 });
+      osc("sine", 55, { name: "drone", gain: 0.022, fade: 4 }); osc("sine", 82.4, { name: "drone-5", gain: 0.008, fade: 6 });
+      const cr = loop(A.pink, { name: "crickets", filters: [["bandpass", 4700, 9]], gain: 0.016, bus: N.out, fade: 3 });
+      { const C = A.ctx, l = C.createOscillator(), lg = C.createGain(); l.frequency.value = 16; lg.gain.value = 0.011; l.connect(lg); lg.connect(cr.g.gain); l.start(); A.amb.push({ s: l, g: lg, p: null, level: 0.011, name: "" }); }
+      loop(A.brown, { name: "night-far", filters: [["lowpass", 260]], gain: 0.05, bus: N.out });
+      A.nightIn = null; nightWhere(true, 0.05);
+    }
     if (name === "june") {
       // the waiting room after midnight: the building's air, the tubes' hum (one failing), the machines, the rain on the
       // window, and the clock, loud in the quiet; far down the corridor now and then a page, footsteps, a monitor
@@ -462,6 +472,50 @@ export function createAudio(o) {
       burst({ type: "bandpass", f: 310, q: 4, gain: 0.05, attack: 0.02, decay: 0.38, delay: i * 1.1, at, ref: 1.2, roll: 1.4 });
     }
     log("thing", "buzz"); return true;
+  }
+  /* ---------- the night (June 2025): inside or out, the engines idling at the kerb, and its one-shots ---------- */
+  /* the walls between you and the street: inside, the outside bus is a murmur; out of the door it opens */
+  function nightWhere(inside, secs = 0.8) {
+    if (!A.ctx || A.scene !== "night" || A.nightIn === inside) return;
+    A.nightIn = inside; const N = A.nodes, t = now();
+    N.outLp.frequency.cancelScheduledValues(t); N.outLp.frequency.setTargetAtTime(inside ? 520 : 16000, t, secs * 0.4);
+    ramp(N.out.gain, inside ? 0.55 : 1, secs);
+  }
+  /* a diesel idling where it stands (id: one per vehicle): level 0 lets it go */
+  function nightEngine(id, at, level) {
+    if (!A.ctx || A.scene !== "night") return;
+    const NV = A.nightV || (A.nightV = {}); let v = NV[id];
+    if (v && !A.amb.includes(v.a)) v = NV[id] = null; // (the scene changed under it)
+    if (!v) {
+      if (!(level > 0)) return;
+      const big = id === "engine";
+      const a = loop(A.brown, { name: "idle-" + id, filters: [["lowpass", big ? 190 : 230], ["peaking", big ? 62 : 84, 3, 8]], gain: 0.001, at, ref: 5, roll: 1.1, max: 90, bus: A.nodes.out, fade: 0.1 });
+      const b = osc("sawtooth", big ? 31 : 42, { name: "", filters: [["lowpass", 150]], gain: 0.001, at, ref: 5, roll: 1.1, max: 90, bus: A.nodes.out, fade: 0.1 });
+      v = NV[id] = { a, b, big, lv: -1 };
+    }
+    if (v.a.p) setPos(v.a.p, at.x, at.y, at.z); if (v.b.p) setPos(v.b.p, at.x, at.y, at.z);
+    if (Math.abs(level - v.lv) > 0.02) { v.lv = level; ramp(v.a.g.gain, (v.big ? 0.5 : 0.36) * level, 0.4); ramp(v.b.g.gain, (v.big ? 0.05 : 0.035) * level, 0.4); }
+  }
+  function night(kind, at, k = 1) {
+    if (!A.ctx) return false;
+    const O = A.nodes.out, v = { at, ref: 3, verb: A.verbAmt };
+    switch (kind) {
+      // air brakes: a long breath let go, and the weight settling
+      case "airbrake": burst({ type: "highpass", f: 2300, gain: 0.2 * k, attack: 0.03, decay: 1.1, at, ref: 9, bus: O }); burst({ type: "bandpass", f: 900, q: 0.8, gain: 0.1 * k, attack: 0.02, decay: 0.5, at, ref: 9, bus: O }); tone({ f: 70, to: 48, glide: 0.2, decay: 0.3, gain: 0.08 * k, delay: 0.1, at, ref: 9, bus: O }); break;
+      // a radio on a shoulder: a squelch, a few clipped bursts of a voice you can't make out, a squelch
+      case "radio": { let t = 0; tone({ f: 1250, decay: 0.05, gain: 0.014 * k, at, ref: 3, bus: O }); const n = 4 + ((Math.random() * 5) | 0); for (let i = 0; i < n; i++) { const d = rnd(0.05, 0.2); burst({ type: "bandpass", f: rnd(800, 1700), q: 3.5, gain: 0.05 * k, attack: 0.008, decay: d, delay: 0.09 + t, at, ref: 3, bus: O }); t += d + rnd(0.02, 0.09); } burst({ type: "highpass", f: 3000, gain: 0.03 * k, decay: 0.07, delay: 0.12 + t, at, ref: 3, bus: O }); break; }
+      // a heavy door shut
+      case "slam": tone({ f: 96, to: 52, glide: 0.09, decay: 0.26, gain: 0.2 * k, at, ref: 5, bus: O }); burst({ type: "lowpass", f: 700, gain: 0.2 * k, decay: 0.07, at, ref: 5, buf: A.brown, bus: O }); sprite("latch", { at, ref: 5, gain: 0.4 * k, rate: 0.7, bus: O }); break;
+      // a house door: the latch, the hinge
+      case "door": sprite("latch", { ...v, gain: 0.34, rate: 0.9 }); sprite("creak-0", { ...v, gain: 0.2, rate: 0.8, delay: 0.14, lp: 2800 }); break;
+      // the chair rocks: the frame creaks, a strap buckle rattles
+      case "rock": sprite("creak-1", { ...v, gain: 0.34, rate: 1.25, lp: 3200 }); for (let i = 0; i < 3; i++) burst({ type: "bandpass", f: rnd(2000, 2900), q: 6, gain: 0.06 * k, decay: 0.05, delay: i * 0.09, at, ref: 3 }); break;
+      // its wheels coming down onto a step
+      case "clunk": tone({ f: 118, to: 72, glide: 0.05, decay: 0.09, gain: 0.07 * k, at, ref: 3 }); burst({ type: "lowpass", f: 520, gain: 0.07 * k, decay: 0.05, at, ref: 3, buf: A.brown }); break;
+      // a sheet thrown back, feet on the floor
+      case "wake": cloth(at, 0.9); sprite("creak-1", { ...v, gain: 0.12, rate: 1.3, delay: 0.2, lp: 2400 }); break;
+    }
+    log("night", kind); return true;
   }
   /* a heartbeat: the pulse that runs under a hold, felt more than heard */
   function heart(k = 1) {
@@ -735,13 +789,25 @@ export function createAudio(o) {
       else { tone({ f: 85, to: 45, glide: 0.08, decay: 0.16, gain: 0.22, at, ref: 2 }); sprite("latch", { at, ref: 2, gain: 0.35, rate: 0.9 }); burst({ type: "lowpass", f: 700, gain: 0.12, decay: 0.08, at, buf: A.brown }); }
       log("car", open ? "door-open" : "door-close");
     }
+    // the horn: two reeds a third apart, on for as long as it is held (it sounds whether or not the engine runs)
+    let hornG = null, hornOn = false;
+    function horn(on) {
+      on = !!on; if (on === hornOn) return; hornOn = on;
+      if (!hornG) {
+        hornG = C.createGain(); hornG.gain.value = 0;
+        const hl = C.createBiquadFilter(); hl.type = "lowpass"; hl.frequency.value = 2300; hl.connect(hornG); hornG.connect(N.sfx);
+        for (const f of [415, 494]) { const o = C.createOscillator(), g = C.createGain(); o.type = "square"; o.frequency.value = f; g.gain.value = 0.5; o.connect(g); g.connect(hl); o.start(); srcs.push(o); }
+      }
+      ramp(hornG.gain, on ? 0.15 : 0, on ? 0.02 : 0.07);
+      if (on) log("car", "horn");
+    }
     function stop(secs = 0.5) {
-      inside(false);
+      inside(false); if (hornG) ramp(hornG.gain, 0, 0.05);
       ramp(out.gain, 0, secs); const t = now() + secs + 0.05; srcs.forEach(n => { try { n.stop(t); } catch (e) {} });
       if (A.drv === api) A.drv = null;
       log("car", "stop");
     }
-    const api = { start, update, shift, inside, impact, door, stop, get on() { return D.on; }, get state() { return { on: D.on, inside: D.inside, rpm: D.rpm, eng: eng.gain.value, squeal: sg.gain.value, roof: roofG.gain.value, out: N.outLp.frequency.value }; } };
+    const api = { start, update, shift, inside, impact, door, horn, stop, get on() { return D.on; }, get state() { return { on: D.on, inside: D.inside, rpm: D.rpm, eng: eng.gain.value, squeal: sg.gain.value, roof: roofG.gain.value, out: N.outLp.frequency.value }; } };
     A.drv = api;
     return api;
   }
@@ -814,7 +880,7 @@ export function createAudio(o) {
   function stopAll() { if (!A.ctx) return; clearAmb(0.6); A.clockOn = false; }
 
   return {
-    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive, use, buzz, heart, scoreLevel, get scoreK() { return scoreK; },
+    get ctx() { return A.ctx; }, build, sound, setMix, mix, applyMix, duck, veil, voice, listen, update, scene, step, cloth, thing, gate, arriveOffice, ring, ui, suspend, stopAll, drive, use, buzz, heart, night, nightEngine, nightWhere, scoreLevel, get scoreK() { return scoreK; },
     debug: () => {
       const N = A.nodes;
       return {

@@ -474,3 +474,35 @@ html[data-still] .st-hold.is-beat svg { animation: none; }
 @keyframes st-pip { 0% { transform: scale(1); } 40% { transform: scale(1.7); } 100% { transform: scale(1); } }
 html[data-still] .st-course__pips b.is-on { animation: none; }
 .story.is-upright .st-course { top: max(78px, calc(env(safe-area-inset-top) + 72px)); }
+
+/* ---------- the HUD out in the open: the round map, the title card for a chain of objectives, the line when one is done ---------- */
+.st-map { position: absolute; left: max(22px, calc(env(safe-area-inset-left) + 14px)); bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px)); z-index: 7; width: 132px; height: 132px; border-radius: 50%; overflow: hidden; pointer-events: none; opacity: 0; transform: scale(.94); transition: opacity .5s var(--ease), transform .5s var(--ease); box-shadow: 0 8px 26px rgba(0, 0, 0, .55); }
+.st-map canvas { display: block; width: 100%; height: 100%; }
+.st-map.is-on { opacity: 1; transform: none; }
+/* under a thumb the bottom corners are the stick's and the buttons': the map sits under the objective instead */
+.story[data-dev="touch"] .st-map { bottom: auto; top: max(62px, calc(env(safe-area-inset-top) + 54px)); left: max(18px, calc(env(safe-area-inset-left) + 12px)); width: 92px; height: 92px; }
+.story.is-driving[data-dev="touch"] .st-map { top: max(16px, env(safe-area-inset-top)); left: 50%; margin-left: -46px; }
+.story.is-cinema .st-map, .story.is-paused .st-map, .story.is-loading .st-map, .story.is-close .st-map, .story.is-talking .st-map, .story.has-choices .st-map { opacity: 0 !important; }
+.story.is-still .st-map, .story.is-still .st-mission { visibility: hidden; }
+/* one HUD: the objective line sits on the same dark as the map's disc, so it reads over a bright morning too */
+.st-obj { padding: 7px 15px 7px 12px; margin-left: -8px; border-radius: 999px; background: rgba(10, 15, 13, .6); text-shadow: 0 1px 2px rgba(0, 0, 0, .9); }
+.st-mission { position: absolute; right: max(26px, calc(env(safe-area-inset-right) + 18px)); bottom: max(120px, calc(env(safe-area-inset-bottom) + 112px)); z-index: 8; max-width: min(420px, 78vw); text-align: right; pointer-events: none; opacity: 0; transform: translateY(8px); transition: opacity .5s var(--ease), transform .7s var(--ease); }
+.st-mission.is-on { opacity: 1; transform: none; }
+.st-mission__k { margin: 0 0 8px; font: 600 11px/1 var(--sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ash, #9a9890); text-shadow: 0 1px 8px rgba(0, 0, 0, .9); }
+.st-mission__h { margin: 0; font: italic 500 clamp(26px, 3.4vw, 40px)/1.12 var(--serif); color: var(--bone); text-shadow: 0 2px 4px rgba(0, 0, 0, .8), 0 2px 22px rgba(0, 0, 0, .7); }
+.st-mission.is-done .st-mission__h { font-size: clamp(19px, 2.2vw, 24px); color: var(--bone-2); }
+.st-mission__rule { display: block; height: 1px; margin: 12px 0 0 auto; width: 100%; background: var(--bone); opacity: .55; transform: scaleX(0); transform-origin: right; transition: transform .9s var(--ease) .1s; }
+.st-mission.is-on .st-mission__rule { transform: scaleX(1); }
+.story.is-cinema .st-mission, .story.is-paused .st-mission, .story.is-talking .st-mission, .story.has-choices .st-mission { opacity: 0 !important; }
+.story[data-dev="touch"] .st-mission { bottom: auto; top: max(62px, calc(env(safe-area-inset-top) + 54px)); }
+@media (prefers-reduced-motion: reduce) { .st-map, .st-mission, .st-mission__rule { transition-duration: .01s; } }
+/* a passer-by's remark: a small card over their head (they have no recorded voice yet), their name and "Fictional" first */
+.st-amb { position: absolute; left: 0; top: 0; z-index: 8; width: max-content; max-width: min(300px, 70vw); margin: 0; text-align: center; pointer-events: none; opacity: 0; transition: opacity .35s var(--ease); will-change: transform; }
+.st-amb.is-on { opacity: 1; }
+.st-amb__who { margin: 0 0 5px; display: flex; gap: 10px; justify-content: center; align-items: baseline; }
+.st-amb__who b { font: 600 10.5px/1 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--bone-2); text-shadow: 0 1px 6px rgba(0, 0, 0, .95); }
+.st-amb__who small { font: 500 9.5px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ash, #9a9890); border: 1px solid rgba(154, 152, 144, .55); border-radius: 3px; padding: 2px 5px 2px 6px; }
+.st-amb__said { margin: 0; font: italic 500 19px/1.25 var(--serif); color: var(--bone); text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 1px 14px rgba(0, 0, 0, .9); }
+.st-amb__said::before { content: ""; display: block; width: 18px; height: 1px; margin: 0 auto 6px; background: var(--bone-2); opacity: .7; }
+.story.is-cinema .st-amb, .story.is-paused .st-amb, .story.is-talking .st-amb { opacity: 0 !important; }
+@media (max-width: 480px) { .st-amb__said { font-size: 17px; } }

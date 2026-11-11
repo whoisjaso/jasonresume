@@ -58,7 +58,12 @@ export const LOOKS = {
   dell: { skin: "#6e4631", beard: "#6f6a62", hair: "#4a4640", brow: "#7d776e", wide: 0, cloth: { work: "#2f3a4a", shoes: "#2a2019", hat: "#34342f" }, keep: "#cfc9bd", umbrella: true, stubble: true, tempo: 0.92 },
   renata: { skin: "#b78a66", lip: "#a66a5a", hair: "#24170f", brow: "#5c4232", browTint: "#8a6248", wide: 0.05, cloth: { elegant: "#7a3b30", shoes: "#2a1f1a" }, keep: "#e3dccd" },
   // a look on another body (make(name, { look })): Marisol, the morning's buyer, is Renata's body in her own colours
-  marisol: { skin: "#8d5f42", lip: "#94584a", hair: "#140e0b", brow: "#2a1c14", browTint: "#4a3324", wide: 0.08, cloth: { elegant: "#3f5f6e", shoes: "#1e1b19" }, keep: "#dcd6ca" }
+  marisol: { skin: "#8d5f42", lip: "#94584a", hair: "#140e0b", brow: "#2a1c14", browTint: "#4a3324", wide: 0.08, cloth: { elegant: "#3f5f6e", shoes: "#1e1b19" }, keep: "#dcd6ca" },
+  // the night (June 2025): me as I was woken, on the memory's body; and the crew, in turnout gear and helmets, on the visitor's
+  "jason-night": { skin: "#56331f", lip: "#7a4741", eyes: "#7a5a48", wide: 0.1, nose: true, hair: "#19130f", brow: "#0d0b0b", cloth: { casual: "#3b4046", shoes: "#24211f" }, keep: "#8b9199", glasses: "browline", goatee: true },
+  fire: { skin: "#7a5238", lip: "#7f4c3c", eyes: "#5a4636", wide: 0.06, hair: "#1c1612", brow: "#1c1612", cloth: { casual: "#8f7a45", shoes: "#16130f" }, keep: "#cfc58c", helmet: "#1b1b19", tempo: 1.04 },
+  fire2: { skin: "#c29676", lip: "#9a6253", eyes: "#5a4636", wide: 0.03, hair: "#3a2a1c", brow: "#3a2a1c", cloth: { casual: "#8f7a45", shoes: "#16130f" }, keep: "#cfc58c", helmet: "#b9a233", tempo: 1.02 },
+  fire3: { skin: "#5d3a26", lip: "#7a4a40", eyes: "#4a3526", wide: 0.06, hair: "#15100d", brow: "#15100d", cloth: { casual: "#1f2a3a", shoes: "#141312" }, keep: "#c9cdd2" }
 };
 
 export async function loadCast(base, o = {}) {
@@ -455,6 +460,16 @@ class Person {
       _m.makeBasis(H.dL, new THREE.Vector3().crossVectors(H.nL, H.dL), H.nL); ph.quaternion.setFromRotationMatrix(_m);
       ph.position.copy(H.palmL).addScaledVector(H.nL, 0.014).addScaledVector(H.dL, 0.01);
       ph.visible = false; this.bones.hand_r.add(ph); this.phoneProp = ph;
+    }
+    if (L.helmet) {
+      // a fire helmet: the dome, the brim that runs long behind the neck, a ridge over the top and a pale band round it
+      const hm = new THREE.Group(); head.add(hm); hm.quaternion.copy(hs.wi); this.helmet = hm;
+      const sh = paint({ color: L.helmet, wet: 1.4, rim: 0.5 }), band = paint({ color: "#d9dc9a", wet: 1.0, rim: 0.3, emit: "#2a2c12" });
+      const top = this.height - hs.at.y - 0.18, cy = top + 0.085;
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.128, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), sh); dome.scale.set(1, 1.06, 1.12); dome.position.set(0, cy, 0.005); hm.add(dome);
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.146, 0.152, 0.012, 24), sh); brim.scale.set(1, 1, 1.34); brim.position.set(0, cy - 0.004, -0.042); brim.rotation.x = -0.14; hm.add(brim);
+      const ridge = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.008, 6, 20, Math.PI), sh); ridge.rotation.y = Math.PI / 2; ridge.scale.set(1.12, 1.06, 1); ridge.position.set(0, cy, 0.005); hm.add(ridge);
+      const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.1295, 0.1295, 0.016, 24, 1, true), band); bd.scale.set(1, 1, 1.12); bd.position.set(0, cy + 0.02, 0.005); hm.add(bd);
     }
     if (L.umbrella && this.bones.hand_r) {
       // a long umbrella, held by its hook at about chest height; the shaft runs down through the fist and the canopy rides above the head
@@ -1206,7 +1221,7 @@ class Person {
     this.car = null; this.carK = 0; this.taskLook = null; this.wheelHands = null;
     this.feet.l.init = this.feet.r.init = false; this.lastPos = null;
     // on the ground again, upright, whatever the car was doing when it last placed the body
-    this.pos.y = 0; this.group.rotation.set(0, this.yaw, 0); this.group.updateMatrix();
+    this.pos.y = c.side === "seat" ? c.G.body.position.y : 0; this.group.rotation.set(0, this.yaw, 0); this.group.updateMatrix();
   }
 
   /* build and run a sequence; resolves when it ends. In: walk up behind the handle, take it, pull the door open
@@ -1411,7 +1426,7 @@ class Person {
      from where the clip would put them */
   carUp() {
     const c = this.car;
-    const w = this.carW(c.root, _f1); this.pos.set(w.x, 0, w.z);
+    const w = this.carW(c.root, _f1); this.pos.set(w.x, c.side === "seat" ? c.G.body.position.y : 0, w.z); // (a seat keeps the floor it stands on: an upstairs bed)
     this.yaw = this.wantYaw = this.carYaw() + c.yaw; this.speed = 0;
     c.seated = false; c.feetW = 0; c.hipW = 0; c.sitW = 0; c.duck = 0; c.roll = 0;
     for (const s of ["l", "r"]) { const F = this.feet[s]; this.carW(c.feet[s], F.pos); F.yaw = this.yaw; F.lock = true; F.w = 1; F.step = 0; F.init = true; }

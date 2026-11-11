@@ -1,6 +1,6 @@
 # People: hooks for story/main.js
 
-The cast (story/people.js, assets/story/cast/*-v2.glb, clips-v2.glb) works with
+The cast (story/people.js, assets/story/cast/*-v3.glb, clips-v2.glb) works with
 main.js as it stands. The calls below make it better. Each is one line, and
 people.js already exports what it needs.
 

@@ -122,6 +122,8 @@ shelf and fence is in `walls`, which nav.js already reads.
 # Blender 4.2 LTS headless (no extensions needed)
 blender -b --python tools/story/world/cars.py -- /tmp/cars          # 5 raw GLBs
 node tools/story/world/pack.mjs /tmp/cars v2                          # assets/story/world/car-<kind>[-lo]-v2.glb
+python3 tools/story/world/rigs.py -- /tmp/rigs                        # the night's pumper and ambulance (bpy as a module, or blender -b --python)
+node tools/story/world/pack_rigs.mjs /tmp/rigs v1                     # assets/story/world/rig-<name>[-lo]-v1.glb
 python3 tools/story/world/textures.py /tmp/ph-cache                   # assets/story/world/tex-v1/*.webp from Poly Haven (CC0)
 node tools/story/world/stills.mjs <tag> [desktop|phone|all] [lot office memory keys]   # tools/verify/out/real-world-*.png
 node tools/story/world/probe.mjs "<expression>"                       # evaluate against /story/world.js in a blank page

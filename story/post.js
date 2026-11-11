@@ -33,7 +33,7 @@ export class Post {
     this.refl = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
     this.mips = []; for (let i = 0; i < 5; i++) { const a = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }), b = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); this.mips.push([a, b]); }
     this.dof = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
-    this.bright = pass(`uniform sampler2D t; uniform float th; varying vec2 vUv; void main(){ vec3 c = clamp(texture2D(t, vUv).rgb, 0.0, 24.0); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(th, th + 0.8, l), 1.0); }`, { t: { value: null }, th: { value: 0.9 } });
+    this.bright = pass(`uniform sampler2D t; uniform float th; varying vec2 vUv; void main(){ vec3 c = clamp(texture2D(t, vUv).rgb, 0.0, 24.0); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(th, th + 0.8, l), 1.0); }`, { t: { value: null }, th: { value: 1.05 } });
     this.down = pass(`uniform sampler2D t; uniform vec2 px; varying vec2 vUv; void main(){
       vec3 c = texture2D(t, vUv).rgb * 0.5;
       c += texture2D(t, vUv + vec2(-px.x, -px.y)).rgb * 0.125; c += texture2D(t, vUv + vec2(px.x, -px.y)).rgb * 0.125;
@@ -50,6 +50,7 @@ export class Post {
       uniform float uExp; uniform vec3 uLift; uniform vec3 uGamma; uniform vec3 uGain; uniform float uSat; uniform float uVig; uniform float uGrain; uniform float uTime;
       uniform float uBloom; uniform float uBox; uniform float uMem; uniform float uFocus; uniform float uRange; uniform float uDofK; uniform float uNear; uniform float uFar;
       uniform float uFade; uniform vec3 uFadeCol; uniform float uAspect; uniform float uTone; uniform vec3 uShadowTint; uniform vec3 uHiTint;
+      uniform float uCon; uniform float uSharp; uniform float uAA; uniform vec2 uPx;
       varying vec2 vUv;
       float lin(float d){ float z = d * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
       vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
@@ -66,6 +67,15 @@ export class Post {
       void main(){
         vec2 uv = vUv;
         vec3 c = clamp(texture2D(tCol, uv).rgb, 0.0, 24.0);
+        // a little sharpening against the four neighbours, held back at lamps so they don't ring
+        if (uSharp > 0.0) {
+          vec3 nb = (texture2D(tCol, uv + vec2(uPx.x, 0.0)).rgb + texture2D(tCol, uv - vec2(uPx.x, 0.0)).rgb + texture2D(tCol, uv + vec2(0.0, uPx.y)).rgb + texture2D(tCol, uv - vec2(0.0, uPx.y)).rgb) * 0.25;
+          nb = min(nb, vec3(24.0));
+          // without multisampling (phones), hard edges lean on their neighbours instead of being sharpened into stairs
+          float lc = dot(c, vec3(0.3333)), ln = dot(nb, vec3(0.3333)), soft = smoothstep(0.14, 0.55, abs(lc - ln) / (max(lc, ln) + 0.05)) * uAA;
+          vec3 d = c - nb; float lim = 0.3 * (lc + 0.02);
+          c = max(mix(c + clamp(d, -lim, lim) * uSharp, nb, soft * 0.5), 0.0);
+        }
         // depth of field: blend toward the soft copy by distance from the focal plane
         if (uDofK > 0.0) { float d = lin(texture2D(tDepth, uv).r); float coc = clamp(abs(d - uFocus) / uRange, 0.0, 1.0); coc = coc * coc * uDofK; c = mix(c, texture2D(tDof, uv).rgb, coc); }
         // memory: the frame's edges dissolve into the soft copy, like an old print
@@ -79,6 +89,8 @@ export class Post {
         float l = dot(c, vec3(0.299, 0.587, 0.114));
         c += uShadowTint * (1.0 - l) * 0.06 + uHiTint * l * 0.05;
         c = mix(vec3(l), c, uSat);
+        // the print's contrast: a soft shoulder and a firmer toe, so blacks sit down instead of floating in haze
+        if (uCon > 0.0) { vec3 g = sqrt(clamp(c, 0.0, 1.0)); g = mix(g, g * g * (3.0 - 2.0 * g), uCon); c = g * g; }
         if (uMem > 0.0) { vec3 sep = vec3(l) * vec3(1.08, 0.97, 0.82) + vec3(0.012, 0.008, 0.0); c = mix(c, sep, 0.5 * uMem); c = mix(c, vec3(0.93, 0.88, 0.78), 0.025 * uMem); }
         c *= mix(1.0, smoothstep(1.05, 0.25, rr), uVig);
         c = toSRGB(c);
@@ -92,8 +104,9 @@ export class Post {
       uExp: { value: 1.0 }, uLift: { value: new THREE.Vector3(0.01, 0.012, 0.014) }, uGamma: { value: new THREE.Vector3(1, 1, 1) }, uGain: { value: new THREE.Vector3(1, 1, 1) },
       uSat: { value: 0.92 }, uVig: { value: 0.75 }, uGrain: { value: 0.035 }, uTime: { value: 0 }, uBloom: { value: 0.9 }, uBox: { value: 0 }, uMem: { value: 0 },
       uFocus: { value: 4 }, uRange: { value: 8 }, uDofK: { value: 0.0 }, uNear: { value: 0.1 }, uFar: { value: 200 }, uFade: { value: 0 }, uFadeCol: { value: new THREE.Vector3(0, 0, 0) },
-      uAspect: { value: 1.6 }, uTone: { value: 0 }, uShadowTint: { value: new THREE.Vector3(-0.2, 0.0, 0.25) }, uHiTint: { value: new THREE.Vector3(0.25, 0.08, -0.15) }
+      uAspect: { value: 1.6 }, uTone: { value: 0 }, uCon: { value: 0 }, uSharp: { value: 0 }, uAA: { value: 0 }, uPx: { value: new THREE.Vector2(1, 1) }, uShadowTint: { value: new THREE.Vector3(-0.2, 0.0, 0.25) }, uHiTint: { value: new THREE.Vector3(0.25, 0.08, -0.15) }
     });
+    this.comp.u.uAA.value = this.main.samples > 0 ? 0 : 1;
     this.copy = pass(`uniform sampler2D t; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(t, vUv).rgb, 1.0); }`, { t: { value: null } });
     this.w = 4; this.h = 4;
   }
@@ -104,7 +117,7 @@ export class Post {
     let mw = w >> 1, mh = h >> 1;
     for (const [a, b] of this.mips) { a.setSize(Math.max(2, mw), Math.max(2, mh)); b.setSize(Math.max(2, mw), Math.max(2, mh)); mw >>= 1; mh >>= 1; }
     this.dof.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
-    this.comp.u.uAspect.value = w / h;
+    this.comp.u.uAspect.value = w / h; this.comp.u.uPx.value.set(1 / w, 1 / h);
   }
   run(m, target) { this.R.setRenderTarget(target); this.R.render(m.sc, CAM); }
   /* render the mirrored world for the wet ground: the world flips under y = 0, the lamps flip with it */
@@ -159,24 +172,24 @@ export class Post {
     }
     const u = this.comp.u;
     u.tCol.value = this.main.texture; u.tBloom.value = bloomOn ? (this.lite ? this.mips[1][1].texture : this.mips[0][0].texture) : this.mips[4][0].texture; u.uBloom.value = bloomOn ? u.uBloom.value : 0;
-    u.tDof.value = this.dof.texture; u.tDepth.value = this.main.depthTexture; u.uTime.value = t; u.uNear.value = cam.near; u.uFar.value = cam.far;
+    u.tDof.value = this.dof.texture; u.tDepth.value = this.main.depthTexture; u.uTime.value = t; u.uSharp.value = this.q >= 1 ? this.sharp || 0 : 0; u.uNear.value = cam.near; u.uFar.value = cam.far;
     this.run(this.comp, null);
   }
 }
 
 /* the looks, per scene: exposure, lift/gamma/gain, saturation, tints, bloom, vignette, grain, memory */
 export const GRADES = {
-  lot: { tone: 0.5, exp: 1.15, lift: [0.012, 0.016, 0.015], gamma: [1.0, 1.0, 1.0], gain: [1.04, 1.0, 0.96], sat: 0.9, bloom: 0.95, vig: 0.8, grain: 0.03, mem: 0, sh: [-0.2, 0.12, 0.12], hi: [0.3, 0.12, -0.2] },
-  office: { tone: 0.7, exp: 1.08, lift: [0.02, 0.018, 0.016], gamma: [1.02, 1.0, 0.98], gain: [1.03, 1.0, 0.95], sat: 0.9, bloom: 0.6, vig: 0.65, grain: 0.025, mem: 0, sh: [-0.1, 0.05, 0.15], hi: [0.25, 0.1, -0.1] },
+  lot: { tone: 0.35, con: 0.5, exp: 1.2, lift: [0.004, 0.006, 0.009], gamma: [1.0, 1.0, 1.0], gain: [1.03, 1.0, 0.98], sat: 1.06, bloom: 0.7, vig: 0.62, grain: 0.022, mem: 0, sh: [-0.25, 0.04, 0.3], hi: [0.26, 0.1, -0.16] },
+  office: { tone: 0.7, con: 0.25, exp: 1.08, lift: [0.014, 0.013, 0.012], gamma: [1.02, 1.0, 0.98], gain: [1.03, 1.0, 0.95], sat: 0.95, bloom: 0.55, vig: 0.6, grain: 0.022, mem: 0, sh: [-0.1, 0.05, 0.15], hi: [0.25, 0.1, -0.1] },
   memory: { exp: 1.3, lift: [0.012, 0.01, 0.006], gamma: [1.0, 0.98, 0.95], gain: [1.08, 1.0, 0.9], sat: 0.8, bloom: 0.8, vig: 0.85, grain: 0.045, mem: 0.5, sh: [0.1, 0.05, -0.05], hi: [0.3, 0.15, -0.1] },
-  keys: { exp: 1.0, lift: [0.025, 0.022, 0.018], gamma: [1.0, 1.0, 0.97], gain: [1.05, 1.02, 0.95], sat: 0.75, bloom: 0.5, vig: 0.85, grain: 0.05, mem: 0.8, sh: [0.05, 0.02, -0.05], hi: [0.3, 0.2, 0.0] },
+  keys: { con: 0.3, exp: 0.96, lift: [0.014, 0.012, 0.01], gamma: [1.0, 1.0, 0.97], gain: [1.05, 1.02, 0.95], sat: 0.86, bloom: 0.35, vig: 0.7, grain: 0.04, mem: 0.4, sh: [0.05, 0.02, -0.05], hi: [0.3, 0.2, 0.0] },
   june: { tone: 0.6, exp: 0.86, lift: [0.016, 0.019, 0.02], gamma: [1.0, 1.0, 1.02], gain: [0.98, 1.0, 1.0], sat: 0.62, bloom: 0.55, vig: 1.0, grain: 0.05, mem: 0.25, sh: [-0.12, 0.06, 0.16], hi: [0.05, 0.12, 0.08] },
-  sale: { exp: 1.05, lift: [0.024, 0.02, 0.014], gamma: [0.99, 1.0, 1.02], gain: [1.1, 1.04, 0.92], sat: 0.95, bloom: 0.6, vig: 0.7, grain: 0.035, mem: 0.12, sh: [0.06, 0.03, -0.04], hi: [0.36, 0.22, 0.02] },
-  decision: { tone: 0.5, exp: 1.2, lift: [0.014, 0.017, 0.016], gamma: [1.0, 1.0, 1.0], gain: [1.05, 1.0, 0.95], sat: 0.92, bloom: 1.0, vig: 0.78, grain: 0.03, mem: 0, sh: [-0.18, 0.12, 0.1], hi: [0.32, 0.14, -0.18] }
+  sale: { tone: 0.25, con: 0.5, exp: 0.88, lift: [0.006, 0.006, 0.008], gamma: [1.0, 1.0, 1.0], gain: [1.04, 1.01, 0.96], sat: 1.04, bloom: 0.28, vig: 0.42, grain: 0.02, mem: 0, sh: [-0.05, 0.02, 0.12], hi: [0.3, 0.16, -0.04] },
+  decision: { tone: 0.35, con: 0.5, exp: 1.24, lift: [0.005, 0.007, 0.009], gamma: [1.0, 1.0, 1.0], gain: [1.04, 1.0, 0.97], sat: 1.06, bloom: 0.75, vig: 0.6, grain: 0.022, mem: 0, sh: [-0.22, 0.05, 0.26], hi: [0.28, 0.12, -0.16] }
 };
 export function applyGrade(post, g) {
   const u = post.comp.u;
   u.uExp.value = g.exp; u.uLift.value.set(...g.lift); u.uGamma.value.set(...g.gamma); u.uGain.value.set(...g.gain); u.uSat.value = g.sat;
-  u.uTone.value = g.tone || 0;
+  u.uTone.value = g.tone || 0; u.uCon.value = g.con || 0; post.sharp = g.sharp != null ? g.sharp : 0.45;
   u.uBloom.value = g.bloom; u.uVig.value = g.vig; u.uGrain.value = g.grain; u.uMem.value = g.mem; u.uShadowTint.value.set(...g.sh); u.uHiTint.value.set(...g.hi);
 }

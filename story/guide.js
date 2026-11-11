@@ -63,7 +63,7 @@ export class Guide {
     this.path = path && path.length > 1 ? path : null;
     this.want = this.path ? k : 0;
   }
-  ring(x, z) { this.ringMesh.position.set(x, 0.03, z); this.ringMesh.visible = true; this.ringT = 0; this.landT = -1; }
+  ring(x, z) { this.ringMesh.position.set(x, 0.03 + (this.ground ? this.ground(x, z) : 0), z); this.ringMesh.visible = true; this.ringT = 0; this.landT = -1; }
   land() { if (this.ringMesh.visible && this.landT < 0) this.landT = 0; }
   clearRing() { this.ringMesh.visible = false; this.ringT = -1; this.landT = -1; }
   /* the stuck helper: one brighter pass down the trail */
@@ -81,7 +81,7 @@ export class Guide {
         const at = pathAt(p, d);
         const yaw = Math.atan2(at.dx, at.dz);
         this.q.setFromAxisAngle(this.up, yaw);
-        this.v.set(at.x, 0.022, at.z);
+        this.v.set(at.x, 0.022 + (this.ground ? this.ground(at.x, at.z) : 0), at.z); // (a set with floors at more than one height says how high: main.js sets ground)
         const sc = 1.3 - 0.45 * (i / (N - 1)); this.s.set(sc, 1, sc);
         this.m.compose(this.v, this.q, this.s); this.mesh.setMatrixAt(i, this.m);
         // a slow wave runs down the trail; the far end fades into the dark

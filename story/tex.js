@@ -462,12 +462,17 @@ export function skylineTex() {
   g.clearRect(0, 0, 2048, 256);
   g.fillStyle = "#070a09";
   let x = 0; while (x < 2048) { const w = 30 + r() * 120, h = 20 + r() * 70; g.fillRect(x, 256 - h, w, h); x += w + r() * 20; }
-  // palms and poles
-  for (let i = 0; i < 38; i++) {
-    const px = r() * 2048, ph = 90 + r() * 120;
-    g.fillRect(px, 256 - ph, 3, ph);
-    g.beginPath(); for (let k = 0; k < 9; k++) { const a = -Math.PI / 2 + (k - 4) * 0.36; g.moveTo(px + 1, 256 - ph); g.quadraticCurveTo(px + Math.cos(a) * 20, 256 - ph - 10, px + Math.cos(a) * 34, 256 - ph + 18 + Math.abs(k - 4) * 3); }
-    g.strokeStyle = "#070a09"; g.lineWidth = 4; g.stroke();
+  // palms and poles: a thin trunk with a lean, fronds that arc out from the crown and hang
+  g.strokeStyle = "#070a09"; g.lineCap = "round";
+  for (let i = 0; i < 30; i++) {
+    const px = r() * 2048, ph = 90 + r() * 120, lean = (r() - 0.5) * 14, tx = px + lean, ty = 256 - ph;
+    g.lineWidth = 3; g.beginPath(); g.moveTo(px, 256); g.quadraticCurveTo(px + lean * 0.2, 256 - ph * 0.5, tx, ty); g.stroke();
+    if (r() < 0.25) continue; // (a pole)
+    g.lineWidth = 2.2;
+    for (let k = 0; k < 9; k++) {
+      const a = -Math.PI * (0.08 + 0.84 * (k + r() * 0.6) / 9), len = 22 + r() * 14, ex = tx + Math.cos(a) * len, ey = ty + Math.sin(a) * len * 0.55;
+      g.beginPath(); g.moveTo(tx, ty); g.quadraticCurveTo(tx + Math.cos(a) * len * 0.6, ty + Math.sin(a) * len * 0.9 - 4, ex, ey + 9 + Math.abs(Math.cos(a)) * 12); g.stroke();
+    }
   }
   // far windows and lamps, warm specks
   for (let i = 0; i < 140; i++) { g.fillStyle = r() < 0.7 ? "rgba(255,190,110," + (0.4 + r() * 0.6) + ")" : "rgba(200,220,255,0.6)"; g.fillRect(r() * 2048, 180 + r() * 70, 2, 2); }

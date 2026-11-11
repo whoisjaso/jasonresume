@@ -10,8 +10,11 @@
    the car's frame with x forward and y to the left; yaw grows turning left. Inputs: steer +1 is right. */
 import * as THREE from "../vendor/three-0.184.0/three.module.min.js";
 import { carLights } from "./world.js";
+import { beamMat } from "./paint.js";
 
 const G = 9.81, DT = 1 / 120;
+// a beam: narrow at the lamp (uv.y 1), opening over nine metres along +Z
+const BEAM_GEO = new THREE.CylinderGeometry(0.09, 1.25, 9, 20, 1, true).rotateX(-Math.PI / 2).translate(0, 0, 4.5);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -112,9 +115,30 @@ export function createVehicle(set, car, opts = {}) {
   const sp = { p: 0, pv: 0, r: 0, rv: 0, h: 0, hv: 0, lift: [0, 0, 0, 0], onBump: [false, false, false, false] };
   // someone's weight on a seat: the body settles toward that side (k 0..1, side +1 the driver's)
   const load = { r: 0, h: 0 };
-  const engine = { on: !!car.engine, start() { if (!engine.on) { engine.on = true; st.rpm = IDLE + 400; if (st.gear === 0) st.gear = 1; } }, stop() { engine.on = false; st.rpm = 0; st.gear = 0; } };
+  // (at night the lamps come on with the engine and go off with it, unless the car was left with them on)
+  const gm = set.userData.groundMat, night = !!(gm && gm.uniforms.uDay && !gm.uniforms.uDay.value), ownLit = !!(car.lights && car.lights.head);
+  const engine = { on: !!car.engine,
+    start() { if (!engine.on) { engine.on = true; st.rpm = IDLE + 400; if (st.gear === 0) st.gear = 1; if (night) { light.head = true; light.tail = true; } } },
+    stop() { engine.on = false; st.rpm = 0; st.gear = 0; if (!ownLit) { light.head = false; light.tail = false; } } };
   const light = { head: !!(car.lights && car.lights.head), tail: !!(car.lights && car.lights.tail), brake: 0, reverse: 0, cluster: !!(car.lights && car.lights.cluster) };
   let lamp = car.lamp || null;
+  // the beams in the wet air: two long cones from the lamps, drawn only while they're lit
+  let beams = null;
+  if (night) {
+    const m = beamMat("#ffe9c4", 1);
+    // (both lamps' cones in one mesh: one draw)
+    const off = meta.W / 2 - 0.34, pos = [], nor = [], uv = [], idx = [];
+    for (const sd of [1, -1]) {
+      const g = BEAM_GEO.clone().rotateY(sd * 0.03).translate(sd * off, 0, 0), base = pos.length / 3;
+      pos.push(...g.attributes.position.array); nor.push(...g.attributes.normal.array); uv.push(...g.attributes.uv.array);
+      for (const i of g.index.array) idx.push(i + base);
+      g.dispose();
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+    const bm = new THREE.Mesh(geo, m); bm.position.set(0, 0.64, meta.L / 2 - 0.1); bm.rotation.x = 0.05; bm.layers.set(3); bm.visible = false; bm.userData.keep = true; bm.frustumCulled = false; root.add(bm);
+    beams = [bm, bm];
+  }
   const lights = {
     auto: true,
     set(o) { Object.assign(light, o); applyLights(); place(); },
@@ -128,6 +152,9 @@ export function createVehicle(set, car, opts = {}) {
     if (lit.head !== was.head || lit.tail !== was.tail || lit.brake !== was.brake || lit.reverse !== was.reverse || lit.cluster !== was.cluster) { carLights(rig.own, lit); Object.assign(was, lit); }
     const lamps = set.userData.lamps;
     if (light.head && !lamp) { lamp = { p: new THREE.Vector3(), range: 8, col: [0.9, 0.85, 0.75], cone: 0, fixed: false, car: true }; car.lamp = lamp; }
+    if (beams) { beams[0].visible = beams[1].visible = !!light.head; }
+    // the lamps on the road (the ground's own throw and the tails' red): the idling car's slot, or the driven car's
+    if (gm && gm.uniforms.uBeamK) gm.uniforms.uBeamK.value[car.id === "idle" ? 0 : 1].set(lit.head, Math.max(lit.tail * 0.22, lit.brake), hl);
     if (lamp) { const i = lamps.indexOf(lamp); if (light.head && i < 0) lamps.push(lamp); if (!light.head && i >= 0) lamps.splice(i, 1); }
   }
   // doors: t 0..1, eased toward a target; +X side (the driver's) swings out with a negative turn about Y
@@ -391,7 +418,8 @@ export function createVehicle(set, car, opts = {}) {
     }
     car.x = st.x; car.z = st.z; car.yaw = st.yaw;
     // the headlights' spill on the ground ahead
-    if (lamp) { const s = Math.sin(st.yaw), c = Math.cos(st.yaw); lamp.p.set(st.x + s * (hl + 0.6), 0.75, st.z + c * (hl + 0.6)); }
+    if (lamp) { const s = Math.sin(st.yaw), c = Math.cos(st.yaw); lamp.p.set(st.x + s * (hl + 1.6), 0.85, st.z + c * (hl + 1.6)); }
+    if (gm && gm.uniforms.uBeam) gm.uniforms.uBeam.value[car.id === "idle" ? 0 : 1].set(st.x, st.z, Math.sin(st.yaw), Math.cos(st.yaw));
     if (car.id === "idle" && set.userData.sounds && set.userData.sounds.idle) { const s = set.userData.sounds.idle; s.x = st.x; s.z = st.z; }
   }
   const qs = new THREE.Quaternion(), ZA = new THREE.Vector3(0, 0, 1), STEER_RATIO = 14;
