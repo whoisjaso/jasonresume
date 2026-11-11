@@ -9,6 +9,8 @@
 // - my own hair (jason, jason-memory) is cut short: the shell is drawn in toward the scalp, full on top
 //   and close at the sides, and its hairline is redrawn straight across the forehead with a square
 //   corner at each temple (the colour's R is the height over that line; the shader trims on it).
+// - the visitor's hair (player) carries, for each vertex of its shell, the way back to the scalp (_SCALP), so
+//   the character creator can wear it cropped close, as it is, or grown out, from the one mesh.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -148,6 +150,17 @@ for (const name of NAMES) {
       C.getElement(i, col); col[0] = Math.min(1, Math.max(0, 0.5 + above / 0.012)); C.setElement(i, col);
     }
     console.log(name, 'hair: drew in', moved, 'of', hair.n, 'vertices; it stood', (maxd * 100).toFixed(1), 'cm at its fullest, now', (maxd * k1 * 100).toFixed(1));
+  }
+
+  // ---- the visitor's hair: each vertex's way back to the scalp, in the mesh's own units
+  if (name === 'player' && hair) {
+    const g = new Grid(trisOf([skin])), Mi = inv(hair.M), arr = new Float32Array(hair.n * 3);
+    for (let i = 0; i < hair.n; i++) {
+      const p = [hair.pos[i * 3], hair.pos[i * 3 + 1], hair.pos[i * 3 + 2]], f = g.closest(p, 0.09); if (!f) continue;
+      const d = xf(Mi, [f[0] - p[0], f[1] - p[1], f[2] - p[2]], 0); arr[i * 3] = d[0]; arr[i * 3 + 1] = d[1]; arr[i * 3 + 2] = d[2];
+    }
+    hair.prim.setAttribute('_SCALP', doc.createAccessor('hair_scalp').setType('VEC3').setArray(arr).setBuffer(doc.getRoot().listBuffers()[0]));
+    console.log(name, 'hair: the way to the scalp for', hair.n, 'vertices');
   }
 
   // ---- the skin's own shade
