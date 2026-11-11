@@ -2291,6 +2291,12 @@ async function lookCheck(vname, w, h, mobile) {
     if (JSON.stringify(c0.look) !== JSON.stringify(c0.def)) errs.push(`${label}: a first visit does not start from the body you were given`);
     await rules(p, 'opened');
     if (!mobile) { const a = await active(p); if (!a) errs.push(`${label}: nothing has the focus when the creator opens`); else if (!a.ring) errs.push(`${label}: the focus is not drawn when the creator opens`); }
+    // stills, of the body you are given (its own hair and clothes), before anything is changed
+    if (vname === 'desktop') {
+      await still(p, 'creator-desktop.png');
+      if (c0.cats.includes('face')) { await p.click('.st-look [data-cr="cat"][data-cat="face"]'); await still(p, 'creator-face.png'); await p.click(`.st-look [data-cr="cat"][data-cat="${c0.cats[0]}"]`); await p.waitForTimeout(400); }
+      await p.focus('.st-look [data-cr="cat"][aria-selected="true"]');
+    } else if (vname === 'portrait') await still(p, 'creator-portrait.png');
     const changed = [];
     for (let i = 0; i < c0.cats.length; i++) {
       const cat = c0.cats[i];
@@ -2349,11 +2355,6 @@ async function lookCheck(vname, w, h, mobile) {
         if (Math.abs((await C(p)).base - y0) > 0.05) errs.push(`${label}: a double click did not turn the body to face you again`);
       }
     }
-    // stills
-    if (vname === 'desktop') {
-      if (c0.cats.includes('face')) { await p.click('.st-look [data-cr="cat"][data-cat="face"]'); await still(p, 'creator-face.png'); }
-      await p.click(`.st-look [data-cr="cat"][data-cat="${c0.cats[0]}"]`); await p.evaluate(() => document.querySelector('.st-look [data-cr="zoom"][data-z="0"]').click()); await still(p, 'creator-desktop.png');
-    } else if (vname === 'portrait') { await p.tap(`.st-look [data-cr="cat"][data-cat="${c0.cats[0]}"]`); await p.evaluate(() => { document.querySelector('.st-look .cr-body').scrollTop = 0; }); await still(p, 'creator-portrait.png'); }
     const kept = (await C(p)).look;
     // Back (Esc) leaves without a sound or a haptic, and keeps what you made; Done is an arrival
     if (!mobile) {

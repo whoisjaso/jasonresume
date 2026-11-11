@@ -14,6 +14,7 @@ import { U, MAXL, paint, blobMat } from "./paint.js";
 import { applyGrade } from "./post.js";
 
 const KEY = "jg_story_look";
+const FRONT = 0.18; // the turn the body starts at: a little off square, so the face has a shape
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
@@ -217,7 +218,7 @@ export function createCreator(X) {
   el.insertBefore(sec, el.querySelector(".st-load"));
   const $ = (s, r) => (r || sec).querySelector(s), $$ = (s, r) => [...(r || sec).querySelectorAll(s)];
   const stageEl = $(".cr-stage"), panelEl = $(".cr-panel"), tabsEl = $(".cr-tabs"), bodyEl = $(".cr-body"), hEl = $(".cr-h"), turnEl = $(".cr-turn"), doneEl = $("[data-cr='done']");
-  const ST = { open: false, live: false, mode: "", cat: "body", resolve: null, changed: {}, random: false, reset: false, t: 0, yaw: 0.35, base: 0.35, held: 0, zoom: 0, zoomTo: 0, kick: 0, spin: 0, snap: null, rect: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1, lvT: 0 };
+  const ST = { open: false, live: false, mode: "", cat: "body", resolve: null, changed: {}, random: false, reset: false, t: 0, yaw: FRONT, base: FRONT, held: 0, zoom: 0, zoomTo: 0, kick: 0, spin: 0, snap: null, rect: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1, lvT: 0 };
   const cats = () => CATS.filter(c => c.items.some(it => can(it.k)));
   const nth = i => (UI.look_nth || [])[i] || "";
   const tileName = (it, id) => L(it.name + id) || (opts.label[it.k + ":" + id]) || String(id).replace(/[-_]+/g, " ").replace(/\d+/g, "").trim().replace(/^./, c => c.toUpperCase()) || nth(0);
@@ -309,7 +310,7 @@ export function createCreator(X) {
   /* ---------- turning and zooming: a drag, a pinch, the wheel; the pad's right stick and triggers ---------- */
   const ptrs = new Map(); let pinch = 0;
   let tapT = 0;
-  stageEl.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; const now = performance.now(); if (now - tapT < 320 && !ptrs.size) ST.base = 0.35 + Math.round((ST.base - 0.35) / (Math.PI * 2)) * Math.PI * 2; tapT = now; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { stageEl.setPointerCapture(e.pointerId); } catch (x) {} if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } ST.held = 6; stageEl.classList.add("is-held"); });
+  stageEl.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; const now = performance.now(); if (now - tapT < 320 && !ptrs.size) ST.base = FRONT + Math.round((ST.base - FRONT) / (Math.PI * 2)) * Math.PI * 2; tapT = now; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { stageEl.setPointerCapture(e.pointerId); } catch (x) {} if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } ST.held = 6; stageEl.classList.add("is-held"); });
   stageEl.addEventListener("pointermove", e => {
     const p = ptrs.get(e.pointerId); if (!p) return;
     const dx = e.clientX - p.x; p.x = e.clientX; p.y = e.clientY;
@@ -415,7 +416,7 @@ export function createCreator(X) {
     if (ST.open) return false;
     let d; try { d = await getDoll(); } catch (e) { if (X.debug) console.warn("creator", e); return false; }
     ready(d);
-    Object.assign(ST, { open: true, live: true, mode, changed: {}, random: false, reset: false, yaw: 0.35, base: 0.35, held: 0, zoom: 0, zoomTo: 0, kick: 0, spin: 0, t: 0 });
+    Object.assign(ST, { open: true, live: true, mode, changed: {}, random: false, reset: false, yaw: FRONT, base: FRONT, held: 0, zoom: 0, zoomTo: 0, kick: 0, spin: 0, t: 0 });
     const cs = cats(); ST.cat = cs.length ? cs[0].id : "body";
     hEl.textContent = L(mode === "first" ? "look_h" : "look_h_pause");
     $("span", doneEl).textContent = L(mode === "first" ? "look_go" : "look_done");
@@ -453,7 +454,7 @@ export function createCreator(X) {
     // takes it once round
     ST.held = Math.max(0, ST.held - dt);
     if (ST.spin > 0.01) { const s = Math.min(ST.spin, 9 * dt * ST.spin + 0.01); ST.base += s; ST.spin -= s; }
-    const sway = still() ? 0 : Math.sin(ST.t * 0.42) * 0.5 * (1 - clamp(ST.held / 1.5, 0, 1));
+    const sway = still() ? 0 : Math.sin(ST.t * 0.42) * lerp(0.42, 0.2, ST.zoom) * (1 - clamp(ST.held / 1.5, 0, 1));
     ST.sway = damp(ST.sway || 0, sway, 3, dt);
     ST.yaw = damp(ST.yaw, ST.base + ST.sway, still() ? 30 : 9, dt);
     ST.zoom = damp(ST.zoom, ST.zoomTo, still() ? 30 : 6, dt);
@@ -465,7 +466,9 @@ export function createCreator(X) {
     doll.headWorld(_h);
     const z = ST.zoom * ST.zoom * (3 - 2 * ST.zoom);
     const halfH = lerp(tall * 0.56, 0.21, z), halfW = lerp(0.5, 0.18, z);
-    _t.set(0, lerp(tall * 0.5, _h.y - 0.03, z), 0);
+    // close in, the frame follows the head (a body shifts its weight as it stands, and that is a long way at this size)
+    ST.hx = damp(ST.hx || 0, _h.x, 5, dt); ST.hz = damp(ST.hz || 0, _h.z, 5, dt);
+    _t.set(ST.hx * z, lerp(tall * 0.5, _h.y - 0.03, z), ST.hz * z);
     const fov = 30, tn = Math.tan(fov * Math.PI / 360), R = ST.rect;
     let dist = Math.max(halfH / tn * (ST.H / R.h), halfW / (tn * (ST.W / ST.H)) * (ST.W / R.w));
     dist *= 1 - (still() ? 0 : 0.018 * ST.kick);
