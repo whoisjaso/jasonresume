@@ -33,6 +33,8 @@ import { createCrowd } from "./crowd.js";
 import { createAudio } from "./audio.js";
 import { buildNav, pathLen } from "./nav.js";
 import { Guide } from "./guide.js";
+import * as PEOPLE from "./people.js";
+import { createCreator } from "./creator.js";
 import { addLostPlates, syncLostPlates, takeLostPlate, tickLostPlates, LOST_IDS, lostGen } from "./tags.js";
 
 const root = document.documentElement, body = document.body;
@@ -89,7 +91,7 @@ const S = {
 /* the phase, kept honest under the menus: whatever finishes while the pause menu or the journal is open (a scene card,
    a cinematic, a talk) lands in the phase they return to, so Resume never brings back something that already ended */
 function setPhase(p) {
-  if ((S.phase === "pause" || S.phase === "journal") && p !== "pause" && p !== "journal") { S.prevPhase = p; return; }
+  if ((S.phase === "pause" || S.phase === "journal" || S.phase === "look") && p !== "pause" && p !== "journal") { S.prevPhase = p; return; }
   S.phase = p;
 }
 function cond(c) {
@@ -643,6 +645,7 @@ async function person0(key, name, o) {
   const p = await cast.make(name + "-" + VER, o);
   p.key = key; world.add(p.group);
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), blobMat(0.55)); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.015; sh.layers.set(2); world.add(sh); p.shadow = sh;
+  if (key === "you") await LOOK.applyTo(p); // the visitor's own look (story/creator.js), before the body is first seen
   P[key] = p; return p;
 }
 function place(p, v, yaw) { if (!p) return; p.pos.copy(v); p.yaw = p.wantYaw = yaw || 0; p.group.visible = true; p.speed = 0; p.path = null; }
@@ -1230,7 +1233,7 @@ function padPoll(dt) {
   if (m > DEAD) { const k = Math.min(1, (m - DEAD) / (1 - DEAD - 0.05)); pad.x = ax / m; pad.y = ay / m; pad.mag = PADN.run ? 1 : padCurve(k); }
   else { pad.x = pad.y = pad.mag = 0; PADN.run = false; }
   const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0, rm = Math.hypot(rx, ry);
-  if (rm > 0.16) {
+  if (rm > 0.16 && S.phase !== "look") {
     // the right stick: the same kind of dead zone and curve, so a small correction is small
     const k = padCurve(Math.min(1, (rm - 0.16) / 0.8)) / rm;
     camState.yaw -= rx * k * 2.8 * dt * SET.look; camState.pitch = clamp(camState.pitch + ry * k * (SET.invert ? -1 : 1) * 1.5 * dt * SET.look, -0.15, 0.75); camState.drag = 1.5; PADN.rc = 0; setDev("pad");
@@ -1256,6 +1259,8 @@ function padPoll(dt) {
     if (Math.abs(rx) > 0.16) { DRV.look = clamp(DRV.look - rx * 2.2 * dt * SET.look, -2.6, 2.6); DRV.lookT = 1.2; }
   }
   else if (S.skipOpen) { if (pe(ok) || pe(B.back)) act("a"); }
+  // the character screen: LB and RB change the group, the right stick turns, the triggers zoom; Back leaves silently
+  else if (S.phase === "look") { if (LOOK.isOpen) { LOOK.pad({ pe, pv, axis: i => gp.axes[i] || 0 }, dt); if (dir) LOOK.nav(dir); if (pe(ok)) LOOK.press(); if (pe(B.back)) LOOK.finish("back"); } }
   else if (host && (S.phase === "pause" || S.phase === "journal" || !choosing)) {
     if (dir) padMove(host, dir);
     if (pe(ok)) padPress(host);
@@ -2078,7 +2083,7 @@ let pzView = "main";
 /* behind a menu the prompt, the dots, the big button and the arrow step out of the way */
 function hideWorldUI() { promptEl.hidden = true; actEl.hidden = true; clearDots(); wayEl.classList.remove("is-on"); way.show = false; guide.trail(null, 0); }
 function pause() {
-  if (S.phase === "end" || S.phase === "load" || S.phase === "pause") return;
+  if (S.phase === "end" || S.phase === "load" || S.phase === "pause" || S.phase === "look") return;
   if (S.phase === "explore") save();
   S.prevPhase = S.phase; S.phase = "pause";
   if (line && line.audio) line.audio.pause();
@@ -2099,6 +2104,7 @@ function pauseView(v, focus) {
     h = '<div class="pz"><h3 class="pz-h">' + E(UI.pause) + '</h3><ul class="pz-m">' +
       '<li><button type="button" data-p="resume">' + E(UI.resume) + "</button></li>" +
       '<li><button type="button" data-p="journal">' + E(UI.journal) + "</button></li>" +
+      (S.scene !== "night" ? '<li><button type="button" data-p="look">' + E(UI.look) + "</button></li>" : "") +
       '<li><button type="button" data-p="settings">' + E(UI.settings) + "</button></li>" +
       (reached.length > 1 ? '<li class="pz-ch"><span>' + E(UI.chapters) + "</span>" + reached.map(n => '<button type="button" data-p="go" data-s="' + n + '">' + E(n === "june" || n === "sale" ? D.scenes[n].card : D.scenes[n].name) + "</button>").join("") + "</li>" : "") +
       '<li><button type="button" data-p="restart">' + E(UI.restart) + "</button></li>" +
@@ -2176,6 +2182,7 @@ pauseEl.addEventListener("click", async e => {
   if (k === "resume") unpause();
   else if (k === "journal") { unpause(); openJournal(); }
   else if (k === "settings") { if (pzView === "main") { AU.ui("open"); hap("tap"); } pauseView("settings"); }
+  else if (k === "look") openLook("pause");
   else if (k === "keys") { AU.ui("open"); hap("tap"); pauseView("keys"); }
   else if (k === "pad") { AU.ui("open"); hap("tap"); pauseView("pad"); }
   else if (k === "reset-pad") { SET.pad = Object.assign({}, PAD0); padCap = null; saveSet(); AU.ui("toggle"); hap("tap"); pauseView("pad", "[data-p='reset-pad']"); glyphs(); }
@@ -2186,6 +2193,23 @@ pauseEl.addEventListener("click", async e => {
   else if (k === "restart") { FX("choice"); unpause(); store.del("jg_story"); resetState(); await travelFresh(FIRST); }
   else if (k === "go") { FX("choice"); unpause(); await travelFresh(b.dataset.s); }
 });
+/* ---------- the character (story/creator.js): who walks onto the lot. From the pause menu at any time (not on the
+   night: you are Jason there), and once on the way from the night to the lot. The look is its own save (jg_story_look):
+   Restart keeps it. While it is up the world waits, as it does behind the pause menu ---------- */
+async function openLook(mode) {
+  if (LOOK.live || S.phase === "look") return;
+  const was = S.phase, paused = mode === "pause";
+  S.phase = "look";
+  if (paused) { AU.ui("open"); hap("tap"); pauseEl.classList.remove("is-on"); pauseEl.hidden = true; }
+  else { LOOK.warm(); el.classList.add("is-paused"); }
+  const p = LOOK.open(mode);
+  if (!paused) { await LOOK.warm(); await sleep(60); await fade(0, 700); }
+  const how = await p;
+  if (!S.open) { LOOK.end(); return; }
+  if (how === false) { S.phase = was; if (paused) { pauseEl.hidden = false; pauseEl.classList.add("is-on"); } else el.classList.remove("is-paused"); return; }
+  if (paused) { LOOK.end(); S.phase = "pause"; pauseEl.hidden = false; requestAnimationFrame(() => pauseEl.classList.add("is-on")); pauseView("main", "[data-p='look']"); lastDraw = 0; }
+  else { await fade(1, 500); LOOK.end(); el.classList.remove("is-paused"); S.phase = was; }
+}
 function resetState() { S.flags = {}; S.looked = {}; S.log = []; S.trophies = []; S.journal = []; S.tags = []; lostGen.n++; S.ending = null; S.visited = {}; S.hint = null; S.obj = null; }
 async function travelFresh(name) { if (line) endLine(true); if (choosing) { choosing = null; choicesEl.hidden = true; } S.heldShot = null; if (name === "night") nightFlagsOff(); await fade(1, 500); await enter(name, { quiet: true }); if (name === "night") { await nightOpen(); return; } await fade(0, 600); setPhase("explore"); if (name === "lot" && !S.flags.met) runTalk("lot-arrive"); else if (name !== "lot" && D.scenes[name].start) { S.partner = P.jason; startTalk(name); } }
 
@@ -2203,7 +2227,7 @@ function setDev(d) {
 /* a line that names pad buttons: {jump}, {act}, {back} and the rest become the buttons they're bound to now */
 const padText = t => String(t).replace(/\{(\w+)\}/g, (m, a) => a === "ok" ? PADNAME[padOK()] : a in SET.pad ? PADNAME[SET.pad[a]] : m);
 function glyphs() {
-  promptKey(); padGlyphs();
+  promptKey(); padGlyphs(); LOOK.glyphs();
   $$(".st-ch kbd", choicesOl).forEach((k, i) => { k.textContent = dev === "pad" ? "" : String(i + 1); });
   if (!hintEl.hidden) hintEl.textContent = hintText();
 }
@@ -2222,7 +2246,7 @@ function hintText() {
 }
 function act(k) {
   if (S.skipOpen && (k === "a" || k === "pause" || k === "b")) { S.skipOpen(); return; }
-  if (k === "pause") { if (S.phase === "pause") unpause(); else if (S.phase === "journal") closeJournal(); else pause(); return; }
+  if (k === "pause") { if (S.phase === "look") { LOOK.finish("back"); return; } if (S.phase === "pause") unpause(); else if (S.phase === "journal") closeJournal(); else pause(); return; }
   if (k === "journal") { if (S.phase === "journal") closeJournal(); else if (S.phase === "explore" || S.phase === "talk" || (S.phase === "drive" && DRV.state === "drive")) openJournal(); return; }
   if (k === "b") { if (S.phase === "journal") closeJournal(); else if (S.phase === "pause") { if (pzView === "keys" || pzView === "pad") pauseView("settings", "[data-p='" + pzView + "']"); else if (pzView !== "main") pauseView("main"); else unpause(); } else if (S.phase === "close" && S.closeFinish) S.closeFinish(); else if (S.phase === "sheet" && S.deskFinish) S.deskFinish(false); return; }
   if (k === "a") {
@@ -2241,6 +2265,7 @@ addEventListener("keydown", e => {
   if (padCap && k === "escape") { e.preventDefault(); e.stopPropagation(); padCancel(); return; }
   if (rebinding) { e.preventDefault(); e.stopPropagation(); if (k === "escape") { rebinding = null; pauseView("keys"); } else if (!["tab", "p", "m", "1", "2", "3", "4", "enter", " ", "meta"].includes(k)) rebind(rebinding, k); return; }
   setDev("kbm"); mv.idle = 0;
+  if (S.phase === "look") { if (LOOK.isOpen) LOOK.key(e, k); return; } // the character screen: its own keys (Esc leaves without a sound)
   if (S.phase === "sheet") { if (k === "escape") { e.preventDefault(); S.deskFinish && S.deskFinish(false); } return; }
   if (S.phase === "end") return;
   if (S.skipOpen && (k === "escape" || k === "enter" || k === " " || k === SET.keys.act)) { e.preventDefault(); S.skipOpen(); return; }
@@ -2365,6 +2390,14 @@ function padGlyphs() {
   legendMode = "";
 }
 padGlyphs();
+const LOOK = createCreator({ el, UI, store, post, camera, AU, base: LOOKS.player, debug: DEBUG, still, dev: () => dev, you: () => P.you, glyph, hap, fx: FX, track: T,
+  // what the body can wear (story/people.js; absent on an older cast, and the screen falls back to colours and height)
+  lookOptions: PEOPLE.lookOptions, defaultLook: PEOPLE.defaultLook,
+  // on its feet: a new body or height waits for this
+  youFree: () => !!P.you && !DRV.state && !P.you.car && P.you.pose !== "sit" && !(P.you.sitK > 0.02) && !P.you.jmp && !(P.you.carrying && (P.you.carrying.l || P.you.carrying.r)),
+  // a second copy of the visitor's body for the studio, so the one in the world stays where it is
+  make: () => cast.make("player-" + VER, { look: "player" }).then(p => { if (DEBUG && window.__people && P.you) window.__people.player = P.you; return p; }),
+  padNames: () => ({ prev: PADNAME[4], next: PADNAME[5] }), tick: () => { if (SC()) SC().tick(); } });
 jumpEl.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); setDev("touch"); jump("touch"); });
 jumpEl.addEventListener("click", e => { e.stopPropagation(); if (e.detail === 0) jump("key"); });
 let jumpShown = false;
@@ -3260,6 +3293,8 @@ async function nightToLot() {
   cardEl.classList.remove("is-title"); cardEl.hidden = false; void cardEl.offsetWidth; cardEl.classList.add("is-on");
   await sleep(2600);
   cardEl.classList.remove("is-on"); await sleep(700); cardEl.hidden = true;
+  // who walks onto the lot: asked once, the first time (Done with nothing changed keeps the body you were given)
+  if (LOOK.wantFirst()) { await openLook("first"); if (!S.open) return; }
   fade(0, 1600);
   await coldOpen();
 }
@@ -3841,8 +3876,11 @@ function frame(now) {
   if (!S.open || document.hidden || S.attract) { last = now; return; }
   if (line) ball.draw(line, now); // the caption ball keeps the full frame rate even when the scene rests
   padPoll(Math.min(0.05, (now - last) / 1000));
+  // the character screen draws its own small studio; the world waits behind it
+  LOOK.settle();
+  if (LOOK.live) { const d = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now; lastDraw = now; LOOK.frame(d); QA.n = 0; QA.gap = 0; QA.work = 0; QA.t0 = now; frame.prev = now; return; }
   // battery: behind the journal or the pause menu there's nothing to draw; standing still, thirty frames are plenty
-  const over = S.phase === "pause" || S.phase === "journal";
+  const over = S.phase === "pause" || S.phase === "journal" || S.phase === "look";
   const idle = (S.phase === "explore" && mv.idle > 3 && me && me.speed < 0.05 && camState.drag <= 0 && !ptrs.size) || (S.phase === "talk" && COARSE.matches);
   // full rate whenever anything moves (you, the camera, a car, a talk on a desktop); thirty only when nothing does
   const every = over ? 500 : S.phase === "sheet" || S.phase === "end" ? 100 : idle && !DRV.state ? 32 : 0;
@@ -4106,6 +4144,7 @@ async function open(sceneName, how) {
 }
 function close(how) {
   if (!S.open) return;
+  if (LOOK.isOpen) LOOK.finish("back");
   if (DRV.state) exitCar("close", true);
   S.open = false; S.phase = "closed";
   if (line) endLine(true);
@@ -4130,6 +4169,8 @@ window.JG_STORY = {
   debug: {
     state: () => ({ open: S.open, scene: S.scene, phase: S.phase, flags: { ...S.flags }, looked: { ...S.looked }, trophies: S.trophies.slice(), journal: S.journal.slice(), talking: S.talking, line: line ? line.L.id : null, choices: choosing ? choosing.list.map(c => c.t) : null, ending: S.ending, near: near ? near.id : null, me: me ? [me.pos.x, me.pos.z] : null, busy: !!S.busy, quality, pixelRatio, fps: fpsLog.slice(-5), obj: S.obj }),
     skip: () => { if (line) endLine(true); },
+    creator: () => LOOK.debug(),
+    go: name => travelFresh(name),
     flag: (k, v) => { S.flags[k] = v; },
     choose: i => pick(i, "debug"),
     spots: () => spotsHere().map(s => s.id),
