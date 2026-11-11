@@ -4,6 +4,8 @@
   "type": "module",
   "description": "Offline tools for After Hours: cast.mjs builds the characters. meshoptimizer (MIT) simplifies and compresses the meshes; its decoder is vendored at vendor/meshopt-0.22.0.",
   "dependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
     "gltfpack": "^0.22.0",
     "meshoptimizer": "0.22.0"
   }

@@ -70,6 +70,8 @@ The sets (story/world.js; tools/story/HANDOFF-world.md has the detail):
 ```
 blender -b --python tools/story/world/cars.py -- /tmp/cars [sedan compact hatch suv truck]
 node tools/story/world/pack.mjs /tmp/cars v2          # assets/story/world/car-<kind>-v2.glb (about 150 KB, with doors, wheels, a cabin) and -lo (about 75 KB)
+python3 tools/story/world/rigs.py -- /tmp/rigs         # the night's pumper and ambulance, a near and a phone model each (Blender as a module: pip install bpy; or blender -b --python)
+node tools/story/world/pack_rigs.mjs /tmp/rigs v1      # assets/story/world/rig-<engine|ambulance>[-lo]-v1.glb (45 to 111 KB)
 python3 tools/story/world/textures.py /tmp/ph-cache    # assets/story/world/tex-v1/*.webp
 node tools/story/world/stills.mjs <tag> all            # stills of every set, desktop and phone
 ```
@@ -85,11 +87,12 @@ cd tools/story && npm install
 # each time
 blender -b --python tools/story/mh_cast.py -- /tmp/cast [jason jason-memory player dell renata]   # adds eye bones, repaints the irises brown with a limbal ring, tailors the jackets' shoulders to the body and smooths the shoulder weights, grows Jason's, the memory's and the visitor's hair
 node tools/story/pack_cast.mjs /tmp/cast v2      # assets/story/cast/<name>-v2.glb, 435 to 605 KB each
+node tools/story/cast_v3.mjs                     # assets/story/cast/<name>-v3.glb from the v2 files, no Blender: bakes the skin's own shade into a vertex colour (rays against the skin, teeth, eyes and clothes) and cuts Jason's hair short with a square hairline; the rig is untouched
 # the motion: UAL1/UAL2 Standard GLBs from quaternius.itch.io (free download), CMU .asf/.amc from mocap.cs.cmu.edu/subjects/<NN>/
 node tools/story/clips.mjs UAL1_Standard.glb UAL2_Standard.glb <cmu dir> v2   # assets/story/cast/clips-v2.glb
 ```
 
-`/assets` is cached for a year, so a rebuilt cast ships under a new version (`v2`) and story/main.js's `VER` moves with it.
+`/assets` is cached for a year, so a rebuilt cast ships under a new version (the bodies are `v3`, story/people.js's `CAST_VER`; the clips are still `clips-v2.glb`).
 
 Voices: `python3 tools/site/story_voice.py` writes `tools/voice/story_lines.json` (the fictional cast, each with a stock Kokoro voice) and `tools/voice/story_jason_lines.json` (my lines, with pronunciations for the figures). Render with `/root/kvenv/bin/python -I tools/voice/narrate_free.py tools/voice/story_lines.json` and `/root/cbvenv/bin/python -I tools/voice/narrate_jason.py tools/voice/story_jason_lines.json --takes 1` (needs `tools/voice/ref.wav`, never committed; about two minutes a line on a 4-core CPU). Both skip lines that haven't changed. Until a line of mine is rendered, it plays as a caption.
 
