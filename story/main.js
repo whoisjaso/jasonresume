@@ -2928,8 +2928,8 @@ function juneShot(L) {
 const SKIP_NIGHT = DEBUG && /[?&]night=0/.test(location.search); // (the harness's other checks start on the lot, as they always did)
 const FIRST = SKIP_NIGHT ? "lot" : "night";
 const NF = FAST ? 6 : 1; // the harness's clock is slow: the night's own clocks run faster under it
-SCENE_LIGHT.night = { sky: "#1a222e", ground: "#0d0d0f", moon: "#262e3c", rim: "#5e6c82", fog: "#070a10", den: 0.0095, wetAll: 0.18, sat: 0.92, moonDir: [0.35, 0.75, 0.55] };
-const NIGHT_GRADE = { tone: 0.5, con: 0.35, exp: 1.16, lift: [0.007, 0.009, 0.013], gamma: [1.0, 1.0, 1.02], gain: [1.03, 1.0, 0.97], sat: 0.88, bloom: 0.85, vig: 0.95, grain: 0.045, mem: 0.1, sh: [-0.16, 0.04, 0.24], hi: [0.24, 0.1, -0.08] };
+SCENE_LIGHT.night = { sky: "#2a3443", ground: "#121214", moon: "#414e66", rim: "#5e6c82", fog: "#070a10", den: 0.0095, wetAll: 0.18, sat: 0.92, moonDir: [0.35, 0.75, 0.55] };
+const NIGHT_GRADE = { tone: 0.5, con: 0.35, exp: 1.32, lift: [0.007, 0.009, 0.013], gamma: [1.0, 1.0, 1.02], gain: [1.03, 1.0, 0.97], sat: 0.88, bloom: 0.85, vig: 0.95, grain: 0.045, mem: 0.1, sh: [-0.16, 0.04, 0.24], hi: [0.24, 0.1, -0.08] };
 const NIGHT_FLAGS = ["found", "met-fire", "lifting", "carried", "out", "done-night"];
 const CREW = ["fire", "fire2", "fire3"], NIGHT_CAST = ["night", "fire", "fire2", "fire3"];
 const NT = { stage: "", t: 0, veh: 0, braked: false, crew: false, inside: true, sat: false, trail: [], radioT: 5, leave: -1, load: -1, loadRes: null, shut: false, doorK: 0, ws: 0, cyaw: 0, sway: new THREE.Vector3(), swayOn: false, carryPath: null, carryLen: 0, wheelPath: null, wheelLen: 0, hintT: 0, engAt: { x: 0, y: 1.2, z: 0 }, ambAt: { x: 0, y: 1.2, z: 0 } };

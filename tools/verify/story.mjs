@@ -2192,6 +2192,7 @@ async function nightStills() {
   await p.waitForSelector('#intro [data-title-play]', { timeout: 30000 }); await p.waitForSelector('#boot', { state: 'detached', timeout: 15000 }).catch(() => {});
   await p.click('[data-title-play]');
   if (!(await until(p, () => { const s = window.JG_STORY && window.JG_STORY.debug.state(); return !!s && s.scene === 'night' && s.phase === 'explore'; }, null, 600000))) { errs.push('night stills: the night never opened'); await ctx.close(); return; }
+  await p.addStyleTag({ content: '.st-prompt, .st-dots, .st-act, .st-way { visibility: hidden !important; }' }); // (a still is the picture: no prompts over it)
   const H = 2.9, go = st => p.evaluate(st => window.JG_STORY.debug.nightGo(st), st), put = (x, z, yaw) => p.evaluate(a => window.JG_STORY.debug.put(...a), [x, z, yaw]);
   const view = (a, b2, r) => p.evaluate(v => window.JG_STORY.debug.view(v[0], v[1], v[2]), [a, b2, r || 6]);
   const snap = async name => { await p.waitForTimeout(6000); await shot0(p, name); notes.push(`still: tools/verify/out/${name}.png`); };

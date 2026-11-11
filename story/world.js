@@ -2782,7 +2782,7 @@ export function buildNight(o = {}) {
     box(0.05, 0.05, 1.56, M.trim, 6.58, H + 2.12, wz, set); box(0.1, 0.04, 1.62, M.trim, 6.56, H + 0.78, wz, set);
     const cur = plane(0.8, 1.7, pbr({ color: "#aab2bd", rough: 0.9, wet: 0, alpha: 0.5, depthWrite: false, side: THREE.DoubleSide, diff: 1.2 }), set); cur.rotation.y = -Math.PI / 2; cur.position.set(6.5, H + 1.35, wz - 0.55); cur.renderOrder = 2; cur.userData.keep = true;
     anim(set, (dt, c) => { const t = c.t; cur.rotation.y = -Math.PI / 2 + Math.sin(t * 0.7) * 0.07 + Math.sin(t * 1.9) * 0.02; cur.position.x = 6.5 - (0.5 + 0.5 * Math.sin(t * 0.7)) * 0.05; });
-    lamp(1, V3(5.9, H + 1.6, wz), 7.5, [0.3, 0.38, 0.56]);
+    lamp(1, V3(5.9, H + 1.6, wz), 9, [0.62, 0.76, 1.05]);
     // the three windows on the street, a desk under them, the chair with yesterday on it, a dresser, the closet's doors, a rug
     for (const [x, w] of [[3.45, 0.5], [4.35, 1.0], [5.25, 0.5]]) inWin(x, H + 1.45, 7.295, Math.PI, w, 1.5, M.nightB);
     box(1.4, 0.04, 0.58, M.wood, 4.35, H + 0.74, 6.95, set); for (const s of [-0.66, 0.66]) box(0.04, 0.74, 0.54, M.wood, 4.35 + s, H + 0.37, 6.95, set);
@@ -2811,7 +2811,7 @@ export function buildNight(o = {}) {
     couch(-1.25, H, -4.2, -Math.PI / 2, 2.0); W1.push({ x0: -1.78, x1: -0.62, z0: -5.4, z1: -3.0, h: H + 0.85 });
     rbox(0.7, 0.36, 0.7, 0.05, M.sofa, -2.75, H + 0.18, -4.2, set); W1.push({ x0: -3.1, x1: -2.4, z0: -4.55, z1: -3.85, h: H + 0.4 });
     { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M.duvet); b.scale.set(0.45, 0.3, 0.45); b.position.set(0.9, H + 0.27, -2.75); set.add(b); W1.push({ x0: 0.5, x1: 1.3, z0: -3.15, z1: -2.35, h: H + 0.55 }); }
-    inWin(-1.4, H + 1.45, -6.295, 0, 1.6, 1.4, M.nightA); lamp(1, V3(-1.4, H + 1.5, -5.7), 7, [0.27, 0.35, 0.52]);
+    inWin(-1.4, H + 1.45, -6.295, 0, 1.6, 1.4, M.nightA); lamp(1, V3(-1.4, H + 1.5, -5.7), 9, [0.58, 0.72, 1.0]);
     flat([-3.7, -1.9, -5.3, -3.1], H, M.rugB, 0.008);
     shutDoor(-4.4, H, -2.6, Math.PI / 2); shutDoor(1.6, H, -5.3, -Math.PI / 2); fan(-1.6, CEIL, -4.2); }
 
@@ -2874,7 +2874,8 @@ export function buildNight(o = {}) {
       for (let i = 1; i < 5; i++) box(0.62, 0.02, 0.03, M.trim, 0, 0.1 + i * 0.376, 0.02, g); box(0.02, 1.9, 0.03, M.trim, 0, 1.03, 0.02, g);
       box(0.04, 0.04, 0.05, M.brass, s ? -0.28 : 0.28, 1.0, 0.05, g); }
     for (const s of [0, 0.14, 0.4]) rbox(0.1, 0.06, 0.27, 0.02, M.dark, 1.02 + s, 0.03, 5.62, set).rotation.y = s;
-    lamp(0, V3(0.8, 2.3, 4.6), 7, [0.24, 0.3, 0.44]);
+    // the hall light, left on: a small fitting in the ceiling
+    lamp(0, V3(0.8, 2.3, 3.4), 8.5, [1.15, 0.84, 0.52]); { const hl = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.04, 16), glow0("#ffe2b0", { k: 1.6 })); hl.position.set(0.8, C0 - 0.025, 3.4); hl.userData.keep = true; set.add(hl); }
     // a small light low on the wall at the foot of the stairs, like the one upstairs
     lamp(0, V3(0.5, 0.35, -1.0), 4.4, [0.44, 0.3, 0.15]); { const nl = plane(0.05, 0.07, glow0("#ffd9a0", { k: 1.4 }), set); nl.position.set(0.006, 0.3, -1.0); nl.rotation.y = Math.PI / 2; nl.userData.keep = true; }
     thing(set, "night-front", { kind: "open", label: "Front door", p: V3(1.28, 1.02, 5.9), stand: V3(0.86, 0, 5.2), r: 1.7, way: true, use: () => ud.door("front", true) });
@@ -2885,7 +2886,7 @@ export function buildNight(o = {}) {
     W.push({ x0: 3.2, x1: 5.2, z0: 0.58, z1: 2.42, h: 1.0 });
     cyl(0.01, 0.01, 0.5, M.brass, 4.2, C0 - 0.25, 1.5, set, 6); cyl(0.2, 0.1, 0.12, M.brass, 4.2, C0 - 0.55, 1.5, set, 10);
     box(1.5, 0.85, 0.42, M.wood, 4.2, 0.425, 0.03, set); W.push({ x0: 3.42, x1: 4.98, z0: -0.2, z1: 0.27, h: 0.9 }); pic(4.2, 1.6, -0.195, 0, 0.8, 0.5);
-    inWin(6.595, 1.5, 1.5, -Math.PI / 2, 1.8, 1.4, M.nightA); lamp(0, V3(5.3, 2.2, 1.5), 7.5, [0.3, 0.38, 0.56]); }
+    inWin(6.595, 1.5, 1.5, -Math.PI / 2, 1.8, 1.4, M.nightA); lamp(0, V3(5.3, 2.2, 1.5), 9, [0.62, 0.76, 1.05]); }
   // ---- the kitchen, at the back: dark cabinets down two walls, the island, the fridge, the pantry, the back door, a small table
   { box(0.6, 0.88, 3.9, M.cab, 6.3, 0.44, -4.35, set); box(0.64, 0.04, 3.9, M.stone, 6.28, 0.9, -4.35, set);
     box(3.0, 0.88, 0.6, M.cab, 4.5, 0.44, -6.0, set); box(3.0, 0.04, 0.64, M.stone, 4.5, 0.9, -5.98, set);
@@ -2895,7 +2896,7 @@ export function buildNight(o = {}) {
     inWin(4.4, 1.55, -6.295, 0, 1.0, 0.9, M.nightB);
     // the cooker's clock: a small glow, nothing you can read
     const mg = plane(0.1, 0.03, glow0("#7fe0b0", { k: 1.2 }), set); mg.rotation.y = -Math.PI / 2; mg.position.set(6.215, 1.6, -3.95); mg.userData.keep = true;
-    lamp(0, V3(4.4, 2.1, -4.7), 7.5, [0.22, 0.33, 0.4]);
+    lamp(0, V3(4.4, 2.1, -4.7), 9, [0.52, 0.7, 0.9]);
     box(1.7, 0.88, 0.9, M.cab, 3.9, 0.44, -3.4, set); box(1.8, 0.04, 1.0, M.stone, 3.9, 0.9, -3.4, set); W.push({ x0: 3.0, x1: 4.8, z0: -3.9, z1: -2.9, h: 0.95 });
     cyl(0.008, 0.008, 0.6, M.dark, 3.9, C0 - 0.3, -3.4, set, 6); cyl(0.05, 0.16, 0.14, M.trim, 3.9, C0 - 0.66, -3.4, set, 12);
     box(0.8, 1.75, 0.75, M.dark, 6.1, 0.875, -0.8, set); W.push({ x0: 5.68, x1: 6.52, z0: -1.2, z1: -0.4, h: 1.8 });
@@ -2914,7 +2915,7 @@ export function buildNight(o = {}) {
     flat([-6.7, -5.0, -4.6, -2.2], 0, M.rugB, 0.012);
     cyl(0.015, 0.015, 1.5, M.dark, -7.3, 0.75, -5.95, set, 6); cyl(0.14, 0.18, 0.24, M.trim, -7.3, 1.56, -5.95, set, 12); W.push({ x0: -7.5, x1: -7.1, z0: -6.15, z1: -5.75, h: 1.7 });
     for (const x of [-4.3, -3.1]) inWin(x, 1.5, -6.295, 0, 1.1, 1.5, M.nightA); inWin(-1.0, 1.5, -6.295, 0, 0.9, 1.5, M.nightB);
-    lamp(0, V3(-4.1, 2.2, -4.7), 8.5, [0.3, 0.38, 0.56]);
+    lamp(0, V3(-4.1, 2.2, -4.7), 10, [0.62, 0.76, 1.05]);
     fan(-4.9, C0, -3.4);
     shutDoor(-2.15, 0, 1.0, Math.PI);
     box(1.6, 1.8, 0.32, M.wood, -5.6, 0.9, 0.83, set); W.push({ x0: -6.42, x1: -4.78, z0: 0.64, z1: 1.0, h: 1.85 });
@@ -2938,8 +2939,8 @@ export function buildNight(o = {}) {
     // the windows on the street: two over the garage, the arched one over the porch, three either floor to the right of it
     for (const x of [-5.9, -3.0]) win(x, 4.3, fz + 0.012, 0.9, 1.5, 0);
     for (const y of [1.45, 4.3]) for (const [x, w] of [[3.45, 0.5], [4.35, 1.0], [5.25, 0.5]]) win(x, y, fz + 0.012, w, y < 2 ? 1.7 : 1.5, 0);
-    win(0.8, 4.15, fz + 0.012, 0.9, 0.9, 0);
-    { const a = new THREE.Mesh(new THREE.CircleGeometry(0.45, 16, 0, Math.PI), M.glassN); a.position.set(0.8, 4.6, fz + 0.012); set.add(a);
+    win(0.8, 4.15, fz + 0.012, 0.9, 0.9, 0, "#c9a878"); // (a light left on behind it)
+    { const a = new THREE.Mesh(new THREE.CircleGeometry(0.45, 16, 0, Math.PI), glow("#c9a878", { k: 0.55 })); a.position.set(0.8, 4.6, fz + 0.012); set.add(a);
       const t = new THREE.Mesh(new THREE.CircleGeometry(0.51, 16, 0, Math.PI), M.trim); t.position.set(0.8, 4.6, fz + 0.006); set.add(t); }
     // the sides and the back
     win(HB[1] + 0.03, 4.35, 4.4, 1.5, 1.3, Math.PI / 2); win(HB[1] + 0.03, 1.5, 1.5, 1.8, 1.4, Math.PI / 2); win(HB[1] + 0.03, 4.3, -3.4, 1.2, 1.3, Math.PI / 2);
@@ -2958,7 +2959,9 @@ export function buildNight(o = {}) {
     // the porch: a slab, the light in its ceiling
     box(PORCH[1] - PORCH[0], 0.06, 1.5, M.conc, 0.8, 0.0, 6.85, set);
     const pg = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), glow0("#ffe2b0", { k: 2.4 })); pg.position.set(0.8, C0 - 0.07, 6.85); pg.userData.keep = true; set.add(pg);
-    ud.lamps.push({ p: V3(0.8, 2.2, 6.9), range: 8, col: [1.5, 1.05, 0.55], cone: 0 });
+    ud.lamps.push({ p: V3(0.8, 2.2, 6.9), range: 11, col: [1.7, 1.2, 0.65], cone: 0 });
+    // what the street lamp by the drive puts on the front of the house
+    ud.lamps.push({ p: V3(-5.5, 6.2, 12.8), range: 24, col: [0.95, 0.72, 0.46], cone: 0 });
     // the garage: one wide door, shut; a lamp beside it (its glow only: the porch lights the front); the plate by it, with nothing on it
     const gd = plane(4.9, 2.15, M.gdoor, set); gd.position.set(-4.5, 1.075, fz + 0.006);
     for (let i = 1; i < 4; i++) box(4.9, 0.02, 0.02, M.dark, -4.5, i * 0.54, fz + 0.012, set);
@@ -3001,7 +3004,7 @@ export function buildNight(o = {}) {
     box(0.09, 1.05, 0.09, M.bark, -1.15, 0.52, 13.3, set); rbox(0.2, 0.2, 0.44, 0.07, M.dark, -1.15, 1.12, 13.3, set); W.push({ x0: -1.3, x1: -1.0, z0: 13.1, z1: 13.5, h: 1.3 });
     for (const s of [0, 0.75]) box(0.6, 1.05, 0.7, pbr({ color: s ? "#27402f" : "#2a2c2f", rough: 0.6, wet: 0.2 }), -8.35, 0.525, 7.0 + s, set); W.push({ x0: -8.7, x1: -8.0, z0: 6.6, z1: 8.15, h: 1.1 }); }
   // the street's own lamps: one each way along our side, one across; the house sits in the dark between them
-  lampPost(-13.5, 13.15, 6.4, set, { k: 0.62 }); lampPost(19.5, 13.15, 6.4, set, { k: 0.62 }); lampPost(12.5, 21.85, 6.4, set, { k: 0.6 });
+  lampPost(-9.6, 13.15, 6.4, set, { k: 0.62 }); lampPost(19.5, 13.15, 6.4, set, { k: 0.62 }); lampPost(12.5, 21.85, 6.4, set, { k: 0.6 });
   // the cars asleep on the street and in the drive, each with its Texas plate
   { const cars = [
       { kind: "suv", x: -5.3, z: 10.15, yaw: Math.PI, color: "#2b3038", metal: true },
