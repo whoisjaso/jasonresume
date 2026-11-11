@@ -399,6 +399,38 @@ async function loadCars() {
     carLib[kind] = { parts, nodes, scene: gltf.scene, meta: meta0, mounts };
   }));
 }
+/* ---------- the night's rigs: the pumper and the ambulance (tools/story/world/rigs.py), loaded when the night is built ---------- */
+const rigLib = {};
+let rigsP = null;
+function loadRigs() {
+  return rigsP || (rigsP = Promise.allSettled(["engine", "ambulance"].map(async name => {
+    const url = BASE + "rig-" + name + (TIER.carLo ? "-lo" : "") + "-v1.glb";
+    loadTotal++;
+    try { rigLib[name] = (await Promise.race([loader.loadAsync(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 12000))])).scene; } catch (e) { console.warn("[world] rig " + name, e && e.message); } finally { progress(); }
+  })));
+}
+/* their surfaces, by the role each part was given in the model: the same paint, chrome, glass and rubber as the lot's cars */
+let RIGM = null;
+function rigMats() {
+  if (RIGM) return RIGM;
+  const v = { vao: true };
+  RIGM = {
+    paint_red: pbr({ ...v, color: "#8f1611", rough: 0.42, coat: 1, coatRough: 0.05, wet: 1, drops: true }),
+    paint_white: pbr({ ...v, color: "#d6d4cc", rough: 0.45, coat: 0.8, coatRough: 0.07, wet: 1, drops: true }),
+    stripe: pbr({ ...v, color: "#d9d2a8", rough: 0.5, wet: 0.4, emit: "#1c1a10" }),
+    band: pbr({ ...v, color: "#b0481f", rough: 0.45, wet: 0.6, emit: "#120602" }),
+    emblem: pbr({ ...v, color: "#1f3f78", rough: 0.45, wet: 0.6, emit: "#04080f" }),
+    chrome: pbr({ ...v, color: "#c9ccd0", metal: 1, rough: 0.14, wet: 0.6 }),
+    steel: pbr({ ...v, color: "#9a9ea2", metal: 0.85, rough: 0.36, wet: 0.5 }),
+    glass: pbr({ ...v, color: "#06080a", rough: 0.04, wet: 1, drops: true, spec: 1.2, diff: 0.6 }),
+    tire: pbr({ ...v, color: "#121212", rough: 0.85, wet: 0.6 }),
+    trim: pbr({ ...v, color: "#141516", rough: 0.6, wet: 0.6 }),
+    hose: pbr({ ...v, color: "#b9b094", rough: 0.85, wet: 0.2 }),
+    interior: pbr({ ...v, color: "#d8d2c2", rough: 0.6, wet: 0, emit: "#3a342a" }),
+    lamp_head: glow("#fff2d6", { k: 2.2 }), lamp_tail: glow("#ff1a0a", { k: 0.7 })
+  };
+  return RIGM;
+}
 /* panel lines, door handle recesses and the fuel door, drawn from the car's own measurements */
 function panelTex(meta) {
   const c = TX.cv(1024, 256), g = c.getContext("2d");
@@ -2681,7 +2713,7 @@ export function buildNight(o = {}) {
     box(0.05, 0.05, 1.56, M.trim, 3.38, H + 2.12, wz, set); box(0.1, 0.04, 1.62, M.trim, 3.36, H + 0.78, wz, set);
     const cur = plane(0.8, 1.7, pbr({ color: "#aab2bd", rough: 0.9, wet: 0, alpha: 0.5, depthWrite: false, side: THREE.DoubleSide, diff: 1.2 }), set); cur.rotation.y = -Math.PI / 2; cur.position.set(3.3, H + 1.35, wz - 0.55); cur.renderOrder = 2; cur.userData.keep = true;
     anim(set, (dt, c) => { const t = c.t; cur.rotation.y = -Math.PI / 2 + Math.sin(t * 0.7) * 0.07 + Math.sin(t * 1.9) * 0.02; cur.position.x = 3.3 - (0.5 + 0.5 * Math.sin(t * 0.7)) * 0.05; });
-    ud.lamps.push({ p: V3(2.7, H + 1.6, wz), range: 6.5, col: [0.2, 0.26, 0.4], cone: 0 });
+    ud.lamps.push({ p: V3(2.7, H + 1.6, wz), range: 7.5, col: [0.3, 0.38, 0.56], cone: 0 });
     // a dresser, a chair with yesterday on it, a rug
     box(1.3, 0.85, 0.45, M.wood, 1.9, H + 0.425, 0.43, set); W.push({ x0: 1.2, x1: 2.6, z0: 0.18, z1: 0.7, h: H + 0.9 });
     box(0.44, 0.04, 0.44, M.wood, -0.7, H + 0.46, -0.2, set); box(0.44, 0.5, 0.04, M.wood, -0.7, H + 0.7, 0.0, set); for (const [a, b] of [[-0.9, -0.4], [-0.5, -0.4], [-0.9, -0.02], [-0.5, -0.02]]) box(0.035, 0.46, 0.035, M.wood, a, H + 0.23, b, set);
@@ -2692,7 +2724,7 @@ export function buildNight(o = {}) {
     ud.sounds.window = { x: 3.3, y: H + 1.4, z: wz }; }
 
   // ---- the hall: a small light low on the wall by the stairs, frames with nothing in them you can read, a table
-  { ud.lamps.push({ p: V3(-2.3, H + 0.3, -1.9), range: 3.4, col: [0.3, 0.2, 0.1], cone: 0 });
+  { ud.lamps.push({ p: V3(-2.3, H + 0.3, -1.9), range: 4.4, col: [0.44, 0.3, 0.15], cone: 0 });
     const nl = plane(0.05, 0.07, glow0("#ffd9a0", { k: 1.4 }), set); nl.position.set(-2.3, H + 0.3, -1.995); nl.rotation.y = Math.PI; nl.userData.keep = true;
     for (const [x, w] of [[-4.2, 0.5], [-5.3, 0.36], [-6.3, 0.5]]) { box(w + 0.06, 0.46, 0.02, M.dark, x, H + 1.55, -3.39, set); const pic = plane(w, 0.4, pbr({ color: "#2b3138", rough: 0.3, wet: 0 }), set); pic.position.set(x, H + 1.55, -3.375); }
     box(0.9, 0.04, 0.26, M.wood, -5.0, H + 0.78, -2.14, set); for (const s of [-0.4, 0.4]) box(0.04, 0.78, 0.22, M.wood, -5.0 + s, H + 0.39, -2.14, set);
@@ -2751,7 +2783,7 @@ export function buildNight(o = {}) {
     const sl = plane(0.3, 1.7, glow("#8fa4c4", { map: TX.nightTex(7), k: 0.5 }), set); sl.position.set(1.72, 1.2, 5.895); sl.rotation.y = Math.PI;
     for (const s of [0, 0.14, 0.4]) rbox(0.1, 0.06, 0.27, 0.02, M.dark, 2.6 + s, 0.03, 5.6, set).rotation.y = s;
     flat([0.0, 1.7, 4.2, 5.8], 0, pbr({ color: "#3d3a36", rough: 0.98, wet: 0 }), 0.008);
-    ud.lamps.push({ p: V3(1.3, 2.6, 4.9), range: 6, col: [0.16, 0.2, 0.3], cone: 0 });
+    ud.lamps.push({ p: V3(1.3, 2.6, 4.9), range: 7, col: [0.24, 0.3, 0.44], cone: 0 });
     thing(set, "night-front", { kind: "open", label: "Front door", p: V3(1.28, 1.02, 5.9), stand: V3(0.86, 0, 5.2), r: 1.7, way: true, use: () => ud.door("front", true) });
     ud.frontSpot = ud.spots["night-front"]; delete ud.spots["night-front"]; }
 
@@ -2825,10 +2857,19 @@ export function buildNight(o = {}) {
     const red = glow0("#ff2414", { k: 0 }), white = glow0("#eef2ff", { k: 0 });
     const lights = [];
     for (const [x, y, z, w, d, m] of bar) { const b = box(w, 0.13, d, m ? white : red, x, y, z, g); b.userData.keep = true; lights.push(b); }
+    // the model, when it is in, takes the stand-in's place: its bar's lenses wear the two pulsing lights
+    loadRigs().then(() => {
+      const src = rigLib[name]; if (!src) return;
+      const mo = src.clone(true), RM = rigMats(); mo.userData.keep = true;
+      mo.traverse(o => { if (!o.isMesh) return; const n = (o.material.name || "").replace(/\.\d+$/, ""); o.material = n === "bar_red" ? red : n === "bar_white" ? white : RM[n] || RM.trim; });
+      g.remove(body); for (const b of lights) g.remove(b);
+      g.add(mo); v.model = mo; if (v.dress) v.dress(mo);
+    });
     const LR = { p: V3(0, 3.2, 0), range: 26, col: [0, 0, 0], cone: 0 }, LW = { p: V3(0, 3.2, 0), range: 26, col: [0, 0, 0], cone: 0 };
     ud.lamps.push(LR, LW);
     g.position.set(120, 0, 15.7); set.add(g);
-    return { g, red, white, LR, LW, on: 0, tint, barY: bar[0][1], barX: bar[0][0] };
+    const v = { g, red, white, LR, LW, on: 0, tint, barY: bar[0][1], barX: bar[0][0] };
+    return v;
   };
   const tyre = pbr({ color: "#0d0d0e", rough: 0.9, wet: 0.2 }), chrome = pbr({ color: "#c9ccd0", metal: 1, rough: 0.2, wet: 0.3 }), glassV = pbr({ color: "#06080a", rough: 0.05, wet: 0.2, spec: 1.2 });
   const wheel = (g, x, z, r) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.34, 18), tyre); w.rotation.x = Math.PI / 2; w.position.set(x, r, z); g.add(w); const hb = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.5, r * 0.5, 0.36, 12), chrome); hb.rotation.x = Math.PI / 2; hb.position.set(x, r, z); g.add(hb); };
@@ -2858,7 +2899,14 @@ export function buildNight(o = {}) {
   // the ambulance's back doors: two leaves that swing out
   { const whiteD = pbr({ color: "#d9d7cf", rough: 0.4, wet: 0.4 }); amb.doors = [];
     for (const s of [-1, 1]) { const h = new THREE.Group(); h.position.set(3.345, 0.55, s * 1.12); h.userData.keep = true; amb.g.add(h); box(0.05, 2.2, 1.1, whiteD, 0, 1.1, -s * 0.55, h); box(0.02, 0.6, 0.6, glassV, 0.03, 1.6, -s * 0.55, h); amb.doors.push({ h, s }); }
-    amb.doorK = 0; amb.inLamp = { p: V3(0, 1.8, 0), range: 5.5, col: [0, 0, 0], cone: 0 }; ud.lamps.push(amb.inLamp); }
+    amb.doorK = 0; amb.inLamp = { p: V3(0, 1.8, 0), range: 5.5, col: [0, 0, 0], cone: 0 }; ud.lamps.push(amb.inLamp);
+    // the model's own doors, each on its hinge, swing out and back; the stand-in's leaves go
+    amb.dress = mo => {
+      const old = amb.doors; amb.doors = [];
+      mo.traverse(o => { if (/^door_[LR]$/.test(o.name)) amb.doors.push({ h: o, s: -Math.sign(o.position.z) }); });
+      if (amb.doors.length) { for (const d of old) amb.g.remove(d.h); rig.doors(amb.doorK); } else amb.doors = old;
+      amb.barX = -1.4; amb.barY = 2.7;
+    }; }
   const rig = ud.rig = {
     engine, amb, flash: 1, lampK: 1, still: false,
     place(v, x, z) { v.g.position.x = x; if (z != null) v.g.position.z = z; },
@@ -2922,7 +2970,7 @@ export function buildNight(o = {}) {
   ud.nav = { x0: -34, x1: 42, z0: -5.7, z1: 20.7, cell: 0.2 };
   ud.surfaceAt = (x, z) => (ud.inside(x, z) ? (z < ZS0 ? (inR(R.bed, x, z) || inR(R.dad, x, z) ? "carpet" : "wood") : z < ZS1 && x < XS1 ? "wood" : "tile") : z < 12.4 ? ((x > 0.15 && x < 1.45) || (x > 4.9 && x < 9.9) || z < 7.8 && x > -0.9 && x < 2.5 ? "concrete" : "carpet") : z < 14 ? "concrete" : "asphalt");
   ud.fogDen = 0.01;
-  ud.ready = roomsReady;
+  ud.ready = Promise.all([roomsReady, loadRigs()]);
   _debug.sets.night = set;
   return set;
 }
