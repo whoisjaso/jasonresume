@@ -613,3 +613,38 @@ html[data-still] .st-course__pips b.is-on { animation: none; }
   .cr-zoom button { min-height: 40px; }
 }
 @media (prefers-reduced-motion: reduce) { .cr-body.is-in-r, .cr-body.is-in-l, .cr-sw button.is-pop, .cr-tiles button.is-pop, .cr-foot button.is-pop { animation: none; } .cr-panel { transition: none; } }
+
+/* ---------- the pause menu, as a game has one: the chapter you are in and what you are doing, then the menu, on the
+   left; the stopped scene stays readable on the right. The lit row carries a bar, as the start screen's does ---------- */
+.st-pause { background: linear-gradient(90deg, rgba(5, 8, 7, .97) 0%, rgba(5, 8, 7, .92) 36%, rgba(5, 8, 7, .6) 100%); padding-left: max(24px, 7vw); }
+.pz--main { max-width: 560px; margin: auto 0; }
+.pz--main .pz-h { margin: 0 0 14px; }
+.pz-t { margin: 0; font: 600 clamp(36px, 4.4vw, 58px)/1 var(--serif); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bone); }
+.pz-o { margin: 12px 0 0; max-width: 40ch; font: italic 500 18px/1.35 var(--serif); color: var(--bone-2); }
+.pz--main .pz-m { margin-top: clamp(22px, 4.5vh, 40px); gap: 0; justify-items: start; }
+.pz--main .pz-m > li:not(.pz-ch) > button { position: relative; width: auto; padding: 8px 20px 8px 0; font-size: clamp(24px, 2.5vw, 31px) !important; letter-spacing: 0.06em; color: var(--ash); }
+.pz--main .pz-m > li:not(.pz-ch) > button::before { content: ""; position: absolute; left: -18px; top: 9px; width: 2px; height: 1.05em; background: var(--bone); transform: scaleY(0); transition: transform .3s var(--ease); }
+.pz--main .pz-m > li:not(.pz-ch) > button:focus { color: var(--bone); transform: translateX(18px); outline: none; }
+.pz--main .pz-m > li:not(.pz-ch) > button:focus::before { transform: scaleY(1); }
+.pz--main .pz-ch { margin: 10px 0 4px; padding: 12px 0 8px; border-top: 1px solid var(--hair); width: 100%; }
+.pz--main .pz-ch button { color: var(--bone-2); }
+.pz--main .pz-ch button:hover, .pz--main .pz-ch button:focus { color: var(--bone); outline: none; text-decoration: underline; text-underline-offset: .3em; }
+.pz--main .pz-m > li.pz-2 > button { font: 500 16px/1.2 var(--sans) !important; font-size: 16px !important; letter-spacing: 0.04em !important; padding: 9px 20px 9px 0 !important; }
+.pz--main .pz-m > li.pz-2 > button::before { top: 8px !important; }
+.pz--main li:not(.pz-2) + .pz-2 { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hair); width: 100%; }
+.story[data-dev="touch"] .pz--main .pz-m > li:not(.pz-ch) > button { color: var(--bone-2); min-height: 46px; }
+.story[data-dev="touch"] .pz--main .pz-m > li:first-child > button { color: var(--bone); }
+.pz--set .pz-fine { max-width: none; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--hair); font-size: 12px; }
+@media (max-height: 480px) {
+  .pz-t { font-size: 30px; } .pz-o { margin-top: 6px; font-size: 15px; }
+  .pz--main .pz-m { margin-top: 10px; }
+  .pz--main .pz-m > li:not(.pz-ch) > button { font-size: 21px !important; padding: 4px 20px 4px 0; }
+  .pz--main li:not(.pz-2) + .pz-2 { margin-top: 6px; padding-top: 6px; }
+}
+/* the journal keeps the height of a page even when it has little in it */
+.jr { min-height: min(520px, calc(100dvh - 32px)); }
+@media (max-height: 480px) {
+  .story[data-dev="touch"] .pz--main .pz-m > li:not(.pz-ch) > button { min-height: 38px; }
+  .pz--main .pz-m > li.pz-2 > button { padding: 6px 20px 6px 0 !important; font-size: 15px !important; }
+  .pz--main .pz-h { margin-bottom: 8px; }
+}

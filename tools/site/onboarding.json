@@ -13,7 +13,15 @@
     "skip": "Skip",
     "play": "Play",
     "attract": "assets/game/loops/story-attract",
-    "continue": "Continue"
+    "continue": "Continue",
+    "game": "After Hours",
+    "episode": "Episode One. Lamps On",
+    "new": "New game",
+    "new_confirm": "Erase your save? Press again",
+    "library": "Library",
+    "library_sub": "Skip the game and read the record",
+    "hint_move": "Move",
+    "hint_select": "Select"
   },
   "question": {
     "title": "Who's playing?",

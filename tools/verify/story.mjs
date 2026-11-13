@@ -1856,7 +1856,10 @@ async function padCheck(vname, w, h, mobile) {
   if ((await st(p)).phase !== 'pause') errs.push(`${label}: Menu didn't pause`);
   await press(13, 2); const f1 = await F(); await press(13, 2); const f2 = await F();
   if (!f1 || !f2 || !f1.inHost || f1.text === f2.text) errs.push(`${label}: the D-pad didn't move the focus in the pause menu (${JSON.stringify([f1, f2])})`);
-  if (f2 && f2.outline === 'none') errs.push(`${label}: the pause menu's focus doesn't show`);
+  // (the lit row carries a bar at its left and comes forward, not an outline)
+  await p.waitForTimeout(450); // (the bar grows in over a third of a second)
+  const lit = await p.evaluate(() => { const a = document.activeElement; if (!a) return false; const b = getComputedStyle(a, '::before'); return b.content !== 'none' && !/^matrix\(1, 0, 0, 0,/.test(b.transform) && getComputedStyle(a).transform !== 'none'; });
+  if (f2 && f2.outline === 'none' && !lit) errs.push(`${label}: the pause menu's focus doesn't show`);
   for (let i = 0; i < 6; i++) { const f = await F(); if (f && f.text === STORY.ui.settings) break; await press(i < 3 ? 12 : 13, 2); }
   await press(0, 3); await p.waitForTimeout(200);
   const inSet = await p.evaluate(() => !!document.querySelector('.st-pause [data-mix]'));

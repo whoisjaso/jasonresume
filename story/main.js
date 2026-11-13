@@ -2101,15 +2101,16 @@ function pauseView(v, focus) {
   const sl = k => '<label class="pz-sl"><span>' + E(UI["mix_" + k]) + '</span><input type="range" min="0" max="100" step="1" data-mix="' + k + '" value="' + Math.round(AU.mix[k] * 100) + '" aria-label="' + E(UI["mix_" + k]) + '" /></label>';
   let h = "";
   if (v === "main") {
-    h = '<div class="pz"><h3 class="pz-h">' + E(UI.pause) + '</h3><ul class="pz-m">' +
+    // the main menu: where you are (the chapter, what you are doing), then the menu; the two ways out sit apart, smaller
+    const sn = D.scenes[S.scene] ? (S.scene === "june" || S.scene === "sale" ? D.scenes[S.scene].card : D.scenes[S.scene].name) : D.title, ob = objEl.hidden ? "" : objEl.textContent;
+    h = '<div class="pz pz--main"><p class="pz-h">' + E(UI.pause) + '</p><h3 class="pz-t">' + E(sn || D.title) + "</h3>" + (ob ? '<p class="pz-o">' + E(ob) + "</p>" : "") + '<ul class="pz-m">' +
       '<li><button type="button" data-p="resume">' + E(UI.resume) + "</button></li>" +
       '<li><button type="button" data-p="journal">' + E(UI.journal) + "</button></li>" +
       (S.scene !== "night" ? '<li><button type="button" data-p="look">' + E(UI.look) + "</button></li>" : "") +
       '<li><button type="button" data-p="settings">' + E(UI.settings) + "</button></li>" +
       (reached.length > 1 ? '<li class="pz-ch"><span>' + E(UI.chapters) + "</span>" + reached.map(n => '<button type="button" data-p="go" data-s="' + n + '">' + E(n === "june" || n === "sale" ? D.scenes[n].card : D.scenes[n].name) + "</button>").join("") + "</li>" : "") +
-      '<li><button type="button" data-p="restart">' + E(UI.restart) + "</button></li>" +
-      '<li><button type="button" data-p="library">' + E(UI.library) + "</button></li></ul>" +
-      '<p class="pz-fine">' + E(D.voices_note) + " " + E(UI.captions) + "</p></div>";
+      '<li class="pz-2"><button type="button" data-p="restart">' + E(UI.restart) + "</button></li>" +
+      '<li class="pz-2"><button type="button" data-p="library">' + E(UI.library) + "</button></li></ul></div>";
   } else if (v === "settings") {
     h = '<div class="pz pz--set"><div class="pz-top"><h3 class="pz-h">' + E(UI.settings) + '</h3><button type="button" class="pz-done" data-p="back">' + E(UI.done) + "</button></div>" +
       '<div class="pz-row"><span>' + E(UI.sound) + '</span><button type="button" class="pz-tog" data-p="sound" aria-pressed="' + soundOn() + '"><span>' + E(soundOn() ? UI.on : UI.off) + "</span></button></div>" +
@@ -2118,7 +2119,8 @@ function pauseView(v, focus) {
       '<div class="pz-row pz-kb"><span>' + E(UI.c_look) + "</span>" + tog("lock", UI.c_look_drag, UI.c_look_lock) + "</div>" +
       '<div class="pz-row"><span>' + E(UI.c_invert) + "</span>" + tog("invert", UI.c_normal, UI.c_inverted) + "</div>" +
       '<div class="pz-foot"><button type="button" class="pz-link pz-kb" data-p="keys">' + E(UI.c_keys) + "</button>" +
-      (padSeen || dev === "pad" ? '<button type="button" class="pz-link" data-p="pad">' + E(UI.c_pad) + "</button>" : "") + "</div></div>";
+      (padSeen || dev === "pad" ? '<button type="button" class="pz-link" data-p="pad">' + E(UI.c_pad) + "</button>" : "") + "</div>" +
+      '<p class="pz-fine">' + E(D.voices_note) + " " + E(UI.captions) + "</p></div>";
   } else if (v === "keys") {
     h = '<div class="pz pz--set"><div class="pz-top"><h3 class="pz-h">' + E(UI.c_keys) + '</h3><button type="button" class="pz-done" data-p="settings">' + E(UI.done) + '</button></div><div class="pz-keys">' +
       ACTS.map(([a, l]) => '<div class="pz-row"><span>' + E(UI[l]) + '</span><button type="button" class="pz-key" data-key="' + a + '">' + E(rebinding === a ? UI.c_press : keyLabel(SET.keys[a])) + "</button></div>").join("") +
@@ -2164,6 +2166,8 @@ function unpause() {
   if (SET.lock && dev === "kbm" && S.phase === "explore") { try { cv.requestPointerLock(); } catch (e) {} }
 }
 let lvT = 0;
+// the mouse lights the row it is over by giving it the focus, so one row is lit at a time, whatever moved last
+pauseEl.addEventListener("pointerover", e => { if (e.pointerType !== "mouse") return; const b = e.target.closest(".pz--main .pz-m > li:not(.pz-ch) > button"); if (b && document.activeElement !== b) b.focus({ preventScroll: true }); });
 pauseEl.addEventListener("input", e => {
   const r = e.target.closest("[data-mix]"); if (!r) return;
   AU.setMix(r.dataset.mix, r.value / 100);

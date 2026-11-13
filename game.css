@@ -348,23 +348,11 @@ html.intro-pending body > :not(#intro):not(#boot):not(script):not(dialog):not(.t
 .intro__attract { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; opacity: 0; transform: scale(1.04); transition: opacity 1.6s var(--ease), transform 6s var(--ease); }
 .intro__attract.is-on { opacity: .62; transform: none; }
 .intro.is-started .intro__attract { opacity: 0; transition-duration: .5s; }
-.intro__start .intro__play { min-width: clamp(240px, 20vw, 300px); min-height: clamp(60px, 7vh, 68px); font-size: clamp(18px, 1.4vw, 20px); }
 /* the start screen (the home page, where the run lives): everything in the middle, one thing to press */
-.intro--play .intro__scene--title { inset: 0; margin: 0 auto; max-width: none; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 var(--pad); }
-.intro--play .intro__logo { justify-items: center; }
-.intro--play .intro__line { margin-top: 18px; }
-.intro--play .intro__start { justify-content: center; margin-top: clamp(32px, 6vh, 56px); }
-.intro--play .intro__press { margin-top: 22px; }
-.intro.intro--play:not(.is-started) .intro__shade { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(10, 15, 13, .72) 0%, rgba(10, 15, 13, .5) 55%, rgba(10, 15, 13, .2) 80%), linear-gradient(0deg, rgba(10, 15, 13, .7) 0%, rgba(10, 15, 13, 0) 30%), linear-gradient(180deg, rgba(10, 15, 13, .7) 0%, rgba(10, 15, 13, 0) 20%); }
-.intro--play .intro__attract { object-position: 50% 55%; }
-@media (max-height: 480px) and (orientation: landscape) { .intro--play .intro__press { margin-top: 10px; } }
-@media (max-width: 759px) { .intro--play .intro__scene--title { bottom: 0; } .intro--play .intro__start .intro__play { width: min(320px, 100%); } }
-.intro__start .intro__play svg { width: 20px; height: 20px; }
 @media (max-height: 480px) and (orientation: landscape) {
   .intro__scene--title .intro__logo { font-size: clamp(30px, 9vh, 46px); }
   .intro__scene--title .intro__line { margin-top: 6px; }
   .intro__scene--title .intro__start { margin-top: 10px; }
-  .intro__start .intro__play { min-height: 52px; }
 }
 @media (max-width: 759px) { .intro__attract { object-position: 30% 60%; } .intro__attract.is-on { opacity: .5; } }
 .intro__shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10, 15, 13, .82) 0%, rgba(10, 15, 13, .45) 42%, rgba(10, 15, 13, .05) 75%), linear-gradient(0deg, rgba(10, 15, 13, .75) 0%, rgba(10, 15, 13, 0) 45%); transition: background .8s var(--ease); }
@@ -600,3 +588,58 @@ html.intro-pending .boot { display: block; position: fixed; inset: 0; z-index: 2
 .intro__textbtn:hover { color: var(--bone); text-decoration-color: var(--bone); }
 .intro__textbtn svg { width: 18px; height: 18px; }
 
+
+/* ---------- the start screen (intro--play): a game's title menu. The game's name and a short menu low on the left,
+   real play (the attract loop) clear on the right, the tagline and the keys along the bottom ---------- */
+.intro--play .intro__attract { object-position: 50% 55%; }
+.intro--play .intro__attract.is-on { opacity: 1; }
+.intro.intro--play:not(.is-started) .intro__shade { background: linear-gradient(90deg, rgba(10, 15, 13, .9) 0%, rgba(10, 15, 13, .66) 32%, rgba(10, 15, 13, .12) 62%, rgba(10, 15, 13, 0) 78%), linear-gradient(0deg, rgba(10, 15, 13, .9) 0%, rgba(10, 15, 13, .4) 18%, rgba(10, 15, 13, 0) 40%), linear-gradient(180deg, rgba(10, 15, 13, .55) 0%, rgba(10, 15, 13, 0) 20%); }
+.intro--play .intro__scene--title { left: clamp(28px, 6.4vw, 116px); right: auto; bottom: clamp(104px, 17vh, 176px); max-width: none; }
+.tm-by { margin: 0 0 16px; font: 600 12px/1 var(--sans); letter-spacing: 0.36em; text-transform: uppercase; color: var(--bone-2); }
+.tm-logo { margin: 0 0 0 -0.04em; font: 600 clamp(56px, 6.7vw, 110px)/0.92 var(--serif); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+.tm-ep { margin: 16px 0 0; font: italic 500 clamp(19px, 1.7vw, 26px)/1.2 var(--serif); letter-spacing: 0.02em; color: var(--bone-2); }
+.tm-menu { list-style: none; margin: clamp(28px, 6.5vh, 60px) 0 0; padding: 0; display: grid; gap: 2px; justify-items: start; }
+.tm-item { position: relative; display: block; padding: 9px 20px 9px 0; background: none; border: 0; text-align: left; cursor: pointer; color: var(--ash); font: 600 clamp(24px, 2.3vw, 32px)/1.1 var(--serif); letter-spacing: 0.06em; transition: color .25s var(--ease), transform .35s var(--ease); }
+.tm-item::before { content: ""; position: absolute; left: -18px; top: 9px; width: 2px; height: 1.1em; background: var(--bone); transform: scaleY(0); transition: transform .3s var(--ease); }
+.tm-item:focus { color: var(--bone); transform: translateX(18px); outline: none; }
+.tm-item:focus::before { transform: scaleY(1); }
+.tm-item:active { transform: translateX(18px) scale(.985); }
+.tm-item.is-ask { font-style: italic; }
+.tm-item small { display: block; margin-top: 7px; font: 400 13px/1.3 var(--sans); letter-spacing: 0.02em; color: var(--ash); opacity: 0; transition: opacity .25s var(--ease); }
+.tm-item:focus small { opacity: 1; }
+.tm-foot { position: absolute; z-index: 2; left: clamp(28px, 6.4vw, 116px); right: clamp(28px, 6.4vw, 116px); bottom: clamp(18px, 4vh, 36px); display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 14px; border-top: 1px solid var(--hair); transition: opacity .4s var(--ease); }
+.intro.is-started .tm-foot { opacity: 0; }
+.tm-line { margin: 0; font: 400 13px/1.3 var(--sans); letter-spacing: 0.04em; color: var(--ash); }
+.tm-hints { margin: 0; display: flex; gap: 22px; font: 600 11px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ash); white-space: nowrap; }
+.tm-hints span { display: inline-flex; align-items: center; gap: 6px; }
+.tm-hints kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border: 1px solid var(--hair-2); border-radius: 4px; font: 600 11px/1 var(--sans); letter-spacing: 0; text-transform: none; color: var(--bone-2); }
+.tm-hints kbd + kbd { margin-left: -2px; }
+.tm-hints kbd:last-of-type { margin-right: 4px; }
+@media (hover: none) {
+  .tm-hints { display: none; }
+  .tm-item { color: var(--bone-2); min-height: 48px; }
+  li:first-child > .tm-item { color: var(--bone); }
+  .tm-item small { opacity: 1; }
+}
+@media (max-width: 759px) {
+  .intro--play .intro__scene--title { left: 22px; right: 22px; bottom: 84px; }
+  .intro.intro--play:not(.is-started) .intro__shade { background: linear-gradient(0deg, rgba(10, 15, 13, .96) 0%, rgba(10, 15, 13, .8) 38%, rgba(10, 15, 13, .2) 66%, rgba(10, 15, 13, 0) 80%), linear-gradient(180deg, rgba(10, 15, 13, .5) 0%, rgba(10, 15, 13, 0) 18%); }
+  .tm-logo { font-size: clamp(56px, 18vw, 80px); letter-spacing: 0.1em; }
+  .tm-logo span { display: block; }
+  .tm-menu { margin-top: 26px; }
+  .tm-item { font-size: 27px; }
+  .tm-foot { left: 22px; right: 22px; bottom: max(16px, env(safe-area-inset-bottom)); }
+  .tm-line { font-size: 12px; }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .intro--play .intro__scene--title { left: max(28px, env(safe-area-inset-left)); bottom: 50px; }
+  .tm-by { margin-bottom: 8px; font-size: 10px; }
+  .tm-logo { font-size: clamp(34px, 12vh, 52px); }
+  .tm-logo span { display: inline; }
+  .tm-ep { margin-top: 6px; font-size: 16px; }
+  .tm-menu { margin-top: 10px; gap: 0; }
+  .tm-item { padding: 5px 20px 5px 0; font-size: 21px; min-height: 40px; }
+  .tm-item::before { top: 9px; }
+  .tm-item small { display: none; }
+  .tm-foot { bottom: 10px; padding-top: 8px; left: max(28px, env(safe-area-inset-left)); }
+}

@@ -78,15 +78,22 @@
     '<div class="intro__art" aria-hidden="true"><img src="' + art + (mob ? "-m.webp" : "-1920.webp") + '" alt="" decoding="async" fetchpriority="high" />' +
       (TPLAY && t.attract && !RM ? '<video class="intro__attract" muted loop playsinline preload="none" poster="' + t.attract + '.jpg"><source src="' + t.attract + '.webm" type="video/webm" /><source src="' + t.attract + '.mp4" type="video/mp4" /></video>' : "") + "</div>" +
     '<div class="intro__shade" aria-hidden="true"></div>' +
-    '<button class="intro__skip" type="button" data-intro-skip>' + E(t.skip) + "</button>" +
+    (TPLAY ? "" : '<button class="intro__skip" type="button" data-intro-skip>' + E(t.skip) + "</button>") +
     (TPLAY ?
-      /* a start screen: one thing to press, in the middle, over real play; the library is the quiet way past it, top right */
+      /* a start screen, as a game has one: the game's name, a short menu (Continue, New game, Library) low on the left
+         over real play, the tagline and the keys along the bottom. Library is the quiet way past it (it is the skip) */
       '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
-        '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
-        '<p class="intro__line">' + E(t.line) + "</p>" +
-        '<div class="intro__start"><button class="btn btn--primary btn--lg intro__play" type="button" data-title-play><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#g-play"/></svg>' + E(SAVED && t.continue ? t.continue : t.play) + "</button></div>" +
-        '<p class="intro__press" aria-hidden="true">' + E(COARSE ? t.press_touch : t.press) + "</p>" +
-      "</section>"
+        '<p class="tm-by">' + E(t.first) + " " + E(t.last) + "</p>" +
+        '<h1 class="tm-logo" id="intro-title">' + E(t.game).split(" ").map(function (w) { return "<span>" + w + "</span>"; }).join(" ") + "</h1>" +
+        '<p class="tm-ep">' + E(t.episode) + "</p>" +
+        '<ul class="tm-menu">' +
+          '<li><button class="tm-item" type="button" data-title-play>' + E(SAVED && t.continue ? t.continue : t.new) + "</button></li>" +
+          (SAVED ? '<li><button class="tm-item" type="button" data-title-new data-l="' + E(t.new) + '">' + E(t.new) + "</button></li>" : "") +
+          '<li><button class="tm-item tm-item--sub" type="button" data-intro-skip>' + E(t.library) + "<small>" + E(t.library_sub) + "</small></button></li>" +
+        "</ul>" +
+      "</section>" +
+      '<footer class="tm-foot"><p class="tm-line">' + E(t.line) + "</p>" +
+        '<p class="tm-hints" aria-hidden="true"><span><kbd>\u2191</kbd><kbd>\u2193</kbd>' + E(t.hint_move) + "</span><span><kbd>Enter</kbd>" + E(t.hint_select) + "</span></p></footer>"
     :
       '<section class="intro__scene intro__scene--title is-on" data-scene="title">' +
         '<h1 class="intro__logo" id="intro-title"><span>' + E(t.first) + "</span><span>" + E(t.last) + "</span></h1>" +
@@ -156,6 +163,20 @@
   });
   bootP.then(function () { setTimeout(function () { startBtn.focus({ preventScroll: true }); }, 60); });
 
+  /* ---------- the start screen's menu: the arrows, W and S or a pad's D-pad move; the row that has the focus is the one lit ---------- */
+  var tms = [].slice.call(el.querySelectorAll(".tm-item"));
+  function tmUnask() { tms.forEach(function (b) { if (b.classList.contains("is-ask")) { b.classList.remove("is-ask"); b.textContent = b.getAttribute("data-l"); } }); }
+  function tmMove(d) {
+    if (!tms.length) return;
+    var i = tms.indexOf(document.activeElement);
+    i = i < 0 ? 0 : Math.max(0, Math.min(tms.length - 1, i + d));
+    tms[i].focus({ preventScroll: true });
+  }
+  tms.forEach(function (b) {
+    b.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") b.focus({ preventScroll: true }); });
+    b.addEventListener("blur", function () { if (b.classList.contains("is-ask")) tmUnask(); });
+  });
+
   /* ---------- start: with the score, or muted ---------- */
   function start(sound, how) {
     if (phase !== "title") return;
@@ -169,7 +190,14 @@
     var b = e.target.closest("[data-start]");
     if (b) { start(b.getAttribute("data-start") === "on", "button"); return; }
     if (e.target.closest("[data-title-play]")) { playFromTitle("button"); return; }
-    if (phase === "title" && !e.target.closest("button,a,input")) { if (TPLAY) playFromTitle("tap"); else start(true, "tap"); }
+    var nw = e.target.closest("[data-title-new]");
+    if (nw) {
+      /* a new game over a save asks once, in the row itself: the second press erases the save and starts */
+      if (!nw.classList.contains("is-ask")) { nw.classList.add("is-ask"); nw.textContent = t.new_confirm; hap("tap"); return; }
+      try { localStorage.removeItem("jg_story"); } catch (x) {}
+      playFromTitle("new"); return;
+    }
+    if (phase === "title" && !TPLAY && !e.target.closest("button,a,input")) start(true, "tap");
   });
 
   /* Play from the title screen: the score starts with the press, then straight into the episode */
@@ -416,8 +444,10 @@
     if (ended || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key;
     if (phase === "title") {
-      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip]")) return; /* the focused button handles its own key */
-      if (k === "Enter" || k === " ") { e.preventDefault(); start(true, "key"); }
+      if (TPLAY && (k === "ArrowDown" || k === "s" || k === "S")) { e.preventDefault(); tmMove(1); return; }
+      if (TPLAY && (k === "ArrowUp" || k === "w" || k === "W")) { e.preventDefault(); tmMove(-1); return; }
+      if (e.target && e.target.closest && e.target.closest("[data-start],[data-intro-skip],.tm-item")) return; /* the focused button handles its own key */
+      if (k === "Enter" || k === " ") { e.preventDefault(); if (TPLAY) playFromTitle("key"); else start(true, "key"); }
       else if (k === "m" || k === "M") { e.preventDefault(); start(false, "key"); }
       else if (k === "Escape") { T("intro_skipped", { phase: phase }); done(true); }
     } else if (phase === "seat") {
@@ -451,7 +481,8 @@
       var gp = (navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean)[0];
       if (gp) {
         var a = gp.buttons[0] && gp.buttons[0].pressed, dn = (gp.buttons[13] && gp.buttons[13].pressed) || gp.axes[1] > 0.5, up = (gp.buttons[12] && gp.buttons[12].pressed) || gp.axes[1] < -0.5;
-        if (a && !prev.a) { if (phase === "title") { if (TPLAY) playFromTitle("pad"); else start(true, "pad"); } else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); }
+        if (phase === "title" && TPLAY) { if (dn && !prev.dn) tmMove(1); if (up && !prev.up) tmMove(-1); }
+        if (a && !prev.a) { if (phase === "title") { if (TPLAY) { var fb = tms.indexOf(document.activeElement) >= 0 ? document.activeElement : tms[0]; fb.click(); } else start(true, "pad"); } else if (phase === "seat") { var on = el.querySelector(".menu__row.is-on"); choose(on.getAttribute("data-role"), "pad"); } else if (phase === "build") { pick(Math.max(0, brows.findIndex(function (r) { return r.classList.contains("is-on"); })), "pad"); } else if (phase === "name") finishName(""); else if (phase === "card") done(); }
         if (phase === "seat") { var i = rows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) mark(Math.min(rows.length - 1, i + 1)); if (up && !prev.up) mark(Math.max(0, i - 1)); }
         if (phase === "build") { var j = brows.findIndex(function (r) { return r.classList.contains("is-on"); }); if (dn && !prev.dn) bmark(Math.min(brows.length - 1, j + 1)); if (up && !prev.up) bmark(Math.max(0, j - 1)); }
         prev = { a: a, dn: dn, up: up };
