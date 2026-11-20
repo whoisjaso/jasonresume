@@ -13,25 +13,19 @@
   "controller": "did:web:jasonobawemimo.com",
   "alsoKnownAs": [
     "https://jasonobawemimo.com/",
+    "https://www.linkedin.com/in/obawemimo",
     "https://jasonobawemimo.com/#jason-obawemimo",
     "https://jasonobawemimo.com/jason-obawemimo.html",
-    "https://www.linkedin.com/in/obawemimo",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
-    "https://github.com/whoisjaso",
-    "https://github.com/whoisjaso/whoisjaso",
-    "https://whoisjaso.github.io/whoisjaso/",
-    "https://www.instagram.com/0bawemimo/"
+    "https://www.instagram.com/0bawemimo/",
+    "https://olaceo.com/",
+    "https://www.instagram.com/olaceo/"
   ],
   "service": [
     {
       "id": "did:web:jasonobawemimo.com#official-profile",
       "type": "LinkedDomains",
       "serviceEndpoint": "https://jasonobawemimo.com/"
-    },
-    {
-      "id": "did:web:jasonobawemimo.com#obavia",
-      "type": "LinkedDomains",
-      "serviceEndpoint": "https://jasonobawemimo.com/obavia.html"
     },
     {
       "id": "did:web:jasonobawemimo.com#schema",
@@ -67,11 +61,6 @@
       "id": "did:web:jasonobawemimo.com#credential-evidence-jsonld",
       "type": "CredentialEvidenceGraph",
       "serviceEndpoint": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld"
-    },
-    {
-      "id": "did:web:jasonobawemimo.com#source-release",
-      "type": "SourceRelease",
-      "serviceEndpoint": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
     },
     {
       "id": "did:web:jasonobawemimo.com#webfinger",

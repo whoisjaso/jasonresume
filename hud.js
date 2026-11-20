@@ -147,7 +147,7 @@
   try {
     if (!sessionStorage.getItem("jg_note")) {
       sessionStorage.setItem("jg_note", "1");
-      console.log("%cYou opened the console. Good.%c\nNo framework, no build step. The library is game.js, the score is score.js, the title screen is intro.js.\nSource: github.com/whoisjaso/jasonresume\nIf you're hiring: jobawems@gmail.com", "font:600 14px Georgia,serif;color:#EDE7DB", "font:12px ui-monospace,monospace;color:#9A9890");
+      console.log("%cYou opened the console. Good.%c\nNo framework, no build step. The library is game.js, the score is score.js, the title screen is intro.js.\nIf you're hiring: jobawems@gmail.com", "font:600 14px Georgia,serif;color:#EDE7DB", "font:12px ui-monospace,monospace;color:#9A9890");
     }
   } catch (e) {}
 })();

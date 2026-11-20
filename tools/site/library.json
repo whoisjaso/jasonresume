@@ -23,11 +23,18 @@
     "verify": "linkedin"
    },
    {
-    "k": "GitHub",
-    "v": "github.com/whoisjaso",
-    "href": "https://github.com/whoisjaso",
+    "k": "Olaceo",
+    "v": "olaceo.com",
+    "href": "https://olaceo.com",
     "ext": true,
-    "verify": "github"
+    "verify": "olaceo"
+   },
+   {
+    "k": "Obavia",
+    "v": "obavia.co",
+    "href": "https://obavia.co",
+    "ext": true,
+    "verify": "obavia"
    },
    {
     "k": "Site",

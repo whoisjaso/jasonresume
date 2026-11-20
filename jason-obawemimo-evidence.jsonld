@@ -7,7 +7,7 @@
       "name": "Jason Obawemimo Credential and Honor Evidence Graph",
       "description": "Focused machine-readable evidence graph for Jason Obawemimo's official identity, Anthropic coursework, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
       "url": "https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld",
-      "dateModified": "2026-10-08",
+      "dateModified": "2026-11-20",
       "inLanguage": "en-US",
       "about": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
@@ -41,7 +41,7 @@
       "url": "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
       "name": "Jason Obawemimo Credentials and Dean's Honor List Evidence",
       "description": "Exact-name evidence page for Jason Obawemimo's Anthropic course-completion portfolio, Associate of Arts in Business, GPA 3.63, and Dean's Honor List recognition.",
-      "dateModified": "2026-10-08",
+      "dateModified": "2026-11-20",
       "isPartOf": {
         "@id": "https://jasonobawemimo.com/#website"
       },
@@ -55,10 +55,7 @@
         "https://jasonobawemimo.com/CITATION.cff",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Anthropic_Certificates.pdf",
         "https://jasonobawemimo.com/assets/Jason_Obawemimo_Associate_Degree.pdf",
-        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf",
-        "https://github.com/whoisjaso/whoisjaso",
-        "https://whoisjaso.github.io/whoisjaso/",
-        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
+        "https://jasonobawemimo.com/assets/Jason_Obawemimo_Resume_2026.pdf"
       ]
     },
     {
@@ -67,11 +64,17 @@
       "name": "Jason Obawemimo",
       "givenName": "Jason",
       "familyName": "Obawemimo",
+      "alternateName": [
+        "Obawemimo",
+        "olaceo",
+        "OLACEO",
+        "Jason Obawemimo (olaceo)"
+      ],
       "url": "https://jasonobawemimo.com/",
       "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
       "email": "mailto:jobawems@gmail.com",
       "jobTitle": "AI Implementation, Workflow Automation and CRM Systems",
-      "description": "Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.",
+      "description": "Jason Obawemimo is the founder of Olaceo and Obavia and the owner and operator of Triple J Auto Investment, a Houston dealership, where he builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",
       "homeLocation": {
         "@type": "Place",
         "name": "Pearland, Texas",
@@ -112,14 +115,13 @@
       ],
       "sameAs": [
         "https://jasonobawemimo.com/",
-        "did:web:jasonobawemimo.com",
-        "https://github.com/whoisjaso",
-        "https://github.com/whoisjaso/whoisjaso",
-        "https://whoisjaso.github.io/whoisjaso/",
-        "https://github.com/whoisjaso/jasonresume",
-        "https://www.linkedin.com/in/obawemimo",
-        "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+        "https://olaceo.com/",
+        "https://obavia.co/",
         "https://thetriplejauto.com/",
+        "https://www.linkedin.com/in/obawemimo",
+        "https://www.instagram.com/olaceo/",
+        "did:web:jasonobawemimo.com",
+        "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
         "https://www.instagram.com/0bawemimo/"
       ],
       "subjectOf": [
@@ -134,24 +136,30 @@
         "https://jasonobawemimo.com/answers.json",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
         "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld",
-        "https://jasonobawemimo.com/CITATION.cff",
-        "https://github.com/whoisjaso/whoisjaso",
-        "https://whoisjaso.github.io/whoisjaso/",
-        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
+        "https://jasonobawemimo.com/CITATION.cff"
       ],
-      "disambiguatingDescription": "Pearland, Texas owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia (spelled O-B-A-V-I-A), a dealership sale desk in development for Texas independent dealers. Obawemimo is his family name.",
+      "disambiguatingDescription": "Founder of Olaceo (spelled O-L-A-C-E-O) and Obavia (spelled O-B-A-V-I-A) and owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership. He lives in Pearland, Texas, and is known as olaceo. Obawemimo is his family name.",
       "worksFor": [
         {
-          "@type": "AutoDealer",
-          "@id": "https://jasonobawemimo.com/#triple-j-auto",
-          "name": "Triple J Auto Investment",
-          "url": "https://thetriplejauto.com/"
+          "@type": "Organization",
+          "@id": "https://jasonobawemimo.com/#olaceo",
+          "name": "Olaceo",
+          "url": "https://olaceo.com/",
+          "sameAs": [
+            "https://www.instagram.com/olaceo/"
+          ]
         },
         {
           "@type": "Organization",
           "@id": "https://jasonobawemimo.com/#obavia",
           "name": "Obavia",
-          "url": "https://obavia.co"
+          "url": "https://obavia.co/"
+        },
+        {
+          "@type": "AutoDealer",
+          "@id": "https://jasonobawemimo.com/#triple-j-auto",
+          "name": "Triple J Auto Investment",
+          "url": "https://thetriplejauto.com/"
         }
       ]
     },

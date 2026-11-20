@@ -7,7 +7,7 @@
       "name": "Jason Obawemimo Well-Known AI Profile",
       "description": "Well-known JSON-LD profile for AI retrieval systems and search engines about Jason Obawemimo's official website, work focus, credentials, education, GPA, and Dean's Honor List recognition.",
       "url": "https://jasonobawemimo.com/.well-known/ai-profile.jsonld",
-      "dateModified": "2026-10-09",
+      "dateModified": "2026-11-20",
       "inLanguage": "en-US",
       "about": {
         "@id": "https://jasonobawemimo.com/#jason-obawemimo"
@@ -31,13 +31,19 @@
       "name": "Jason Obawemimo",
       "givenName": "Jason",
       "familyName": "Obawemimo",
+      "alternateName": [
+        "Obawemimo",
+        "olaceo",
+        "OLACEO",
+        "Jason Obawemimo (olaceo)"
+      ],
       "url": "https://jasonobawemimo.com/",
       "mainEntityOfPage": "https://jasonobawemimo.com/jason-obawemimo.html",
       "email": "mailto:jobawems@gmail.com",
       "image": "https://jasonobawemimo.com/assets/jason-headshot.png",
       "jobTitle": "AI Implementation, Workflow Automation and CRM Systems",
-      "description": "Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.",
-      "disambiguatingDescription": "Pearland, Texas owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia (spelled O-B-A-V-I-A), a dealership sale desk in development for Texas independent dealers. Obawemimo is his family name.",
+      "description": "Jason Obawemimo is the founder of Olaceo and Obavia and the owner and operator of Triple J Auto Investment, a Houston dealership, where he builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds.",
+      "disambiguatingDescription": "Founder of Olaceo (spelled O-L-A-C-E-O) and Obavia (spelled O-B-A-V-I-A) and owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership. He lives in Pearland, Texas, and is known as olaceo. Obawemimo is his family name.",
       "knowsLanguage": [
         "English",
         "Spanish"
@@ -49,6 +55,8 @@
         "Dealership CRM",
         "Voice AI",
         "Voice AI prompts and call flows",
+        "Purchase order automation",
+        "Sales-call intelligence",
         "Dealership sale desks",
         "Lead to title workflows",
         "Dealership operations",
@@ -132,14 +140,13 @@
       ],
       "sameAs": [
         "https://jasonobawemimo.com/",
-        "did:web:jasonobawemimo.com",
-        "https://github.com/whoisjaso",
-        "https://github.com/whoisjaso/whoisjaso",
-        "https://whoisjaso.github.io/whoisjaso/",
-        "https://github.com/whoisjaso/jasonresume",
-        "https://www.linkedin.com/in/obawemimo",
-        "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
+        "https://olaceo.com/",
+        "https://obavia.co/",
         "https://thetriplejauto.com/",
+        "https://www.linkedin.com/in/obawemimo",
+        "https://www.instagram.com/olaceo/",
+        "did:web:jasonobawemimo.com",
+        "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
         "https://www.instagram.com/0bawemimo/"
       ],
       "subjectOf": [
@@ -154,23 +161,29 @@
         "https://jasonobawemimo.com/person.json",
         "https://jasonobawemimo.com/credentials.json",
         "https://jasonobawemimo.com/answers.json",
-        "https://jasonobawemimo.com/llms-full.txt",
-        "https://github.com/whoisjaso/whoisjaso",
-        "https://whoisjaso.github.io/whoisjaso/",
-        "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
+        "https://jasonobawemimo.com/llms-full.txt"
       ],
       "worksFor": [
         {
-          "@type": "AutoDealer",
-          "@id": "https://jasonobawemimo.com/#triple-j-auto",
-          "name": "Triple J Auto Investment",
-          "url": "https://thetriplejauto.com/"
+          "@type": "Organization",
+          "@id": "https://jasonobawemimo.com/#olaceo",
+          "name": "Olaceo",
+          "url": "https://olaceo.com/",
+          "sameAs": [
+            "https://www.instagram.com/olaceo/"
+          ]
         },
         {
           "@type": "Organization",
           "@id": "https://jasonobawemimo.com/#obavia",
           "name": "Obavia",
-          "url": "https://obavia.co"
+          "url": "https://obavia.co/"
+        },
+        {
+          "@type": "AutoDealer",
+          "@id": "https://jasonobawemimo.com/#triple-j-auto",
+          "name": "Triple J Auto Investment",
+          "url": "https://thetriplejauto.com/"
         }
       ]
     },

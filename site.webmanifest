@@ -1,7 +1,7 @@
 {
   "name": "Jason Obawemimo",
   "short_name": "Jason Obawemimo",
-  "description": "Official website of Jason Obawemimo, owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia.",
+  "description": "Official website of Jason Obawemimo, owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Olaceo and Obavia.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -21,19 +21,6 @@
       "short_name": "Profile",
       "description": "Exact-name entity profile for Jason Obawemimo.",
       "url": "/jason-obawemimo.html",
-      "icons": [
-        {
-          "src": "/assets/favicon-r-32.png",
-          "sizes": "32x32",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Obavia",
-      "short_name": "Obavia",
-      "description": "Obavia, a sale desk he is building for Texas independent dealers.",
-      "url": "/obavia.html",
       "icons": [
         {
           "src": "/assets/favicon-r-32.png",

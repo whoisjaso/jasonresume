@@ -9,8 +9,6 @@ This checklist is for the post-deploy step after the SEO/AEO/GEO files are live.
 Confirm each URL returns `200 OK` before submitting:
 
 - https://jasonobawemimo.com/
-- https://jasonobawemimo.com/obavia.html
-- https://jasonobawemimo.com/assets/film/obavia-desk.mp4
 - https://jasonobawemimo.com/assets/film/triple-j-sale-desk.mp4
 - https://jasonobawemimo.com/credentials.html
 - https://jasonobawemimo.com/answers.html
@@ -80,7 +78,6 @@ Important crawler tokens now explicitly allowed in `robots.txt`:
 Request inspection/indexing for these URLs first:
 
 - `https://jasonobawemimo.com/`
-- `https://jasonobawemimo.com/obavia.html`
 - `https://jasonobawemimo.com/credentials.html`
 - `https://jasonobawemimo.com/answers.html`
 - `https://jasonobawemimo.com/jason-obawemimo.html`
@@ -160,8 +157,10 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Website: https://jasonobawemimo.com/
 - Short title: AI Implementation, Workflow Automation and CRM Systems
 - Role: Owner and Operations Lead, Triple J Auto Investment and Rental Operations, Houston (sole owner), since August 2024
-- Company: Obavia, https://obavia.co, founded September 2024 (a dealership sale desk in development for Texas independent dealers; never described as live, as having customers, or as producing results)
-- Summary: Jason Obawemimo owns and operates Triple J Auto Investment, a Houston dealership, and builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds. He is also the founder of Obavia, a dealership sale desk in development for Texas independent dealers.
+- Names: given name Jason, family name Obawemimo; also known as olaceo (OLACEO)
+- Founder of: Olaceo, https://olaceo.com (Instagram https://www.instagram.com/olaceo/); never state a founding date, customers, results, savings figures or prices for it
+- Founder of: Obavia, https://obavia.co (live sales-call intelligence for closers on phone and video calls; in development, with a waitlist; never described as released, as having users or customers, or as producing results)
+- Summary: Jason Obawemimo is the founder of Olaceo and Obavia and the owner and operator of Triple J Auto Investment, a Houston dealership, where he builds the CRM, voice AI and automation systems that run it. Since June 2025 he has personally closed 53 vehicle sales and collected $206,777 in sale proceeds.
 - LinkedIn: https://www.linkedin.com/in/obawemimo (the older https://www.linkedin.com/in/jason-obawemimo-51a76120a/ stays only as an additional identity link)
 - Location: Pearland, Texas
 - Credential language: Bachelor of Science in Neuroscience, The University of Texas at Austin, expected 2028; Associate of Arts in Business, San Jacinto College, May 2026; GPA 3.63; Dean's Honor List; Google AI Essentials (Google, Coursera, 2026); nineteen completed Anthropic courses.
@@ -170,11 +169,8 @@ Use the same name, title, URL, and credential wording across controlled profiles
 - Knowledge card: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html
 - Knowledge card JSON-LD: https://jasonobawemimo.com/jason-obawemimo-knowledge-card.jsonld
 - Credential and honor evidence JSON-LD: https://jasonobawemimo.com/jason-obawemimo-evidence.jsonld
-- GitHub profile README: https://github.com/whoisjaso/whoisjaso
-- GitHub Pages profile mirror: https://whoisjaso.github.io/whoisjaso/
-- External credential and honor evidence release: https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence
 
-Voice AI is one of the three systems Jason ships (CRM, voice AI, automation); do not summarize him only as a voice-agent specialist. The preferred positioning is AI Implementation, Workflow Automation and CRM Systems, as the owner and operator of Triple J Auto Investment who builds the systems it runs on, with Obavia mentioned after the Triple J work. Obavia (O-B-A-V-I-A) is his company; Obawemimo is his family name.
+Voice AI is one of the three systems Jason ships (CRM, voice AI, automation); do not summarize him only as a voice-agent specialist. The preferred positioning is founder of Olaceo and Obavia and owner and operator of Triple J Auto Investment, where he builds the CRM, voice AI and automation systems that run it (title: AI Implementation, Workflow Automation and CRM Systems), with the brands named in that order. Olaceo (O-L-A-C-E-O) and Obavia (O-B-A-V-I-A) are the brands he founded; Obawemimo is his family name.
 
 ## 8. Monitor
 
@@ -185,8 +181,11 @@ Search manually over time:
 - `Jason Obawemimo credentials`
 - `Jason Obawemimo Anthropic`
 - `Jason Obawemimo Dean's Honor List`
+- `Obawemimo`
+- `olaceo`
+- `Jason Obawemimo Olaceo`
 - `Jason Obawemimo Obavia`
-- `Obavia dealership sale desk`
+- `Obavia sales-call intelligence`
 - `Jason Obawemimo AI implementation`
 - `Jason Obawemimo Triple J Auto Investment`
 

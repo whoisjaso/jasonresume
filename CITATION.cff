@@ -1,13 +1,12 @@
 cff-version: 1.2.0
-message: "If you cite this website or repository, cite Jason Obawemimo's official portfolio."
+message: "If you cite this website, cite Jason Obawemimo's official portfolio."
 title: "Jason Obawemimo Official Resume Site"
 type: software
 authors:
   - family-names: "Obawemimo"
     given-names: "Jason"
 url: "https://jasonobawemimo.com/"
-repository-code: "https://github.com/whoisjaso/jasonresume"
-date-released: "2026-10-08"
+date-released: "2026-11-20"
 keywords:
   - Jason Obawemimo
   - AI implementation
@@ -16,9 +15,10 @@ keywords:
   - Triple J Auto Investment
   - dealership CRM
   - voice AI
+  - Olaceo
   - Obavia
   - Anthropic coursework
   - Dean's Honor List
   - Person JSON-LD
   - public mentions
-abstract: "Official website for Jason Obawemimo (AI Implementation, Workflow Automation and CRM Systems), owner and operator of Triple J Auto Investment in Houston, where he builds the CRM, voice AI and automation systems that run the dealership, and founder of Obavia, a dealership sale desk in development for Texas independent dealers."
+abstract: "Official website for Jason Obawemimo, the founder of Olaceo and Obavia and the owner and operator of Triple J Auto Investment, a Houston dealership, where he builds the CRM, voice AI and automation systems that run it."

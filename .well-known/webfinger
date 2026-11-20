@@ -2,17 +2,16 @@
   "subject": "acct:jobawems@jasonobawemimo.com",
   "aliases": [
     "https://jasonobawemimo.com/",
+    "https://www.linkedin.com/in/obawemimo",
     "https://jasonobawemimo.com/jason-obawemimo.html",
     "https://jasonobawemimo.com/jason-obawemimo-credentials-honor.html",
     "https://jasonobawemimo.com/jason-obawemimo-knowledge-card.html",
     "https://jasonobawemimo.com/mentions.html",
     "did:web:jasonobawemimo.com",
-    "https://github.com/whoisjaso",
-    "https://github.com/whoisjaso/whoisjaso",
-    "https://whoisjaso.github.io/whoisjaso/",
-    "https://www.linkedin.com/in/obawemimo",
     "https://www.linkedin.com/in/jason-obawemimo-51a76120a/",
-    "https://www.instagram.com/0bawemimo/"
+    "https://www.instagram.com/0bawemimo/",
+    "https://olaceo.com/",
+    "https://www.instagram.com/olaceo/"
   ],
   "links": [
     {
@@ -28,7 +27,7 @@
     {
       "rel": "me",
       "type": "text/html",
-      "href": "https://github.com/whoisjaso"
+      "href": "https://www.instagram.com/olaceo/"
     },
     {
       "rel": "me",
@@ -38,27 +37,17 @@
     {
       "rel": "related",
       "type": "text/html",
-      "href": "https://thetriplejauto.com/"
+      "href": "https://olaceo.com/"
     },
     {
       "rel": "related",
       "type": "text/html",
-      "href": "https://obavia.co"
+      "href": "https://obavia.co/"
     },
     {
-      "rel": "describedby",
+      "rel": "related",
       "type": "text/html",
-      "href": "https://github.com/whoisjaso/jasonresume/releases/tag/v2026.06.17-credential-honor-evidence"
-    },
-    {
-      "rel": "describedby",
-      "type": "text/html",
-      "href": "https://github.com/whoisjaso/whoisjaso"
-    },
-    {
-      "rel": "describedby",
-      "type": "text/html",
-      "href": "https://whoisjaso.github.io/whoisjaso/"
+      "href": "https://thetriplejauto.com/"
     },
     {
       "rel": "http://webfinger.net/rel/profile-page",
@@ -153,9 +142,12 @@
   ],
   "properties": {
     "http://schema.org/name": "Jason Obawemimo",
-    "http://schema.org/jobTitle": "AI Implementation, Workflow Automation and CRM Systems; owner and operations lead, Triple J Auto Investment; founder, Obavia",
+    "http://schema.org/jobTitle": "Founder, Olaceo and Obavia; owner and operations lead, Triple J Auto Investment; AI Implementation, Workflow Automation and CRM Systems",
     "http://schema.org/homeLocation": "Pearland, Texas, United States",
     "http://schema.org/url": "https://jasonobawemimo.com/",
-    "http://schema.org/worksFor": "Triple J Auto Investment (https://thetriplejauto.com/); Obavia (https://obavia.co)"
+    "http://schema.org/worksFor": "Olaceo (https://olaceo.com/); Obavia (https://obavia.co/); Triple J Auto Investment (https://thetriplejauto.com/)",
+    "http://schema.org/givenName": "Jason",
+    "http://schema.org/familyName": "Obawemimo",
+    "http://schema.org/alternateName": "Obawemimo; olaceo; OLACEO; Jason Obawemimo (olaceo)"
   }
 }
