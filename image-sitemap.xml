@@ -6,7 +6,7 @@
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
       <image:title>Jason Obawemimo professional headshot</image:title>
-      <image:caption>Portrait of Jason Obawemimo, owner and operator of Triple J Auto Investment and founder of Obavia, Pearland, Texas.</image:caption>
+      <image:caption>Portrait of Jason Obawemimo, owner and operator of Triple J Auto Investment and founder of Olaceo and Obavia, Pearland, Texas.</image:caption>
       <image:geo_location>Pearland, Texas, United States</image:geo_location>
     </image:image>
     <image:image>
@@ -31,19 +31,11 @@
     </image:image>
   </url>
   <url>
-    <loc>https://jasonobawemimo.com/obavia.html</loc>
-    <image:image>
-      <image:loc>https://jasonobawemimo.com/assets/film/obavia-desk.jpg</image:loc>
-      <image:title>Obavia film poster</image:title>
-      <image:caption>Poster for the Obavia film, cut from real Obavia screens. Obavia is in development; people and figures in the film are fictional.</image:caption>
-    </image:image>
-  </url>
-  <url>
     <loc>https://jasonobawemimo.com/jason-obawemimo.html</loc>
     <image:image>
       <image:loc>https://jasonobawemimo.com/assets/jason-headshot.png</image:loc>
       <image:title>Jason Obawemimo official entity profile image</image:title>
-      <image:caption>Official profile image for Jason Obawemimo, owner and operator of Triple J Auto Investment and founder of Obavia.</image:caption>
+      <image:caption>Official profile image for Jason Obawemimo, owner and operator of Triple J Auto Investment and founder of Olaceo and Obavia.</image:caption>
       <image:geo_location>Pearland, Texas, United States</image:geo_location>
     </image:image>
   </url>
